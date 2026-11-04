@@ -37,7 +37,7 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("POST", "/api/journal/void"): lambda q, b: t.journal_void(b.get("ref", "")),
         ("GET", "/api/settings"): lambda q, b: t.settings(),
         ("POST", "/api/settings"): lambda q, b: t.settings_set(b),
-        ("GET", "/api/sizing"): lambda q, b: t.sizing(q.get("t", ""), q.get("entry"), q.get("stop")),
+        ("GET", "/api/sizing"): lambda q, b: t.sizing(q.get("t", ""), q.get("entry"), q.get("stop"), q.get("equity")),
         ("GET", "/api/model/plan"): lambda q, b: t.model_plan(),
     }
 

@@ -236,6 +236,11 @@ def test_sizing_service_suggests_2atr_stop(tmp_path):
     assert d["result"]["shares"] >= 0 and d["held_qty"] == 10
     assert t.sizing("", "100", "90")["result"]["entry"] == 100.0
     assert t.sizing()["result"] is None
+    empty = Terminal(tmp_path / "e", src=fake_src(), now=lambda: NOW)
+    with pytest.raises(pf.JournalError):
+        empty.sizing("AAPL")
+    d = empty.sizing("AAPL", "100", "95", "50000")
+    assert d["equity_source"] == "입력값" and d["result"]["shares"] == 100 and d["result"]["binding"] == "RISK"
 
 
 def test_model_plan_scales_to_equity_read_only(tmp_path):

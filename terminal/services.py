@@ -381,7 +381,7 @@ class Terminal:
                 "fetched_at": res["fetched_at"], "source": "거래 기록 재계산 + Yahoo 일봉 종가, 비교 지수 SPY",
                 "method": "시간가중수익률(TWR): 입출금 효과를 제외한 일별 수익률의 누적"}
 
-    def sizing(self, ticker: str = "", entry=None, stop=None) -> Dict[str, Any]:
+    def sizing(self, ticker: str = "", entry=None, stop=None, equity=None) -> Dict[str, Any]:
         _, integ, state, val, _, _ = self._valued()
         st = self.settings()
         out: Dict[str, Any] = {"settings": st, "equity": val["summary"]["equity"], "cash": state["cash"]}
@@ -402,9 +402,14 @@ class Terminal:
             out["result"] = None
             out["reason"] = "진입가와 손절가를 입력하세요 (종목 코드를 넣으면 최근 종가와 2 ATR 손절가를 제안합니다)."
             return out
-        if val["summary"]["equity"] is None:
+        manual = pf._opt_pos(equity, "계좌 금액")
+        if manual:                       # hypothetical account (e.g. before any trade is recorded): all cash
+            out.update(equity=manual, cash=manual, equity_source="입력값")
+        elif val["summary"]["equity"] is None:
             raise pf.JournalError("일부 보유 종목의 시세가 없어 계좌 평가액을 확정할 수 없습니다.")
-        out["result"] = pf.position_size(val["summary"]["equity"], state["cash"], e, s, st)
+        else:
+            out["equity_source"] = "거래 기록"
+        out["result"] = pf.position_size(out["equity"], out["cash"], e, s, st)
         out["stop_source"] = "입력값" if stop not in (None, "") else "2 ATR(14일) 제안값"
         return out
 

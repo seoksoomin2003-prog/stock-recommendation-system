@@ -155,6 +155,7 @@ async function renderAssist() {
         <label>종목 코드<input name="t" maxlength="15" style="text-transform:uppercase" placeholder="예: AAPL"></label>
         <label>진입가($)<input name="entry" inputmode="decimal" placeholder="비우면 최근 종가"></label>
         <label>손절가($)<input name="stop" inputmode="decimal" placeholder="비우면 2 ATR 아래"></label>
+        <label>계좌 금액($, 선택)<input name="equity" inputmode="decimal" placeholder="비우면 거래 기록 기준"></label>
         <div><button class="btn-primary" type="submit">계산</button></div>
       </form><div id="szout"></div></div>
     <div class="panel"><h2>위험 관리 설정</h2>
@@ -178,7 +179,7 @@ async function renderAssist() {
 let lastSizing = null;
 async function runSizing() {
   const f = $("#szform"), out = $("#szout"), qs = new URLSearchParams();
-  ["t", "entry", "stop"].forEach((k) => { const v = f[k].value.trim().replace(/,/g, ""); if (v) qs.set(k, k === "t" ? v.toUpperCase() : v); });
+  ["t", "entry", "stop", "equity"].forEach((k) => { const v = f[k].value.trim().replace(/,/g, ""); if (v) qs.set(k, k === "t" ? v.toUpperCase() : v); });
   out.innerHTML = '<div class="meta">계산 중…</div>';
   try {
     const d = await api("/api/sizing?" + qs); lastSizing = d;
@@ -190,7 +191,7 @@ async function runSizing() {
       <div class="kv"><div><span>매수 금액</span><b class="num">${usd(r.notional)}</b></div><div><span>계좌 대비 비중</span><b>${r.weight_pct.toFixed(1)}%</b></div>
         <div><span>손절 시 손실</span><b class="num">${usd(r.risk_amount)}</b> <span class="meta" style="margin:0">${r.risk_pct.toFixed(2)}%</span></div>
         <div><span>수량을 정한 한도</span><b>${esc(BIND_KO[r.binding])}</b></div></div>
-      <div class="meta">한도별 최대 수량: 위험 ${r.limits.RISK}주 · 비중 ${r.limits.WEIGHT}주 · 현금 ${r.limits.CASH}주 (계좌 ${usd(d.equity)}, 현금 ${usd(d.cash)}, 위험 예산 ${usd(r.risk_budget)})</div>
+      <div class="meta">한도별 최대 수량: 위험 ${r.limits.RISK}주 · 비중 ${r.limits.WEIGHT}주 · 현금 ${r.limits.CASH}주 (계좌 ${usd(d.equity)}${d.equity_source === "입력값" ? " 입력값, 전액 현금으로 가정" : ""}, 현금 ${usd(d.cash)}, 위험 예산 ${usd(r.risk_budget)})</div>
       ${r.shares > 0 && d.ticker ? '<button id="tojournal" style="margin-top:8px">이 수량으로 매수 기록 작성</button> <span class="meta">체결된 뒤에 기록하세요.</span>' : ""}`;
     const b = $("#tojournal");
     if (b) b.onclick = () => { prefill = { kind: "BUY", ticker: d.ticker, qty: r.shares, price: r.entry.toFixed(2), stop: r.stop.toFixed(2) }; show("portfolio"); };

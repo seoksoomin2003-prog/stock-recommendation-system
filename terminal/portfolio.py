@@ -375,7 +375,7 @@ def position_size(equity: float, cash: float, entry: float, stop: float, st: Dic
     if stop >= entry:
         raise JournalError("손절가는 진입가보다 낮아야 합니다 (매수 기준).")
     if not equity or equity <= 0:
-        raise JournalError("계좌 평가액이 없어 계산할 수 없습니다. 입금과 거래를 먼저 기록하세요.")
+        raise JournalError("계좌 평가액이 없습니다. '계좌 금액'을 입력하거나 포트폴리오에 입금·거래를 먼저 기록하세요.")
     risk_amt = equity * st["risk_per_trade_pct"] / 100
     per_share = entry - stop
     limits = {"RISK": risk_amt / per_share, "WEIGHT": equity * st["max_position_pct"] / 100 / entry,
