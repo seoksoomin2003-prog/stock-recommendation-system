@@ -230,6 +230,34 @@ python app.py dashboard --open                          # US and KR side by side
   * never pooled with US observations.
 * A full KR scan downloads about 2,500 symbols from Yahoo the first time each day (roughly 40 minutes on a slow link). Later runs on the same day reuse `data/kr/cache/`.
 
+### Personal terminal (TERMINAL-1, US)
+
+A local web app on this Mac only (`127.0.0.1`), with the screen in Korean. It uses free public data only and has no order execution.
+
+```bash
+python app.py terminal --open          # http://127.0.0.1:8765 ; stop with Ctrl+C ; --port N for another port
+```
+
+| Tab | Content | Source |
+|---|---|---|
+| 시장 개요 | indices, rates/FX/commodities, 11 sector ETFs (daily change, 1-month change, 30-day sparkline) | Yahoo Finance (delayed daily bars) |
+| 종목 | profile and valuation, candle chart with SMA 20/50/200 and volume (3 months / 1 year / 5 years), 5-year annual financials, latest SEC filings | Yahoo, SEC EDGAR companyfacts / submissions |
+| 거시 | 10Y and 2Y Treasury yields, 10Y-2Y spread, effective Fed funds rate, CPI year over year, unemployment, payrolls, KRW/USD | FRED public CSV (personal, non-commercial use, with attribution) |
+| 관심종목 | local watchlist (`data/terminal/watchlist.json`) | Yahoo |
+| 모델 | frozen P6-11B baseline: latest full scan TOP-5 and tracking status (read-only); challenger models come in stage 3 | `runs/`, `tracking/` |
+
+* Every value carries a status: **실데이터** (real), **지연·오래됨** (stale: provider failed, cached copy shown, or bar older than 5 days) or **데이터 없음** (unavailable).
+* During the US regular session the latest daily bar is labelled **장중·미확정** (intraday, unconfirmed).
+* Missing values show as "—" and are never filled with 0. For banks, lines such as operating income are left empty.
+* Responses are cached under `data/terminal/cache/`, which is ignored by git and safe to delete:
+  * quotes and charts: 15 minutes;
+  * profile and financials: 20 hours;
+  * filings: 1 hour;
+  * macro: 6 hours.
+* The financials table is for display only and is separate from the P6-20-A model inputs.
+* The SEC identity (`SEC_USER_AGENT`) is only ever reported as a status word.
+* Specification: `reports/TERMINAL_1_SPECIFICATION.md`.
+
 ### Where things are
 
 | Path | Content |
@@ -249,6 +277,8 @@ python app.py dashboard --open                          # US and KR side by side
 | `data/kr/` | KRX KIND security-master snapshots (with source sha256) and KR OHLCV caches |
 | `tracking/STORAGE_SCHEMA.json` | storage layout version 2 (additive; backup in `~/Developer/qse-backups/`) |
 | `tracking/dashboard.html` | unified read-only dashboard (`python app.py dashboard`) |
+| `terminal/` | personal terminal (TERMINAL-1): `services.py` data screens, `sources.py` Yahoo/SEC/FRED access, `server.py` local server, `static/` Korean UI |
+| `data/terminal/` | terminal cache and watchlist (local, ignored by git) |
 | `reports/` | phase reports, roadmap, test results |
 
 ## 6. Tests

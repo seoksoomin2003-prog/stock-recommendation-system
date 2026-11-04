@@ -19,6 +19,7 @@ Multi-market (P6-21..25): ``--market`` selects the market (default US, unchanged
     python app.py --market KR tracking update|report|status|verify
     python app.py dashboard [--open]   unified US/KR dashboard (read-only, tracking/dashboard.html)
     python app.py migrate-storage      idempotent, additive storage layout v2 (backs up tracking/ first)
+    python app.py terminal [--open]    personal terminal, local web app at http://127.0.0.1:8765 (TERMINAL-1)
 
 Capital is REQUIRED (no default): pass --capital AMOUNT or set QPP_CAPITAL in .env.
 
@@ -362,6 +363,26 @@ def interactive() -> int:
     return 0
 
 
+def cmd_terminal(args) -> int:
+    from terminal.server import HOST, serve
+    try:
+        httpd = serve(port=args.port, base_dir=PROJECT_ROOT)
+    except OSError as exc:
+        print(f"터미널 서버를 시작할 수 없습니다 (포트 {args.port}): {exc.strerror}. --port 로 다른 포트를 지정하세요.")
+        return 2
+    url = f"http://{HOST}:{args.port}/"
+    print(f"퀀트 터미널: {url}  (이 Mac에서만 접속 가능 · 종료: Ctrl+C)")
+    if args.open and sys.platform == "darwin":
+        os.system(f"open '{url}'")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print("\n터미널을 종료합니다.")
+    finally:
+        httpd.server_close()
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="app.py", description="Quant stock recommendation (frozen P6-11B, public data).")
     p.add_argument("--market", choices=["US", "KR"], default="US",
@@ -369,6 +390,9 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command")
     db = sub.add_parser("dashboard", help="Unified read-only US/KR dashboard (tracking/dashboard.html)")
     db.add_argument("--open", action="store_true")
+    tm = sub.add_parser("terminal", help="Personal terminal: local web app on 127.0.0.1 (TERMINAL-1, read-only)")
+    tm.add_argument("--port", type=int, default=8765)
+    tm.add_argument("--open", action="store_true", help="Open the terminal in the default browser")
     sub.add_parser("migrate-storage", help="Additive storage layout v2 (idempotent; backs up tracking/ first)")
     s = sub.add_parser("scan", help="Automated Market Scan of the current S&P 500")
     s.add_argument("--capital", default=None,
@@ -414,6 +438,8 @@ def main(argv=None) -> int:
         if args.open and sys.platform == "darwin":
             os.system(f"open '{out}'")
         return 0
+    if args.command == "terminal":
+        return cmd_terminal(args)
     if args.command == "migrate-storage":
         from markets import storage
         print(json.dumps(storage.migrate(PROJECT_ROOT), indent=1, default=str))
