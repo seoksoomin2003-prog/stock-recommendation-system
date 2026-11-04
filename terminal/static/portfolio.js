@@ -1,0 +1,223 @@
+// TERMINAL-2: 포트폴리오 · 매매 보조.  Uses helpers from app.js.  No orders are ever placed.
+"use strict";
+const KIND_KO = { DEPOSIT: "입금", WITHDRAW: "출금", BUY: "매수", SELL: "매도", DIVIDEND: "배당", FEE: "비용", PLAN: "손절·목표 설정", VOID: "취소" };
+const KIND_FIELDS = { DEPOSIT: ["amount"], WITHDRAW: ["amount"], FEE: ["amount"], DIVIDEND: ["ticker", "amount"],
+  BUY: ["ticker", "qty", "price", "fee", "stop", "target"], SELL: ["ticker", "qty", "price", "fee"], PLAN: ["ticker", "stop", "target"] };
+const FIELD_KO = { ticker: "종목 코드", qty: "수량(주)", price: "가격($)", fee: "수수료($)", amount: "금액($)", stop: "손절가($, 선택)", target: "목표가($, 선택)" };
+const BIND_KO = { RISK: "1회 거래 위험 한도", WEIGHT: "종목당 최대 비중", CASH: "보유 현금" };
+let prefill = null;
+
+function usd(v, d = 2) {
+  if (!isNum(v)) return DASH;
+  return `${v < 0 ? "-" : ""}$${Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d })}`;
+}
+function pnl(v) { return isNum(v) ? `<span class="${v > 0 ? "up" : v < 0 ? "down" : "flat"} num">${v > 0 ? "+" : ""}${usd(v)}</span>` : DASH; }
+const qtyFmt = (v) => (isNum(v) ? v.toLocaleString("ko-KR", { maximumFractionDigits: 4 }) : DASH);
+function todayET() { return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date()); }
+const post = (path, body) => api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+// ------------------------------------------------------------------ 포트폴리오
+async function renderPortfolio() {
+  const el = $("#tab-portfolio");
+  if (!el.innerHTML) el.innerHTML = loading;
+  let d;
+  try { d = await api("/api/portfolio"); } catch (e) { el.innerHTML = errBox(e); return; }
+  state.loaded.portfolio = true;
+  const s = d.summary, fx = d.fx, empty = !d.journal.length;
+  const krw = (v) => (isNum(v) && isNum(fx.usdkrw) ? `<span class="meta" style="margin:0">≈ ₩${Math.round(v * fx.usdkrw).toLocaleString("ko-KR")}</span>` : "");
+  el.innerHTML = `
+    ${d.integrity.status !== "OK" ? `<div class="notice">거래 기록 무결성 오류: ${esc(d.integrity.reason || "")}${d.integrity.line ? ` (${d.integrity.line}번째 줄)` : ""}. 새 기록 추가가 중단됩니다. data/terminal/journal.jsonl 을 확인하세요.</div>` : ""}
+    ${empty ? `<div class="panel"><h2>시작하기</h2><div class="meta" style="font-size:13px">1) 아래 '거래 기록'에서 <b>입금</b>을 먼저 기록하고 2) 실제로 체결된 <b>매수·매도</b>를 기록하세요.
+      보유 종목·평균단가·손익은 기록으로부터 자동 계산됩니다. 기록은 이 Mac에만 저장되며, 잘못 입력한 기록은 삭제 대신 '취소'로 무효화합니다.</div></div>` : ""}
+    <div class="panel"><h2>계좌 요약 ${s.complete ? "" : badge("STALE")}</h2>
+      ${s.complete ? "" : `<div class="notice">시세가 없는 종목(${esc(s.missing_prices.join(", "))})이 있어 총액을 확정할 수 없습니다.</div>`}
+      <div class="head"><span class="big num">${usd(s.equity)}</span> ${krw(s.equity)}</div>
+      <div class="kv">
+        <div><span>총 손익 (평가액 − 순입금)</span><b>${pnl(s.total_pnl)}</b></div>
+        <div><span>오늘 손익</span><b>${pnl(s.day_pnl)}</b></div>
+        <div><span>미실현 손익</span><b>${pnl(s.unrealized)}</b></div>
+        <div><span>실현 손익</span><b>${pnl(s.realized)}</b></div>
+        <div><span>현금</span><b class="num">${usd(s.cash)}</b> <span class="meta" style="margin:0">${isNum(s.cash_pct) ? s.cash_pct.toFixed(1) + "%" : ""}</span></div>
+        <div><span>주식 평가액</span><b class="num">${usd(s.market_value)}</b></div>
+        <div><span>순입금</span><b class="num">${usd(s.net_deposits)}</b></div>
+        <div><span>배당 / 비용</span><b class="num">${usd(s.dividends)} / ${usd(s.fees)}</b></div>
+        <div><span>손절 시 손실 합계</span><b class="num">${usd(s.risk_to_stops)}</b> <span class="meta" style="margin:0">${isNum(s.risk_to_stops_pct) ? "계좌의 " + s.risk_to_stops_pct.toFixed(2) + "%" : ""}</span></div>
+      </div>
+      ${s.unprotected.length ? `<div class="meta">손절가 미설정 종목은 손실 합계에 포함되지 않습니다: ${esc(s.unprotected.join(", "))}</div>` : ""}
+      ${meta(d.source, d.cache && d.cache.fetched_at, isNum(fx.usdkrw) ? `원/달러 ${fmt(fx.usdkrw)} (${esc(fx.date || "")})` : "")}</div>
+    ${d.alerts.length ? `<div class="panel"><h2>경고 <span class="meta" style="margin:0">${d.alerts.length}건 · 화면 표시만 하며 주문하지 않습니다</span></h2>
+      <ul class="alerts">${d.alerts.map((a) => `<li class="${esc(a.level)}">${esc(a.text)}</li>`).join("")}</ul></div>` : ""}
+    <div class="panel"><h2>보유 종목 <span class="meta" style="margin:0">${d.holdings.length}개</span></h2>
+      ${d.holdings.length ? `<div class="tbl-wrap"><table><thead><tr><th>종목</th><th>수량</th><th>평균단가</th><th>현재가</th><th>평가액</th><th>비중</th><th>미실현 손익</th><th>오늘</th><th>손절가(거리)</th><th>목표가</th><th class="l">섹터</th></tr></thead>
+      <tbody>${d.holdings.map((h) => `<tr class="click" data-ticker="${esc(h.ticker)}"><td><b>${esc(h.ticker)}</b> ${liveBadge(h.intraday)}${h.status !== "REAL" ? " " + badge(h.status) : ""}</td>
+        <td class="num">${qtyFmt(h.qty)}</td><td class="num">${usd(h.avg_cost)}</td><td class="num">${usd(h.close)}</td><td class="num">${usd(h.value)}</td>
+        <td class="num">${isNum(h.weight_pct) ? h.weight_pct.toFixed(1) + "%" : DASH}</td><td>${pnl(h.unrealized)} ${pct(h.unrealized_pct, 1)}</td><td>${pct(h.change_pct)}</td>
+        <td class="num">${h.stop ? `${usd(h.stop)} <span class="meta" style="margin:0">(${pct(h.stop_distance_pct, 1, false)})</span>` : '<span class="missing">미설정</span>'}</td>
+        <td class="num">${h.target ? usd(h.target) : DASH}</td><td class="l">${esc(h.sector || "미분류")}</td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">보유 종목이 없습니다.</div>'}</div>
+    ${Object.keys(d.sectors).length ? `<div class="panel"><h2>섹터 비중 <span class="meta" style="margin:0">한도 ${d.settings.max_sector_pct}%</span></h2><table><tbody>
+      ${Object.entries(d.sectors).map(([k, v]) => `<tr><td>${esc(k)}</td><td style="width:60%"><div class="bar ${v > d.settings.max_sector_pct ? "over" : ""}"><i style="width:${Math.min(100, v).toFixed(1)}%"></i></div></td><td class="num">${v.toFixed(1)}%</td></tr>`).join("")}
+      </tbody></table></div>` : ""}
+    <div class="panel"><h2>계좌 수익률 vs SPY</h2><div id="eq-sum" class="meta">불러오는 중…</div><div class="chart"><canvas id="eqc"></canvas></div><div id="eq-meta"></div></div>
+    <div class="panel"><h2>매매 성과 (매도 건 기준)</h2>${statsHtml(d.stats)}
+      ${d.closed.length ? `<div class="tbl-wrap"><table><thead><tr><th>매도일</th><th class="l">종목</th><th>수량</th><th>평균단가</th><th>매도가</th><th>실현 손익</th><th>수익률</th><th>보유 일수</th></tr></thead>
+      <tbody>${d.closed.slice(0, 50).map((c) => `<tr><td>${esc(c.date)}</td><td class="l"><b>${esc(c.ticker)}</b></td><td class="num">${qtyFmt(c.qty)}</td><td class="num">${usd(c.avg_cost)}</td><td class="num">${usd(c.price)}</td><td>${pnl(c.pnl)}</td><td>${pct(c.return_pct, 1)}</td><td class="num">${c.hold_days}일</td></tr>`).join("")}</tbody></table></div>` : ""}</div>
+    <div class="panel" id="jform-panel"><h2>거래 기록 추가</h2>${formHtml()}</div>
+    <div class="panel"><h2>거래 기록 <span class="meta" style="margin:0">${d.journal.length}건 · 추가만 가능, 취소는 별도 기록으로 남습니다</span></h2>
+      ${d.journal.length ? `<div class="tbl-wrap"><table><thead><tr><th>날짜</th><th class="l">종류</th><th class="l">종목</th><th>수량</th><th>가격</th><th>금액</th><th class="l">메모</th><th></th></tr></thead>
+      <tbody>${d.journal.map(journalRow).join("")}</tbody></table></div>` : '<div class="empty">기록이 없습니다.</div>'}</div>
+    <div class="panel meta">${esc(d.note)}</div>`;
+  bindForm();
+  el.querySelectorAll("[data-void]").forEach((b) => (b.onclick = async (e) => {
+    e.stopPropagation();
+    if (!confirm("이 기록을 취소할까요? 원래 기록은 남고, 취소 기록이 추가됩니다.")) return;
+    try { await post("/api/journal/void", { ref: b.dataset.void }); renderPortfolio(); } catch (err) { alert(err.message); }
+  }));
+  loadEquity();
+}
+function statsHtml(st) {
+  if (!st.count) return '<div class="empty">아직 매도 기록이 없습니다.</div>';
+  return `<div class="kv"><div><span>매도 건수</span><b>${st.count}</b></div><div><span>승률</span><b>${fmt(st.win_rate_pct, 1)}%</b></div>
+    <div><span>평균 이익</span><b>${pnl(st.avg_win)}</b></div><div><span>평균 손실</span><b>${pnl(st.avg_loss)}</b></div>
+    <div><span>손익비</span><b>${fmt(st.payoff, 2)}</b></div><div><span>실현 손익 합계</span><b>${pnl(st.total)}</b></div></div>
+    ${st.small_sample ? '<div class="meta">표본이 20건 미만이라 승률·손익비로 실력을 판단하기 어렵습니다.</div>' : ""}`;
+}
+function journalRow(r) {
+  const amt = isNum(r.amount) ? usd(r.amount) : isNum(r.qty) && isNum(r.price) ? usd(r.qty * r.price) : DASH;
+  const extra = r.kind === "PLAN" || (r.kind === "BUY" && (r.stop || r.target)) ? ` 손절 ${r.stop ? usd(r.stop) : "—"} · 목표 ${r.target ? usd(r.target) : "—"}` : "";
+  const ref = r.kind === "VOID" ? ` (기록 ${esc(r.ref)} 취소)` : "";
+  return `<tr class="${r.voided ? "voided" : ""}"><td>${esc(r.date || r.recorded_at.slice(0, 10))}</td><td class="l">${esc(KIND_KO[r.kind] || r.kind)}${r.voided ? " · 취소됨" : ""}</td>
+    <td class="l">${esc(r.ticker || "")}</td><td class="num">${isNum(r.qty) ? qtyFmt(r.qty) : ""}</td><td class="num">${isNum(r.price) ? usd(r.price) : ""}</td><td class="num">${amt}</td>
+    <td class="l meta" style="margin:0;white-space:normal;min-width:120px">${esc((r.note || "") + extra + ref)}</td>
+    <td>${r.kind !== "VOID" && !r.voided ? `<button class="x" data-void="${esc(r.id)}" title="이 기록 취소">취소</button>` : ""}</td></tr>`;
+}
+function formHtml() {
+  const p = prefill || {};
+  const kind = p.kind || "BUY";
+  return `<form class="form" id="jform" autocomplete="off">
+    <label>종류<select name="kind">${Object.keys(KIND_FIELDS).map((k) => `<option value="${k}" ${k === kind ? "selected" : ""}>${KIND_KO[k]}</option>`).join("")}</select></label>
+    <label>날짜(미국 기준)<input name="date" type="date" value="${esc(p.date || todayET())}" max="${todayET()}"></label>
+    ${Object.keys(FIELD_KO).map((f) => `<label data-f="${f}">${FIELD_KO[f]}<input name="${f}" ${f === "ticker" ? 'maxlength="15" style="text-transform:uppercase"' : 'inputmode="decimal"'} value="${esc(p[f] ?? "")}"></label>`).join("")}
+    <label class="wide">메모 (매매 이유 등, 선택)<input name="note" maxlength="500" value="${esc(p.note || "")}"></label>
+    <div class="wide"><button class="btn-primary" type="submit">기록 추가</button> <span class="meta">실제로 체결된 내용만 기록하세요. 이 화면은 주문을 내지 않습니다.</span><div class="msg" id="jmsg"></div></div>
+  </form>`;
+}
+function bindForm() {
+  const f = $("#jform"); if (!f) return;
+  const sync = () => { const need = KIND_FIELDS[f.kind.value]; f.querySelectorAll("[data-f]").forEach((l) => (l.hidden = !need.includes(l.dataset.f))); };
+  f.kind.onchange = sync; sync();
+  f.onsubmit = async (e) => {
+    e.preventDefault();
+    const body = { kind: f.kind.value, date: f.date.value, note: f.note.value };
+    KIND_FIELDS[body.kind].forEach((k) => { const v = f[k].value.trim().replace(/,/g, ""); if (v) body[k] = k === "ticker" ? v.toUpperCase() : v; });
+    try { await post("/api/journal/add", body); prefill = null; $("#jmsg").className = "msg ok"; $("#jmsg").textContent = "기록했습니다. 시세를 다시 불러오는 중…"; renderPortfolio(); }
+    catch (err) { $("#jmsg").className = "msg err"; $("#jmsg").textContent = ERR_KO[err.message] || err.message; }
+  };
+  if (prefill) { $("#jform-panel").scrollIntoView({ behavior: "smooth" }); }
+}
+let eqData = null;
+async function loadEquity() {
+  try {
+    const d = await api("/api/portfolio/equity");
+    eqData = d;
+    if (!d.points.length) { $("#eq-sum").innerHTML = "거래 기록이 생기면 계좌 가치 곡선을 그립니다."; return; }
+    $("#eq-sum").innerHTML = `시작 ${esc(d.start)} 이후 · 내 계좌(TWR) ${pct(d.twr_pct)} · SPY ${pct(d.bench_pct)}`;
+    $("#eq-meta").innerHTML = meta(d.source, d.fetched_at, esc(d.method));
+    drawEquity(); redrawers.add(drawEquity);
+  } catch (e) { $("#eq-sum").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+}
+function drawEquity() {
+  const cv = $("#eqc"), d = eqData;
+  if (!cv || !cv.isConnected || !d || d.points.length < 2) return;
+  const { ctx, w, h } = setupCanvas(cv, 220);
+  const pts = d.points, vals = pts.flatMap((p) => [p.twr_pct, p.bench_pct]).filter(isNum);
+  if (!vals.length) return;
+  let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals); const pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
+  const padR = 48, x = (i) => (i / (pts.length - 1)) * (w - padR), y = (v) => 6 + (1 - (v - lo) / (hi - lo)) * (h - 26);
+  ctx.font = "11px -apple-system, sans-serif"; ctx.fillStyle = cssVar("--muted"); ctx.textBaseline = "middle";
+  for (let k = 0; k <= 4; k++) { const v = lo + ((hi - lo) * k) / 4; ctx.strokeStyle = cssVar("--grid"); ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(w - padR, y(v)); ctx.stroke(); ctx.fillText(v.toFixed(1) + "%", w - padR + 6, y(v)); }
+  ctx.strokeStyle = cssVar("--line"); ctx.beginPath(); ctx.moveTo(0, y(0)); ctx.lineTo(w - padR, y(0)); ctx.stroke();
+  ctx.textBaseline = "bottom"; ctx.fillText(pts[0].date, 0, h); ctx.textAlign = "right"; ctx.fillText(pts[pts.length - 1].date, w - padR, h); ctx.textAlign = "left";
+  line(ctx, pts.map((p) => p.bench_pct), x, y, cssVar("--muted"), 1.3);
+  line(ctx, pts.map((p) => p.twr_pct), x, y, cssVar("--accent"), 2);
+  ctx.fillStyle = cssVar("--accent"); ctx.fillText("● 내 계좌", 4, 18); ctx.fillStyle = cssVar("--muted"); ctx.fillText("● SPY", 80, 18);
+}
+
+// ------------------------------------------------------------------ 매매 보조
+async function renderAssist() {
+  const el = $("#tab-assist");
+  if (!el.innerHTML) el.innerHTML = loading;
+  let st;
+  try { st = await api("/api/settings"); } catch (e) { el.innerHTML = errBox(e); return; }
+  state.loaded.assist = true;
+  el.innerHTML = `
+    <div class="panel"><h2>포지션 크기 계산기</h2>
+      <form class="form" id="szform" autocomplete="off">
+        <label>종목 코드<input name="t" maxlength="15" style="text-transform:uppercase" placeholder="예: AAPL"></label>
+        <label>진입가($)<input name="entry" inputmode="decimal" placeholder="비우면 최근 종가"></label>
+        <label>손절가($)<input name="stop" inputmode="decimal" placeholder="비우면 2 ATR 아래"></label>
+        <div><button class="btn-primary" type="submit">계산</button></div>
+      </form><div id="szout"></div></div>
+    <div class="panel"><h2>위험 관리 설정</h2>
+      <form class="form" id="stform">
+        <label>1회 거래 위험(%)<input name="risk_per_trade_pct" inputmode="decimal" value="${st.risk_per_trade_pct}"></label>
+        <label>종목당 최대 비중(%)<input name="max_position_pct" inputmode="decimal" value="${st.max_position_pct}"></label>
+        <label>섹터당 최대 비중(%)<input name="max_sector_pct" inputmode="decimal" value="${st.max_sector_pct}"></label>
+        <label>손절 근접 경고(%)<input name="near_stop_pct" inputmode="decimal" value="${st.near_stop_pct}"></label>
+        <div><button type="submit">저장</button></div></form>
+      <div class="meta">1회 거래 위험: 손절가에 도달했을 때 잃는 금액을 계좌의 몇 %로 제한할지 정합니다. 이 값들은 계산기와 경고에 쓰입니다.</div><div class="msg" id="stmsg"></div></div>
+    <div class="panel" id="plan">${loading}</div>`;
+  $("#szform").onsubmit = (e) => { e.preventDefault(); runSizing(); };
+  $("#stform").onsubmit = async (e) => {
+    e.preventDefault(); const f = e.target, body = {};
+    ["risk_per_trade_pct", "max_position_pct", "max_sector_pct", "near_stop_pct"].forEach((k) => (body[k] = f[k].value));
+    try { await post("/api/settings", body); $("#stmsg").className = "msg ok"; $("#stmsg").textContent = "저장했습니다."; }
+    catch (err) { $("#stmsg").className = "msg err"; $("#stmsg").textContent = err.message; }
+  };
+  loadPlan();
+}
+let lastSizing = null;
+async function runSizing() {
+  const f = $("#szform"), out = $("#szout"), qs = new URLSearchParams();
+  ["t", "entry", "stop"].forEach((k) => { const v = f[k].value.trim().replace(/,/g, ""); if (v) qs.set(k, k === "t" ? v.toUpperCase() : v); });
+  out.innerHTML = '<div class="meta">계산 중…</div>';
+  try {
+    const d = await api("/api/sizing?" + qs); lastSizing = d;
+    const r = d.result;
+    const ctx = d.ticker ? `<div class="meta">${esc(d.ticker)} 최근 종가 ${usd(d.last_close)} (${esc(d.last_date || "")}) · ATR(14) ${usd(d.atr14)} · 2 ATR 손절 제안 ${usd(d.suggested_stop)}${isNum(d.held_qty) ? ` · 현재 보유 ${qtyFmt(d.held_qty)}주` : ""}</div>` : "";
+    if (!r) { out.innerHTML = ctx + `<div class="meta">${esc(d.reason)}</div>`; return; }
+    out.innerHTML = `${ctx}<div class="result" style="margin-top:10px"><span class="big num">${r.shares.toLocaleString("ko-KR")}주</span>
+        <span class="meta">${usd(r.entry)} 진입 · 손절 ${usd(r.stop)} (${d.stop_source}, −${r.stop_distance_pct.toFixed(1)}%)</span></div>
+      <div class="kv"><div><span>매수 금액</span><b class="num">${usd(r.notional)}</b></div><div><span>계좌 대비 비중</span><b>${r.weight_pct.toFixed(1)}%</b></div>
+        <div><span>손절 시 손실</span><b class="num">${usd(r.risk_amount)}</b> <span class="meta" style="margin:0">${r.risk_pct.toFixed(2)}%</span></div>
+        <div><span>수량을 정한 한도</span><b>${esc(BIND_KO[r.binding])}</b></div></div>
+      <div class="meta">한도별 최대 수량: 위험 ${r.limits.RISK}주 · 비중 ${r.limits.WEIGHT}주 · 현금 ${r.limits.CASH}주 (계좌 ${usd(d.equity)}, 현금 ${usd(d.cash)}, 위험 예산 ${usd(r.risk_budget)})</div>
+      ${r.shares > 0 && d.ticker ? '<button id="tojournal" style="margin-top:8px">이 수량으로 매수 기록 작성</button> <span class="meta">체결된 뒤에 기록하세요.</span>' : ""}`;
+    const b = $("#tojournal");
+    if (b) b.onclick = () => { prefill = { kind: "BUY", ticker: d.ticker, qty: r.shares, price: r.entry.toFixed(2), stop: r.stop.toFixed(2) }; show("portfolio"); };
+  } catch (e) { out.innerHTML = `<div class="msg err">${esc(ERR_KO[e.message] || e.message)}</div>`; }
+}
+async function loadPlan() {
+  const el = $("#plan");
+  try {
+    const d = await api("/api/model/plan");
+    if (d.status === "UNAVAILABLE") { el.innerHTML = `<h2>P6-11B 계획 대조</h2><div class="empty">${esc(d.reason)}</div>`; return; }
+    el.innerHTML = `<h2>P6-11B 계획 대조 ${badge("FROZEN")} ${d.status === "STALE" ? badge("STALE") : ""}</h2>
+      <div class="meta" style="margin-top:0">최근 전체 스캔 ${when(d.executed_at)}${isNum(d.age_days) ? ` (${d.age_days}일 전)` : ""} · 내 계좌 ${usd(d.equity)} 기준으로 환산</div>
+      <div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th>기준가</th><th>목표 비중</th><th>목표 수량</th><th>1차 진입 수량</th><th>모델 손절가</th><th>보유</th><th>기간</th><th></th></tr></thead>
+      <tbody>${d.items.map((r, i) => `<tr><td>${esc(r.rank)}</td><td class="l"><b data-ticker="${esc(r.ticker)}" title="${esc(r.name || "")} · 눌러서 종목 화면" style="cursor:pointer">${esc(r.ticker)}</b></td>
+        <td class="num">${usd(r.close)} <span class="meta" style="margin:0">${esc(r.last_bar || "")}</span></td><td class="num">${isNum(r.target_weight) ? (r.target_weight * 100).toFixed(0) + "%" : DASH}</td>
+        <td class="num">${isNum(r.target_shares) ? r.target_shares + "주" : DASH}</td><td class="num">${isNum(r.entry1_shares) ? r.entry1_shares + "주" : DASH}</td>
+        <td class="num">${usd(r.hard_stop)}</td><td>${isNum(r.held_qty) ? qtyFmt(r.held_qty) + "주" : '<span class="missing">미보유</span>'}</td>
+        <td>${isNum(r.horizon_days) ? r.horizon_days + "일" : DASH}</td><td><button class="x" data-calc="${i}">계산기</button></td></tr>`).join("")}</tbody></table></div>
+      <div class="meta">${esc(d.disclaimer)} 1차 진입 후 2차 진입 조건은 '종가 > 20일 지수이동평균'입니다 (모델 설명 기준).</div>`;
+    el.querySelectorAll("[data-calc]").forEach((b) => (b.onclick = () => {
+      const r = d.items[+b.dataset.calc], f = $("#szform");
+      f.t.value = r.ticker; f.entry.value = isNum(r.close) ? r.close.toFixed(2) : ""; f.stop.value = isNum(r.hard_stop) ? r.hard_stop.toFixed(2) : "";
+      el.querySelector(".tbl-wrap").scrollLeft = 0;
+      runSizing(); f.scrollIntoView({ behavior: "smooth" });
+    }));
+  } catch (e) { el.innerHTML = `<h2>P6-11B 계획 대조</h2><div class="msg err">${esc(e.message)}</div>`; }
+}
+
+RENDER.portfolio = renderPortfolio;
+RENDER.assist = renderAssist;

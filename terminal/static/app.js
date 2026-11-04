@@ -68,7 +68,7 @@ function show(tab, push = true) {
   document.querySelectorAll(".tab").forEach((s) => s.classList.toggle("on", s.id === "tab-" + tab));
   if (push) location.hash = tab === "stock" && state.ticker ? `stock/${state.ticker}` : tab;
   if (tab === "stock") return renderStock();
-  if (!state.loaded[tab] || tab === "watch") RENDER[tab]();
+  if (!state.loaded[tab] || ALWAYS_FRESH.has(tab)) RENDER[tab]();
 }
 function openTicker(t) {
   state.ticker = String(t).toUpperCase(); state.loaded.stock = null;
@@ -341,6 +341,7 @@ async function renderModel() {
   } catch (e) { el.innerHTML = errBox(e); }
 }
 
+const ALWAYS_FRESH = new Set(["watch", "portfolio", "assist"]);
 const RENDER = { overview: renderOverview, macro: renderMacro, watch: renderWatch, model: renderModel, stock: renderStock };
 
 // ------------------------------------------------------------------ boot
@@ -355,4 +356,4 @@ function fromHash() {
   show(RENDER[tab] ? tab : "overview", false);
 }
 window.addEventListener("hashchange", fromHash);
-fromHash();
+window.addEventListener("DOMContentLoaded", fromHash);   // after every script (portfolio.js) has registered

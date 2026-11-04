@@ -3,13 +3,14 @@
 The terminal only READS model artifacts (runs/, tracking/); it never writes to them.
 """
 import json
+import math
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
-from terminal import TERMINAL_VERSION, sources
+from terminal import TERMINAL_VERSION, portfolio as pf, sources
 from terminal.cache import FileCache
 
 TTL = {"quote": 900, "chart": 900, "info": 20 * 3600, "facts": 20 * 3600, "filings": 3600, "macro": 6 * 3600}
@@ -78,6 +79,8 @@ class Terminal:
         self.cache = FileCache(self.base / "data" / "terminal" / "cache", **({"clock": clock} if clock else {}))
         self.now = now or (lambda: datetime.now(timezone.utc))
         self.watchlist_file = self.base / "data" / "terminal" / "watchlist.json"
+        self.journal = pf.Journal(self.base / "data" / "terminal" / "journal.jsonl")
+        self.settings_file = self.base / "data" / "terminal" / "settings.json"
 
     # ---------------------------------------------------------------- helpers
     def _intraday(self, last_date: Optional[str]) -> bool:
@@ -260,21 +263,25 @@ class Terminal:
                 "source": "Yahoo Finance (일봉 종가, 지연)"}
 
     # ---------------------------------------------------------------- model (read-only)
-    def model(self) -> Dict[str, Any]:
+    def _latest_scan(self) -> Optional[Dict[str, Any]]:
+        """Latest full US market scan written by the frozen P6-11B pipeline (read-only)."""
         runs = self.base / "runs"
-        latest = None
-        if runs.exists():
-            for d in sorted((p for p in runs.iterdir() if p.is_dir()), reverse=True):
-                v = d / "validation_result.json"
-                if not v.exists():
-                    continue
-                try:
-                    x = json.loads(v.read_text(encoding="utf-8"))
-                except ValueError:
-                    continue
-                if x.get("mode") == "market_scan" and x.get("validation_scope") == "full":
-                    latest = x
-                    break
+        if not runs.exists():
+            return None
+        for d in sorted((p for p in runs.iterdir() if p.is_dir()), reverse=True):
+            v = d / "validation_result.json"
+            if not v.exists():
+                continue
+            try:
+                x = json.loads(v.read_text(encoding="utf-8"))
+            except ValueError:
+                continue
+            if x.get("mode") == "market_scan" and x.get("validation_scope") == "full":
+                return x
+        return None
+
+    def model(self) -> Dict[str, Any]:
+        latest = self._latest_scan()
         base = {"name": "P6-11B (MODEL_RANK_E)", "status": "FROZEN", "role": "기준 모델"}
         if latest:
             base.update(run_id=latest["run_id"], executed_at=latest.get("executed_at"),
@@ -298,6 +305,138 @@ class Terminal:
             trk = {"status": "UNAVAILABLE", "error": type(exc).__name__}
         return {"baseline": base, "tracking": trk, "challengers": [],
                 "challenger_note": "도전자 모델은 3단계에서 추가됩니다. 기준 모델(P6-11B)은 변경하지 않습니다."}
+
+    # ---------------------------------------------------------------- portfolio (TERMINAL-2)
+    def settings(self) -> Dict[str, float]:
+        try:
+            raw = json.loads(self.settings_file.read_text(encoding="utf-8"))
+            return pf.clean_settings(raw, dict(pf.DEFAULT_SETTINGS))
+        except (OSError, ValueError):
+            return dict(pf.DEFAULT_SETTINGS)
+
+    def settings_set(self, raw: Dict[str, Any]) -> Dict[str, float]:
+        new = pf.clean_settings(raw or {}, self.settings())
+        self.settings_file.parent.mkdir(parents=True, exist_ok=True)
+        tmp = self.settings_file.with_suffix(".tmp")
+        tmp.write_text(json.dumps({**new, "updated_at": self.now().isoformat()}), encoding="utf-8")
+        tmp.replace(self.settings_file)
+        return new
+
+    def _today_et(self):
+        return self.now().astimezone(ZoneInfo("America/New_York")).date()
+
+    def journal_add(self, raw: Dict[str, Any]) -> Dict[str, Any]:
+        entry = pf.normalize(raw or {}, self._today_et(), clean_ticker)
+        return {"entry": self.journal.append(entry, self.now())}
+
+    def journal_void(self, ref: str) -> Dict[str, Any]:
+        return {"entry": self.journal.append({"kind": "VOID", "ref": str(ref or "")}, self.now())}
+
+    def _sector(self, ticker: str) -> Optional[str]:
+        res = self.cache.cached(f"info:{ticker}", TTL["info"], lambda: self.src.yahoo_info(ticker))
+        return (res["data"] or {}).get("sector")
+
+    def _book(self):
+        recs, integ = self.journal.read()
+        try:
+            state = pf.replay(recs)
+        except pf.JournalError as exc:
+            integ, state = {"status": "BROKEN", "reason": str(exc)}, pf.replay([])
+        return recs, integ, state
+
+    def _valued(self):
+        recs, integ, state = self._book()
+        held = sorted(state["positions"])
+        q = self._quotes(held + ["KRW=X"], "pf:" + ",".join(held))
+        quotes = {t: q["items"][t] for t in held}
+        fx = q["items"].get("KRW=X") or {}
+        val = pf.valuation(state, quotes, {t: self._sector(t) for t in held}, self.settings())
+        return recs, integ, state, val, fx, q["cache"]
+
+    def portfolio(self) -> Dict[str, Any]:
+        recs, integ, state, val, fx, cache = self._valued()
+        gone = pf.voided_ids(recs)
+        journal = [{**r, "voided": r["id"] in gone} for r in
+                   sorted(recs, key=lambda r: (r.get("date") or r["recorded_at"][:10], r["seq"]), reverse=True)]
+        return {"integrity": integ, **val, "stats": pf.trade_stats(state["closed"]), "closed": state["closed"][::-1],
+                "journal": journal, "settings": self.settings(),
+                "fx": {"usdkrw": fx.get("close"), "date": fx.get("date"), "status": fx.get("status", "UNAVAILABLE")},
+                "cache": cache, "source": "사용자 거래 기록 + Yahoo Finance 일봉 종가(지연)",
+                "note": "주문 기능은 없습니다. 보유 현황은 직접 기록한 거래로만 계산합니다."}
+
+    def equity(self) -> Dict[str, Any]:
+        recs, integ, state = self._book()
+        eff = pf.effective(recs)
+        if not eff or integ["status"] != "OK":
+            return {"points": [], "twr_pct": None, "bench_pct": None, "status": "UNAVAILABLE"}
+        days = (self._today_et() - datetime.strptime(eff[0]["date"], "%Y-%m-%d").date()).days
+        period = "1y" if days < 330 else "2y" if days < 700 else "5y" if days < 1800 else "10y"
+        tickers = sorted({r["ticker"] for r in eff if r["kind"] in ("BUY", "SELL")})
+        syms = tickers + (["SPY"] if "SPY" not in tickers else [])
+        res = self.cache.cached(f"eq:{period}:{','.join(syms)}", TTL["chart"],
+                                lambda: self.src.yahoo_history(syms, period))
+        hist = res["data"] or {}
+        curve = pf.equity_curve(recs, {t: hist.get(t) or [] for t in tickers}, hist.get("SPY") or [])
+        return {**curve, "status": res["status"] if curve["points"] else "UNAVAILABLE",
+                "fetched_at": res["fetched_at"], "source": "거래 기록 재계산 + Yahoo 일봉 종가, 비교 지수 SPY",
+                "method": "시간가중수익률(TWR): 입출금 효과를 제외한 일별 수익률의 누적"}
+
+    def sizing(self, ticker: str = "", entry=None, stop=None) -> Dict[str, Any]:
+        _, integ, state, val, _, _ = self._valued()
+        st = self.settings()
+        out: Dict[str, Any] = {"settings": st, "equity": val["summary"]["equity"], "cash": state["cash"]}
+        last, a = None, None
+        if ticker:
+            t = clean_ticker(ticker)
+            c = self.chart(t, "3mo")
+            if c.get("bars"):
+                last = c["last"]["close"]
+                res = self.cache.cached(f"chart:{t}:2y", TTL["chart"], lambda: self.src.yahoo_history([t], "2y"))
+                a = pf.atr((res["data"] or {}).get(t) or [])
+            out.update(ticker=t, last_close=last, last_date=(c.get("last") or {}).get("date"), atr14=a,
+                       suggested_stop=(last - 2 * a) if last is not None and a else None,
+                       held_qty=(state["positions"].get(t) or {}).get("qty"))
+        e = pf._opt_pos(entry, "진입가") or last
+        s = pf._opt_pos(stop, "손절가") or out.get("suggested_stop")
+        if e is None or s is None:
+            out["result"] = None
+            out["reason"] = "진입가와 손절가를 입력하세요 (종목 코드를 넣으면 최근 종가와 2 ATR 손절가를 제안합니다)."
+            return out
+        if val["summary"]["equity"] is None:
+            raise pf.JournalError("일부 보유 종목의 시세가 없어 계좌 평가액을 확정할 수 없습니다.")
+        out["result"] = pf.position_size(val["summary"]["equity"], state["cash"], e, s, st)
+        out["stop_source"] = "입력값" if stop not in (None, "") else "2 ATR(14일) 제안값"
+        return out
+
+    def model_plan(self) -> Dict[str, Any]:
+        latest = self._latest_scan()
+        if not latest:
+            return {"status": "UNAVAILABLE", "items": [], "reason": "기록된 미국 전체 스캔이 없습니다."}
+        _, _, state, val, _, _ = self._valued()
+        eq = val["summary"]["equity"]
+        age = None
+        try:
+            age = (self.now() - datetime.fromisoformat(latest["executed_at"])).days
+        except (KeyError, TypeError, ValueError):
+            pass
+        items = []
+        for r in latest.get("recommendations") or []:
+            close = r.get("close")
+            held = (state["positions"].get(r.get("ticker")) or {}).get("qty")
+
+            def sh(w):
+                return math.floor(w * eq / close) if eq and close and w is not None else None
+            items.append({"rank": r.get("recommendation_rank"), "ticker": r.get("ticker"), "name": r.get("name"),
+                          "sector": r.get("sector"), "close": close, "last_bar": r.get("last_bar"),
+                          "target_weight": r.get("target_weight"), "target_shares": sh(r.get("target_weight")),
+                          "entry1_shares": sh(r.get("entry_1_weight")), "hard_stop": r.get("hard_stop"),
+                          "horizon_days": r.get("horizon_days"), "held_qty": held,
+                          "explanation": r.get("explanation")})
+        return {"status": "STALE" if age is not None and age > 3 else "REAL", "age_days": age,
+                "run_id": latest.get("run_id"), "executed_at": latest.get("executed_at"),
+                "recommendation_status": latest.get("recommendation_status"), "equity": eq, "items": items,
+                "disclaimer": "P6-11B가 기록한 계획(목표 비중·1차 진입 비중·손절가)을 내 계좌 규모로 환산한 값입니다. "
+                              "수익을 보장하지 않으며 매매 권유가 아닙니다."}
 
     def health(self) -> Dict[str, Any]:
         from utils.runtime_config import sec_user_agent_status

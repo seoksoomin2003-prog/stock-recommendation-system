@@ -45,3 +45,6 @@ nohup.out
 # machine-specific editor/OS files
 .idea/
 *.swp
+
+# TERMINAL: personal portfolio journal, settings, watchlist and caches (private user data, never committed)
+data/terminal/

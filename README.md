@@ -258,6 +258,39 @@ python app.py terminal --open          # http://127.0.0.1:8765 ; stop with Ctrl+
 * The SEC identity (`SEC_USER_AGENT`) is only ever reported as a status word.
 * Specification: `reports/TERMINAL_1_SPECIFICATION.md`.
 
+**Stage 2 (TERMINAL-2): your real portfolio and trade assistant.** Two more tabs; still no order execution.
+
+| Tab | Content |
+|---|---|
+| 포트폴리오 | Record real fills (deposit, withdraw, buy, sell, dividend, fee, stop/target plan) and see the results (see below) |
+| 매매 보조 | Position-size calculator, risk settings, and the P6-11B plan check (see below) |
+
+포트폴리오 shows:
+* holdings, moving-average cost and unrealized/realized P&L;
+* account equity in USD with the KRW equivalent;
+* sector weights;
+* alerts: stop hit or near, target reached, missing stop, position or sector over its limit;
+* the time-weighted return versus SPY;
+* closed-trade statistics.
+
+매매 보조 provides:
+* **Position-size calculator:** shares = the smallest of three limits, rounded down:
+  * risk limit: equity × risk % ÷ (entry − stop);
+  * weight limit: equity × max weight ÷ entry;
+  * cash limit: cash ÷ entry.
+
+  If the stop is left empty, it suggests 2 × ATR(14) below the entry.
+* **Risk settings:** risk per trade 1%, maximum position 20%, maximum sector 40%, near-stop warning 3%.
+* **P6-11B plan check (read-only):** the latest TOP-5 converted to your account size (target shares, first-entry shares, model stop).
+
+How records work:
+* Records live in `data/terminal/journal.jsonl`. It stays on this Mac and is ignored by git.
+* The file is append-only and hash-chained. Validation rejects overselling, negative cash and future dates.
+* A mistaken entry is cancelled with a VOID entry. The original line stays.
+* Settings are stored in `data/terminal/settings.json`.
+
+Specification: `reports/TERMINAL_2_SPECIFICATION.md`.
+
 ### Where things are
 
 | Path | Content |
@@ -278,7 +311,7 @@ python app.py terminal --open          # http://127.0.0.1:8765 ; stop with Ctrl+
 | `tracking/STORAGE_SCHEMA.json` | storage layout version 2 (additive; backup in `~/Developer/qse-backups/`) |
 | `tracking/dashboard.html` | unified read-only dashboard (`python app.py dashboard`) |
 | `terminal/` | personal terminal (TERMINAL-1): `services.py` data screens, `sources.py` Yahoo/SEC/FRED access, `server.py` local server, `static/` Korean UI |
-| `data/terminal/` | terminal cache and watchlist (local, ignored by git) |
+| `data/terminal/` | terminal cache, watchlist, trade journal `journal.jsonl` and risk settings (local, private, ignored by git) |
 | `reports/` | phase reports, roadmap, test results |
 
 ## 6. Tests

@@ -3,4 +3,4 @@
 See reports/TERMINAL_1_SPECIFICATION.md.  No orders are ever placed; the frozen P6-11B model and the
 P6-20 tracking are only read.
 """
-TERMINAL_VERSION = "TERMINAL-1.0"
+TERMINAL_VERSION = "TERMINAL-2.0"

@@ -31,6 +31,14 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("POST", "/api/watchlist/add"): lambda q, b: {"tickers": t.watchlist_add(b.get("ticker", ""))},
         ("POST", "/api/watchlist/remove"): lambda q, b: {"tickers": t.watchlist_remove(b.get("ticker", ""))},
         ("GET", "/api/model"): lambda q, b: t.model(),
+        ("GET", "/api/portfolio"): lambda q, b: t.portfolio(),
+        ("GET", "/api/portfolio/equity"): lambda q, b: t.equity(),
+        ("POST", "/api/journal/add"): lambda q, b: t.journal_add(b),
+        ("POST", "/api/journal/void"): lambda q, b: t.journal_void(b.get("ref", "")),
+        ("GET", "/api/settings"): lambda q, b: t.settings(),
+        ("POST", "/api/settings"): lambda q, b: t.settings_set(b),
+        ("GET", "/api/sizing"): lambda q, b: t.sizing(q.get("t", ""), q.get("entry"), q.get("stop")),
+        ("GET", "/api/model/plan"): lambda q, b: t.model_plan(),
     }
 
 
@@ -70,6 +78,8 @@ def make_handler(t: Terminal):
                     n = min(int(self.headers.get("Content-Length") or 0), 10_000)
                     try:
                         body = json.loads(self.rfile.read(n) or b"{}")
+                        if not isinstance(body, dict):
+                            raise ValueError
                     except ValueError:
                         return self._json(400, {"error": "BAD_JSON"})
                 q = {k: v[0] for k, v in parse_qs(u.query).items()}
