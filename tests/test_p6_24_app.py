@@ -66,7 +66,8 @@ def test_dashboard_renders_both_markets_separately(tmp_path, monkeypatch):
     assert d["markets"]["US"]["currency"] == "USD" and d["markets"]["KR"]["currency"] == "KRW"
     assert d["markets"]["KR"]["model"]["status"] == "EXPERIMENTAL"
     html = dashboard.render(d)
-    assert "prefers-color-scheme" in html and "South Korea" in html and "United States" in html
+    assert "prefers-color-scheme" in html and ">한국<" in html and ">미국<" in html and "lang='ko'" in html
+    assert "실험 단계" in html and "KRW" in html and "USD" in html
     assert dashboard.write(tmp_path / "dash.html").exists()
 
 
