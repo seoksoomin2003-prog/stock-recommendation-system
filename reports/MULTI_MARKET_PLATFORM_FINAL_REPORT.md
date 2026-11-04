@@ -207,4 +207,4 @@ Put the keys in `.env` (git-ignored) or your shell profile. They are read only f
 
 ## 14. Commits (local only)
 
-The milestone commits are listed by `git log` on `main`. No remote exists and nothing has been pushed. Commit messages end with the Co-Authored-By trailer.
+`cf005e6` feat(markets): code and tests (suite verified), then `6996519` docs, plus this follow-up recording the IDs. No remote exists and nothing has been pushed. Commit messages end with the Co-Authored-By trailer.
