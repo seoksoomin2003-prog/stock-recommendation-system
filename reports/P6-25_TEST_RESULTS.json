@@ -1,0 +1,30 @@
+{
+ "phase": "P6-25",
+ "generated": "2026-11-04",
+ "command": ".venv/bin/python -m pytest tests -q -p no:cacheprovider --junitxml=<abs>/reports/P6-21_25_pytest_junit.xml",
+ "collection_errors": 0,
+ "environment": "Python 3.14, macOS (M2, 8 GB), offline sandbox",
+ "runtime_s": 213.2,
+ "peak_rss_mb": 351,
+ "known_failure": "tests/test_cross_asset.py::test_cross_asset_adjustment: pre-existing legacy test that depends on live Yahoo macro data (yfinance curl_cffi bypasses the socket guard); identical result at baseline commit 32878c3 with today data; not a P6-21..25 regression; not weakened",
+ "phase_tests": {
+  "test_p6_25_kr_tracking": {
+   "passed": 11,
+   "collected": 11
+  }
+ },
+ "full_suite": {
+  "collected": 923,
+  "passed": 911,
+  "failed": 1,
+  "errors": 0,
+  "skipped": 6,
+  "xfailed": 5,
+  "collection_errors": 0,
+  "duration_s": 211.352
+ },
+ "failures": [
+  "tests.test_cross_asset::test_cross_asset_adjustment"
+ ],
+ "junit": "P6-21_25_pytest_junit.xml"
+}

@@ -5,6 +5,28 @@ Full-Universe Validated → Operationally Ready. A level is claimed only with ev
 that has been re-verified (P6-19 re-checked every P6-18 claim against code, artifacts
 and fresh runs).
 
+## Official phase table (multi-market directive P6-21..P6-25, 2026-11-04)
+
+The "Official status" column is the status the directive assigns. The "State at end of 2026-11-04" column records what the evidence shows after this work.
+
+| Phase | Scope | Official status | State at end of 2026-11-04 | Evidence |
+|---|---|---|---|---|
+| P6-11B | Frozen US mathematical core | **FROZEN** | unchanged; 5 sha256 pins match | `tests/fixtures/frozen_source_sha256_p6_19.json`, `MULTI_MARKET_PLATFORM_FINAL_REPORT.md` §2 |
+| P6-18 | Shared US live pipeline | **Verify evidence** | re-verified: the full US scan `20261104T143051Z_market_scan_7dbbfd` returned REAL RECOMMENDATION (503 symbols, 65 s) | run artifacts; P6-19 report |
+| P6-19 | Verification and hardening | **Verify evidence** | re-verified: sandbox guard active (and it caught and restored a cwd leak in a new test); frozen pins pass | `P6-19_IMPLEMENTATION_REPORT.md`, `P6-21_25_pytest_junit.xml` |
+| P6-20 | US prospective paper tracking | **ACTIVE** | 3 valid runs / 15 TOP-5 observations, all PENDING_OUTCOME; verify OK | `US_TRACKING_SPECIFICATION.md`, `US_PERFORMANCE_REPORT.md` |
+| P6-20-A | Approved US data-input rules | **FROZEN VERSION** | in force for every US run since `63c283d` | `docs/DATA_INPUT_SPECIFICATION.md` |
+| P6-21 | Multi-market architecture | **IN PROGRESS** | implemented and tested (identity, config, storage v2, isolation) | `P6-21_ARCHITECTURE.md`, `P6-21_IMPLEMENTATION_REPORT.md` |
+| P6-22 | Korean data engine | **PLANNED** | implemented: KIND and Yahoo live; OpenDART and KRX offline only (no keys) | `P6-22_*` |
+| P6-23 | Independent KR model | **PLANNED** | implemented as `KR-EXP-0.1`, **EXPERIMENTAL** (no evidence of predictive power) | `KR_MODEL_*`, `P6-23_IMPLEMENTATION_REPORT.md` |
+| P6-24 | Unified application | **PLANNED** | implemented (`--market`, dashboard) | `P6-24_IMPLEMENTATION_REPORT.md` |
+| P6-25 | Separate paper tracking per market | **PLANNED** | implemented; KR observation started (10 PENDING_ENTRY) | `KR_TRACKING_SPECIFICATION.md`, `P6-25_IMPLEMENTATION_REPORT.md` |
+| P6-12D | Institutional historical validation | **DEFERRED INDEFINITELY** | unchanged | no zero-cost survivorship-free PIT source |
+
+**Renumbering note.** The earlier roadmap used "P6-21" for a US evidence-based research review. That review is kept, renamed **US evidence review (unnumbered)**, and still PLANNED. It starts only once there are ≥ 30 completed valid US observations from many independent scan dates, and its agenda includes the sector-cap decision (`P6-20_SECTOR_CAP_REVIEW.md`). Any model change needs explicit user approval.
+
+### Previous phase table (preserved as written before the multi-market directive)
+
 | Phase | Scope | Status | Evidence |
 |---|---|---|---|
 | P6-11B | Frozen mathematical core (factors, DEFAULT_FACTOR_WEIGHTS, MODEL_RANK_E, 500k ADV, 75th-pct BEAR, 30%/40% caps, entry/stop/horizon) | **FROZEN** | Engine sources unchanged since Aug 2026; sha256 pinned in `tests/fixtures/frozen_source_sha256_p6_19.json` (`TestFrozenSourcePinned`); numerical parity against the pre-change golden baseline (`tests/test_p6_18_frozen_core_parity.py`, 12 tests pass) |
@@ -13,7 +35,7 @@ and fresh runs).
 | P6-19 | Independent verification and operational hardening | **COMPLETE** (re-verified at the P6-20 baseline: frozen hashes match, latest run replays, exclusions intact). Open user actions: NewsAPI key rotation, optional removal of the Desktop copy. | `reports/P6-19_IMPLEMENTATION_REPORT.md`, `reports/P6-19_TEST_RESULTS.json`, `reports/P6-20_BASELINE_VERIFICATION.md` |
 | P6-20 | Prospective performance validation and paper tracking | **COMPLETE** (tracking infrastructure). **Observation ongoing**: as of 2026-11-04 there is 1 valid run (5 TOP-5 observations), all PENDING_OUTCOME; there are no completed observations and no performance claim. | `reports/P6-20_IMPLEMENTATION_REPORT.md`, `reports/P6-20_TEST_RESULTS.json` (817 collected, 806 passed, 0 failed), `reports/P6-20_TRACKING_SPECIFICATION.md`, `reports/P6-20_SECTOR_CAP_REVIEW.md`, `tracking/ledger/` (hash chain verified) |
 | P6-20-A | Addendum: approved data-input rules (A1–A7) and safe local git (B) | **COMPLETE**. Spec `P6-20-A` is in force for runs after commit `63c283d`. Local git on `main` (baseline `1e9472f`), with no remote and no push. | `docs/DATA_INPUT_SPECIFICATION.md`, `reports/P6-20_INPUT_VALIDATION_TEST_RESULTS.json` (837 passed, 0 failed), `docs/GIT_SETUP_REPORT.md`, validation run `20261104T125402Z_market_scan_5a396d` (replay MATCH) |
-| P6-21 | Evidence-based research review | **PLANNED**, not scheduled automatically | Starts only once the prospective record holds ≥30 completed valid observations from many independent scan dates. It decides whether further research is justified. It is not an optimisation phase, and any model change requires explicit user approval. Agenda includes the sector-cap decision (`P6-20_SECTOR_CAP_REVIEW.md`). |
+| (former P6-21, now "US evidence review") | Evidence-based research review | **PLANNED**, not scheduled automatically | Starts only once the prospective record holds ≥30 completed valid observations from many independent scan dates. It decides whether further research is justified. It is not an optimisation phase, and any model change requires explicit user approval. Agenda includes the sector-cap decision (`P6-20_SECTOR_CAP_REVIEW.md`). |
 | P6-12D | Institutional historical validation | **DEFERRED INDEFINITELY** | Needs survivorship-free point-in-time constituents and fundamentals, which have no zero-cost source |
 
 ## History (completed, preserved)
@@ -66,6 +88,12 @@ and fresh runs).
 - P6-19 input rules superseded by P6-20-A: revenue "largest same-period concept" (it could select a component, e.g. CPT lease income); the NI > revenue rejection (it rejected DTE although DTE tags a total-revenue concept); and the P/B check against annual-period equity with no scope, staleness or common-equity handling. Observations made under `P6-19-final` stay valid and are reported separately by spec version.
 
 ## Next tasks (candidates, not started)
+
+0. Multi-market:
+   - configure the free `OPENDART_API_KEY` and `KRX_API_KEY` yourself (registration in the README);
+   - after the keys are set: live-validate the KRX field mapping and measure DART concept coverage per industry class;
+   - run the KR scan after 18:00 KST on trading days, and `--market KR tracking update` afterwards;
+   - decide what to do about the legacy live-data test `tests/test_cross_asset.py` (it depends on live Yahoo macro moves) and about the network-guard gap (yfinance `curl_cffi` bypasses the Python socket guard).
 
 1. Run a full scan on each trading day before 09:30 ET, then run `app.py tracking update` after 17:00 ET. Review `tracking/reports/latest.html`. No model changes.
 2. Before 2027-12-31: decide whether to fix the New Year-on-Saturday rule in `utils/market_calendar.py` (freshness gate).

@@ -1,0 +1,143 @@
+{
+ "generated_at": "2026-11-04T13:50:26.616733+00:00",
+ "data_spec": "KR-DATA-0.1",
+ "rule": "KR factor research study (P6-23 §5.2).  Diagnostic, NOT a backtest of the strategy.\n\nPRE-REGISTERED RULE (fixed in code before results were observed, 2026-11-04):\n  candidates, in priority order: MOM_6_1, REV_1M, LOWVOL_60, TREND_50\n  * rebalance every 21 sessions; forward return = adjusted close t -> t+20 sessions (non-overlapping)\n  * statistic: cross-sectional Spearman rank IC of the direction-adjusted factor vs forward return\n  * DROP a factor if its mean IC t-statistic < -2.0 (significantly opposite to its hypothesis)\n  * DROP a factor if its mean cross-sectional rank correlation with an already-kept factor > 0.70\n  * weights: equal over kept factors (never fitted)",
+ "known_biases": [
+  "survivorship / membership look-ahead (current liquid-300)",
+  "Yahoo supplementary prices",
+  "no costs",
+  "short sample"
+ ],
+ "universe_summary": {
+  "size_target": 300,
+  "members": 300,
+  "candidates": 2418,
+  "eligible_master_rows": 2531,
+  "by_market": {
+   "KOSPI": 161,
+   "KOSDAQ": 139
+  },
+  "adtv20_at_cutoff_krw": 8580662515.0,
+  "adtv20_median_member_krw": 25138297374.875,
+  "exclusions": {
+   "STALE_LAST_BAR": 96,
+   "INSUFFICIENT_VALID_OBSERVATIONS": 11,
+   "NO_MARKET_DATA": 6
+  },
+  "latest_session": "2026-11-04",
+  "window": 20,
+  "traded_value_basis": [
+   "PROXY_CLOSE_X_VOLUME"
+  ]
+ },
+ "master_meta": {
+  "file": "master_20261104T135026Z.csv.gz",
+  "retrieved_at": "2026-11-04T13:50:26.616941+00:00",
+  "source": "KRX KIND corpList",
+  "source_sha256": {
+   "KOSPI": "76899d37e89e49cc23afdb83e74b46c0a03d0e39aac5d72f37f814c888518620",
+   "KOSDAQ": "3339413c47d10518a3fe4dfddc9d7f7fb21e755bd6cc465b09e9f26feb2415c5"
+  },
+  "rows": 2658,
+  "eligible": 2531,
+  "by_market": {
+   "KOSDAQ": 1829,
+   "KOSPI": 829
+  },
+  "exclusions": {
+   "SPAC_EXCLUDED": 70,
+   "REIT_EXCLUDED_SEPARATE_TREATMENT": 25,
+   "FOREIGN_ISSUER_EXCLUDED_INITIAL_MODEL": 19,
+   "COLLECTIVE_INVESTMENT_VEHICLE_EXCLUDED": 13
+  },
+  "cache_hit": false,
+  "status": "REAL"
+ },
+ "history_window": [
+  "2023-08-24",
+  "2026-11-05"
+ ],
+ "rebalance_dates": [
+  "2024-03-04",
+  "2024-04-02",
+  "2024-05-03",
+  "2024-06-05",
+  "2024-07-05",
+  "2024-08-05",
+  "2024-09-04",
+  "2024-10-11",
+  "2024-11-11",
+  "2024-12-10",
+  "2025-01-13",
+  "2025-02-17",
+  "2025-03-19",
+  "2025-04-17",
+  "2025-05-21",
+  "2025-06-23",
+  "2025-07-22",
+  "2025-08-21",
+  "2025-11-25",
+  "2025-12-24",
+  "2026-01-27",
+  "2026-03-03",
+  "2026-04-30",
+  "2026-06-04",
+  "2026-07-03",
+  "2026-08-04",
+  "2026-09-03"
+ ],
+ "factor_stats": {
+  "MOM_6_1": {
+   "periods": 27,
+   "mean_ic": -0.02141167351180676,
+   "std_ic": 0.16464104487532058,
+   "t_stat": -0.6757629561743358,
+   "hit_rate": 0.4074074074074074
+  },
+  "REV_1M": {
+   "periods": 27,
+   "mean_ic": -0.022863599112533356,
+   "std_ic": 0.12710639954260325,
+   "t_stat": -0.9346716321750845,
+   "hit_rate": 0.4074074074074074
+  },
+  "LOWVOL_60": {
+   "periods": 27,
+   "mean_ic": 0.04017885536374082,
+   "std_ic": 0.24324569533186607,
+   "t_stat": 0.8582904472576328,
+   "hit_rate": 0.5555555555555556
+  },
+  "TREND_50": {
+   "periods": 27,
+   "mean_ic": -0.021312626074824915,
+   "std_ic": 0.13641196399818994,
+   "t_stat": -0.8118324109343626,
+   "hit_rate": 0.4074074074074074
+  }
+ },
+ "mean_factor_rank_correlation": {
+  "MOM_6_1|REV_1M": -0.008484184888205973,
+  "MOM_6_1|TREND_50": 0.19255891339671194,
+  "REV_1M|TREND_50": -0.8506412221225118,
+  "LOWVOL_60|MOM_6_1": -0.33334876296116844,
+  "LOWVOL_60|REV_1M": 0.05766982634269772,
+  "LOWVOL_60|TREND_50": -0.0924697655484257
+ },
+ "decisions": {
+  "MOM_6_1": "KEPT",
+  "REV_1M": "KEPT",
+  "LOWVOL_60": "KEPT",
+  "TREND_50": "DROPPED: redundant with ['REV_1M'] (|rank corr| > 0.7)"
+ },
+ "kept_factors": [
+  "MOM_6_1",
+  "REV_1M",
+  "LOWVOL_60"
+ ],
+ "weights": {
+  "MOM_6_1": 0.3333333333333333,
+  "REV_1M": 0.3333333333333333,
+  "LOWVOL_60": 0.3333333333333333
+ }
+}

@@ -12,6 +12,12 @@ Two modes share **one** canonical pipeline (`pipeline/canonical.py`):
 | A. Automated Market Scan | `python app.py scan --capital 50000` | Current S&P 500 → data → gates → frozen scoring → MODEL_RANK_E → portfolio gates → TOP-5 / watchlist |
 | B. Direct Ticker Evaluation | `python app.py evaluate NVDA AAPL --capital 50000` | Scores your tickers inside the same S&P 500 cross-section with the same rules, and reports each one's individual verdict *and* the portfolio-level status |
 
+**Multi-market (P6-21..25).** A second, fully independent engine covers **South Korea** (KOSPI +
+KOSDAQ liquid-300, KRW). It has its own data, universe, model (`KR-EXP-0.1`, status **EXPERIMENTAL**)
+and paper tracking. It shares infrastructure with the US engine, never model assumptions; see §5a and
+`reports/P6-21_ARCHITECTURE.md`. The US engine is unchanged, and every existing command defaults to
+`--market US`.
+
 > **What a REAL RECOMMENDATION means:** every data and decision gate passed. It does
 > **not** mean the stocks will rise, that the ranking predicts returns, or that the
 > strategy is profitable. Predictive power is unproven. `python app.py track` records
@@ -68,6 +74,9 @@ cp .env.example .env
 | `QPP_LOG_LEVEL` | no | `WARNING` (default) or `INFO` |
 | `QPP_FINANCIAL_WORKERS` | no | Concurrent fundamentals fetches (default 4; SEC is paced at 8 req/s and Yahoo at ~3 req/s) |
 | `QPP_PROVIDER_TESTS` | no | `1` enables live-provider tests |
+| `QPP_CAPITAL_KRW` | for KR, unless you pass `--capital` | KR capital in **KRW**. The USD `QPP_CAPITAL` is never reused for Korea. |
+| `OPENDART_API_KEY` | no (KR fundamentals) | Free key from <https://opendart.fss.or.kr/> (인증키 신청). Without it the KR engine runs price-only and reports DART as UNAVAILABLE. |
+| `KRX_API_KEY` | no (official KR market data) | Free key from <https://openapi.krx.co.kr/> (sign up, then apply for the daily-trading services: 유가증권/코스닥 일별매매정보). Without it, KR prices come from Yahoo (supplementary) and traded value is the labelled proxy close × volume. |
 
 Variables already set in your shell (for example in `~/.zprofile`) take precedence
 over `.env`.
@@ -198,6 +207,29 @@ are listed with their reasons. A sector note appears when a non-Technology secto
 exceeds 40%: the frozen engine caps only "Technology", so this is reported, not
 enforced.
 
+### South Korea (P6-21..25, EXPERIMENTAL)
+
+```bash
+python app.py --market KR scan --capital 10000000      # liquid-300 scan, TOP-10 (KRW)
+python app.py --market KR scan --capital 10000000 --limit 60   # bounded check (never tracked)
+python app.py --market KR evaluate 005930 035720       # direct evaluation vs the liquid-300 reference
+python app.py --market KR tracking update               # KR paper outcomes (KRW, ^KS11/^KQ11)
+python app.py --market KR tracking verify
+python app.py dashboard --open                          # US and KR side by side (read-only)
+```
+
+* **Universe:**
+  * eligible KOSPI + KOSDAQ common stocks from the KRX KIND list, with SPACs, REITs, funds and foreign issuers excluded, each with a stated reason;
+  * the top 300 by 20-session average traded value.
+* **Model `KR-EXP-0.1`:** price factors only, as fixed by the pre-registered study (`reports/KR_MODEL_RESEARCH_SPECIFICATION.md`):
+  * winsorised z-scores and equal weights;
+  * TOP-10 equal weight, at most 3 names per KRX industry, whole shares;
+  * 20-session holding period. Status **EXPERIMENTAL**: it is not validated and is for paper observation only.
+* **Tracking:**
+  * `tracking/kr/`, KRW only, cohort `EXPERIMENTAL_PROSPECTIVE`;
+  * never pooled with US observations.
+* A full KR scan downloads about 2,500 symbols from Yahoo the first time each day (roughly 40 minutes on a slow link). Later runs on the same day reuse `data/kr/cache/`.
+
 ### Where things are
 
 | Path | Content |
@@ -212,6 +244,11 @@ enforced.
 | `docs/DATA_INPUT_SPECIFICATION.md` | approved input definitions, version `P6-20-A` (SEC timestamp eligibility, P/B cross-check, total revenue, net margin, ADV20, sector, gating); each run records its version |
 | `docs/GIT_SETUP_REPORT.md` | local git setup, ignored files, secret scan, how to add a private remote later |
 | `tracking/excluded_runs.json` | P6-19 exclusion list (preserved; mirrored into `tracking/ledger/events.jsonl`) |
+| `runs/KR/<run_id>/` | KR runs: manifest, status, `validation_result.json`, `candidate_flow.json`, `universe_snapshot.csv.gz`, `report.md` |
+| `tracking/kr/` | KR ledger, price snapshots, outcomes, `reports/latest.html` (KRW) |
+| `data/kr/` | KRX KIND security-master snapshots (with source sha256) and KR OHLCV caches |
+| `tracking/STORAGE_SCHEMA.json` | storage layout version 2 (additive; backup in `~/Developer/qse-backups/`) |
+| `tracking/dashboard.html` | unified read-only dashboard (`python app.py dashboard`) |
 | `reports/` | phase reports, roadmap, test results |
 
 ## 6. Tests
