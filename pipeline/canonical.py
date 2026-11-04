@@ -123,6 +123,9 @@ class CanonicalPipeline:
             rec.update(fundamental_status=financial_status.get(t, "UNAVAILABLE"),
                        name=m.get("name"), sector=m.get("sector") or "Unknown",
                        sector_source="yfinance" if m.get("sector") else None,
+                       # P6-20-A5: raw provider label, normalised label, observation time and status
+                       sector_raw=m.get("sector_raw"), sector_observed_at=m.get("sector_observed_at"),
+                       sector_status=m.get("sector_status") or ("REAL" if m.get("sector") else "MISSING"),
                        quote_type=m.get("quote_type"), currency=m.get("currency"),
                        fundamentals={f: _num(financials.loc[t, f]) if t in financials.index else None
                                      for f in ("per", "pbr", "roe", "profitMargin")},
@@ -140,7 +143,8 @@ class CanonicalPipeline:
                     if missing:
                         rec["missing_fundamentals"] = missing
                 for fname, finfo in (field_prov.get(t) or {}).items():
-                    if isinstance(finfo, dict) and str(finfo.get("status", "")).startswith("REJECTED"):
+                    if isinstance(finfo, dict) and (str(finfo.get("status", "")).startswith("REJECTED")
+                                                    or finfo.get("rejected_provider_value")):
                         rec["reasons"].append(f"PROVIDER_VALUE_REJECTED_{fname.upper()}")
                 if m.get("quote_type") and m["quote_type"] != "EQUITY":
                     rec["reasons"].append(f"NON_EQUITY_INSTRUMENT_{m['quote_type']}")
@@ -190,7 +194,11 @@ class CanonicalPipeline:
             rec.update(adv20_window={"observations": int(len(window)),
                                      "first": str(window.index[0].date()) if len(window) else None,
                                      "last": str(window.index[-1].date()) if len(window) else None,
-                                     "unit": "shares/day (split-adjusted share volume, not dollar volume)"},
+                                     "unit": "shares/day (split-adjusted share volume, not dollar volume)",
+                                     # P6-20-A4 provenance
+                                     "source": "yfinance download Volume (auto_adjust=True)",
+                                     "retrieved_at": volumes.attrs.get("retrieved_at"),
+                                     "rule": "mean of last 20 valid session observations; missing != 0"},
                        close=_num(close), adv20=_num(adv), last_volume=_num(vs.iloc[-1]) if not vs.empty else None,
                        alpha=_num(cand["alpha"]), alpha_percentile=_num(cand["alpha_percentile"]),
                        atr=_num(atr), ema20=_num(ema20), entry_readiness=_num(cand["entry_readiness"]),

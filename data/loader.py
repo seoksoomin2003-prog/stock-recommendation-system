@@ -46,23 +46,40 @@ logger = setup_logger("DataLoader")
 
 FUNDAMENTAL_FIELDS = ("per", "pbr", "roe", "profitMargin")
 SEC_NET_INCOME = ("NetIncomeLoss",)
-SEC_REVENUE = ("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax",
-               "SalesRevenueNet", "RevenueFromContractWithCustomerIncludingAssessedTax",
-               # P6-19: lessors/REITs and banks report total revenue under these concepts.  Without them
-               # the ASC 606 line (often a small non-lease slice for a REIT) was used as "revenue".
-               "OperatingLeaseLeaseIncome", "RealEstateRevenueNet", "RevenuesNetOfInterestExpense")
-# P6-19 provider-consistency rule: a Yahoo priceToBook more than this factor away from the
-# same company's marketCap / SEC equity is a unit/share-class artifact (e.g. BRK-B priced
-# against Class-A book value).  It is rejected (left missing), never replaced.
+# P6-20-A2 semantic total-revenue selection (replaces the P6-19 "largest of any revenue concept" rule).
+# Tier 1: US-GAAP concepts whose definition IS consolidated total revenue.
+SEC_REVENUE_TOTAL = ("Revenues", "RevenuesNetOfInterestExpense", "RegulatedAndUnregulatedOperatingRevenue")
+# Tier 2: single-stream concepts (ASC 606 contract revenue / legacy net sales).  They equal total revenue
+# only for a company with no other revenue stream, so they are accepted ONLY when no component concept
+# below is reported for the same period.
+SEC_REVENUE_SINGLE_STREAM = ("RevenueFromContractWithCustomerExcludingAssessedTax",
+                             "RevenueFromContractWithCustomerIncludingAssessedTax", "SalesRevenueNet")
+# Components / other revenue streams: never total revenue on their own and never summed.
+SEC_REVENUE_COMPONENTS = ("OperatingLeaseLeaseIncome", "LeaseIncome", "OperatingLeasesIncomeStatementLeaseRevenue",
+                          "RealEstateRevenueNet", "InterestAndDividendIncomeOperating", "NoninterestIncome",
+                          "InterestIncomeExpenseNet", "InterestIncomeExpenseAfterProvisionForLoanLoss",
+                          "PremiumsEarnedNet")
+SEC_REVENUE = SEC_REVENUE_TOTAL + SEC_REVENUE_SINGLE_STREAM   # concepts that can be selected as total revenue
+SEC_CONTINUING_OPS = ("IncomeLossFromContinuingOperations",)
+# A1 provider-consistency rule: a Yahoo priceToBook more than this factor away from the diagnostic
+# marketCap / SEC common equity is UNAVAILABLE (original value and reason kept), never replaced.
 PBR_CONSISTENCY_FACTOR = 10.0
-FUNDAMENTALS_CACHE_SCHEMA = 4
+PBR_EQUITY_MAX_AGE_DAYS = 200        # latest balance sheet older than this -> cross-check NOT_VERIFIABLE
+PBR_SCOPE_TOLERANCE = 0.02           # marketCap must equal price x all-class shares within 2%
+YAHOO_MARGIN_MAX_AGE_DAYS = 200      # Yahoo TTM margin: mostRecentQuarter must be at most this old
+FUNDAMENTALS_CACHE_SCHEMA = 5
 # Version of docs/DATA_INPUT_SPECIFICATION.md implemented by this loader (recorded in run manifests, P6-20).
-DATA_INPUT_SPEC_VERSION = "P6-19-final"
+DATA_INPUT_SPEC_VERSION = "P6-20-A"
 SEC_EQUITY = ("StockholdersEquity",)
+SEC_PREFERRED = ("PreferredStockValue",)
 ANNUAL_FORMS = {"10-K", "10-K/A", "10-KT", "20-F", "40-F"}
+BALANCE_SHEET_FORMS = ANNUAL_FORMS | {"10-Q", "10-Q/A", "10-QT"}
 INFO_FIELDS = ("trailingPE", "priceToBook", "returnOnEquity", "profitMargins", "sector",
                "industry", "quoteType", "longName", "shortName", "currency", "averageVolume",
-               "marketCap", "exchange")
+               "marketCap", "exchange",
+               # P6-20-A: fields needed to validate P/B scope and Yahoo margin freshness
+               "currentPrice", "regularMarketPrice", "sharesOutstanding", "impliedSharesOutstanding",
+               "financialCurrency", "mostRecentQuarter", "bookValue")
 
 
 class RateLimiter:
@@ -299,20 +316,79 @@ class DataLoader:
         except Exception:
             return np.nan
 
+    # ------------------------------------------- SEC timestamp eligibility (P6-20-A1..A3)
     @staticmethod
-    def _sec_entries(facts: Dict[str, Any], concept: str) -> List[Dict[str, Any]]:
-        units = facts.get("facts", {}).get("us-gaap", {}).get(concept, {}).get("units", {})
-        return list(units.get("USD", []))
+    def _as_of(as_of=None) -> pd.Timestamp:
+        ts = pd.Timestamp(as_of) if as_of is not None else pd.Timestamp(_utc_now())
+        return ts.tz_localize("UTC") if ts.tzinfo is None else ts.tz_convert("UTC")
+
+    @staticmethod
+    def _accepted_utc(accepted: Optional[str]) -> Optional[pd.Timestamp]:
+        """EDGAR ``acceptanceDateTime``.  EDGAR suffixes it with ``Z`` although the clock is US Eastern.
+        Reading it as Eastern is never earlier than the true acceptance instant, so a filing that was not
+        yet public can never be admitted."""
+        if not accepted:
+            return None
+        try:
+            ts = pd.Timestamp(str(accepted).replace("Z", "").split(".")[0])
+            if ts.tzinfo is not None:
+                ts = ts.tz_localize(None)
+            return ts.tz_localize("America/New_York").tz_convert("UTC")
+        except Exception:
+            return None
 
     @classmethod
-    def _sec_annual_flow(cls, facts: Dict[str, Any], concepts, today: str) -> Optional[Dict[str, Any]]:
-        """Latest annual (~1y duration, FY, 10-K family) value across candidate concepts."""
-        best = None
+    def _available_at(cls, e: Dict[str, Any], as_of: pd.Timestamp,
+                      accepted: Optional[Dict[str, str]]) -> Tuple[bool, Optional[str]]:
+        """A fact may be used only if its filing was public at ``as_of``.
+
+        Accepted datetime known (EDGAR submissions)  -> accepted <= as_of.
+        Accepted datetime unknown                    -> filed date strictly before as_of's US/Eastern date
+        (a same-day filing is excluded because its acceptance time cannot be verified)."""
+        filed = e.get("filed")
+        if not filed:
+            return False, None
+        raw = (accepted or {}).get(e.get("accn"))
+        acc = cls._accepted_utc(raw)
+        if acc is not None:
+            return bool(acc <= as_of), raw
+        return filed < as_of.tz_convert("America/New_York").strftime("%Y-%m-%d"), None
+
+    @staticmethod
+    def _sec_entries(facts: Dict[str, Any], concept: str, taxonomy: str = "us-gaap",
+                     unit: str = "USD") -> List[Dict[str, Any]]:
+        # CompanyFacts carries only non-dimensional facts (consolidated, entity-wide) for one CIK;
+        # only the USD unit is read, so currencies/units are never mixed.
+        units = facts.get("facts", {}).get(taxonomy, {}).get(concept, {}).get("units", {})
+        return list(units.get(unit, []))
+
+    @staticmethod
+    def _fact(e: Dict[str, Any], concept: str, accepted: Optional[str], **extra) -> Dict[str, Any]:
+        out = {"val": e["val"], "start": e.get("start"), "end": e["end"], "filed": e["filed"],
+               "accepted": accepted, "form": e.get("form"), "concept": concept, "taxonomy": "us-gaap",
+               "unit": "USD", "accn": e.get("accn"), "fy": e.get("fy"), "fp": e.get("fp"),
+               "frame": e.get("frame")}
+        out.update(extra)
+        return out
+
+    @classmethod
+    def _sec_annual_flow(cls, facts: Dict[str, Any], concepts, as_of=None, accepted=None,
+                         period: Optional[Tuple[str, str]] = None,
+                         prefer_accn: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Annual (330-380 day duration, 10-K family) value available at ``as_of``.
+
+        Without ``period``: latest period end, then latest filing (a restatement of the same period wins).
+        With ``period``: exactly that (start, end); the filing ``prefer_accn`` is preferred, else the latest."""
+        as_of = cls._as_of(as_of)
+        best, best_key = None, None
         for concept in concepts:
             for e in cls._sec_entries(facts, concept):
                 if e.get("form") not in ANNUAL_FORMS or not e.get("start") or not e.get("end"):
                     continue
-                if not e.get("filed") or e["filed"] > today:
+                if np.isnan(_finite_or_nan(e.get("val"))):
+                    continue
+                ok, acc = cls._available_at(e, as_of, accepted)
+                if not ok:
                     continue
                 try:
                     days = (pd.Timestamp(e["end"]) - pd.Timestamp(e["start"])).days
@@ -320,81 +396,181 @@ class DataLoader:
                     continue
                 if not 330 <= days <= 380:
                     continue
-                key = (e["end"], e["filed"])
-                if best is None or key > (best["end"], best["filed"]):
-                    best = {"val": e["val"], "end": e["end"], "start": e["start"], "filed": e["filed"],
-                            "form": e.get("form"), "concept": concept, "accn": e.get("accn"),
-                            "fy": e.get("fy"), "fp": e.get("fp"), "frame": e.get("frame")}
+                if period is not None and (e["start"], e["end"]) != tuple(period):
+                    continue
+                key = (e["end"], bool(prefer_accn) and e.get("accn") == prefer_accn, e["filed"])
+                if best is None or key > best_key:
+                    best, best_key = cls._fact(e, concept, acc, duration_days=days), key
         return best
 
     @classmethod
-    def _sec_instant(cls, facts: Dict[str, Any], concepts, today: str, at_end: Optional[str]) -> Optional[Dict[str, Any]]:
-        best = None
+    def _sec_instant(cls, facts: Dict[str, Any], concepts, as_of=None, accepted=None,
+                     at_end: Optional[str] = None, forms=None,
+                     prefer_accn: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        as_of = cls._as_of(as_of)
+        best, best_key = None, None
         for concept in concepts:
             for e in cls._sec_entries(facts, concept):
-                if e.get("start") or not e.get("end") or not e.get("filed") or e["filed"] > today:
+                if e.get("start") or not e.get("end"):
+                    continue
+                if forms is not None and e.get("form") not in forms:
+                    continue
+                if np.isnan(_finite_or_nan(e.get("val"))):
+                    continue
+                ok, acc = cls._available_at(e, as_of, accepted)
+                if not ok:
                     continue
                 if at_end and e["end"] != at_end:
                     continue
-                key = (e["end"], e["filed"])
-                if best is None or key > (best["end"], best["filed"]):
-                    best = {"val": e["val"], "end": e["end"], "filed": e["filed"],
-                            "form": e.get("form"), "concept": concept, "accn": e.get("accn"),
-                            "fy": e.get("fy"), "fp": e.get("fp")}
+                key = (e["end"], bool(prefer_accn) and e.get("accn") == prefer_accn, e["filed"])
+                if best is None or key > best_key:
+                    best, best_key = cls._fact(e, concept, acc), key
         return best
 
-    def _sec_metrics(self, facts: Dict[str, Any]) -> Dict[str, Any]:
-        """Period-aligned SEC ROE and profit margin with their provenance."""
+    @classmethod
+    def _pb_common_equity(cls, facts: Dict[str, Any], as_of, accepted) -> Dict[str, Any]:
+        """A1: common shareholders' equity from the latest balance sheet public at ``as_of``.
+
+        Common equity = StockholdersEquity (parent, excludes non-controlling interests) minus
+        PreferredStockValue at the same instant.  Preferred stock that is not tagged at that instant is
+        recorded as such and treated as zero (its effect is far inside the 10x cross-check tolerance)."""
+        eq = cls._sec_instant(facts, SEC_EQUITY, as_of, accepted, forms=BALANCE_SHEET_FORMS)
+        if eq is None:
+            return {"status": "UNAVAILABLE", "reason": "SEC_STOCKHOLDERS_EQUITY_UNAVAILABLE"}
+        pref = cls._sec_instant(facts, SEC_PREFERRED, as_of, accepted, at_end=eq["end"],
+                                forms=BALANCE_SHEET_FORMS, prefer_accn=eq.get("accn"))
+        common = float(eq["val"]) - (float(pref["val"]) if pref else 0.0)
+        age = (as_of.tz_localize(None).normalize() - pd.Timestamp(eq["end"])).days
+        out = {"stockholders_equity": eq, "preferred_stock": pref,
+               "preferred_treatment": "SUBTRACTED_SAME_INSTANT" if pref else "NOT_TAGGED_AT_INSTANT_TREATED_AS_ZERO",
+               "common_equity": common, "balance_sheet_date": eq["end"], "age_days": age,
+               "max_age_days": PBR_EQUITY_MAX_AGE_DAYS}
+        if age > PBR_EQUITY_MAX_AGE_DAYS:
+            out.update(status="STALE", reason="SEC_BALANCE_SHEET_OLDER_THAN_MAX_AGE")
+        elif common <= 0:
+            out.update(status="NON_POSITIVE", reason="NON_POSITIVE_COMMON_EQUITY")
+        else:
+            out["status"] = "VALID"
+        return out
+
+    @classmethod
+    def _select_total_revenue(cls, facts: Dict[str, Any], ni: Dict[str, Any], as_of, accepted) -> Dict[str, Any]:
+        """A2: consolidated total revenue for exactly the net-income period (never combined, never summed)."""
+        period = (ni["start"], ni["end"])
+
+        def found(concepts):
+            out = {}
+            for c in concepts:
+                f = cls._sec_annual_flow(facts, (c,), as_of, accepted, period=period, prefer_accn=ni.get("accn"))
+                if f is not None:
+                    out[c] = f
+            return out
+
+        total, single, comps = (found(SEC_REVENUE_TOTAL), found(SEC_REVENUE_SINGLE_STREAM),
+                                found(SEC_REVENUE_COMPONENTS))
+        brief = lambda f, tier: {"val": f["val"], "accn": f.get("accn"), "filed": f.get("filed"), "tier": tier}
+        res = {"rule": "P6-20-A2 tiered semantic total revenue", "period": list(period),
+               "candidates": {**{c: brief(f, 1) for c, f in total.items()},
+                              **{c: brief(f, 2) for c, f in single.items()},
+                              **{c: brief(f, "component") for c, f in comps.items()}},
+               "rejected": []}
+        selected, tier = None, None
+        for c, f in list(total.items()) + list(single.items()):
+            if float(f["val"]) <= 0:
+                res["rejected"].append({"concept": c, "val": f["val"], "reason": "NON_POSITIVE_REVENUE"})
+        pos_total = {c: f for c, f in total.items() if float(f["val"]) > 0}
+        pos_single = {c: f for c, f in single.items() if float(f["val"]) > 0}
+        if pos_total:
+            selected, tier = max(pos_total.values(), key=lambda f: float(f["val"])), 1
+        elif pos_single:
+            if comps:
+                for c, f in pos_single.items():
+                    res["rejected"].append({"concept": c, "val": f["val"],
+                                            "reason": "SINGLE_STREAM_CONCEPT_WITH_OTHER_REVENUE_STREAMS",
+                                            "other_streams": {k: v["val"] for k, v in comps.items()}})
+            else:
+                selected, tier = max(pos_single.values(), key=lambda f: float(f["val"])), 2
+        for c, f in comps.items():
+            res["rejected"].append({"concept": c, "val": f["val"], "reason": "COMPONENT_NOT_TOTAL_REVENUE"})
+        if selected is None:
+            res.update(status="UNAVAILABLE",
+                       reason=("NO_RELIABLE_TOTAL_REVENUE" if res["candidates"] else "NO_REVENUE_CONCEPT_FOR_PERIOD"))
+        else:
+            res.update(status="SELECTED", tier=tier, selected=selected,
+                       same_filing_as_net_income=selected.get("accn") == ni.get("accn"))
+        return res
+
+    @classmethod
+    def _margin_anomaly_review(cls, facts, ni, revenue: float, as_of, accepted) -> Dict[str, Any]:
+        """A3: net margin above 100% with validated total revenue is reviewed, not declared impossible."""
+        cont = cls._sec_annual_flow(facts, SEC_CONTINUING_OPS, as_of, accepted,
+                                    period=(ni["start"], ni["end"]), prefer_accn=ni.get("accn"))
+        review = {"trigger": "NET_MARGIN_ABOVE_100PCT", "net_margin": float(ni["val"]) / revenue,
+                  "continuing_operations_income": cont}
+        if cont is None:
+            review.update(decision="REJECTED", explanation="CONTINUING_OPERATIONS_INCOME_UNAVAILABLE")
+        elif float(cont["val"]) <= revenue:
+            review.update(decision="ACCEPTED",
+                          explanation="CONTINUING_OPERATIONS_INCOME_WITHIN_REVENUE: excess from discontinued "
+                                      "operations or exceptional items")
+        else:
+            review.update(decision="REJECTED", explanation="CONTINUING_OPERATIONS_INCOME_EXCEEDS_REVENUE")
+        return review
+
+    def _sec_metrics(self, facts: Dict[str, Any], as_of=None, accepted: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+        """Period-aligned SEC ROE and profit margin (A2/A3) and P/B common equity (A1), with provenance."""
         out = {"roe": np.nan, "profitMargin": np.nan, "detail": {}}
         if not facts:
             out["detail"]["status"] = "UNAVAILABLE"
             return out
-        today = _utc_now().strftime("%Y-%m-%d")
-        ni = self._sec_annual_flow(facts, SEC_NET_INCOME, today)
+        as_of = self._as_of(as_of)
+        accepted = accepted or {}
+        d = out["detail"]
+        d["as_of"] = as_of.isoformat()
+        d["accepted_datetime_source"] = ("edgar_submissions" if accepted else
+                                         "UNAVAILABLE (filed date must be strictly before as_of date)")
+        d["pb_equity"] = self._pb_common_equity(facts, as_of, accepted)
+        ni = self._sec_annual_flow(facts, SEC_NET_INCOME, as_of, accepted)
         if ni is None:
-            out["detail"]["status"] = "NET_INCOME_UNAVAILABLE"
+            d["status"] = "NET_INCOME_UNAVAILABLE"
             return out
-        age = (pd.Timestamp(today) - pd.Timestamp(ni["end"])).days
-        out["detail"]["net_income"] = ni
+        age = (as_of.tz_localize(None).normalize() - pd.Timestamp(ni["end"])).days
+        d["net_income"] = ni
         if age > cfg.SEC_ANNUAL_MAX_AGE_DAYS:
-            out["detail"]["status"] = "STALE"
-            out["detail"]["period_age_days"] = age
+            d["status"] = "STALE"
+            d["period_age_days"] = age
             return out
-        equity = self._sec_instant(facts, SEC_EQUITY, today, ni["end"])
-        revenue = None
-        # P6-19: total revenue = the LARGEST same-period value among total-revenue concepts.
-        # Every concept in SEC_REVENUE is a revenue measure <= total revenue, so the maximum is the
-        # most complete single reported line and can never be a partial slice when a fuller one exists.
-        candidates = {}
-        for concept in SEC_REVENUE:
-            cand = self._sec_annual_flow(facts, (concept,), today)
-            if cand is not None and cand["end"] == ni["end"] and np.isfinite(_finite_or_nan(cand["val"])):
-                candidates[concept] = cand
-        if candidates:
-            revenue = max(candidates.values(), key=lambda c: float(c["val"]))
-            out["detail"]["revenue_rule"] = "max_same_period_total_revenue_concept"
-            out["detail"]["revenue_candidates"] = {k: v["val"] for k, v in candidates.items()}
         net_income = _finite_or_nan(ni["val"])
+        equity = self._sec_instant(facts, SEC_EQUITY, as_of, accepted, at_end=ni["end"], prefer_accn=ni.get("accn"))
         if equity is not None:
             eq = _finite_or_nan(equity["val"])
-            out["detail"]["equity"] = equity
+            d["equity"] = equity
             if not np.isnan(net_income) and not np.isnan(eq) and eq > 0:
                 out["roe"] = net_income / eq
-        if revenue is not None:
-            rev = _finite_or_nan(revenue["val"])
-            out["detail"]["revenue"] = revenue
-            if not np.isnan(net_income) and not np.isnan(rev) and rev > 0:
-                if net_income > rev:
-                    # P6-19: net income above the selected revenue line proves that line is not total
-                    # revenue (e.g. a bank tagging only fee income or lease income).  The SEC margin is
-                    # rejected - never reconstructed - and the field falls back to the provider value.
-                    out["detail"]["revenue_rejected"] = {
-                        "reason": "NET_INCOME_EXCEEDS_REVENUE_CONCEPT", "concept": revenue.get("concept"),
-                        "revenue": rev, "net_income": net_income}
+        selection = self._select_total_revenue(facts, ni, as_of, accepted)
+        d["revenue_selection"] = selection
+        if selection["status"] == "SELECTED":
+            revenue = selection["selected"]
+            rev = float(revenue["val"])
+            d["revenue"] = revenue
+            if not np.isnan(net_income):
+                margin = net_income / rev
+                if margin > 1.0:
+                    review = self._margin_anomaly_review(facts, ni, rev, as_of, accepted)
+                    d["margin_anomaly_review"] = review
+                    if review["decision"] == "ACCEPTED":
+                        out["profitMargin"] = margin
+                    else:
+                        d["revenue_rejected"] = {"reason": "NET_MARGIN_ABOVE_100PCT_UNEXPLAINED",
+                                                 "concept": revenue.get("concept"), "revenue": rev,
+                                                 "net_income": net_income, "review": review["explanation"]}
                 else:
-                    out["profitMargin"] = net_income / rev
-        out["detail"]["status"] = "REAL"
-        out["detail"]["fiscal_period_end"] = ni["end"]
+                    out["profitMargin"] = margin
+        else:
+            d["revenue_rejected"] = {"reason": selection["reason"], "concept": None, "net_income": net_income,
+                                     "rejected_facts": selection["rejected"]}
+        d["status"] = "REAL"
+        d["fiscal_period_end"] = ni["end"]
         return out
 
     # --------------------------------------------------------- yfinance info
@@ -451,6 +627,30 @@ class DataLoader:
         except Exception as exc:
             logger.warning(f"Fundamental cache write failed for {ticker}: {exc}")
 
+    def _fetch_sec_submissions(self, cik: str) -> Dict[str, str]:
+        """accession number -> EDGAR acceptanceDateTime (recent filings).  {} when unavailable."""
+        cik_padded = str(cik).zfill(10)
+        url = f"https://data.sec.gov/submissions/CIK{cik_padded}.json"
+        headers = {"User-Agent": cfg.SEC_USER_AGENT, "Accept-Encoding": "gzip, deflate"}
+        for attempt in range(cfg.PROVIDER_MAX_RETRIES + 1):
+            self._sec_limiter.wait()
+            self._count("sec_submissions")
+            try:
+                resp = requests.get(url, headers=headers, timeout=(cfg.API_CONNECT_TIMEOUT, 30))
+                if resp.status_code == 200:
+                    recent = (resp.json().get("filings") or {}).get("recent") or {}
+                    return {a: t for a, t in zip(recent.get("accessionNumber", []),
+                                                 recent.get("acceptanceDateTime", [])) if a and t}
+                if resp.status_code == 404:
+                    return {}
+                error = f"HTTP_{resp.status_code}"
+            except Exception as exc:
+                error = type(exc).__name__
+            if attempt < cfg.PROVIDER_MAX_RETRIES:
+                time.sleep(1.5 * (attempt + 1))
+        self._event("sec_edgar", "submissions_failed", cik=cik_padded, error=error)
+        return {}
+
     def _acquire_fundamentals(self, ticker: str, cik: Optional[str]) -> Dict[str, Any]:
         cached = self._load_cached(ticker, cik)
         if cached is not None:
@@ -458,17 +658,20 @@ class DataLoader:
             cached["cache_hit"] = True
             return cached
         sec_enabled = runtime_config.sec_configured()
+        as_of = _utc_now()
         if not cik:
             sec = {"roe": np.nan, "profitMargin": np.nan, "detail": {"status": "NO_CIK"}}
         elif not sec_enabled:
             # P6-19: SEC fair-access requires a real contact; without one we do not query SEC at all.
             sec = {"roe": np.nan, "profitMargin": np.nan, "detail": {"status": "SEC_NOT_CONFIGURED"}}
         else:
-            sec = self._sec_metrics(self._fetch_sec_facts(cik))
+            facts = self._fetch_sec_facts(cik)
+            accepted = self._fetch_sec_submissions(cik) if facts else {}
+            sec = self._sec_metrics(facts, as_of=as_of, accepted=accepted)
         info = self._fetch_yf_info(ticker)
         payload = {
             "schema": FUNDAMENTALS_CACHE_SCHEMA, "ticker": ticker, "cik": str(cik) if cik else None, "sec_enabled": sec_enabled,
-            "retrieved_at": _utc_now().isoformat(),
+            "retrieved_at": _utc_now().isoformat(), "sec_as_of": as_of.isoformat(),
             "sec": {"roe": None if np.isnan(sec["roe"]) else sec["roe"],
                     "profitMargin": None if np.isnan(sec["profitMargin"]) else sec["profitMargin"],
                     "detail": sec["detail"]},
@@ -481,20 +684,96 @@ class DataLoader:
         return payload
 
     @staticmethod
-    def _pbr_consistency(pbr: float, market_cap, sec_detail: Dict[str, Any]) -> Dict[str, Any]:
-        """Cross-check Yahoo priceToBook against marketCap / SEC stockholders' equity (same company)."""
-        equity = _finite_or_nan((sec_detail.get("equity") or {}).get("val"))
-        mcap = _finite_or_nan(market_cap)
-        if np.isnan(pbr) or np.isnan(equity) or np.isnan(mcap) or pbr <= 0 or equity <= 0 or mcap <= 0:
-            return {}
-        implied = mcap / equity
-        ratio = pbr / implied
-        out = {"provider_value": pbr, "implied_market_cap_over_sec_equity": implied, "ratio": ratio,
-               "sec_equity_period_end": (sec_detail.get("equity") or {}).get("end"),
-               "tolerance_factor": PBR_CONSISTENCY_FACTOR}
-        out["status"] = ("REJECTED_INCONSISTENT" if ratio > PBR_CONSISTENCY_FACTOR or ratio < 1 / PBR_CONSISTENCY_FACTOR
-                         else "CONSISTENT")
+    def _share_scope(mcap: float, info: Dict[str, Any]) -> Dict[str, Any]:
+        """A1 scope check: Yahoo marketCap must value ALL share classes (price x all-class shares), because
+        SEC StockholdersEquity is entity-wide.  A single-class market cap would mis-scale P/B."""
+        price = _finite_or_nan(info.get("currentPrice"))
+        if np.isnan(price) or price <= 0:
+            price = _finite_or_nan(info.get("regularMarketPrice"))
+        shares = _finite_or_nan(info.get("sharesOutstanding"))
+        implied = _finite_or_nan(info.get("impliedSharesOutstanding"))
+        all_class = implied if not np.isnan(implied) and implied > 0 else shares
+        out = {"price": None if np.isnan(price) else price, "shares_outstanding": None if np.isnan(shares) else shares,
+               "implied_shares_outstanding": None if np.isnan(implied) else implied, "tolerance": PBR_SCOPE_TOLERANCE}
+        if np.isnan(price) or price <= 0:
+            return {**out, "status": "NOT_VERIFIABLE", "reason": "PRICE_UNAVAILABLE_FOR_SCOPE_CHECK"}
+        if np.isnan(all_class) or all_class <= 0:
+            return {**out, "status": "NOT_VERIFIABLE", "reason": "SHARE_COUNT_UNAVAILABLE_FOR_SCOPE_CHECK"}
+        mcap_shares = mcap / price
+        out["market_cap_over_price"] = mcap_shares
+        if abs(mcap_shares / all_class - 1) <= PBR_SCOPE_TOLERANCE:
+            return {**out, "status": "COMPATIBLE", "scope": "ALL_SHARE_CLASSES_AT_QUOTED_PRICE"}
+        if (not np.isnan(shares) and shares > 0 and abs(mcap_shares / shares - 1) <= PBR_SCOPE_TOLERANCE
+                and all_class > shares * (1 + PBR_SCOPE_TOLERANCE)):
+            return {**out, "status": "NOT_VERIFIABLE", "reason": "SINGLE_CLASS_MARKET_CAP_VS_ENTITY_EQUITY"}
+        return {**out, "status": "NOT_VERIFIABLE", "reason": "MARKET_CAP_SHARE_COUNT_UNRECONCILED"}
+
+    @classmethod
+    def _pbr_cross_check(cls, pbr: float, info: Dict[str, Any], sec_detail: Dict[str, Any]) -> Dict[str, Any]:
+        """A1: Yahoo priceToBook vs diagnostic marketCap / SEC common equity.
+
+        status: CONSISTENT | INCONSISTENT (>10x either way -> Yahoo value UNAVAILABLE, never replaced) |
+        NOT_VERIFIABLE (diagnostic cannot be computed validly -> Yahoo value kept, labelled) |
+        PROVIDER_VALUE_UNAVAILABLE (no Yahoo value to check)."""
+        out = {"rule": "P6-20-A1", "provider_value": None if np.isnan(pbr) else pbr,
+               "tolerance_factor": PBR_CONSISTENCY_FACTOR, "reasons": []}
+        eqd = sec_detail.get("pb_equity") or {}
+        out["sec_common_equity"] = {k: eqd.get(k) for k in ("status", "common_equity", "balance_sheet_date",
+                                                           "age_days", "preferred_treatment")}
+        out["sec_equity_filing"] = {k: (eqd.get("stockholders_equity") or {}).get(k)
+                                    for k in ("concept", "end", "filed", "accepted", "form", "accn", "fy", "fp")}
+        if eqd.get("status") != "VALID":
+            out["reasons"].append(eqd.get("reason") or "SEC_EQUITY_UNAVAILABLE")
+        mcap = _finite_or_nan(info.get("marketCap"))
+        out["market_cap"] = None if np.isnan(mcap) else mcap
+        if np.isnan(mcap) or mcap <= 0:
+            out["reasons"].append("MARKET_CAP_UNAVAILABLE")
+        else:
+            scope = cls._share_scope(mcap, info)
+            out["share_scope"] = scope
+            if scope["status"] != "COMPATIBLE":
+                out["reasons"].append(scope["reason"])
+        for k in ("currency", "financialCurrency"):
+            if info.get(k) and info.get(k) != "USD":
+                out["reasons"].append(f"CURRENCY_NOT_USD_{k}")
+        if out["reasons"]:
+            out["diagnostic_pbr"] = None
+            out["status"] = "PROVIDER_VALUE_UNAVAILABLE" if np.isnan(pbr) else "NOT_VERIFIABLE"
+            return out
+        diag = mcap / float(eqd["common_equity"])
+        out["diagnostic_pbr"] = diag
+        if np.isnan(pbr):
+            out["status"] = "PROVIDER_VALUE_UNAVAILABLE"
+            return out
+        ratio = pbr / diag
+        out["ratio"] = ratio
+        out["status"] = ("INCONSISTENT" if pbr <= 0 or ratio > PBR_CONSISTENCY_FACTOR
+                         or ratio < 1 / PBR_CONSISTENCY_FACTOR else "CONSISTENT")
         return out
+
+    @staticmethod
+    def _yahoo_margin(info: Dict[str, Any], as_of) -> Tuple[float, Dict[str, Any]]:
+        """A3: Yahoo profitMargins (provider TTM net income / TTM revenue, one provider, one period) is
+        usable only if finite, <= 100% and its latest quarter is fresh."""
+        m = _finite_or_nan(info.get("profitMargins"))
+        prov = {"definition": "yfinance profitMargins: provider-computed TTM net income / TTM total revenue",
+                "max_age_days": YAHOO_MARGIN_MAX_AGE_DAYS}
+        if np.isnan(m):
+            return np.nan, {**prov, "status": "UNAVAILABLE", "reason": "PROVIDER_VALUE_MISSING"}
+        prov["provider_value"] = m
+        mrq = _finite_or_nan(info.get("mostRecentQuarter"))
+        if np.isnan(mrq):
+            return np.nan, {**prov, "status": "UNAVAILABLE", "reason": "FRESHNESS_UNVERIFIABLE_NO_MOST_RECENT_QUARTER"}
+        q_end = pd.Timestamp(int(mrq), unit="s")
+        ref = pd.Timestamp(as_of)
+        ref = ref.tz_convert("UTC").tz_localize(None) if ref.tzinfo is not None else ref
+        age = (ref.normalize() - q_end.normalize()).days
+        prov.update(most_recent_quarter=str(q_end.date()), age_days=age)
+        if age > YAHOO_MARGIN_MAX_AGE_DAYS:
+            return np.nan, {**prov, "status": "UNAVAILABLE", "reason": "PROVIDER_PERIOD_STALE"}
+        if m > 1.0:
+            return np.nan, {**prov, "status": "UNAVAILABLE", "reason": "ABOVE_100PCT_NOT_REVIEWABLE_FROM_PROVIDER"}
+        return m, {**prov, "status": "VALID"}
 
     def get_financial_data(self, tickers: List[str], ciks: Dict[str, str] = None) -> pd.DataFrame:
         ciks = ciks or {}
@@ -506,14 +785,20 @@ class DataLoader:
         rows, provenance, meta = [], {}, {}
         for ticker, p in zip(tickers, payloads):
             sec, info = p["sec"], p.get("yf_info") or {}
+            detail = sec.get("detail", {}) or {}
             sec_roe = _finite_or_nan(sec.get("roe"))
             sec_margin = _finite_or_nan(sec.get("profitMargin"))
             per = _finite_or_nan(info.get("trailingPE"))
             pbr = _finite_or_nan(info.get("priceToBook"))
             roe = sec_roe if not np.isnan(sec_roe) else _finite_or_nan(info.get("returnOnEquity"))
-            margin = sec_margin if not np.isnan(sec_margin) else _finite_or_nan(info.get("profitMargins"))
-            pbr_check = self._pbr_consistency(pbr, info.get("marketCap"), sec.get("detail", {}))
-            if pbr_check.get("status") == "REJECTED_INCONSISTENT":
+            yahoo_margin_check = None
+            if not np.isnan(sec_margin):
+                margin = sec_margin
+            else:
+                # A3: never SEC net income / Yahoo revenue; Yahoo's own margin only if validated.
+                margin, yahoo_margin_check = self._yahoo_margin(info, p.get("retrieved_at") or _utc_now())
+            pbr_check = self._pbr_cross_check(pbr, info, detail)
+            if pbr_check.get("status") == "INCONSISTENT":
                 pbr = np.nan
             values = {"per": per, "pbr": pbr, "roe": roe, "profitMargin": margin}
             src = {
@@ -526,23 +811,43 @@ class DataLoader:
                         "status": "REAL" if not np.isnan(values[field]) else "UNAVAILABLE"}
                 for field in FUNDAMENTAL_FIELDS
             }
-            if pbr_check.get("status") == "REJECTED_INCONSISTENT":
-                provenance[ticker]["pbr"] = {"source": None, "status": "REJECTED_INCONSISTENT",
+            if pbr_check.get("status") == "INCONSISTENT":
+                provenance[ticker]["pbr"] = {"source": None, "status": "UNAVAILABLE",
+                                             "reason": "PBR_INCONSISTENT_WITH_SEC_COMMON_EQUITY",
                                              "rejected_provider_value": pbr_check}
-            elif pbr_check:
+            else:
                 provenance[ticker]["pbr"]["consistency_check"] = pbr_check
-            if sec.get("detail", {}).get("revenue_rejected"):
-                provenance[ticker]["profitMargin"]["sec_rejected"] = sec["detail"]["revenue_rejected"]
+            if detail.get("revenue_rejected"):
+                provenance[ticker]["profitMargin"]["sec_rejected"] = detail["revenue_rejected"]
+            if detail.get("margin_anomaly_review"):
+                provenance[ticker]["profitMargin"]["anomaly_review"] = {
+                    k: v for k, v in detail["margin_anomaly_review"].items() if k != "continuing_operations_income"}
+            if yahoo_margin_check is not None:
+                key = "yahoo_validation" if yahoo_margin_check["status"] == "VALID" else "yahoo_rejected"
+                provenance[ticker]["profitMargin"][key] = yahoo_margin_check
+            if isinstance(detail.get("revenue_selection"), dict):
+                rs = detail["revenue_selection"]
+                provenance[ticker]["profitMargin"]["revenue_selection"] = {
+                    k: rs.get(k) for k in ("rule", "status", "tier", "reason", "same_filing_as_net_income",
+                                           "candidates", "rejected")}
             provenance[ticker]["_retrieved_at"] = p["retrieved_at"]
+            provenance[ticker]["_sec_as_of"] = p.get("sec_as_of")
             provenance[ticker]["_cache_hit"] = p.get("cache_hit", False)
-            provenance[ticker]["_sec_status"] = sec.get("detail", {}).get("status")
-            provenance[ticker]["_sec_fiscal_period_end"] = sec.get("detail", {}).get("fiscal_period_end")
+            provenance[ticker]["_sec_status"] = detail.get("status")
+            provenance[ticker]["_sec_fiscal_period_end"] = detail.get("fiscal_period_end")
+            provenance[ticker]["_sec_accepted_datetime_source"] = detail.get("accepted_datetime_source")
             provenance[ticker]["_sec_filings"] = {
-                part: {k: d.get(k) for k in ("concept", "start", "end", "filed", "form", "accn", "fy", "fp")}
+                part: {k: d.get(k) for k in ("concept", "taxonomy", "unit", "start", "end", "duration_days",
+                                             "filed", "accepted", "form", "accn", "fy", "fp")}
                 for part in ("net_income", "equity", "revenue")
-                if isinstance((d := sec.get("detail", {}).get(part)), dict)}
+                if isinstance((d := detail.get(part)), dict)}
+            sector_raw = info.get("sector")
+            sector = sector_raw.strip() if isinstance(sector_raw, str) and sector_raw.strip() else None
             meta[ticker] = {
-                "sector": info.get("sector") or None,
+                "sector": sector,
+                "sector_raw": sector_raw if sector_raw not in ("",) else None,
+                "sector_observed_at": p["retrieved_at"],
+                "sector_status": ("MISSING" if sector is None else ("CACHED" if p.get("cache_hit") else "REAL")),
                 "industry": info.get("industry") or None,
                 "quote_type": info.get("quoteType") or None,
                 "name": info.get("longName") or info.get("shortName") or None,

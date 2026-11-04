@@ -32,6 +32,8 @@ from utils.runtime_config import CapitalNotConfigured
 
 T8 = [f"A{i}" for i in range(8)]
 VALID_UA = "QuantStockEngine/1.0 someone@realmail.org"
+# P6-20-A3: a Yahoo profitMargins fallback is used only when its latest quarter is fresh.
+FRESH_MRQ = int(pd.Timestamp.now(tz="UTC").normalize().timestamp()) - 30 * 86400
 
 
 # --------------------------------------------------------------- configuration
@@ -265,6 +267,12 @@ class TestExclusionBeforeNormalisation(unittest.TestCase):
 
 
 # --------------------------------------------------- B4 SEC fiscal periods
+_now = pd.Timestamp.now().normalize()
+RECENT_QE = str((_now - pd.offsets.QuarterEnd(1)).date()) if (_now - (_now - pd.offsets.QuarterEnd(1))).days > 3 \
+    else str((_now - pd.offsets.QuarterEnd(2)).date())
+RECENT_QE_FILED = str((pd.Timestamp(RECENT_QE) + pd.Timedelta(days=2)).date())
+
+
 def _fy(year, val, filed, form="10-K", accn=None, start=None):
     return {"start": start or f"{year}-01-01", "end": f"{year}-12-31", "val": val, "fy": year, "fp": "FY",
             "form": form, "filed": filed, "accn": accn or f"0000-{year}-{filed}"}
@@ -317,7 +325,8 @@ class TestSecFiscalPeriods(unittest.TestCase):
         m = DataLoader(use_cache=False)._sec_metrics(self.facts(ni, rev, eq))
         self.assertTrue(np.isnan(m["roe"]) and np.isnan(m["profitMargin"]))
         loader = DataLoader(use_cache=False)
-        info = {"trailingPE": 20.0, "priceToBook": 3.0, "returnOnEquity": 0.11, "profitMargins": 0.07}
+        info = {"trailingPE": 20.0, "priceToBook": 3.0, "returnOnEquity": 0.11, "profitMargins": 0.07,
+                "mostRecentQuarter": FRESH_MRQ}
         with patch.object(DataLoader, "_fetch_yf_info", lambda self, t: info), \
                 patch.object(DataLoader, "_fetch_sec_facts", lambda self, cik: self_facts), \
                 patch.dict(os.environ, {"SEC_USER_AGENT": VALID_UA}):
@@ -335,7 +344,10 @@ class TestP619LiveDefectRegressions(unittest.TestCase):
     """Defects found in the P6-19 full live run (CPT revenue concept, BRK-B Yahoo priceToBook)."""
     Y = pd.Timestamp.now().year
 
-    def test_reit_revenue_uses_total_not_asc606_slice(self):
+    # P6-20-A supersedes the P6-19 "largest revenue concept" and REJECTED_INCONSISTENT rules for these
+    # same live defect cases (CPT, FITB/DTE/HBAN/MTB, BRK-B); see docs/DATA_INPUT_SPECIFICATION.md.
+    def test_reit_revenue_component_is_never_total_revenue(self):
+        """CPT: only ASC 606 ($13M) and lease income ($1,573M) tagged -> no reliable total -> UNAVAILABLE."""
         y = self.Y - 1
         facts = {"facts": {"us-gaap": {
             "NetIncomeLoss": {"units": {"USD": [_fy(y, 384.0, f"{y + 1}-02-12")]}},
@@ -344,12 +356,17 @@ class TestP619LiveDefectRegressions(unittest.TestCase):
             "StockholdersEquity": {"units": {"USD": [{"end": f"{y}-12-31", "val": 4362.0, "form": "10-K",
                                                       "filed": f"{y + 1}-02-12"}]}}}}}
         m = DataLoader(use_cache=False)._sec_metrics(facts)
-        self.assertAlmostEqual(m["profitMargin"], 384.0 / 1573.0)          # not 384/13 = 29.5
-        self.assertEqual(m["detail"]["revenue"]["concept"], "OperatingLeaseLeaseIncome")
-        self.assertEqual(m["detail"]["revenue_rule"], "max_same_period_total_revenue_concept")
+        self.assertTrue(np.isnan(m["profitMargin"]))          # neither 384/13 nor 384/1573
+        sel = m["detail"]["revenue_selection"]
+        self.assertEqual(sel["status"], "UNAVAILABLE")
+        reasons = {r["concept"]: r["reason"] for r in sel["rejected"]}
+        self.assertEqual(reasons["RevenueFromContractWithCustomerExcludingAssessedTax"],
+                         "SINGLE_STREAM_CONCEPT_WITH_OTHER_REVENUE_STREAMS")
+        self.assertEqual(reasons["OperatingLeaseLeaseIncome"], "COMPONENT_NOT_TOTAL_REVENUE")
+        self.assertAlmostEqual(m["roe"], 384.0 / 4362.0)
 
-    def test_partial_revenue_line_below_net_income_is_rejected(self):
-        """FITB/DTE case: only a slice (lease income) is tagged; NI > that line -> no SEC margin."""
+    def test_partial_revenue_line_is_rejected_and_validated_yahoo_margin_used(self):
+        """FITB/DTE case: only a slice (lease income) is tagged -> no SEC margin -> validated Yahoo margin."""
         y = self.Y - 1
         facts = {"facts": {"us-gaap": {
             "NetIncomeLoss": {"units": {"USD": [_fy(y, 2500.0, f"{y + 1}-02-24")]}},
@@ -358,9 +375,10 @@ class TestP619LiveDefectRegressions(unittest.TestCase):
                                                       "filed": f"{y + 1}-02-24"}]}}}}}
         m = DataLoader(use_cache=False)._sec_metrics(facts)
         self.assertTrue(np.isnan(m["profitMargin"]))
-        self.assertEqual(m["detail"]["revenue_rejected"]["reason"], "NET_INCOME_EXCEEDS_REVENUE_CONCEPT")
+        self.assertEqual(m["detail"]["revenue_rejected"]["reason"], "NO_RELIABLE_TOTAL_REVENUE")
         self.assertAlmostEqual(m["roe"], 2500.0 / 21000.0)            # ROE is unaffected
-        info = {"trailingPE": 12.0, "priceToBook": 1.5, "profitMargins": 0.27, "quoteType": "EQUITY"}
+        info = {"trailingPE": 12.0, "priceToBook": 1.5, "profitMargins": 0.27, "quoteType": "EQUITY",
+                "mostRecentQuarter": FRESH_MRQ}
         with patch.object(DataLoader, "_fetch_yf_info", lambda self, t: dict(info)), \
                 patch.object(DataLoader, "_fetch_sec_facts", lambda self, cik: facts), \
                 patch.dict(os.environ, {"SEC_USER_AGENT": VALID_UA}):
@@ -368,17 +386,19 @@ class TestP619LiveDefectRegressions(unittest.TestCase):
         prov = frame.attrs["field_provenance"]["BANK"]["profitMargin"]
         self.assertEqual(frame.loc["BANK", "profitMargin"], 0.27)
         self.assertEqual(prov["source"], "yfinance")
-        self.assertEqual(prov["sec_rejected"]["concept"], "OperatingLeaseLeaseIncome")
+        self.assertEqual(prov["yahoo_validation"]["status"], "VALID")
+        self.assertEqual(prov["sec_rejected"]["rejected_facts"][0]["concept"], "OperatingLeaseLeaseIncome")
 
-    def test_yahoo_pbr_inconsistent_with_sec_equity_is_rejected_not_replaced(self):
+    def test_yahoo_pbr_inconsistent_with_sec_equity_is_unavailable_not_replaced(self):
         y = self.Y - 1
         facts = {"facts": {"us-gaap": {
             "NetIncomeLoss": {"units": {"USD": [_fy(y, 67.0, f"{y + 1}-03-02")]}},
             "Revenues": {"units": {"USD": [_fy(y, 371.0, f"{y + 1}-03-02")]}},
-            "StockholdersEquity": {"units": {"USD": [{"end": f"{y}-12-31", "val": 717.0, "form": "10-K",
-                                                      "filed": f"{y + 1}-03-02"}]}}}}}
-        infos = {"BRKB": {"trailingPE": 14.0, "priceToBook": 0.00107, "marketCap": 1000.0, "quoteType": "EQUITY"},
-                 "OK": {"trailingPE": 14.0, "priceToBook": 1.5, "marketCap": 1000.0, "quoteType": "EQUITY"},
+            "StockholdersEquity": {"units": {"USD": [{"end": RECENT_QE, "val": 717.0, "form": "10-Q",
+                                                      "filed": RECENT_QE_FILED}]}}}}}
+        base = {"trailingPE": 14.0, "marketCap": 1000.0, "currentPrice": 10.0, "sharesOutstanding": 100.0,
+                "quoteType": "EQUITY", "currency": "USD"}
+        infos = {"BRKB": {**base, "priceToBook": 0.00107}, "OK": {**base, "priceToBook": 1.5},
                  "NOCAP": {"trailingPE": 14.0, "priceToBook": 0.00107, "quoteType": "EQUITY"}}
         with patch.object(DataLoader, "_fetch_yf_info", lambda self, t: dict(infos[t])), \
                 patch.object(DataLoader, "_fetch_sec_facts", lambda self, cik: facts), \
@@ -387,12 +407,15 @@ class TestP619LiveDefectRegressions(unittest.TestCase):
                                                                   ciks={"BRKB": "1", "OK": "2", "NOCAP": "3"})
         prov = frame.attrs["field_provenance"]
         self.assertTrue(np.isnan(frame.loc["BRKB", "pbr"]))
-        self.assertEqual(prov["BRKB"]["pbr"]["status"], "REJECTED_INCONSISTENT")
+        self.assertEqual(prov["BRKB"]["pbr"]["status"], "UNAVAILABLE")
+        self.assertEqual(prov["BRKB"]["pbr"]["reason"], "PBR_INCONSISTENT_WITH_SEC_COMMON_EQUITY")
         self.assertAlmostEqual(prov["BRKB"]["pbr"]["rejected_provider_value"]["provider_value"], 0.00107)
         self.assertEqual(frame.attrs["provider_status"]["BRKB"], "PARTIAL")
         self.assertEqual(frame.loc["OK", "pbr"], 1.5)
         self.assertEqual(prov["OK"]["pbr"]["consistency_check"]["status"], "CONSISTENT")
-        self.assertEqual(frame.loc["NOCAP", "pbr"], 0.00107)   # no market cap -> cannot check -> unchanged
+        self.assertEqual(frame.loc["NOCAP", "pbr"], 0.00107)   # cannot verify -> unchanged, labelled
+        self.assertEqual(prov["NOCAP"]["pbr"]["consistency_check"]["status"], "NOT_VERIFIABLE")
+        self.assertIn("MARKET_CAP_UNAVAILABLE", prov["NOCAP"]["pbr"]["consistency_check"]["reasons"])
 
     def test_rejected_provider_value_surfaces_as_reason(self):
         prices, volumes = make_market(T8)
@@ -412,7 +435,7 @@ class TestP619LiveDefectRegressions(unittest.TestCase):
 # -------------------------------------------------- loader / SEC gating / cache
 class TestSecGatingAndCache(unittest.TestCase):
     INFO = {"trailingPE": 10.0, "priceToBook": 2.0, "returnOnEquity": 0.1, "profitMargins": 0.1,
-            "sector": "Energy", "quoteType": "EQUITY"}
+            "sector": "Energy", "quoteType": "EQUITY", "mostRecentQuarter": FRESH_MRQ}
 
     def test_sec_never_queried_without_valid_user_agent(self):
         def boom(self, cik):

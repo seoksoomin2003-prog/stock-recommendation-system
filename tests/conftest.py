@@ -141,6 +141,10 @@ def _no_network(monkeypatch):
     monkeypatch.setattr(socket, "create_connection",
                         lambda address, *a, **k: (_ for _ in ()).throw(
                             OSError(f"Network access blocked in deterministic tests (target {address!r})")))
+    # P6-20-A: EDGAR submissions (acceptance datetimes) are an extra SEC request per CIK.  Offline tests
+    # that stub only companyfacts get "accepted datetime unavailable" instead of slow blocked retries.
+    from data.loader import DataLoader
+    monkeypatch.setattr(DataLoader, "_fetch_sec_submissions", lambda self, cik: {})
     yield
 
 

@@ -280,7 +280,8 @@ class TestLedgerIntegrity(unittest.TestCase):
                       "reference_close", "adv20", "target_weight", "horizon_days", "hard_stop"):
             self.assertIn(field, o)
         self.assertLess(o["factor_contributions"]["reconstruction_error"], 1e-9)
-        self.assertEqual(o["data_input_spec_version"], "P6-19-final")
+        from data.loader import DATA_INPUT_SPEC_VERSION
+        self.assertEqual(o["data_input_spec_version"], DATA_INPUT_SPEC_VERSION)
         self.assertEqual(runs[0]["capital"], 50_000)
 
     def test_duplicates_prevented_and_chain_verifies(self):

@@ -33,6 +33,10 @@ def facts_fixture():
     }}}
 
 
+
+# P6-20-A3: a Yahoo profitMargins fallback is used only when its latest quarter is fresh.
+FRESH_MRQ = int(pd.Timestamp.now(tz="UTC").normalize().timestamp()) - 30 * 86400
+
 class TestSecExtraction(unittest.TestCase):
     def test_annual_period_alignment(self):
         m = DataLoader(use_cache=False)._sec_metrics(facts_fixture())
@@ -71,9 +75,10 @@ class TestMissingVersusZero(unittest.TestCase):
     def test_financial_frame_status_and_provenance(self):
         loader = DataLoader(use_cache=False)
         infos = {"AAA": {"trailingPE": 20.0, "priceToBook": 3.0, "returnOnEquity": 0.0, "profitMargins": 0.1,
-                         "sector": "Technology", "quoteType": "EQUITY", "longName": "AAA Inc"},
+                         "sector": "Technology", "quoteType": "EQUITY", "longName": "AAA Inc",
+                         "mostRecentQuarter": FRESH_MRQ},
                  "BBB": {"trailingPE": None, "priceToBook": 2.0, "returnOnEquity": 0.2, "profitMargins": 0.05,
-                         "sector": "Energy", "quoteType": "EQUITY"},
+                         "sector": "Energy", "quoteType": "EQUITY", "mostRecentQuarter": FRESH_MRQ},
                  "CCC": {}}
         with patch.object(DataLoader, "_fetch_yf_info", lambda self, t: infos[t]):
             frame = loader.get_financial_data(["AAA", "BBB", "CCC"], ciks={})
