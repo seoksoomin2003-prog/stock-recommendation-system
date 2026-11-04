@@ -209,7 +209,8 @@ enforced.
 | `tracking/reports/latest.html` | prospective performance report |
 | `tracking/recommendation_ledger.jsonl`, `tracking/outcomes.json` | P6-19 schema-1 tracker files (preserved, superseded, no longer written) |
 | `cache.nosync/provider/` | fundamentals cache (safe to delete; it is rebuilt) |
-| `docs/DATA_INPUT_SPECIFICATION.md` | approved input definitions (ADV20, sector, eligibility, SEC periods, revenue concept, P/B consistency) |
+| `docs/DATA_INPUT_SPECIFICATION.md` | approved input definitions, version `P6-20-A` (SEC timestamp eligibility, P/B cross-check, total revenue, net margin, ADV20, sector, gating); each run records its version |
+| `docs/GIT_SETUP_REPORT.md` | local git setup, ignored files, secret scan, how to add a private remote later |
 | `tracking/excluded_runs.json` | P6-19 exclusion list (preserved; mirrored into `tracking/ledger/events.jsonl`) |
 | `reports/` | phase reports, roadmap, test results |
 

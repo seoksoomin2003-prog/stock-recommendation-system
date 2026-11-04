@@ -423,6 +423,14 @@ def summarize(observations: List[Dict[str, Any]], outcomes: Dict[str, Dict[str, 
         x = outcomes[o["observation_id"]]
         if x.get("outcome_state") == "COMPLETED_OUTCOME" and x.get("returns"):
             by_date.setdefault(o["recommendation_timestamp_utc"][:10], []).append(x["returns"]["price_return"])
+    # P6-20-A: observations made under different data-input specifications are reported separately.
+    by_spec = {}
+    for o in official:
+        x = outcomes[o["observation_id"]]
+        b = by_spec.setdefault(o.get("data_input_spec_version") or "unknown", {"valid": 0, "returns": []})
+        b["valid"] += 1
+        if x.get("outcome_state") == "COMPLETED_OUTCOME" and x.get("returns"):
+            b["returns"].append(x["returns"]["price_return"])
     costs = []
     for i, bps in enumerate(cost_bps):
         net = [x["returns"]["cost_sensitivity"][i]["net_return"] for x in done if x.get("returns")]
@@ -458,6 +466,8 @@ def summarize(observations: List[Dict[str, Any]], outcomes: Dict[str, Dict[str, 
         "max_drawdown_close": _stats([x["returns"]["max_drawdown_close"] for x in done if x.get("returns")]),
         "by_recommendation_rank": {k: _stats(v) for k, v in sorted(by_rank.items())},
         "by_recommendation_date": {k: _stats(v) for k, v in sorted(by_date.items())},
+        "by_data_input_spec_version": {k: {"valid_observations": v["valid"], "completed_observations": len(v["returns"]),
+                                           "price_return": _stats(v["returns"])} for k, v in sorted(by_spec.items())},
         "watchlist_diagnostic_price_return": _stats([x["returns"]["price_return"] for x in watch if x.get("returns")]),
         "cost_sensitivity": costs,
         "cost_sensitivity_conclusion_changes": len(signs) > 1,

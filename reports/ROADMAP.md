@@ -12,6 +12,7 @@ and fresh runs).
 | P6-18 | Shared live recommendation pipeline (canonical route, run durability, Mode A/B) | **Full-Universe Validated (pipeline)**. The P6-18 run's *recommendation* was produced with defective inputs and is excluded from performance statistics (PRE_FIX, P6-20). | Pipeline re-validated by the P6-19 full runs. Run `20261104T071145Z_market_scan_e16f62`: TOP-5 identical to the pre-fix P6-19 run, $10M default capital. |
 | P6-19 | Independent verification and operational hardening | **COMPLETE** (re-verified at the P6-20 baseline: frozen hashes match, latest run replays, exclusions intact). Open user actions: NewsAPI key rotation, optional removal of the Desktop copy. | `reports/P6-19_IMPLEMENTATION_REPORT.md`, `reports/P6-19_TEST_RESULTS.json`, `reports/P6-20_BASELINE_VERIFICATION.md` |
 | P6-20 | Prospective performance validation and paper tracking | **COMPLETE** (tracking infrastructure). **Observation ongoing**: as of 2026-11-04 there is 1 valid run (5 TOP-5 observations), all PENDING_OUTCOME; there are no completed observations and no performance claim. | `reports/P6-20_IMPLEMENTATION_REPORT.md`, `reports/P6-20_TEST_RESULTS.json` (817 collected, 806 passed, 0 failed), `reports/P6-20_TRACKING_SPECIFICATION.md`, `reports/P6-20_SECTOR_CAP_REVIEW.md`, `tracking/ledger/` (hash chain verified) |
+| P6-20-A | Addendum: approved data-input rules (A1–A7) and safe local git (B) | **COMPLETE**. Spec `P6-20-A` is in force for runs after commit `63c283d`. Local git on `main` (baseline `1e9472f`), with no remote and no push. | `docs/DATA_INPUT_SPECIFICATION.md`, `reports/P6-20_INPUT_VALIDATION_TEST_RESULTS.json` (837 passed, 0 failed), `docs/GIT_SETUP_REPORT.md`, validation run `20261104T125402Z_market_scan_5a396d` (replay MATCH) |
 | P6-21 | Evidence-based research review | **PLANNED**, not scheduled automatically | Starts only once the prospective record holds ≥30 completed valid observations from many independent scan dates. It decides whether further research is justified. It is not an optimisation phase, and any model change requires explicit user approval. Agenda includes the sector-cap decision (`P6-20_SECTOR_CAP_REVIEW.md`). |
 | P6-12D | Institutional historical validation | **DEFERRED INDEFINITELY** | Needs survivorship-free point-in-time constituents and fundamentals, which have no zero-cost source |
 
@@ -62,9 +63,12 @@ and fresh runs).
 - The P6-18 full run was not excluded in P6-19, although its TOP-5 came from the same defective inputs. It is now excluded via an appended PRE_FIX event.
 - `utils/market_calendar.py` (freshness gate) mis-handles New Year's Day falling on a Saturday (next occurrence 2027-12-31). It is documented and not changed (production path); the tracking calendar is correct.
 
+- P6-19 input rules superseded by P6-20-A: revenue "largest same-period concept" (it could select a component, e.g. CPT lease income); the NI > revenue rejection (it rejected DTE although DTE tags a total-revenue concept); and the P/B check against annual-period equity with no scope, staleness or common-equity handling. Observations made under `P6-19-final` stay valid and are reported separately by spec version.
+
 ## Next tasks (candidates, not started)
 
 1. Run a full scan on each trading day before 09:30 ET, then run `app.py tracking update` after 17:00 ET. Review `tracking/reports/latest.html`. No model changes.
 2. Before 2027-12-31: decide whether to fix the New Year-on-Saturday rule in `utils/market_calendar.py` (freshness gate).
 3. Optional: persist position state so the frozen `evaluate_existing_position` exit rules can run on actual holdings (read-only advice, no execution).
-4. Optional: put the repository under git (a `.gitignore` already excludes secrets, caches and user data).
+4. Done (P6-20-A): local git. Connecting a private GitHub remote requires your explicit approval (`docs/GIT_SETUP_REPORT.md` §7).
+5. Optional input-coverage review (needs approval): 48 tickers have a P/B cross-check NOT_VERIFIABLE because companyfacts has no recent `StockholdersEquity` (e.g. AVGO tags only the NCI-inclusive concept). The Yahoo value is kept and labelled. Adopting another equity concept would be an input-definition change.

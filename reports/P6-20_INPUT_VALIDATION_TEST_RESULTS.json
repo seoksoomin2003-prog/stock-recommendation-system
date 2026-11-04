@@ -1,0 +1,231 @@
+{
+ "phase": "P6-20 addendum A (approved data-input rules)",
+ "date": "2026-11-04",
+ "data_input_spec_version": "P6-20-A",
+ "fundamentals_cache_schema": 5,
+ "commit_of_rules": "63c283d",
+ "full_suite": {
+  "command": ".venv/bin/python -m pytest tests/ -q --junitxml=<abs>/reports/P6-20_pytest_junit.xml",
+  "passed": 837,
+  "skipped": 6,
+  "xfailed": 5,
+  "failed": 0,
+  "errors": 0,
+  "duration_s": 184.1
+ },
+ "frozen_core_hashes_match": true,
+ "input_rule_tests": [
+  {
+   "test": "tests.test_p6_19_hardening.TestSecFiscalPeriods::test_metrics_never_mix_periods_and_provenance_is_per_field",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_19_hardening.TestSecFiscalPeriods::test_prior_year_comparative_in_later_filing_is_not_the_latest_period",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_19_hardening.TestSecFiscalPeriods::test_quarterly_and_ytd_durations_ignored_and_52_53_week_years_accepted",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_19_hardening.TestSecFiscalPeriods::test_restatement_for_same_period_wins_and_keeps_accession",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_19_hardening.TestP619LiveDefectRegressions::test_partial_revenue_line_is_rejected_and_validated_yahoo_margin_used",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_19_hardening.TestP619LiveDefectRegressions::test_reit_revenue_component_is_never_total_revenue",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_19_hardening.TestP619LiveDefectRegressions::test_rejected_provider_value_surfaces_as_reason",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_19_hardening.TestP619LiveDefectRegressions::test_yahoo_pbr_inconsistent_with_sec_equity_is_unavailable_not_replaced",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_filing_after_timestamp_is_never_used",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_incompatible_share_class_scope_not_verifiable",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_loader_never_replaces_inconsistent_value",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_missing_market_cap_not_verifiable_and_value_kept",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_more_than_10x_difference_is_unavailable_with_original_value",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_multi_class_all_class_market_cap_is_compatible",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_normal_agreement",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_preferred_stock_subtracted_and_can_make_common_equity_non_positive",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_sec_not_configured_is_not_verifiable",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_stale_sec_balance_sheet_not_verifiable",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_unavailable_yahoo_pbr",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA1PriceToBook::test_zero_or_negative_equity_not_verifiable",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA2TotalRevenue::test_components_alone_or_together_never_total",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA2TotalRevenue::test_largest_only_among_compatible_total_concepts",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA2TotalRevenue::test_other_units_and_currencies_ignored",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA2TotalRevenue::test_provenance_fields_preserved",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA2TotalRevenue::test_quarterly_ytd_and_other_periods_never_combined",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA2TotalRevenue::test_same_filing_preferred_and_future_filings_excluded",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA2TotalRevenue::test_single_stream_concept_accepted_only_without_other_streams",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA2TotalRevenue::test_tier1_total_revenue_preferred_over_larger_component",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA3NetMargin::test_failed_revenue_rejects_sec_margin",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA3NetMargin::test_margin_above_100pct_reviewed_and_accepted_when_explained",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA3NetMargin::test_margin_above_100pct_unexplained_rejected_then_validated_yahoo",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA3NetMargin::test_sec_margin_kept_when_valid",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA3NetMargin::test_yahoo_margin_unvalidated_is_unavailable",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA4A5A6Pipeline::test_adv20_provenance_and_missing_is_not_zero",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA4A5A6Pipeline::test_loader_sector_normalisation",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA4A5A6Pipeline::test_rejected_pbr_quarantines_before_normalisation",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestA4A5A6Pipeline::test_sector_raw_and_normalised_preserved_and_missing_recorded",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestVersioning::test_spec_and_cache_schema_bumped",
+   "result": "passed"
+  },
+  {
+   "test": "tests.test_p6_20_input_rules.TestVersioning::test_tracking_summary_separates_spec_versions",
+   "result": "passed"
+  }
+ ],
+ "superseded_tests_rewritten": [
+  "tests/test_p6_19_hardening.py::TestP619LiveDefectRegressions::test_reit_revenue_uses_total_not_asc606_slice -> test_reit_revenue_component_is_never_total_revenue (A2)",
+  "\u2026::test_partial_revenue_line_below_net_income_is_rejected -> test_partial_revenue_line_is_rejected_and_validated_yahoo_margin_used (A2/A3)",
+  "\u2026::test_yahoo_pbr_inconsistent_with_sec_equity_is_rejected_not_replaced -> test_yahoo_pbr_inconsistent_with_sec_equity_is_unavailable_not_replaced (A1)"
+ ],
+ "fixture_updates": "Yahoo fixtures used for margin fallback gained a fresh mostRecentQuarter (A3 freshness requirement); P6-20 ledger test reads DATA_INPUT_SPEC_VERSION instead of a literal.",
+ "live_validation_run": {
+  "run_id": "20261104T125402Z_market_scan_5a396d",
+  "status": "REAL RECOMMENDATION",
+  "funnel": "503 -> provenance 446 -> liquidity/required 433 -> top5 5",
+  "top5": [
+   "CL",
+   "SNDK",
+   "MU",
+   "AES",
+   "CHTR"
+  ],
+  "same_top5_as_run_953827": true,
+  "provenance_gate_set_identical_to_953827": true,
+  "pbr_cross_check": {
+   "CONSISTENT": 411,
+   "NOT_VERIFIABLE": 90,
+   "INCONSISTENT": 1,
+   "PROVIDER_VALUE_UNAVAILABLE": 1
+  },
+  "not_verifiable_reasons": {
+   "SEC_BALANCE_SHEET_OLDER_THAN_MAX_AGE": 48,
+   "NON_POSITIVE_COMMON_EQUITY": 34,
+   "SEC_STOCKHOLDERS_EQUITY_UNAVAILABLE": 8
+  },
+  "revenue_selection": {
+   "tier1": 214,
+   "tier2": 204,
+   "unavailable": 39,
+   "no_sec_net_income_or_stale": 46
+  },
+  "margin_source": {
+   "sec_edgar": 418,
+   "yfinance_validated": 85,
+   "yahoo_rejected": 0
+  },
+  "accepted_datetime_source": {
+   "edgar_submissions": 503
+  },
+  "cases": {
+   "BRK-B": "P/B INCONSISTENT -> UNAVAILABLE -> quarantined",
+   "CPT": "SEC revenue UNAVAILABLE -> Yahoo margin 0.206",
+   "FITB": "Yahoo margin 0.230",
+   "HBAN": "Yahoo margin 0.254",
+   "MTB": "Yahoo margin 0.319 (watchlist)",
+   "DTE": "SEC margin 0.0924 via RegulatedAndUnregulatedOperatingRevenue",
+   "CL": "P/B CONSISTENT (ratio 1.0008), TOP-5 #1"
+  },
+  "replay": "MATCH",
+  "tracking_verify": "OK"
+ }
+}

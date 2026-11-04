@@ -354,6 +354,11 @@ def render_markdown(res: Dict[str, Any], st: Dict[str, Any], runs: List[Dict[str
               f"{c['cost_bps_per_side']:g} bps → mean {_pct(c['mean_net_return'])}, excess "
               f"{_pct(c['mean_net_excess_vs_spy'])}" for c in s["cost_sensitivity"]) +
           f". Conclusion changes with costs: {s['cost_sensitivity_conclusion_changes']}.", ""]
+    if s.get("by_data_input_spec_version"):
+        L += ["By data-input specification (observations under different input rules are never pooled silently): "
+              + "; ".join(f"`{k}`: valid {v['valid_observations']}, completed {v['completed_observations']}"
+                          + (f", mean {_pct(v['price_return']['mean'])}" if v["completed_observations"] else "")
+                          for k, v in s["by_data_input_spec_version"].items()), ""]
     if s["by_recommendation_rank"]:
         L += ["By recommendation rank: " + ", ".join(f"#{k}: n={v['n']} mean {_pct(v['mean'])}"
                                                       for k, v in s["by_recommendation_rank"].items()), ""]

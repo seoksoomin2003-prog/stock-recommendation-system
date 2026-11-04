@@ -346,6 +346,18 @@ class TestVersioning(unittest.TestCase):
         self.assertEqual(DATA_INPUT_SPEC_VERSION, "P6-20-A")
         self.assertEqual(FUNDAMENTALS_CACHE_SCHEMA, 5)
 
+    def test_tracking_summary_separates_spec_versions(self):
+        from pipeline import prospective_outcomes as po
+        obs = [{"observation_id": f"O{i}", "observation_class": "PORTFOLIO_TOP5", "run_id": f"R{i}",
+                "recommendation_rank": 1, "recommendation_timestamp_utc": "2026-11-04T12:00:00+00:00",
+                "data_input_spec_version": v} for i, v in enumerate(["P6-19-final", "P6-20-A", "P6-20-A"])]
+        outcomes = {o["observation_id"]: {"outcome_state": "PENDING_OUTCOME", "entry": {}} for o in obs}
+        cohorts = {o["observation_id"]: {"cohort": "VALID_PROSPECTIVE"} for o in obs}
+        s = po.summarize(obs, outcomes, cohorts, [])
+        self.assertEqual(s["by_data_input_spec_version"]["P6-19-final"]["valid_observations"], 1)
+        self.assertEqual(s["by_data_input_spec_version"]["P6-20-A"]["valid_observations"], 2)
+        self.assertEqual(s["by_data_input_spec_version"]["P6-20-A"]["completed_observations"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

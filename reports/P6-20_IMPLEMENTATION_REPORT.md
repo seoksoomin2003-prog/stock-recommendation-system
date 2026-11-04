@@ -233,6 +233,49 @@ All commands run from `~/Developer/quant-stock-engine`:
 - **Open from P6-19:** NewsAPI key rotation (user action), the sector-cap decision (user, future phase) and
   the freshness-calendar New Year rule (before 2027-12-31).
 
+## Addendum A/B (approved data-input rules, safe local git), 2026-11-04
+
+**Git (B).** No repository existed. `git init -b main`; `.gitignore` extended (tracking/, provider caches,
+data stores, junit, logs); secret scan of all 515 files before staging (one third-party e-mail redacted; the
+old NewsAPI key: 0 occurrences). Baseline `1e9472f0020d6071e6b63764dcc0f3bcd09c20c5`. The input-rule
+milestone was committed as `63c283d` after tests passed and the diff was reviewed. **No remote, no push**;
+`gh` is not installed. Details: `docs/GIT_SETUP_REPORT.md`.
+
+**Input rules (A1–A7).** Implemented in `data/loader.py` (spec `P6-20-A`, cache schema 5) and specified rule by rule
+in `docs/DATA_INPUT_SPECIFICATION.md`:
+- SEC timestamp eligibility: EDGAR `acceptanceDateTime` ≤ as-of (read as US/Eastern, which is conservative).
+  When acceptance is unknown, the filing date must be strictly before the as-of date.
+- A1: Yahoo P/B checked against marketCap / common equity (latest balance sheet ≤ 200 days old, preferred
+  stock subtracted, all-class share scope, USD). >10× → UNAVAILABLE with the original value kept;
+  invalid diagnostic → NOT_VERIFIABLE (Yahoo value kept, labelled).
+- A2: tiered semantic total revenue. Components are never total and never summed; exact period; USD;
+  same-filing preference.
+- A3: net margin >100% → anomaly review (continuing operations). The Yahoo margin is used only when fresh
+  and ≤ 100%. SEC net income is never divided by Yahoo revenue.
+- A4/A5: ADV20 source and timestamp; raw and normalised sector, observation time and status (the frozen
+  Technology-only cap is unchanged).
+- A6: unchanged.
+- Tracking summaries now break results down by `data_input_spec_version`.
+
+**Tests.** `tests/test_p6_20_input_rules.py` has 31 tests and covers every case listed in the addendum. Three
+P6-19 tests that asserted the superseded rules were rewritten for the same defect cases. Yahoo fixtures used for
+the margin fallback gained `mostRecentQuarter`. Full suite: **837 passed, 6 skipped, 5 xfailed, 0 failed**.
+Frozen hashes unchanged.
+
+**Live validation** (`20261104T125402Z_market_scan_5a396d`, REAL RECOMMENDATION, replay MATCH):
+- **TOP-5:** CL, SNDK, MU, AES, CHTR, identical to run 953827. The provenance-gate set is also identical
+  (446 names), so the new rules did not change the eligible set for this date.
+- **P/B cross-check:** 411 CONSISTENT, 90 NOT_VERIFIABLE (48 stale or missing recent equity, 34 non-positive
+  common equity, 8 no equity), 1 INCONSISTENT (BRK-B → quarantined).
+- **Revenue:** tier 1 for 214 names, tier 2 for 204; 39 have no reliable total.
+- **Margin source:** SEC for 418, validated Yahoo for 85, none rejected.
+- **Named cases:** CPT, FITB, HBAN and MTB use validated Yahoo margins. DTE now uses an SEC total-revenue
+  margin of 9.2%.
+- **Tracking:** the run entered the ledger as VALID_PROSPECTIVE. It is **not independent** of 953827 (same
+  day, same TOP-5), and the report says so. `tracking verify`: OK.
+
+**Status after addendum:** READY FOR PROSPECTIVE PERFORMANCE OBSERVATION (unchanged). No profitability claim.
+
 ## Final status
 
 **READY FOR PROSPECTIVE PERFORMANCE OBSERVATION.** Profitability is not established. The system now records

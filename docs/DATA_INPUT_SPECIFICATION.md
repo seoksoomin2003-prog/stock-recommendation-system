@@ -1,119 +1,149 @@
-# Data-Input Specification (approved in P6-19)
+# Data-Input Specification: version **P6-20-A**
 
-This document defines what is **fed into** the frozen P6-11B core. It does not
-change any frozen rule, formula, weight or threshold. The frozen engines
+This document defines what is **fed into** the frozen P6-11B core. It does not change any frozen
+formula, factor weight, normalisation rule, threshold or portfolio rule. The frozen engines
 (`core/factor_engine.py`, `core/scoring_engine.py`, `core/ranking_engine.py`,
-`core/decision_engine.py`, `contracts/decision.py`) are byte-identical to their
-pre-P6-18 versions. Their sha256 hashes are pinned in
-`tests/fixtures/frozen_source_sha256_p6_19.json` and recorded in every run's
-`run_manifest.json`.
+`core/decision_engine.py`, `contracts/decision.py`) are byte-identical to their pinned versions
+(`tests/fixtures/frozen_source_sha256_p6_19.json`, re-verified after every P6-20 change).
 
-All four definitions below were introduced in P6-18 and independently reviewed
-in P6-19:
-
-| # | Definition | P6-19 verdict |
+| Version | Where in force | Recorded as |
 |---|---|---|
-| 1 | ADV20 share volume | **KEEP** |
-| 2 | Yahoo sector for the 40% cap | **KEEP** (frozen Technology-only limitation documented) |
-| 3 | Data-quality exclusion before normalisation | **KEEP** |
-| 4 | SEC fiscal-period selection | **REVISE**: the period-selection logic is kept; the *revenue-concept* choice and two provider-value plausibility rules (§4a, §4b) were added after the full live run exposed three input defects (CPT, FITB/DTE/HBAN/MTB, BRK-B) |
+| `P6-20-A` (this document) | runs created after commit `63c283d` | `run_manifest.json → data_input_spec_version`, every ledger observation |
+| `P6-19-final` | run `20261104T111004Z_market_scan_953827` and other P6-19/P6-20 runs before the addendum | same field (inferred for older runs, see `pipeline/prospective_ledger.py::infer_data_input_spec`) |
 
-These are input definitions only. None of them changes a frozen formula, weight,
-threshold or rule.
+The implementation constant is `data/loader.py::DATA_INPUT_SPEC_VERSION`. The fundamentals cache
+schema is `FUNDAMENTALS_CACHE_SCHEMA = 5`. A cache entry with any other schema is refetched, so a
+rule change can never be hidden behind an old cached value.
+
+The P6-20 addendum rules are A1–A6. Summary:
+
+| Rule | Input | P6-20-A change |
+|---|---|---|
+| A1 | P/B validation | Cross-check now uses **common** equity from the **latest eligible balance sheet**, with share-class scope, currency and staleness checks. Outcomes: CONSISTENT / INCONSISTENT (→ UNAVAILABLE) / NOT_VERIFIABLE / PROVIDER_VALUE_UNAVAILABLE |
+| A2 | SEC total revenue | Replaces the P6-19 "largest of any revenue concept" rule with tiered **semantic** selection. Components are never total revenue. |
+| A3 | Net margin | Margins above 100% go to an anomaly review. The Yahoo fallback is used only if **validated**. SEC net income is never divided by Yahoo revenue. |
+| A4 | ADV20 | Definition unchanged; source and timestamp provenance added |
+| A5 | Sector | Raw and normalised label, observation time and status. The frozen Technology-only cap is unchanged. |
+| A6 | Gating | Unchanged (before normalisation, no imputation). Tests extended to the new rejection reasons. |
+| — | Timestamp eligibility | **New**, common to A1–A3: EDGAR acceptance datetime (see §0) |
 
 ---
 
-## 1. Average daily volume (input to the frozen 500,000 rule)
+## 0. SEC timestamp eligibility (common to A1–A3)
 
-| Item | Definition |
+| Item | Rule |
 |---|---|
-| Frozen rule | `DecisionEngine._check_data_quality`: `volume >= 500000` (and `evaluate_portfolio`: `volume < 500000` → `LIQUIDITY_REJECTED`) |
-| Input supplied as `volume` | **ADV20**: arithmetic mean of the last **20 valid daily share-volume observations** |
-| Provider / field | yfinance `download(..., auto_adjust=True)` → `Volume` (shares per session, split-adjusted). It is **not** dollar volume. |
-| Valid observation | One value per session, so duplicated timestamps keep the last value. NaN sessions are not observations. Negative values are invalid and dropped. A genuine `0` (for example a halt) is a valid observation. |
-| Insufficient history | Fewer than 20 valid observations → ADV20 is *missing*, never zero. The candidate is quarantined with `REQUIRED_NUMERIC_DATA_MISSING`. |
-| Freshness | The volume series must pass the same freshness gate as prices: last bar no more than 1 NYSE session behind, otherwise `STALE` → quarantined. |
-| Boundaries (tested) | 499,999 → FAIL · 500,000 → PASS · 500,001 → PASS |
-| Diagnostics | `adv20`, `adv20_window` (count, first and last session, unit) and `last_volume` (diagnostic only) in `candidate_flow.json` |
-| Rationale | The frozen threshold is stated as an *average daily volume* rule (P6-11B; P6-12A researched it with 20-day ADV). The pre-P6-18 live route passed the last session's volume, which is a single-day figure, not an average. |
-| Paths | The canonical pipeline is the only production route. Both Automated Market Scan and Direct Ticker Evaluation use it. |
+| Definition | A SEC fact may be used only if the filing that contains it was **public at the as-of timestamp**. The as-of timestamp is the fundamentals acquisition instant (`_sec_as_of` in provenance). It is never later than the recommendation timestamp (`RUN_COMPLETED`). |
+| Source | `filed` (date) from CompanyFacts. `acceptanceDateTime` from EDGAR **submissions** (`data.sec.gov/submissions/CIK##########.json`, `filings.recent`), one extra zero-cost request per CIK at the same < 10 req/s pacing, cached with the fundamentals. |
+| Policy | Acceptance datetime known → `accepted ≤ as_of`. Unknown (older than `filings.recent`, or the submissions request failed) → `filed` date **strictly before** the as-of US/Eastern date. A same-day filing whose acceptance time cannot be verified is excluded. |
+| Clock | EDGAR suffixes `acceptanceDateTime` with `Z`, but the timestamp is US Eastern. It is read as US/Eastern, which is never earlier than the true instant, so a filing that is not yet public is never admitted. |
+| Provenance | `accepted` on every selected fact. `_sec_accepted_datetime_source` per ticker (`edgar_submissions` or `UNAVAILABLE (…)`). |
+| Cache | An entry is computed at its acquisition time and reused for up to 20 h. Its as-of is therefore earlier than any later run's timestamp, which is conservative. |
+| Tests | `TestA1PriceToBook::test_filing_after_timestamp_is_never_used` (future filing; same-day unknown, after and before acceptance), `TestA2TotalRevenue::test_same_filing_preferred_and_future_filings_excluded` |
 
-## 2. Sector classification (input to the frozen 40% cap)
+## A1. Price-to-book (Yahoo value, SEC cross-check)
 
-| Item | Definition |
+| Item | Rule |
 |---|---|
-| Frozen rule | `DecisionEngine._optimize_portfolio`: at most **2 of 5** TOP-5 slots (40%) where `sector == "Technology"`. The frozen code applies the cap **only** to the literal label `Technology`. |
-| Input supplied as `sector` | yfinance `Ticker.info["sector"]`, used verbatim (for example `Technology`, `Healthcare`, `Financial Services`) |
-| Missing sector | Recorded as `Unknown`, with `sector_source = null` and reason `SECTOR_UNKNOWN_CAP_NOT_APPLICABLE`. A sector is never guessed or mapped from another source. |
-| Same-sector counting | All candidates with the same label count toward the same cap (tested with 8 Technology candidates → 2 selected, the rest go to the watchlist with `SECTOR_CAP_CONSTRAINT`) |
-| Pipeline survival | The sector is carried into `candidate_flow.json`, `validation_result.json`, the reports and the forward-tracking ledger (tested) |
-| Known frozen limitation (not changed) | Other sectors are **not** capped by the frozen engine, so five Healthcare names would give 100% Healthcare. P6-19 reports this in `sector_cap_warnings` (display only) and does not enforce it, because enforcing it would change frozen logic. See the P6-19 report, "Frozen-core conflicts". |
-| Classification note | Yahoo's taxonomy is not GICS. For example GOOGL and META are `Communication Services` and AMZN is `Consumer Cyclical`. The Wikipedia GICS sector is kept in the universe record for reference but is not used for the cap. |
+| Definition | The P/B fed to the frozen value factor is Yahoo `priceToBook`. It is **cross-checked**, never replaced, against a diagnostic P/B. |
+| Formula | `diagnostic_pbr = marketCap / common_equity`. `common_equity = StockholdersEquity − PreferredStockValue` at the **same balance-sheet instant**. `ratio = priceToBook / diagnostic_pbr`. |
+| Source | Yahoo `Ticker.info` (`priceToBook`, `marketCap`, `currentPrice` or `regularMarketPrice`, `sharesOutstanding`, `impliedSharesOutstanding`, `currency`, `financialCurrency`). SEC CompanyFacts `us-gaap:StockholdersEquity` and `us-gaap:PreferredStockValue` (USD, instant). |
+| Timestamp policy | §0. The **latest** balance sheet public at as-of, from forms 10-K, 10-K/A, 10-KT, 10-Q, 10-Q/A, 10-QT, 20-F or 40-F (highest period end, then latest filing). Preferred stock is taken at that same instant, preferring the same filing (accession). |
+| Accounting context | `StockholdersEquity` is the parent's equity: it excludes non-controlling interests and is entity-wide, covering all share classes. CompanyFacts contains only non-dimensional (consolidated) facts for one CIK. Preferred stock not tagged at that instant is recorded as `NOT_TAGGED_AT_INSTANT_TREATED_AS_ZERO`. An untagged preferred balance (e.g. JPM, about 5% of equity) moves P/B by far less than the 10× tolerance. |
+| Share-class scope | SEC equity is entity-wide, so `marketCap` must value **all** classes. The check is `marketCap / price ≈ impliedSharesOutstanding` (or `sharesOutstanding` when no implied count exists), within **2%** → `COMPATIBLE`. A market cap equal to one class only (`≈ sharesOutstanding` while the implied count is larger) → `SINGLE_CLASS_MARKET_CAP_VS_ENTITY_EQUITY`. Otherwise → `MARKET_CAP_SHARE_COUNT_UNRECONCILED`. Live check 2026-11-04: BRK-B, GOOGL and FOX value all classes (e.g. BRK-B 557.07 × 2,140,709,794 = marketCap), so the BRK-B Class-A book-value defect is still caught. |
+| Validation | All must hold for a diagnostic: SEC equity available, at most **200 days** old at as-of, `common_equity > 0`; `marketCap > 0`; scope `COMPATIBLE`; Yahoo `currency` and `financialCurrency` are USD (SEC values are USD). |
+| Outcomes | `CONSISTENT`: ratio within [0.1, 10]. Yahoo value used. **`INCONSISTENT`**: ratio > 10 or < 0.1 (or Yahoo P/B ≤ 0 against a positive diagnostic). Yahoo P/B becomes **UNAVAILABLE** (`reason = PBR_INCONSISTENT_WITH_SEC_COMMON_EQUITY`), and the original value and the full check are kept in `rejected_provider_value`. The ticker becomes `PARTIAL` and is quarantined by the frozen data-quality rule (`PROVIDER_VALUE_REJECTED_PBR`). **`NOT_VERIFIABLE`**: the diagnostic cannot be computed validly (reasons listed). The Yahoo value is used unchanged and labelled; this is the P6-19 "no check" behaviour. `PROVIDER_VALUE_UNAVAILABLE`: no Yahoo P/B exists. The field stays missing and the diagnostic is recorded only. |
+| Never | The diagnostic is never substituted for the Yahoo value. Nothing filed after as-of is used. |
+| Provenance | `field_provenance[t].pbr.consistency_check` (or `.rejected_provider_value`): `rule`, `status`, `reasons`, `provider_value`, `diagnostic_pbr`, `ratio`, `market_cap`, `share_scope`, `sec_common_equity {status, common_equity, balance_sheet_date, age_days, preferred_treatment}`, `sec_equity_filing {concept, end, filed, accepted, form, accn, fy, fp}` |
+| Missing data | Missing Yahoo P/B → field missing (`UNAVAILABLE`), never imputed |
+| Tests | `tests/test_p6_20_input_rules.py::TestA1PriceToBook`: normal agreement; >10× (low, high, and exactly 10×); loader never replaces; zero or negative equity; preferred subtraction; missing market cap; stale SEC filing; filing after the timestamp; incompatible share-class scope and currency; multi-class all-class market cap; unavailable Yahoo P/B; SEC not configured |
 
-## 3. Data-quality eligibility (before normalisation)
+## A2. SEC total revenue
 
-| Item | Definition |
+| Item | Rule |
 |---|---|
-| Usable statuses | `REAL`, `CACHED`, `REAL_CURRENT`, `REAL_PIT_ELIGIBLE`, `CACHED_PIT_ELIGIBLE`. This is the frozen `DecisionEngine._check_data_quality` set. |
-| Rejected statuses | `PARTIAL`, `UNAVAILABLE`, `STALE`, `MOCK` for price, volume or fundamentals |
-| Where | `pipeline/canonical.py` step 3, **before** `FactorEngine` / cross-sectional standardisation / scoring |
-| Effect | Excluded candidates contribute nothing to means, standard deviations, z-scores, percentiles or MODEL_RANK_E ranks. Tests change an excluded candidate's prices and fundamentals to extreme values and assert that every valid candidate's alpha, percentile, factor z-scores and rank are bit-identical. |
-| Partial coverage | The frozen ScoringEngine can re-weight over the factors that are available, but the frozen decision gate rejects `fundamental_status = PARTIAL`. Applying the same rule before normalisation is therefore **not stricter** than the frozen contract. It only stops rejected names from distorting the statistics of valid ones. A PARTIAL ticker (for example a loss-making company with no trailing PE) is reported with `missing_fundamentals`. |
-| Required numeric fields | `close`, `volume` (ADV20), `alpha`, `atr`, `ema20`. If any is missing → `REQUIRED_NUMERIC_DATA_MISSING`. |
-| Fail-safe | No eligible candidates → `DATA-INCOMPLETE / NO VALID RECOMMENDATION`. No market data at all → `LIVE DATA UNAVAILABLE`, with no fundamentals requests made. |
-| Cache status | A complete fundamentals observation served from the local cache (TTL 20 h) is labelled `CACHED`, not `REAL` (P6-19). |
+| Definition | Consolidated total revenue for **exactly** the fiscal period of the selected annual net income |
+| Source | SEC CompanyFacts `us-gaap`, unit **USD** only |
+| Timestamp policy | §0. Within the exact period, the fact from the **same filing (accession) as net income** is preferred; otherwise the latest eligible filing (restatement) is used. `same_filing_as_net_income` is recorded. |
+| Semantic priority | **Tier 1**, concepts defined as total revenue: `Revenues`, `RevenuesNetOfInterestExpense`, `RegulatedAndUnregulatedOperatingRevenue`. **Tier 2**, single-stream concepts: `RevenueFromContractWithCustomerExcludingAssessedTax`, `…IncludingAssessedTax`, `SalesRevenueNet`. Accepted only if **no** other revenue stream (component) is reported for the same period. **Components**, never total: `OperatingLeaseLeaseIncome`, `LeaseIncome`, `OperatingLeasesIncomeStatementLeaseRevenue`, `RealEstateRevenueNet`, `InterestAndDividendIncomeOperating`, `NoninterestIncome`, `InterestIncomeExpenseNet`, `InterestIncomeExpenseAfterProvisionForLoanLoss`, `PremiumsEarnedNet`. Within a tier, the largest **positive** value is used. Candidates in one tier share meaning, period, unit and scope. |
+| Extensions (priority 3) | CompanyFacts does not publish company-extension concepts (verified live: only `us-gaap`, `dei`, `srt`, `invest`, `ffd`, `ecd`). Extension revenue is therefore never used. A company that reports total revenue only through an extension gets `UNAVAILABLE`. |
+| Validation | Form in the 10-K family (10-K, 10-K/A, 10-KT, 20-F, 40-F). Duration (not instant) of 330–380 days. `start` **and** `end` equal to the net-income period. Finite value. Consolidated: non-dimensional by construction, single CIK entity. |
+| Never combined | Segment with consolidated (no dimensional facts are read). Quarterly or YTD with annual (the duration check and exact period). Different currencies or units (USD only). Facts across incompatible periods. Components are never summed. |
+| Rejection | Tier 2 with components present → `SINGLE_STREAM_CONCEPT_WITH_OTHER_REVENUE_STREAMS`. Component → `COMPONENT_NOT_TOTAL_REVENUE`. Non-positive value → `NON_POSITIVE_REVENUE`. Nothing selectable → `status = UNAVAILABLE`, reason `NO_RELIABLE_TOTAL_REVENUE` (candidates existed) or `NO_REVENUE_CONCEPT_FOR_PERIOD` |
+| Live cases (2026-11-04) | CPT (ASC 606 $13M + lease income $1,574M, no total) → UNAVAILABLE. P6-19 used lease income. FITB, HBAN and MTB (bank components only) → UNAVAILABLE. DTE → tier 1 `RegulatedAndUnregulatedOperatingRevenue` $15,814M (margin 9.2%). P6-19 rejected it. JPM, BRK-B, GOOGL and O → `Revenues`. AAPL, CL and MU → tier 2 ASC 606 (no other streams). |
+| Provenance | `field_provenance[t].profitMargin.revenue_selection {rule, status, tier, reason, same_filing_as_net_income, candidates{concept: val, accn, filed, tier}, rejected[]}`. `_sec_filings.revenue {concept, taxonomy, unit, start, end, duration_days, filed, accepted, form, accn, fy, fp}` |
+| Missing data | No SEC revenue → no SEC margin. The margin goes to the validated Yahoo fallback (A3). It is never reconstructed. |
+| Tests | `TestA2TotalRevenue`: tier 1 over a larger component; largest only among compatible total concepts; tier 2 accepted and rejected; components never total or summed; quarterly, YTD and shifted periods; other units; same-filing preference and future filings; provenance fields. `TestP619LiveDefectRegressions::test_reit_revenue_component_is_never_total_revenue` (CPT) |
 
-## 4. SEC fiscal-period selection (ROE and profit margin)
+## A3. Net margin
 
-| Item | Definition |
+| Item | Rule |
 |---|---|
-| Source | SEC EDGAR CompanyFacts (`data.sec.gov/api/xbrl/companyfacts`), queried **only** when `SEC_USER_AGENT` is a valid "<app> <contact e-mail>" identity. Otherwise SEC is not contacted and the status is `SEC_NOT_CONFIGURED`. |
-| Annual flow (net income, revenue) | Forms `10-K`, `10-K/A`, `10-KT`, `20-F`, `40-F`. The duration must be **330–380 days**, which excludes quarterly and YTD values and accepts 52/53-week years. Only filings with `filed <= today` count. |
-| Latest period | Highest fiscal **period end**, then the latest `filed` date for that same period. A restatement or amendment (10-K/A) for the same period therefore wins. A prior-year comparative re-reported in a later 10-K can never become "latest", because its period end is older. |
-| Alignment | Revenue and stockholders' equity must have **the same period end** as the selected net income. Otherwise the metric is missing (never mixed across periods), and the field falls back to Yahoo with its own provenance. |
-| Staleness | A latest annual period older than 550 days gives `STALE`, and SEC values are not used. |
-| Metrics | ROE = NI / equity (equity > 0). Profit margin = NI / revenue (revenue > 0). |
-| Provenance kept | Per field: `source` (`sec_edgar` / `yfinance` / null) and `status`. Per ticker: `_sec_status`, `_sec_fiscal_period_end`, and `_sec_filings` with concept, start, end, filed, form, accession number (`accn`), `fy` and `fp` for net income, equity and revenue. |
-| Revenue concept (P6-19 REVISE) | Candidates: `Revenues`, `RevenueFromContractWithCustomerExcludingAssessedTax`, `RevenueFromContractWithCustomerIncludingAssessedTax`, `SalesRevenueNet`, `OperatingLeaseLeaseIncome`, `RealEstateRevenueNet`, `RevenuesNetOfInterestExpense` (see `SEC_REVENUE` in `data/loader.py`). Among the candidates reported **for the same period end as net income**, the **largest** value is used (`revenue_rule = max_same_period_total_revenue_concept`; all candidate values are kept in the detail). Before P6-19 the first concept in list order won, so CPT (a REIT that tags no `Revenues`) used a $13M ASC 606 slice instead of $1,574M lease income, which gave a 2,965% margin. |
-| PER / PBR | Always from yfinance (`trailingPE`, `priceToBook`), with provenance |
+| Definition | `profitMargin = NetIncomeLoss / total revenue`. Same fiscal period, same entity, USD, both available at as-of, revenue passed A2. |
+| SEC NI | Latest annual `NetIncomeLoss` (10-K family, 330–380 days, highest period end, then latest eligible filing). A period end older than 550 days → `STALE` and no SEC values. |
+| Anomaly review | Margin > 100% is **reviewed, not declared impossible**. If `IncomeLossFromContinuingOperations` for the same period exists and is ≤ revenue, the margin is **ACCEPTED** and flagged (the excess comes from discontinued operations or exceptional items). Otherwise it is **REJECTED** (`NET_MARGIN_ABOVE_100PCT_UNEXPLAINED`, explanation recorded) and the field goes to the Yahoo fallback. |
+| Yahoo fallback (CPT/FITB/DTE/HBAN/MTB class) | Used only if the SEC margin is unavailable or rejected. It must be validated: `profitMargins` is finite and ≤ 100%, and `mostRecentQuarter` is at most **200 days** old at acquisition. The definition is Yahoo's own TTM net income / TTM revenue (one provider, one period). Labelled `source = yfinance` with `yahoo_validation`. Otherwise UNAVAILABLE with `yahoo_rejected.reason` ∈ {`PROVIDER_VALUE_MISSING`, `FRESHNESS_UNVERIFIABLE_NO_MOST_RECENT_QUARTER`, `PROVIDER_PERIOD_STALE`, `ABOVE_100PCT_NOT_REVIEWABLE_FROM_PROVIDER`}. |
+| Never | SEC net income divided by a Yahoo revenue. A margin built from components. |
+| Provenance | `profitMargin.source`, `.sec_rejected {reason, concept, revenue, net_income, rejected_facts or review}`, `.anomaly_review {trigger, net_margin, decision, explanation}`, `.yahoo_validation` or `.yahoo_rejected {definition, provider_value, most_recent_quarter, age_days, status, reason}` |
+| Missing data | UNAVAILABLE → ticker `PARTIAL` → quarantined by the frozen data-quality rule before normalisation (A6) |
+| Tests | `TestA3NetMargin`: >100% explained and accepted; >100% unexplained, rejected, then validated Yahoo (and never SEC NI / Yahoo revenue); failed revenue rejects the SEC margin; four unvalidated-Yahoo cases; valid SEC margin kept |
+| ROE (unchanged) | `NetIncomeLoss / StockholdersEquity` at the NI period end (equity > 0), preferring the same filing; otherwise Yahoo `returnOnEquity` |
 
-### 4a. Revenue plausibility (P6-19)
+## A4. Average daily volume (input to the frozen 500,000 rule)
 
-| Item | Definition |
+| Item | Rule |
 |---|---|
-| Rule | If SEC net income **exceeds** the selected revenue value for the same period, that value cannot be total revenue (it is a slice such as fee income or lease income). The SEC profit margin is **rejected** (never reconstructed from other lines), and the field falls back to Yahoo `profitMargins` with `source = yfinance` and `sec_rejected = {reason: NET_INCOME_EXCEEDS_REVENUE_CONCEPT, concept, revenue, net_income}`. |
-| Live cases | FITB and DTE (only `OperatingLeaseLeaseIncome` tagged for FY2025, giving margins of 3,153% and 2,397%) and HBAN and MTB (only the ASC 606 fee-income slice, giving 142% and 172%) |
-| ROE | Unaffected (net income ÷ equity) |
-| Accepted risk | A company whose net income genuinely exceeds revenue (for example a large one-off gain) also falls back to Yahoo. That is conservative: it substitutes a disclosed provider value and labels it. |
+| Frozen rule | `DecisionEngine._check_data_quality`: `volume >= 500000` (unchanged; boundaries 499,999 FAIL / 500,000 PASS / 500,001 PASS are tested) |
+| Definition and formula | **ADV20** = arithmetic mean of the last **20 valid session observations** of share volume. These are trading sessions, not calendar days, and it is not single-day volume. |
+| Source | yfinance `download(…, auto_adjust=True)` → `Volume` (split-adjusted shares per session; not dollar volume) |
+| Validation | One value per session (the duplicate timestamp's last value). NaN is not an observation. Negative values are invalid and dropped. A genuine 0 (halt) is valid. The series must pass the price freshness gate (at most 1 NYSE session behind). |
+| Missing data | Fewer than 20 valid observations → ADV20 **missing** (never 0) → `REQUIRED_NUMERIC_DATA_MISSING` |
+| Provenance | `candidate_flow[t].adv20`, `adv20_window {observations, first, last, unit, source, retrieved_at, rule}`, `last_volume` (diagnostic only) |
+| Tests | `tests/test_p6_19_hardening.py` (threshold boundaries, duplicates, NaN, negatives), `TestA4A5A6Pipeline::test_adv20_provenance_and_missing_is_not_zero` |
 
-### 4b. Price-to-book consistency (P6-19, new rule, **flagged for user review**)
+## A5. Sector (input to the frozen Technology cap)
 
-| Item | Definition |
+| Item | Rule |
 |---|---|
-| Rule | When Yahoo `marketCap` and same-filer SEC `StockholdersEquity` are both available, the implied ratio `marketCap / equity` is compared with Yahoo `priceToBook`. If they differ by more than **10×** in either direction, the Yahoo value is set to *missing* (`status = REJECTED_INCONSISTENT`, original value kept in `rejected_provider_value`). It is **never replaced** by the implied value. |
-| Effect | The ticker becomes `PARTIAL` and is quarantined with `PROVENANCE_STATUS_REJECTED` and `PROVIDER_VALUE_REJECTED_PBR`, through the frozen data-quality rule (§3). |
-| No check | If market cap or SEC equity is missing or not positive, the Yahoo value is used unchanged. |
-| Live case | BRK-B: Yahoo `priceToBook = 0.00107` against an implied ≈1.4. This gave a value z-score of 21.1 and made BRK-B the #1 pick in the first P6-19 full run. |
-| Why 10× | Share-class and currency mismatches cause errors of 1,000× or more, while legitimate timing differences (equity as of the last fiscal year end, market cap today) stay well inside 10×. In the live run every consistent ticker's ratio was within [0.1, 10]. |
+| Frozen rule | At most 2 of 5 TOP-5 slots where `sector == "Technology"` (P6-11B approved, Technology only; see `reports/P6-20_SECTOR_CAP_REVIEW.md`). Unchanged. |
+| Definition | `sector_raw` = Yahoo `info["sector"]` verbatim. `sector` = `sector_raw.strip()` (whitespace only; no mapping, no case change, no other taxonomy). The engine receives `sector`. Yahoo has not been observed to return padded labels, so in practice the cap's reach is unchanged. |
+| Timestamp | `sector_observed_at` = provider retrieval time. `sector_status` = `REAL`, `CACHED` (served from the 20 h cache) or `MISSING` |
+| Missing data | Empty or missing → `sector = "Unknown"`, `sector_source = null`, reason `SECTOR_UNKNOWN_CAP_NOT_APPLICABLE`. A sector is never invented or taken from another source. |
+| Reporting | Every run reports full `sector_exposure` and `sector_cap_warnings` (any sector > 40%, display only). Tracking diagnostics do the same. |
+| Tests | `TestA4A5A6Pipeline::test_sector_raw_and_normalised_preserved_and_missing_recorded`, `::test_loader_sector_normalisation`, `tests/test_p6_20_prospective_tracking.py::TestDiagnostics::test_sector_exposure_reported_frozen_cap_unchanged` |
 
-### Fundamentals cache
+## A6. Data-quality gating (before normalisation)
 
-The cache records a schema number (`FUNDAMENTALS_CACHE_SCHEMA`, currently **4**). An
-entry with another schema, or one written with a different SEC configuration, is
-refetched, so a rule change can never be masked by an old cached value.
+| Item | Rule |
+|---|---|
+| Usable statuses | `REAL`, `CACHED`, `REAL_CURRENT`, `REAL_PIT_ELIGIBLE`, `CACHED_PIT_ELIGIBLE` (the frozen `_check_data_quality` set) |
+| Where | `pipeline/canonical.py` step 3, **before** `FactorEngine`, cross-sectional standardisation and scoring |
+| Effect | Excluded candidates contribute nothing to means, standard deviations, z-scores, percentiles or ranks. There is no median imputation and there are no synthetic values. A field made UNAVAILABLE by A1 or A3 makes the ticker `PARTIAL`, which is quarantined (`PROVENANCE_STATUS_REJECTED`, plus `PROVIDER_VALUE_REJECTED_<FIELD>` for a rejected provider value). |
+| Required numeric fields | `close`, `volume` (ADV20), `alpha`, `atr`, `ema20` → otherwise `REQUIRED_NUMERIC_DATA_MISSING` |
+| Tests | `tests/test_p6_19_hardening.py::…test_excluded_candidate_values_cannot_change_valid_scores` (extreme values on an excluded name leave valid names bit-identical), `TestA4A5A6Pipeline::test_rejected_pbr_quarantines_before_normalisation` |
 
-### Known genuine outliers (not defects)
+## PER (unchanged)
 
-CL: ROE 39.5 (3,948%). SEC `StockholdersEquity` at 2025-12-31 is **$54M** in the
-10-K and in every 10-Q (share buybacks), so the value is genuine. The frozen
-standardisation does not winsorise, so a single genuine extreme value can
-dominate a factor z-score. That behaviour is part of the frozen P6-11B core and
-is reported, not changed.
+Yahoo `trailingPE`, with provenance. Missing (e.g. a loss-making company) → `PARTIAL`.
+
+## Known genuine outliers (not defects)
+
+CL: ROE ≈ 39.5 (3,948%). SEC `StockholdersEquity` at 2025-12-31 is $54M (buybacks), and Yahoo
+P/B ≈ 264 agrees with marketCap / common equity (A1 CONSISTENT, ratio 1.0008). The frozen
+standardisation does not winsorise. This is reported, not changed.
 
 ## Status vocabulary
 
-`REAL` (current provider observation) · `CACHED` (provider observation served
-from the local cache inside its TTL) · `PARTIAL` (some required fields missing)
-· `UNAVAILABLE` (provider returned nothing) · `STALE` (older than the freshness
-limit) · `MOCK` (synthetic; never allowed into production). Missing data is
-never relabelled as MOCK and never converted to zero.
+`REAL` (current provider observation) · `CACHED` (served from the local cache inside its TTL) ·
+`PARTIAL` (some required fields missing) · `UNAVAILABLE` (no usable value) · `STALE` (older than the
+freshness limit) · `MOCK` (synthetic; never allowed in production). A1 check statuses: `CONSISTENT`,
+`INCONSISTENT`, `NOT_VERIFIABLE`, `PROVIDER_VALUE_UNAVAILABLE`. Missing data is never relabelled as
+MOCK, never converted to zero and never imputed.
+
+## History
+
+- P6-18: ADV20, Yahoo sector, gating before normalisation, period-aligned SEC selection.
+- P6-19: revenue concept "largest same-period" (CPT), the NI > revenue rejection (FITB, DTE, HBAN,
+  MTB), and the P/B 10× consistency rule (BRK-B). All three are **superseded** by A1–A3 above.
+  Results produced under `P6-19-final` stay valid and are reported under their own spec version.
+- P6-20-A (this version): addendum A1–A7 and SEC timestamp eligibility.
