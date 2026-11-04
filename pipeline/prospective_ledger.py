@@ -155,6 +155,10 @@ def eligibility_of_run(run_dir: Path) -> Dict[str, Any]:
     """Only completed, full-universe market scans with a REAL RECOMMENDATION are recorded."""
     v, st = _load(run_dir, "validation_result.json"), _load(run_dir, "execution_status.json")
     reasons = []
+    # P6-21: the US ledger records US runs only.  Runs before P6-21 carry no "market" key; they were
+    # produced exclusively by the US canonical pipeline, so their market is US by construction.
+    if _load(run_dir, "run_manifest.json").get("market", "US") != "US":
+        reasons.append("NOT_A_US_MARKET_RUN")
     if v.get("mode") != "market_scan":
         reasons.append("NOT_A_MARKET_SCAN")
     if v.get("validation_scope") != "full":

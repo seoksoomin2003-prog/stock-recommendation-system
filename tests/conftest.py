@@ -22,6 +22,7 @@ ALLOWED_WRITES = {
     # The test-results artifacts are written by the test runners themselves.
     "reports/P6-19_pytest_junit.xml",
     "reports/P6-20_pytest_junit.xml",
+    "reports/P6-21_25_pytest_junit.xml",
 }
 LIVE = os.getenv("QPP_PROVIDER_TESTS") == "1"
 

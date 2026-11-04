@@ -13,6 +13,13 @@
     python app.py tracking verify      hash chains, artifact integrity, reconstruction, replay
     python app.py track                alias: tracking update + tracking report
 
+Multi-market (P6-21..25): ``--market`` selects the market (default US, unchanged behaviour).
+    python app.py --market KR scan --capital 10000000   KR liquid-300 scan (EXPERIMENTAL model, KRW)
+    python app.py --market KR evaluate 005930 035720    KR direct evaluation against the liquid-300 reference
+    python app.py --market KR tracking update|report|status|verify
+    python app.py dashboard [--open]   unified US/KR dashboard (read-only, tracking/dashboard.html)
+    python app.py migrate-storage      idempotent, additive storage layout v2 (backs up tracking/ first)
+
 Capital is REQUIRED (no default): pass --capital AMOUNT or set QPP_CAPITAL in .env.
 
 Every run writes a durable artifact directory under ``runs/<run_id>/``.
@@ -357,7 +364,12 @@ def interactive() -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="app.py", description="Quant stock recommendation (frozen P6-11B, public data).")
+    p.add_argument("--market", choices=["US", "KR"], default="US",
+                   help="Market (default US; KR = separate experimental Korean engine, KRW)")
     sub = p.add_subparsers(dest="command")
+    db = sub.add_parser("dashboard", help="Unified read-only US/KR dashboard (tracking/dashboard.html)")
+    db.add_argument("--open", action="store_true")
+    sub.add_parser("migrate-storage", help="Additive storage layout v2 (idempotent; backs up tracking/ first)")
     s = sub.add_parser("scan", help="Automated Market Scan of the current S&P 500")
     s.add_argument("--capital", default=None,
                    help="REQUIRED unless QPP_CAPITAL is set: capital in USD used for position sizing, e.g. 50000")
@@ -395,6 +407,20 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv=None) -> int:
     os.chdir(PROJECT_ROOT)  # relative cache/report paths are project-relative (at run time, not import time)
     args = build_parser().parse_args(argv)
+    if args.command == "dashboard":
+        from markets import dashboard
+        out = dashboard.write()
+        print(f"Dashboard: {out}")
+        if args.open and sys.platform == "darwin":
+            os.system(f"open '{out}'")
+        return 0
+    if args.command == "migrate-storage":
+        from markets import storage
+        print(json.dumps(storage.migrate(PROJECT_ROOT), indent=1, default=str))
+        return 0
+    if args.market == "KR" and args.command:
+        from markets.kr import cli as kr_cli
+        return kr_cli.dispatch(args)
     if args.command in ("scan", "evaluate"):
         try:
             args.capital, args.capital_source = runtime_config.resolve_capital(args.capital)

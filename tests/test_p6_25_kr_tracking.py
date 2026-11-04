@@ -1,0 +1,128 @@
+"""P6-25: KR paper tracking: immutability, duplicates, entry timing, no look-ahead, KRW/cohort separation."""
+import json
+from datetime import datetime, timezone
+
+import pandas as pd
+import pytest
+
+from tests import kr_fakes as F
+from markets.kr import tracking as kt
+from markets.kr.pipeline import KRContext, run_kr_scan
+from markets.storage import runs_dir, tracking_dir
+from pipeline.prospective_ledger import read_jsonl
+
+
+@pytest.fixture()
+def scanned(tmp_path):
+    ctx = KRContext(fetch_kind=F.fake_kind(), provider_factory=F.provider_factory(F.FakeDownload()), now=F.NOW,
+                    base_dir=tmp_path)
+    v = run_kr_scan(10_000_000, ctx=ctx)
+    return {"v": v, "td": tracking_dir("KR", tmp_path), "rd": runs_dir("KR", tmp_path), "base": tmp_path}
+
+
+def _prov():
+    return F.provider_factory(F.FakeDownload())()
+
+
+def test_records_are_kr_krw_experimental_and_keyed(scanned):
+    obs = kt.observations(scanned["td"])
+    assert len(obs) == 10 and len(kt.runs(scanned["td"])) == 1
+    for o in obs:
+        assert o["market"] == "KR" and o["currency"] == "KRW" and o["cohort"] == "EXPERIMENTAL_PROSPECTIVE"
+        assert o["key"] == f"OBS:KR:{o['run_id']}:{o['ticker']}" and o["model_version"].startswith("KR-EXP")
+        assert o["benchmark"] in ("^KS11", "^KQ11") and o["horizon_sessions"] == 20
+    r = kt.runs(scanned["td"])[0]
+    assert r["universe"]["snapshot_sha256"] and r["signal"]["entry_not_before"]
+
+
+def test_kr_ledger_is_separate_from_us(scanned):
+    assert scanned["td"] == scanned["base"] / "tracking" / "kr"
+    assert not (scanned["base"] / "tracking" / "ledger" / "observations.jsonl").exists()
+
+
+def test_duplicate_recording_is_idempotent(scanned):
+    rd = scanned["rd"] / scanned["v"]["run_id"]
+    before = (scanned["td"] / "ledger" / "observations.jsonl").read_bytes()
+    assert kt.record_run(rd, scanned["td"])["already_recorded"]
+    assert kt.sync_runs(scanned["rd"], scanned["td"])["recorded"] == []
+    assert (scanned["td"] / "ledger" / "observations.jsonl").read_bytes() == before
+
+
+def test_ledger_tamper_detected(scanned):
+    p = scanned["td"] / "ledger" / "observations.jsonl"
+    lines = p.read_text().splitlines()
+    rec = json.loads(lines[3])
+    rec["shares"] += 1
+    lines[3] = json.dumps(rec)
+    p.write_text("\n".join(lines) + "\n")
+    assert not kt.verify(scanned["td"], scanned["rd"])["ok"]
+
+
+def test_artifact_change_detected(scanned):
+    rd = scanned["rd"] / scanned["v"]["run_id"]
+    (rd / "candidate_flow.json").write_text("{}")
+    r = kt.verify(scanned["td"], scanned["rd"])
+    assert not r["ok"] and r["runs"][0]["artifacts"] == "CHANGED"
+
+
+def test_entry_never_before_entry_not_before_and_horizon(scanned):
+    r = kt.update(scanned["td"], provider=_prov(), now=datetime(2026, 12, 20, 10, tzinfo=timezone.utc))
+    out = json.loads(open(r["outcomes_file"]).read())
+    obs = {o["observation_id"]: o for o in kt.observations(scanned["td"])}
+    for oid, x in out["outcomes"].items():
+        assert x["outcome_state"] == "COMPLETED_OUTCOME" and x["currency"] == "KRW"
+        assert x["entry"]["session"] >= obs[oid]["entry_not_before"] and x["entry"]["basis"] == "open"
+        assert x["sessions_held"] == 20 and x["exit"]["session"] > x["entry"]["session"]
+        assert x["returns"]["benchmark"] == obs[oid]["benchmark"]
+    s = out["summary"]
+    assert s["sample_status"] == "INSUFFICIENT_SAMPLE" and "annual" not in json.dumps(s).lower()
+
+
+def test_pending_states_before_data_exists(scanned):
+    early = kt.update(scanned["td"], provider=_prov(), now=datetime(2026, 11, 4, 1, tzinfo=timezone.utc))
+    assert set(early["states"]) <= {"PENDING_ENTRY", "PENDING_OUTCOME"}
+
+
+def test_no_look_ahead_bars_after_now_are_ignored(scanned):
+    now = datetime(2026, 11, 20, 10, tzinfo=timezone.utc)
+    r = kt.update(scanned["td"], provider=_prov(), now=now)
+    snap = pd.read_csv(scanned["td"] / "prices" / f"{r['update_id']}.csv.gz", parse_dates=["date"])
+    assert snap["date"].max() <= pd.Timestamp("2026-11-20")
+    out = json.loads(open(r["outcomes_file"]).read())
+    assert all(x["outcome_state"] in ("PENDING_OUTCOME", "PENDING_ENTRY") for x in out["outcomes"].values())
+
+
+def test_data_gap_is_incomplete_never_filled():
+    sess = pd.bdate_range("2026-11-02", periods=25)
+    obs = {"observation_id": "o", "ticker": "t", "entry_not_before": "2026-11-02", "benchmark": "^KS11"}
+    bars = pd.DataFrame({"date": sess, "open": 100.0, "close": 101.0, "adj_close": 101.0, "quality_status": "REAL"})
+    bench = pd.DataFrame({"Open": 1.0, "Close": 1.0}, index=sess)
+    gap = bars.drop(index=5)
+    assert kt.outcome(obs, gap, bench, sess)["outcome_state"] == "INCOMPLETE"
+    assert kt.outcome(obs, gap, bench, sess)["reason"] == "DATA_GAP"
+    invalid = bars.copy()
+    invalid.loc[0, "quality_status"] = "INVALID"
+    assert kt.outcome(obs, invalid, bench, sess)["reason"] == "ENTRY_BAR_MISSING"
+    ok = kt.outcome(obs, bars, bench, sess)
+    assert ok["outcome_state"] == "COMPLETED_OUTCOME" and ok["returns"]["price_return"] == pytest.approx(0.01)
+    assert [c["cost_bps_per_side"] for c in ok["returns"]["cost_sensitivity"]] == list(kt.COST_BPS)
+
+
+def test_replay_matches_and_report_written(scanned):
+    r = kt.update(scanned["td"], provider=_prov(), now=datetime(2026, 12, 20, 10, tzinfo=timezone.utc))
+    assert kt.replay(r["update_id"], scanned["td"])["match"]
+    rep = kt.write_report(scanned["td"]).read_text(encoding="utf-8")
+    assert "KRW" in rep and "EXPERIMENTAL" in rep and "USD" not in rep.replace("never combined with USD", "")
+    assert (scanned["td"] / "reports" / "latest.html").exists()
+    assert kt.verify(scanned["td"], scanned["rd"])["ok"]
+    log = read_jsonl(scanned["td"] / "updates.jsonl")
+    assert log[-1]["outcomes_sha256"]
+
+
+def test_ineligible_runs_not_recorded(tmp_path):
+    rd = tmp_path / "r"
+    rd.mkdir()
+    (rd / "run_manifest.json").write_text(json.dumps({"market": "US"}))
+    e = kt.eligibility(rd)
+    assert not e["eligible"] and "NOT_A_KR_RUN" in e["reasons"]
+    assert kt.record_run(rd, tmp_path / "t")["recorded_observations"] == 0

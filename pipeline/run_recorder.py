@@ -129,8 +129,14 @@ def _data_input_spec_version():
 
 
 class RunRecorder:
-    def __init__(self, mode: str, params: Dict[str, Any], runs_dir: Optional[str] = None):
+    def __init__(self, mode: str, params: Dict[str, Any], runs_dir: Optional[str] = None,
+                 market: str = "US", stages=None, manifest_extra: Optional[Dict[str, Any]] = None):
+        """``market`` (P6-21) is recorded explicitly in every manifest.  The US defaults are unchanged;
+        another market supplies its own ``stages`` and ``manifest_extra`` (its own versions), and none
+        of the US-specific fields (frozen fingerprints, SEC status, US data spec) are attached to it."""
         self.params = dict(params or {})
+        self.market = market
+        self.stages = tuple(stages) if stages else STAGES
         from utils import config as cfg
         self.started_monotonic = time.monotonic()
         self.started_at = datetime.now(timezone.utc)
@@ -145,18 +151,24 @@ class RunRecorder:
             (self.root / "LATEST").write_text(self.run_id + "\n")
         except Exception:
             pass
-        self.write("run_manifest.json", {
-            "run_id": self.run_id, "mode": mode, "params": params,
+        manifest = {
+            "run_id": self.run_id, "mode": mode, "params": params, "market": market,
             "started_at": self.started_at.isoformat(), "cwd": os.getcwd(),
             "python": sys.version.split()[0], "platform": platform.platform(),
             "machine": platform.machine(), "pid": os.getpid(),
             "packages": self._package_versions(),
-            "frozen_core": frozen_config_fingerprint(),
-            "frozen_source_sha256": frozen_source_hashes(),
-            "sec_user_agent_status": _sec_status(),
-            "data_input_spec_version": _data_input_spec_version(),
-            "pipeline": "pipeline.canonical.CanonicalPipeline",
-        })
+        }
+        if market == "US":
+            manifest.update({
+                "market_config_version": "US-1",
+                "frozen_core": frozen_config_fingerprint(),
+                "frozen_source_sha256": frozen_source_hashes(),
+                "sec_user_agent_status": _sec_status(),
+                "data_input_spec_version": _data_input_spec_version(),
+                "pipeline": "pipeline.canonical.CanonicalPipeline",
+            })
+        manifest.update(manifest_extra or {})
+        self.write("run_manifest.json", manifest)
         self.checkpoint("RUN_STARTED")
 
     @staticmethod
@@ -190,7 +202,7 @@ class RunRecorder:
                 "checkpoints": self.checkpoints, **extra}
 
     def checkpoint(self, stage: str, **details):
-        if stage not in STAGES:
+        if stage not in self.stages:
             raise ValueError(f"Unknown stage {stage}")
         entry = {"stage": stage, "at": datetime.now(timezone.utc).isoformat(),
                  "elapsed_seconds": self.elapsed(), "peak_rss_mb": round(peak_rss_mb(), 1),
