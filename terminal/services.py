@@ -81,6 +81,8 @@ class Terminal:
         self.watchlist_file = self.base / "data" / "terminal" / "watchlist.json"
         self.journal = pf.Journal(self.base / "data" / "terminal" / "journal.jsonl")
         self.settings_file = self.base / "data" / "terminal" / "settings.json"
+        from terminal.lab.service import Lab
+        self.lab = Lab(self.base, now=self.now)
 
     # ---------------------------------------------------------------- helpers
     def _intraday(self, last_date: Optional[str]) -> bool:
@@ -304,7 +306,7 @@ class Terminal:
         except Exception as exc:
             trk = {"status": "UNAVAILABLE", "error": type(exc).__name__}
         return {"baseline": base, "tracking": trk, "challengers": [],
-                "challenger_note": "도전자 모델은 3단계에서 추가됩니다. 기준 모델(P6-11B)은 변경하지 않습니다."}
+                "challenger_note": "도전자 모델 비교는 아래 표에 있습니다. 기준 모델(P6-11B)은 변경하지 않습니다."}
 
     # ---------------------------------------------------------------- portfolio (TERMINAL-2)
     def settings(self) -> Dict[str, float]:

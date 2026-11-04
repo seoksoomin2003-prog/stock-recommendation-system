@@ -39,6 +39,10 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("POST", "/api/settings"): lambda q, b: t.settings_set(b),
         ("GET", "/api/sizing"): lambda q, b: t.sizing(q.get("t", ""), q.get("entry"), q.get("stop"), q.get("equity")),
         ("GET", "/api/model/plan"): lambda q, b: t.model_plan(),
+        ("GET", "/api/lab/status"): lambda q, b: t.lab.status(),
+        ("GET", "/api/lab/compare"): lambda q, b: t.lab.comparison(),
+        ("GET", "/api/lab/research"): lambda q, b: t.lab.research(),
+        ("POST", "/api/lab/run"): lambda q, b: t.lab.run_background(),
     }
 
 

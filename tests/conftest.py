@@ -25,6 +25,7 @@ ALLOWED_WRITES = {
     "reports/P6-21_25_pytest_junit.xml",
     "reports/TERMINAL-1_pytest_junit.xml",
     "reports/TERMINAL-2_pytest_junit.xml",
+    "reports/TERMINAL-3_pytest_junit.xml",
 }
 LIVE = os.getenv("QPP_PROVIDER_TESTS") == "1"
 

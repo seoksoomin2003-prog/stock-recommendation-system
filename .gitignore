@@ -48,3 +48,5 @@ nohup.out
 
 # TERMINAL: personal portfolio journal, settings, watchlist and caches (private user data, never committed)
 data/terminal/
+# TERMINAL-3 lab: price panel, challenger ledger, research cache (local data, never committed)
+data/lab/

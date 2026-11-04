@@ -291,6 +291,43 @@ How records work:
 
 Specification: `reports/TERMINAL_2_SPECIFICATION.md`.
 
+**Stage 3 (TERMINAL-3): challenger models and research lab.**
+
+The frozen P6-11B stays the baseline. Rule-based challengers are observed beside it, prospectively, under one common yardstick.
+
+```bash
+python app.py lab update     # refresh ~500 S&P 500 daily bars (about 2-3 minutes) and record today's challenger signals
+python app.py lab compare    # prospective comparison summary
+```
+
+Run `lab update` once a day after the US close (17:00 ET, about 07:00 KST), or press the button on the 모델 tab. Running it twice on the same day records nothing new.
+
+**Challengers** (price-only, parameters fixed in advance, top 10 stocks at equal weight):
+* `MOM_12_1`: 12-month return, skipping the last month;
+* `LOWVOL_252`: lowest 252-day volatility;
+* `TREND_SWING`: close above SMA200, SMA50 above SMA200, ranked by 6-month return;
+* baselines `BASE_SPY` and `BASE_EW` (equal weight across the whole universe).
+
+**Prospective records:**
+* stored in `data/lab/ledger.jsonl`, append-only and hash-chained;
+* one record per model per completed session;
+* the entry is the first regular-session open after the record time, the same rule as P6-20.
+
+**Common yardstick:**
+* buy at the entry-session open, sell at the close of the H-th session (H = 5, 20 or 60);
+* dividends included, equal weight, excess return versus SPY;
+* P6-11B uses its P6-20 `VALID_PROSPECTIVE` TOP-5, the first run of each entry session, read-only;
+* because daily cohorts overlap, the screen shows the number of independent samples (about matured ÷ H) and "판단 보류" (no verdict) until there are 12 or more.
+
+**연구실 (research) tab:**
+* a monthly-rebalanced historical simulation, about 5 years;
+* cost scenarios of 0 and 10 bps one way;
+* CAGR, volatility, Sharpe ratio, maximum drawdown and yearly excess return.
+
+Picks are limited to stocks that had already joined the index (Wikipedia "Date added"). Stocks that later left the index are still missing, so results remain biased upward. Treat the lab as reference only.
+
+Specification: `reports/TERMINAL_3_SPECIFICATION.md`.
+
 ### Where things are
 
 | Path | Content |
@@ -311,6 +348,7 @@ Specification: `reports/TERMINAL_2_SPECIFICATION.md`.
 | `tracking/STORAGE_SCHEMA.json` | storage layout version 2 (additive; backup in `~/Developer/qse-backups/`) |
 | `tracking/dashboard.html` | unified read-only dashboard (`python app.py dashboard`) |
 | `terminal/` | personal terminal (TERMINAL-1): `services.py` data screens, `sources.py` Yahoo/SEC/FRED access, `server.py` local server, `static/` Korean UI |
+| `data/lab/` | lab price panel, challenger ledger, membership cache, research cache (local, ignored by git) |
 | `data/terminal/` | terminal cache, watchlist, trade journal `journal.jsonl` and risk settings (local, private, ignored by git) |
 | `reports/` | phase reports, roadmap, test results |
 

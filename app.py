@@ -19,7 +19,9 @@ Multi-market (P6-21..25): ``--market`` selects the market (default US, unchanged
     python app.py --market KR tracking update|report|status|verify
     python app.py dashboard [--open]   unified US/KR dashboard (read-only, tracking/dashboard.html)
     python app.py migrate-storage      idempotent, additive storage layout v2 (backs up tracking/ first)
-    python app.py terminal [--open]    personal terminal, local web app at http://127.0.0.1:8765 (TERMINAL-1)
+    python app.py terminal [--open]    personal terminal, local web app at http://127.0.0.1:8765 (TERMINAL-1..3)
+    python app.py lab update           refresh the lab price panel and record today's challenger signals (TERMINAL-3)
+    python app.py lab status           challenger ledger and panel status
 
 Capital is REQUIRED (no default): pass --capital AMOUNT or set QPP_CAPITAL in .env.
 
@@ -363,6 +365,26 @@ def interactive() -> int:
     return 0
 
 
+def cmd_lab(args) -> int:
+    from terminal.lab.service import Lab, LabError
+    lab = Lab(PROJECT_ROOT)
+    try:
+        if args.action == "update":
+            print("가격 데이터 갱신 중 (S&P 500 약 500종목, 처음에는 몇 분 걸립니다)…", flush=True)
+            res = lab.update(lambda d, t: print(f"  {d}/{t}", flush=True))
+        elif args.action == "status":
+            res = lab.status()
+        else:
+            c = lab.comparison()
+            res = {m: {h: {k: v for k, v in a.items() if k in ("matured", "independent", "mean_excess", "hit_rate", "verdict")}
+                       for h, a in c["results"][m]["horizons"].items()} for m in c["order"]}
+    except LabError as exc:
+        print(f"실패: {exc}")
+        return 2
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0
+
+
 def cmd_terminal(args) -> int:
     from terminal.server import HOST, serve
     try:
@@ -390,6 +412,8 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command")
     db = sub.add_parser("dashboard", help="Unified read-only US/KR dashboard (tracking/dashboard.html)")
     db.add_argument("--open", action="store_true")
+    lb = sub.add_parser("lab", help="Challenger models beside the frozen P6-11B (TERMINAL-3)")
+    lb.add_argument("action", choices=["update", "status", "compare"])
     tm = sub.add_parser("terminal", help="Personal terminal: local web app on 127.0.0.1 (TERMINAL-1, read-only)")
     tm.add_argument("--port", type=int, default=8765)
     tm.add_argument("--open", action="store_true", help="Open the terminal in the default browser")
@@ -440,6 +464,8 @@ def main(argv=None) -> int:
         return 0
     if args.command == "terminal":
         return cmd_terminal(args)
+    if args.command == "lab":
+        return cmd_lab(args)
     if args.command == "migrate-storage":
         from markets import storage
         print(json.dumps(storage.migrate(PROJECT_ROOT), indent=1, default=str))

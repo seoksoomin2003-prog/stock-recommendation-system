@@ -341,7 +341,7 @@ async function renderModel() {
   } catch (e) { el.innerHTML = errBox(e); }
 }
 
-const ALWAYS_FRESH = new Set(["watch", "portfolio", "assist"]);
+const ALWAYS_FRESH = new Set(["watch", "portfolio", "assist", "model"]);
 const RENDER = { overview: renderOverview, macro: renderMacro, watch: renderWatch, model: renderModel, stock: renderStock };
 
 // ------------------------------------------------------------------ boot
