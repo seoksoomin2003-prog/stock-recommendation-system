@@ -1,0 +1,44 @@
+{
+  "0.3": {
+    "sector_cap": 0.3,
+    "trade_count": 60,
+    "avg_net_return": 0.008405099346922256,
+    "win_rate": 0.31666666666666665,
+    "max_drawdown": -0.17118514841921528
+  },
+  "0.35": {
+    "sector_cap": 0.35,
+    "trade_count": 60,
+    "avg_net_return": 0.008405099346922256,
+    "win_rate": 0.31666666666666665,
+    "max_drawdown": -0.17118514841921528
+  },
+  "0.4": {
+    "sector_cap": 0.4,
+    "trade_count": 60,
+    "avg_net_return": 0.008405099346922256,
+    "win_rate": 0.31666666666666665,
+    "max_drawdown": -0.17118514841921528
+  },
+  "0.45": {
+    "sector_cap": 0.45,
+    "trade_count": 60,
+    "avg_net_return": 0.008405099346922256,
+    "win_rate": 0.31666666666666665,
+    "max_drawdown": -0.17118514841921528
+  },
+  "0.5": {
+    "sector_cap": 0.5,
+    "trade_count": 60,
+    "avg_net_return": 0.008405099346922256,
+    "win_rate": 0.31666666666666665,
+    "max_drawdown": -0.17118514841921528
+  },
+  "1.0": {
+    "sector_cap": 1.0,
+    "trade_count": 60,
+    "avg_net_return": 0.004153661739571246,
+    "win_rate": 0.2833333333333333,
+    "max_drawdown": -0.14782042627020342
+  }
+}

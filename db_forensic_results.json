@@ -1,0 +1,344 @@
+{
+    "data/historical_data.db": {
+        "status": "exists",
+        "size_bytes": 67850240,
+        "tables": {
+            "historical_financial_facts": {
+                "columns": [
+                    "fact_id",
+                    "security_id",
+                    "provider",
+                    "source",
+                    "accession_number",
+                    "taxonomy",
+                    "concept",
+                    "normalized_metric",
+                    "period_start",
+                    "period_end",
+                    "filed_at",
+                    "accepted_at",
+                    "value",
+                    "unit",
+                    "form_type",
+                    "fiscal_year",
+                    "fiscal_period",
+                    "is_amended",
+                    "is_restated",
+                    "source_url",
+                    "observed_at",
+                    "ingested_at",
+                    "schema_version",
+                    "period_type",
+                    "source_id",
+                    "prevrpt"
+                ],
+                "row_count": 98100
+            },
+            "historical_price_bars": {
+                "columns": [
+                    "security_id",
+                    "provider",
+                    "date",
+                    "open",
+                    "high",
+                    "low",
+                    "close",
+                    "adjusted_close",
+                    "volume",
+                    "source",
+                    "observed_at",
+                    "ingested_at",
+                    "schema_version",
+                    "source_id"
+                ],
+                "row_count": 33800,
+                "min_date": "2023-12-01",
+                "max_date": "2026-08-13"
+            },
+            "historical_corporate_actions": {
+                "columns": [
+                    "event_id",
+                    "security_id",
+                    "event_type",
+                    "effective_at",
+                    "announced_at",
+                    "old_value",
+                    "new_value",
+                    "ratio",
+                    "cash_amount",
+                    "shares_affected",
+                    "source",
+                    "source_url",
+                    "observed_at",
+                    "is_verified",
+                    "schema_version"
+                ],
+                "row_count": 0
+            }
+        }
+    },
+    "data/historical_security.db": {
+        "status": "exists",
+        "size_bytes": 65536,
+        "tables": {
+            "historical_security_states": {
+                "columns": [
+                    "security_id",
+                    "ticker",
+                    "company_name",
+                    "share_class",
+                    "exchange",
+                    "exchange_mic",
+                    "country",
+                    "currency",
+                    "listing_status",
+                    "valid_from",
+                    "valid_to",
+                    "source",
+                    "confidence",
+                    "schema_version"
+                ],
+                "row_count": 50,
+                "distinct_tickers": 50
+            },
+            "provider_identifiers_history": {
+                "columns": [
+                    "security_id",
+                    "provider",
+                    "identifier",
+                    "identifier_type",
+                    "valid_from",
+                    "valid_to",
+                    "source"
+                ],
+                "row_count": 0
+            },
+            "lifecycle_events": {
+                "columns": [
+                    "event_id",
+                    "security_id",
+                    "event_type",
+                    "effective_at",
+                    "announced_at",
+                    "source",
+                    "source_record_id",
+                    "metadata_json"
+                ],
+                "row_count": 0
+            },
+            "corporate_actions_history": {
+                "columns": [
+                    "action_id",
+                    "parent_security_id",
+                    "child_security_id",
+                    "action_type",
+                    "effective_at",
+                    "announced_at",
+                    "details_json"
+                ],
+                "row_count": 0
+            },
+            "universe_membership_history": {
+                "columns": [
+                    "universe_id",
+                    "security_id",
+                    "valid_from",
+                    "valid_to",
+                    "source"
+                ],
+                "row_count": 0
+            }
+        }
+    },
+    "data/research_cache.db": {
+        "status": "exists",
+        "size_bytes": 1155072,
+        "tables": {
+            "cache_entries": {
+                "columns": [
+                    "cache_key",
+                    "provider",
+                    "data_type",
+                    "security_id",
+                    "payload_json",
+                    "source",
+                    "status",
+                    "confidence",
+                    "observed_at",
+                    "fetched_at",
+                    "expires_at",
+                    "stale_until",
+                    "request_id",
+                    "schema_version"
+                ],
+                "row_count": 106
+            },
+            "fetch_history": {
+                "columns": [
+                    "request_id",
+                    "provider",
+                    "security_id",
+                    "data_type",
+                    "latency_ms",
+                    "status",
+                    "cache_state",
+                    "error_code",
+                    "completed_at"
+                ],
+                "row_count": 0
+            },
+            "provider_metadata": {
+                "columns": [
+                    "provider",
+                    "data_type",
+                    "enabled",
+                    "default_ttl_seconds",
+                    "stale_ttl_seconds",
+                    "policy_version"
+                ],
+                "row_count": 0
+            },
+            "provider_health": {
+                "columns": [
+                    "provider",
+                    "success_count",
+                    "failure_count",
+                    "updated_at"
+                ],
+                "row_count": 0
+            }
+        }
+    },
+    "data/tickers.db": {
+        "status": "exists",
+        "size_bytes": 10579968,
+        "tables": {
+            "tickers": {
+                "columns": [
+                    "id",
+                    "ticker",
+                    "company_name",
+                    "exchange",
+                    "country",
+                    "sector",
+                    "created_at",
+                    "updated_at"
+                ],
+                "row_count": 12,
+                "distinct_tickers": 12
+            },
+            "sqlite_sequence": {
+                "columns": [
+                    "name",
+                    "seq"
+                ],
+                "row_count": 4
+            },
+            "aliases": {
+                "columns": [
+                    "id",
+                    "ticker_id",
+                    "alias",
+                    "source",
+                    "confidence",
+                    "created_at"
+                ],
+                "row_count": 11210
+            },
+            "alias_tokens": {
+                "columns": [
+                    "id",
+                    "alias_id",
+                    "token"
+                ],
+                "row_count": 6573
+            },
+            "lookup_cache": {
+                "columns": [
+                    "query",
+                    "ticker",
+                    "confidence",
+                    "last_used",
+                    "hit_count",
+                    "usage_tier"
+                ],
+                "row_count": 20,
+                "distinct_tickers": 12
+            },
+            "exchanges": {
+                "columns": [
+                    "exchange_mic",
+                    "exchange",
+                    "country",
+                    "currency"
+                ],
+                "row_count": 0
+            },
+            "provider_identifiers": {
+                "columns": [
+                    "security_id",
+                    "provider",
+                    "identifier",
+                    "identifier_type"
+                ],
+                "row_count": 11
+            },
+            "ticker_history": {
+                "columns": [
+                    "security_id",
+                    "ticker",
+                    "exchange_mic",
+                    "valid_from",
+                    "valid_to"
+                ],
+                "row_count": 0,
+                "distinct_tickers": 0
+            },
+            "security_resolution_audit": {
+                "columns": [
+                    "request_id",
+                    "query",
+                    "security_id",
+                    "status",
+                    "confidence",
+                    "resolved_at"
+                ],
+                "row_count": 0
+            },
+            "securities": {
+                "columns": [
+                    "security_id",
+                    "ticker",
+                    "company_name",
+                    "asset_type",
+                    "share_class",
+                    "exchange",
+                    "exchange_mic",
+                    "country",
+                    "currency",
+                    "sector",
+                    "industry",
+                    "cik",
+                    "isin",
+                    "figi",
+                    "created_at",
+                    "updated_at"
+                ],
+                "row_count": 12,
+                "distinct_tickers": 12
+            },
+            "security_aliases": {
+                "columns": [
+                    "id",
+                    "security_id",
+                    "alias",
+                    "alias_type",
+                    "locale",
+                    "source",
+                    "confidence"
+                ],
+                "row_count": 112455
+            }
+        }
+    }
+}

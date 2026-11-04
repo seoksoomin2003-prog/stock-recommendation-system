@@ -1,0 +1,5 @@
+{
+    "production_run_a_vs_b_identical": true,
+    "local_run_a_vs_b_identical": true,
+    "deterministic": "YES"
+}

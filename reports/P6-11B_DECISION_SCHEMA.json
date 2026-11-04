@@ -1,0 +1,19 @@
+{
+    "schema_version": "1.0",
+    "model": "MODEL_RANK_E",
+    "description": "Decision Object Schema",
+    "fields": {
+        "security_id": "string",
+        "ticker": "string",
+        "action": "Enum(BUY_CANDIDATE, WAIT, HOLD, WATCHLIST, EXIT_CANDIDATE, EXIT)",
+        "entry_stage": "Enum(LifecycleState)",
+        "explanation": "string (multiline text explaining WHAT, WHEN, HOW MUCH, THESIS, STOP)",
+        "target_weight": "float",
+        "target_shares": "float",
+        "fractional_allowed": "boolean",
+        "expected_horizon_days": "integer",
+        "hard_stop": "float",
+        "trailing_stop": "float",
+        "reason_codes": "List[string]"
+    }
+}

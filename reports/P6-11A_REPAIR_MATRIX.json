@@ -1,0 +1,42 @@
+[
+    {
+        "finding_id": "P0-1",
+        "component": "YFinanceMarketProvider",
+        "issue": "auto_adjust=True leaks future corporate actions into historical backtests.",
+        "repair_action": "Disabled auto_adjust. Explicitly separated 'close' (raw) and 'adjusted_close' (adj_prices) to maintain data integrity while preserving research capabilities.",
+        "status": "FIXED",
+        "parity_impact": "Prevents artificial backtest outperformance."
+    },
+    {
+        "finding_id": "P0-2",
+        "component": "YFinanceFinancialProvider",
+        "issue": "info.get('trailingPE') returns current snapshots but was marked as DataStatus.REAL.",
+        "repair_action": "Updated status to DataStatus.REAL_CURRENT. Explicitly blocked usage of current snapshot when context.as_of is a historical date (DataStatus.UNAVAILABLE).",
+        "status": "FIXED",
+        "parity_impact": "Prevents future fundamentals leakage."
+    },
+    {
+        "finding_id": "P1-1",
+        "component": "RankingEngine",
+        "issue": "MODEL_RANK_E was absent and mocked in DecisionEngine.",
+        "repair_action": "Implemented calculate_model_rank_e() in RankingEngine conforming exactly to the user-approved architecture. Includes capital constraints, liquidity multiplication, and volatility penalization. Delegated from DecisionEngine.",
+        "status": "FIXED",
+        "parity_impact": "Restores strict Research/Production Parity for capital-aware evaluation."
+    },
+    {
+        "finding_id": "P1-2",
+        "component": "PORTFOLIO_SETTINGS (config.py)",
+        "issue": "Max Individual Weight was 0.20 instead of 0.30; Max Sector Exposure was 0.35 instead of 0.40.",
+        "repair_action": "Updated configuration constants to match the P6 user-approved architecture limits.",
+        "status": "FIXED",
+        "parity_impact": "Aligns trading sizing with research simulations."
+    },
+    {
+        "finding_id": "P2-1",
+        "component": "FactorEngine (Momentum)",
+        "issue": "Momentum uses monthly resampling + shift(1), causing a 1-month lag.",
+        "repair_action": "Acknowledged and documented. Kept unmodified per absolute instructions (P0/P1 scope only).",
+        "status": "UNCHANGED",
+        "parity_impact": "Remains matched with MODEL_0."
+    }
+]

@@ -1,0 +1,68 @@
+[
+  {
+    "as_of": "2024-08-15",
+    "regime_dir": "SIDEWAYS",
+    "regime_vol": "HIGH_VOLATILITY",
+    "momentum_ic": NaN
+  },
+  {
+    "as_of": "2024-10-15",
+    "regime_dir": "TRENDING_UP",
+    "regime_vol": "HIGH_VOLATILITY",
+    "momentum_ic": NaN
+  },
+  {
+    "as_of": "2024-12-15",
+    "regime_dir": "TRENDING_DOWN",
+    "regime_vol": "HIGH_VOLATILITY",
+    "momentum_ic": NaN
+  },
+  {
+    "as_of": "2025-02-15",
+    "regime_dir": "TRENDING_DOWN",
+    "regime_vol": "HIGH_VOLATILITY",
+    "momentum_ic": -0.4348139255702281
+  },
+  {
+    "as_of": "2025-04-15",
+    "regime_dir": "TRENDING_UP",
+    "regime_vol": "HIGH_VOLATILITY",
+    "momentum_ic": -0.1822328931572629
+  },
+  {
+    "as_of": "2025-06-15",
+    "regime_dir": "TRENDING_UP",
+    "regime_vol": "HIGH_VOLATILITY",
+    "momentum_ic": -0.39399759903961584
+  },
+  {
+    "as_of": "2025-08-15",
+    "regime_dir": "SIDEWAYS",
+    "regime_vol": "HIGH_VOLATILITY",
+    "momentum_ic": 0.05651860744297719
+  },
+  {
+    "as_of": "2025-10-15",
+    "regime_dir": "TRENDING_UP",
+    "regime_vol": "HIGH_VOLATILITY",
+    "momentum_ic": 0.02415366146458583
+  },
+  {
+    "as_of": "2025-12-15",
+    "regime_dir": "TRENDING_UP",
+    "regime_vol": "HIGH_VOLATILITY",
+    "momentum_ic": 0.21565426170468185
+  },
+  {
+    "as_of": "2026-02-15",
+    "regime_dir": "SIDEWAYS",
+    "regime_vol": "HIGH_VOLATILITY",
+    "momentum_ic": -0.006674669867947179
+  },
+  {
+    "as_of": "2026-04-15",
+    "regime_dir": "TRENDING_UP",
+    "regime_vol": "HIGH_VOLATILITY",
+    "momentum_ic": 0.5245138055222089
+  }
+]

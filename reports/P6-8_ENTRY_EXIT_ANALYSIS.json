@@ -1,0 +1,92 @@
+{
+  "split_0.4_0.6_stop_1.5": {
+    "split": [
+      0.4,
+      0.6
+    ],
+    "stop_mult": 1.5,
+    "trade_count": 60,
+    "avg_net_return": 0.0018824468488244919,
+    "win_rate": 0.26666666666666666
+  },
+  "split_0.4_0.6_stop_2.0": {
+    "split": [
+      0.4,
+      0.6
+    ],
+    "stop_mult": 2.0,
+    "trade_count": 60,
+    "avg_net_return": 0.004153661739571246,
+    "win_rate": 0.2833333333333333
+  },
+  "split_0.4_0.6_stop_2.5": {
+    "split": [
+      0.4,
+      0.6
+    ],
+    "stop_mult": 2.5,
+    "trade_count": 60,
+    "avg_net_return": 0.008840108870523531,
+    "win_rate": 0.3333333333333333
+  },
+  "split_0.5_0.5_stop_1.5": {
+    "split": [
+      0.5,
+      0.5
+    ],
+    "stop_mult": 1.5,
+    "trade_count": 60,
+    "avg_net_return": 0.0030167582804089747,
+    "win_rate": 0.26666666666666666
+  },
+  "split_0.5_0.5_stop_2.0": {
+    "split": [
+      0.5,
+      0.5
+    ],
+    "stop_mult": 2.0,
+    "trade_count": 60,
+    "avg_net_return": 0.0052880447387741,
+    "win_rate": 0.2833333333333333
+  },
+  "split_0.5_0.5_stop_2.5": {
+    "split": [
+      0.5,
+      0.5
+    ],
+    "stop_mult": 2.5,
+    "trade_count": 60,
+    "avg_net_return": 0.009968450513430512,
+    "win_rate": 0.3333333333333333
+  },
+  "split_0.6_0.4_stop_1.5": {
+    "split": [
+      0.6,
+      0.4
+    ],
+    "stop_mult": 1.5,
+    "trade_count": 60,
+    "avg_net_return": 0.004151069711993461,
+    "win_rate": 0.26666666666666666
+  },
+  "split_0.6_0.4_stop_2.0": {
+    "split": [
+      0.6,
+      0.4
+    ],
+    "stop_mult": 2.0,
+    "trade_count": 60,
+    "avg_net_return": 0.0064224277379769535,
+    "win_rate": 0.2833333333333333
+  },
+  "split_0.6_0.4_stop_2.5": {
+    "split": [
+      0.6,
+      0.4
+    ],
+    "stop_mult": 2.5,
+    "trade_count": 60,
+    "avg_net_return": 0.011096792156337494,
+    "win_rate": 0.3333333333333333
+  }
+}

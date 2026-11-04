@@ -1,0 +1,38 @@
+{
+    "meta": {
+        "description": "P6-13.5 Pipeline Execution Status vs Recommendation Validity Matrix",
+        "version": "1.0",
+        "last_updated": "2026-08-19"
+    },
+    "statuses": {
+        "pipeline_execution_status": {
+            "SUCCESS": "The pipeline completed all data loading, factor calculation, and portfolio optimization steps without crashing.",
+            "LIVE_DATA_UNAVAILABLE": "Critical APIs failed or returned empty data, and no valid prices/volumes were loaded. Execution halted.",
+            "PARTIAL": "The pipeline completed execution, but some non-critical data sources failed and fell back to stale cache or fallback logic."
+        },
+        "recommendation_validity_status": {
+            "REAL_RECOMMENDATION": "The recommended portfolio was generated entirely from valid, real point-in-time and market data. Safe to execute.",
+            "DATA_INCOMPLETE_NO_VALID_RECOMMENDATION": "The recommended portfolio could not be validated with real data due to mock data injection or insufficient real candidate universe depth. Unsafe to execute."
+        }
+    },
+    "mappings": [
+        {
+            "pipeline_status": "SUCCESS",
+            "condition": "Eligible REAL candidates >= 5",
+            "recommendation_status": "REAL RECOMMENDATION",
+            "description": "Standard successful run with real data and sufficient depth."
+        },
+        {
+            "pipeline_status": "SUCCESS",
+            "condition": "Eligible REAL candidates < 5",
+            "recommendation_status": "DATA-INCOMPLETE / NO VALID RECOMMENDATION",
+            "description": "Pipeline runs, but cannot populate the TOP 5 portfolio with real candidates due to mock data filtration or missing tickers."
+        },
+        {
+            "pipeline_status": "LIVE DATA UNAVAILABLE",
+            "condition": "All candidates fail price, volume, or core validation checks",
+            "recommendation_status": "DATA-INCOMPLETE / NO VALID RECOMMENDATION",
+            "description": "Critical API failure resulting in empty price/volume matrices."
+        }
+    ]
+}

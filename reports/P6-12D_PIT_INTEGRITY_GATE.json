@@ -1,0 +1,8 @@
+{
+    "pit_gate_status": "BLOCKED",
+    "synthetic_data_detected": false,
+    "lookahead_risk_detected": false,
+    "yfinance_snapshot_hijacking": false,
+    "historical_fundamentals_available": false,
+    "reason": "Safe from lookahead bias, but blocked due to missing fundamental and price history for the universe."
+}

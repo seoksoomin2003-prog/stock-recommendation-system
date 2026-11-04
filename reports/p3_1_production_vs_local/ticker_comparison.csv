@@ -1,0 +1,4 @@
+ticker,production_score,local_score,delta,abs_delta,status
+AAPL,-1.0,-1.0,0.0,0.0,CLASS A
+MSFT,-1.0,-1.0,0.0,0.0,CLASS A
+GOOGL,-1.0,-1.0,0.0,0.0,CLASS A

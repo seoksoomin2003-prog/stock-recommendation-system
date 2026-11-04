@@ -1,0 +1,34 @@
+{
+    "price": {
+        "production": "OK",
+        "local": "OK"
+    },
+    "momentum": {
+        "production": "OK",
+        "local": "OK"
+    },
+    "news": {
+        "production": "OK",
+        "local": "OK"
+    },
+    "trends": {
+        "production": "OK",
+        "local": "FALLBACK"
+    },
+    "sec": {
+        "production": "OK",
+        "local": "FALLBACK"
+    },
+    "embedding": {
+        "production": "OK",
+        "local": "DISABLED"
+    },
+    "rag": {
+        "production": "OK",
+        "local": "DISABLED"
+    },
+    "llm": {
+        "production": "OK",
+        "local": "DISABLED"
+    }
+}

@@ -1,0 +1,30 @@
+{
+  "Trend_Continuation": {
+    "trade_count": 62,
+    "win_rate": 0.4838709677419355,
+    "avg_return": 0.03640472867999384,
+    "max_drawdown": -0.0777230555067433,
+    "avg_holding_period": 10.693548387096774
+  },
+  "Pullback": {
+    "trade_count": 1,
+    "win_rate": 0.0,
+    "avg_return": -0.0009418613928507957,
+    "max_drawdown": -0.0009418613928507957,
+    "avg_holding_period": 1.0
+  },
+  "Breakout": {
+    "trade_count": 2,
+    "win_rate": 1.0,
+    "avg_return": 0.06571733799052915,
+    "max_drawdown": 0.05009078276829615,
+    "avg_holding_period": 21.0
+  },
+  "Mean_Reversion": {
+    "trade_count": 1,
+    "win_rate": 0.0,
+    "avg_return": -0.03687393842276432,
+    "max_drawdown": -0.03687393842276432,
+    "avg_holding_period": 1.0
+  }
+}

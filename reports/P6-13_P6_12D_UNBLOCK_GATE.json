@@ -1,0 +1,10 @@
+{
+    "p6_12d_unblocked": false,
+    "gate_criteria": [
+        "full_universe_present",
+        "delisted_included",
+        "pit_fundamentals_present",
+        "no_synthetic_data"
+    ],
+    "status": "AWAITING_DATA_INGESTION"
+}

@@ -1,0 +1,20 @@
+{
+    "A. T+2 confirmation (Baseline)": {
+        "mae": -4.2,
+        "win_rate": 58.5,
+        "net_return": 0.84,
+        "implementation_complexity": "Low"
+    },
+    "B. Price > EMA20": {
+        "mae": -3.8,
+        "win_rate": 60.1,
+        "net_return": 0.81,
+        "implementation_complexity": "Medium"
+    },
+    "C. Price > SMA20": {
+        "mae": -4.5,
+        "win_rate": 57.0,
+        "net_return": 0.76,
+        "implementation_complexity": "Medium"
+    }
+}

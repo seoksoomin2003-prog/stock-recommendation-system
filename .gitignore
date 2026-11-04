@@ -1,0 +1,47 @@
+# secrets
+.env
+.env.*
+!.env.example
+# environments / caches (regenerable)
+.venv/
+.venv*/
+__pycache__/
+*.pyc
+.pytest_cache/
+cache/
+cache.nosync/
+# local run artifacts and user data (not source)
+runs/
+data/*.db
+data/*.bak
+data/signals/
+data/sec_cache/
+data/sp500_universe_cache.json
+reports/daily/
+scratch/
+.DS_Store
+
+# P6-20 tracking lock files (recreated automatically)
+tracking/**/*.lock
+tracking/*.lock
+
+# P6-20 addendum (safe git initialisation)
+# prospective tracking ledger / price snapshots / outcomes: local user data (like runs/)
+tracking/
+# generated test artifacts
+reports/*_pytest_junit.xml
+# provider caches and local datasets
+data/*.json
+data/**/*.json
+*.sqlite
+*.sqlite3
+*.parquet
+*.csv.gz
+# logs and temp files
+*.log
+*.tmp
+.*.tmp-*
+nohup.out
+# machine-specific editor/OS files
+.idea/
+*.swp

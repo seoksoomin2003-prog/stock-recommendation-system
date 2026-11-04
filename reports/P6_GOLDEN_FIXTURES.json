@@ -1,0 +1,8 @@
+{
+  "total_configs": 6,
+  "best_config_name": "SLOW_TREND_50",
+  "holdout_trades_count": 32,
+  "holdout_mean_realized_return": 0.04776843289822705,
+  "holdout_win_rate": 0.5,
+  "whole_share_ratio_at_1k": 0.125
+}

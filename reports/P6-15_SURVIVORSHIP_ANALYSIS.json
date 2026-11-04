@@ -1,0 +1,5 @@
+{
+  "universe_selection_bias": "PASS (via SEC EDGAR)",
+  "pricing_survivorship_bias": "FAIL (Delisted OHLCV missing)",
+  "overall_status": "PARTIAL"
+}

@@ -1,0 +1,23 @@
+{
+  "SEC_EDGAR": {
+    "role": "PRIMARY PIT FUNDAMENTALS & HISTORICAL UNIVERSE",
+    "cost": 0,
+    "survivorship_safe": true
+  },
+  "yfinance": {
+    "role": "LIVE OHLCV & SURVIVOR OHLCV",
+    "cost": 0,
+    "survivorship_safe": false
+  },
+  "Tiingo_Free": {
+    "role": "SECONDARY VALIDATION",
+    "cost": 0,
+    "survivorship_safe": false,
+    "limits": "500/month"
+  },
+  "Public_Academic_Archives": {
+    "role": "UNVERIFIED (Potential Historical OHLCV)",
+    "cost": 0,
+    "survivorship_safe": "UNKNOWN"
+  }
+}

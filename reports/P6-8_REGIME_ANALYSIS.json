@@ -1,0 +1,17 @@
+{
+  "BULL": {
+    "trade_count": 30,
+    "avg_net_return": 0.018081040286766346,
+    "win_rate": 0.36666666666666664
+  },
+  "SIDEWAYS": {
+    "trade_count": 25,
+    "avg_net_return": -0.015738184697384375,
+    "win_rate": 0.16
+  },
+  "BEAR": {
+    "trade_count": 5,
+    "avg_net_return": 0.020048622641178737,
+    "win_rate": 0.4
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "expected_holding_days": 20,
+  "lower_bound_days": 10,
+  "upper_bound_days": 35,
+  "confidence": 0.71,
+  "uncertainty": 0.15
+}

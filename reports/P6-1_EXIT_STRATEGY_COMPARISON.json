@@ -1,0 +1,30 @@
+{
+  "Target Exit": {
+    "trade_count": 14,
+    "win_rate": 1.0,
+    "avg_return": 0.17587131044204427,
+    "avg_mae": -0.007324203315537459,
+    "avg_mfe": 0.17587131044204427
+  },
+  "Risk Exit": {
+    "trade_count": 8,
+    "win_rate": 0.0,
+    "avg_return": -0.0598805528133978,
+    "avg_mae": -0.0598805528133978,
+    "avg_mfe": 0.01939573903104272
+  },
+  "Trend Failure": {
+    "trade_count": 24,
+    "win_rate": 0.08333333333333333,
+    "avg_return": -0.025768406992455663,
+    "avg_mae": -0.026598834124540924,
+    "avg_mfe": 0.009138266777656973
+  },
+  "Time Exit": {
+    "trade_count": 20,
+    "win_rate": 0.8,
+    "avg_return": 0.04929999492312797,
+    "avg_mae": -0.018336734787192815,
+    "avg_mfe": 0.09858834319164286
+  }
+}

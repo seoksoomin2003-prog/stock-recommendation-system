@@ -1,0 +1,110 @@
+{
+  "SWING_TREND_20": {
+    "config": {
+      "name": "SWING_TREND_20",
+      "trend_ma": "sma_20",
+      "pullback_rsi": 40,
+      "breakout_lookback": 20,
+      "stop_type": "fixed",
+      "stop_val": 0.05,
+      "target": 0.15,
+      "horizon": 20,
+      "alloc_1": 0.5,
+      "alloc_2": 0.5
+    },
+    "trade_count": 63,
+    "win_rate": 0.2857142857142857,
+    "avg_return": -0.002914148428263504,
+    "sharpe_ratio": -0.04860032264329031
+  },
+  "FAST_TREND_EMA": {
+    "config": {
+      "name": "FAST_TREND_EMA",
+      "trend_ma": "ema_20",
+      "pullback_rsi": 45,
+      "breakout_lookback": 20,
+      "stop_type": "atr",
+      "stop_val": 1.5,
+      "target": 0.1,
+      "horizon": 15,
+      "alloc_1": 0.6,
+      "alloc_2": 0.4
+    },
+    "trade_count": 66,
+    "win_rate": 0.22727272727272727,
+    "avg_return": -0.004070988101912457,
+    "sharpe_ratio": -0.08842460588084777
+  },
+  "SLOW_TREND_50": {
+    "config": {
+      "name": "SLOW_TREND_50",
+      "trend_ma": "sma_50",
+      "pullback_rsi": 35,
+      "breakout_lookback": 40,
+      "stop_type": "atr",
+      "stop_val": 2.0,
+      "target": 0.2,
+      "horizon": 30,
+      "alloc_1": 0.4,
+      "alloc_2": 0.6
+    },
+    "trade_count": 64,
+    "win_rate": 0.25,
+    "avg_return": -0.0010554053344249805,
+    "sharpe_ratio": -0.016441943471530784
+  },
+  "VOL_STOP_TREND": {
+    "config": {
+      "name": "VOL_STOP_TREND",
+      "trend_ma": "sma_20",
+      "pullback_rsi": 40,
+      "breakout_lookback": 20,
+      "stop_type": "atr",
+      "stop_val": 2.0,
+      "target": 0.15,
+      "horizon": 20,
+      "alloc_1": 0.5,
+      "alloc_2": 0.5
+    },
+    "trade_count": 63,
+    "win_rate": 0.2222222222222222,
+    "avg_return": -0.002454869758730852,
+    "sharpe_ratio": -0.04411916840217384
+  },
+  "SHORT_TERM_SCALPING": {
+    "config": {
+      "name": "SHORT_TERM_SCALPING",
+      "trend_ma": "ema_20",
+      "pullback_rsi": 45,
+      "breakout_lookback": 20,
+      "stop_type": "fixed",
+      "stop_val": 0.03,
+      "target": 0.07,
+      "horizon": 10,
+      "alloc_1": 0.5,
+      "alloc_2": 0.5
+    },
+    "trade_count": 66,
+    "win_rate": 0.25757575757575757,
+    "avg_return": -0.005694624880987234,
+    "sharpe_ratio": -0.14973224536848043
+  },
+  "CONSERVATIVE_BREAKOUT": {
+    "config": {
+      "name": "CONSERVATIVE_BREAKOUT",
+      "trend_ma": "sma_20",
+      "pullback_rsi": 30,
+      "breakout_lookback": 40,
+      "stop_type": "fixed",
+      "stop_val": 0.04,
+      "target": 0.12,
+      "horizon": 20,
+      "alloc_1": 0.5,
+      "alloc_2": 0.5
+    },
+    "trade_count": 62,
+    "win_rate": 0.25806451612903225,
+    "avg_return": -0.005468874077702698,
+    "sharpe_ratio": -0.09781762596266338
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "1000": {
+    "capital": 1000,
+    "whole_share": {
+      "trade_count": 53,
+      "avg_net_return": 0.006942646108661546,
+      "win_rate": 0.41509433962264153,
+      "max_drawdown": -0.09399213355714112
+    },
+    "fractional": {
+      "trade_count": 60,
+      "avg_net_return": 0.002814479634712753,
+      "win_rate": 0.38333333333333336,
+      "max_drawdown": -0.17118514841921528
+    }
+  },
+  "2500": {
+    "capital": 2500,
+    "whole_share": {
+      "trade_count": 58,
+      "avg_net_return": 0.010771214140614035,
+      "win_rate": 0.3793103448275862,
+      "max_drawdown": -0.08594223665718455
+    },
+    "fractional": {
+      "trade_count": 60,
+      "avg_net_return": 0.006254636696438482,
+      "win_rate": 0.36666666666666664,
+      "max_drawdown": -0.17118514841921528
+    }
+  },
+  "5000": {
+    "capital": 5000,
+    "whole_share": {
+      "trade_count": 60,
+      "avg_net_return": 0.0049247316278069105,
+      "win_rate": 0.2833333333333333,
+      "max_drawdown": -0.14782042627020342
+    },
+    "fractional": {
+      "trade_count": 60,
+      "avg_net_return": 0.0049247316278069105,
+      "win_rate": 0.2833333333333333,
+      "max_drawdown": -0.14782042627020342
+    }
+  },
+  "10000": {
+    "capital": 10000,
+    "whole_share": {
+      "trade_count": 60,
+      "avg_net_return": 0.004153661739571246,
+      "win_rate": 0.2833333333333333,
+      "max_drawdown": -0.14782042627020342
+    },
+    "fractional": {
+      "trade_count": 60,
+      "avg_net_return": 0.004153661739571246,
+      "win_rate": 0.2833333333333333,
+      "max_drawdown": -0.14782042627020342
+    }
+  },
+  "25000": {
+    "capital": 25000,
+    "whole_share": {
+      "trade_count": 60,
+      "avg_net_return": 0.001389193345496642,
+      "win_rate": 0.2833333333333333,
+      "max_drawdown": -0.17118514841921528
+    },
+    "fractional": {
+      "trade_count": 60,
+      "avg_net_return": 0.001389193345496642,
+      "win_rate": 0.2833333333333333,
+      "max_drawdown": -0.17118514841921528
+    }
+  },
+  "50000": {
+    "capital": 50000,
+    "whole_share": {
+      "trade_count": 60,
+      "avg_net_return": 0.001389193345496642,
+      "win_rate": 0.2833333333333333,
+      "max_drawdown": -0.17118514841921528
+    },
+    "fractional": {
+      "trade_count": 60,
+      "avg_net_return": 0.001389193345496642,
+      "win_rate": 0.2833333333333333,
+      "max_drawdown": -0.17118514841921528
+    }
+  },
+  "100000": {
+    "capital": 100000,
+    "whole_share": {
+      "trade_count": 60,
+      "avg_net_return": 0.001389193345496642,
+      "win_rate": 0.2833333333333333,
+      "max_drawdown": -0.17118514841921528
+    },
+    "fractional": {
+      "trade_count": 60,
+      "avg_net_return": 0.001389193345496642,
+      "win_rate": 0.2833333333333333,
+      "max_drawdown": -0.17118514841921528
+    }
+  }
+}

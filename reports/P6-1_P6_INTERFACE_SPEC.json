@@ -1,0 +1,42 @@
+{
+  "EntrySignal": {
+    "security_id": "str",
+    "ticker": "str",
+    "signal_timestamp": "str",
+    "alpha_score": "float",
+    "timing_score": "float",
+    "risk_score": "float",
+    "liquidity_score": "float",
+    "confidence": "float",
+    "expected_return": "float",
+    "expected_horizon": "int",
+    "regime": "str",
+    "entry_reason": "List[str]"
+  },
+  "ExitSignal": {
+    "security_id": "str",
+    "signal_timestamp": "str",
+    "exit_reason": "str",
+    "risk_change": "float",
+    "regime_change": "str",
+    "signal_decay": "float",
+    "expected_remaining_return": "float",
+    "confidence": "float"
+  },
+  "ExpectedHorizon": {
+    "expected_holding_days": "int",
+    "lower_bound_days": "int",
+    "upper_bound_days": "int",
+    "confidence": "float",
+    "signal_decay_profile": "List[float]"
+  },
+  "CapitalAwareConstraint": {
+    "capital": "float",
+    "risk_budget": "float",
+    "max_position_weight": "float",
+    "max_positions": "int",
+    "minimum_trade_value": "float",
+    "liquidity_limit": "float",
+    "transaction_cost": "float"
+  }
+}

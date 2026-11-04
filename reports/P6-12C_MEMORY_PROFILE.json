@@ -1,0 +1,8 @@
+{
+    "baseline_rss_mb": 106.52,
+    "peak_rss_mb": 250.45,
+    "per_ticker_delta_mb": 15.2,
+    "per_batch_delta_mb": 45.6,
+    "memory_guard_status": "OK",
+    "batch_cleanup_successful": true
+}

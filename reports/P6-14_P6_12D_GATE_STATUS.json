@@ -1,0 +1,18 @@
+{
+    "P6-12D_STATUS": "BLOCKED",
+    "required_criteria": {
+        "sufficient_historical_universe_coverage": false,
+        "sufficient_ohlcv_coverage": false,
+        "sufficient_volume_coverage": false,
+        "historical_security_identity": true,
+        "delisted_securities_represented": false,
+        "corporate_actions_represented": false,
+        "pit_fundamentals_available": true,
+        "sufficient_historical_lookback": false,
+        "no_survivorship_contamination": false,
+        "no_lookahead_contamination": true,
+        "no_mock_data": true,
+        "no_synthetic_return_streams": true
+    },
+    "verdict": "SEC Company Facts provides PIT fundamentals, but missing historical delisted constituents and OHLCV prevent full validation."
+}

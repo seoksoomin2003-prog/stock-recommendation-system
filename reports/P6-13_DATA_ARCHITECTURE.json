@@ -1,0 +1,12 @@
+{
+    "storage_engine": "SQLite / Parquet",
+    "estimated_size_gb": 4.5,
+    "partition_strategy": "by_ticker_or_year",
+    "primary_key": ["security_id", "date", "source"],
+    "providers_mapped": {
+        "price_volume": "Tiingo",
+        "corporate_actions": "Tiingo",
+        "fundamentals": "SEC_EDGAR",
+        "security_master": "Tiingo (permaTicker)"
+    }
+}

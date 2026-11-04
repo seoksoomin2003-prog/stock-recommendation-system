@@ -1,0 +1,116 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "App: Interactive menu",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/app.py",
+            "cwd": "${workspaceFolder}",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "App: Market Scan (full S&P 500)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/app.py",
+            "cwd": "${workspaceFolder}",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "args": [
+                "scan",
+                "--open",
+                "--capital",
+                "${input:capital}"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "App: Quick bounded scan (25)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/app.py",
+            "cwd": "${workspaceFolder}",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "args": [
+                "scan",
+                "--limit",
+                "25",
+                "--open",
+                "--capital",
+                "${input:capital}"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "App: Evaluate tickers (prompt)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/app.py",
+            "cwd": "${workspaceFolder}",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "args": [
+                "evaluate",
+                "${input:tickers}",
+                "--open",
+                "--capital",
+                "${input:capital}"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "App: Forward performance (track)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/app.py",
+            "cwd": "${workspaceFolder}",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "args": [
+                "track"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "Tests: full suite (pytest, offline sandbox)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "cwd": "${workspaceFolder}",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "args": [
+                "tests",
+                "-q"
+            ],
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Run Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${workspaceFolder}",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        }
+    ],
+    "inputs": [
+        {
+            "id": "tickers",
+            "type": "promptString",
+            "description": "Ticker symbols separated by spaces or commas",
+            "default": "NVDA AAPL TSLA PLTR"
+        },
+        {
+            "id": "capital",
+            "type": "promptString",
+            "description": "Investment capital in USD (required; no default)"
+        }
+    ]
+}

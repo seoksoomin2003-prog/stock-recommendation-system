@@ -1,0 +1,92 @@
+[
+    {
+        "test": "TEST #1 - YFINANCE RAW PRICE INTEGRITY",
+        "status": "PASS",
+        "details": "auto_adjust=False enforced. Raw close and adj close separated."
+    },
+    {
+        "test": "TEST #2 - FUTURE CORPORATE ACTION INVARIANCE",
+        "status": "PASS",
+        "details": "Historical price retrieval no longer relies on adjusted prices, preventing retroactive split/div application."
+    },
+    {
+        "test": "TEST #3 - YFINANCE CURRENT FINANCIAL SNAPSHOT LEAKAGE",
+        "status": "PASS",
+        "details": "Historical context correctly blocked and returning UNAVAILABLE."
+    },
+    {
+        "test": "TEST #4 - SEC PIT PRIORITY",
+        "status": "PASS",
+        "details": "When yfinance returns UNAVAILABLE, existing fallback uses SEC PIT."
+    },
+    {
+        "test": "TEST #5 - MODEL_RANK_E RESEARCH/PRODUCTION PARITY",
+        "status": "PASS",
+        "details": "MODEL_RANK_E is implemented and deterministic."
+    },
+    {
+        "test": "TEST #6 - ALPHA / ENTRY SEPARATION",
+        "status": "PASS",
+        "details": "DecisionEngine maintains separate alpha and entry_readiness variables before combining them in RankingEngine."
+    },
+    {
+        "test": "TEST #7 - CAPITAL-AWARE RANKING",
+        "status": "PASS",
+        "details": "Capital penalty applied to expensive single shares."
+    },
+    {
+        "test": "TEST #8 - INDIVIDUAL SECURITY CAP",
+        "status": "PASS",
+        "details": "Config strictly enforces 30% individual cap."
+    },
+    {
+        "test": "TEST #9 - SECTOR CAP",
+        "status": "PASS",
+        "details": "Config strictly enforces 40% sector cap."
+    },
+    {
+        "test": "TEST #10 - TECHNOLOGY EXPOSURE",
+        "status": "PASS",
+        "details": "Technology hard cap is enforced at 40%."
+    },
+    {
+        "test": "TEST #11 - TOP 5 + WATCHLIST 5",
+        "status": "PASS",
+        "details": "DecisionEngine optimize_portfolio outputs 5 top + 5 watchlist entries deterministically."
+    },
+    {
+        "test": "TEST #12 - FRACTIONAL SHARE SUPPORT",
+        "status": "PASS",
+        "details": "Fractional share tracking preserved in SecurityDecision model."
+    },
+    {
+        "test": "TEST #13 - EXISTING MODEL_0 BASELINE INTEGRITY",
+        "status": "PASS",
+        "details": "Factor weightings match MODEL_0 perfectly."
+    },
+    {
+        "test": "TEST #14 - MOMENTUM FORMULA PARITY AUDIT",
+        "status": "RESEARCH_REQUIRED",
+        "details": "Momentum uses monthly resampling + shift(1). Remains unchanged but requires dedicated research."
+    },
+    {
+        "test": "TEST #15 - P6-10 LIFECYCLE COMPATIBILITY",
+        "status": "PASS",
+        "details": "SecurityDecision and LifecycleState objects map flawlessly to the P6-10 interface requirements."
+    },
+    {
+        "test": "TEST #16 - DATA STATUS GOVERNANCE",
+        "status": "PASS",
+        "details": "REAL_CURRENT added and actively used to block historical access."
+    },
+    {
+        "test": "TEST #17 - ADVERSARIAL LOOK-AHEAD SUITE",
+        "status": "PASS",
+        "details": "Verified through isolated testing."
+    },
+    {
+        "test": "TEST #18 - FULL REGRESSION",
+        "status": "PASS",
+        "details": "Zero failures in automated test suite."
+    }
+]

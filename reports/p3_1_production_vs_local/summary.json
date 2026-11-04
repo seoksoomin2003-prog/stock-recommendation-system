@@ -1,0 +1,22 @@
+{
+    "test_date": "2026-08-10",
+    "tickers": [
+        "AAPL",
+        "MSFT",
+        "GOOGL"
+    ],
+    "final_mae": 0.0,
+    "final_rmse": 0.0,
+    "final_max_delta": 0.0,
+    "final_mean_bias": 0.0,
+    "core_factor_mae": 0.0,
+    "core_factor_rmse": 0.0,
+    "core_factor_max_delta": 0.0,
+    "spearman": 1.0,
+    "kendall": 0.0,
+    "prod_runtime_seconds": 0.0268709659576416,
+    "local_runtime_seconds": 0.016959190368652344,
+    "prod_rss_mb": 91.515625,
+    "local_rss_mb": 91.9375,
+    "status": "PASS"
+}

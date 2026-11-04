@@ -1,0 +1,7 @@
+{
+  "best_ranking_model": "MODEL_RANK_E",
+  "fractional_exec_ratio_at_1k": 1.0,
+  "whole_share_exec_ratio_at_1k": 0.8833333333333333,
+  "unrestricted_return_10k": 0.003925541259552333,
+  "sector_capped_return_10k": 0.007868581400917599
+}

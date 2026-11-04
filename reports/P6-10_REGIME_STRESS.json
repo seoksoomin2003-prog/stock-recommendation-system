@@ -1,0 +1,10 @@
+{
+    "BULL": {
+        "new_entry_count": 85,
+        "drawdown": -8.4
+    },
+    "BEAR": {
+        "new_entry_count": 12,
+        "drawdown": -14.2
+    }
+}

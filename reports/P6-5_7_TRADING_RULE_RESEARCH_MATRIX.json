@@ -1,0 +1,6 @@
+{
+  "configurations_tested": 7,
+  "holdout_trades_count": 32,
+  "holdout_unrestricted_return": 0.04776843289822704,
+  "holdout_sector_capped_return": 0.03851838209515931
+}

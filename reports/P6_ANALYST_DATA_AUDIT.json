@@ -1,0 +1,10 @@
+{
+  "source": "yfinance",
+  "api_methods": [
+    "get_recommendations",
+    "get_earnings_dates"
+  ],
+  "governance_classification": "REAL_CURRENT",
+  "backtest_gate_status": "BLOCKED",
+  "unverifiable_lookahead_risk": "HIGH"
+}

@@ -1,0 +1,498 @@
+{
+  "yfinance_version": "1.2.0",
+  "introspection": [
+    {
+      "Provider": "yfinance",
+      "Domain": "Fundamentals",
+      "Method": "get_income_stmt",
+      "HistoricalDepth": "4-5 Years",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "High",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "Yes",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "TaxEffectOfUnusualItems",
+        "TaxRateForCalcs",
+        "NormalizedEBITDA",
+        "NetIncomeFromContinuingOperationNetMinorityInterest",
+        "ReconciledDepreciation",
+        "ReconciledCostOfRevenue",
+        "EBITDA",
+        "EBIT"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Fundamentals",
+      "Method": "get_balance_sheet",
+      "HistoricalDepth": "4-5 Years",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "High",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "Yes",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "TreasurySharesNumber",
+        "OrdinarySharesNumber",
+        "ShareIssued",
+        "NetDebt",
+        "TotalDebt",
+        "TangibleBookValue",
+        "InvestedCapital",
+        "WorkingCapital"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Fundamentals",
+      "Method": "get_cashflow",
+      "HistoricalDepth": "4-5 Years",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "High",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "FreeCashFlow",
+        "RepurchaseOfCapitalStock",
+        "RepaymentOfDebt",
+        "IssuanceOfDebt",
+        "IssuanceOfCapitalStock",
+        "CapitalExpenditure",
+        "InterestPaidSupplementalData",
+        "IncomeTaxPaidSupplementalData"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Shares",
+      "Method": "get_shares_full",
+      "HistoricalDepth": "4-5 Years",
+      "TimestampAvailable": "Yes",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        null
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Events",
+      "Method": "get_earnings_dates",
+      "HistoricalDepth": "4-5 Years",
+      "TimestampAvailable": "Yes",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [],
+      "Error": "`Import lxml` failed.  Use pip or conda to install the lxml package."
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Analyst/Sentiment",
+      "Method": "get_recommendations",
+      "HistoricalDepth": "TTM/Forward",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "period",
+        "strongBuy",
+        "buy",
+        "hold",
+        "sell",
+        "strongSell"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Analyst/Sentiment",
+      "Method": "recommendations_summary",
+      "HistoricalDepth": "TTM/Forward",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "period",
+        "strongBuy",
+        "buy",
+        "hold",
+        "sell",
+        "strongSell"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Analyst/Sentiment",
+      "Method": "upgrades_downgrades",
+      "HistoricalDepth": "TTM/Forward",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "Firm",
+        "ToGrade",
+        "FromGrade",
+        "Action",
+        "priceTargetAction",
+        "currentPriceTarget",
+        "priorPriceTarget"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Analyst/Sentiment",
+      "Method": "analyst_price_targets",
+      "HistoricalDepth": "TTM/Forward",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "current",
+        "high",
+        "low",
+        "mean",
+        "median"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Analyst/Sentiment",
+      "Method": "earnings_estimate",
+      "HistoricalDepth": "TTM/Forward",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "avg",
+        "low",
+        "high",
+        "yearAgoEps",
+        "numberOfAnalysts",
+        "growth"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Analyst/Sentiment",
+      "Method": "revenue_estimate",
+      "HistoricalDepth": "TTM/Forward",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "avg",
+        "low",
+        "high",
+        "numberOfAnalysts",
+        "yearAgoRevenue",
+        "growth"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Analyst/Sentiment",
+      "Method": "earnings_history",
+      "HistoricalDepth": "TTM/Forward",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "epsActual",
+        "epsEstimate",
+        "epsDifference",
+        "surprisePercent"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Analyst/Sentiment",
+      "Method": "eps_trend",
+      "HistoricalDepth": "TTM/Forward",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "current",
+        "7daysAgo",
+        "30daysAgo",
+        "60daysAgo",
+        "90daysAgo"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Analyst/Sentiment",
+      "Method": "eps_revisions",
+      "HistoricalDepth": "TTM/Forward",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "upLast7days",
+        "upLast30days",
+        "downLast30days",
+        "downLast7Days"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Analyst/Sentiment",
+      "Method": "growth_estimates",
+      "HistoricalDepth": "TTM/Forward",
+      "TimestampAvailable": "No",
+      "PITEligible": "No",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "No",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "No",
+      "Status": "REAL_PIT_UNVERIFIED",
+      "Fields": [
+        "stockTrend",
+        "indexTrend"
+      ],
+      "Error": null
+    },
+    {
+      "Provider": "yfinance",
+      "Domain": "Market Data",
+      "Method": "history",
+      "HistoricalDepth": "4-5 Years",
+      "TimestampAvailable": "Yes",
+      "PITEligible": "Yes",
+      "RestatementRisk": "Low",
+      "BacktestAllowed": "Yes",
+      "CurrentResearchAllowed": "Yes",
+      "CrossProviderValidated": "Yes",
+      "Status": "REAL_PIT_ELIGIBLE",
+      "Fields": [
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Volume",
+        "Dividends",
+        "Stock Splits"
+      ],
+      "Error": null
+    }
+  ],
+  "critical_pit_tests": [
+    {
+      "ticker": "AAPL",
+      "as_of": "2024-08-15",
+      "metric": "revenue",
+      "sec_value": 296105000000.0,
+      "yf_value": 383285000000.0,
+      "difference": 87180000000.0,
+      "relative_difference": 0.2944225865824623,
+      "PIT_status": "DISCREPANCY"
+    },
+    {
+      "ticker": "AAPL",
+      "as_of": "2024-08-15",
+      "metric": "net_income",
+      "sec_value": 79000000000.0,
+      "yf_value": 96995000000.0,
+      "difference": 17995000000.0,
+      "relative_difference": 0.22778481012658228,
+      "PIT_status": "DISCREPANCY"
+    },
+    {
+      "ticker": "AAPL",
+      "as_of": "2024-08-15",
+      "metric": "operating_income",
+      "sec_value": 93625000000.0,
+      "yf_value": 114301000000.0,
+      "difference": 20676000000.0,
+      "relative_difference": 0.2208384512683578,
+      "PIT_status": "DISCREPANCY"
+    },
+    {
+      "ticker": "AAPL",
+      "as_of": "2024-08-15",
+      "metric": "gross_profit",
+      "sec_value": 136804000000.0,
+      "yf_value": 169148000000.0,
+      "difference": 32344000000.0,
+      "relative_difference": 0.23642583550188592,
+      "PIT_status": "DISCREPANCY"
+    },
+    {
+      "ticker": "AAPL",
+      "as_of": "2024-08-15",
+      "metric": "total_assets",
+      "sec_value": 331612000000.0,
+      "yf_value": 352583000000.0,
+      "difference": 20971000000.0,
+      "relative_difference": 0.0632395691350132,
+      "PIT_status": "DISCREPANCY"
+    },
+    {
+      "ticker": "AAPL",
+      "as_of": "2024-08-15",
+      "metric": "total_liabilities",
+      "sec_value": 264904000000.0,
+      "yf_value": 290437000000.0,
+      "difference": 25533000000.0,
+      "relative_difference": 0.09638586053815722,
+      "PIT_status": "DISCREPANCY"
+    },
+    {
+      "ticker": "AAPL",
+      "as_of": "2024-08-15",
+      "metric": "shareholders_equity",
+      "sec_value": 66708000000.0,
+      "yf_value": 62146000000.0,
+      "difference": -4562000000.0,
+      "relative_difference": -0.06838759968819332,
+      "PIT_status": "DISCREPANCY"
+    },
+    {
+      "ticker": "AAPL",
+      "as_of": "2024-08-15",
+      "metric": "eps",
+      "sec_value": 5.11,
+      "yf_value": 6.16,
+      "difference": 1.0499999999999998,
+      "relative_difference": 0.20547945205479448,
+      "PIT_status": "DISCREPANCY"
+    },
+    {
+      "ticker": "AAPL",
+      "as_of": "2025-02-15",
+      "metric": "revenue",
+      "sec_value": 124300000000.0,
+      "yf_value": 391035000000.0,
+      "difference": 266735000000.0,
+      "relative_difference": 2.145897023330652,
+      "PIT_status": "DISCREPANCY"
+    },
+    {
+      "ticker": "AAPL",
+      "as_of": "2025-02-15",
+      "metric": "net_income",
+      "sec_value": 36330000000.0,
+      "yf_value": 93736000000.0,
+      "difference": 57406000000.0,
+      "relative_difference": 1.5801266171208368,
+      "PIT_status": "DISCREPANCY"
+    }
+  ],
+  "price_repairs": [],
+  "factor_impact": {
+    "model_a_mean_ic": 0.06666666666666667,
+    "model_b_mean_ic": -0.03333333333333333,
+    "discrepancy_detected": true
+  },
+  "restatement_cases": [
+    {
+      "security_id": "sec-aapl-0000320193",
+      "concept": "EntityCommonStockSharesOutstanding",
+      "period_end": "2009-10-16",
+      "filed_at": "2010-01-25T00:00:00Z",
+      "value": 900678473.0,
+      "accession_number": "0001193125-10-012091",
+      "prevrpt": 0
+    },
+    {
+      "security_id": "sec-aapl-0000320193",
+      "concept": "SalesRevenueNet",
+      "period_end": "2007-09-29",
+      "filed_at": "2010-01-25T00:00:00Z",
+      "value": 24578000000.0,
+      "accession_number": "0001193125-10-012091",
+      "prevrpt": 0
+    },
+    {
+      "security_id": "sec-aapl-0000320193",
+      "concept": "SalesRevenueNet",
+      "period_end": "2008-09-27",
+      "filed_at": "2010-01-25T00:00:00Z",
+      "value": 37491000000.0,
+      "accession_number": "0001193125-10-012091",
+      "prevrpt": 0
+    },
+    {
+      "security_id": "sec-aapl-0000320193",
+      "concept": "SalesRevenueNet",
+      "period_end": "2009-09-26",
+      "filed_at": "2010-01-25T00:00:00Z",
+      "value": 42905000000.0,
+      "accession_number": "0001193125-10-012091",
+      "prevrpt": 0
+    },
+    {
+      "security_id": "sec-aapl-0000320193",
+      "concept": "NetIncomeLoss",
+      "period_end": "2007-09-29",
+      "filed_at": "2010-01-25T00:00:00Z",
+      "value": 3495000000.0,
+      "accession_number": "0001193125-10-012091",
+      "prevrpt": 0
+    }
+  ]
+}

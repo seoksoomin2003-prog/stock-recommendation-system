@@ -1,0 +1,10 @@
+{
+    "providers": {
+        "yfinance": {"ohlcv": "POOR", "pit_fundamentals": "FAIL", "delisted": "FAIL", "cost": "FREE"},
+        "Tiingo": {"ohlcv": "EXCELLENT", "pit_fundamentals": "GOOD", "delisted": "EXCELLENT", "cost": "PREMIUM_LOW"},
+        "AlphaVantage": {"ohlcv": "GOOD", "pit_fundamentals": "MODERATE", "delisted": "MODERATE", "cost": "PREMIUM_MED"},
+        "SEC_EDGAR": {"ohlcv": "N/A", "pit_fundamentals": "EXCELLENT", "delisted": "N/A", "cost": "FREE"}
+    },
+    "recommended_ohlcv": "Tiingo",
+    "recommended_fundamentals": "SEC_EDGAR"
+}

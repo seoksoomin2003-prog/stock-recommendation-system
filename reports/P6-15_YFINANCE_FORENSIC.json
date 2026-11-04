@@ -1,0 +1,7 @@
+{
+  "delisted_coverage": "FAIL",
+  "survivorship_bias_elimination": "FAIL",
+  "stable_identifiers": "FAIL",
+  "corporate_actions": "PASS",
+  "live_pricing": "PASS"
+}

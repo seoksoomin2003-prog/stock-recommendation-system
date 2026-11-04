@@ -1,0 +1,56 @@
+{
+  "fee_7_horizon_20": {
+    "fee_bps": 7,
+    "horizon": 20,
+    "avg_net_return": 0.003952410105221195,
+    "win_rate": 0.31666666666666665
+  },
+  "fee_7_horizon_30": {
+    "fee_bps": 7,
+    "horizon": 30,
+    "avg_net_return": 0.0067536617395712465,
+    "win_rate": 0.3
+  },
+  "fee_7_horizon_40": {
+    "fee_bps": 7,
+    "horizon": 40,
+    "avg_net_return": 0.010628990721221036,
+    "win_rate": 0.3
+  },
+  "fee_20_horizon_20": {
+    "fee_bps": 20,
+    "horizon": 20,
+    "avg_net_return": 0.0013524101052211977,
+    "win_rate": 0.2833333333333333
+  },
+  "fee_20_horizon_30": {
+    "fee_bps": 20,
+    "horizon": 30,
+    "avg_net_return": 0.004153661739571246,
+    "win_rate": 0.2833333333333333
+  },
+  "fee_20_horizon_40": {
+    "fee_bps": 20,
+    "horizon": 40,
+    "avg_net_return": 0.008028990721221036,
+    "win_rate": 0.2833333333333333
+  },
+  "fee_55_horizon_20": {
+    "fee_bps": 55,
+    "horizon": 20,
+    "avg_net_return": -0.005647589894778802,
+    "win_rate": 0.23333333333333334
+  },
+  "fee_55_horizon_30": {
+    "fee_bps": 55,
+    "horizon": 30,
+    "avg_net_return": -0.0028463382604287527,
+    "win_rate": 0.21666666666666667
+  },
+  "fee_55_horizon_40": {
+    "fee_bps": 55,
+    "horizon": 40,
+    "avg_net_return": 0.0010289907212210371,
+    "win_rate": 0.23333333333333334
+  }
+}

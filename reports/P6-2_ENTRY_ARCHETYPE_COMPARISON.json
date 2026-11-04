@@ -1,0 +1,26 @@
+{
+  "Trend_Continuation": {
+    "trade_count": 30,
+    "win_rate": 0.5333333333333333,
+    "avg_return": 0.05266224303457431,
+    "avg_holding_days": 15.766666666666667
+  },
+  "Pullback": {
+    "trade_count": 0,
+    "win_rate": 0.0,
+    "avg_return": 0.0,
+    "avg_holding_days": 0.0
+  },
+  "Breakout": {
+    "trade_count": 2,
+    "win_rate": 0.0,
+    "avg_return": -0.025638719146981948,
+    "avg_holding_days": 11.0
+  },
+  "Mean_Reversion": {
+    "trade_count": 0,
+    "win_rate": 0.0,
+    "avg_return": 0.0,
+    "avg_holding_days": 0.0
+  }
+}

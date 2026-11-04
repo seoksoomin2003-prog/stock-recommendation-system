@@ -1,0 +1,15 @@
+{
+  "SEC": "PRIMARY PIT FUNDAMENTALS",
+  "Tiingo": "SECONDARY_VALIDATION",
+  "yfinance": "LIVE_ONLY",
+  "P6-12D": "BLOCKED",
+  "BLOCKERS": [
+    "No free historical OHLCV provider with delisted coverage"
+  ],
+  "DATA QUALITY": "UNAVAILABLE",
+  "SURVIVORSHIP": "FAIL",
+  "PIT": "FAIL",
+  "CORPORATE ACTIONS": "PARTIAL",
+  "RESOURCE FEASIBILITY": "PARTIAL",
+  "NO PAYMENT REQUIRED": "YES"
+}

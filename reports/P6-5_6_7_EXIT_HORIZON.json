@@ -1,0 +1,6 @@
+{
+  "expected_holding_days": 30,
+  "lower_bound_days": 15,
+  "upper_bound_days": 45,
+  "confidence": 0.68
+}

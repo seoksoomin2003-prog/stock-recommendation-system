@@ -1,0 +1,5 @@
+{
+  "definition": "HISTORICAL_POINT_IN_TIME_UNIVERSE",
+  "methodology": "Cross-section of all SEC reporting entities (10-K/10-Q filers) active on simulation date T.",
+  "survivorship_bias_status": "RESOLVABLE_VIA_SEC"
+}

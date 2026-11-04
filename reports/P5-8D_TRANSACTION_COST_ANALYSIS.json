@@ -1,0 +1,122 @@
+{
+  "MODEL_0": {
+    "LOW_COST": {
+      "gross_return": 0.056220666631787514,
+      "turnover": 0.3846153846153846,
+      "fee_bps": 7.0,
+      "net_return": 0.05595143586255674
+    },
+    "BASE_COST": {
+      "gross_return": 0.056220666631787514,
+      "turnover": 0.3846153846153846,
+      "fee_bps": 20.0,
+      "net_return": 0.05545143586255674
+    },
+    "HIGH_COST": {
+      "gross_return": 0.056220666631787514,
+      "turnover": 0.3846153846153846,
+      "fee_bps": 55.0,
+      "net_return": 0.0541052820164029
+    }
+  },
+  "MODEL_A": {
+    "LOW_COST": {
+      "gross_return": 0.04661131458381542,
+      "turnover": 0.4102564102564103,
+      "fee_bps": 7.0,
+      "net_return": 0.04632413509663593
+    },
+    "BASE_COST": {
+      "gross_return": 0.04661131458381542,
+      "turnover": 0.4102564102564103,
+      "fee_bps": 20.0,
+      "net_return": 0.0457908017633026
+    },
+    "HIGH_COST": {
+      "gross_return": 0.04661131458381542,
+      "turnover": 0.4102564102564103,
+      "fee_bps": 55.0,
+      "net_return": 0.044354904327405166
+    }
+  },
+  "MODEL_B": {
+    "LOW_COST": {
+      "gross_return": -0.001960957488251806,
+      "turnover": 0.4871794871794872,
+      "fee_bps": 7.0,
+      "net_return": -0.002301983129277447
+    },
+    "BASE_COST": {
+      "gross_return": -0.001960957488251806,
+      "turnover": 0.4871794871794872,
+      "fee_bps": 20.0,
+      "net_return": -0.0029353164626107803
+    },
+    "HIGH_COST": {
+      "gross_return": -0.001960957488251806,
+      "turnover": 0.4871794871794872,
+      "fee_bps": 55.0,
+      "net_return": -0.004640444667738985
+    }
+  },
+  "MODEL_C": {
+    "LOW_COST": {
+      "gross_return": 0.05737655495658267,
+      "turnover": 0.4615384615384615,
+      "fee_bps": 7.0,
+      "net_return": 0.057053478033505745
+    },
+    "BASE_COST": {
+      "gross_return": 0.05737655495658267,
+      "turnover": 0.4615384615384615,
+      "fee_bps": 20.0,
+      "net_return": 0.05645347803350575
+    },
+    "HIGH_COST": {
+      "gross_return": 0.05737655495658267,
+      "turnover": 0.4615384615384615,
+      "fee_bps": 55.0,
+      "net_return": 0.05483809341812113
+    }
+  },
+  "MODEL_D": {
+    "LOW_COST": {
+      "gross_return": -0.001779238181491721,
+      "turnover": 0.4615384615384615,
+      "fee_bps": 7.0,
+      "net_return": -0.002102315104568644
+    },
+    "BASE_COST": {
+      "gross_return": -0.001779238181491721,
+      "turnover": 0.4615384615384615,
+      "fee_bps": 20.0,
+      "net_return": -0.002702315104568644
+    },
+    "HIGH_COST": {
+      "gross_return": -0.001779238181491721,
+      "turnover": 0.4615384615384615,
+      "fee_bps": 55.0,
+      "net_return": -0.004317699719953259
+    }
+  },
+  "MODEL_E": {
+    "LOW_COST": {
+      "gross_return": 0.04477679382759703,
+      "turnover": 0.3846153846153846,
+      "fee_bps": 7.0,
+      "net_return": 0.044507563058366256
+    },
+    "BASE_COST": {
+      "gross_return": 0.04477679382759703,
+      "turnover": 0.3846153846153846,
+      "fee_bps": 20.0,
+      "net_return": 0.044007563058366256
+    },
+    "HIGH_COST": {
+      "gross_return": 0.04477679382759703,
+      "turnover": 0.3846153846153846,
+      "fee_bps": 55.0,
+      "net_return": 0.04266140921221241
+    }
+  }
+}

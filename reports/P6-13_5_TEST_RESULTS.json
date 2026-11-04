@@ -1,0 +1,17 @@
+{
+  "test_suite": "P6-13.5",
+  "total_tests": 126,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "pass_rate": "100.0%",
+  "tested_modules": [
+    "Candidate-Level Quarantine Firewall",
+    "Missing Data Provenance (NaN fallback vs 0)",
+    "Execution Liquidity Firewall (500k hard limit)",
+    "P6-11B Portfolio Recommendation Status Logic",
+    "Local Workload Limits & Graceful Exits",
+    "Legacy Trading Logic Integrity",
+    "30-Day Re-underwriting Verification"
+  ]
+}

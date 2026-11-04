@@ -1,0 +1,892 @@
+{
+  "2025-10-15": {
+    "scores": {
+      "AAPL": 0.046885830472946005,
+      "MSFT": 0.22978583941964484,
+      "GOOGL": -0.03300732320305917,
+      "NVDA": 0.49010794367923466,
+      "TSLA": -0.5941983475492431,
+      "AMZN": -0.5744629984144584,
+      "META": 0.10009613392338934,
+      "JPM": 0.4397294743947714,
+      "KO": 0.10219817903317233,
+      "005930.KS": 0.04143889529878231,
+      "NFLX": -0.34449807599156745,
+      "XOM": 0.09592444893638741
+    },
+    "factors": {
+      "AAPL": {
+        "momentum": NaN,
+        "value": -0.06510738992894953,
+        "quality": 0.38442417743822266,
+        "low_volatility": 0.0
+      },
+      "MSFT": {
+        "momentum": NaN,
+        "value": -0.16967871057166495,
+        "quality": 0.7671910327125545,
+        "low_volatility": 0.0
+      },
+      "GOOGL": {
+        "momentum": NaN,
+        "value": 0.2406766529830627,
+        "quality": 0.09776311797483174,
+        "low_volatility": 0.0
+      },
+      "NVDA": {
+        "momentum": NaN,
+        "value": -0.607919831559372,
+        "quality": 1.4449040669780426,
+        "low_volatility": 0.0
+      },
+      "TSLA": {
+        "momentum": NaN,
+        "value": -0.31073708236176084,
+        "quality": -0.676055712101597,
+        "low_volatility": 0.0
+      },
+      "AMZN": {
+        "momentum": NaN,
+        "value": -0.1274706696175077,
+        "quality": -0.7241086100070673,
+        "low_volatility": 0.0
+      },
+      "META": {
+        "momentum": NaN,
+        "value": 0.3597835727504733,
+        "quality": 0.2866610594633912,
+        "low_volatility": 0.0
+      },
+      "JPM": {
+        "momentum": NaN,
+        "value": 2.550157886563233,
+        "quality": -0.09776311797483174,
+        "low_volatility": 0.0
+      },
+      "KO": {
+        "momentum": NaN,
+        "value": 0.06510738992894953,
+        "quality": 0.425849277979819,
+        "low_volatility": 0.0
+      },
+      "005930.KS": {
+        "momentum": NaN,
+        "value": 2.8679439158596223,
+        "quality": -0.9726587161594142,
+        "low_volatility": 0.0
+      },
+      "NFLX": {
+        "momentum": NaN,
+        "value": -0.1779845417676893,
+        "quality": -0.2800327650022868,
+        "low_volatility": 0.0
+      },
+      "XOM": {
+        "momentum": NaN,
+        "value": 2.2336267123897393,
+        "quality": -0.5816067413573173,
+        "low_volatility": 0.0
+      }
+    },
+    "standardized": {
+      "AAPL": {
+        "momentum": NaN,
+        "value": -0.5192426637204596,
+        "quality": 0.5372972902060273,
+        "low_volatility": 0.0
+      },
+      "MSFT": {
+        "momentum": NaN,
+        "value": -0.6045308081754718,
+        "quality": 1.0810678290314542,
+        "low_volatility": 0.0
+      },
+      "GOOGL": {
+        "momentum": NaN,
+        "value": -0.26984585526833144,
+        "quality": 0.13005764388671132,
+        "low_volatility": 0.0
+      },
+      "NVDA": {
+        "momentum": NaN,
+        "value": -0.9619593249351458,
+        "quality": 2.043848113514127,
+        "low_volatility": 0.0
+      },
+      "TSLA": {
+        "momentum": NaN,
+        "value": -0.7195777131574506,
+        "quality": -0.9692535331020716,
+        "low_volatility": 0.0
+      },
+      "AMZN": {
+        "momentum": NaN,
+        "value": -0.5701060206530814,
+        "quality": -1.0375189793551267,
+        "low_volatility": 0.0
+      },
+      "META": {
+        "momentum": NaN,
+        "value": -0.17270250739552143,
+        "quality": 0.39841195411722946,
+        "low_volatility": 0.0
+      },
+      "JPM": {
+        "momentum": NaN,
+        "value": 1.6137620771466137,
+        "quality": -0.14771302829088534,
+        "low_volatility": 0.0
+      },
+      "KO": {
+        "momentum": NaN,
+        "value": -0.41303976902199085,
+        "quality": 0.5961470807038408,
+        "low_volatility": 0.0
+      },
+      "005930.KS": {
+        "momentum": NaN,
+        "value": 1.8729476799087534,
+        "quality": -1.390617016150169,
+        "low_volatility": 0.0
+      },
+      "NFLX": {
+        "momentum": NaN,
+        "value": -0.6113050262546887,
+        "quality": -0.4066509765743245,
+        "low_volatility": 0.0
+      },
+      "XOM": {
+        "momentum": NaN,
+        "value": 1.3555999315267746,
+        "quality": -0.8350763779868126,
+        "low_volatility": 0.0
+      }
+    },
+    "returns": {
+      "AAPL": -0.043425242541607734,
+      "MSFT": 0.046901833014377094,
+      "GOOGL": -0.03707683302267849,
+      "NVDA": -0.02979897655861483,
+      "TSLA": -0.0007587778882632086,
+      "AMZN": 0.0030768245672878124,
+      "META": 0.019570455616226435,
+      "JPM": 0.07526195339102527,
+      "KO": -0.09979086660069203,
+      "005930.KS": 0.0952941415348137,
+      "NFLX": 0.1059551516474972,
+      "XOM": 0.07957885997130991
+    }
+  },
+  "2025-12-15": {
+    "scores": {
+      "AAPL": 0.046885830472946005,
+      "MSFT": 0.22978583941964484,
+      "GOOGL": -0.03300732320305917,
+      "NVDA": 0.49010794367923466,
+      "TSLA": -0.5941983475492431,
+      "AMZN": -0.5744629984144584,
+      "META": 0.10009613392338934,
+      "JPM": 0.4397294743947714,
+      "KO": 0.10219817903317233,
+      "005930.KS": 0.04143889529878231,
+      "NFLX": -0.34449807599156745,
+      "XOM": 0.09592444893638741
+    },
+    "factors": {
+      "AAPL": {
+        "momentum": NaN,
+        "value": -0.06510738992894953,
+        "quality": 0.38442417743822266,
+        "low_volatility": 0.0
+      },
+      "MSFT": {
+        "momentum": NaN,
+        "value": -0.16967871057166495,
+        "quality": 0.7671910327125545,
+        "low_volatility": 0.0
+      },
+      "GOOGL": {
+        "momentum": NaN,
+        "value": 0.2406766529830627,
+        "quality": 0.09776311797483174,
+        "low_volatility": 0.0
+      },
+      "NVDA": {
+        "momentum": NaN,
+        "value": -0.607919831559372,
+        "quality": 1.4449040669780426,
+        "low_volatility": 0.0
+      },
+      "TSLA": {
+        "momentum": NaN,
+        "value": -0.31073708236176084,
+        "quality": -0.676055712101597,
+        "low_volatility": 0.0
+      },
+      "AMZN": {
+        "momentum": NaN,
+        "value": -0.1274706696175077,
+        "quality": -0.7241086100070673,
+        "low_volatility": 0.0
+      },
+      "META": {
+        "momentum": NaN,
+        "value": 0.3597835727504733,
+        "quality": 0.2866610594633912,
+        "low_volatility": 0.0
+      },
+      "JPM": {
+        "momentum": NaN,
+        "value": 2.550157886563233,
+        "quality": -0.09776311797483174,
+        "low_volatility": 0.0
+      },
+      "KO": {
+        "momentum": NaN,
+        "value": 0.06510738992894953,
+        "quality": 0.425849277979819,
+        "low_volatility": 0.0
+      },
+      "005930.KS": {
+        "momentum": NaN,
+        "value": 2.8679439158596223,
+        "quality": -0.9726587161594142,
+        "low_volatility": 0.0
+      },
+      "NFLX": {
+        "momentum": NaN,
+        "value": -0.1779845417676893,
+        "quality": -0.2800327650022868,
+        "low_volatility": 0.0
+      },
+      "XOM": {
+        "momentum": NaN,
+        "value": 2.2336267123897393,
+        "quality": -0.5816067413573173,
+        "low_volatility": 0.0
+      }
+    },
+    "standardized": {
+      "AAPL": {
+        "momentum": NaN,
+        "value": -0.5192426637204596,
+        "quality": 0.5372972902060273,
+        "low_volatility": 0.0
+      },
+      "MSFT": {
+        "momentum": NaN,
+        "value": -0.6045308081754718,
+        "quality": 1.0810678290314542,
+        "low_volatility": 0.0
+      },
+      "GOOGL": {
+        "momentum": NaN,
+        "value": -0.26984585526833144,
+        "quality": 0.13005764388671132,
+        "low_volatility": 0.0
+      },
+      "NVDA": {
+        "momentum": NaN,
+        "value": -0.9619593249351458,
+        "quality": 2.043848113514127,
+        "low_volatility": 0.0
+      },
+      "TSLA": {
+        "momentum": NaN,
+        "value": -0.7195777131574506,
+        "quality": -0.9692535331020716,
+        "low_volatility": 0.0
+      },
+      "AMZN": {
+        "momentum": NaN,
+        "value": -0.5701060206530814,
+        "quality": -1.0375189793551267,
+        "low_volatility": 0.0
+      },
+      "META": {
+        "momentum": NaN,
+        "value": -0.17270250739552143,
+        "quality": 0.39841195411722946,
+        "low_volatility": 0.0
+      },
+      "JPM": {
+        "momentum": NaN,
+        "value": 1.6137620771466137,
+        "quality": -0.14771302829088534,
+        "low_volatility": 0.0
+      },
+      "KO": {
+        "momentum": NaN,
+        "value": -0.41303976902199085,
+        "quality": 0.5961470807038408,
+        "low_volatility": 0.0
+      },
+      "005930.KS": {
+        "momentum": NaN,
+        "value": 1.8729476799087534,
+        "quality": -1.390617016150169,
+        "low_volatility": 0.0
+      },
+      "NFLX": {
+        "momentum": NaN,
+        "value": -0.6113050262546887,
+        "quality": -0.4066509765743245,
+        "low_volatility": 0.0
+      },
+      "XOM": {
+        "momentum": NaN,
+        "value": 1.3555999315267746,
+        "quality": -0.8350763779868126,
+        "low_volatility": 0.0
+      }
+    },
+    "returns": {
+      "AAPL": 0.007052890878107081,
+      "MSFT": 0.03193446219029313,
+      "GOOGL": 0.1318733539819591,
+      "NVDA": 0.03944099701144914,
+      "TSLA": 0.06456232431320842,
+      "AMZN": 0.08472848553178004,
+      "META": 0.042263033230822,
+      "JPM": -0.054720093178068786,
+      "KO": -0.003402665217449715,
+      "005930.KS": 0.05058047295982889,
+      "NFLX": 0.010145005586833258,
+      "XOM": 0.09083483556733875
+    }
+  },
+  "2026-02-15": {
+    "scores": {
+      "AAPL": 0.046885830472946005,
+      "MSFT": 0.22978583941964484,
+      "GOOGL": -0.03300732320305917,
+      "NVDA": 0.49010794367923466,
+      "TSLA": -0.5941983475492431,
+      "AMZN": -0.5744629984144584,
+      "META": 0.10009613392338934,
+      "JPM": 0.4397294743947714,
+      "KO": 0.10219817903317233,
+      "005930.KS": 0.04143889529878231,
+      "NFLX": -0.34449807599156745,
+      "XOM": 0.09592444893638741
+    },
+    "factors": {
+      "AAPL": {
+        "momentum": NaN,
+        "value": -0.06510738992894953,
+        "quality": 0.38442417743822266,
+        "low_volatility": 0.0
+      },
+      "MSFT": {
+        "momentum": NaN,
+        "value": -0.16967871057166495,
+        "quality": 0.7671910327125545,
+        "low_volatility": 0.0
+      },
+      "GOOGL": {
+        "momentum": NaN,
+        "value": 0.2406766529830627,
+        "quality": 0.09776311797483174,
+        "low_volatility": 0.0
+      },
+      "NVDA": {
+        "momentum": NaN,
+        "value": -0.607919831559372,
+        "quality": 1.4449040669780426,
+        "low_volatility": 0.0
+      },
+      "TSLA": {
+        "momentum": NaN,
+        "value": -0.31073708236176084,
+        "quality": -0.676055712101597,
+        "low_volatility": 0.0
+      },
+      "AMZN": {
+        "momentum": NaN,
+        "value": -0.1274706696175077,
+        "quality": -0.7241086100070673,
+        "low_volatility": 0.0
+      },
+      "META": {
+        "momentum": NaN,
+        "value": 0.3597835727504733,
+        "quality": 0.2866610594633912,
+        "low_volatility": 0.0
+      },
+      "JPM": {
+        "momentum": NaN,
+        "value": 2.550157886563233,
+        "quality": -0.09776311797483174,
+        "low_volatility": 0.0
+      },
+      "KO": {
+        "momentum": NaN,
+        "value": 0.06510738992894953,
+        "quality": 0.425849277979819,
+        "low_volatility": 0.0
+      },
+      "005930.KS": {
+        "momentum": NaN,
+        "value": 2.8679439158596223,
+        "quality": -0.9726587161594142,
+        "low_volatility": 0.0
+      },
+      "NFLX": {
+        "momentum": NaN,
+        "value": -0.1779845417676893,
+        "quality": -0.2800327650022868,
+        "low_volatility": 0.0
+      },
+      "XOM": {
+        "momentum": NaN,
+        "value": 2.2336267123897393,
+        "quality": -0.5816067413573173,
+        "low_volatility": 0.0
+      }
+    },
+    "standardized": {
+      "AAPL": {
+        "momentum": NaN,
+        "value": -0.5192426637204596,
+        "quality": 0.5372972902060273,
+        "low_volatility": 0.0
+      },
+      "MSFT": {
+        "momentum": NaN,
+        "value": -0.6045308081754718,
+        "quality": 1.0810678290314542,
+        "low_volatility": 0.0
+      },
+      "GOOGL": {
+        "momentum": NaN,
+        "value": -0.26984585526833144,
+        "quality": 0.13005764388671132,
+        "low_volatility": 0.0
+      },
+      "NVDA": {
+        "momentum": NaN,
+        "value": -0.9619593249351458,
+        "quality": 2.043848113514127,
+        "low_volatility": 0.0
+      },
+      "TSLA": {
+        "momentum": NaN,
+        "value": -0.7195777131574506,
+        "quality": -0.9692535331020716,
+        "low_volatility": 0.0
+      },
+      "AMZN": {
+        "momentum": NaN,
+        "value": -0.5701060206530814,
+        "quality": -1.0375189793551267,
+        "low_volatility": 0.0
+      },
+      "META": {
+        "momentum": NaN,
+        "value": -0.17270250739552143,
+        "quality": 0.39841195411722946,
+        "low_volatility": 0.0
+      },
+      "JPM": {
+        "momentum": NaN,
+        "value": 1.6137620771466137,
+        "quality": -0.14771302829088534,
+        "low_volatility": 0.0
+      },
+      "KO": {
+        "momentum": NaN,
+        "value": -0.41303976902199085,
+        "quality": 0.5961470807038408,
+        "low_volatility": 0.0
+      },
+      "005930.KS": {
+        "momentum": NaN,
+        "value": 1.8729476799087534,
+        "quality": -1.390617016150169,
+        "low_volatility": 0.0
+      },
+      "NFLX": {
+        "momentum": NaN,
+        "value": -0.6113050262546887,
+        "quality": -0.4066509765743245,
+        "low_volatility": 0.0
+      },
+      "XOM": {
+        "momentum": NaN,
+        "value": 1.3555999315267746,
+        "quality": -0.8350763779868126,
+        "low_volatility": 0.0
+      }
+    },
+    "returns": {
+      "AAPL": 0.03886153441801056,
+      "MSFT": 0.03845631457805548,
+      "GOOGL": -0.019056536610786774,
+      "NVDA": 0.038541952286072205,
+      "TSLA": 0.08248085237926137,
+      "AMZN": 0.04015148468820882,
+      "META": 0.012788872760448163,
+      "JPM": 0.06856946337314307,
+      "KO": 0.07503168906352521,
+      "005930.KS": 0.033656354964221716,
+      "NFLX": 0.048970768510136466,
+      "XOM": 0.02058119671456902
+    }
+  },
+  "2026-04-15": {
+    "scores": {
+      "AAPL": 0.046885830472946005,
+      "MSFT": 0.22978583941964484,
+      "GOOGL": -0.03300732320305917,
+      "NVDA": 0.49010794367923466,
+      "TSLA": -0.5941983475492431,
+      "AMZN": -0.5744629984144584,
+      "META": 0.10009613392338934,
+      "JPM": 0.4397294743947714,
+      "KO": 0.10219817903317233,
+      "005930.KS": 0.04143889529878231,
+      "NFLX": -0.34449807599156745,
+      "XOM": 0.09592444893638741
+    },
+    "factors": {
+      "AAPL": {
+        "momentum": NaN,
+        "value": -0.06510738992894953,
+        "quality": 0.38442417743822266,
+        "low_volatility": 0.0
+      },
+      "MSFT": {
+        "momentum": NaN,
+        "value": -0.16967871057166495,
+        "quality": 0.7671910327125545,
+        "low_volatility": 0.0
+      },
+      "GOOGL": {
+        "momentum": NaN,
+        "value": 0.2406766529830627,
+        "quality": 0.09776311797483174,
+        "low_volatility": 0.0
+      },
+      "NVDA": {
+        "momentum": NaN,
+        "value": -0.607919831559372,
+        "quality": 1.4449040669780426,
+        "low_volatility": 0.0
+      },
+      "TSLA": {
+        "momentum": NaN,
+        "value": -0.31073708236176084,
+        "quality": -0.676055712101597,
+        "low_volatility": 0.0
+      },
+      "AMZN": {
+        "momentum": NaN,
+        "value": -0.1274706696175077,
+        "quality": -0.7241086100070673,
+        "low_volatility": 0.0
+      },
+      "META": {
+        "momentum": NaN,
+        "value": 0.3597835727504733,
+        "quality": 0.2866610594633912,
+        "low_volatility": 0.0
+      },
+      "JPM": {
+        "momentum": NaN,
+        "value": 2.550157886563233,
+        "quality": -0.09776311797483174,
+        "low_volatility": 0.0
+      },
+      "KO": {
+        "momentum": NaN,
+        "value": 0.06510738992894953,
+        "quality": 0.425849277979819,
+        "low_volatility": 0.0
+      },
+      "005930.KS": {
+        "momentum": NaN,
+        "value": 2.8679439158596223,
+        "quality": -0.9726587161594142,
+        "low_volatility": 0.0
+      },
+      "NFLX": {
+        "momentum": NaN,
+        "value": -0.1779845417676893,
+        "quality": -0.2800327650022868,
+        "low_volatility": 0.0
+      },
+      "XOM": {
+        "momentum": NaN,
+        "value": 2.2336267123897393,
+        "quality": -0.5816067413573173,
+        "low_volatility": 0.0
+      }
+    },
+    "standardized": {
+      "AAPL": {
+        "momentum": NaN,
+        "value": -0.5192426637204596,
+        "quality": 0.5372972902060273,
+        "low_volatility": 0.0
+      },
+      "MSFT": {
+        "momentum": NaN,
+        "value": -0.6045308081754718,
+        "quality": 1.0810678290314542,
+        "low_volatility": 0.0
+      },
+      "GOOGL": {
+        "momentum": NaN,
+        "value": -0.26984585526833144,
+        "quality": 0.13005764388671132,
+        "low_volatility": 0.0
+      },
+      "NVDA": {
+        "momentum": NaN,
+        "value": -0.9619593249351458,
+        "quality": 2.043848113514127,
+        "low_volatility": 0.0
+      },
+      "TSLA": {
+        "momentum": NaN,
+        "value": -0.7195777131574506,
+        "quality": -0.9692535331020716,
+        "low_volatility": 0.0
+      },
+      "AMZN": {
+        "momentum": NaN,
+        "value": -0.5701060206530814,
+        "quality": -1.0375189793551267,
+        "low_volatility": 0.0
+      },
+      "META": {
+        "momentum": NaN,
+        "value": -0.17270250739552143,
+        "quality": 0.39841195411722946,
+        "low_volatility": 0.0
+      },
+      "JPM": {
+        "momentum": NaN,
+        "value": 1.6137620771466137,
+        "quality": -0.14771302829088534,
+        "low_volatility": 0.0
+      },
+      "KO": {
+        "momentum": NaN,
+        "value": -0.41303976902199085,
+        "quality": 0.5961470807038408,
+        "low_volatility": 0.0
+      },
+      "005930.KS": {
+        "momentum": NaN,
+        "value": 1.8729476799087534,
+        "quality": -1.390617016150169,
+        "low_volatility": 0.0
+      },
+      "NFLX": {
+        "momentum": NaN,
+        "value": -0.6113050262546887,
+        "quality": -0.4066509765743245,
+        "low_volatility": 0.0
+      },
+      "XOM": {
+        "momentum": NaN,
+        "value": 1.3555999315267746,
+        "quality": -0.8350763779868126,
+        "low_volatility": 0.0
+      }
+    },
+    "returns": {
+      "AAPL": 0.004251803036690073,
+      "MSFT": 0.03212294620083802,
+      "GOOGL": 0.13268985257962315,
+      "NVDA": -0.03201424314322663,
+      "TSLA": 0.05142413394140102,
+      "AMZN": -0.03566799436226796,
+      "META": 0.07035033024717309,
+      "JPM": 0.04264698484974493,
+      "KO": -0.013708605348436372,
+      "005930.KS": 0.10578824229619477,
+      "NFLX": 0.08729835950292117,
+      "XOM": 0.0008705003205462673
+    }
+  },
+  "2026-06-15": {
+    "scores": {
+      "AAPL": 0.046885830472946005,
+      "MSFT": 0.22978583941964484,
+      "GOOGL": -0.03300732320305917,
+      "NVDA": 0.49010794367923466,
+      "TSLA": -0.5941983475492431,
+      "AMZN": -0.5744629984144584,
+      "META": 0.10009613392338934,
+      "JPM": 0.4397294743947714,
+      "KO": 0.10219817903317233,
+      "005930.KS": 0.04143889529878231,
+      "NFLX": -0.34449807599156745,
+      "XOM": 0.09592444893638741
+    },
+    "factors": {
+      "AAPL": {
+        "momentum": NaN,
+        "value": -0.06510738992894953,
+        "quality": 0.38442417743822266,
+        "low_volatility": 0.0
+      },
+      "MSFT": {
+        "momentum": NaN,
+        "value": -0.16967871057166495,
+        "quality": 0.7671910327125545,
+        "low_volatility": 0.0
+      },
+      "GOOGL": {
+        "momentum": NaN,
+        "value": 0.2406766529830627,
+        "quality": 0.09776311797483174,
+        "low_volatility": 0.0
+      },
+      "NVDA": {
+        "momentum": NaN,
+        "value": -0.607919831559372,
+        "quality": 1.4449040669780426,
+        "low_volatility": 0.0
+      },
+      "TSLA": {
+        "momentum": NaN,
+        "value": -0.31073708236176084,
+        "quality": -0.676055712101597,
+        "low_volatility": 0.0
+      },
+      "AMZN": {
+        "momentum": NaN,
+        "value": -0.1274706696175077,
+        "quality": -0.7241086100070673,
+        "low_volatility": 0.0
+      },
+      "META": {
+        "momentum": NaN,
+        "value": 0.3597835727504733,
+        "quality": 0.2866610594633912,
+        "low_volatility": 0.0
+      },
+      "JPM": {
+        "momentum": NaN,
+        "value": 2.550157886563233,
+        "quality": -0.09776311797483174,
+        "low_volatility": 0.0
+      },
+      "KO": {
+        "momentum": NaN,
+        "value": 0.06510738992894953,
+        "quality": 0.425849277979819,
+        "low_volatility": 0.0
+      },
+      "005930.KS": {
+        "momentum": NaN,
+        "value": 2.8679439158596223,
+        "quality": -0.9726587161594142,
+        "low_volatility": 0.0
+      },
+      "NFLX": {
+        "momentum": NaN,
+        "value": -0.1779845417676893,
+        "quality": -0.2800327650022868,
+        "low_volatility": 0.0
+      },
+      "XOM": {
+        "momentum": NaN,
+        "value": 2.2336267123897393,
+        "quality": -0.5816067413573173,
+        "low_volatility": 0.0
+      }
+    },
+    "standardized": {
+      "AAPL": {
+        "momentum": NaN,
+        "value": -0.5192426637204596,
+        "quality": 0.5372972902060273,
+        "low_volatility": 0.0
+      },
+      "MSFT": {
+        "momentum": NaN,
+        "value": -0.6045308081754718,
+        "quality": 1.0810678290314542,
+        "low_volatility": 0.0
+      },
+      "GOOGL": {
+        "momentum": NaN,
+        "value": -0.26984585526833144,
+        "quality": 0.13005764388671132,
+        "low_volatility": 0.0
+      },
+      "NVDA": {
+        "momentum": NaN,
+        "value": -0.9619593249351458,
+        "quality": 2.043848113514127,
+        "low_volatility": 0.0
+      },
+      "TSLA": {
+        "momentum": NaN,
+        "value": -0.7195777131574506,
+        "quality": -0.9692535331020716,
+        "low_volatility": 0.0
+      },
+      "AMZN": {
+        "momentum": NaN,
+        "value": -0.5701060206530814,
+        "quality": -1.0375189793551267,
+        "low_volatility": 0.0
+      },
+      "META": {
+        "momentum": NaN,
+        "value": -0.17270250739552143,
+        "quality": 0.39841195411722946,
+        "low_volatility": 0.0
+      },
+      "JPM": {
+        "momentum": NaN,
+        "value": 1.6137620771466137,
+        "quality": -0.14771302829088534,
+        "low_volatility": 0.0
+      },
+      "KO": {
+        "momentum": NaN,
+        "value": -0.41303976902199085,
+        "quality": 0.5961470807038408,
+        "low_volatility": 0.0
+      },
+      "005930.KS": {
+        "momentum": NaN,
+        "value": 1.8729476799087534,
+        "quality": -1.390617016150169,
+        "low_volatility": 0.0
+      },
+      "NFLX": {
+        "momentum": NaN,
+        "value": -0.6113050262546887,
+        "quality": -0.4066509765743245,
+        "low_volatility": 0.0
+      },
+      "XOM": {
+        "momentum": NaN,
+        "value": 1.3555999315267746,
+        "quality": -0.8350763779868126,
+        "low_volatility": 0.0
+      }
+    },
+    "returns": {
+      "AAPL": 0.03447980892255433,
+      "MSFT": 0.06678947851451526,
+      "GOOGL": 0.06646349938755049,
+      "NVDA": -0.03859356633594441,
+      "TSLA": 0.06863476345184175,
+      "AMZN": -0.031458500843723626,
+      "META": 0.09100386111301316,
+      "JPM": 0.012965808997769182,
+      "KO": 0.010821308431918144,
+      "005930.KS": -0.030291365464832628,
+      "NFLX": -0.009564724399357596,
+      "XOM": -0.045078419250415454
+    }
+  }
+}

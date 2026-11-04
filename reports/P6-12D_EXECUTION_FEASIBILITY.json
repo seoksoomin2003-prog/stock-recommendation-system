@@ -1,0 +1,12 @@
+{
+    "hardware": "MacBook M2 / 8GB",
+    "dry_run_completed": true,
+    "chunk_invariance_tested": true,
+    "chunk_invariance_passed": true,
+    "memory_bounds_safe": true,
+    "read_throughput_seconds": 0.097,
+    "write_throughput_seconds": 0.003,
+    "local_data_sufficient": false,
+    "feasibility_verdict": "NOT_COMPUTABLE",
+    "reason": "Missing required ~6,500 universe data for cross-sectional and longitudinal validity."
+}

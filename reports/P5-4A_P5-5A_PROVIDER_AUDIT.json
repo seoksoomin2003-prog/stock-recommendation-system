@@ -1,0 +1,32 @@
+{
+  "audit_timestamp": "2026-08-14T14:20:00+09:00",
+  "environment": {
+    "os": "macOS 15.5 arm64",
+    "python": "3.14.2",
+    "memory_bytes": null,
+    "network_dns": "UNAVAILABLE"
+  },
+  "dependencies": {
+    "requests": "AVAILABLE",
+    "pandas": "AVAILABLE",
+    "yfinance": "AVAILABLE",
+    "duckdb": "UNAVAILABLE",
+    "pyarrow": "UNAVAILABLE",
+    "pytest": "UNAVAILABLE"
+  },
+  "providers": [
+    {"provider": "sec_edgar_official", "domain": "fundamentals", "credentials_configured": false, "reachable": false, "authenticated": false, "sample_record_retrieved": false, "status": "UNAVAILABLE", "reason": "SEC_USER_AGENT_not_configured; DNS unavailable"},
+    {"provider": "sharadar_nasdaq_data_link", "domain": "fundamentals/prices/corporate_actions", "credentials_configured": false, "reachable": false, "authenticated": false, "sample_record_retrieved": false, "status": "UNAVAILABLE", "reason": "credentials missing; DNS unavailable"},
+    {"provider": "norgate", "domain": "universe/prices/corporate_actions", "credentials_configured": false, "reachable": false, "authenticated": false, "sample_record_retrieved": false, "status": "UNAVAILABLE", "reason": "credentials missing"}
+  ],
+  "local_data": {
+    "historical_production_repository": "ABSENT",
+    "historical_financial_facts": 0,
+    "historical_price_bars": 0,
+    "historical_corporate_actions": 0,
+    "historical_security_states": 0,
+    "historical_universe_memberships": 0,
+    "sec_cache": "CACHED filing/ticker metadata only; not PIT financial facts",
+    "research_cache": "CURRENT provider cache records only; not certified PIT history"
+  }
+}

@@ -1,0 +1,7 @@
+{
+    "500k_origin": "IMPLEMENTATION_ADDED. Codified during P6-11B without formal prior statistical multiple-testing.",
+    "500k_semantics": "Raw share volume. Not adjusted for splits or price, creating potential capital distortion.",
+    "75th_origin": "RESEARCH_DERIVED. Recommended in P6-9 but without holding out validation for final threshold tuning.",
+    "75th_semantics": "Cross-sectional percentile ranking. Must be evaluated synchronously across the entire eligible universe.",
+    "verdict": "RESEARCH_REQUIRED on both parameters."
+}

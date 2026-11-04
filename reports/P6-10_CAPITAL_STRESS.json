@@ -1,0 +1,18 @@
+{
+    "1k": {
+        "fractional_share_requirement": true,
+        "executable_positions": 5
+    },
+    "5k": {
+        "fractional_share_requirement": true,
+        "executable_positions": 5
+    },
+    "10k": {
+        "fractional_share_requirement": false,
+        "executable_positions": 5
+    },
+    "100k": {
+        "fractional_share_requirement": false,
+        "executable_positions": 5
+    }
+}

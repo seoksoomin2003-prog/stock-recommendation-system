@@ -1,0 +1,23 @@
+{
+  "EMA20": {
+    "condition": "EMA20",
+    "trade_count": 60,
+    "avg_net_return": 0.004153661739571246,
+    "win_rate": 0.2833333333333333,
+    "max_drawdown": -0.14782042627020342
+  },
+  "SMA20": {
+    "condition": "SMA20",
+    "trade_count": 60,
+    "avg_net_return": 0.003925541259552333,
+    "win_rate": 0.2833333333333333,
+    "max_drawdown": -0.14782042627020342
+  },
+  "NONE": {
+    "condition": "NONE",
+    "trade_count": 60,
+    "avg_net_return": 0.003925541259552333,
+    "win_rate": 0.2833333333333333,
+    "max_drawdown": -0.14782042627020342
+  }
+}

@@ -1,0 +1,72 @@
+{
+    "meta": {
+        "description": "Mock Data and Data Availability Policy Matrix (Cases A-G)",
+        "version": "1.0",
+        "last_updated": "2026-08-19"
+    },
+    "cases": {
+        "Case_A": {
+            "description": "100 candidates, all REAL",
+            "candidate_level_action": "Allow all 100 to proceed to ranking",
+            "portfolio_level_action": "Perform full optimization on 100 eligible candidates",
+            "recommendation_status": "REAL RECOMMENDATION",
+            "top5_generated": "Yes (fully filled)",
+            "watchlist5_generated": "Yes (fully filled)",
+            "execution_blocked": "No"
+        },
+        "Case_B": {
+            "description": "100 candidates, 1 MOCK candidate",
+            "candidate_level_action": "Quarantine the 1 MOCK candidate; allow 99 REAL candidates to proceed to ranking",
+            "portfolio_level_action": "Perform full optimization on 99 eligible REAL candidates",
+            "recommendation_status": "REAL RECOMMENDATION",
+            "top5_generated": "Yes (fully filled)",
+            "watchlist5_generated": "Yes (fully filled)",
+            "execution_blocked": "No"
+        },
+        "Case_C": {
+            "description": "100 candidates, 20 MOCK candidates",
+            "candidate_level_action": "Quarantine the 20 MOCK candidates; allow 80 REAL candidates to proceed to ranking",
+            "portfolio_level_action": "Perform full optimization on 80 eligible REAL candidates",
+            "recommendation_status": "REAL RECOMMENDATION",
+            "top5_generated": "Yes (fully filled)",
+            "watchlist5_generated": "Yes (fully filled)",
+            "execution_blocked": "No"
+        },
+        "Case_D": {
+            "description": "Only 3 REAL candidates remain after removing MOCK candidates",
+            "candidate_level_action": "Quarantine the 97 MOCK candidates; allow 3 REAL candidates to proceed to ranking",
+            "portfolio_level_action": "Construct a degraded portfolio of only 3 candidates",
+            "recommendation_status": "DATA-INCOMPLETE / NO VALID RECOMMENDATION",
+            "top5_generated": "No (insufficient candidates to fill 5 slots)",
+            "watchlist5_generated": "No",
+            "execution_blocked": "Yes"
+        },
+        "Case_E": {
+            "description": "All candidates are MOCK",
+            "candidate_level_action": "Quarantine all candidates",
+            "portfolio_level_action": "Halt execution due to empty eligible candidate universe",
+            "recommendation_status": "DATA-INCOMPLETE / NO VALID RECOMMENDATION",
+            "top5_generated": "No",
+            "watchlist5_generated": "No",
+            "execution_blocked": "Yes"
+        },
+        "Case_F": {
+            "description": "Price/volume data is REAL but fundamentals are MOCK",
+            "candidate_level_action": "Quarantine candidates due to mock fundamentals; they do not enter ranking",
+            "portfolio_level_action": "Halt execution if all candidates are quarantined",
+            "recommendation_status": "DATA-INCOMPLETE / NO VALID RECOMMENDATION",
+            "top5_generated": "No",
+            "watchlist5_generated": "No",
+            "execution_blocked": "Yes"
+        },
+        "Case_G": {
+            "description": "Fundamentals are REAL but price/volume data is unavailable",
+            "candidate_level_action": "Quarantine candidates due to missing/unavailable market data; they do not enter ranking",
+            "portfolio_level_action": "Halt execution due to empty eligible candidate universe",
+            "recommendation_status": "DATA-INCOMPLETE / NO VALID RECOMMENDATION",
+            "top5_generated": "No",
+            "watchlist5_generated": "No",
+            "execution_blocked": "Yes"
+        }
+    }
+}

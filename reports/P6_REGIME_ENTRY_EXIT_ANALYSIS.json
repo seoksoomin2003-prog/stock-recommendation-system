@@ -1,0 +1,68 @@
+{
+  "BULL": {
+    "Trend_Continuation": {
+      "count": 22,
+      "win_rate": 0.7272727272727273,
+      "avg_return": 0.09230140704127758
+    },
+    "Pullback": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_return": 0.0
+    },
+    "Breakout": {
+      "count": 1,
+      "win_rate": 0.0,
+      "avg_return": -0.026646245041270222
+    },
+    "Mean_Reversion": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_return": 0.0
+    }
+  },
+  "BEAR": {
+    "Trend_Continuation": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_return": 0.0
+    },
+    "Pullback": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_return": 0.0
+    },
+    "Breakout": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_return": 0.0
+    },
+    "Mean_Reversion": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_return": 0.0
+    }
+  },
+  "SIDEWAYS": {
+    "Trend_Continuation": {
+      "count": 8,
+      "win_rate": 0.0,
+      "avg_return": -0.05634545798385959
+    },
+    "Pullback": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_return": 0.0
+    },
+    "Breakout": {
+      "count": 1,
+      "win_rate": 0.0,
+      "avg_return": -0.024631193252693674
+    },
+    "Mean_Reversion": {
+      "count": 0,
+      "win_rate": 0.0,
+      "avg_return": 0.0
+    }
+  }
+}

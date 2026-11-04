@@ -1,0 +1,14 @@
+{
+  "alloc_40_60": {
+    "avg_return": 0.0405,
+    "win_rate": 0.5
+  },
+  "alloc_50_50": {
+    "avg_return": 0.041,
+    "win_rate": 0.5
+  },
+  "alloc_60_40": {
+    "avg_return": 0.0385,
+    "win_rate": 0.48
+  }
+}

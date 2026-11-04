@@ -1,0 +1,50 @@
+[
+  {
+    "Provider": "SEC Official EDGAR",
+    "Domain": "data.sec.gov",
+    "Free": true,
+    "Credential": "SEC_USER_AGENT",
+    "Reachable": true,
+    "Authenticated": true,
+    "HistoricalDepth": "Full (Facts from 2009)",
+    "DelistedSupport": true,
+    "CorporateActions": false,
+    "PITSafe": true,
+    "SurvivorshipSafe": true,
+    "RealSample": true,
+    "Coverage": "Fundamentals",
+    "Verdict": "A. SEC REAL-DATA READY"
+  },
+  {
+    "Provider": "Alpha Vantage (Free)",
+    "Domain": "www.alphavantage.co",
+    "Free": true,
+    "Credential": "ALPHAVANTAGE_API_KEY",
+    "Reachable": true,
+    "Authenticated": true,
+    "HistoricalDepth": "Compact (Last 100 days; full history is premium)",
+    "DelistedSupport": true,
+    "CorporateActions": false,
+    "PITSafe": true,
+    "SurvivorshipSafe": false,
+    "RealSample": true,
+    "Coverage": "Listings, Daily Prices (Compact)",
+    "Verdict": "B. LIMITED HISTORICAL DATA READY"
+  },
+  {
+    "Provider": "yfinance (Free)",
+    "Domain": "query1.finance.yahoo.com",
+    "Free": true,
+    "Credential": "NONE",
+    "Reachable": true,
+    "Authenticated": true,
+    "HistoricalDepth": "Full (Max daily prices for active tickers)",
+    "DelistedSupport": false,
+    "CorporateActions": true,
+    "PITSafe": true,
+    "SurvivorshipSafe": false,
+    "RealSample": true,
+    "Coverage": "Daily Prices, Splits, Dividends (Active/OTC)",
+    "Verdict": "B. LIMITED HISTORICAL DATA READY"
+  }
+]

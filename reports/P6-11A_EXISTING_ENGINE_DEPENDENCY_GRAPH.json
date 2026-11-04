@@ -1,0 +1,82 @@
+{
+    "nodes": [
+        {
+            "id": "DATA",
+            "type": "Source"
+        },
+        {
+            "id": "YFinanceMarketProvider",
+            "type": "Adapter"
+        },
+        {
+            "id": "YFinanceFinancialProvider",
+            "type": "Adapter"
+        },
+        {
+            "id": "SECProviderAdapter",
+            "type": "Adapter"
+        },
+        {
+            "id": "FactorEngine",
+            "type": "Engine"
+        },
+        {
+            "id": "ScoringEngine",
+            "type": "Engine"
+        },
+        {
+            "id": "RankingEngine",
+            "type": "Engine"
+        },
+        {
+            "id": "PortfolioEngine",
+            "type": "Engine"
+        },
+        {
+            "id": "DecisionEngine",
+            "type": "Engine"
+        }
+    ],
+    "edges": [
+        {
+            "source": "DATA",
+            "target": "YFinanceMarketProvider"
+        },
+        {
+            "source": "DATA",
+            "target": "YFinanceFinancialProvider"
+        },
+        {
+            "source": "DATA",
+            "target": "SECProviderAdapter"
+        },
+        {
+            "source": "YFinanceMarketProvider",
+            "target": "FactorEngine"
+        },
+        {
+            "source": "YFinanceFinancialProvider",
+            "target": "FactorEngine"
+        },
+        {
+            "source": "SECProviderAdapter",
+            "target": "FactorEngine"
+        },
+        {
+            "source": "FactorEngine",
+            "target": "ScoringEngine"
+        },
+        {
+            "source": "ScoringEngine",
+            "target": "RankingEngine"
+        },
+        {
+            "source": "RankingEngine",
+            "target": "PortfolioEngine"
+        },
+        {
+            "source": "PortfolioEngine",
+            "target": "DecisionEngine"
+        }
+    ]
+}

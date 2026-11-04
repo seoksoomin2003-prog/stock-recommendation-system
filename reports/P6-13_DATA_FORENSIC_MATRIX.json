@@ -1,0 +1,12 @@
+{
+    "universe_target": 6500,
+    "universe_actual": 50,
+    "survivorship_bias_risk": "HIGH",
+    "lookahead_bias_risk": "HIGH",
+    "missing_components": [
+        "Full Universe OHLCV",
+        "Point-in-Time Fundamentals",
+        "Delisted Security Master",
+        "Corporate Actions History"
+    ]
+}

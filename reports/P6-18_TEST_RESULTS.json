@@ -1,0 +1,550 @@
+{
+  "executed_at": "2026-11-04T07:45:31.417866+00:00",
+  "python": "3.14.2",
+  "timeout_seconds": 180,
+  "modules": [
+    {
+      "module": "tests.test_alternative_data",
+      "status": "FAILED",
+      "tests": 0,
+      "summary": [
+        "NO TESTS RAN"
+      ],
+      "failures": [],
+      "seconds": 4.5
+    },
+    {
+      "module": "tests.test_api_resilience",
+      "status": "PASSED",
+      "tests": 5,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 13.6
+    },
+    {
+      "module": "tests.test_canonical_cutover",
+      "status": "PASSED",
+      "tests": 13,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 41.0
+    },
+    {
+      "module": "tests.test_cross_asset",
+      "status": "FAILED",
+      "tests": 0,
+      "summary": [
+        "NO TESTS RAN"
+      ],
+      "failures": [],
+      "seconds": 3.3
+    },
+    {
+      "module": "tests.test_data_stability",
+      "status": "FAILED",
+      "tests": 1,
+      "summary": "FAILED (errors=1)",
+      "failures": [
+        "ERROR: test_data_stability"
+      ],
+      "seconds": 27.9
+    },
+    {
+      "module": "tests.test_embedding_lazy_loading",
+      "status": "FAILED",
+      "tests": 0,
+      "summary": [
+        "NO TESTS RAN"
+      ],
+      "failures": [],
+      "seconds": 1.2
+    },
+    {
+      "module": "tests.test_execution_alpha",
+      "status": "FAILED",
+      "tests": 0,
+      "summary": [
+        "NO TESTS RAN"
+      ],
+      "failures": [],
+      "seconds": 4.3
+    },
+    {
+      "module": "tests.test_golden_validation",
+      "status": "FAILED",
+      "tests": 1,
+      "summary": "FAILED (errors=1)",
+      "failures": [
+        "ERROR: test_golden_validation"
+      ],
+      "seconds": 3.4
+    },
+    {
+      "module": "tests.test_historical_audit_validation",
+      "status": "PASSED",
+      "tests": 12,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 6.1
+    },
+    {
+      "module": "tests.test_historical_data_layer",
+      "status": "PASSED",
+      "tests": 15,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 4.1
+    },
+    {
+      "module": "tests.test_historical_provider_validation",
+      "status": "PASSED",
+      "tests": 18,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 4.5
+    },
+    {
+      "module": "tests.test_historical_security_master",
+      "status": "PASSED",
+      "tests": 19,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 3.4
+    },
+    {
+      "module": "tests.test_historical_translation",
+      "status": "PASSED",
+      "tests": 18,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 3.3
+    },
+    {
+      "module": "tests.test_historical_universe",
+      "status": "PASSED",
+      "tests": 19,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 2.3
+    },
+    {
+      "module": "tests.test_local_resource_safety",
+      "status": "FAILED",
+      "tests": 0,
+      "summary": [
+        "NO TESTS RAN"
+      ],
+      "failures": [],
+      "seconds": 1.4
+    },
+    {
+      "module": "tests.test_local_workload_control",
+      "status": "FAILED",
+      "tests": 1,
+      "summary": "FAILED (errors=1)",
+      "failures": [
+        "ERROR: test_local_workload_control"
+      ],
+      "seconds": 1.7
+    },
+    {
+      "module": "tests.test_memory_guard",
+      "status": "PASSED",
+      "tests": 16,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 1.9
+    },
+    {
+      "module": "tests.test_memory_integration",
+      "status": "FAILED",
+      "tests": 1,
+      "summary": "FAILED (errors=1)",
+      "failures": [
+        "ERROR: test_memory_integration"
+      ],
+      "seconds": 1.7
+    },
+    {
+      "module": "tests.test_meta_alpha",
+      "status": "FAILED",
+      "tests": 0,
+      "summary": [
+        "NO TESTS RAN"
+      ],
+      "failures": [],
+      "seconds": 3.0
+    },
+    {
+      "module": "tests.test_news_engine_normalization",
+      "status": "PASSED",
+      "tests": 14,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 3.2
+    },
+    {
+      "module": "tests.test_p5_8_statistical_validation",
+      "status": "PASSED",
+      "tests": 12,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 1.8
+    },
+    {
+      "module": "tests.test_p5_8a_factor_forensics",
+      "status": "PASSED",
+      "tests": 17,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 2.1
+    },
+    {
+      "module": "tests.test_p5_8b_model_research",
+      "status": "PASSED",
+      "tests": 6,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 7.8
+    },
+    {
+      "module": "tests.test_p5_8c_yfinance_governance",
+      "status": "PASSED",
+      "tests": 20,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 4.2
+    },
+    {
+      "module": "tests.test_p5_8d_robustness",
+      "status": "PASSED",
+      "tests": 20,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 54.4
+    },
+    {
+      "module": "tests.test_p6_10_lifecycle_validation",
+      "status": "PASSED",
+      "tests": 35,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 38.4
+    },
+    {
+      "module": "tests.test_p6_11a_forensic_audit",
+      "status": "PASSED",
+      "tests": 3,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 6.5
+    },
+    {
+      "module": "tests.test_p6_11a_repair",
+      "status": "PASSED",
+      "tests": 4,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 1.8
+    },
+    {
+      "module": "tests.test_p6_11b_decision_engine",
+      "status": "PASSED",
+      "tests": 87,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 4.2
+    },
+    {
+      "module": "tests.test_p6_11b_trading_logic",
+      "status": "PASSED",
+      "tests": 6,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 1.6
+    },
+    {
+      "module": "tests.test_p6_12_post_implementation_validation",
+      "status": "PASSED",
+      "tests": 8,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 1.6
+    },
+    {
+      "module": "tests.test_p6_12a_execution_architecture",
+      "status": "PASSED",
+      "tests": 18,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 1.2
+    },
+    {
+      "module": "tests.test_p6_12b_real_statistical_validation",
+      "status": "PASSED",
+      "tests": 3,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 1.4
+    },
+    {
+      "module": "tests.test_p6_12c_live_data_path",
+      "status": "PASSED",
+      "tests": 4,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 28.1
+    },
+    {
+      "module": "tests.test_p6_12c_live_workload_architecture",
+      "status": "PASSED",
+      "tests": 3,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 18.8
+    },
+    {
+      "module": "tests.test_p6_13_5_focused",
+      "status": "PASSED",
+      "tests": 15,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 49.0
+    },
+    {
+      "module": "tests.test_p6_14_data_semantics",
+      "status": "PASSED",
+      "tests": 5,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 1.9
+    },
+    {
+      "module": "tests.test_p6_14_pit_selection",
+      "status": "PASSED",
+      "tests": 2,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 5.6
+    },
+    {
+      "module": "tests.test_p6_17_4_reconciliation",
+      "status": "PASSED",
+      "tests": 5,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 5.2
+    },
+    {
+      "module": "tests.test_p6_17_5_live_pipeline",
+      "status": "PASSED",
+      "tests": 13,
+      "summary": "OK (skipped=5)",
+      "failures": [],
+      "seconds": 3.3
+    },
+    {
+      "module": "tests.test_p6_18_canonical_pipeline",
+      "status": "PASSED",
+      "tests": 20,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 8.3
+    },
+    {
+      "module": "tests.test_p6_18_frozen_core_parity",
+      "status": "PASSED",
+      "tests": 12,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 4.5
+    },
+    {
+      "module": "tests.test_p6_18_loader_contracts",
+      "status": "PASSED",
+      "tests": 14,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 1.9
+    },
+    {
+      "module": "tests.test_p6_18_scheduler",
+      "status": "PASSED",
+      "tests": 3,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 5.8
+    },
+    {
+      "module": "tests.test_p6_1_architecture",
+      "status": "PASSED",
+      "tests": 20,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 3.0
+    },
+    {
+      "module": "tests.test_p6_2_3_4_robustness",
+      "status": "PASSED",
+      "tests": 24,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 3.2
+    },
+    {
+      "module": "tests.test_p6_5_6_7_joint_decision_research",
+      "status": "PASSED",
+      "tests": 24,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 3.0
+    },
+    {
+      "module": "tests.test_p6_5_7_joint_research",
+      "status": "PASSED",
+      "tests": 24,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 3.4
+    },
+    {
+      "module": "tests.test_p6_8_final_decision_architecture",
+      "status": "PASSED",
+      "tests": 24,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 3.3
+    },
+    {
+      "module": "tests.test_p6_9_trading_logic_design_review",
+      "status": "PASSED",
+      "tests": 22,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 16.1
+    },
+    {
+      "module": "tests.test_provider_modes",
+      "status": "FAILED",
+      "tests": 0,
+      "summary": [
+        "NO TESTS RAN"
+      ],
+      "failures": [],
+      "seconds": 1.4
+    },
+    {
+      "module": "tests.test_provider_orchestrator",
+      "status": "PASSED",
+      "tests": 2,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 0.9
+    },
+    {
+      "module": "tests.test_research_contracts",
+      "status": "PASSED",
+      "tests": 3,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 1.4
+    },
+    {
+      "module": "tests.test_research_isolation",
+      "status": "PASSED",
+      "tests": 1,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 4.2
+    },
+    {
+      "module": "tests.test_research_orchestrator",
+      "status": "PASSED",
+      "tests": 2,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 3.2
+    },
+    {
+      "module": "tests.test_saturation_forensics",
+      "status": "PASSED",
+      "tests": 15,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 9.2
+    },
+    {
+      "module": "tests.test_sec_parser",
+      "status": "PASSED",
+      "tests": 3,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 3.1
+    },
+    {
+      "module": "tests.test_sec_security_master",
+      "status": "TIMEOUT",
+      "tests": null,
+      "seconds": 180,
+      "summary": "no result within 180s"
+    },
+    {
+      "module": "tests.test_security_master",
+      "status": "PASSED",
+      "tests": 2,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 12.1
+    },
+    {
+      "module": "tests.test_stress",
+      "status": "FAILED",
+      "tests": 1,
+      "summary": "FAILED (errors=1)",
+      "failures": [
+        "ERROR: test_stress"
+      ],
+      "seconds": 40.0
+    },
+    {
+      "module": "tests.test_walk_forward_validation",
+      "status": "PASSED",
+      "tests": 32,
+      "summary": "OK",
+      "failures": [],
+      "seconds": 26.4
+    }
+  ],
+  "totals": {
+    "PASSED": 48,
+    "FAILED": 12,
+    "TIMEOUT": 1
+  },
+  "reruns_after_fixes": {
+    "note": "Re-executed after installing the missing legacy dependency python-dotenv and correcting a stale expectation.",
+    "tests.test_data_stability": "PASSED (10 tests) - stale FALLBACK expectation updated to MOCK per P6-17.4 contract",
+    "tests.test_golden_validation": "PASSED (12 tests)",
+    "tests.test_memory_integration": "PASSED (5 tests)",
+    "tests.test_stress": "PASSED (12 tests)",
+    "tests.test_sec_security_master": "PASSED (1 test, 1.6s) - earlier TIMEOUT caused by iCloud re-downloading data/tickers.db; note: this test writes to the production data/tickers.db",
+    "tests.test_local_workload_control": "FAILED (3 of 6) - legacy research path: asserts 365-day lookback but loader enforces the 425-day momentum minimum (same clamp in the original loader); duplicate-ticker test returns empty scores in the legacy backtest path. Not part of the canonical route; unresolved."
+  },
+  "not_executed": {
+    "tests.test_alternative_data": "pytest-style module-level function, no unittest.TestCase; pytest not installed -> 0 tests collected",
+    "tests.test_cross_asset": "pytest-style module-level function, no unittest.TestCase; pytest not installed -> 0 tests collected",
+    "tests.test_embedding_lazy_loading": "pytest-style module-level function, no unittest.TestCase; pytest not installed -> 0 tests collected",
+    "tests.test_execution_alpha": "pytest-style module-level function, no unittest.TestCase; pytest not installed -> 0 tests collected",
+    "tests.test_local_resource_safety": "pytest-style module-level function, no unittest.TestCase; pytest not installed -> 0 tests collected",
+    "tests.test_meta_alpha": "pytest-style module-level function, no unittest.TestCase; pytest not installed -> 0 tests collected",
+    "tests.test_provider_modes": "pytest-style module-level function, no unittest.TestCase; pytest not installed -> 0 tests collected"
+  },
+  "blocked_by_provider": {
+    "tests.test_p6_17_5_live_pipeline (5 live tests)": "opt-in; skipped by default (QPP_PROVIDER_TESTS=1). Equivalent live coverage: full-universe run 20261104T071145Z_market_scan_e16f62"
+  },
+  "final_classification": {
+    "executed_and_passed_modules": 53,
+    "executed_and_failed_modules": 1,
+    "not_executed_modules": 7,
+    "provider_opt_in_skipped_tests": 5
+  }
+}

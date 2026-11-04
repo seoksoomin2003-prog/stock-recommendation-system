@@ -1,0 +1,50 @@
+{
+  "1000": {
+    "capital": 1000,
+    "total_trades": 32,
+    "whole_share_allowed": 4,
+    "whole_share_ratio": 0.125,
+    "fractional_allowed": 32,
+    "fractional_ratio": 1.0
+  },
+  "5000": {
+    "capital": 5000,
+    "total_trades": 32,
+    "whole_share_allowed": 26,
+    "whole_share_ratio": 0.8125,
+    "fractional_allowed": 32,
+    "fractional_ratio": 1.0
+  },
+  "10000": {
+    "capital": 10000,
+    "total_trades": 32,
+    "whole_share_allowed": 28,
+    "whole_share_ratio": 0.875,
+    "fractional_allowed": 32,
+    "fractional_ratio": 1.0
+  },
+  "25000": {
+    "capital": 25000,
+    "total_trades": 32,
+    "whole_share_allowed": 32,
+    "whole_share_ratio": 1.0,
+    "fractional_allowed": 32,
+    "fractional_ratio": 1.0
+  },
+  "50000": {
+    "capital": 50000,
+    "total_trades": 32,
+    "whole_share_allowed": 32,
+    "whole_share_ratio": 1.0,
+    "fractional_allowed": 32,
+    "fractional_ratio": 1.0
+  },
+  "100000": {
+    "capital": 100000,
+    "total_trades": 32,
+    "whole_share_allowed": 32,
+    "whole_share_ratio": 1.0,
+    "fractional_allowed": 32,
+    "fractional_ratio": 1.0
+  }
+}

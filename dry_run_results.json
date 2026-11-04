@@ -1,0 +1,9 @@
+{
+    "read_throughput_seconds": 0.09736418724060059,
+    "write_throughput_seconds": 0.0032739639282226562,
+    "memory_start_mb": 100.0,
+    "memory_peak_mb": 100.0,
+    "chunk_invariance_passed": true,
+    "row_count_processed": 33800,
+    "total_time": 0.10878396034240723
+}

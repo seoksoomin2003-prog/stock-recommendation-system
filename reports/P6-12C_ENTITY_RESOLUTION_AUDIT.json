@@ -1,0 +1,8 @@
+{
+    "token_search_failed_original": ["GOOGL", "META"],
+    "root_cause": "SQL INNER JOIN on alias_tokens filtered out valid exact tickers without aliases",
+    "fix_applied": "Switched to LEFT JOIN on aliases and alias_tokens in search_by_token",
+    "token_search_failed_new": [],
+    "fallback_invocations": 0,
+    "status": "RESOLVED"
+}

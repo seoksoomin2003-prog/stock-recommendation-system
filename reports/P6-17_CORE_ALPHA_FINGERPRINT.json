@@ -1,0 +1,42 @@
+{
+  "frozen_components": {
+    "momentum": {
+      "function": "FactorEngine.calculate_momentum",
+      "inputs": ["prices"],
+      "transformation": "12-month return minus 1-month return",
+      "lag": "shift(1) month",
+      "missing_data": "If history < 14 months, output pd.Series(np.nan) with status UNAVAILABLE"
+    },
+    "value": {
+      "function": "FactorEngine.calculate_value",
+      "inputs": ["financial_data (per, pbr)"],
+      "transformation": "Inverse PER + Inverse PBR",
+      "normalization": "Robust Scaler (Median/IQR)",
+      "missing_data": "Fallback to cross-sectional median"
+    },
+    "quality": {
+      "function": "FactorEngine.calculate_quality",
+      "inputs": ["financial_data (roe, profitMargin)"],
+      "transformation": "ROE + Profit Margin",
+      "normalization": "Robust Scaler (Median/IQR)",
+      "missing_data": "Fallback to cross-sectional median"
+    },
+    "low_volatility": {
+      "function": "FactorEngine.calculate_volatility",
+      "inputs": ["prices"],
+      "transformation": "22-day rolling std * sqrt(252)",
+      "lag": "shift(1) day",
+      "weight": "Inverted (negative) before aggregation"
+    }
+  },
+  "aggregation": {
+    "engine": "ScoringEngine",
+    "normalization": "All factors unified using z-score or robust before weighting",
+    "default_weights": {
+      "momentum": 0.35,
+      "value": 0.30,
+      "quality": 0.25,
+      "low_volatility": 0.10
+    }
+  }
+}

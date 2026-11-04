@@ -1,0 +1,14 @@
+{
+    "target_universe_size": 6500,
+    "local_universe_size": 50,
+    "missing_tickers": 6450,
+    "coverage": {
+        "historical_price": "PARTIAL",
+        "historical_volume": "PARTIAL",
+        "corporate_actions": "MISSING",
+        "fundamentals": "MISSING",
+        "pit_metadata": "PARTIAL"
+    },
+    "requirements_met": false,
+    "verdict": "DATA_INCOMPLETE"
+}

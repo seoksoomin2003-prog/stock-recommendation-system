@@ -1,0 +1,6 @@
+{
+  "yfinance": "LIVE_ONLY / SECONDARY_VALIDATION",
+  "tiingo": "SECONDARY_VALIDATION",
+  "sec_edgar": "PRIMARY_PIT_FUNDAMENTALS",
+  "p6_12d_status": "BLOCKED"
+}

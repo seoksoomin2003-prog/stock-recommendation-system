@@ -1,0 +1,15 @@
+{
+    "status": "A. DESIGN INTEGRATION READY",
+    "total_trades": 128,
+    "win_rate": 59.2,
+    "mean_return": 1.2,
+    "net_return": 0.86,
+    "drawdown": -13.9,
+    "mae": -3.8,
+    "mfe": 8.4,
+    "average_holding_period": 28.4,
+    "entry_2_execution_rate": 81.5,
+    "entry_2_missed_opportunity_rate": 18.5,
+    "thesis_invalidation_avoided_drawdown": 4.2,
+    "reentry_success_rate": 62.1
+}

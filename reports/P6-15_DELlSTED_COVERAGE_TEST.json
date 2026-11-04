@@ -1,0 +1,12 @@
+{
+  "TWTR": {
+    "data_available": false
+  },
+  "SIVB": {
+    "data_available": false
+  },
+  "FRC": {
+    "data_available": false
+  },
+  "verdict": "FAIL"
+}

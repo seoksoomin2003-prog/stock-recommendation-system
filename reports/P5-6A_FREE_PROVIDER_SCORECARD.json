@@ -1,0 +1,62 @@
+[
+  {
+    "Provider": "SEC Official EDGAR",
+    "Price": "UNSUITABLE",
+    "Delisted": "GOOD",
+    "Universe": "UNSUITABLE",
+    "Actions": "UNSUITABLE",
+    "Fundamentals": "EXCELLENT",
+    "PIT": "EXCELLENT",
+    "Free": "EXCELLENT",
+    "Identity": "EXCELLENT",
+    "Verdict": "A. SEC REAL-DATA READY"
+  },
+  {
+    "Provider": "Alpha Vantage (Free)",
+    "Price": "LIMITED",
+    "Delisted": "LIMITED",
+    "Universe": "UNSUITABLE",
+    "Actions": "UNSUITABLE",
+    "Fundamentals": "LIMITED",
+    "PIT": "GOOD",
+    "Free": "GOOD",
+    "Identity": "GOOD",
+    "Verdict": "B. LIMITED FREE DATA"
+  },
+  {
+    "Provider": "yfinance (Free)",
+    "Price": "GOOD",
+    "Delisted": "UNSUITABLE",
+    "Universe": "UNSUITABLE",
+    "Actions": "GOOD",
+    "Fundamentals": "UNSUITABLE",
+    "PIT": "UNSUITABLE",
+    "Free": "GOOD",
+    "Identity": "GOOD",
+    "Verdict": "B. LIMITED FREE DATA"
+  },
+  {
+    "Provider": "Wikipedia S&P 500",
+    "Price": "UNSUITABLE",
+    "Delisted": "GOOD",
+    "Universe": "GOOD",
+    "Actions": "UNSUITABLE",
+    "Fundamentals": "UNSUITABLE",
+    "PIT": "GOOD",
+    "Free": "EXCELLENT",
+    "Identity": "LIMITED",
+    "Verdict": "B. LIMITED FREE DATA"
+  },
+  {
+    "Provider": "OpenFIGI (Free)",
+    "Price": "UNSUITABLE",
+    "Delisted": "GOOD",
+    "Universe": "UNSUITABLE",
+    "Actions": "UNSUITABLE",
+    "Fundamentals": "UNSUITABLE",
+    "PIT": "EXCELLENT",
+    "Free": "EXCELLENT",
+    "Identity": "EXCELLENT",
+    "Verdict": "B. LIMITED FREE DATA"
+  }
+]

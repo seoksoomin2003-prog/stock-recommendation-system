@@ -1,0 +1,60 @@
+{
+  "translation_domains": {
+    "market": {
+      "status": "TRANSLATED",
+      "data_status": "REAL",
+      "coverage": "PARTIAL",
+      "notes": "Limited to compact daily price bars under free tier."
+    },
+    "financial": {
+      "status": "TRANSLATED",
+      "data_status": "REAL",
+      "coverage": "COMPLETE",
+      "notes": "SEC EDGAR PIT fundamentals translated."
+    },
+    "sec": {
+      "status": "TRANSLATED",
+      "data_status": "REAL",
+      "coverage": "COMPLETE",
+      "notes": "SEC-specific taxonomy facts mapped."
+    },
+    "corporate_actions": {
+      "status": "TRANSLATED",
+      "data_status": "REAL",
+      "coverage": "PARTIAL",
+      "notes": "Corporate actions timing preserved (announced_at kept as None if missing)."
+    },
+    "security_master": {
+      "status": "TRANSLATED",
+      "data_status": "REAL",
+      "coverage": "COMPLETE",
+      "notes": "HistoricalSecurityState translated to SecurityIdentity-compatible format."
+    },
+    "universe": {
+      "status": "TRANSLATED",
+      "data_status": "REAL",
+      "coverage": "MISSING",
+      "notes": "Historical index membership remains missing; active survivor universe not promoted."
+    }
+  },
+  "provenance_preservation": "PASSED (source, source_id, fetched_at, observed_at, and as_of mapped correctly)",
+  "pit_validation": "PASSED (future data lookaheads throw look_ahead_data_rejected)",
+  "quant_input_parity": "PASSED (QuantInputAdapter outputs prices and financial_df dataframes matching FactorEngine inputs)",
+  "gates": {
+    "P5-7_backtest_ready": false,
+    "P5-7_blockers": [
+      "historical universe membership missing",
+      "delisted pricing history unavailable for defunct tickers",
+      "corporate action adjustment coverage incomplete"
+    ],
+    "P5-8_predictive_validation_ready": false,
+    "P5-8_blockers": [
+      "P5-7 backtest results required first"
+    ]
+  },
+  "test_metrics": {
+    "translation_tests_passed": 18,
+    "total_historical_tests_passed": 90
+  },
+  "verdict": "B. TRANSLATION FOUNDATION READY WITH LIMITATIONS"
+}

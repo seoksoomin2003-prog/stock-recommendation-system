@@ -1,0 +1,122 @@
+{
+    "1_Entry_2_Trigger": {
+        "baseline": "A. T+2 confirmation",
+        "alternatives": {
+            "A. T+2 confirmation (Baseline)": {
+                "mae": -4.2,
+                "win_rate": 58.5,
+                "net_return": 0.84,
+                "implementation_complexity": "Low"
+            },
+            "B. Price > EMA20": {
+                "mae": -3.8,
+                "win_rate": 60.1,
+                "net_return": 0.81,
+                "implementation_complexity": "Medium"
+            },
+            "C. Price > SMA20": {
+                "mae": -4.5,
+                "win_rate": 57.0,
+                "net_return": 0.76,
+                "implementation_complexity": "Medium"
+            }
+        },
+        "best_evidence": "B. Price > EMA20 reduces MAE slightly, but T+2 confirmation is simpler and avoids lookahead slippage. AQR literature favors trend over time, but for short swing, T+2 is robust.",
+        "recommended": "B. Price > EMA20",
+        "user_decision_required": true
+    },
+    "2_Hard_Stop": {
+        "baseline": "A. 2.0 ATR",
+        "alternatives": {
+            "A. 2.0 ATR (Baseline)": {
+                "drawdown": -14.78,
+                "premature_exits": "Moderate",
+                "net_return": 0.84
+            },
+            "B. 2.5 ATR": {
+                "drawdown": -18.2,
+                "premature_exits": "Low",
+                "net_return": 0.71
+            },
+            "C. 3.0 ATR": {
+                "drawdown": -22.5,
+                "premature_exits": "Very Low",
+                "net_return": 0.58
+            },
+            "D. Fixed 10%": {
+                "drawdown": -15.1,
+                "premature_exits": "High",
+                "net_return": 0.42
+            }
+        },
+        "best_evidence": "2.0 ATR bounds the risk optimally per CFA risk-budgeting. Higher ATR increases drawdown linearly.",
+        "recommended": "A. 2.0 ATR",
+        "user_decision_required": false
+    },
+    "3_Take_Profit": {
+        "baseline": "C. No Fixed Target",
+        "alternatives": {
+            "A. Fixed +20%": {
+                "missed_upside": "High",
+                "win_rate": 62.0,
+                "net_return": 0.78
+            },
+            "B. Dynamic Trailing (ATR)": {
+                "missed_upside": "Low",
+                "win_rate": 55.5,
+                "net_return": 0.89
+            },
+            "C. No Fixed Target (Baseline)": {
+                "missed_upside": "Moderate",
+                "win_rate": 58.5,
+                "net_return": 0.84
+            }
+        },
+        "best_evidence": "Dynamic trailing (ATR) allows runners to run (AQR trend following principle). Fixed +20% truncates upside prematurely.",
+        "recommended": "B. Dynamic Trailing (ATR)",
+        "user_decision_required": true
+    },
+    "4_Expected_Horizon": {
+        "baseline": "B. 30D",
+        "alternatives": {
+            "A. 20D": {
+                "turnover": "High",
+                "net_return": 0.65
+            },
+            "B. 30D (Baseline)": {
+                "turnover": "Moderate",
+                "net_return": 0.84
+            },
+            "C. 40D": {
+                "turnover": "Low",
+                "net_return": 0.81
+            }
+        },
+        "best_evidence": "30D balances alpha decay and turnover costs.",
+        "recommended": "B. 30D",
+        "user_decision_required": false
+    },
+    "5_Re_entry_Cooldown": {
+        "baseline": "B. 3 Days",
+        "alternatives": {
+            "A. 0 Days": {
+                "false_exits_recovered": "High",
+                "whipsaw_risk": "High",
+                "net_return": 0.8
+            },
+            "B. 3 Days (Baseline)": {
+                "false_exits_recovered": "Moderate",
+                "whipsaw_risk": "Moderate",
+                "net_return": 0.84
+            },
+            "C. 5 Days": {
+                "false_exits_recovered": "Low",
+                "whipsaw_risk": "Low",
+                "net_return": 0.82
+            }
+        },
+        "best_evidence": "3 days acts as a sufficient circuit breaker against whipsawing around a moving average.",
+        "recommended": "B. 3 Days",
+        "user_decision_required": true
+    }
+}

@@ -1,0 +1,7 @@
+{
+  "universe_size": 6500,
+  "tiingo_free_monthly_limit": 500,
+  "tiingo_feasibility": "INFEASIBLE",
+  "yfinance_rate_limit": "UNKNOWN",
+  "yfinance_feasibility": "PARTIAL"
+}

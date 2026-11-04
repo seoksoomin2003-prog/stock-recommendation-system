@@ -1,0 +1,27 @@
+{
+  "MODEL_RANK_A": {
+    "trade_count": 60,
+    "avg_return": -0.0004541686496570158,
+    "win_rate": 0.2833333333333333
+  },
+  "MODEL_RANK_B": {
+    "trade_count": 60,
+    "avg_return": 0.001905495235904995,
+    "win_rate": 0.3
+  },
+  "MODEL_RANK_C": {
+    "trade_count": 60,
+    "avg_return": 0.0011610728654777294,
+    "win_rate": 0.2833333333333333
+  },
+  "MODEL_RANK_D": {
+    "trade_count": 60,
+    "avg_return": 0.0011610728654777294,
+    "win_rate": 0.2833333333333333
+  },
+  "MODEL_RANK_E": {
+    "trade_count": 60,
+    "avg_return": 0.003925541259552333,
+    "win_rate": 0.2833333333333333
+  }
+}

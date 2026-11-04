@@ -1,0 +1,7 @@
+{
+    "mock_data_detected": true,
+    "mock_exposure_path": "LLMFundamentalEngine -> MetaAlphaEngine",
+    "metadata_stripped": true,
+    "impact_on_top5": "CRITICAL",
+    "impact_on_alpha": "CRITICAL"
+}

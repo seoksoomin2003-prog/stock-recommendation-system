@@ -1,0 +1,10 @@
+{
+    "required_metrics": ["open", "high", "low", "close", "volume", "per", "pbr", "roe", "profitMargin"],
+    "required_derived": ["EMA20", "ATR", "20D_ADV", "Momentum_12M_1M"],
+    "pit_constraints": {
+        "fundamentals": "SEC_Filing_Acceptance_Date",
+        "prices": "EOD_Availability",
+        "corporate_actions": "Effective_Date",
+        "delisted_inclusion": true
+    }
+}

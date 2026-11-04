@@ -1,0 +1,10 @@
+{
+  "note": "sha256 of the frozen P6-11B engine sources, captured 2026-11-04 (P6-19) from files whose last modification predates P6-18 (Aug 2026) and identical to the original Desktop copy. Any edit fails tests/test_p6_19_hardening.py::TestFrozenSourcePinned.",
+  "sha256": {
+    "core/factor_engine.py": "d84820f82eda45ce17bb6d616473d91bb3c63ba516ed60e35527c0d7e3e3cd23",
+    "core/scoring_engine.py": "0f42f8401b2696166269705705710aa70ea5431e32058ae8c06619e1b155c250",
+    "core/ranking_engine.py": "2b354792de5d5eb120b311d2cd3b86f844e824bd3e5c5e6e50f423eb648b7cf5",
+    "core/decision_engine.py": "074f5180426eacdb95d890de0cadcd89c1752775092ac2b3bd846cb3f1d2cf0a",
+    "contracts/decision.py": "3339af551c0dd7f2a532e602aab0970973ea41f94cf0c5dd6e0d88e91996e468"
+  }
+}

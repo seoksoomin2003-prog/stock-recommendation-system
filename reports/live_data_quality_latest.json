@@ -1,0 +1,23 @@
+{
+  "status": "SUCCESS",
+  "recommendation_status": "REAL RECOMMENDATION",
+  "scores": "pd.Series/DataFrame...",
+  "weights": "pd.Series/DataFrame...",
+  "risk_multiplier": 1.0,
+  "capacity": {
+    "is_over_capacity": "False",
+    "max_participation": NaN,
+    "avg_participation": NaN,
+    "alpha_decay_factor": 0.8705505632961241,
+    "recommended_max_aum": NaN
+  },
+  "robustness": null,
+  "attribution": {
+    "factor": 0.002550550511128947,
+    "fundamental": 0.0,
+    "sentiment": 0.0,
+    "alt_data": 0.0
+  },
+  "quarantined_candidates": [],
+  "eligible_candidates_count": 11
+}

@@ -1,0 +1,9 @@
+{
+    "local_limit": 3,
+    "received_workload": 7,
+    "execution_mode": "CHUNKED_SEQUENTIAL",
+    "batch_size": 3,
+    "number_of_batches": 3,
+    "global_ranking_applied": true,
+    "is_memory_safe": true
+}

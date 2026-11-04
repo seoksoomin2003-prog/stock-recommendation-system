@@ -1,0 +1,8 @@
+{
+    "universe": "Total currently tradable US Equities (~6,500).",
+    "date_range": "2015-01-01 to Present.",
+    "batching_strategy": "2-Pass Chunked Execution.",
+    "pass_1": "Cross-sectional Alpha calculation over entire universe per date.",
+    "pass_2": "Ticker-batched longitudinal processing (20-day ADV) avoiding Cartesian blowup.",
+    "memory_safety": "Incremental SQLite persistence. No in-memory retention of Cartesian candidates."
+}

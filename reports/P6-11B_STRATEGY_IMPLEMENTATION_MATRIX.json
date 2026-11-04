@@ -1,0 +1,50 @@
+[
+    {
+        "Decision": "Alpha",
+        "Research Decision": "MODEL_RANK_E",
+        "User Approval": "Approved",
+        "Implementation": "core/decision_engine.py",
+        "Test": "test_04_model_rank_e_usage",
+        "Status": "PASS"
+    },
+    {
+        "Decision": "Sector Cap",
+        "Research Decision": "40% Technology",
+        "User Approval": "Approved",
+        "Implementation": "core/decision_engine.py",
+        "Test": "test_21_technology_le_40",
+        "Status": "PASS"
+    },
+    {
+        "Decision": "Entry #2 Trigger",
+        "Research Decision": "Close > EMA20",
+        "User Approval": "Approved",
+        "Implementation": "core/decision_engine.py",
+        "Test": "test_10_entry_2_requires_close_above_ema20",
+        "Status": "PASS"
+    },
+    {
+        "Decision": "Take Profit",
+        "Research Decision": "Dynamic Trailing ATR",
+        "User Approval": "Approved",
+        "Implementation": "core/decision_engine.py",
+        "Test": "test_27_trailing_stop_never_loosens",
+        "Status": "PASS"
+    },
+    {
+        "Decision": "Thesis Invalidation",
+        "Research Decision": "Close < EMA20",
+        "User Approval": "Approved",
+        "Implementation": "core/decision_engine.py",
+        "Test": "test_25_thesis_invalidation_ema20",
+        "Status": "PASS"
+    },
+    {
+        "Decision": "Hard Stop",
+        "Research Decision": "2.0 ATR",
+        "User Approval": "Approved",
+        "Implementation": "core/decision_engine.py",
+        "Test": "test_24_hard_stop_2_atr",
+        "Status": "PASS"
+    }
+]

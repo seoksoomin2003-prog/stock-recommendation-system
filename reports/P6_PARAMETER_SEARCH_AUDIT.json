@@ -1,0 +1,6 @@
+{
+  "configurations_tested": 6,
+  "selected_best_configuration": "SLOW_TREND_50",
+  "multiple_testing_risk": "MULTIPLE_TESTING_RISK",
+  "holdout_leakage_mitigation": "Strict separation, holdout run only once."
+}

@@ -1,0 +1,92 @@
+{
+  "BULL": {
+    "momentum": {
+      "mean_ic": 0.08237695078031212,
+      "count": 4
+    },
+    "value": {
+      "mean_ic": 0.02931162813877618,
+      "count": 5
+    },
+    "quality": {
+      "mean_ic": -0.020101322966729535,
+      "count": 5
+    },
+    "low_volatility": {
+      "mean_ic": -0.11442977190876351,
+      "count": 5
+    }
+  },
+  "BEAR": {
+    "momentum": {
+      "mean_ic": -0.1822328931572629,
+      "count": 1
+    },
+    "value": {
+      "mean_ic": -0.0931594996546949,
+      "count": 1
+    },
+    "quality": {
+      "mean_ic": 0.11524886555219989,
+      "count": 1
+    },
+    "low_volatility": {
+      "mean_ic": -0.8398079231692677,
+      "count": 1
+    }
+  },
+  "SIDEWAYS": {
+    "momentum": {
+      "mean_ic": -0.11471788715486193,
+      "count": 3
+    },
+    "value": {
+      "mean_ic": 0.07907992991306781,
+      "count": 5
+    },
+    "quality": {
+      "mean_ic": 0.06424163847322209,
+      "count": 5
+    },
+    "low_volatility": {
+      "mean_ic": 0.022424969987995196,
+      "count": 5
+    }
+  },
+  "HIGH_VOLATILITY": {
+    "momentum": {
+      "mean_ic": -0.024609843937575024,
+      "count": 8
+    },
+    "value": {
+      "mean_ic": 0.04079984460041136,
+      "count": 11
+    },
+    "quality": {
+      "mean_ic": 0.030540949371332962,
+      "count": 11
+    },
+    "low_volatility": {
+      "mean_ic": -0.11816653934300993,
+      "count": 11
+    }
+  },
+  "LOW_VOLATILITY": {
+    "momentum": {
+      "mean_ic": 0.0,
+      "count": 0
+    },
+    "value": {
+      "mean_ic": 0.0,
+      "count": 0
+    },
+    "quality": {
+      "mean_ic": 0.0,
+      "count": 0
+    },
+    "low_volatility": {
+      "mean_ic": 0.0,
+      "count": 0
+    }
+  }
+}

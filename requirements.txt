@@ -1,0 +1,12 @@
+# Reproducible local dependencies (all free/open-source). Verified 2026-11-04 on
+# macOS Apple Silicon, Python 3.14.2 (python.org framework build).
+numpy==2.5.4
+pandas==3.1.0
+yfinance==1.8.0
+requests==2.34.2
+beautifulsoup4==4.15.0
+psutil==7.2.2
+# Optional (legacy NewsAPI integration; not used by the canonical recommendation route)
+newsapi-python==0.2.7
+# Legacy research package (alpha_engine) only; not used by the canonical route
+python-dotenv==1.2.4

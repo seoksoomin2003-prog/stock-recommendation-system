@@ -1,0 +1,22 @@
+{
+    "A. 2.0 ATR (Baseline)": {
+        "drawdown": -14.78,
+        "premature_exits": "Moderate",
+        "net_return": 0.84
+    },
+    "B. 2.5 ATR": {
+        "drawdown": -18.2,
+        "premature_exits": "Low",
+        "net_return": 0.71
+    },
+    "C. 3.0 ATR": {
+        "drawdown": -22.5,
+        "premature_exits": "Very Low",
+        "net_return": 0.58
+    },
+    "D. Fixed 10%": {
+        "drawdown": -15.1,
+        "premature_exits": "High",
+        "net_return": 0.42
+    }
+}

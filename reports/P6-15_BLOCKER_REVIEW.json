@@ -1,0 +1,9 @@
+{
+  "current_status": "BLOCKED",
+  "primary_blocker": "Zero-Cost OHLCV for Delisted Securities",
+  "secondary_blockers": [
+    "Stable PERMNO/FIGI mapping for zero-cost sources",
+    "Unadjusted historical corporate action pricing"
+  ],
+  "zero_cost_path": "PARTIAL"
+}

@@ -1,0 +1,44 @@
+{
+  "SLOW_TREND_50_BASE": {
+    "trade_count": 64,
+    "win_rate": 0.25,
+    "avg_return": -0.0010554053344249813,
+    "sharpe": -0.016441943471530798
+  },
+  "SLOW_TREND_40": {
+    "trade_count": 65,
+    "win_rate": 0.26153846153846155,
+    "avg_return": 0.00042628583000621864,
+    "sharpe": 0.006567625630905391
+  },
+  "SLOW_TREND_60": {
+    "trade_count": 65,
+    "win_rate": 0.24615384615384617,
+    "avg_return": -0.0011237964749290464,
+    "sharpe": -0.017644748574025048
+  },
+  "STOP_1_5_ATR": {
+    "trade_count": 64,
+    "win_rate": 0.234375,
+    "avg_return": -0.00026782050833631856,
+    "sharpe": -0.004191984137136458
+  },
+  "STOP_2_5_ATR": {
+    "trade_count": 64,
+    "win_rate": 0.25,
+    "avg_return": -0.0007958008991554393,
+    "sharpe": -0.012066986562139458
+  },
+  "ALLOC_60_40": {
+    "trade_count": 64,
+    "win_rate": 0.234375,
+    "avg_return": -0.00047573460017304907,
+    "sharpe": -0.007313264999990802
+  },
+  "ALLOC_50_50": {
+    "trade_count": 64,
+    "win_rate": 0.234375,
+    "avg_return": -0.0007655699672990159,
+    "sharpe": -0.011851695687084293
+  }
+}

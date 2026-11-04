@@ -1,0 +1,374 @@
+{
+  "executed_at": "2026-11-04T11:19:08.190109+00:00",
+  "runner": "pytest 8.4.2 + pytest-timeout (180 s per test), offline sandbox (tests/conftest.py)",
+  "command": ".venv/bin/python -m pytest tests -q",
+  "total_test_files": 62,
+  "test_files_with_collected_tests": 62,
+  "test_files_without_tests": [],
+  "total_collected": 778,
+  "passed": 768,
+  "failed": 0,
+  "errors": 0,
+  "skipped": 5,
+  "xfailed_strict_isolated": 5,
+  "deselected": 0,
+  "collection_errors": 0,
+  "suite_seconds": 157.583,
+  "skipped_detail": [
+    {
+      "test": "tests.test_p6_17_5_live_pipeline.TestP6175LivePipeline::test_01_universe_dynamically_acquired",
+      "reason": "live provider test: set QPP_PROVIDER_TESTS=1"
+    },
+    {
+      "test": "tests.test_p6_17_5_live_pipeline.TestP6175LivePipeline::test_02_no_seven_ticker_fallback",
+      "reason": "live provider test: set QPP_PROVIDER_TESTS=1"
+    },
+    {
+      "test": "tests.test_p6_17_5_live_pipeline.TestP6175LivePipeline::test_03_universe_provenance_recorded",
+      "reason": "live provider test: set QPP_PROVIDER_TESTS=1"
+    },
+    {
+      "test": "tests.test_p6_17_5_live_pipeline.TestP6175LivePipeline::test_04_sec_cik_mapping_works",
+      "reason": "live provider test: set QPP_PROVIDER_TESTS=1"
+    },
+    {
+      "test": "tests.test_p6_17_5_live_pipeline.TestP6175LivePipeline::test_05_market_data_failures_become_nan",
+      "reason": "live provider test: set QPP_PROVIDER_TESTS=1"
+    }
+  ],
+  "xfailed_detail": [
+    {
+      "test": "tests.test_alternative_data::test_alternative_data",
+      "reason": "LEGACY_ISOLATED: legacy AlternativeDataEngine no longer has fetch_sns_sentiment (API drift; not on the canonical route). Never executed by the P6-18 unittest runner (plain pytest function)."
+    },
+    {
+      "test": "tests.test_local_workload_control.TestLocalWorkloadControl::test_test1_local_1_ticker",
+      "reason": "LEGACY_ISOLATED: expects a <=365-day download window; the frozen P6-11B momentum factor needs >=425 days (reports/P6-17_PREIMPLEMENTATION_FORENSIC.md). Passing would require changing a frozen input."
+    },
+    {
+      "test": "tests.test_local_workload_control.TestLocalWorkloadControl::test_test2_local_3_tickers",
+      "reason": "LEGACY_ISOLATED: expects a <=365-day download window; the frozen P6-11B momentum factor needs >=425 days (reports/P6-17_PREIMPLEMENTATION_FORENSIC.md). Passing would require changing a frozen input."
+    },
+    {
+      "test": "tests.test_local_workload_control.TestLocalWorkloadControl::test_test4_local_duplicates",
+      "reason": "LEGACY_ISOLATED: expects company-name alias resolution ('Alphabet'->GOOGL) and scores from 5 stale mock bars without provider status; the canonical route correctly quarantines STALE/unverified data (P6-14 contract)."
+    },
+    {
+      "test": "tests.test_meta_alpha::test_meta_alpha_ensemble",
+      "reason": "LEGACY_ISOLATED: legacy research MetaAlphaEngine (not on the canonical route); pre-existing drift-weight expectation (0.1522 vs <0.15). Never executed by the P6-18 unittest runner (plain pytest function)."
+    }
+  ],
+  "failed_detail": [],
+  "error_detail": [],
+  "per_file": {
+    "tests/test_alternative_data.py": {
+      "xfailed": 1,
+      "seconds": 0.3
+    },
+    "tests/test_api_resilience.py": {
+      "passed": 5,
+      "seconds": 10.75
+    },
+    "tests/test_canonical_cutover.py": {
+      "passed": 13,
+      "seconds": 16.47
+    },
+    "tests/test_cross_asset.py": {
+      "passed": 1,
+      "seconds": 1.04
+    },
+    "tests/test_data_stability.py": {
+      "passed": 10,
+      "seconds": 3.77
+    },
+    "tests/test_embedding_lazy_loading.py": {
+      "passed": 1,
+      "seconds": 0.01
+    },
+    "tests/test_execution_alpha.py": {
+      "passed": 1,
+      "seconds": 0.01
+    },
+    "tests/test_golden_validation.py": {
+      "passed": 12,
+      "seconds": 11.0
+    },
+    "tests/test_historical_audit_validation.py": {
+      "passed": 12,
+      "seconds": 0.12
+    },
+    "tests/test_historical_data_layer.py": {
+      "passed": 15,
+      "seconds": 0.15
+    },
+    "tests/test_historical_provider_validation.py": {
+      "passed": 18,
+      "seconds": 0.19
+    },
+    "tests/test_historical_security_master.py": {
+      "passed": 19,
+      "seconds": 0.54
+    },
+    "tests/test_historical_translation.py": {
+      "passed": 18,
+      "seconds": 0.18
+    },
+    "tests/test_historical_universe.py": {
+      "passed": 20,
+      "seconds": 0.62
+    },
+    "tests/test_local_resource_safety.py": {
+      "passed": 1,
+      "seconds": 0.01
+    },
+    "tests/test_local_workload_control.py": {
+      "xfailed": 3,
+      "seconds": 23.86,
+      "passed": 3
+    },
+    "tests/test_memory_guard.py": {
+      "passed": 16,
+      "seconds": 0.62
+    },
+    "tests/test_memory_integration.py": {
+      "passed": 5,
+      "seconds": 3.7
+    },
+    "tests/test_meta_alpha.py": {
+      "xfailed": 1,
+      "seconds": 0.01
+    },
+    "tests/test_news_engine_normalization.py": {
+      "passed": 14,
+      "seconds": 0.15
+    },
+    "tests/test_p5_8_statistical_validation.py": {
+      "passed": 12,
+      "seconds": 0.12
+    },
+    "tests/test_p5_8a_factor_forensics.py": {
+      "passed": 17,
+      "seconds": 0.17
+    },
+    "tests/test_p5_8b_model_research.py": {
+      "passed": 6,
+      "seconds": 0.06
+    },
+    "tests/test_p5_8c_yfinance_governance.py": {
+      "passed": 20,
+      "seconds": 2.4
+    },
+    "tests/test_p5_8d_robustness.py": {
+      "passed": 20,
+      "seconds": 0.2
+    },
+    "tests/test_p6_10_lifecycle_validation.py": {
+      "passed": 35,
+      "seconds": 0.35
+    },
+    "tests/test_p6_11a_forensic_audit.py": {
+      "passed": 3,
+      "seconds": 0.03
+    },
+    "tests/test_p6_11a_repair.py": {
+      "passed": 4,
+      "seconds": 0.04
+    },
+    "tests/test_p6_11b_decision_engine.py": {
+      "passed": 87,
+      "seconds": 0.87
+    },
+    "tests/test_p6_11b_trading_logic.py": {
+      "passed": 6,
+      "seconds": 0.06
+    },
+    "tests/test_p6_12_post_implementation_validation.py": {
+      "passed": 8,
+      "seconds": 0.08
+    },
+    "tests/test_p6_12a_execution_architecture.py": {
+      "passed": 18,
+      "seconds": 0.18
+    },
+    "tests/test_p6_12b_real_statistical_validation.py": {
+      "passed": 3,
+      "seconds": 0.03
+    },
+    "tests/test_p6_12c_live_data_path.py": {
+      "passed": 4,
+      "seconds": 6.09
+    },
+    "tests/test_p6_12c_live_workload_architecture.py": {
+      "passed": 3,
+      "seconds": 0.03
+    },
+    "tests/test_p6_13_5_focused.py": {
+      "passed": 15,
+      "seconds": 18.32
+    },
+    "tests/test_p6_14_data_semantics.py": {
+      "passed": 5,
+      "seconds": 0.05
+    },
+    "tests/test_p6_14_pit_selection.py": {
+      "passed": 2,
+      "seconds": 0.02
+    },
+    "tests/test_p6_17_4_reconciliation.py": {
+      "passed": 5,
+      "seconds": 0.07
+    },
+    "tests/test_p6_17_5_live_pipeline.py": {
+      "skipped": 5,
+      "seconds": 0.15,
+      "passed": 8
+    },
+    "tests/test_p6_18_canonical_pipeline.py": {
+      "passed": 20,
+      "seconds": 1.32
+    },
+    "tests/test_p6_18_frozen_core_parity.py": {
+      "passed": 12,
+      "seconds": 0.13
+    },
+    "tests/test_p6_18_loader_contracts.py": {
+      "passed": 14,
+      "seconds": 0.16
+    },
+    "tests/test_p6_18_scheduler.py": {
+      "passed": 4,
+      "seconds": 0.09
+    },
+    "tests/test_p6_19_hardening.py": {
+      "passed": 41,
+      "seconds": 1.44
+    },
+    "tests/test_p6_1_architecture.py": {
+      "passed": 20,
+      "seconds": 0.21
+    },
+    "tests/test_p6_2_3_4_robustness.py": {
+      "passed": 24,
+      "seconds": 0.24
+    },
+    "tests/test_p6_5_6_7_joint_decision_research.py": {
+      "passed": 24,
+      "seconds": 0.24
+    },
+    "tests/test_p6_5_7_joint_research.py": {
+      "passed": 24,
+      "seconds": 0.24
+    },
+    "tests/test_p6_8_final_decision_architecture.py": {
+      "passed": 24,
+      "seconds": 0.24
+    },
+    "tests/test_p6_9_trading_logic_design_review.py": {
+      "passed": 22,
+      "seconds": 0.22
+    },
+    "tests/test_provider_modes.py": {
+      "passed": 1,
+      "seconds": 0.01
+    },
+    "tests/test_provider_orchestrator.py": {
+      "passed": 2,
+      "seconds": 0.02
+    },
+    "tests/test_research_contracts.py": {
+      "passed": 3,
+      "seconds": 0.03
+    },
+    "tests/test_research_isolation.py": {
+      "passed": 1,
+      "seconds": 0.01
+    },
+    "tests/test_research_orchestrator.py": {
+      "passed": 2,
+      "seconds": 0.02
+    },
+    "tests/test_saturation_forensics.py": {
+      "passed": 15,
+      "seconds": 4.94
+    },
+    "tests/test_sec_parser.py": {
+      "passed": 3,
+      "seconds": 0.03
+    },
+    "tests/test_sec_security_master.py": {
+      "passed": 1,
+      "seconds": 3.31
+    },
+    "tests/test_security_master.py": {
+      "passed": 2,
+      "seconds": 0.02
+    },
+    "tests/test_stress.py": {
+      "passed": 12,
+      "seconds": 40.97
+    },
+    "tests/test_walk_forward_validation.py": {
+      "passed": 32,
+      "seconds": 0.37
+    }
+  },
+  "runner_note": "pytest-timeout 600 s per test; --junitxml written outside the sandbox (absolute path)",
+  "peak_rss_mb_suite": 360,
+  "wall_seconds_suite": 158.7,
+  "production_data_unchanged_by_tests": true,
+  "production_data_check": "sha256 of 150 data/report files before vs after; only differences: data/sp500_universe_cache.json (refreshed by the live scans, not by tests) and data/loader.py (intentional P6-19 edit)",
+  "frozen_core": {
+    "pinned_sha256_match": true,
+    "files": [
+      "core/factor_engine.py",
+      "core/scoring_engine.py",
+      "core/ranking_engine.py",
+      "core/decision_engine.py",
+      "contracts/decision.py"
+    ],
+    "parity_tests": "tests/test_p6_18_frozen_core_parity.py (12 passed)"
+  },
+  "live_validation": {
+    "bounded_scan": {
+      "run_id": "20261104T105421Z_market_scan_e320cd",
+      "symbols": 25,
+      "status": "REAL RECOMMENDATION",
+      "seconds": 13
+    },
+    "full_scan_pre_fix": {
+      "run_id": "20261104T105453Z_market_scan_9072c9",
+      "status": "REAL RECOMMENDATION",
+      "seconds": 199.7,
+      "note": "input defects found (BRK-B priceToBook, CPT revenue); excluded from forward statistics"
+    },
+    "full_scan_intermediate": {
+      "run_id": "20261104T110528Z_market_scan_4f4b37",
+      "status": "REAL RECOMMENDATION",
+      "seconds": 211.0,
+      "note": "revenue slice defect found (FITB, DTE, HBAN, MTB); excluded from forward statistics"
+    },
+    "full_scan_final": {
+      "run_id": "20261104T111004Z_market_scan_953827",
+      "status": "REAL RECOMMENDATION",
+      "seconds": 218.4,
+      "peak_rss_mb": 225.1,
+      "funnel": "503 -> 446 -> 433 -> ranked 433 -> top5 5",
+      "top5": [
+        "CL",
+        "SNDK",
+        "MU",
+        "AES",
+        "CHTR"
+      ],
+      "profit_margins_above_1": 0,
+      "replay_match": true
+    },
+    "direct_evaluation": {
+      "run_id": "20261104T111435Z_direct_evaluation_5008d3",
+      "symbols": "NVDA AAPL TSLA PLTR RKLB SPY ZZZZX @@ BRK-B",
+      "status": "REAL RECOMMENDATION",
+      "note": "every requested symbol received an individual verdict"
+    },
+    "meaning": "REAL RECOMMENDATION = all data and decision gates passed. It does not mean the picks are profitable."
+  }
+}

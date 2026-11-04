@@ -1,0 +1,5 @@
+{
+  "search_space_size": 36,
+  "selected_best_architecture": "MODEL_RANK_E + SIZING_CAP_AWARE + 40% Sector Cap",
+  "multiple_testing_risk": "MULTIPLE_TESTING_RISK"
+}

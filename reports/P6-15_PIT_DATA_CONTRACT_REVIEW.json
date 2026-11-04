@@ -1,0 +1,6 @@
+{
+  "fundamentals": "PASS (SEC filed_at filtering)",
+  "corporate_actions": "PARTIAL (yfinance auto-adjusts)",
+  "universe_membership": "PASS (SEC filing dates)",
+  "market_data": "FAIL (Missing delisted data)"
+}

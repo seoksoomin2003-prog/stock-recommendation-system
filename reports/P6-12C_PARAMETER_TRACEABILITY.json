@@ -1,0 +1,34 @@
+{
+  "parameters": [
+    {
+      "name": "LIQUIDITY_HARD_MINIMUM",
+      "value": 500000,
+      "unit": "shares",
+      "metric": "20-day ADV (Average Daily Volume)",
+      "classification": "RESEARCH_REQUIRED",
+      "origin": "IMPLEMENTATION_ADDED",
+      "code_paths": [
+        "core/decision_engine.py:51 (hardcoded filtering)",
+        "main.py:322 (fallback to EXECUTION_SETTINGS)",
+        "utils/config.py:110 (min_volume_threshold)",
+        "execution/execution_engine.py:59 (filter_by_liquidity evaluation)"
+      ],
+      "status": "FROZEN_PENDING_RESEARCH",
+      "notes": "Introduced during P6-11B without formal multiple-testing. Cannot be optimized. Must be validated via future joint research."
+    },
+    {
+      "name": "BEAR_MARKET_REGIME_ALPHA_ENTRY_THRESHOLD",
+      "value": 0.75,
+      "unit": "percentile",
+      "metric": "alpha_percentile ranking strictly >= 0.75 (Top 25%)",
+      "classification": "RESEARCH_REQUIRED",
+      "origin": "IMPLEMENTATION_ADDED",
+      "code_paths": [
+        "core/decision_engine.py:213 (hardcoded threshold in _rank_candidates)",
+        "utils/config.py:129 (bear_alpha_threshold configuration)"
+      ],
+      "status": "FROZEN_PENDING_RESEARCH",
+      "notes": "Used exclusively in BEAR regimes to filter candidates before MODEL_RANK_E. Pending robust cross-regime statistical evaluation."
+    }
+  ]
+}
