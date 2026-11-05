@@ -389,6 +389,11 @@ def cmd_lab(args) -> int:
 
 def cmd_qsf(args) -> int:
     """QSF 1.1 scoring (separate from the frozen P6-11B model; no orders are ever placed)."""
+    if args.action in ("history-prepare", "history-run"):
+        from terminal.qsf import validate
+        res = validate.prepare(PROJECT_ROOT) if args.action == "history-prepare" else validate.run(PROJECT_ROOT)
+        print(json.dumps(res.get("primary", res), ensure_ascii=False, indent=1, default=str))
+        return 0
     from terminal.qsf.service import QSF
     q = QSF(PROJECT_ROOT)
     market = args.market
@@ -472,7 +477,7 @@ def build_parser() -> argparse.ArgumentParser:
     lb = sub.add_parser("lab", help="Challenger models beside the frozen P6-11B (TERMINAL-3)")
     lb.add_argument("action", choices=["update", "status", "compare"])
     qs = sub.add_parser("qsf", help="QSF 1.1: 0-100 stock score with holding-period plan (separate from P6-11B)")
-    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify"])
+    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run"])
     qs.add_argument("tickers", nargs="*")
     qs.add_argument("--dry-run", action="store_true", help="Scan without writing to the ledger")
     au = sub.add_parser("automation", help="Daily job: record, tracking, backup, Telegram/macOS alerts (TERMINAL-4)")

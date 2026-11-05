@@ -116,6 +116,12 @@ def momentum_persistence(c) -> Dict:
 
 
 # ---------------------------------------------------------------------- fundamentals
+def _rr(f: Dict, key: str, lo: float, hi: float) -> Optional[float]:
+    """Sector percentile when the research candidate supplies one in ``f["rel"]``; otherwise the absolute anchor."""
+    rel = (f.get("rel") or {}).get(key)
+    return rel if rel is not None else ramp(f.get(key), lo, hi)
+
+
 def _f(c) -> Optional[Dict]:
     f = c.get("fund")
     return f if f and f.get("status") in ("REAL", "STALE") else None
@@ -135,7 +141,7 @@ def earnings_revenue_quality(c) -> Dict:
     f = _f(c)
     if not f:
         return _fund_missing(c)
-    return _fobs(c, mean([ramp(f.get("rev_growth"), -0.05, 0.20), ramp(f.get("eps_growth"), -0.10, 0.25), ramp(f.get("ocf_to_ni"), 0.5, 1.2)]),
+    return _fobs(c, mean([_rr(f, "rev_growth", -0.05, 0.20), _rr(f, "eps_growth", -0.10, 0.25), ramp(f.get("ocf_to_ni"), 0.5, 1.2)]),
                  {k: f.get(k) for k in ("rev_growth", "eps_growth", "ocf_to_ni")},
                  f"매출 성장 {pct(f.get('rev_growth'))}, EPS 성장 {pct(f.get('eps_growth'))}, 영업현금/순이익 {num(f.get('ocf_to_ni'))}")
 
@@ -144,7 +150,7 @@ def profitability(c) -> Dict:
     f = _f(c)
     if not f:
         return _fund_missing(c)
-    return _fobs(c, mean([ramp(f.get("roe"), 0.0, 0.20), ramp(f.get("op_margin"), 0.0, 0.20)]),
+    return _fobs(c, mean([_rr(f, "roe", 0.0, 0.20), _rr(f, "op_margin", 0.0, 0.20)]),
                  {k: f.get(k) for k in ("roe", "op_margin")}, f"ROE {pct(f.get('roe'))}, 영업이익률 {pct(f.get('op_margin'))}")
 
 
@@ -155,7 +161,7 @@ def balance_sheet(c) -> Dict:
     if f.get("is_financial"):
         return _fobs(c, ramp(f.get("equity_assets"), 0.04, 0.15), {"equity_assets": f.get("equity_assets")},
                      f"금융업 기준: 자기자본/자산 {pct(f.get('equity_assets'))}")
-    return _fobs(c, mean([ramp(f.get("debt_equity"), 2.0, 0.3), ramp(f.get("current_ratio"), 0.8, 2.0)]),
+    return _fobs(c, mean([_rr(f, "debt_equity", 2.0, 0.3), ramp(f.get("current_ratio"), 0.8, 2.0)]),
                  {k: f.get(k) for k in ("debt_equity", "current_ratio")},
                  f"부채/자본 {num(f.get('debt_equity'))}, 유동비율 {num(f.get('current_ratio'))}")
 
@@ -166,7 +172,7 @@ def cash_flow_quality(c) -> Dict:
         return _fund_missing(c)
     if f.get("is_financial"):
         return not_applicable("금융업은 현금흐름 품질을 같은 기준으로 비교하지 않습니다")
-    return _fobs(c, mean([ramp(f.get("ocf_to_ni"), 0.5, 1.2), ramp(f.get("fcf_margin"), -0.02, 0.15)]),
+    return _fobs(c, mean([ramp(f.get("ocf_to_ni"), 0.5, 1.2), _rr(f, "fcf_margin", -0.02, 0.15)]),
                  {k: f.get(k) for k in ("ocf_to_ni", "fcf_margin")},
                  f"영업현금/순이익 {num(f.get('ocf_to_ni'))}, FCF 마진 {pct(f.get('fcf_margin'))}")
 
@@ -178,10 +184,10 @@ def valuation(c) -> Dict:
     pe, pb, fy = f.get("pe"), f.get("pb"), f.get("fcf_yield")
     if pe is None and pb is None and fy is None:
         return missing("밸류에이션 계산에 필요한 가격·재무 값 없음")
-    pe_s = 0.0 if pe is not None and pe <= 0 else ramp(pe, 40, 10)
+    pe_s = 0.0 if pe is not None and pe <= 0 else _rr(f, "pe", 40, 10)
     if f.get("is_financial"):
-        return _fobs(c, mean([pe_s, ramp(pb, 2.5, 0.8)]), {"pe": pe, "pb": pb}, f"금융업 기준: PER {num(pe, 1)}, PBR {num(pb, 2)}")
-    return _fobs(c, mean([pe_s, ramp(pb, 8, 1.5), ramp(fy, 0.0, 0.07)]), {"pe": pe, "pb": pb, "fcf_yield": fy},
+        return _fobs(c, mean([pe_s, _rr(f, "pb", 2.5, 0.8)]), {"pe": pe, "pb": pb}, f"금융업 기준: PER {num(pe, 1)}, PBR {num(pb, 2)}")
+    return _fobs(c, mean([pe_s, _rr(f, "pb", 8, 1.5), _rr(f, "fcf_yield", 0.0, 0.07)]), {"pe": pe, "pb": pb, "fcf_yield": fy},
                  f"PER {num(pe, 1)}, PBR {num(pb, 2)}, FCF 수익률 {pct(fy)}")
 
 
@@ -190,7 +196,7 @@ def business_quality(c) -> Dict:
     if not f:
         return _fund_missing(c)
     stable = None if f.get("roe_years_positive") is None else f["roe_years_positive"]
-    return _fobs(c, mean([ramp(f.get("roe"), 0.03, 0.25), ramp(f.get("op_margin"), 0.0, 0.25), ramp(f.get("gross_margin"), 0.15, 0.60), stable]),
+    return _fobs(c, mean([_rr(f, "roe", 0.03, 0.25), _rr(f, "op_margin", 0.0, 0.25), _rr(f, "gross_margin", 0.15, 0.60), stable]),
                  {k: f.get(k) for k in ("roe", "op_margin", "gross_margin", "roe_years_positive")},
                  f"ROE {pct(f.get('roe'))}, 영업이익률 {pct(f.get('op_margin'))}, 매출총이익률 {pct(f.get('gross_margin'))}, 흑자 지속 비율 {pct(stable, 0)}")
 
@@ -199,7 +205,7 @@ def growth_quality(c) -> Dict:
     f = _f(c)
     if not f:
         return _fund_missing(c)
-    return _fobs(c, mean([ramp(f.get("rev_cagr3"), -0.02, 0.15), ramp(f.get("eps_cagr3"), -0.05, 0.20), ramp(f.get("rev_growth"), -0.05, 0.20)]),
+    return _fobs(c, mean([_rr(f, "rev_cagr3", -0.02, 0.15), _rr(f, "eps_cagr3", -0.05, 0.20), _rr(f, "rev_growth", -0.05, 0.20)]),
                  {k: f.get(k) for k in ("rev_cagr3", "eps_cagr3", "rev_growth")},
                  f"3년 매출 CAGR {pct(f.get('rev_cagr3'))}, 3년 EPS CAGR {pct(f.get('eps_cagr3'))}, 최근 매출 성장 {pct(f.get('rev_growth'))}")
 
@@ -210,7 +216,7 @@ def free_cash_flow(c) -> Dict:
         return _fund_missing(c)
     if f.get("is_financial"):
         return not_applicable("금융업은 FCF 기준을 적용하지 않습니다")
-    return _fobs(c, mean([ramp(f.get("fcf_margin"), -0.02, 0.18), f.get("fcf_years_positive")]),
+    return _fobs(c, mean([_rr(f, "fcf_margin", -0.02, 0.18), f.get("fcf_years_positive")]),
                  {k: f.get(k) for k in ("fcf_margin", "fcf_years_positive")},
                  f"FCF 마진 {pct(f.get('fcf_margin'))}, FCF 흑자 연도 비율 {pct(f.get('fcf_years_positive'), 0)}")
 
@@ -223,7 +229,7 @@ def balance_dilution(c) -> Dict:
     if f.get("is_financial"):
         return _fobs(c, mean([ramp(f.get("equity_assets"), 0.04, 0.15), dil]), {k: f.get(k) for k in ("equity_assets", "share_change")},
                      f"자기자본/자산 {pct(f.get('equity_assets'))}, 주식 수 변화 {pct(f.get('share_change'))}")
-    return _fobs(c, mean([ramp(f.get("debt_equity"), 2.0, 0.3), dil]), {k: f.get(k) for k in ("debt_equity", "share_change")},
+    return _fobs(c, mean([_rr(f, "debt_equity", 2.0, 0.3), dil]), {k: f.get(k) for k in ("debt_equity", "share_change")},
                  f"부채/자본 {num(f.get('debt_equity'))}, 주식 수 변화 {pct(f.get('share_change'))}")
 
 
@@ -346,7 +352,7 @@ def leverage(c) -> Dict:
         return _fund_missing(c)
     if f.get("is_financial"):
         return not_applicable("금융업은 부채비율을 일반 기업 기준으로 평가하지 않습니다")
-    return _fobs(c, ramp(f.get("debt_equity"), 2.5, 0.2), {"debt_equity": f.get("debt_equity")}, f"부채/자본 {num(f.get('debt_equity'))}")
+    return _fobs(c, _rr(f, "debt_equity", 2.5, 0.2), {"debt_equity": f.get("debt_equity")}, f"부채/자본 {num(f.get('debt_equity'))}")
 
 
 # ---------------------------------------------------------------------- events
