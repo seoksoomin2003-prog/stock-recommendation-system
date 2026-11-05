@@ -4,6 +4,7 @@ Prospective rules (TERMINAL-3 §3): the signal session is the latest COMPLETED N
 one record per model per signal session (idempotent); no back-dating; the panel must end exactly on the
 signal session.  The P6-20 tracking ledger is only read.
 """
+import fcntl
 import hashlib
 import json
 import os
@@ -112,7 +113,9 @@ class Lab:
 
     def record(self) -> Dict[str, Any]:
         """Append today's challenger signals (one per model per completed session)."""
-        with self._lock:
+        self.dir.mkdir(parents=True, exist_ok=True)
+        with self._lock, open(self.dir / "ledger.lock", "w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)          # the daily job and the server button are separate processes
             p = self.panel()
             signal = self.signal_session()
             if p is None:

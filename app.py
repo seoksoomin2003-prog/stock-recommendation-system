@@ -17,6 +17,7 @@ Multi-market (P6-21..25): ``--market`` selects the market (default US, unchanged
     python app.py --market KR scan --capital 10000000   KR liquid-300 scan (EXPERIMENTAL model, KRW)
     python app.py --market KR evaluate 005930 035720    KR direct evaluation against the liquid-300 reference
     python app.py --market KR tracking update|report|status|verify
+    python app.py automation [status|run|install|uninstall|test-notify|telegram-chat]   daily job and alerts
     python app.py dashboard [--open]   unified US/KR dashboard (read-only, tracking/dashboard.html)
     python app.py migrate-storage      idempotent, additive storage layout v2 (backs up tracking/ first)
     python app.py terminal [--open]    personal terminal, local web app at http://127.0.0.1:8765 (TERMINAL-1..3)
@@ -385,6 +386,25 @@ def cmd_lab(args) -> int:
     return 0
 
 
+def cmd_automation(args) -> int:
+    from terminal import automation, notify
+    if args.action == "install":
+        res = automation.install(PROJECT_ROOT)
+    elif args.action == "uninstall":
+        res = automation.uninstall()
+    elif args.action == "run":
+        res = automation.Daily(PROJECT_ROOT).run(resend=args.resend)
+    elif args.action == "test-notify":
+        res = {"telegram": notify.send_telegram("퀀트 터미널 테스트 알림입니다."),
+               "macos": notify.send_macos("퀀트 터미널", "테스트 알림입니다.")}
+    elif args.action == "telegram-chat":
+        res = notify.find_chats()
+    else:
+        res = automation.status(PROJECT_ROOT)
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0
+
+
 def cmd_terminal(args) -> int:
     from terminal.server import HOST, serve
     try:
@@ -414,6 +434,9 @@ def build_parser() -> argparse.ArgumentParser:
     db.add_argument("--open", action="store_true")
     lb = sub.add_parser("lab", help="Challenger models beside the frozen P6-11B (TERMINAL-3)")
     lb.add_argument("action", choices=["update", "status", "compare"])
+    au = sub.add_parser("automation", help="Daily job: record, tracking, backup, Telegram/macOS alerts (TERMINAL-4)")
+    au.add_argument("action", choices=["status", "run", "install", "uninstall", "test-notify", "telegram-chat"], nargs="?", default="status")
+    au.add_argument("--resend", action="store_true", help="Send the summary again even if unchanged")
     tm = sub.add_parser("terminal", help="Personal terminal: local web app on 127.0.0.1 (TERMINAL-1, read-only)")
     tm.add_argument("--port", type=int, default=8765)
     tm.add_argument("--open", action="store_true", help="Open the terminal in the default browser")
@@ -466,6 +489,8 @@ def main(argv=None) -> int:
         return cmd_terminal(args)
     if args.command == "lab":
         return cmd_lab(args)
+    if args.command == "automation":
+        return cmd_automation(args)
     if args.command == "migrate-storage":
         from markets import storage
         print(json.dumps(storage.migrate(PROJECT_ROOT), indent=1, default=str))

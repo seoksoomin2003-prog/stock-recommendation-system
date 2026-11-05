@@ -38,9 +38,20 @@ async function renderComparison() {
         <td class="num">${r.cohorts}</td>${H.map((h) => cell(r.horizons[String(h)])).join("")}<td class="l" style="white-space:normal;min-width:220px">${latest(m)}</td></tr>`; }).join("")}</tbody></table></div>
     <div class="meta">${esc(d.method)} 가격 데이터 마지막 날 ${esc(d.panel_last || "없음")} · 다음 신호일 ${esc(d.signal_session)}.</div>
     <div style="margin-top:10px"><button id="labrun" class="btn-primary">데이터 갱신 + 오늘 신호 기록</button>
-      <span class="meta" id="labmsg">미국 장 마감(동부 17:00, 한국 오전 7시경) 이후에 실행하면 그날 종가로 기록됩니다. 같은 날 여러 번 눌러도 한 번만 기록됩니다.</span></div>`;
+      <span class="meta" id="labmsg">미국 장 마감(동부 17:00, 한국 오전 7시경) 이후에 실행하면 그날 종가로 기록됩니다. 같은 날 여러 번 눌러도 한 번만 기록됩니다.</span></div>
+    <div class="meta" id="autoline"></div>`;
   $("#labrun").onclick = startLabRun;
+  automationLine().then((t) => { const n = $("#autoline"); if (n) n.textContent = t; });
   if (d.job && d.job.state === "RUNNING") pollLab();
+}
+async function automationLine() {
+  const a = await api("/api/automation/status").catch(() => null);
+  if (!a) return "";
+  const tg = { CONFIGURED: "텔레그램 연결됨", NOT_CONFIGURED: "텔레그램 미설정", INVALID: "텔레그램 설정 오류" }[a.telegram];
+  const run = a.installed ? `자동 실행 켜짐 (한국 시간 ${a.schedule_kst[0]})` : "자동 실행 꺼짐";
+  const last = a.last_run ? `마지막 실행 ${a.last_run.at.slice(0, 16).replace("T", " ")} UTC, 기준 거래일 ${a.last_run.session}` : "실행 기록 없음";
+  const gaps = a.last_run && a.last_run.missing_sessions.length ? `, 빠진 거래일 ${a.last_run.missing_sessions.length}일` : "";
+  return `${run} · ${tg} · ${last}${gaps}`;
 }
 async function startLabRun() {
   try { await post("/api/lab/run", {}); pollLab(); } catch (e) { $("#labmsg").textContent = e.message; }
