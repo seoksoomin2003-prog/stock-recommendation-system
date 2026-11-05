@@ -97,8 +97,8 @@ The "Official status" column is the status the directive assigns. The "State at 
 
 | Portfolio long-term and swing tagging, per-style limits, target weight, exit readings, alerts | implemented, tested | `tests/test_portfolio_style.py`, README section 5 |
 
-Next, in the order the user set: the Korean market across the terminal.
-QSF follow-ups: quarterly and TTM fundamentals, sector-relative normalization, a full-model historical check on point-in-time fundamentals.
+The order the user set (automation, long and swing tags, Korean market) is complete.
+QSF historical checks (2026-11-05): QSF 1.2 candidate NO_EVIDENCE (`reports/QSF_1_2_VALIDATION_RESULTS.md`); research score: no factor passed (`reports/QSF_RESEARCH_SCORE_RESULTS.md`). Live score stays QSF-1.1.2 with a notice.
 
 ## Next tasks (candidates, not started)
 
