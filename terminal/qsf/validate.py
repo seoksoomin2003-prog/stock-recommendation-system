@@ -268,12 +268,45 @@ def verdict(s: Dict[str, Any]) -> Dict[str, Any]:
     return {"verdict": "WEAK_POSITIVE_EVIDENCE" if all(checks.values()) else "NO_EVIDENCE", "checks": checks}
 
 
+def bucket_table(score: np.ndarray, ret: np.ndarray, bench: np.ndarray, excess: np.ndarray, cost: float) -> Dict[str, Any]:
+    """What happened to the stocks of each score band: arrays are pooled over dates.  Descriptive, not independent samples."""
+    out = {}
+    for lo, hi in config.BUCKETS:
+        m = np.isfinite(score) & np.isfinite(ret) & (score >= lo) & (score < hi)
+        n = int(m.sum())
+        rel = ret[m] - bench[m] - cost
+        rel = rel[np.isfinite(rel)]
+        out[f"{lo:g}-{min(hi, 100):.0f}"] = {"n": n, "mean_net": float((ret[m] - cost).mean()) if n else None, "median_net": float(np.median(ret[m] - cost)) if n else None,
+                                             "win_rate": float((ret[m] - cost > 0).mean()) if n else None, "mean_vs_bench_net": float(rel.mean()) if len(rel) else None,
+                                             "beat_bench_rate": float((rel > 0).mean()) if len(rel) else None, "mean_vs_average": float(excess[m].mean()) if n else None,
+                                             "beat_average_rate": float((excess[m] > 0).mean()) if n else None}
+    return out
+
+
 def analyze(px: Prices, recs: List[Dict[str, Any]]) -> Dict[str, Any]:
     cost = config.round_trip_cost("US")
     by_i: Dict[int, List[Dict]] = {}
     for r in recs:
         by_i.setdefault(r["i"], []).append(r)
-    out: Dict[str, Any] = {"cost_round_trip": cost, "tables": {}}
+    out: Dict[str, Any] = {"cost_round_trip": cost, "tables": {}, "buckets": {}}
+
+    def buckets(key: str, h: int) -> Dict[str, Any]:
+        sc, rt, be, ex = [], [], [], []
+        for i in sorted(by_i):
+            fwd = px.forward(i, h)
+            g = by_i[i]
+            score = np.array([r[key] if r.get(key) is not None else np.nan for r in g], dtype=float)
+            ret = np.array([fwd[px.col[r["t"]]] for r in g], dtype=float)
+            ok = np.isfinite(score) & np.isfinite(ret)
+            if ok.sum() < 30:
+                continue
+            sc.append(score[ok])
+            rt.append(ret[ok])
+            be.append(np.full(int(ok.sum()), fwd[px.col["SPY"]]))
+            ex.append(ret[ok] - ret[ok].mean())
+        if not sc:
+            return {}
+        return bucket_table(*(np.concatenate(x) for x in (sc, rt, be, ex)), cost)
 
     def table(key: str, h: int, strategy_rows=None) -> Dict[str, Any]:
         rows = []
@@ -293,6 +326,8 @@ def analyze(px: Prices, recs: List[Dict[str, Any]]) -> Dict[str, Any]:
             for name in (*VARIANTS, "TECHNICAL", "FUNDAMENTAL", "RISK"):
                 out["tables"][f"{strategy}|{name}|{h}"] = table(f"{strategy}|{name}", h)
             out["tables"][f"{strategy}|mom_12_1|{h}"] = table("mom_12_1", h)
+            for name in VARIANTS:
+                out["buckets"][f"{strategy}|{name}|{h}"] = buckets(f"{strategy}|{name}", h)
     out["primary"] = {s: {"horizon": PRIMARY[s], **out["tables"][f"{s}|C|{PRIMARY[s]}"], **verdict(out["tables"][f"{s}|C|{PRIMARY[s]}"])} for s in PRIMARY}
     return out
 
@@ -329,6 +364,8 @@ def run(base: Path, log=print) -> Dict[str, Any]:
     t0 = time.time()
     recs = score_dates(px, lambda day: members_at(u["tickers"], added, day), facts, u["sectors"], splits,
                        progress=lambda n, m, d, k: log(f"{n}/{m} {d} {k} stocks {time.time() - t0:.0f}s"))
+    with gzip.open(root / "scores.json.gz", "wt", encoding="utf-8") as fh:      # later analysis needs no rescoring
+        json.dump({"dates": px.dates, "records": recs}, fh)
     result = analyze(px, recs)
     result.update(status="REAL", model="QSF-1.2 candidate (research only)", protocol="reports/QSF_1_2_VALIDATION_PROTOCOL.md", limitations=LIMITS, evaluations=len(recs),
                   companies=len(facts), price_last=px.dates[-1])

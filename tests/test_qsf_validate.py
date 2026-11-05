@@ -214,6 +214,16 @@ def test_bars_never_turn_missing_into_zero(tmp_path):
     assert p.bars(1, 0, 1)[0]["high"] is None
 
 
+def test_bucket_table_reports_what_happened_per_band():
+    score = np.array([85.0, 85.0, 30.0, np.nan])
+    ret = np.array([0.10, -0.05, 0.02, 0.9])
+    bench = np.full(4, 0.01)
+    t = validate.bucket_table(score, ret, bench, ret - 0.02, 0.0)
+    assert t["80-100"]["n"] == 2 and t["80-100"]["win_rate"] == 0.5 and t["80-100"]["mean_net"] == pytest.approx(0.025)
+    assert t["80-100"]["beat_bench_rate"] == 0.5 and t["0-40"]["n"] == 1
+    assert t["70-80"]["n"] == 0 and t["70-80"]["win_rate"] is None    # no data stays empty
+
+
 def test_facts_download_resumes_and_reports_failures(tmp_path):
     def fetch(cik):
         if cik == "2":
