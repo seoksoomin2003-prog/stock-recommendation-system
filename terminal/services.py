@@ -62,6 +62,11 @@ MACRO_KR = [  # Bank of Korea ECOS.  Codes checked against the API on 2026-11-05
 ]
 BENCH = {"US": ("SPY", "SPY"), "KR": ("069500.KS", "KODEX 200")}
 
+def _validation_note() -> str:
+    from terminal.qsf import config as qsf_config
+    return qsf_config.VALIDATION_NOTICE + " 주문을 실행하지 않습니다."
+
+
 TICKER_RE = re.compile(r"^\^?[A-Z0-9][A-Z0-9.\-=]{0,14}$")      # AAPL, BRK.B, ^GSPC, KRW=X, CL=F
 
 
@@ -481,7 +486,7 @@ class Terminal:
                 items.append(self.qsf.signal(h["ticker"], h["weight_pct"], pf.limits_for(h["style"], st, market)["max_position_pct"], market))
             except Exception as exc:              # one unreadable stock never hides the others
                 items.append({"status": "UNAVAILABLE", "ticker": h["ticker"], "reason": type(exc).__name__})
-        return {"status": integ["status"], "items": items, "note": "QSF 점수는 실험 단계이며 예측력이 검증되지 않았습니다. 주문을 실행하지 않습니다."}
+        return {"status": integ["status"], "items": items, "note": _validation_note()}
 
     def journal_void(self, ref: str) -> Dict[str, Any]:
         return {"entry": self.journal.append({"kind": "VOID", "ref": str(ref or "")}, self.now())}

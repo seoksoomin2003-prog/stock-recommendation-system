@@ -24,7 +24,7 @@ function qsfBar(v) {
 async function renderQsf() {
   const el = $("#tab-qsf");
   el.innerHTML = `<div class="panel"><h2>종목 점수 (QSF 1.1)</h2>
-    <div class="notice">P6-11B와 별개인 규칙 기반 점수입니다. 가중치와 구간은 사전에 정한 연구 기본값이며 수익이 검증되지 않았습니다. 주문을 실행하지 않고, 투자 자문이 아닙니다.</div>
+    <div class="notice"><b>미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. 한국은 검증하지 않았습니다. 참고용으로만 쓰세요.</b><br>P6-11B와 별개인 규칙 기반 점수입니다. 가중치와 구간은 사전에 정한 연구 기본값입니다. 주문을 실행하지 않고, 투자 자문이 아닙니다.</div>
     <form id="qsfform" class="qsf-form">
       <input id="qsfticker" placeholder="${isKR() ? "종목코드 (예: 005930)" : "티커 (예: AAPL)"}" autocomplete="off" aria-label="종목">
       <button class="btn-primary">평가</button></form>
