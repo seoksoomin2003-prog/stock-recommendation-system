@@ -51,3 +51,4 @@ data/terminal/
 # TERMINAL-3 lab: price panel, challenger ledger, research cache (local data, never committed)
 data/lab/
 data/automation/
+data/qsf/

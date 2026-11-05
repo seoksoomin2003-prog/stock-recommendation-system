@@ -83,6 +83,23 @@ class Terminal:
         self.settings_file = self.base / "data" / "terminal" / "settings.json"
         from terminal.lab.service import Lab
         self.lab = Lab(self.base, now=self.now)
+        self._qsf = None
+
+    @property
+    def qsf(self):
+        if self._qsf is None:
+            from terminal.qsf.service import QSF
+            self._qsf = QSF(self.base, src=self.src, now=self.now, terminal=self)
+        return self._qsf
+
+    def qsf_evaluate(self, ticker: str, market: str = "US") -> Dict[str, Any]:
+        if market == "KR":
+            if not re.fullmatch(r"[0-9A-Z]{6}", (ticker or "").strip().upper()):
+                raise ValueError("INVALID_TICKER")
+            return self.qsf.evaluate(ticker.strip().upper(), "KR")
+        if market != "US":
+            raise ValueError("INVALID_MARKET")
+        return self.qsf.evaluate(clean_ticker(ticker), "US")
 
     # ---------------------------------------------------------------- helpers
     def _intraday(self, last_date: Optional[str]) -> bool:

@@ -21,6 +21,12 @@ HOST = "127.0.0.1"
 log = logging.getLogger("terminal")
 
 
+def _market(m: str) -> str:
+    if m not in ("US", "KR"):
+        raise ValueError("INVALID_MARKET")
+    return m
+
+
 def routes(t: Terminal) -> Dict[str, Callable]:
     return {
         ("GET", "/api/health"): lambda q, b: t.health(),
@@ -43,6 +49,9 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/model/plan"): lambda q, b: t.model_plan(),
         ("GET", "/api/lab/status"): lambda q, b: t.lab.status(),
         ("GET", "/api/automation/status"): lambda q, b: automation.status(t.base),
+        ("GET", "/api/qsf/evaluate"): lambda q, b: t.qsf_evaluate(q.get("t", ""), q.get("market", "US")),
+        ("GET", "/api/qsf/latest"): lambda q, b: t.qsf.latest(_market(q.get("market", "US"))),
+        ("GET", "/api/qsf/validation"): lambda q, b: t.qsf.validation(),
         ("GET", "/api/lab/compare"): lambda q, b: t.lab.comparison(),
         ("GET", "/api/lab/research"): lambda q, b: t.lab.research(),
         ("POST", "/api/lab/run"): lambda q, b: t.lab.run_background(),

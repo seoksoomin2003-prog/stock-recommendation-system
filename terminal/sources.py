@@ -71,7 +71,8 @@ def yahoo_history(symbols: List[str], period: str = "1y", download=_yf_download)
 
 INFO_FIELDS = ("longName", "shortName", "sector", "industry", "exchange", "currency", "marketCap",
                "trailingPE", "forwardPE", "priceToBook", "dividendYield", "beta", "fiftyTwoWeekHigh",
-               "fiftyTwoWeekLow", "sharesOutstanding", "averageVolume", "website", "longBusinessSummary")
+               "fiftyTwoWeekLow", "sharesOutstanding", "averageVolume", "website", "longBusinessSummary",
+               "heldPercentInsiders")
 
 
 def _yf_info(ticker: str) -> Dict:
@@ -87,6 +88,13 @@ def yahoo_info(ticker: str, fetch=_yf_info) -> Dict:
         if k in out:
             out[k] = _num(out[k])
     return {k: v for k, v in out.items() if v is not None}
+
+
+def yahoo_earnings_dates(ticker: str) -> List[str]:
+    """Upcoming earnings dates as Yahoo lists them (estimates until the company confirms); [] when none."""
+    import yfinance as yf
+    cal = yf.Ticker(ticker).calendar or {}
+    return sorted(str(d)[:10] for d in (cal.get("Earnings Date") or []))
 
 
 # ----------------------------------------------------------------------------- SEC
@@ -108,6 +116,20 @@ def _sec_get(url: str, http=requests):
     if r.status_code != 200:
         raise RuntimeError(f"SEC HTTP_{r.status_code}")        # never includes the identity
     return r.json()
+
+
+def sec_text(url: str, http=requests) -> str:
+    """Raw text of an EDGAR document (paced and identified like every SEC request)."""
+    headers = {"User-Agent": sec_user_agent(), "Accept-Encoding": "gzip, deflate"}
+    with _sec_lock:
+        wait = SEC_MIN_INTERVAL - (time.time() - _sec_last[0])
+        if wait > 0:
+            time.sleep(wait)
+        _sec_last[0] = time.time()
+    r = http.get(url, headers=headers, timeout=30)
+    if r.status_code != 200:
+        raise RuntimeError(f"SEC HTTP_{r.status_code}")
+    return r.text
 
 
 _ticker_map = []

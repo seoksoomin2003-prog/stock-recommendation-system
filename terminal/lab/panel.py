@@ -20,6 +20,15 @@ CHUNK = 50
 BENCH = "SPY"
 
 
+MIN_ROW_COVERAGE = 0.90
+
+
+def row_complete(p: "Panel", i: int) -> bool:
+    """A session row is usable only when the benchmark and at least 90% of symbols have a close."""
+    c = p.f("close")[i]
+    return BENCH in p.col and bool(np.isfinite(c[p.col[BENCH]])) and float(np.isfinite(c).mean()) >= MIN_ROW_COVERAGE
+
+
 class Panel:
     def __init__(self, dates: List[str], tickers: List[str], data: Dict[str, np.ndarray], meta: Dict):
         self.dates = list(dates)

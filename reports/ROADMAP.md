@@ -87,6 +87,16 @@ The "Official status" column is the status the directive assigns. The "State at 
 
 - P6-19 input rules superseded by P6-20-A: revenue "largest same-period concept" (it could select a component, e.g. CPT lease income); the NI > revenue rejection (it rejected DTE although DTE tags a total-revenue concept); and the P/B check against annual-period equity with no scope, staleness or common-equity handling. Observations made under `P6-19-final` stay valid and are reported separately by spec version.
 
+## Terminal and QSF status (2026-11-05)
+
+| Phase | State | Evidence |
+|---|---|---|
+| TERMINAL-1..4 (market, stock, macro, portfolio, challengers, automation, Telegram, backup) | implemented, committed through `faf461a` | `reports/TERMINAL_4_SPECIFICATION.md` |
+| QSF 1.1 scoring, holding-period and exit engine (US and KR) | implemented, **EXPERIMENTAL**; predictive power not validated | `reports/QSF_1_1_IMPLEMENTATION_REPORT.md` |
+
+Next, in the order the user set: portfolio core vs swing tagging linked to QSF profiles, then the Korean market across the terminal.
+QSF follow-ups: quarterly and TTM fundamentals, sector-relative normalization, a full-model historical check on point-in-time fundamentals.
+
 ## Next tasks (candidates, not started)
 
 0. Multi-market:

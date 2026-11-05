@@ -352,6 +352,27 @@ Specification: `reports/TERMINAL_3_SPECIFICATION.md`.
 | `data/terminal/` | terminal cache, watchlist, trade journal `journal.jsonl` and risk settings (local, private, ignored by git) |
 | `reports/` | phase reports, roadmap, test results |
 
+### QSF 1.1 stock score (experimental)
+
+The 점수 tab and `qsf` commands score a chosen stock from 0 to 100 under four separate profiles: `US_SWING_V1`, `US_LONG_TERM_V1`,
+`KR_SWING_V1`, `KR_LONG_TERM_V1`. Each result shows the factors, coverage and confidence, hard gates, a holding plan, exit conditions
+and what would change the label.
+
+```bash
+.venv/bin/python app.py qsf evaluate AAPL              # one stock, printed only
+.venv/bin/python app.py --market KR qsf evaluate 005930
+.venv/bin/python app.py qsf scan                       # full universe, appended to the ledger
+.venv/bin/python app.py qsf validate                   # matured outcomes by score bucket
+.venv/bin/python app.py qsf verify                     # ledger integrity
+```
+
+* **Not a validated signal.** A price-only historical check found no relation between score and later relative return
+  (`reports/QSF_1_1_IMPLEMENTATION_REPORT.md`). A BUY label does not authorize a trade; the decision is yours.
+* QSF is separate from the frozen P6-11B model. It imports nothing from the frozen core, and the two scores are never merged.
+* Missing data lowers coverage and is never treated as 0. Snapshots are stored in `data/qsf/ledger/` as append-only, hash-chained
+  shards. A shard recorded from bad data gets a VOID row and stays on disk.
+* Exit code 3 from `qsf scan` means Yahoo has not finished the session yet. The daily job retries at its next slot.
+
 ## 6. Tests
 
 ```bash

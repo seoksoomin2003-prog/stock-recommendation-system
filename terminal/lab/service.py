@@ -77,7 +77,7 @@ class Lab:
             raise LabError("유니버스(S&P 500 구성 종목) 캐시가 없습니다. 먼저 'python app.py scan'을 한 번 실행하세요.")
         target = self.signal_session()
         cur = self.panel()
-        if cur and cur.last == target and cur.meta.get("universe_sha256") == u["sha256"]:
+        if cur and cur.last == target and panel_mod.row_complete(cur, -1) and cur.meta.get("universe_sha256") == u["sha256"]:
             return {"status": "UP_TO_DATE", "last": cur.last, "tickers": len(cur.tickers)}
         frames = panel_mod.download(u["tickers"] + [BENCH], "6y", self.fetch, progress)
         if not frames or BENCH not in frames:
@@ -89,12 +89,39 @@ class Lab:
         if p.last and p.last > target:
             keep = [i for i, d in enumerate(p.dates) if d <= target]
             p = Panel([p.dates[i] for i in keep], p.tickers, {k: v[keep] for k, v in p.data.items()}, p.meta)
+        # Yahoo can list a session before most symbols have values.  Such a row is dropped until it is complete.
+        if p.dates and not panel_mod.row_complete(p, -1):
+            p = Panel(p.dates[:-1], p.tickers, {k: v[:-1] for k, v in p.data.items()}, p.meta)
         p.save(self.panel_file)
         self._panel, self._panel_mtime = p, self.panel_file.stat().st_mtime
         return {"status": "DOWNLOADED", "last": p.last, "tickers": len(p.tickers), "missing": p.meta["requested"] - len(frames)}
 
     # ------------------------------------------------------------------ ledger
     def read_ledger(self):
+        """Effective signals: the hash chain is checked over every line, voided sessions are left out (never deleted)."""
+        recs, integ = self._raw_ledger()
+        void = {r["signal_session"] for r in recs if r.get("type") == "VOID"}
+        return [r for r in recs if r.get("type") != "VOID" and r["signal_session"] not in void], integ
+
+    def void_session(self, session: str, reason: str) -> Dict[str, Any]:
+        """Append a VOID line for a session recorded from bad data.  The original lines stay in the file and in backups."""
+        with self._lock, open(self.dir / "ledger.lock", "w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            recs, integ = self._raw_ledger()
+            if integ["status"] != "OK":
+                raise LabError("도전자 기록 파일의 무결성 오류로 처리할 수 없습니다.")
+            if not any(r.get("signal_session") == session and r.get("type") != "VOID" for r in recs):
+                raise LabError(f"{session} 기록이 없습니다.")
+            rec = {"type": "VOID", "signal_session": session, "reason": reason, "recorded_at": self.now().astimezone(timezone.utc).isoformat(),
+                   "seq": len(recs) + 1, "prev_hash": recs[-1]["hash"] if recs else GENESIS}
+            rec["hash"] = _hash(rec)
+            with open(self.ledger_file, "a", encoding="utf-8") as fh:
+                fh.write(json.dumps(rec, ensure_ascii=False, sort_keys=True) + "\n")
+                fh.flush()
+                os.fsync(fh.fileno())
+            return {"voided": session}
+
+    def _raw_ledger(self):
         recs, prev = [], GENESIS
         if not self.ledger_file.exists():
             return [], {"status": "OK", "records": 0}
@@ -122,7 +149,10 @@ class Lab:
                 raise LabError("가격 데이터가 없습니다. 먼저 데이터를 갱신하세요.")
             if p.last != signal:
                 raise LabError(f"가격 데이터의 마지막 날짜({p.last})가 신호일({signal})과 달라 기록하지 않습니다.")
-            recs, integ = self.read_ledger()
+            if not panel_mod.row_complete(p, -1):
+                raise LabError(f"{signal} 가격 데이터가 아직 완전하지 않아 기록하지 않습니다.")
+            raw, integ = self._raw_ledger()
+            recs, _ = self.read_ledger()
             if integ["status"] != "OK":
                 raise LabError("도전자 기록 파일의 무결성 오류로 기록할 수 없습니다.")
             done = {(r["model"], r["signal_session"]) for r in recs}
@@ -132,7 +162,7 @@ class Lab:
             # P6-20): a record made during the session enters at the NEXT open, never at an open already past.
             phase = nyse_calendar.classify_signal(self.now())
             entry = phase["entry_session"]
-            new, prev = [], recs[-1]["hash"] if recs else GENESIS
+            new, prev = [], raw[-1]["hash"] if raw else GENESIS
             for code in CHALLENGERS:
                 if (code, signal) in done:
                     continue
@@ -144,7 +174,7 @@ class Lab:
                        "eligible": s["eligible"], "universe_size": len(u["tickers"]),
                        "universe_sha256": u["sha256"], "panel_fingerprint": p.fingerprint(),
                        "recorded_at": self.now().astimezone(timezone.utc).isoformat(),
-                       "seq": len(recs) + len(new) + 1, "prev_hash": prev}
+                       "seq": len(raw) + len(new) + 1, "prev_hash": prev}
                 rec["hash"] = _hash(rec)
                 prev = rec["hash"]
                 new.append(rec)

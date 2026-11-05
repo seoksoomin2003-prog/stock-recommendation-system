@@ -27,10 +27,10 @@ STEP_TIMEOUT = 45 * 60
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
 OK, FAILED, SKIPPED = "OK", "FAILED", "SKIPPED"
-STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "BACKUP": "백업"}
+STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "BACKUP": "백업"}
 BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
-                "tracking/kr/*.jsonl")
+                "tracking/kr/*.jsonl", "data/qsf/ledger/index.jsonl")
 
 
 def backup_root() -> Path:
@@ -51,6 +51,16 @@ def backup(base: Path, day: str, root: Optional[Path] = None) -> Dict[str, Any]:
         for src in sorted(base.glob(pattern)):
             dst = tmp / src.relative_to(base)
             dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+            if _sha(src) != _sha(dst):
+                raise OSError("backup verification failed")
+            n += 1
+    # QSF shards are immutable and large, so they are mirrored once instead of copied into every dated folder.
+    mirror = root / "qsf_ledger"
+    for src in sorted((base / "data" / "qsf" / "ledger").glob("*.jsonl.gz")):
+        dst = mirror / src.name
+        if not dst.exists():
+            mirror.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
             if _sha(src) != _sha(dst):
                 raise OSError("backup verification failed")
@@ -146,6 +156,12 @@ class Daily:
             if name == "TRACK":
                 rc = self.runner(name, ["track"])
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else f"코드 {rc}"}
+            if name == "QSF":
+                rc = self.runner(name, ["qsf", "scan"])
+                return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else f"코드 {rc}"}
+            if name == "QSF_KR":
+                rc = self.runner(name, ["--market", "KR", "qsf", "scan"])
+                return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else f"코드 {rc}"}
             res = backup(self.base, session, self.backup_dir)
             return {"status": OK, "at": at, "detail": f"{res['files']}개 파일"}
         except Exception as exc:                                    # one failed step never stops the others
@@ -229,6 +245,8 @@ class Daily:
         st = self.state()
         steps = st["sessions"].setdefault(session, {})
         pending = [n for n in STEP_NAMES if (steps.get(n) or {}).get("status") not in (OK, SKIPPED)]
+        if "LAB" not in pending and not self._lab_recorded(session):
+            pending.insert(0, "LAB")                # a voided or missing record is retried even if it once reported OK
         if (steps.get("SCAN") or {}).get("status") == SKIPPED and os.getenv("QPP_CAPITAL", "").strip():
             pending.append("SCAN")                  # a skipped scan runs as soon as capital is configured
         delivered = (st.get("notified") or {}).get("session") == session

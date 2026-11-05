@@ -17,6 +17,7 @@ Multi-market (P6-21..25): ``--market`` selects the market (default US, unchanged
     python app.py --market KR scan --capital 10000000   KR liquid-300 scan (EXPERIMENTAL model, KRW)
     python app.py --market KR evaluate 005930 035720    KR direct evaluation against the liquid-300 reference
     python app.py --market KR tracking update|report|status|verify
+    python app.py qsf evaluate AAPL    QSF 1.1 score and holding plan (also: scan, validate, verify; --market KR)
     python app.py automation [status|run|install|uninstall|test-notify|telegram-chat]   daily job and alerts
     python app.py dashboard [--open]   unified US/KR dashboard (read-only, tracking/dashboard.html)
     python app.py migrate-storage      idempotent, additive storage layout v2 (backs up tracking/ first)
@@ -386,6 +387,42 @@ def cmd_lab(args) -> int:
     return 0
 
 
+def cmd_qsf(args) -> int:
+    """QSF 1.1 scoring (separate from the frozen P6-11B model; no orders are ever placed)."""
+    from terminal.qsf.service import QSF
+    q = QSF(PROJECT_ROOT)
+    market = args.market
+    if args.action == "scan":
+        res = q.scan(market, tickers=args.tickers or None, record=not args.dry_run, progress=lambda st, d, t: print(f"  {st} {d}/{t}", flush=True))
+        print(json.dumps({k: v for k, v in res.items() if k != "rows"} | {"errors": len(res["errors"])}, ensure_ascii=False, indent=1, default=str))
+        return 0 if res["status"] == "REAL" else 3 if res["status"] == "DATA_NOT_READY" else 2
+    if args.action == "validate":
+        print(json.dumps(q.validation(), ensure_ascii=False, indent=1, default=str))
+        return 0
+    if args.action == "verify":
+        res = q.ledger.verify()
+        print(json.dumps(res, ensure_ascii=False, indent=1))
+        return 0 if res["status"] == "OK" else 2
+    if not args.tickers:
+        print("종목을 지정하세요: python app.py qsf evaluate AAPL")
+        return 2
+    rc = 0
+    for t in args.tickers:
+        res = q.evaluate(t.upper(), market)
+        if res["status"] != "REAL":
+            print(f"{t}: 평가 불가 - {res['reason']}")
+            rc = 2
+            continue
+        print(f"\n{res['ticker']} {res.get('name') or ''} [{market}] " + (f"(P6-11B 참고: {'상위 5 포함' if res['p6_reference'].get('in_top5') else '상위 5 아님'}, 점수와 합치지 않음)" if res.get("p6_reference") else ""))
+        for s, c in res["cards"].items():
+            score = "없음" if c["score"] is None else f"{c['score']:.1f}"
+            print(f"  {s}: {score}점 · {c['action_label']} · {c['actionability']} · 반영률 {c['coverage'] * 100:.0f}% · 신뢰도 {c['confidence']} · 진입 {c['entry_status']}")
+            print("    " + " / ".join(f"{v['label']} {'-' if v['score_100'] is None else format(v['score_100'], '.0f')}" for v in c["domains"].values()))
+            print(f"    {c['why_summary']}")
+            print(f"    게이트: {', '.join(g['code'] for g in c['gates']) or '없음'} · 첫 재평가 {c['holding']['first_review']}")
+    return rc
+
+
 def cmd_automation(args) -> int:
     from terminal import automation, notify
     if args.action == "install":
@@ -434,6 +471,10 @@ def build_parser() -> argparse.ArgumentParser:
     db.add_argument("--open", action="store_true")
     lb = sub.add_parser("lab", help="Challenger models beside the frozen P6-11B (TERMINAL-3)")
     lb.add_argument("action", choices=["update", "status", "compare"])
+    qs = sub.add_parser("qsf", help="QSF 1.1: 0-100 stock score with holding-period plan (separate from P6-11B)")
+    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify"])
+    qs.add_argument("tickers", nargs="*")
+    qs.add_argument("--dry-run", action="store_true", help="Scan without writing to the ledger")
     au = sub.add_parser("automation", help="Daily job: record, tracking, backup, Telegram/macOS alerts (TERMINAL-4)")
     au.add_argument("action", choices=["status", "run", "install", "uninstall", "test-notify", "telegram-chat"], nargs="?", default="status")
     au.add_argument("--resend", action="store_true", help="Send the summary again even if unchanged")
@@ -491,6 +532,8 @@ def main(argv=None) -> int:
         return cmd_lab(args)
     if args.command == "automation":
         return cmd_automation(args)
+    if args.command == "qsf":
+        return cmd_qsf(args)
     if args.command == "migrate-storage":
         from markets import storage
         print(json.dumps(storage.migrate(PROJECT_ROOT), indent=1, default=str))

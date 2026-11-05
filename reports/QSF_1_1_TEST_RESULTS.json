@@ -1,0 +1,78 @@
+{
+ "model_version": "QSF-1.1.1",
+ "generated_at": "2026-11-05T13:49:48.994111+09:00",
+ "full_suite": {
+  "tests": 1090,
+  "failures": 1,
+  "errors": 0,
+  "skipped_or_xfailed": 11,
+  "passed": 1078,
+  "seconds": 439.382,
+  "timestamp": "2026-11-05T13:40:19.072542+09:00",
+  "junit": "reports/QSF_pytest_junit.xml (local, ignored by git)"
+ },
+ "known_failures": [
+  {
+   "test": "tests.test_cross_asset::test_cross_asset_adjustment",
+   "message": "assert np.float64(0.509714945969444) < np.float64(0.5)",
+   "note": "Existing test that depends on live Yahoo macro moves; present before QSF; reclassification awaits user approval."
+  }
+ ],
+ "qsf_tests": {
+  "file": "tests/test_qsf.py",
+  "count": 81,
+  "failures": 0
+ },
+ "frozen_core": {
+  "before": "reports/qsf/frozen_core_before.json",
+  "after": "reports/qsf/frozen_core_after.json",
+  "source_hashes_match": true,
+  "config_values_match": true,
+  "files": [
+   "core/factor_engine.py",
+   "core/scoring_engine.py",
+   "core/ranking_engine.py",
+   "core/decision_engine.py",
+   "contracts/decision.py"
+  ]
+ },
+ "p6_20_tracking_verify": "OK",
+ "qsf_ledger_verify": {
+  "status": "OK",
+  "index_rows": 8,
+  "voided_shards": 3
+ },
+ "live_scans": [
+  {
+   "market": "KR",
+   "session": "2026-11-04",
+   "file": "data/qsf/ledger/2026-11-04_KR_000007.jsonl.gz",
+   "tickers": 300,
+   "snapshots": 590,
+   "no_price": [
+    "0035S0",
+    "0161M0",
+    "266690",
+    "468670",
+    "486510"
+   ]
+  },
+  {
+   "market": "US",
+   "session": "2026-11-04",
+   "file": "data/qsf/ledger/2026-11-04_US_000008.jsonl.gz",
+   "tickers": 504,
+   "snapshots": 1004,
+   "no_price": [
+    "KVUE",
+    "VYLR"
+   ]
+  }
+ ],
+ "historical_check": {
+  "artifact": "reports/qsf/QSF_1_1_HISTORICAL_PRICE_ONLY.json",
+  "scope": "technical and risk domains of US_SWING_V1 only",
+  "result": "no predictive relation found"
+ },
+ "matured_prospective_outcomes": 0
+}

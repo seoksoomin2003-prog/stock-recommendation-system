@@ -27,6 +27,7 @@ ALLOWED_WRITES = {
     "reports/TERMINAL-2_pytest_junit.xml",
     "reports/TERMINAL-3_pytest_junit.xml",
     "reports/TERMINAL-4_pytest_junit.xml",
+    "reports/QSF_pytest_junit.xml",
 }
 LIVE = os.getenv("QPP_PROVIDER_TESTS") == "1"
 
@@ -126,6 +127,14 @@ def _guard_protected_files(request, _protected_snapshot):
     _protected_snapshot["stats"] = _stat_map()
     pytest.fail(f"Test wrote to protected user data / historical artifacts (restored): "
                 f"changed={changed[:5]} created={created[:5]} deleted={deleted[:5]}", pytrace=False)
+
+
+@pytest.fixture(autouse=True)
+def _no_user_credentials(monkeypatch):
+    """Offline tests must behave the same on a machine whose .env holds real keys, and must never see those keys."""
+    if not LIVE:
+        for name in ("KRX_API_KEY", "OPENDART_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"):
+            monkeypatch.delenv(name, raising=False)
 
 
 @pytest.fixture(autouse=True)

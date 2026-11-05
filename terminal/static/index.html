@@ -8,7 +8,7 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand">퀀트 터미널 <span class="ver">미국 · 3단계</span></div>
+  <div class="brand">퀀트 터미널 <span class="ver">QSF 1.1</span></div>
   <form id="search" class="search" autocomplete="off">
     <input id="q" name="q" placeholder="종목 코드 (예: AAPL)" maxlength="15" aria-label="종목 코드">
     <button type="submit">조회</button>
@@ -18,6 +18,7 @@
 <nav class="tabs" role="tablist">
   <button data-tab="overview" class="on">시장 개요</button>
   <button data-tab="stock">종목</button>
+  <button data-tab="qsf">점수</button>
   <button data-tab="macro">거시</button>
   <button data-tab="watch">관심종목</button>
   <button data-tab="portfolio">포트폴리오</button>
@@ -34,6 +35,7 @@
   <section id="tab-assist" class="tab"></section>
   <section id="tab-model" class="tab"></section>
   <section id="tab-lab" class="tab"></section>
+  <section id="tab-qsf" class="tab"></section>
 </main>
 <footer class="foot">
   무료 공개 데이터(Yahoo Finance 지연 시세 · SEC EDGAR · FRED)만 사용합니다. 실시간 시세가 아니며, 투자 권유가 아닌 연구용 정보입니다.
@@ -43,5 +45,6 @@
 <script src="app.js"></script>
 <script src="portfolio.js"></script>
 <script src="lab.js"></script>
+<script src="qsf.js"></script>
 </body>
 </html>
