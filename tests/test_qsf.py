@@ -519,7 +519,7 @@ class FakeTerm:
     def _latest_scan(self):
         return {"run_id": "r1", "recommendations": [{"ticker": "TOP", "recommendation_rank": 1, "alpha": 9.9}]}
 
-    def _book(self):
+    def _book(self, market="US"):
         return [], {"status": "OK"}, {"positions": {"HELD": {"avg": 10.0, "opened": "2026-10-01", "qty": 1.0}}, "plans": {"HELD": {"stop": 1.0, "target": 1000.0}}}
 
     def watchlist(self):

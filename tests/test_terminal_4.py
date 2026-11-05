@@ -19,7 +19,9 @@ class FakeTerminal:
     def __init__(self, alerts=None, holdings=None, integrity="OK"):
         self.alerts, self.holdings, self.integrity = alerts or [], holdings or [], integrity
 
-    def portfolio(self):
+    def portfolio(self, market="US"):
+        if market == "KR":
+            return {"integrity": {"status": "OK"}, "alerts": [], "holdings": []}
         return {"integrity": {"status": self.integrity}, "alerts": self.alerts, "holdings": self.holdings}
 
 

@@ -1,8 +1,13 @@
 // 퀀트 터미널 (TERMINAL-1) — vanilla JS, no external libraries.  Missing values are shown as "—", never 0.
 "use strict";
 const $ = (s, el = document) => el.querySelector(s);
-const STATUS_KO = { REAL: "실데이터", STALE: "지연·오래됨", UNAVAILABLE: "데이터 없음", FROZEN: "고정" };
-const state = { tab: "overview", ticker: null, range: "1y", loaded: {} };
+const STATUS_KO = { REAL: "실데이터", STALE: "지연·오래됨", UNAVAILABLE: "데이터 없음", FROZEN: "고정", EXPERIMENTAL: "실험" };
+const state = { tab: "overview", ticker: null, range: "1y", loaded: {}, market: "US" };
+try { if (localStorage.getItem("qse-market") === "KR") state.market = "KR"; } catch (e) { /* storage unavailable */ }
+const KR_RE = /^[0-9][0-9A-Z]{5}$/;
+const marketOf = (t) => (KR_RE.test(String(t).toUpperCase()) ? "KR" : "US");
+const isKR = () => state.market === "KR";
+const mq = (path) => `${path}${path.includes("?") ? "&" : "?"}market=${state.market}`;
 
 // ------------------------------------------------------------------ helpers
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -16,14 +21,14 @@ function pct(v, d = 2, sign = true) {
 }
 function big(v, unit = "USD") {
   if (!isNum(v)) return DASH;
-  const a = Math.abs(v), s = v < 0 ? "-" : "", p = unit === "USD" ? "$" : "";
+  const a = Math.abs(v), s = v < 0 ? "-" : "", p = unit === "USD" ? "$" : unit === "KRW" ? "₩" : "";
   if (a >= 1e12) return `${s}${p}${(a / 1e12).toFixed(2)}조`;
   if (a >= 1e8) return `${s}${p}${(a / 1e8).toLocaleString("ko-KR", { maximumFractionDigits: a >= 1e11 ? 0 : 1 })}억`;
   if (a >= 1e4) return `${s}${p}${(a / 1e4).toLocaleString("ko-KR", { maximumFractionDigits: 1 })}만`;
   return `${s}${p}${a.toLocaleString("ko-KR", { maximumFractionDigits: 2 })}`;
 }
 function badge(st) { return `<span class="badge ${esc(st)}">${esc(STATUS_KO[st] || st)}</span>`; }
-const liveBadge = (on) => (on ? '<span class="badge live" title="미국 정규장 진행 중: 마지막 일봉은 아직 확정되지 않았습니다">장중·미확정</span>' : "");
+const liveBadge = (on) => (on ? '<span class="badge live" title="정규장 진행 중: 마지막 일봉은 아직 확정되지 않았습니다">장중·미확정</span>' : "");
 function when(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -70,13 +75,44 @@ function show(tab, push = true) {
   if (tab === "stock") return renderStock();
   if (!state.loaded[tab] || ALWAYS_FRESH.has(tab)) RENDER[tab]();
 }
+function paintMarket() {
+  $("#market").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.m === state.market));
+}
+function setMarket(m, render = true) {
+  if (m === state.market) return;
+  state.market = m;
+  try { localStorage.setItem("qse-market", m); } catch (e) { /* storage unavailable */ }
+  paintMarket();
+  state.loaded = {};
+  redrawers.clear();
+  document.querySelectorAll(".tab").forEach((s) => (s.innerHTML = ""));
+  if (state.ticker && marketOf(state.ticker) !== m) state.ticker = null;
+  if (render) show(state.tab);
+}
 function openTicker(t) {
   state.ticker = String(t).toUpperCase(); state.loaded.stock = null;
+  setMarket(marketOf(state.ticker), false);
   show("stock");
   window.scrollTo(0, 0);
 }
 document.querySelectorAll(".tabs button").forEach((b) => (b.onclick = () => show(b.dataset.tab)));
-$("#search").onsubmit = (e) => { e.preventDefault(); const t = $("#q").value.trim(); if (t) { openTicker(t); $("#q").value = ""; $("#q").blur(); } };
+$("#market").onclick = (e) => { const b = e.target.closest("button"); if (b) setMarket(b.dataset.m); };
+async function searchKr(q) {
+  setMarket("KR", false);
+  state.ticker = null; state.loaded.stock = "search";
+  show("stock");
+  const el = $("#tab-stock"); el.innerHTML = loading;
+  try {
+    const d = await api(`/api/kr/search?q=${encodeURIComponent(q)}`);
+    if (d.items.length === 1 || (d.items[0] && d.items[0].name === q)) return openTicker(d.items[0].ticker);
+    el.innerHTML = `<div class="panel"><h2>'${esc(q)}' 검색 결과</h2>${d.items.length ? `<div class="tbl-wrap"><table><tbody>${d.items.map((i) => `<tr class="click" data-ticker="${esc(i.ticker)}"><td class="l"><b>${esc(i.name)}</b></td><td class="l">${esc(i.ticker)}</td><td class="l">${esc(i.market || "")}</td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">일치하는 상장 종목이 없습니다.</div>'}</div>`;
+  } catch (err) { el.innerHTML = errBox(err); }
+}
+$("#search").onsubmit = (e) => {
+  e.preventDefault(); const t = $("#q").value.trim(); if (!t) return;
+  /[가-힣]/.test(t) ? searchKr(t) : openTicker(t);
+  $("#q").value = ""; $("#q").blur();
+};
 document.addEventListener("click", (e) => { const el = e.target.closest("[data-ticker]"); if (el && !e.target.closest("button.x")) openTicker(el.dataset.ticker); });
 
 // theme: auto (OS) → light → dark
@@ -96,11 +132,11 @@ let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTime
 
 // ------------------------------------------------------------------ 시장 개요
 async function renderOverview() {
-  const el = $("#tab-overview"); el.innerHTML = loading;
+  const el = $("#tab-overview"), m = state.market; el.innerHTML = loading;
   try {
-    const d = await api("/api/overview"); state.loaded.overview = true;
+    const d = await api(mq("/api/overview")); if (m !== state.market) return; state.loaded.overview = true;
     const live = d.groups.some((g) => g.items.some((i) => i.intraday));
-    el.innerHTML = (live ? '<div class="notice">미국 정규장이 진행 중입니다. 오늘 일봉은 지연된 장중 값이며 확정되지 않았습니다.</div>' : "") +
+    el.innerHTML = (live ? '<div class="notice">정규장이 진행 중입니다. 오늘 일봉은 지연된 장중 값이며 확정되지 않았습니다.</div>' : "") +
       d.groups.map((g) => `<div class="panel"><h2>${esc(g.title)}</h2><div class="grid">${g.items.map(card).join("")}</div></div>`).join("") +
       `<div class="panel">${meta(d.source, d.cache.fetched_at, badge(d.cache.status))}<div class="meta">${esc(d.basis)}</div></div>`;
     const draw = () => el.querySelectorAll("canvas[data-spark]").forEach((cv) => spark(cv, JSON.parse(cv.dataset.spark)));
@@ -108,10 +144,11 @@ async function renderOverview() {
   } catch (e) { el.innerHTML = errBox(e); }
 }
 function card(i) {
-  const tk = /^[A-Z]{1,5}$/.test(i.symbol) ? `data-ticker="${esc(i.symbol)}"` : "";
+  const code = i.ticker || i.symbol, won = /\.K[SQ]$/.test(i.symbol);
+  const tk = /^[A-Z]{1,5}$/.test(code) || KR_RE.test(code) ? `data-ticker="${esc(code)}"` : "";
   return `<div class="card" ${tk} title="${esc(i.symbol)}${i.date ? " · " + esc(i.date) : ""}">
-    <div class="nm">${esc(i.name || i.symbol)} <span class="muted">${esc(i.symbol)}</span></div>
-    <div class="row"><div><div class="px num">${fmt(i.close)}</div>
+    <div class="nm">${esc(i.name || i.symbol)} <span class="muted">${esc(code)}</span></div>
+    <div class="row"><div><div class="px num">${fmt(i.close, won ? 0 : 2)}</div>
       <div>${pct(i.change_pct)} <span class="meta" style="margin:0">1개월 ${pct(i.change_1m_pct, 1)}</span></div></div>
       <canvas data-spark='${JSON.stringify(i.spark || [])}'></canvas></div>
     <div class="meta" style="margin-top:4px">${i.status !== "REAL" ? badge(i.status) + " " : ""}${liveBadge(i.intraday)} ${esc(i.date || "")}</div>
@@ -121,7 +158,7 @@ function card(i) {
 // ------------------------------------------------------------------ 종목
 async function renderStock() {
   const el = $("#tab-stock");
-  if (!state.ticker) { el.innerHTML = '<div class="panel empty">위 검색창에 종목 코드를 입력하세요 (예: AAPL, MSFT, NVDA).</div>'; return; }
+  if (!state.ticker) { el.innerHTML = `<div class="panel empty">위 검색창에 ${isKR() ? "종목 코드나 회사명을 입력하세요 (예: 005930, 삼성전자)." : "종목 코드를 입력하세요 (예: AAPL, MSFT, NVDA)."}</div>`; return; }
   if (state.loaded.stock === state.ticker) return;
   state.loaded.stock = state.ticker;
   const t = state.ticker;
@@ -154,12 +191,13 @@ async function loadChart(t) {
 function renderHeadPrice() {
   const L = state.lastQuote, h = $("#s-price");
   if (!h || !L) return;
-  h.innerHTML = `<span class="big num">${fmt(L.close)}</span> ${pct(L.change_pct)} ${liveBadge(L.intraday)}
-    <span class="meta">52주 범위 ${fmt(L.low_52w)} – ${fmt(L.high_52w)} · 200일선 대비 ${pct(L.vs_sma200_pct, 1)}</span>`;
+  const d = isKR() ? 0 : 2;
+  h.innerHTML = `<span class="big num">${fmt(L.close, d)}</span> ${pct(L.change_pct)} ${liveBadge(L.intraday)}
+    <span class="meta">52주 범위 ${fmt(L.low_52w, d)} – ${fmt(L.high_52w, d)} · 200일선 대비 ${pct(L.vs_sma200_pct, 1)}</span>`;
 }
 function renderProfile(c) {
   const p = c.profile.data || {};
-  const kv = [["시가총액", big(p.marketCap)], ["PER(후행)", fmt(p.trailingPE, 1)], ["PER(예상)", fmt(p.forwardPE, 1)],
+  const kv = [["시가총액", big(p.marketCap, c.market === "KR" ? "KRW" : "USD")], ["PER(후행)", fmt(p.trailingPE, 1)], ["PER(예상)", fmt(p.forwardPE, 1)],
     ["PBR", fmt(p.priceToBook, 2)], ["배당수익률", isNum(p.dividendYield) ? `${fmt(p.dividendYield, 2)}%` : DASH],
     ["베타", fmt(p.beta, 2)], ["평균 거래량", big(p.averageVolume, "")], ["상장 주식수", big(p.sharesOutstanding, "")]];
   $("#s-head").innerHTML = `<div class="head"><h2 style="margin:0">${esc(p.longName || p.shortName || c.ticker)} <span class="meta" style="margin:0">${esc(c.ticker)} · ${esc(p.exchange || "")}</span></h2>
@@ -176,26 +214,28 @@ function renderProfile(c) {
 function renderFund(f) {
   const el = $("#s-fund");
   if (!f || f.status === "UNAVAILABLE" || !f.years || !f.years.length) {
-    el.innerHTML = `<h2>연간 재무 요약 ${badge("UNAVAILABLE")}</h2><div class="empty">${esc(f && f.reason || "SEC 재무 데이터가 없습니다.")}</div>`; return;
+    el.innerHTML = `<h2>연간 재무 요약 ${badge("UNAVAILABLE")}</h2><div class="empty">${esc(f && f.reason || "재무 데이터가 없습니다.")}</div>`; return;
   }
   const cell = (r, y) => {
     const v = r.values[y];
     if (r.unit === "ratio") return isNum(v) ? (r.key === "debt_ratio" ? `${(v * 100).toFixed(0)}%` : pct(v * 100, 1, false)) : DASH;
     if (r.unit === "USD/shares") return isNum(v) ? `$${v.toFixed(2)}` : DASH;
-    return big(v);
+    if (r.unit === "KRW/shares") return isNum(v) ? `${Math.round(v).toLocaleString("ko-KR")}원` : DASH;
+    return big(v, r.unit === "KRW" ? "KRW" : "USD");
   };
   el.innerHTML = `<h2>연간 재무 요약 ${badge(f.status)}</h2>
     <div class="tbl-wrap"><table><thead><tr><th>항목 (회계연도 종료일)</th>${f.years.map((y) => `<th>${esc(y)}</th>`).join("")}</tr></thead>
     <tbody>${f.rows.map((r) => `<tr><td title="${esc(Object.values(r.concepts || {}).filter(Boolean)[0] || "")}">${esc(r.label)}</td>${f.years.map((y) => `<td class="num">${cell(r, y)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
-    <div class="meta">— 는 SEC 공시에 해당 항목이 없거나 형식이 달라 확인할 수 없는 값입니다 (0이 아닙니다). 금융업처럼 영업이익을 따로 보고하지 않는 업종은 비어 있을 수 있습니다.</div>
+    <div class="meta">— 는 공시에 해당 항목이 없거나 형식이 달라 확인할 수 없는 값입니다 (0이 아닙니다). 금융업처럼 영업이익을 따로 보고하지 않는 업종은 비어 있을 수 있습니다.</div>
     ${meta(f.source, f.fetched_at, esc(f.note))}`;
 }
 const FORM_KO = { "10-K": "연간보고서", "10-Q": "분기보고서", "8-K": "주요사항", "4": "내부자 거래", "DEF 14A": "주총 위임장",
   "S-3": "증권신고", "SC 13G": "대량보유", "SC 13G/A": "대량보유 변경", "144": "매도 예정 신고", "11-K": "종업원 플랜" };
 function renderFilings(f) {
   const el = $("#s-fil");
-  if (f.status === "UNAVAILABLE") { el.innerHTML = `<h2>최근 SEC 공시 ${badge("UNAVAILABLE")}</h2><div class="empty">${esc(f.reason || "")}</div>`; return; }
-  el.innerHTML = `<h2>최근 SEC 공시 ${badge(f.status)}</h2><div class="tbl-wrap"><table><thead><tr><th>제출일</th><th class="l">양식</th><th class="l">설명</th><th class="l">원문</th></tr></thead>
+  const name = f.market === "KR" ? "DART" : "SEC";
+  if (f.status === "UNAVAILABLE") { el.innerHTML = `<h2>최근 ${name} 공시 ${badge("UNAVAILABLE")}</h2><div class="empty">${esc(f.reason || "")}</div>`; return; }
+  el.innerHTML = `<h2>최근 ${name} 공시 ${badge(f.status)}</h2><div class="tbl-wrap"><table><thead><tr><th>제출일</th><th class="l">양식</th><th class="l">설명</th><th class="l">원문</th></tr></thead>
     <tbody>${f.items.map((i) => `<tr><td>${esc(i.filing_date)}</td><td class="l"><b>${esc(i.form)}</b> <span class="meta" style="margin:0">${esc(FORM_KO[i.form] || "")}</span></td>
       <td class="l">${esc(i.description || "")}</td><td class="l">${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener noreferrer">열기 ↗</a>` : DASH}</td></tr>`).join("")}</tbody></table></div>
     ${meta(f.source, f.fetched_at)}`;
@@ -257,16 +297,16 @@ function line(ctx, vals, x, y, color, lw) {
 
 // ------------------------------------------------------------------ 거시
 async function renderMacro() {
-  const el = $("#tab-macro"); el.innerHTML = loading;
+  const el = $("#tab-macro"), mk = state.market; el.innerHTML = loading;
   try {
-    const d = await api("/api/macro"); state.loaded.macro = true;
-    el.innerHTML = `<div class="panel"><h2>미국 거시 지표</h2><div class="mgrid">${d.items.map((m) => `<div class="mcard">
+    const d = await api(mq("/api/macro")); if (mk !== state.market) return; state.loaded.macro = true;
+    el.innerHTML = `${d.reason ? `<div class="notice">${esc(d.reason)}</div>` : ""}<div class="panel"><h2>${mk === "KR" ? "한국" : "미국"} 거시 지표</h2><div class="mgrid">${d.items.map((m) => `<div class="mcard">
       <div class="nm meta" style="margin:0">${esc(m.label)} <span>${esc(m.id)}</span> ${m.status !== "REAL" ? badge(m.status) : ""}</div>
       <div class="row" style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span class="px num" style="font-size:20px;font-weight:650">${fmtMacro(m, m.value)}</span>
         <span class="meta" style="margin:0">${esc(m.date || "")}</span></div>
       <div class="meta" style="margin:0">직전 ${fmtMacro(m, m.previous)} · 1년 전 ${fmtMacro(m, m.value_1y_ago)}</div>
       <canvas data-m="${esc(m.id)}"></canvas></div>`).join("")}</div>
-      <div class="meta">CPI는 전년 동월 대비 상승률(%)로 계산해 표시합니다. 차트는 최근 약 260개 관측치입니다.</div>${meta(d.source)}</div>`;
+      <div class="meta">${mk === "KR" ? "소비자물가" : "CPI"}는 전년 동월 대비 상승률(%)로 계산해 표시합니다. 차트는 최근 약 260개 관측치입니다.</div>${meta(d.source)}</div>`;
     const draw = () => d.items.forEach((m) => { const cv = el.querySelector(`canvas[data-m="${m.id}"]`); if (cv && cv.isConnected) mini(cv, m.series); });
     draw(); redrawers.add(draw);
   } catch (e) { el.innerHTML = errBox(e); }
@@ -291,14 +331,14 @@ function mini(cv, series) {
 
 // ------------------------------------------------------------------ 관심종목
 async function renderWatch() {
-  const el = $("#tab-watch");
+  const el = $("#tab-watch"), mk = state.market, d0 = mk === "KR" ? 0 : 2;
   if (!el.innerHTML) el.innerHTML = loading;
   try {
-    const d = await api("/api/watchlist"); state.loaded.watch = true;
-    el.innerHTML = `<div class="panel"><h2>관심종목 <span class="meta" style="margin:0">${d.tickers.length}개</span></h2>
+    const d = await api(mq("/api/watchlist")); if (mk !== state.market) return; state.loaded.watch = true;
+    el.innerHTML = `<div class="panel"><h2>${mk === "KR" ? "한국" : "미국"} 관심종목 <span class="meta" style="margin:0">${d.tickers.length}개</span></h2>
       <form class="addrow" id="wadd"><input id="wq" placeholder="추가할 종목 코드" maxlength="15"><button type="submit">추가</button></form>
       ${d.items.length ? `<div class="tbl-wrap"><table><thead><tr><th>종목</th><th>종가</th><th>전일 대비</th><th>1개월</th><th class="l">추세(30일)</th><th class="l">상태</th><th></th></tr></thead>
-      <tbody>${d.items.map((i) => `<tr class="click" data-ticker="${esc(i.symbol)}"><td><b>${esc(i.symbol)}</b></td><td class="num">${fmt(i.close)}</td><td>${pct(i.change_pct)}</td><td>${pct(i.change_1m_pct, 1)}</td>
+      <tbody>${d.items.map((i) => `<tr class="click" data-ticker="${esc(i.symbol)}"><td><b>${esc(i.symbol)}</b> ${i.name ? `<span class="meta" style="margin:0">${esc(i.name)}</span>` : ""}</td><td class="num">${fmt(i.close, d0)}</td><td>${pct(i.change_pct)}</td><td>${pct(i.change_1m_pct, 1)}</td>
         <td class="l"><canvas style="width:80px;height:24px" data-spark='${JSON.stringify(i.spark || [])}'></canvas></td><td class="l">${badge(i.status)} ${liveBadge(i.intraday)} <span class="meta">${esc(i.date || "")}</span></td>
         <td><button class="x" data-rm="${esc(i.symbol)}" title="삭제">✕</button></td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">관심종목이 없습니다.</div>'}
       ${d.cache ? meta(d.source, d.cache.fetched_at) : ""}<div class="meta">관심종목은 이 Mac의 data/terminal/watchlist.json 에만 저장됩니다.</div></div>`;
@@ -310,7 +350,7 @@ async function renderWatch() {
 }
 async function watchOp(op, t) {
   t = (t || "").trim(); if (!t) return;
-  try { await api(`/api/watchlist/${op}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: t }) }); renderWatch(); }
+  try { await api(`/api/watchlist/${op}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: t }) }); setMarket(marketOf(t.toUpperCase()), false); renderWatch(); }
   catch (e) { alert(ERR_KO[e.message] || e.message); }
 }
 
@@ -321,18 +361,18 @@ const OUT_KO = { PENDING_ENTRY: "진입 대기", PENDING_OUTCOME: "보유 중(�
   VALID_PROSPECTIVE: "유효", PRE_FIX_EXCLUDED: "수정 전 제외", DATA_INVALID: "데이터 무효" };
 const outKo = (k) => String(k).split("/").map((x) => OUT_KO[x] || x).join(" · ");
 async function renderModel() {
-  const el = $("#tab-model"); el.innerHTML = loading;
+  const el = $("#tab-model"), mk = state.market; el.innerHTML = loading;
   try {
-    const d = await api("/api/model"); state.loaded.model = true;
+    const d = await api(mq("/api/model")); if (mk !== state.market) return; state.loaded.model = true;
     const b = d.baseline, t = d.tracking;
-    el.innerHTML = `<div class="panel"><h2>${esc(b.name)} ${badge("FROZEN")} <span class="meta" style="margin:0">${esc(b.role)}</span></h2>
+    el.innerHTML = `<div class="panel"><h2>${esc(b.name)} ${badge(b.status || "FROZEN")} <span class="meta" style="margin:0">${esc(b.role)}</span></h2>
       ${b.run_id ? `<div class="kv"><div><span>최근 전체 스캔</span><b>${when(b.executed_at)}</b></div><div><span>결과</span><b>${esc(REC_KO[b.recommendation_status] || b.recommendation_status)}</b></div>
         <div><span>시장 국면</span><b>${esc(REGIME_KO[b.regime] || b.regime || "—")}</b></div><div><span>기준 자본</span><b class="num">${isNum(b.capital) ? b.capital.toLocaleString("ko-KR") + " " + esc(b.currency || "") : DASH}</b></div></div>
-      <h3>추천 상위 종목</h3><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th class="l">섹터</th><th>기준가</th><th>알파</th><th>목표 비중</th><th>손절가</th><th>보유 기간</th></tr></thead>
+      <h3>추천 상위 종목</h3><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th class="l">섹터</th><th>기준가</th><th>${mk === "KR" ? "점수" : "알파"}</th><th>목표 비중</th><th>손절가</th><th>보유 기간</th></tr></thead>
       <tbody>${(b.top5 || []).map((r) => `<tr class="click" data-ticker="${esc(r.ticker)}"><td>${esc(r.recommendation_rank)}</td><td class="l"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span></td>
-        <td class="l">${esc(r.sector || "")}</td><td class="num">${fmt(r.close)}</td><td class="num">${fmt(r.alpha, 3)}</td><td class="num">${isNum(r.target_weight) ? (r.target_weight * 100).toFixed(1) + "%" : DASH}</td>
+        <td class="l">${esc(r.sector || "")}</td><td class="num">${fmt(r.close, mk === "KR" ? 0 : 2)}</td><td class="num">${fmt(r.alpha, 3)}</td><td class="num">${isNum(r.target_weight) ? (r.target_weight * 100).toFixed(1) + "%" : DASH}</td>
         <td class="num">${fmt(r.hard_stop)}</td><td>${isNum(r.horizon_days) ? r.horizon_days + "거래일" : DASH}</td></tr>`).join("") || '<tr><td colspan="8" class="empty">추천 종목 없음</td></tr>'}</tbody></table></div>
-      <div class="meta">실행 ID ${esc(b.run_id)} · 읽기 전용 표시입니다. 이 화면은 모델을 실행하거나 변경하지 않습니다.</div>` : '<div class="empty">기록된 미국 전체 스캔이 없습니다. <code>python app.py scan --capital 금액</code> 으로 실행하세요.</div>'}</div>
+      <div class="meta">실행 ID ${esc(b.run_id)} · 읽기 전용 표시입니다. 이 화면은 모델을 실행하거나 변경하지 않습니다.</div>` : '<div class="empty">기록된 전체 스캔이 없습니다. <code>python app.py scan --capital 금액</code> 으로 실행하세요.</div>'}</div>
       <div class="panel"><h2>전향적 추적 ${badge(t.status)}</h2>${t.status === "REAL" ? `<div class="kv"><div><span>기록된 실행</span><b>${esc(t.runs)}</b></div><div><span>관찰 건수</span><b>${esc(t.observations)}</b></div>
         <div><span>최근 갱신</span><b>${esc(t.latest_update || "—")}</b></div></div>
         ${t.outcome_states ? `<div class="kv">${Object.entries(t.outcome_states).map(([k, v]) => `<div><span>${esc(outKo(k))}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
@@ -346,13 +386,14 @@ const RENDER = { overview: renderOverview, macro: renderMacro, watch: renderWatc
 
 // ------------------------------------------------------------------ boot
 applyTheme(theme);
-api("/api/health").then((h) => ($("#health").textContent = `· ${h.version} · SEC ${h.sec === "CONFIGURED" ? "연결 설정됨" : "미설정"}`)).catch(() => {});
+paintMarket();
+api("/api/health").then((h) => ($("#health").textContent = `· ${h.version} · SEC ${h.sec === "CONFIGURED" ? "연결 설정됨" : "미설정"} · ECOS ${h.ecos === "CONFIGURED" ? "연결 설정됨" : "미설정"}`)).catch(() => {});
 let booted = false;
 function fromHash() {
   const [tab, tk] = location.hash.replace(/^#/, "").split("/");
   if (booted && tab === state.tab && (tab !== "stock" || (tk || "").toUpperCase() === state.ticker)) return;
   booted = true;
-  if (tab === "stock" && tk) { state.ticker = decodeURIComponent(tk).toUpperCase(); state.loaded.stock = null; }
+  if (tab === "stock" && tk) { state.ticker = decodeURIComponent(tk).toUpperCase(); state.loaded.stock = null; setMarket(marketOf(state.ticker), false); }
   show(RENDER[tab] ? tab : "overview", false);
 }
 window.addEventListener("hashchange", fromHash);

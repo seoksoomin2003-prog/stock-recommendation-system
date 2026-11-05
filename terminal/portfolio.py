@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import threading
 import uuid
 from bisect import bisect_left, bisect_right
@@ -18,28 +19,47 @@ from typing import Any, Dict, List, Optional, Tuple
 KINDS = ("DEPOSIT", "WITHDRAW", "BUY", "SELL", "DIVIDEND", "FEE", "PLAN", "STYLE", "VOID")
 STYLES = ("LONG", "SWING")
 STYLE_KO = {"LONG": "장기", "SWING": "스윙"}
+MARKETS = ("US", "KR")
+KR_TICKER = re.compile(r"^[0-9][0-9A-Z]{5}$")      # 005930, 0035S0; a US ticker never has this shape
+
+
+def market_of(ticker: str) -> str:
+    return "KR" if KR_TICKER.match(ticker or "") else "US"
+
+
+def for_market(recs: List[Dict[str, Any]], market: str) -> List[Dict[str, Any]]:
+    """One journal, two accounts: dollars and won never mix.  A record without a market field is US."""
+    return [r for r in recs if r.get("market", "US") == market]
 GENESIS = "0" * 64
 EPS = 1e-9
 # risk_per_trade_pct and max_position_pct apply until a position is tagged.  Values chosen by the user on 2026-11-05.
 DEFAULT_SETTINGS = {"risk_per_trade_pct": 1.0, "max_position_pct": 20.0, "max_sector_pct": 40.0,
                     "near_stop_pct": 3.0, "risk_long_pct": 2.0, "max_position_long_pct": 25.0,
                     "risk_swing_pct": 1.0, "max_position_swing_pct": 10.0, "target_long_pct": 70.0,
-                    "style_drift_pct": 10.0, "stop_atr_long": 5.0, "stop_atr_swing": 2.0}
+                    "style_drift_pct": 10.0, "stop_atr_long": 5.0, "stop_atr_swing": 2.0,
+                    "risk_long_kr_pct": 1.0, "max_position_long_kr_pct": 20.0, "risk_swing_kr_pct": 0.5,
+                    "max_position_swing_kr_pct": 10.0, "target_long_kr_pct": 70.0}
 SETTING_BOUNDS = {"risk_per_trade_pct": (0.05, 10.0), "max_position_pct": (1.0, 100.0),
                   "max_sector_pct": (5.0, 100.0), "near_stop_pct": (0.5, 20.0),
                   "risk_long_pct": (0.05, 10.0), "max_position_long_pct": (1.0, 100.0),
                   "risk_swing_pct": (0.05, 10.0), "max_position_swing_pct": (1.0, 100.0),
                   "target_long_pct": (0.0, 100.0), "style_drift_pct": (1.0, 50.0),
-                  "stop_atr_long": (0.5, 20.0), "stop_atr_swing": (0.5, 20.0)}
+                  "stop_atr_long": (0.5, 20.0), "stop_atr_swing": (0.5, 20.0),
+                  "risk_long_kr_pct": (0.05, 10.0), "max_position_long_kr_pct": (1.0, 100.0),
+                  "risk_swing_kr_pct": (0.05, 10.0), "max_position_swing_kr_pct": (1.0, 100.0),
+                  "target_long_kr_pct": (0.0, 100.0)}
 
 
-def limits_for(style: Optional[str], st: Dict[str, float]) -> Dict[str, float]:
-    """Settings with the risk and weight limits of one style; an untagged position keeps the general ones."""
-    if style == "LONG":
-        return {**st, "risk_per_trade_pct": st["risk_long_pct"], "max_position_pct": st["max_position_long_pct"]}
-    if style == "SWING":
-        return {**st, "risk_per_trade_pct": st["risk_swing_pct"], "max_position_pct": st["max_position_swing_pct"]}
-    return dict(st)
+def limits_for(style: Optional[str], st: Dict[str, float], market: str = "US") -> Dict[str, float]:
+    """Settings with the risk and weight limits of one style and market; an untagged position keeps the general ones."""
+    if style not in STYLES:
+        return dict(st)
+    s, kr = style.lower(), "_kr" if market == "KR" else ""
+    return {**st, "risk_per_trade_pct": st[f"risk_{s}{kr}_pct"], "max_position_pct": st[f"max_position_{s}{kr}_pct"]}
+
+
+def _price(v: float, market: str) -> str:
+    return f"{v:,.0f}원" if market == "KR" else f"{v:,.2f}"
 
 
 def _style(v) -> Optional[str]:
@@ -80,6 +100,9 @@ def normalize(raw: Dict[str, Any], today: date, clean_ticker) -> Dict[str, Any]:
     if kind not in KINDS:
         raise JournalError("기록 종류가 올바르지 않습니다.")
     e: Dict[str, Any] = {"kind": kind}
+    market = str(raw.get("market") or "US").upper()
+    if market not in MARKETS:
+        raise JournalError("시장 값이 올바르지 않습니다.")
     if kind != "VOID":
         try:
             d = date.fromisoformat(str(raw.get("date", "")))
@@ -93,6 +116,7 @@ def normalize(raw: Dict[str, Any], today: date, clean_ticker) -> Dict[str, Any]:
             e["ticker"] = clean_ticker(raw.get("ticker", ""))
         except ValueError:
             raise JournalError("종목 코드 형식이 올바르지 않습니다.")
+        market = market_of(e["ticker"])
     if kind in ("BUY", "SELL"):
         e["qty"] = _pos(raw.get("qty"), "수량")
         e["price"] = _pos(raw.get("price"), "가격")
@@ -126,6 +150,8 @@ def normalize(raw: Dict[str, Any], today: date, clean_ticker) -> Dict[str, Any]:
         if not ref:
             raise JournalError("취소할 기록을 지정하세요.")
         e["ref"] = ref
+    if market == "KR" and kind != "VOID":
+        e["market"] = "KR"
     note = str(raw.get("note") or "").strip()
     if note:
         e["note"] = note[:500]
@@ -168,10 +194,13 @@ class Journal:
                     raise JournalError("취소할 기록을 찾을 수 없습니다.")
                 if target["kind"] == "VOID" or entry["ref"] in voided_ids(recs):
                     raise JournalError("이미 취소된 기록이거나 취소 기록입니다.")
+                if target.get("market"):
+                    entry = {**entry, "market": target["market"]}
             rec = {**entry, "id": uuid.uuid4().hex[:12], "seq": len(recs) + 1,
                    "recorded_at": now.astimezone(timezone.utc).isoformat(),
                    "prev_hash": recs[-1]["hash"] if recs else GENESIS}
-            replay(recs + [rec])                       # raises JournalError if the account becomes invalid
+            for market in MARKETS:                     # raises JournalError if an account becomes invalid
+                replay(for_market(recs + [rec], market))
             rec["hash"] = _hash(rec)
             self.path.parent.mkdir(parents=True, exist_ok=True)
             with open(self.path, "a", encoding="utf-8") as f:
@@ -259,7 +288,7 @@ def replay(recs: List[Dict[str, Any]], until: Optional[str] = None) -> Dict[str,
 
 # ----------------------------------------------------------------------------- valuation
 def valuation(state: Dict[str, Any], quotes: Dict[str, Dict[str, Any]], sectors: Dict[str, Optional[str]],
-              settings: Dict[str, float]) -> Dict[str, Any]:
+              settings: Dict[str, float], market: str = "US") -> Dict[str, Any]:
     rows, mv, missing = [], 0.0, []
     for t, p in sorted(state["positions"].items()):
         q = quotes.get(t) or {}
@@ -305,18 +334,19 @@ def valuation(state: Dict[str, Any], quotes: Dict[str, Dict[str, Any]], sectors:
                "risk_to_stops_pct": risk_total / equity * 100 if complete and equity > 0 else None,
                "unprotected": [r["ticker"] for r in rows if not r["stop"]]}
     summary["total_pnl"] = (equity - summary["net_deposits"]) if complete else None
-    styles = style_summary(rows, equity if complete else None, settings)
+    styles = style_summary(rows, equity if complete else None, settings, market)
     summary["styles"] = styles
     return {"summary": summary, "holdings": rows, "sectors": dict(sorted(sector_w.items(), key=lambda x: -x[1])),
-            "alerts": alerts(rows, sector_w, settings, styles)}
+            "alerts": alerts(rows, sector_w, settings, styles, market)}
 
 
-def style_summary(rows: List[Dict[str, Any]], equity: Optional[float], st: Dict[str, float]) -> Dict[str, Any]:
+def style_summary(rows: List[Dict[str, Any]], equity: Optional[float], st: Dict[str, float], market: str = "US") -> Dict[str, Any]:
     """Share of the tagged stock value in each style.  Cash is left out, so an account still mostly in cash is not 'off target'."""
     known = {s: [r for r in rows if r.get("style") == s] for s in STYLES}
     complete = all(r["value"] is not None for r in rows)
     tagged = sum(r["value"] or 0.0 for s in STYLES for r in known[s])
-    out: Dict[str, Any] = {"target_long_pct": st["target_long_pct"], "target_swing_pct": 100.0 - st["target_long_pct"], "complete": complete,
+    target = st["target_long_kr_pct"] if market == "KR" else st["target_long_pct"]
+    out: Dict[str, Any] = {"target_long_pct": target, "target_swing_pct": 100.0 - target, "complete": complete,
                            "untagged": [r["ticker"] for r in rows if not r.get("style")]}
     for s in STYLES:
         value = sum(r["value"] or 0.0 for r in known[s])
@@ -328,12 +358,13 @@ def style_summary(rows: List[Dict[str, Any]], equity: Optional[float], st: Dict[
     return out
 
 
-def alerts(rows: List[Dict[str, Any]], sector_w: Dict[str, float], st: Dict[str, float], styles: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+def alerts(rows: List[Dict[str, Any]], sector_w: Dict[str, float], st: Dict[str, float], styles: Optional[Dict[str, Any]] = None, market: str = "US") -> List[Dict[str, Any]]:
     out = []
     share = ((styles or {}).get("LONG") or {}).get("share_pct")
-    if share is not None and abs(share - st["target_long_pct"]) > st["style_drift_pct"]:
+    target = (styles or {}).get("target_long_pct")
+    if share is not None and abs(share - target) > st["style_drift_pct"]:
         out.append({"level": "warn", "code": "STYLE_DRIFT", "ticker": None,
-                    "text": f"주식 평가액 중 장기 비중 {share:.0f}%가 목표 {st['target_long_pct']:.0f}%에서 {st['style_drift_pct']:.0f}%p 넘게 벗어났습니다."})
+                    "text": f"주식 평가액 중 장기 비중 {share:.0f}%가 목표 {target:.0f}%에서 {st['style_drift_pct']:.0f}%p 넘게 벗어났습니다."})
     for r in rows:
         t, c, s, g = r["ticker"], r["close"], r["stop"], r["target"]
         if c is None:
@@ -341,16 +372,16 @@ def alerts(rows: List[Dict[str, Any]], sector_w: Dict[str, float], st: Dict[str,
             continue
         if s and c <= s:
             out.append({"level": "bad", "code": "STOP_HIT", "ticker": t,
-                        "text": f"{t}: 종가 {c:,.2f}가 손절가 {s:,.2f} 이하입니다."})
+                        "text": f"{t}: 종가 {_price(c, market)}{'이' if market == 'KR' else '가'} 손절가 {_price(s, market)} 이하입니다."})
         elif s and (c / s - 1) * 100 <= st["near_stop_pct"]:
             out.append({"level": "warn", "code": "NEAR_STOP", "ticker": t,
                         "text": f"{t}: 손절가까지 {(c / s - 1) * 100:.1f}% 남았습니다."})
         if g and c >= g:
             out.append({"level": "info", "code": "TARGET_HIT", "ticker": t,
-                        "text": f"{t}: 종가 {c:,.2f}가 목표가 {g:,.2f}에 도달했습니다."})
+                        "text": f"{t}: 종가 {_price(c, market)}{'이' if market == 'KR' else '가'} 목표가 {_price(g, market)}에 도달했습니다."})
         if not s:
             out.append({"level": "warn", "code": "NO_STOP", "ticker": t, "text": f"{t}: 손절가가 설정되지 않았습니다."})
-        limit = limits_for(r.get("style"), st)["max_position_pct"]
+        limit = limits_for(r.get("style"), st, market)["max_position_pct"]
         if r["weight_pct"] is not None and r["weight_pct"] > limit:
             out.append({"level": "warn", "code": "OVERWEIGHT", "ticker": t,
                         "text": f"{t}: 비중 {r['weight_pct']:.1f}%가 종목 한도 {limit:.0f}%를 넘습니다."})

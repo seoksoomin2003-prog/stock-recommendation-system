@@ -47,6 +47,21 @@ FUNDAMENTALS = [  # (key, label, kind, unit, concepts in priority order) -- disp
     ("cash", "현금성자산", "instant", "USD", ["CashAndCashEquivalentsAtCarryingValue"]),
 ]
 
+OVERVIEW_KR = [
+    ("지수", [("^KS11", "코스피"), ("^KQ11", "코스닥"), ("^KS200", "코스피 200")]),
+    ("환율·대표 ETF", [("KRW=X", "원/달러"), ("069500.KS", "KODEX 200")]),
+    ("업종 ETF", [("091160.KS", "반도체"), ("305720.KS", "2차전지"), ("139260.KS", "IT"), ("091180.KS", "자동차"), ("244580.KS", "바이오"),
+               ("091170.KS", "은행"), ("102970.KS", "증권"), ("140700.KS", "보험"), ("117460.KS", "에너지화학"), ("117680.KS", "철강"), ("117700.KS", "건설")]),
+]
+MACRO_KR = [  # Bank of Korea ECOS.  Codes checked against the API on 2026-11-05.
+    ("BOK_RATE", "한국은행 기준금리", "%", "level", ("722Y001", "D", ("0101000",))),
+    ("KTB3Y", "국고채 3년", "%", "level", ("817Y002", "D", ("010200000",))),
+    ("KTB10Y", "국고채 10년", "%", "level", ("817Y002", "D", ("010210000",))),
+    ("KR_CPI", "소비자물가 전년비", "%", "yoy", ("901Y009", "M", ("0",))),
+    ("KR_UNEMP", "실업률", "%", "level", ("901Y027", "M", ("I61BC", "I28A"))),
+]
+BENCH = {"US": ("SPY", "SPY"), "KR": ("069500.KS", "KODEX 200")}
+
 TICKER_RE = re.compile(r"^\^?[A-Z0-9][A-Z0-9.\-=]{0,14}$")      # AAPL, BRK.B, ^GSPC, KRW=X, CL=F
 
 
@@ -102,11 +117,14 @@ class Terminal:
         return self.qsf.evaluate(clean_ticker(ticker), "US")
 
     # ---------------------------------------------------------------- helpers
-    def _intraday(self, last_date: Optional[str]) -> bool:
-        """True when the last bar is today's US session and the regular close (16:00 ET, +15 min for data
+    def _intraday(self, last_date: Optional[str], market: str = "US") -> bool:
+        """True when the last bar is today's session and the regular close (16:00 ET or 15:30 KST, +15 min for data
         settlement) has not passed: the value is a delayed intraday price, not a final close."""
         if not last_date:
             return False
+        if market == "KR":
+            kst = self.now().astimezone(ZoneInfo("Asia/Seoul"))
+            return last_date == kst.strftime("%Y-%m-%d") and (kst.hour, kst.minute) < (15, 45)
         et = self.now().astimezone(ZoneInfo("America/New_York"))
         return last_date == et.strftime("%Y-%m-%d") and (et.hour, et.minute) < (16, 15)
 
@@ -116,7 +134,25 @@ class Terminal:
         age = (self.now().date() - datetime.strptime(last_date, "%Y-%m-%d").date()).days
         return "STALE" if age > STALE_DAYS else "REAL"
 
-    def _quotes(self, symbols: List[str], key: str) -> Dict[str, Any]:
+    def _sym(self, ticker: str) -> str:
+        """Yahoo symbol of a ticker.  A Korean code not on the listed-company master, such as an ETF, is tried on KOSPI."""
+        if pf.market_of(ticker) == "US":
+            return ticker
+        try:
+            ident = self.qsf._kr_identity(ticker)
+        except Exception:
+            ident = None
+        return (ident or {}).get("yahoo_symbol") or f"{ticker}.KS"
+
+    def _kr_name(self, ticker: str) -> Optional[str]:
+        if pf.market_of(ticker) == "US":
+            return None
+        try:
+            return (self.qsf._kr_identity(ticker) or {}).get("company_name")
+        except Exception:
+            return None
+
+    def _quotes(self, symbols: List[str], key: str, market: str = "US") -> Dict[str, Any]:
         res = self.cache.cached(key, TTL["quote"], lambda: self.src.yahoo_history(symbols, "3mo"))
         data = res["data"] or {}
         out = {}
@@ -132,16 +168,17 @@ class Terminal:
                       "change": (last["close"] - prev["close"]) if prev else None,
                       "change_pct": _pct(last["close"], prev["close"] if prev else None),
                       "change_1m_pct": _pct(last["close"], m1["close"] if m1 else None),
-                      "spark": [r["close"] for r in rows[-30:]], "intraday": self._intraday(last["date"]),
+                      "spark": [r["close"] for r in rows[-30:]], "intraday": self._intraday(last["date"], market),
                       "status": self._bar_status(last["date"], res["status"])}
         return {"items": out, "cache": {k: res[k] for k in ("status", "fetched_at", "error")}}
 
     # ---------------------------------------------------------------- screens
-    def overview(self) -> Dict[str, Any]:
-        syms = [s for _, g in OVERVIEW for s, _ in g]
-        q = self._quotes(syms, "overview")
-        groups = [{"title": t, "items": [{**q["items"][s], "name": n} for s, n in g]} for t, g in OVERVIEW]
-        return {"groups": groups, "cache": q["cache"], "source": "Yahoo Finance (일봉 종가, 지연)",
+    def overview(self, market: str = "US") -> Dict[str, Any]:
+        layout = OVERVIEW_KR if market == "KR" else OVERVIEW
+        syms = [s for _, g in layout for s, _ in g]
+        q = self._quotes(syms, "overview" if market == "US" else "overview:KR", market)
+        groups = [{"title": t, "items": [{**q["items"][s], "name": n, "ticker": s.split(".")[0] if s.endswith(".KS") else s} for s, n in g]} for t, g in layout]
+        return {"market": market, "groups": groups, "cache": q["cache"], "source": "Yahoo Finance (일봉 종가, 지연)",
                 "basis": "최근 일봉 종가 대비 전일 종가. 실시간이 아니며, 장중에는 '장중·미확정'으로 표시되는 지연 가격입니다."}
 
     def chart(self, ticker: str, rng: str = "1y") -> Dict[str, Any]:
@@ -149,9 +186,10 @@ class Terminal:
         period = {"3mo": "2y", "1y": "2y", "5y": "10y"}.get(rng)
         if not period:
             raise ValueError("INVALID_RANGE")
-        res = self.cache.cached(f"chart:{ticker}:{period}", TTL["chart"],
-                                lambda: self.src.yahoo_history([ticker], period))
-        rows = (res["data"] or {}).get(ticker) or []
+        market, sym = pf.market_of(ticker), self._sym(ticker)
+        res = self.cache.cached(f"chart:{sym}:{period}", TTL["chart"],
+                                lambda: self.src.yahoo_history([sym], period))
+        rows = (res["data"] or {}).get(sym) or []
         if not rows:
             return {"ticker": ticker, "status": "UNAVAILABLE", "bars": [], "cache": res}
         closes = [r["close"] for r in rows]
@@ -163,19 +201,39 @@ class Terminal:
         last = rows[-1]
         hi52 = max(r["high"] or r["close"] for r in rows[-252:])
         lo52 = min(r["low"] or r["close"] for r in rows[-252:])
-        return {"ticker": ticker, "range": rng, "bars": bars,
+        return {"ticker": ticker, "market": market, "range": rng, "bars": bars,
                 "status": self._bar_status(last["date"], res["status"]),
-                "last": {"date": last["date"], "close": last["close"], "intraday": self._intraday(last["date"]),
+                "last": {"date": last["date"], "close": last["close"], "intraday": self._intraday(last["date"], market),
                          "change_pct": _pct(last["close"], rows[-2]["close"] if len(rows) > 1 else None),
                          "high_52w": hi52, "low_52w": lo52,
                          "vs_sma200_pct": _pct(last["close"], sma[200][-1])},
                 "cache": {k: res[k] for k in ("status", "fetched_at", "error")},
                 "source": "Yahoo Finance (분할 조정 일봉)"}
 
+    def _kr_fundamentals(self, c: Dict[str, Any]) -> Dict[str, Any]:
+        if not c.get("annual"):
+            return {"status": "UNAVAILABLE", "reason": c.get("reason") or "DART 재무 데이터가 없습니다."}
+        bases = c["annual"].get("_bases") or []
+        rows, years = [], set()
+        for key, label, unit in (("revenue", "매출", "KRW"), ("op_income", "영업이익", "KRW"), ("net_income", "순이익", "KRW"), ("eps", "기본 EPS", "KRW/shares"),
+                                 ("ocf", "영업현금흐름", "KRW"), ("assets", "총자산", "KRW"), ("liabilities", "총부채", "KRW"), ("equity", "자본총계(지배)", "KRW"), ("cash", "현금성자산", "KRW")):
+            vals = {r["end"]: r["val"] for r in c["annual"].get(key) or []}
+            years |= set(vals)
+            rows.append({"key": key, "label": label, "unit": unit, "values": vals})
+        return {"status": c["annual_status"], "years": sorted(years)[-5:], "rows": rows, "fetched_at": c["annual_fetched"], "source": "OpenDART 사업보고서 (열 = 회계연도 종료일)",
+                "note": "재무제표 기준: " + (" → ".join("연결" if b == "CONSOLIDATED" else "별도" for b in bases) or "확인 불가") + ". 표시용 요약입니다."}
+
     def company(self, ticker: str) -> Dict[str, Any]:
         ticker = clean_ticker(ticker)
-        info = self.cache.cached(f"info:{ticker}", TTL["info"], lambda: self.src.yahoo_info(ticker))
-        out = {"ticker": ticker, "profile": {"status": info["status"], "data": info["data"] or {},
+        market, sym = pf.market_of(ticker), self._sym(ticker)
+        info = self.cache.cached(f"info:{sym}", TTL["info"], lambda: self.src.yahoo_info(sym))
+        if market == "KR":
+            c = self.qsf.kr_company(ticker)
+            ident = c.get("ident") or {}
+            data = {**(info["data"] or {}), "longName": ident.get("company_name") or (info["data"] or {}).get("longName"), "exchange": ident.get("market") or (info["data"] or {}).get("exchange")}
+            return {"ticker": ticker, "market": "KR", "profile": {"status": info["status"], "data": data, "source": "Yahoo Finance quote summary, KRX 상장 목록", "fetched_at": info["fetched_at"]},
+                    "fundamentals": self._kr_fundamentals(c)}
+        out = {"ticker": ticker, "market": "US", "profile": {"status": info["status"], "data": info["data"] or {},
                                              "source": "Yahoo Finance quote summary", "fetched_at": info["fetched_at"]}}
         out["fundamentals"] = self._fundamentals(ticker)
         return out
@@ -202,6 +260,13 @@ class Terminal:
 
     def filings(self, ticker: str, limit: int = 20) -> Dict[str, Any]:
         ticker = clean_ticker(ticker)
+        if pf.market_of(ticker) == "KR":
+            c = self.qsf.kr_company(ticker)
+            if c.get("reports") is None:
+                return {"status": "UNAVAILABLE", "market": "KR", "reason": c.get("reason") or "DART 공시를 불러오지 못했습니다.", "items": []}
+            items = [{"form": r.get("report_nm", "").strip(), "filing_date": f"{r['rcept_dt'][:4]}-{r['rcept_dt'][4:6]}-{r['rcept_dt'][6:8]}" if r.get("rcept_dt") else None,
+                      "description": r.get("flr_nm"), "url": f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={r['rcept_no']}" if r.get("rcept_no") else None} for r in c["reports"][:limit]]
+            return {"status": c["reports_status"], "market": "KR", "items": items, "fetched_at": c["reports_fetched"], "source": "OpenDART 공시 목록"}
         cik = self._cik(ticker)
         if not cik:
             return {"status": "UNAVAILABLE", "reason": "SEC CIK를 찾을 수 없습니다.", "items": []}
@@ -225,24 +290,51 @@ class Terminal:
         return {"status": res["status"], "cik": cik, "company": res["data"].get("name"), "items": items,
                 "fetched_at": res["fetched_at"], "source": "SEC EDGAR submissions"}
 
-    def macro(self) -> Dict[str, Any]:
+    def _macro_kr(self) -> Dict[str, Any]:
+        configured = sources.ecos_status() == "CONFIGURED"
+        start, end, out = self.now() - timedelta(days=365 * 6 + 30), self.now(), []
+        for sid, label, unit, kind, (stat, cycle, items) in MACRO_KR:
+            fmt = "%Y%m%d" if cycle == "D" else "%Y%m"
+            res = {"data": None, "status": "UNAVAILABLE", "fetched_at": None}
+            if configured:
+                res = self.cache.cached(f"ecos:{sid}", TTL["macro"], lambda st=stat, c=cycle, it=items, f=fmt: self.src.ecos_series(st, c, start.strftime(f), end.strftime(f), it))
+            out.append(self._macro_item(sid, label, unit, kind, res))
+        by = {m["id"]: dict(map(tuple, m["series"])) for m in out}
+        days = sorted(set(by["KTB10Y"]) & set(by["KTB3Y"]))
+        status = next((m["status"] for m in out if m["id"] == "KTB10Y"), "UNAVAILABLE")
+        out.insert(3, self._macro_item("KTB10Y-3Y", "장단기 금리차 (10년−3년)", "%p", "level",
+                                       {"data": [[d, by["KTB10Y"][d] - by["KTB3Y"][d]] for d in days], "status": status, "fetched_at": out[2]["fetched_at"]}))
+        fx = self.cache.cached("chart:KRW=X:2y", TTL["chart"], lambda: self.src.yahoo_history(["KRW=X"], "2y"))
+        rows = (fx["data"] or {}).get("KRW=X") or []
+        out.append(self._macro_item("KRW=X", "원/달러 환율", "원", "level",
+                                    {"data": [[r["date"], r["close"]] for r in rows], "status": fx["status"], "fetched_at": fx["fetched_at"]}))
+        return {"market": "KR", "items": out, "configured": configured,
+                "reason": None if configured else "ECOS_API_KEY가 없습니다. https://ecos.bok.or.kr/api/ 에서 무료로 발급받아 .env에 넣으세요.",
+                "source": "한국은행 경제통계시스템(ECOS)"}
+
+    def _macro_item(self, sid: str, label: str, unit: str, kind: str, res: Dict[str, Any]) -> Dict[str, Any]:
+        pts = [p for p in (res["data"] or []) if p[1] is not None]
+        if kind == "yoy":
+            by = {p[0]: p[1] for p in pts}
+            pts = [[d, (v / by[f"{int(d[:4]) - 1}{d[4:]}"] - 1) * 100] for d, v in pts
+                   if f"{int(d[:4]) - 1}{d[4:]}" in by]
+        item = {"id": sid, "label": label, "unit": unit, "status": res["status"], "fetched_at": res["fetched_at"]}
+        if pts:
+            item.update(date=pts[-1][0], value=pts[-1][1], previous=pts[-2][1] if len(pts) > 1 else None,
+                        value_1y_ago=next((v for d, v in reversed(pts) if d <= _minus_year(pts[-1][0])), None),
+                        series=pts[-260:])
+        else:
+            item.update(status="UNAVAILABLE", value=None, series=[])
+        return item
+
+    def macro(self, market: str = "US") -> Dict[str, Any]:
+        if market == "KR":
+            return self._macro_kr()
         start = (self.now() - timedelta(days=365 * 5 + 30)).strftime("%Y-%m-%d")
         out = []
         for sid, label, unit, kind in MACRO:
             res = self.cache.cached(f"fred:{sid}", TTL["macro"], lambda s=sid: self.src.fred_series(s, start))
-            pts = [p for p in (res["data"] or []) if p[1] is not None]
-            if kind == "yoy":
-                by = {p[0]: p[1] for p in pts}
-                pts = [[d, (v / by[f"{int(d[:4]) - 1}{d[4:]}"] - 1) * 100] for d, v in pts
-                       if f"{int(d[:4]) - 1}{d[4:]}" in by]
-            item = {"id": sid, "label": label, "unit": unit, "status": res["status"], "fetched_at": res["fetched_at"]}
-            if pts:
-                item.update(date=pts[-1][0], value=pts[-1][1], previous=pts[-2][1] if len(pts) > 1 else None,
-                            value_1y_ago=next((v for d, v in reversed(pts) if d <= _minus_year(pts[-1][0])), None),
-                            series=pts[-260:])
-            else:
-                item.update(status="UNAVAILABLE", value=None, series=[])
-            out.append(item)
+            out.append(self._macro_item(sid, label, unit, kind, res))
         return {"items": out, "source": "FRED, Federal Reserve Bank of St. Louis (개인·비상업적 이용, 출처 표시)"}
 
     # ---------------------------------------------------------------- watchlist
@@ -273,12 +365,13 @@ class Terminal:
         self._save_watchlist(w)
         return w
 
-    def watchlist_quotes(self) -> Dict[str, Any]:
-        w = self.watchlist()
+    def watchlist_quotes(self, market: str = "US") -> Dict[str, Any]:
+        w = [t for t in self.watchlist() if pf.market_of(t) == market]
         if not w:
             return {"items": [], "tickers": []}
-        q = self._quotes(w, "watch:" + ",".join(sorted(w)))
-        return {"tickers": w, "items": [q["items"][t] for t in w], "cache": q["cache"],
+        sym = {t: self._sym(t) for t in w}
+        q = self._quotes(list(sym.values()), "watch:" + ",".join(sorted(sym.values())), market)
+        return {"tickers": w, "items": [{**q["items"][sym[t]], "symbol": t, "name": self._kr_name(t)} for t in w], "cache": q["cache"],
                 "source": "Yahoo Finance (일봉 종가, 지연)"}
 
     # ---------------------------------------------------------------- model (read-only)
@@ -299,7 +392,33 @@ class Terminal:
                 return x
         return None
 
-    def model(self) -> Dict[str, Any]:
+    def _model_kr(self) -> Dict[str, Any]:
+        base = {"name": "KR-EXP-0.1", "status": "EXPERIMENTAL", "role": "한국 실험 모델, 예측력 미검증"}
+        root, latest = self.base / "runs" / "KR", None
+        for d in sorted((p for p in root.iterdir() if p.is_dir()), reverse=True) if root.exists() else []:
+            try:
+                x = json.loads((d / "validation_result.json").read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if x.get("validation_scope") == "full":
+                latest = x
+                break
+        if latest:
+            base.update(run_id=latest.get("run_id"), executed_at=latest.get("executed_at"), recommendation_status=latest.get("recommendation_status"),
+                        capital=latest.get("capital_krw"), currency=latest.get("currency"),
+                        top5=[{"recommendation_rank": r.get("rank"), "ticker": r.get("ticker"), "name": r.get("company_name"), "sector": r.get("industry"), "close": r.get("reference_close_krw"),
+                               "alpha": r.get("score"), "target_weight": r.get("target_weight")} for r in latest.get("recommendations") or []])
+        try:
+            from markets.kr import tracking as krt
+            d = self.base / "tracking" / "kr"
+            trk = {"status": "REAL", "runs": len(krt.runs(d)), "observations": len(krt.observations(d))}
+        except Exception as exc:
+            trk = {"status": "UNAVAILABLE", "error": type(exc).__name__}
+        return {"market": "KR", "baseline": base, "tracking": trk, "challengers": [], "challenger_note": "도전자 모델과 연구실은 아직 미국 전용입니다."}
+
+    def model(self, market: str = "US") -> Dict[str, Any]:
+        if market == "KR":
+            return self._model_kr()
         latest = self._latest_scan()
         base = {"name": "P6-11B (MODEL_RANK_E)", "status": "FROZEN", "role": "기준 모델"}
         if latest:
@@ -344,17 +463,22 @@ class Terminal:
     def _today_et(self):
         return self.now().astimezone(ZoneInfo("America/New_York")).date()
 
+    def _today(self, market: str):
+        return self.now().astimezone(ZoneInfo("Asia/Seoul")).date() if market == "KR" else self._today_et()
+
     def journal_add(self, raw: Dict[str, Any]) -> Dict[str, Any]:
-        entry = pf.normalize(raw or {}, self._today_et(), clean_ticker)
+        raw = raw or {}
+        market = pf.market_of(str(raw.get("ticker") or "").strip().upper()) if raw.get("ticker") else str(raw.get("market") or "US").upper()
+        entry = pf.normalize(raw, self._today(market), clean_ticker)
         return {"entry": self.journal.append(entry, self.now())}
 
-    def portfolio_signals(self) -> Dict[str, Any]:
-        """QSF reading of each holding, kept apart from /api/portfolio because the first run reads SEC filings."""
-        _, integ, _, val, _, _ = self._valued()
+    def portfolio_signals(self, market: str = "US") -> Dict[str, Any]:
+        """QSF reading of each holding, kept apart from /api/portfolio because the first run reads filings."""
+        _, integ, _, val, _, _ = self._valued(market)
         st, items = self.settings(), []
         for h in val["holdings"]:
             try:
-                items.append(self.qsf.signal(h["ticker"], h["weight_pct"], pf.limits_for(h["style"], st)["max_position_pct"]))
+                items.append(self.qsf.signal(h["ticker"], h["weight_pct"], pf.limits_for(h["style"], st, market)["max_position_pct"], market))
             except Exception as exc:              # one unreadable stock never hides the others
                 items.append({"status": "UNAVAILABLE", "ticker": h["ticker"], "reason": type(exc).__name__})
         return {"status": integ["status"], "items": items, "note": "QSF 점수는 실험 단계이며 예측력이 검증되지 않았습니다. 주문을 실행하지 않습니다."}
@@ -363,69 +487,87 @@ class Terminal:
         return {"entry": self.journal.append({"kind": "VOID", "ref": str(ref or "")}, self.now())}
 
     def _sector(self, ticker: str) -> Optional[str]:
-        res = self.cache.cached(f"info:{ticker}", TTL["info"], lambda: self.src.yahoo_info(ticker))
+        sym = self._sym(ticker)
+        res = self.cache.cached(f"info:{sym}", TTL["info"], lambda: self.src.yahoo_info(sym))
         return (res["data"] or {}).get("sector")
 
-    def _book(self):
-        recs, integ = self.journal.read()
+    def _book(self, market: str = "US"):
+        all_recs, integ = self.journal.read()
+        recs = pf.for_market(all_recs, market)
         try:
             state = pf.replay(recs)
         except pf.JournalError as exc:
             integ, state = {"status": "BROKEN", "reason": str(exc)}, pf.replay([])
         return recs, integ, state
 
-    def _valued(self):
-        recs, integ, state = self._book()
+    def _valued(self, market: str = "US"):
+        recs, integ, state = self._book(market)
         held = sorted(state["positions"])
-        q = self._quotes(held + ["KRW=X"], "pf:" + ",".join(held))
-        quotes = {t: q["items"][t] for t in held}
+        sym = {t: self._sym(t) for t in held}
+        q = self._quotes(list(sym.values()) + ["KRW=X"], "pf:" + ",".join(sym.values()), market)
+        quotes = {t: q["items"][sym[t]] for t in held}
         fx = q["items"].get("KRW=X") or {}
-        val = pf.valuation(state, quotes, {t: self._sector(t) for t in held}, self.settings())
+        val = pf.valuation(state, quotes, {t: self._sector(t) for t in held}, self.settings(), market)
+        for h in val["holdings"]:
+            h["name"] = self._kr_name(h["ticker"])
         return recs, integ, state, val, fx, q["cache"]
 
-    def portfolio(self) -> Dict[str, Any]:
-        recs, integ, state, val, fx, cache = self._valued()
+    def _total(self, market: str, val: Dict[str, Any], fx: Dict[str, Any]) -> Dict[str, Any]:
+        """Both accounts in won.  A missing price or rate leaves the total empty rather than understated."""
+        other = "KR" if market == "US" else "US"
+        eq = {market: val["summary"]["equity"], other: self._valued(other)[3]["summary"]["equity"]}
+        rate = fx.get("close")
+        total = eq["KR"] + eq["US"] * rate if None not in (eq["KR"], eq["US"], rate) else None
+        return {"krw": total, "us_equity": eq["US"], "kr_equity": eq["KR"], "usdkrw": rate, "fx_date": fx.get("date"),
+                "us_krw": eq["US"] * rate if eq["US"] is not None and rate else None}
+
+    def portfolio(self, market: str = "US") -> Dict[str, Any]:
+        recs, integ, state, val, fx, cache = self._valued(market)
         gone = pf.voided_ids(recs)
         journal = [{**r, "voided": r["id"] in gone} for r in
                    sorted(recs, key=lambda r: (r.get("date") or r["recorded_at"][:10], r["seq"]), reverse=True)]
-        return {"integrity": integ, **val, "stats": pf.trade_stats(state["closed"]), "closed": state["closed"][::-1],
+        return {"market": market, "integrity": integ, **val, "total": self._total(market, val, fx), "stats": pf.trade_stats(state["closed"]), "closed": state["closed"][::-1],
                 "stats_by_style": {s: pf.trade_stats([c for c in state["closed"] if c.get("style") == s]) for s in pf.STYLES},
                 "journal": journal, "settings": self.settings(),
                 "fx": {"usdkrw": fx.get("close"), "date": fx.get("date"), "status": fx.get("status", "UNAVAILABLE")},
-                "cache": cache, "source": "사용자 거래 기록 + Yahoo Finance 일봉 종가(지연)",
+                "cache": cache, "source": "사용자 거래 기록 + Yahoo Finance 일봉 종가(지연)", "benchmark": BENCH[market][1],
                 "note": "주문 기능은 없습니다. 보유 현황은 직접 기록한 거래로만 계산합니다."}
 
-    def equity(self) -> Dict[str, Any]:
-        recs, integ, state = self._book()
+    def equity(self, market: str = "US") -> Dict[str, Any]:
+        recs, integ, state = self._book(market)
         eff = pf.effective(recs)
         if not eff or integ["status"] != "OK":
             return {"points": [], "twr_pct": None, "bench_pct": None, "status": "UNAVAILABLE"}
         days = (self._today_et() - datetime.strptime(eff[0]["date"], "%Y-%m-%d").date()).days
         period = "1y" if days < 330 else "2y" if days < 700 else "5y" if days < 1800 else "10y"
         tickers = sorted({r["ticker"] for r in eff if r["kind"] in ("BUY", "SELL")})
-        syms = tickers + (["SPY"] if "SPY" not in tickers else [])
+        sym = {t: self._sym(t) for t in tickers}
+        bench, bench_name = BENCH[market]
+        syms = list(sym.values()) + ([bench] if bench not in sym.values() else [])
         res = self.cache.cached(f"eq:{period}:{','.join(syms)}", TTL["chart"],
                                 lambda: self.src.yahoo_history(syms, period))
         hist = res["data"] or {}
-        curve = pf.equity_curve(recs, {t: hist.get(t) or [] for t in tickers}, hist.get("SPY") or [])
+        curve = pf.equity_curve(recs, {t: hist.get(sym[t]) or [] for t in tickers}, hist.get(bench) or [])
         return {**curve, "status": res["status"] if curve["points"] else "UNAVAILABLE",
-                "fetched_at": res["fetched_at"], "source": "거래 기록 재계산 + Yahoo 일봉 종가, 비교 지수 SPY",
-                "method": "시간가중수익률(TWR): 입출금 효과를 제외한 일별 수익률의 누적"}
+                "fetched_at": res["fetched_at"], "source": f"거래 기록 재계산 + Yahoo 일봉 종가, 비교 지수 {bench_name}",
+                "benchmark": bench_name, "method": "시간가중수익률(TWR): 입출금 효과를 제외한 일별 수익률의 누적"}
 
-    def sizing(self, ticker: str = "", entry=None, stop=None, equity=None, style=None) -> Dict[str, Any]:
-        _, integ, state, val, _, _ = self._valued()
+    def sizing(self, ticker: str = "", entry=None, stop=None, equity=None, style=None, market: str = "US") -> Dict[str, Any]:
+        market = pf.market_of(clean_ticker(ticker)) if ticker else market
+        _, integ, state, val, _, _ = self._valued(market)
         style = pf._style(style) or (state["positions"].get(clean_ticker(ticker)) or {}).get("style") if ticker else pf._style(style)
-        st = pf.limits_for(style, self.settings())
+        st = pf.limits_for(style, self.settings(), market)
         atr_n = st.get(f"stop_atr_{(style or 'SWING').lower()}", 2.0)
-        out: Dict[str, Any] = {"settings": st, "style": style, "stop_atr": atr_n, "equity": val["summary"]["equity"], "cash": state["cash"]}
+        out: Dict[str, Any] = {"market": market, "settings": st, "style": style, "stop_atr": atr_n, "equity": val["summary"]["equity"], "cash": state["cash"]}
         last, a = None, None
         if ticker:
             t = clean_ticker(ticker)
             c = self.chart(t, "3mo")
             if c.get("bars"):
                 last = c["last"]["close"]
-                res = self.cache.cached(f"chart:{t}:2y", TTL["chart"], lambda: self.src.yahoo_history([t], "2y"))
-                a = pf.atr((res["data"] or {}).get(t) or [])
+                sym = self._sym(t)
+                res = self.cache.cached(f"chart:{sym}:2y", TTL["chart"], lambda: self.src.yahoo_history([sym], "2y"))
+                a = pf.atr((res["data"] or {}).get(sym) or [])
             out.update(ticker=t, last_close=last, last_date=(c.get("last") or {}).get("date"), atr14=a,
                        suggested_stop=(last - atr_n * a) if last is not None and a else None,
                        held_qty=(state["positions"].get(t) or {}).get("qty"))
@@ -479,7 +621,7 @@ class Terminal:
     def health(self) -> Dict[str, Any]:
         from utils.runtime_config import sec_user_agent_status
         return {"version": TERMINAL_VERSION, "time_utc": self.now().isoformat(),
-                "sec": sec_user_agent_status()["status"]}       # status word only, never the value
+                "sec": sec_user_agent_status()["status"], "ecos": sources.ecos_status()}       # status words only, never values
 
 
 def _minus_year(d: str) -> str:

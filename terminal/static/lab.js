@@ -7,6 +7,7 @@ const pctR = (v, d = 2) => (isNum(v) ? pct(v * 100, d) : DASH);
 const _renderModelBase = RENDER.model;
 RENDER.model = async function () {
   await _renderModelBase();
+  if (isKR()) return;                  // challengers and the research lab are US only so far
   const host = $("#tab-model");
   const panel = document.createElement("div");
   panel.className = "panel"; panel.id = "cmp"; panel.innerHTML = loading;
@@ -79,6 +80,7 @@ async function pollLab() {
 let labData = null, labCost = "0";
 async function renderLab() {
   const el = $("#tab-lab");
+  if (isKR()) { el.innerHTML = '<div class="panel empty">연구실은 아직 미국 전용입니다. 위에서 미국을 선택하면 볼 수 있습니다.</div>'; return; }
   el.innerHTML = '<div class="panel empty">과거 시뮬레이션 계산 중… (처음에는 수십 초 걸릴 수 있습니다)</div>';
   let d;
   try { d = await api("/api/lab/research"); } catch (e) { el.innerHTML = errBox(e); return; }

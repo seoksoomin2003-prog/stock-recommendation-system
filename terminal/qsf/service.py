@@ -272,10 +272,45 @@ class QSF:
         ev = events.classify_kr(rep["data"], as_of) if rep["data"] is not None else {"status": "UNAVAILABLE", "reason": "DART 공시 조회 실패"}
         return {"fund": fund, "events": ev}
 
+    def kr_company(self, code: str) -> Dict[str, Any]:
+        """Identity, annual statements and recent filings of one Korean company, for the stock screen."""
+        ident = self._kr_identity(code)
+        out: Dict[str, Any] = {"ident": ident, "annual": None, "reports": None}
+        if not ident:
+            out["reason"] = "상장 종목 목록에 없는 코드입니다 (ETF는 재무·공시가 없습니다)."
+            return out
+        if not self.dart.configured:
+            out["reason"] = "OPENDART_API_KEY가 없어 재무·공시를 불러오지 않았습니다."
+            return out
+        corp = self._corp_code(code)
+        if not corp:
+            out["reason"] = "DART 고유번호를 찾지 못했습니다."
+            return out
+        as_of = self.now().date()
+        klass = ident.get("industry_class") or "NON_FINANCIAL"
+        res = self.cache.cached(f"krfund:{code}", TTL["facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart)))
+
+        def fetch_list():
+            bgn = (as_of - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")
+            return self.dart._get("list.json", corp_code=corp, bgn_de=bgn, end_de=as_of.strftime("%Y%m%d"), page_count=100).json().get("list") or []
+        rep = self.cache.cached(f"krlist:{corp}", TTL["subm"], fetch_list)
+        out.update(annual=res["data"], annual_status=res["status"], annual_fetched=res["fetched_at"], reports=rep["data"], reports_status=rep["status"], reports_fetched=rep["fetched_at"])
+        return out
+
+    def kr_search(self, query: str, limit: int = 10) -> List[Dict[str, str]]:
+        """Listed companies by Korean name, exact match first."""
+        self._kr_identity("000000")               # loads the master
+        df, q = self._kr_master, (query or "").strip()
+        if not q:
+            return []
+        hit = df[df["company_name"].astype(str).str.contains(q, regex=False)]
+        rows = sorted(hit.to_dict("records"), key=lambda r: (r["company_name"] != q, len(r["company_name"])))[:limit]
+        return [{"ticker": r["canonical_ticker"], "name": r["company_name"], "market": r.get("market")} for r in rows]
+
     # ------------------------------------------------------------------ evaluation
-    def _position(self, ticker: str) -> Optional[Dict[str, Any]]:
+    def _position(self, ticker: str, market: str = "US") -> Optional[Dict[str, Any]]:
         try:
-            _, _, state = self.terminal._book()
+            _, _, state = self.terminal._book(market)
         except Exception:
             return None
         p = state["positions"].get(ticker)
@@ -346,17 +381,17 @@ class QSF:
         ctx = self.context(ticker, market)
         if ctx.get("error"):
             return {"status": "UNAVAILABLE", "ticker": ticker, "market": market, "reason": ctx["reason"]}
-        pos = self._position(ticker) if market == "US" else None
+        pos = self._position(ticker, market)
         own = config.STYLE_TO_STRATEGY.get((pos or {}).get("style"))
         cards = {s: self.card(ctx, s, pos if own in (None, s) else None) for s in strategies}
         return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
 
-    def signal(self, ticker: str, weight_pct: Optional[float] = None, max_weight_pct: Optional[float] = None) -> Dict[str, Any]:
+    def signal(self, ticker: str, weight_pct: Optional[float] = None, max_weight_pct: Optional[float] = None, market: str = "US") -> Dict[str, Any]:
         """Score and exit reading of one held position, under the profile of its own style only."""
-        pos = self._position(ticker)
+        pos = self._position(ticker, market)
         if not pos or not pos.get("style"):
             return {"status": "NO_STYLE", "ticker": ticker}
-        ctx = self.context(ticker, "US")
+        ctx = self.context(ticker, market)
         if ctx.get("error"):
             return {"status": "UNAVAILABLE", "ticker": ticker, "reason": ctx["reason"]}
         strategy = config.STYLE_TO_STRATEGY[pos["style"]]
@@ -364,7 +399,7 @@ class QSF:
         out = {"status": "REAL", "ticker": ticker, "style": pos["style"], "strategy": strategy, "score": c["score"], "band_label": c["band_label"], "confidence": c["confidence"],
                "coverage": c["coverage"], "data_date": c["data_date"], "gates": c["gates"], "exit": c["exit"], "earnings_date": (ctx.get("earnings") or {}).get("date")}
         if strategy == "SWING":
-            step = holding.stepper("US")
+            step = holding.stepper(market)
             limit = holding.add_sessions(date.fromisoformat(pos["opened"]), config.SWING["time_stop"], step)
             d, left = self.now().date(), 0
             while d < limit:
@@ -425,7 +460,7 @@ class QSF:
                 if ctx.get("error"):
                     errors[t] = ctx["error"]
                     continue
-                pos = self._position(t) if market == "US" else None
+                pos = self._position(t, market)
                 for s in config.STRATEGIES:
                     c = self.card(ctx, s, pos)
                     cards.append(c)

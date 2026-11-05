@@ -230,7 +230,7 @@ python app.py dashboard --open                          # US and KR side by side
   * never pooled with US observations.
 * A full KR scan downloads about 2,500 symbols from Yahoo the first time each day (roughly 40 minutes on a slow link). Later runs on the same day reuse `data/kr/cache/`.
 
-### Personal terminal (TERMINAL-1, US)
+### Personal terminal (TERMINAL-1)
 
 A local web app on this Mac only (`127.0.0.1`), with the screen in Korean. It uses free public data only and has no order execution.
 
@@ -351,6 +351,17 @@ Specification: `reports/TERMINAL_3_SPECIFICATION.md`.
 | `data/lab/` | lab price panel, challenger ledger, membership cache, research cache (local, ignored by git) |
 | `data/terminal/` | terminal cache, watchlist, trade journal `journal.jsonl` and risk settings (local, private, ignored by git) |
 | `reports/` | phase reports, roadmap, test results |
+
+### Korean market in the terminal
+
+A market switch at the top of the terminal (미국 | 한국) changes every tab. Typing a 6-digit code such as `005930`, or a Korean company name such as `삼성전자`, switches to Korea by itself.
+
+- **Accounts:** the dollar and won accounts are calculated separately. Dollars can never pay for a Korean stock. Both live in the same `data/terminal/journal.jsonl`; a record of the Korean account carries `"market": "KR"`, and older records stay US. The portfolio tab also shows the total converted to won, which stays empty when a price or the exchange rate is missing.
+- **Limits:** Korean long-term 1% risk and 20% weight; Korean swing 0.5% risk and 10% weight. All can be changed in 매매 보조.
+- **Sell tax:** the Korean securities transaction tax (0.20% in 2026) is not added for you. Enter it with the broker fee in the fee field of a SELL record.
+- **Data:** prices from Yahoo (delayed), statements and filings from OpenDART (`OPENDART_API_KEY`), listings from KIND, macro from the Bank of Korea ECOS (`ECOS_API_KEY`).
+- **ECOS key:** free from https://ecos.bok.or.kr/api/. Put it in `.env` as `ECOS_API_KEY=...` and restart the terminal. Without it the Korean macro cards read "데이터 없음"; the won/dollar card still works.
+- **US only so far:** challenger models, the research lab and the P6-11B plan check. The 모델 tab shows KR-EXP-0.1 read-only, which is experimental and unvalidated.
 
 ### Long-term and swing positions
 

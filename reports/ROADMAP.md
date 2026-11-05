@@ -93,6 +93,7 @@ The "Official status" column is the status the directive assigns. The "State at 
 |---|---|---|
 | TERMINAL-1..4 (market, stock, macro, portfolio, challengers, automation, Telegram, backup) | implemented, committed through `faf461a` | `reports/TERMINAL_4_SPECIFICATION.md` |
 | QSF 1.1 scoring, holding-period and exit engine (US and KR) | implemented, **EXPERIMENTAL**; predictive power not validated | `reports/QSF_1_1_IMPLEMENTATION_REPORT.md` |
+| Korean market in the terminal (market switch, won account, KR limits, DART company screen, ECOS macro, name search) | implemented, not yet used with real trades; ECOS needs the user's free key | README "Korean market in the terminal", `tests/test_kr_terminal.py` |
 
 | Portfolio long-term and swing tagging, per-style limits, target weight, exit readings, alerts | implemented, tested | `tests/test_portfolio_style.py`, README section 5 |
 

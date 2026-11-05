@@ -153,6 +153,34 @@ def sec_submissions(cik: str, http=requests) -> Dict:
 
 
 # ----------------------------------------------------------------------------- FRED
+def ecos_status() -> str:
+    """CONFIGURED | NOT_CONFIGURED (a status word only)."""
+    return "CONFIGURED" if os.getenv("ECOS_API_KEY", "").strip() else "NOT_CONFIGURED"
+
+
+def ecos_series(stat: str, cycle: str, start: str, end: str, items: Sequence[str], http=requests, key: Optional[str] = None) -> List[List]:
+    """[[ISO date, value], ...] from the Bank of Korea ECOS API.  The key sits in the URL path, so every failure is raised
+    without the URL or the provider's text.  ``cycle``: D or M; ``start`` and ``end`` use that cycle's format."""
+    key = key or os.getenv("ECOS_API_KEY", "").strip()
+    if not key:
+        raise RuntimeError("ECOS key not configured")
+    url = "/".join(["https://ecos.bok.or.kr/api/StatisticSearch", key, "json", "kr", "1", "5000", stat, cycle, start, end, *items])
+    try:
+        r = http.get(url, timeout=30)
+        body = r.json()
+    except Exception:
+        raise RuntimeError("ECOS request failed") from None
+    rows = (body.get("StatisticSearch") or {}).get("row")
+    if rows is None:
+        raise RuntimeError("ECOS returned no rows")
+    out = []
+    for x in rows:
+        t = str(x.get("TIME") or "")
+        iso = f"{t[:4]}-{t[4:6]}-{t[6:8] or '01'}"
+        out.append([iso, _num(x.get("DATA_VALUE"))])
+    return out
+
+
 def fred_series(series_id: str, start: str, http=requests) -> List[List]:
     """[[date, value|None], ...] from FRED's public CSV download (no key).  '.' = missing."""
     r = http.get(FRED_CSV, params={"id": series_id, "cosd": start}, headers={"User-Agent": GENERIC_UA},

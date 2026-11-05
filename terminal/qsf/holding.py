@@ -193,6 +193,10 @@ def _scenarios(res: Dict, ctx: Dict) -> Dict[str, Any]:
 # ---------------------------------------------------------------------- exits
 def evaluate_exit(res: Dict, ctx: Dict, position: Dict[str, Any], today: date) -> Dict[str, Any]:
     """``position``: avg_cost, opened (ISO), stop, target.  Returns one action plus every condition checked."""
+    kr = ctx.get("market") == "KR"
+    px, ga = (lambda v: f"{v:,.0f}원"), "이"
+    if not kr:
+        px, ga = (lambda v: f"{v:,.2f}"), "가"
     t, strategy = res["tech"], res["strategy"]
     hits: List[Dict[str, str]] = []
     step = stepper(res["market"])
@@ -202,14 +206,14 @@ def evaluate_exit(res: Dict, ctx: Dict, position: Dict[str, Any], today: date) -
     close, stop, target = t["close"], position.get("stop"), position.get("target")
     if strategy == "SWING":
         if stop and close <= stop:
-            hit("STOP_BREACH", "EXIT", f"종가 {close:,.2f}가 손절 기준 {stop:,.2f} 이하입니다. 다음 시가 체결을 가정하면 손절가보다 불리할 수 있습니다.")
+            hit("STOP_BREACH", "EXIT", f"종가 {px(close)}{ga} 손절 기준 {px(stop)} 이하입니다. 다음 시가 체결을 가정하면 손절가보다 불리할 수 있습니다.")
         if t.get("ma50") and close < t["ma50"] and (t.get("ma50_slope") or 0) < 0:
-            hit("TREND_BREAKDOWN", "THESIS_INVALIDATED", f"종가가 하락 중인 50일선 {t['ma50']:,.2f} 아래입니다.")
+            hit("TREND_BREAKDOWN", "THESIS_INVALIDATED", f"종가가 하락 중인 50일선 {px(t['ma50'])} 아래입니다.")
         m = _factor(res, "momentum")
         if m is not None and m < 0.25:
             hit("MOMENTUM_DETERIORATION", "REDUCE", f"모멘텀 점수가 {m * 100:.0f}/100으로 낮습니다.")
         if target and close >= target:
-            hit("TARGET_REACHED", "PARTIAL_TAKE_PROFIT", f"종가가 목표 {target:,.2f}에 도달했습니다.")
+            hit("TARGET_REACHED", "PARTIAL_TAKE_PROFIT", f"종가가 목표 {px(target)}에 도달했습니다.")
         if stop and target and close > stop and (target - close) / (close - stop) < 1:
             hit("REWARD_RISK_DETERIORATED", "HOLD_AND_REVIEW", f"남은 손익비가 {(target - close) / (close - stop):.2f}로 1 미만입니다.")
         e = ctx.get("earnings") or {}
@@ -224,7 +228,7 @@ def evaluate_exit(res: Dict, ctx: Dict, position: Dict[str, Any], today: date) -
     else:
         # Price alone is not a long-term exit rule.  This one exists because the user requires a stop and chose this reading of it.
         if stop and close <= stop:
-            hit("STOP_BREACH", "EXIT", f"종가 {close:,.2f}가 직접 정한 손절가 {stop:,.2f} 이하입니다.")
+            hit("STOP_BREACH", "EXIT", f"종가 {px(close)}{ga} 직접 정한 손절가 {px(stop)} 이하입니다.")
         f = ctx.get("fund") or {}
         if f.get("roe") is not None and f.get("roe_prev") is not None and f["roe"] < f["roe_prev"] - 0.05 and f["roe"] < 0.08:
             hit("PROFITABILITY_DOWN", "THESIS_INVALIDATED", f"ROE가 {f['roe_prev'] * 100:.1f}%에서 {f['roe'] * 100:.1f}%로 하락했습니다.")

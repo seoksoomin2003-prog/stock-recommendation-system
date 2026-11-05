@@ -183,18 +183,22 @@ class Daily:
                 from terminal.services import Terminal
                 self._terminal = Terminal(self.base, now=self.now)
             pf = self._terminal.portfolio()
+            kr = self._terminal.portfolio("KR")
         except Exception as exc:
             return {"status": "UNAVAILABLE", "error": type(exc).__name__, "items": [], "stale": []}
-        if pf["integrity"]["status"] != "OK":
+        if pf["integrity"]["status"] != "OK" or kr["integrity"]["status"] != "OK":
             return {"status": "INTEGRITY", "items": [], "stale": []}
-        stale = [f"{h['ticker']} ({h['date'] or '시세 없음'})" for h in pf["holdings"] if h["status"] != "REAL"]
-        out = {"status": "OK", "items": list(pf["alerts"]), "stale": stale}
-        if pf["holdings"]:
+        stale = [f"{h['ticker']} ({h['date'] or '시세 없음'})" for p in (pf, kr) for h in p["holdings"] if h["status"] != "REAL"]
+        out = {"status": "OK", "items": list(pf["alerts"]) + [{**a, "text": "[한국] " + a["text"]} for a in kr["alerts"]], "stale": stale}
+        for market, book in (("US", pf), ("KR", kr)):
+            if not book["holdings"]:
+                continue
             try:
-                out["items"] += exit_alerts(self._terminal.portfolio_signals()["items"])
-                out["items"].sort(key=lambda a: {"bad": 0, "warn": 1, "info": 2}[a["level"]])
+                got = exit_alerts(self._terminal.portfolio_signals(market)["items"])
+                out["items"] += [{**a, "text": "[한국] " + a["text"]} for a in got] if market == "KR" else got
             except Exception:
                 out["signals_failed"] = True
+        out["items"].sort(key=lambda a: {"bad": 0, "warn": 1, "info": 2}[a["level"]])
         return out
 
     def missing_sessions(self, session: str) -> List[str]:

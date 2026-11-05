@@ -4,7 +4,7 @@ const QSF_STRAT = { SWING: "스윙", LONG_TERM: "장기" };
 const QSF_ENTRY = { ENTRY_NOW: "지금 진입 가능 구간", WAIT_FOR_PULLBACK: "눌림 대기", WAIT_FOR_BREAKOUT_CONFIRMATION: "돌파 확인 대기", WAIT_FOR_EARNINGS: "실적 발표 대기", OVERVALUED_AT_CURRENT_PRICE: "현재 가격 고평가", NO_VALID_ENTRY_SETUP: "유효한 진입 근거 없음" };
 const QSF_CONF = { HIGH: "높음", MEDIUM: "보통", LOW: "낮음", INSUFFICIENT: "부족" };
 const QSF_EXIT = { HOLD: "보유", HOLD_AND_REVIEW: "보유하며 재검토", PARTIAL_TAKE_PROFIT: "일부 차익 실현 검토", REDUCE: "비중 축소 검토", EXIT: "청산 검토", THESIS_INVALIDATED: "투자 논리 무효", TIME_STOP_REVIEW: "시간 손절 재평가" };
-const qsfState = { market: "US", strategy: "SWING", detail: null };
+const qsfState = { get market() { return state.market; }, strategy: "SWING", detail: null };
 
 function qsfClass(a, score) {
   if (a === "AVOID" && score !== null && score >= 40) return "act-reduce";   // 40-54.99 is the orange band; red starts below 40
@@ -26,17 +26,14 @@ async function renderQsf() {
   el.innerHTML = `<div class="panel"><h2>종목 점수 (QSF 1.1)</h2>
     <div class="notice">P6-11B와 별개인 규칙 기반 점수입니다. 가중치와 구간은 사전에 정한 연구 기본값이며 수익이 검증되지 않았습니다. 주문을 실행하지 않고, 투자 자문이 아닙니다.</div>
     <form id="qsfform" class="qsf-form">
-      <select id="qsfmarket" aria-label="시장"><option value="US">미국</option><option value="KR">한국</option></select>
-      <input id="qsfticker" placeholder="티커 또는 종목코드 (AAPL, 005930)" autocomplete="off" aria-label="종목">
+      <input id="qsfticker" placeholder="${isKR() ? "종목코드 (예: 005930)" : "티커 (예: AAPL)"}" autocomplete="off" aria-label="종목">
       <button class="btn-primary">평가</button></form>
     <div id="qsfmsg" class="meta"></div></div>
     <div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsfvalid"></div>`;
-  $("#qsfmarket").value = qsfState.market;
-  $("#qsfform").onsubmit = (e) => { e.preventDefault(); const t = $("#qsfticker").value.trim().toUpperCase(); if (t) qsfEvaluate(t, $("#qsfmarket").value); };
-  $("#qsfmarket").onchange = () => { qsfState.market = $("#qsfmarket").value; qsfRank(); };
+  $("#qsfform").onsubmit = (e) => { e.preventDefault(); const t = $("#qsfticker").value.trim().toUpperCase(); if (t) { setMarket(marketOf(t)); qsfEvaluate(t, qsfState.market); } };
   qsfRank();
   qsfValidation();
-  if (qsfState.detail) qsfDrawDetail(qsfState.detail);
+  if (qsfState.detail && qsfState.detail.market === state.market) qsfDrawDetail(qsfState.detail);
 }
 
 async function qsfEvaluate(t, market) {
@@ -90,7 +87,9 @@ function qsfCard(c) {
 
 async function qsfRank() {
   const box = $("#qsfrank"); if (!box) return;
-  const d = await api(`/api/qsf/latest?market=${qsfState.market}`).catch(() => null);
+  const mk = state.market;
+  const d = await api(`/api/qsf/latest?market=${mk}`).catch(() => null);
+  if (mk !== state.market) return;
   if (!d || d.status !== "REAL") { box.innerHTML = `<div class="panel"><h2>순위</h2><div class="empty">아직 스캔 기록이 없습니다. <code>python app.py qsf scan</code> 또는 매일 자동 실행 후 표시됩니다.</div></div>`; return; }
   const rows = d.rows.filter((r) => r.strategy === qsfState.strategy).slice(0, 50);
   box.innerHTML = `<div class="panel"><h2>순위 <span class="badge">${esc(d.session)}</span>
