@@ -1,0 +1,163 @@
+{
+ "as_of": "2026-11-06",
+ "note": "survey only; no returns or scores of removed names were computed; Tiingo figures come from its public ticker list, prices not fetched",
+ "removed_tickers": 286,
+ "renamed_in_cache": 26,
+ "others": 260,
+ "classes": {
+  "still_public": [
+   105,
+   95,
+   96,
+   89
+  ],
+  "acquired_8k": [
+   133,
+   0,
+   102,
+   95
+  ],
+  "bankruptcy_8k": [
+   10,
+   0,
+   4,
+   3
+  ],
+  "no_cik": [
+   9,
+   0,
+   5,
+   0
+  ],
+  "unknown": [
+   2,
+   0,
+   1,
+   0
+  ],
+  "deregistered": [
+   1,
+   0,
+   1,
+   1
+  ]
+ },
+ "class_columns": [
+  "n",
+  "yahoo",
+  "yahoo_or_tiingo",
+  "price_and_facts"
+ ],
+ "by_year": [
+  {
+   "year": 2014,
+   "cache": 0.645,
+   "yahoo": 0.752,
+   "tiingo": 0.925,
+   "tiingo_facts": 0.901,
+   "cache_nonmember": 0.306
+  },
+  {
+   "year": 2015,
+   "cache": 0.664,
+   "yahoo": 0.772,
+   "tiingo": 0.928,
+   "tiingo_facts": 0.906,
+   "cache_nonmember": 0.284
+  },
+  {
+   "year": 2016,
+   "cache": 0.698,
+   "yahoo": 0.804,
+   "tiingo": 0.945,
+   "tiingo_facts": 0.926,
+   "cache_nonmember": 0.249
+  },
+  {
+   "year": 2017,
+   "cache": 0.732,
+   "yahoo": 0.832,
+   "tiingo": 0.958,
+   "tiingo_facts": 0.939,
+   "cache_nonmember": 0.214
+  },
+  {
+   "year": 2018,
+   "cache": 0.754,
+   "yahoo": 0.85,
+   "tiingo": 0.959,
+   "tiingo_facts": 0.943,
+   "cache_nonmember": 0.195
+  },
+  {
+   "year": 2019,
+   "cache": 0.78,
+   "yahoo": 0.875,
+   "tiingo": 0.964,
+   "tiingo_facts": 0.952,
+   "cache_nonmember": 0.166
+  },
+  {
+   "year": 2020,
+   "cache": 0.813,
+   "yahoo": 0.898,
+   "tiingo": 0.973,
+   "tiingo_facts": 0.963,
+   "cache_nonmember": 0.152
+  },
+  {
+   "year": 2021,
+   "cache": 0.834,
+   "yahoo": 0.918,
+   "tiingo": 0.981,
+   "tiingo_facts": 0.973,
+   "cache_nonmember": 0.138
+  },
+  {
+   "year": 2022,
+   "cache": 0.854,
+   "yahoo": 0.936,
+   "tiingo": 0.989,
+   "tiingo_facts": 0.979,
+   "cache_nonmember": 0.113
+  },
+  {
+   "year": 2023,
+   "cache": 0.885,
+   "yahoo": 0.955,
+   "tiingo": 0.995,
+   "tiingo_facts": 0.988,
+   "cache_nonmember": 0.089
+  },
+  {
+   "year": 2024,
+   "cache": 0.913,
+   "yahoo": 0.965,
+   "tiingo": 0.998,
+   "tiingo_facts": 0.992,
+   "cache_nonmember": 0.064
+  },
+  {
+   "year": 2025,
+   "cache": 0.949,
+   "yahoo": 0.982,
+   "tiingo": 0.999,
+   "tiingo_facts": 0.997,
+   "cache_nonmember": 0.032
+  },
+  {
+   "year": 2026,
+   "cache": 0.976,
+   "yahoo": 0.991,
+   "tiingo": 0.999,
+   "tiingo_facts": 0.999,
+   "cache_nonmember": 0.01
+  }
+ ],
+ "all_period": {
+  "cache": 0.793,
+  "yahoo": 0.877,
+  "tiingo": 0.967,
+  "tiingo_facts": 0.954
+ }
+}
