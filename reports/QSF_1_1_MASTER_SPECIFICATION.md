@@ -1,6 +1,6 @@
 # QSF 1.1 마스터 명세
 
-- 모델 버전: `QSF-1.1.1` · 코드: `terminal/qsf/` · 설정: `terminal/qsf/config.py`
+- 모델 버전: `QSF-1.1.2` · 코드: `terminal/qsf/` · 설정: `terminal/qsf/config.py`
 - 위치: P6-11B와 별개 모델이다. 고정 코어를 가져오지도 바꾸지도 않으며(`tests/test_qsf.py`가 import를 검사), 점수를 합치지 않는다. P6-11B 순위는 참고로만 표시한다.
 - 성격: 분석·페이퍼 연구 도구다. 주문을 실행하지 않고, 점수가 거래를 승인하지 않는다.
 

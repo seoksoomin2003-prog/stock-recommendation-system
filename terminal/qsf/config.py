@@ -5,7 +5,8 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.1.1"
+MODEL_VERSION = "QSF-1.1.2"
+STYLE_TO_STRATEGY = {"LONG": "LONG_TERM", "SWING": "SWING"}
 SPEC_VERSION = "QSF_1_1_MASTER_SPECIFICATION"
 
 MARKETS = ("US", "KR")

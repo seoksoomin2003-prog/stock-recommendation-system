@@ -9,6 +9,7 @@ A fetch that returns None or an empty payload counts as a failure (missing is ne
 import hashlib
 import json
 import os
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -38,7 +39,7 @@ class FileCache:
         self.root.mkdir(parents=True, exist_ok=True)
         rec = {"key": key, "stored_at": self.clock(), "data": data}
         p = self._path(key)
-        tmp = p.with_suffix(".tmp")
+        tmp = p.with_suffix(f".{os.getpid()}.{threading.get_ident()}.tmp")     # concurrent requests can write one key
         tmp.write_text(json.dumps(rec, ensure_ascii=False, default=str), encoding="utf-8")
         os.replace(tmp, p)
         return rec

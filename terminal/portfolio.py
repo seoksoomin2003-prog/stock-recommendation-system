@@ -15,13 +15,40 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-KINDS = ("DEPOSIT", "WITHDRAW", "BUY", "SELL", "DIVIDEND", "FEE", "PLAN", "VOID")
+KINDS = ("DEPOSIT", "WITHDRAW", "BUY", "SELL", "DIVIDEND", "FEE", "PLAN", "STYLE", "VOID")
+STYLES = ("LONG", "SWING")
+STYLE_KO = {"LONG": "장기", "SWING": "스윙"}
 GENESIS = "0" * 64
 EPS = 1e-9
+# risk_per_trade_pct and max_position_pct apply until a position is tagged.  Values chosen by the user on 2026-11-05.
 DEFAULT_SETTINGS = {"risk_per_trade_pct": 1.0, "max_position_pct": 20.0, "max_sector_pct": 40.0,
-                    "near_stop_pct": 3.0}
+                    "near_stop_pct": 3.0, "risk_long_pct": 2.0, "max_position_long_pct": 25.0,
+                    "risk_swing_pct": 1.0, "max_position_swing_pct": 10.0, "target_long_pct": 70.0,
+                    "style_drift_pct": 10.0, "stop_atr_long": 5.0, "stop_atr_swing": 2.0}
 SETTING_BOUNDS = {"risk_per_trade_pct": (0.05, 10.0), "max_position_pct": (1.0, 100.0),
-                  "max_sector_pct": (5.0, 100.0), "near_stop_pct": (0.5, 20.0)}
+                  "max_sector_pct": (5.0, 100.0), "near_stop_pct": (0.5, 20.0),
+                  "risk_long_pct": (0.05, 10.0), "max_position_long_pct": (1.0, 100.0),
+                  "risk_swing_pct": (0.05, 10.0), "max_position_swing_pct": (1.0, 100.0),
+                  "target_long_pct": (0.0, 100.0), "style_drift_pct": (1.0, 50.0),
+                  "stop_atr_long": (0.5, 20.0), "stop_atr_swing": (0.5, 20.0)}
+
+
+def limits_for(style: Optional[str], st: Dict[str, float]) -> Dict[str, float]:
+    """Settings with the risk and weight limits of one style; an untagged position keeps the general ones."""
+    if style == "LONG":
+        return {**st, "risk_per_trade_pct": st["risk_long_pct"], "max_position_pct": st["max_position_long_pct"]}
+    if style == "SWING":
+        return {**st, "risk_per_trade_pct": st["risk_swing_pct"], "max_position_pct": st["max_position_swing_pct"]}
+    return dict(st)
+
+
+def _style(v) -> Optional[str]:
+    if v in (None, ""):
+        return None
+    s = str(v).upper()
+    if s not in STYLES:
+        raise JournalError("구분은 장기 또는 스윙이어야 합니다.")
+    return s
 
 
 class JournalError(ValueError):
@@ -61,7 +88,7 @@ def normalize(raw: Dict[str, Any], today: date, clean_ticker) -> Dict[str, Any]:
         if d > today:
             raise JournalError("미래 날짜는 기록할 수 없습니다.")
         e["date"] = d.isoformat()
-    if kind in ("BUY", "SELL", "DIVIDEND", "PLAN"):
+    if kind in ("BUY", "SELL", "DIVIDEND", "PLAN", "STYLE"):
         try:
             e["ticker"] = clean_ticker(raw.get("ticker", ""))
         except ValueError:
@@ -83,7 +110,13 @@ def normalize(raw: Dict[str, Any], today: date, clean_ticker) -> Dict[str, Any]:
         e["target"] = _opt_pos(raw.get("target"), "목표가")
         if e["stop"] and e["target"] and e["target"] <= e["stop"]:
             raise JournalError("목표가는 손절가보다 높아야 합니다.")
+    if kind == "STYLE":
+        e["style"] = _style(raw.get("style"))
+        if not e["style"]:
+            raise JournalError("변경할 구분을 선택하세요.")
     if kind == "BUY":
+        if _style(raw.get("style")):
+            e["style"] = _style(raw.get("style"))
         e["stop"] = _opt_pos(raw.get("stop"), "손절가")
         e["target"] = _opt_pos(raw.get("target"), "목표가")
         if e["stop"] and e["stop"] >= e["price"]:
@@ -183,7 +216,11 @@ def replay(recs: List[Dict[str, Any]], until: Optional[str] = None) -> Dict[str,
             cost = r["qty"] * r["price"] + r["fee"]
             cash -= cost; fees += r["fee"]
             p = pos.setdefault(r["ticker"], {"qty": 0.0, "cost": 0.0, "opened": r["date"], "dividends": 0.0,
-                                             "realized": 0.0})
+                                             "realized": 0.0, "style": None, "style_since": r["date"]})
+            if r.get("style"):
+                if p["style"] and p["style"] != r["style"]:
+                    raise JournalError(f"{r['ticker']}는 {STYLE_KO[p['style']]}으로 보유 중입니다. 한 종목은 한 구분으로만 보유하므로 구분 변경을 먼저 기록하세요.")
+                p["style"] = r["style"]
             p["qty"] += r["qty"]; p["cost"] += cost
             if r.get("stop") or r.get("target"):
                 plans[r["ticker"]] = {"stop": r.get("stop"), "target": r.get("target"), "date": r["date"]}
@@ -196,12 +233,18 @@ def replay(recs: List[Dict[str, Any]], until: Optional[str] = None) -> Dict[str,
             cash += r["qty"] * r["price"] - r["fee"]; fees += r["fee"]; realized += pnl; p["realized"] += pnl
             closed.append({"date": r["date"], "ticker": r["ticker"], "qty": r["qty"], "price": r["price"],
                            "avg_cost": avg, "pnl": pnl, "return_pct": (r["price"] / avg - 1) * 100,
-                           "opened": p["opened"], "hold_days": (date.fromisoformat(r["date"])
+                           "opened": p["opened"], "style": p["style"], "hold_days": (date.fromisoformat(r["date"])
                                                                 - date.fromisoformat(p["opened"])).days})
             p["qty"] -= r["qty"]; p["cost"] -= avg * r["qty"]
             if p["qty"] <= EPS:
                 del pos[r["ticker"]]
                 plans.pop(r["ticker"], None)
+        elif k == "STYLE":
+            if r["ticker"] not in pos:
+                raise JournalError(f"{r['ticker']}는 {r['date']} 기준 보유 중이 아니어서 구분을 바꿀 수 없습니다.")
+            if pos[r["ticker"]]["style"] != r["style"]:
+                pos[r["ticker"]]["style"] = r["style"]
+                pos[r["ticker"]]["style_since"] = r["date"]    # a swing's time limit counts from here
         elif k == "PLAN":
             if r["ticker"] not in pos:
                 raise JournalError(f"{r['ticker']}는 {r['date']} 기준 보유 중이 아니어서 손절·목표를 설정할 수 없습니다.")
@@ -231,7 +274,7 @@ def valuation(state: Dict[str, Any], quotes: Dict[str, Dict[str, Any]], sectors:
                "day_pnl": (close - prev) * p["qty"] if prev is not None else None,
                "change_pct": q.get("change_pct"), "opened": p["opened"], "realized": p["realized"],
                "dividends": p["dividends"], "sector": sectors.get(t), "stop": plan.get("stop"),
-               "target": plan.get("target")}
+               "target": plan.get("target"), "style": p.get("style"), "style_since": p.get("style_since")}
         if val is None:
             missing.append(t)
         else:
@@ -262,12 +305,35 @@ def valuation(state: Dict[str, Any], quotes: Dict[str, Dict[str, Any]], sectors:
                "risk_to_stops_pct": risk_total / equity * 100 if complete and equity > 0 else None,
                "unprotected": [r["ticker"] for r in rows if not r["stop"]]}
     summary["total_pnl"] = (equity - summary["net_deposits"]) if complete else None
+    styles = style_summary(rows, equity if complete else None, settings)
+    summary["styles"] = styles
     return {"summary": summary, "holdings": rows, "sectors": dict(sorted(sector_w.items(), key=lambda x: -x[1])),
-            "alerts": alerts(rows, sector_w, settings)}
+            "alerts": alerts(rows, sector_w, settings, styles)}
 
 
-def alerts(rows: List[Dict[str, Any]], sector_w: Dict[str, float], st: Dict[str, float]) -> List[Dict[str, Any]]:
+def style_summary(rows: List[Dict[str, Any]], equity: Optional[float], st: Dict[str, float]) -> Dict[str, Any]:
+    """Share of the tagged stock value in each style.  Cash is left out, so an account still mostly in cash is not 'off target'."""
+    known = {s: [r for r in rows if r.get("style") == s] for s in STYLES}
+    complete = all(r["value"] is not None for r in rows)
+    tagged = sum(r["value"] or 0.0 for s in STYLES for r in known[s])
+    out: Dict[str, Any] = {"target_long_pct": st["target_long_pct"], "target_swing_pct": 100.0 - st["target_long_pct"], "complete": complete,
+                           "untagged": [r["ticker"] for r in rows if not r.get("style")]}
+    for s in STYLES:
+        value = sum(r["value"] or 0.0 for r in known[s])
+        cost = sum(r["cost"] for r in known[s] if r["value"] is not None)
+        out[s] = {"count": len(known[s]), "value": value if complete else None, "unrealized": sum(r["unrealized"] or 0.0 for r in known[s]),
+                  "unrealized_pct": (value / cost - 1) * 100 if cost > 0 else None,
+                  "share_pct": value / tagged * 100 if complete and tagged > 0 else None,
+                  "weight_pct": value / equity * 100 if complete and equity and equity > 0 else None}
+    return out
+
+
+def alerts(rows: List[Dict[str, Any]], sector_w: Dict[str, float], st: Dict[str, float], styles: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     out = []
+    share = ((styles or {}).get("LONG") or {}).get("share_pct")
+    if share is not None and abs(share - st["target_long_pct"]) > st["style_drift_pct"]:
+        out.append({"level": "warn", "code": "STYLE_DRIFT", "ticker": None,
+                    "text": f"주식 평가액 중 장기 비중 {share:.0f}%가 목표 {st['target_long_pct']:.0f}%에서 {st['style_drift_pct']:.0f}%p 넘게 벗어났습니다."})
     for r in rows:
         t, c, s, g = r["ticker"], r["close"], r["stop"], r["target"]
         if c is None:
@@ -284,9 +350,12 @@ def alerts(rows: List[Dict[str, Any]], sector_w: Dict[str, float], st: Dict[str,
                         "text": f"{t}: 종가 {c:,.2f}가 목표가 {g:,.2f}에 도달했습니다."})
         if not s:
             out.append({"level": "warn", "code": "NO_STOP", "ticker": t, "text": f"{t}: 손절가가 설정되지 않았습니다."})
-        if r["weight_pct"] is not None and r["weight_pct"] > st["max_position_pct"]:
+        limit = limits_for(r.get("style"), st)["max_position_pct"]
+        if r["weight_pct"] is not None and r["weight_pct"] > limit:
             out.append({"level": "warn", "code": "OVERWEIGHT", "ticker": t,
-                        "text": f"{t}: 비중 {r['weight_pct']:.1f}%가 종목 한도 {st['max_position_pct']:.0f}%를 넘습니다."})
+                        "text": f"{t}: 비중 {r['weight_pct']:.1f}%가 종목 한도 {limit:.0f}%를 넘습니다."})
+        if not r.get("style"):
+            out.append({"level": "warn", "code": "NO_STYLE", "ticker": t, "text": f"{t}: 장기·스윙 구분이 없어 보유 판정을 계산하지 않습니다."})
     for sec, w in sector_w.items():
         if w > st["max_sector_pct"]:
             out.append({"level": "warn", "code": "SECTOR_OVER", "ticker": None,

@@ -222,6 +222,9 @@ def evaluate_exit(res: Dict, ctx: Dict, position: Dict[str, Any], today: date) -
         if (res["domains"]["REGIME"]["score_100"] or 100) < 25:
             hit("REGIME_SEVERE", "REDUCE", f"시장 국면 점수가 {res['domains']['REGIME']['score_100']:.0f}/100으로 급악화했습니다.")
     else:
+        # Price alone is not a long-term exit rule.  This one exists because the user requires a stop and chose this reading of it.
+        if stop and close <= stop:
+            hit("STOP_BREACH", "EXIT", f"종가 {close:,.2f}가 직접 정한 손절가 {stop:,.2f} 이하입니다.")
         f = ctx.get("fund") or {}
         if f.get("roe") is not None and f.get("roe_prev") is not None and f["roe"] < f["roe_prev"] - 0.05 and f["roe"] < 0.08:
             hit("PROFITABILITY_DOWN", "THESIS_INVALIDATED", f"ROE가 {f['roe_prev'] * 100:.1f}%에서 {f['roe'] * 100:.1f}%로 하락했습니다.")
@@ -246,7 +249,7 @@ def evaluate_exit(res: Dict, ctx: Dict, position: Dict[str, Any], today: date) -
     order = ["EXIT", "THESIS_INVALIDATED", "REDUCE", "PARTIAL_TAKE_PROFIT", "TIME_STOP_REVIEW", "HOLD_AND_REVIEW", "HOLD"]
     action = next((a for a in order if any(h["action"] == a for h in hits)), "HOLD")
     must = "손절선과 추세가 유지되어야 합니다." if strategy == "SWING" else "수익성, 현금흐름, 재무 건전성이 유지되어야 합니다."
-    return {"action": action, "conditions": hits, "reason": hits[0]["text"] if hits and action != "HOLD" else f"청산 조건에 해당하지 않습니다. {must}"}
+    return {"action": action, "conditions": hits, "reason": next(h["text"] for h in hits if h["action"] == action) if action != "HOLD" else f"청산 조건에 해당하지 않습니다. {must}"}
 
 
 def what_would_change(res: Dict) -> List[str]:

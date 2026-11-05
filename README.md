@@ -352,6 +352,24 @@ Specification: `reports/TERMINAL_3_SPECIFICATION.md`.
 | `data/terminal/` | terminal cache, watchlist, trade journal `journal.jsonl` and risk settings (local, private, ignored by git) |
 | `reports/` | phase reports, roadmap, test results |
 
+### Long-term and swing positions
+
+Every position is either 장기 or 스윙, and one ticker has one style at a time. Choose it on the first buy; a 구분 변경 record changes it later,
+and the history stays append-only. The portfolio tab shows a table for each, and the 매매 보조 tab holds these settings:
+
+| Setting | 장기 | 스윙 |
+|---|---:|---:|
+| Risk per trade | 2% | 1% |
+| Maximum weight per stock | 25% | 10% |
+| Suggested stop in the calculator | 5 ATR | 2 ATR |
+| Target share of stock value | 70% | 30% |
+
+* A stop is expected on both styles; a position without one raises a warning.
+* The target compares tagged stock value only, so cash does not count as being off target. A gap over 10 points raises a warning.
+* Each holding gets a QSF reading from its own profile. QSF is experimental, and no reading places an order.
+* The daily Telegram summary carries 청산 검토, 투자 논리 무효, 비중 축소 검토, 일부 차익 실현 검토 and 시간 손절 재평가. 보유하며 재검토 stays on the screen.
+* A swing's 30-session time limit counts from the day it became a swing.
+
 ### QSF 1.1 stock score (experimental)
 
 The 점수 tab and `qsf` commands score a chosen stock from 0 to 100 under four separate profiles: `US_SWING_V1`, `US_LONG_TERM_V1`,

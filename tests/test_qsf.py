@@ -257,7 +257,10 @@ def test_swing_target_and_time_stop():
 
 def test_long_term_price_drop_alone_does_not_exit_but_thesis_does():
     r, c = run("LONG_TERM", bars=bars(drift=-0.002))
-    assert holding.evaluate_exit(r, c, {"stop": 99999.0, "opened": "2020-01-01"}, date(2026, 11, 5))["action"] not in ("EXIT", "THESIS_INVALIDATED")
+    assert holding.evaluate_exit(r, c, {"opened": "2020-01-01"}, date(2026, 11, 5))["action"] not in ("EXIT", "THESIS_INVALIDATED")
+    # The one price rule: a stop the user set on a long-term holding.
+    e = holding.evaluate_exit(r, c, {"stop": 99999.0, "opened": "2020-01-01"}, date(2026, 11, 5))
+    assert e["action"] == "EXIT" and "직접 정한 손절가" in e["reason"]
     r2, c2 = run("LONG_TERM", fund={**GOOD_FUND, "share_change": 0.2})
     assert holding.evaluate_exit(r2, c2, {"opened": "2024-01-01"}, date(2026, 11, 5))["action"] == "THESIS_INVALIDATED"
 

@@ -19,6 +19,7 @@
 ## 장기
 | 조건 | 행동 |
 |---|---|
+| 종가 ≤ 사용자가 정한 손절가 (QSF-1.1.2, 사용자 결정) | EXIT |
 | ROE 5%p 넘게 하락하고 8% 미만 | THESIS_INVALIDATED |
 | 주식 수 1년 10% 초과 증가 | THESIS_INVALIDATED |
 | 재무 복원력 < 20/100 | REDUCE |

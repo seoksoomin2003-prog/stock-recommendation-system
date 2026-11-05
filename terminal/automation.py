@@ -188,7 +188,14 @@ class Daily:
         if pf["integrity"]["status"] != "OK":
             return {"status": "INTEGRITY", "items": [], "stale": []}
         stale = [f"{h['ticker']} ({h['date'] or '시세 없음'})" for h in pf["holdings"] if h["status"] != "REAL"]
-        return {"status": "OK", "items": pf["alerts"], "stale": stale}
+        out = {"status": "OK", "items": list(pf["alerts"]), "stale": stale}
+        if pf["holdings"]:
+            try:
+                out["items"] += exit_alerts(self._terminal.portfolio_signals()["items"])
+                out["items"].sort(key=lambda a: {"bad": 0, "warn": 1, "info": 2}[a["level"]])
+            except Exception:
+                out["signals_failed"] = True
+        return out
 
     def missing_sessions(self, session: str) -> List[str]:
         from terminal.lab.service import Lab
@@ -225,6 +232,8 @@ class Daily:
             if old:
                 lines.append("계속되는 경고:")
                 lines += [f"  · {a['text']}" for a in old]
+        if alerts.get("signals_failed"):
+            lines.append("⚠️ 보유 종목 판정을 계산하지 못했습니다.")
         if alerts.get("stale"):
             lines.append("오래되었거나 없는 시세로 계산: " + ", ".join(alerts["stale"]))
         if missing:
@@ -278,6 +287,25 @@ class Daily:
                           "macos": out["macos"], "missing_sessions": missing}
         self._save(st)
         return out
+
+
+# What reaches Telegram, as chosen by the user: readings that call for an action.  HOLD_AND_REVIEW stays on the screen.
+EXIT_ALERTS = {"EXIT": ("bad", "청산 검토"), "THESIS_INVALIDATED": ("bad", "투자 논리 무효"), "REDUCE": ("warn", "비중 축소 검토"),
+               "PARTIAL_TAKE_PROFIT": ("info", "일부 차익 실현 검토"), "TIME_STOP_REVIEW": ("warn", "시간 손절 재평가")}
+
+
+def exit_alerts(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    out = []
+    for s in items:
+        if s.get("status") != "REAL" or s["exit"]["action"] not in EXIT_ALERTS:
+            continue
+        action = s["exit"]["action"]
+        own = [c["code"] for c in s["exit"]["conditions"] if c["action"] == action]
+        if own and set(own) <= {"STOP_BREACH", "CONCENTRATION"}:
+            continue                       # the portfolio's own stop and weight alerts already say this
+        level, label = EXIT_ALERTS[action]
+        out.append({"level": level, "code": f"QSF_{action}", "ticker": s["ticker"], "text": f"{s['ticker']}: {label}. {s['exit']['reason']}"})
+    return out
 
 
 def _key(a: Dict[str, Any]) -> str:

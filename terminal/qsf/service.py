@@ -282,7 +282,8 @@ class QSF:
         if not p:
             return None
         plan = state["plans"].get(ticker) or {}
-        return {"avg_cost": p["avg"], "opened": p["opened"], "qty": p["qty"], "stop": plan.get("stop"), "target": plan.get("target")}
+        # A position that became a swing later counts its time limit from that change.
+        return {"avg_cost": p["avg"], "opened": p.get("style_since") or p["opened"], "qty": p["qty"], "stop": plan.get("stop"), "target": plan.get("target"), "style": p.get("style")}
 
     def context(self, ticker: str, market: str, prefetched: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         pre = prefetched or {}
@@ -346,8 +347,30 @@ class QSF:
         if ctx.get("error"):
             return {"status": "UNAVAILABLE", "ticker": ticker, "market": market, "reason": ctx["reason"]}
         pos = self._position(ticker) if market == "US" else None
-        cards = {s: self.card(ctx, s, pos) for s in strategies}
-        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "cards": cards, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
+        own = config.STYLE_TO_STRATEGY.get((pos or {}).get("style"))
+        cards = {s: self.card(ctx, s, pos if own in (None, s) else None) for s in strategies}
+        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
+
+    def signal(self, ticker: str, weight_pct: Optional[float] = None, max_weight_pct: Optional[float] = None) -> Dict[str, Any]:
+        """Score and exit reading of one held position, under the profile of its own style only."""
+        pos = self._position(ticker)
+        if not pos or not pos.get("style"):
+            return {"status": "NO_STYLE", "ticker": ticker}
+        ctx = self.context(ticker, "US")
+        if ctx.get("error"):
+            return {"status": "UNAVAILABLE", "ticker": ticker, "reason": ctx["reason"]}
+        strategy = config.STYLE_TO_STRATEGY[pos["style"]]
+        c = self.card(ctx, strategy, {**pos, "weight_pct": weight_pct, "max_weight_pct": max_weight_pct})
+        out = {"status": "REAL", "ticker": ticker, "style": pos["style"], "strategy": strategy, "score": c["score"], "band_label": c["band_label"], "confidence": c["confidence"],
+               "coverage": c["coverage"], "data_date": c["data_date"], "gates": c["gates"], "exit": c["exit"], "earnings_date": (ctx.get("earnings") or {}).get("date")}
+        if strategy == "SWING":
+            step = holding.stepper("US")
+            limit = holding.add_sessions(date.fromisoformat(pos["opened"]), config.SWING["time_stop"], step)
+            d, left = self.now().date(), 0
+            while d < limit:
+                d, left = step(d), left + 1
+            out.update(time_limit=limit.isoformat(), sessions_left=left)
+        return out
 
     def p6_reference(self, ticker: str) -> Dict[str, Any]:
         """Read-only display from the latest P6-11B full scan.  Deliberately not an input to any QSF score."""

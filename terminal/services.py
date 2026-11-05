@@ -348,6 +348,17 @@ class Terminal:
         entry = pf.normalize(raw or {}, self._today_et(), clean_ticker)
         return {"entry": self.journal.append(entry, self.now())}
 
+    def portfolio_signals(self) -> Dict[str, Any]:
+        """QSF reading of each holding, kept apart from /api/portfolio because the first run reads SEC filings."""
+        _, integ, _, val, _, _ = self._valued()
+        st, items = self.settings(), []
+        for h in val["holdings"]:
+            try:
+                items.append(self.qsf.signal(h["ticker"], h["weight_pct"], pf.limits_for(h["style"], st)["max_position_pct"]))
+            except Exception as exc:              # one unreadable stock never hides the others
+                items.append({"status": "UNAVAILABLE", "ticker": h["ticker"], "reason": type(exc).__name__})
+        return {"status": integ["status"], "items": items, "note": "QSF 점수는 실험 단계이며 예측력이 검증되지 않았습니다. 주문을 실행하지 않습니다."}
+
     def journal_void(self, ref: str) -> Dict[str, Any]:
         return {"entry": self.journal.append({"kind": "VOID", "ref": str(ref or "")}, self.now())}
 
@@ -378,6 +389,7 @@ class Terminal:
         journal = [{**r, "voided": r["id"] in gone} for r in
                    sorted(recs, key=lambda r: (r.get("date") or r["recorded_at"][:10], r["seq"]), reverse=True)]
         return {"integrity": integ, **val, "stats": pf.trade_stats(state["closed"]), "closed": state["closed"][::-1],
+                "stats_by_style": {s: pf.trade_stats([c for c in state["closed"] if c.get("style") == s]) for s in pf.STYLES},
                 "journal": journal, "settings": self.settings(),
                 "fx": {"usdkrw": fx.get("close"), "date": fx.get("date"), "status": fx.get("status", "UNAVAILABLE")},
                 "cache": cache, "source": "사용자 거래 기록 + Yahoo Finance 일봉 종가(지연)",
@@ -400,10 +412,12 @@ class Terminal:
                 "fetched_at": res["fetched_at"], "source": "거래 기록 재계산 + Yahoo 일봉 종가, 비교 지수 SPY",
                 "method": "시간가중수익률(TWR): 입출금 효과를 제외한 일별 수익률의 누적"}
 
-    def sizing(self, ticker: str = "", entry=None, stop=None, equity=None) -> Dict[str, Any]:
+    def sizing(self, ticker: str = "", entry=None, stop=None, equity=None, style=None) -> Dict[str, Any]:
         _, integ, state, val, _, _ = self._valued()
-        st = self.settings()
-        out: Dict[str, Any] = {"settings": st, "equity": val["summary"]["equity"], "cash": state["cash"]}
+        style = pf._style(style) or (state["positions"].get(clean_ticker(ticker)) or {}).get("style") if ticker else pf._style(style)
+        st = pf.limits_for(style, self.settings())
+        atr_n = st.get(f"stop_atr_{(style or 'SWING').lower()}", 2.0)
+        out: Dict[str, Any] = {"settings": st, "style": style, "stop_atr": atr_n, "equity": val["summary"]["equity"], "cash": state["cash"]}
         last, a = None, None
         if ticker:
             t = clean_ticker(ticker)
@@ -413,13 +427,13 @@ class Terminal:
                 res = self.cache.cached(f"chart:{t}:2y", TTL["chart"], lambda: self.src.yahoo_history([t], "2y"))
                 a = pf.atr((res["data"] or {}).get(t) or [])
             out.update(ticker=t, last_close=last, last_date=(c.get("last") or {}).get("date"), atr14=a,
-                       suggested_stop=(last - 2 * a) if last is not None and a else None,
+                       suggested_stop=(last - atr_n * a) if last is not None and a else None,
                        held_qty=(state["positions"].get(t) or {}).get("qty"))
         e = pf._opt_pos(entry, "진입가") or last
         s = pf._opt_pos(stop, "손절가") or out.get("suggested_stop")
         if e is None or s is None:
             out["result"] = None
-            out["reason"] = "진입가와 손절가를 입력하세요 (종목 코드를 넣으면 최근 종가와 2 ATR 손절가를 제안합니다)."
+            out["reason"] = f"진입가와 손절가를 입력하세요 (종목 코드를 넣으면 최근 종가와 {atr_n:g} ATR 손절가를 제안합니다)."
             return out
         manual = pf._opt_pos(equity, "계좌 금액")
         if manual:                       # hypothetical account (e.g. before any trade is recorded): all cash
@@ -429,7 +443,7 @@ class Terminal:
         else:
             out["equity_source"] = "거래 기록"
         out["result"] = pf.position_size(out["equity"], out["cash"], e, s, st)
-        out["stop_source"] = "입력값" if stop not in (None, "") else "2 ATR(14일) 제안값"
+        out["stop_source"] = "입력값" if stop not in (None, "") else f"{atr_n:g} ATR(14일) 제안값"
         return out
 
     def model_plan(self) -> Dict[str, Any]:

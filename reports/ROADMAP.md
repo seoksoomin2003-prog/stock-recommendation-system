@@ -94,7 +94,9 @@ The "Official status" column is the status the directive assigns. The "State at 
 | TERMINAL-1..4 (market, stock, macro, portfolio, challengers, automation, Telegram, backup) | implemented, committed through `faf461a` | `reports/TERMINAL_4_SPECIFICATION.md` |
 | QSF 1.1 scoring, holding-period and exit engine (US and KR) | implemented, **EXPERIMENTAL**; predictive power not validated | `reports/QSF_1_1_IMPLEMENTATION_REPORT.md` |
 
-Next, in the order the user set: portfolio core vs swing tagging linked to QSF profiles, then the Korean market across the terminal.
+| Portfolio long-term and swing tagging, per-style limits, target weight, exit readings, alerts | implemented, tested | `tests/test_portfolio_style.py`, README section 5 |
+
+Next, in the order the user set: the Korean market across the terminal.
 QSF follow-ups: quarterly and TTM fundamentals, sector-relative normalization, a full-model historical check on point-in-time fundamentals.
 
 ## Next tasks (candidates, not started)
