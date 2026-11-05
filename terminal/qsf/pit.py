@@ -5,15 +5,25 @@ what had been filed by ``as_of``.  TTM = last fiscal year + current year-to-date
 """
 from bisect import bisect_right
 from datetime import date, timedelta
+from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
-from terminal.qsf.fundamentals import US_FLOW, US_INSTANT, _days
+from terminal.qsf.fundamentals import US_FLOW, US_INSTANT
 
 FORMS = ("10-K", "10-K/A", "10-Q", "10-Q/A")
 FLOW_NOT_SUMMABLE = ("shares_avg", "eps")
 SECTOR_KEYS = {"pe": False, "pb": False, "fcf_yield": True, "roe": True, "op_margin": True, "gross_margin": True, "rev_growth": True, "eps_growth": True,
                "rev_cagr3": True, "eps_cagr3": True, "fcf_margin": True, "debt_equity": False}      # True: higher is better
 MIN_PEERS = 5
+HISTORY_DAYS = 6 * 365 + 30      # the yearly view never reaches further back than this
+# Candidate only.  Older filings of about a fifth of the universe (KO, XOM, VLO, CI...) tag revenue with these.  They come last,
+# so they fill a period only when no total-revenue concept reported it.
+EXTRA_REVENUE = ["SalesRevenueGoodsNet", "SalesRevenueServicesNet", "RealEstateRevenueNet", "RegulatedAndUnregulatedOperatingRevenue", "HealthCareOrganizationRevenue"]
+_date = lru_cache(maxsize=20000)(date.fromisoformat)
+
+
+def _days(a: str, b: str) -> int:
+    return (_date(b) - _date(a)).days
 
 
 def extract_full(facts: Dict[str, Any]) -> Dict[str, List[Dict]]:
@@ -38,7 +48,7 @@ def extract_full(facts: Dict[str, Any]) -> Dict[str, List[Dict]]:
                     got.setdefault(f"{r.get('start')}|{r['end']}|{r['filed']}", rec)
         out[metric] = sorted(got.values(), key=lambda x: (x["end"], x["filed"]))
     for m, c in US_FLOW.items():
-        collect(m, c, True)
+        collect(m, c + EXTRA_REVENUE if m == "revenue" else c, True)
     for m, c in US_INSTANT.items():
         collect(m, c, False)
     return out
@@ -46,8 +56,9 @@ def extract_full(facts: Dict[str, Any]) -> Dict[str, List[Dict]]:
 
 def _latest(rows: List[Dict], as_of: str) -> Dict[Tuple, Dict]:
     per: Dict[Tuple, Dict] = {}
+    oldest = (_date(as_of) - timedelta(days=HISTORY_DAYS)).isoformat()
     for r in rows:
-        if r["filed"] <= as_of:
+        if r["filed"] <= as_of and r["end"] >= oldest:
             k = (r.get("start"), r["end"])
             if k not in per or r["filed"] >= per[k]["filed"]:
                 per[k] = r
@@ -57,7 +68,7 @@ def _latest(rows: List[Dict], as_of: str) -> Dict[Tuple, Dict]:
 def _near(rows: List[Dict], key: str, target: date, tol: int = 12) -> Optional[Dict]:
     best, gap = None, tol + 1
     for r in rows:
-        g = abs((date.fromisoformat(r[key]) - target).days)
+        g = abs((_date(r[key]) - target).days)
         if g < gap:
             best, gap = r, g
     return best
@@ -74,10 +85,10 @@ def ttm_points(rows: List[Dict], as_of: str) -> List[Dict]:
         if r["end"] not in out and (r["end"] not in longest or r["start"] < longest[r["end"]]["start"]):
             longest[r["end"]] = r
     for end, r in longest.items():
-        start, stop = date.fromisoformat(r["start"]), date.fromisoformat(end)
+        start, stop = _date(r["start"]), _date(end)
         last_fy = _near(fy, "end", start - timedelta(days=1))
         same = [x for x in ytd if abs(_days(x["start"], x["end"]) - _days(r["start"], end)) <= 15]
-        same = [x for x in same if abs((date.fromisoformat(x["end"]) - (stop - timedelta(days=365))).days) <= 12]
+        same = [x for x in same if abs((_date(x["end"]) - (stop - timedelta(days=365))).days) <= 12]
         prior = _near(same, "start", start - timedelta(days=365))
         if last_fy and prior:
             out[end] = {"end": end, "val": last_fy["val"] + r["val"] - prior["val"], "filed": max(last_fy["filed"], r["filed"], prior["filed"])}
@@ -88,14 +99,14 @@ def _yearly(points: List[Dict]) -> List[Dict]:
     """Walk back from the latest point one year at a time, so a year-over-year formula compares like with like."""
     if not points:
         return []
-    out, cur = [points[-1]], date.fromisoformat(points[-1]["end"])
+    out, cur = [points[-1]], _date(points[-1]["end"])
     while True:
         cur -= timedelta(days=365)
         hit = _near([p for p in points if p["end"] < out[-1]["end"]], "end", cur, 45)
         if not hit:
             return out[::-1]
         out.append(hit)
-        cur = date.fromisoformat(hit["end"])
+        cur = _date(hit["end"])
 
 
 def _latest_reported(rows: List[Dict], as_of: str) -> List[Dict]:
