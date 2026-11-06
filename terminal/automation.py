@@ -27,10 +27,10 @@ STEP_TIMEOUT = 45 * 60
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
 OK, FAILED, SKIPPED = "OK", "FAILED", "SKIPPED"
-STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "BACKUP": "백업"}
+STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "BACKUP": "백업"}
 BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
-                "tracking/kr/*.jsonl", "data/qsf/ledger/index.jsonl")
+                "tracking/kr/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl")
 
 
 def backup_root() -> Path:
@@ -61,6 +61,15 @@ def backup(base: Path, day: str, root: Optional[Path] = None) -> Dict[str, Any]:
         dst = mirror / src.name
         if not dst.exists():
             mirror.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+            if _sha(src) != _sha(dst):
+                raise OSError("backup verification failed")
+            n += 1
+    # Daily news files grow only on a retry of the same day, so a copy of a different size is replaced.
+    for src in sorted((base / "data" / "news").glob("*/*.jsonl.gz")):
+        dst = root / "news" / src.parent.name / src.name
+        if not dst.exists() or dst.stat().st_size != src.stat().st_size:
+            dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
             if _sha(src) != _sha(dst):
                 raise OSError("backup verification failed")
@@ -162,6 +171,9 @@ class Daily:
             if name == "QSF_KR":
                 rc = self.runner(name, ["--market", "KR", "qsf", "scan"])
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else f"코드 {rc}"}
+            if name in ("NEWS", "NEWS_KR"):
+                rc = self.runner(name, ["news", "record"] if name == "NEWS" else ["--market", "KR", "news", "record"])
+                return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "점수 기록 없음" if rc == 3 else f"코드 {rc}"}
             res = backup(self.base, session, self.backup_dir)
             return {"status": OK, "at": at, "detail": f"{res['files']}개 파일"}
         except Exception as exc:                                    # one failed step never stops the others

@@ -15,7 +15,7 @@ from urllib.parse import parse_qs, urlparse
 from terminal.services import Terminal
 
 STATIC = Path(__file__).resolve().parent / "static"
-from terminal import automation, record_status  # noqa: E402
+from terminal import automation, record_status, today  # noqa: E402
 
 HOST = "127.0.0.1"
 log = logging.getLogger("terminal")
@@ -57,6 +57,7 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/qsf/latest"): lambda q, b: t.qsf.latest(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/validation"): lambda q, b: t.qsf.validation(),
         ("GET", "/api/record"): lambda q, b: record_status.build(t),
+        ("GET", "/api/today"): lambda q, b: today.build(t, q.get("t", ""), _market(q.get("market", "US"))),
         ("GET", "/api/lab/compare"): lambda q, b: t.lab.comparison(),
         ("GET", "/api/lab/research"): lambda q, b: t.lab.research(),
         ("POST", "/api/lab/run"): lambda q, b: t.lab.run_background(),

@@ -65,16 +65,16 @@ def test_runs_each_step_once_per_session(tmp_path, monkeypatch):
     monkeypatch.setenv("QPP_CAPITAL", "1000")
     d, calls, sent = make(tmp_path)
     assert d.run()["status"] == "DONE"
-    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR"] and len(sent) == 1
+    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR"] and len(sent) == 1
     assert d.run()["status"] == "UP_TO_DATE"              # the next firing the same day does nothing
-    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR"] and len(sent) == 1
+    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR"] and len(sent) == 1
 
 
 def test_failed_step_retries_alone_and_others_still_run(tmp_path, monkeypatch):
     monkeypatch.setenv("QPP_CAPITAL", "1000")
     d, calls, sent = make(tmp_path, rc={"SCAN": 2})
     d.run()
-    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR"] and "❌ P6-11B 스캔" in sent[0]
+    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR"] and "❌ P6-11B 스캔" in sent[0]
     d2, calls2, sent2 = make(tmp_path)
     d2.run()
     assert calls2 == ["SCAN"] and "✅ P6-11B 스캔" in sent2[0]

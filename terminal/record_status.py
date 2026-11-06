@@ -14,7 +14,7 @@ TRADING_DAYS_PER_YEAR = 252
 BASELINE_TARGET = 30
 BEHIND_ALERT = 2      # the record of a finished session is written at the next morning's run, so one session behind is normal
 PRIMARY = {"SWING": 20, "LONG_TERM": 252}
-STEP_LABELS = {"LAB": "도전자 기록", "SCAN": "기준 모델 스캔", "TRACK": "기준 모델 추적", "QSF": "QSF 기록(미국)", "QSF_KR": "QSF 기록(한국)", "BACKUP": "백업"}
+STEP_LABELS = {"LAB": "도전자 기록", "SCAN": "기준 모델 스캔", "TRACK": "기준 모델 추적", "QSF": "QSF 기록(미국)", "QSF_KR": "QSF 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "BACKUP": "백업"}
 
 
 def horizons() -> Dict[str, List[int]]:

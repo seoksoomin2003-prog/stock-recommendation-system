@@ -52,3 +52,6 @@ data/terminal/
 data/lab/
 data/automation/
 data/qsf/
+
+# News headline record (runtime data)
+data/news/

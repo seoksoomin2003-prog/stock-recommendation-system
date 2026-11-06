@@ -511,6 +511,8 @@ def build_parser() -> argparse.ArgumentParser:
     db.add_argument("--open", action="store_true")
     lb = sub.add_parser("lab", help="Challenger models beside the frozen P6-11B (TERMINAL-3)")
     lb.add_argument("action", choices=["update", "status", "compare"])
+    nw = sub.add_parser("news", help="Record free news headlines of the scanned stocks (feeds no score)")
+    nw.add_argument("action", choices=["record"])
     qs = sub.add_parser("qsf", help="QSF 1.1: 0-100 stock score with holding-period plan (separate from P6-11B)")
     qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "sue-test", "insider-prepare", "insider-develop", "insider-test"])
     qs.add_argument("tickers", nargs="*")
@@ -574,6 +576,11 @@ def main(argv=None) -> int:
         return cmd_automation(args)
     if args.command == "qsf":
         return cmd_qsf(args)
+    if args.command == "news":
+        from terminal import news
+        res = news.record(PROJECT_ROOT, args.market)
+        print(json.dumps(res, ensure_ascii=False))
+        return {"OK": 0, "NO_UNIVERSE": 3}.get(res["status"], 1)
     if args.command == "migrate-storage":
         from markets import storage
         print(json.dumps(storage.migrate(PROJECT_ROOT), indent=1, default=str))

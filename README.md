@@ -329,6 +329,15 @@ Picks are limited to stocks that had already joined the index (Wikipedia "Date a
 
 Specification: `reports/TERMINAL_3_SPECIFICATION.md`.
 
+**점수 (score) tab, same-day check:**
+* looking up a stock also shows today's delayed price, opening gap, volume, new filings and news headlines. The check is never added to the score;
+* filings become warnings by the rules the score's event reader uses. Headlines are not judged good or bad;
+* the ranking opens the top three actionable stocks, and each row below opens in place.
+
+News comes from free feeds: Yahoo Finance RSS (US) and Google News RSS (KR). Yahoo's feed for a ticker can include articles about related companies, and a Korean name search can match unrelated articles.
+
+`python app.py news record` (also `--market KR`) stores new headlines of every scanned stock in `data/news/`: title, link, source and time only. It runs in the daily job and stops at once if a feed refuses requests.
+
 ### Where things are
 
 | Path | Content |
