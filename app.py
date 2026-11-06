@@ -394,6 +394,11 @@ def cmd_qsf(args) -> int:
         res = {"corrected-prepare": vc.prepare, "corrected-open": vc.run_open, "corrected-oos": vc.run_oos, "corrected-research": vc.run_research, "corrected-swing": vc.run_swing, "sue-test": vc.test_sue}[args.action](PROJECT_ROOT)
         print(json.dumps({k: res[k] for k in ("status", "companies", "failed") if k in res}, ensure_ascii=False, default=str))
         return 0
+    if args.action in ("ensemble-prepare", "ensemble-run"):
+        from terminal.qsf import research_ensemble
+        res = {"ensemble-prepare": research_ensemble.prepare, "ensemble-run": research_ensemble.run_once}[args.action](PROJECT_ROOT)
+        print(json.dumps({k: v for k, v in res.items() if k != "strategies"}, ensure_ascii=False, default=str))
+        return 0
     if args.action in ("news-prepare", "news-develop", "news-test"):
         from terminal.qsf import research_news
         res = {"news-prepare": research_news.prepare, "news-develop": research_news.develop, "news-test": research_news.test_once}[args.action](PROJECT_ROOT)
@@ -519,7 +524,7 @@ def build_parser() -> argparse.ArgumentParser:
     nw = sub.add_parser("news", help="Record free news headlines of the scanned stocks (feeds no score)")
     nw.add_argument("action", choices=["record"])
     qs = sub.add_parser("qsf", help="QSF 1.1: 0-100 stock score with holding-period plan (separate from P6-11B)")
-    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "sue-test", "insider-prepare", "insider-develop", "insider-test", "news-prepare", "news-develop", "news-test"])
+    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "sue-test", "insider-prepare", "insider-develop", "insider-test", "news-prepare", "news-develop", "news-test", "ensemble-prepare", "ensemble-run"])
     qs.add_argument("tickers", nargs="*")
     qs.add_argument("--dry-run", action="store_true", help="Scan without writing to the ledger")
     au = sub.add_parser("automation", help="Daily job: record, tracking, backup, Telegram/macOS alerts (TERMINAL-4)")
