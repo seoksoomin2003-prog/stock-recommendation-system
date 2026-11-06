@@ -100,6 +100,8 @@ The "Official status" column is the status the directive assigns. The "State at 
 The order the user set (automation, long and swing tags, Korean market) is complete.
 QSF historical checks (2026-11-05): QSF 1.2 candidate NO_EVIDENCE (`reports/QSF_1_2_VALIDATION_RESULTS.md`); research score: no factor passed (`reports/QSF_RESEARCH_SCORE_RESULTS.md`). Live score stays QSF-1.1.2 with a notice.
 
+QSF swing chart-factor research (2026-11-06): 24 pre-registered chart and short-term factors, 10 and 20 sessions, one-shot 2022+ test: NO_EVIDENCE for both (`reports/QSF_SWING_RESEARCH_RESULTS.md`). No factor added to the live score. The 2022+ window is now used for these factors.
+
 ## Next tasks (candidates, not started)
 
 0. Multi-market:
