@@ -110,6 +110,8 @@ QSF earnings factor test (2026-11-06): `sue` alone, 10 sessions, one run on 2022
 
 Forward record panel (2026-11-06): top of the research tab, `terminal/record_status.py`. Same-day check and news record (2026-11-06): `terminal/today.py`, `terminal/news.py`, `/api/today`, `app.py news record`. Headlines are stored in `data/news/` and feed no score; a news factor can only be tested on this record once it has grown.
 
+QSF historical news test (2026-11-07): FNSPID headlines, development 2010-2016, one test 2017 to 2020-05: NO_EVIDENCE at 10 and 20 sessions (IC +0.0079 t 1.05, IC +0.0126 t 1.61). Not added. `reports/QSF_NEWS_RESEARCH_RESULTS.md`.
+
 QSF insider purchase research (2026-11-06): SEC Form 4 officer and director open-market buys, 5 pre-registered factors, 10 and 20 sessions: none passed development, so no score and no test (`reports/QSF_INSIDER_RESEARCH_RESULTS.md`). It exposed a gap: tickers whose SEC company number changed have only the new number's filings, which also thins financial history.
 
 Live fix (2026-11-06): eight changed-number tickers join earlier SEC numbers (`sources.CIK_PREDECESSORS`), and their stopped series read as empty. Only XOM's score moved. Open: 331 of 493 other tickers have some series stopped over 400 days before their newest year, read as current by `fundamentals.metrics`, 110 of them in a core series; TFC reports net income under ProfitLoss only. Research facts are unchanged.
