@@ -55,3 +55,6 @@ data/qsf/
 
 # News headline record (runtime data)
 data/news/
+
+# Large research downloads: outside data/, which the test guard copies
+research_data/
