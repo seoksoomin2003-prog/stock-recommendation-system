@@ -314,23 +314,24 @@ def build_features(px: validate.Prices, members: Callable[[str], List[str]], net
     return {"rows": rows, "tensor": tensor, "counts": counts}
 
 
-def rank_tensor(tensor: np.ndarray) -> np.ndarray:
+def rank_tensor(tensor: np.ndarray, factors: Sequence[str] = FACTORS, good_high: Optional[Dict[str, bool]] = None) -> np.ndarray:
     """Percentile within the whole eligible universe, 1 at the good end; empty stays empty."""
+    good_high = good_high or GOOD_HIGH
     out = np.full(tensor.shape, np.nan, dtype=np.float32)
     for n in range(tensor.shape[0]):
-        for k, name in enumerate(FACTORS):
+        for k, name in enumerate(factors):
             x = tensor[n, :, k].astype(float)
             m = np.isfinite(x)
             c = int(m.sum())
             if c < 30:
                 continue
             r = validate.rank(x[m]) / (c - 1)
-            out[n, m, k] = r if GOOD_HIGH[name] else 1 - r
+            out[n, m, k] = r if good_high[name] else 1 - r
     return out
 
 
-def composite(ranks_row: np.ndarray, chosen: List[str]) -> np.ndarray:
-    idx = [FACTORS.index(f) for f in chosen]
+def composite(ranks_row: np.ndarray, chosen: List[str], factors: Sequence[str] = FACTORS) -> np.ndarray:
+    idx = [list(factors).index(f) for f in chosen]
     x = ranks_row[:, idx].astype(float)
     have = np.isfinite(x).sum(axis=1)
     with np.errstate(invalid="ignore", divide="ignore"):
@@ -353,13 +354,13 @@ def lag_of(h: int) -> int:
     return max(1, math.ceil(h / STEP))
 
 
-def select(ranks: np.ndarray, px: validate.Prices, rows: List[int], picks: List[int], h: int) -> Dict[str, Any]:
+def select(ranks: np.ndarray, px: validate.Prices, rows: List[int], picks: List[int], h: int, factors: Sequence[str] = FACTORS) -> Dict[str, Any]:
     """The protocol's rule, on development dates only."""
     if any(px.dates[rows[n] + h] >= TEST_START for n in picks):
         raise ValueError("TEST_DATA_IN_DEVELOPMENT")
     returns = {n: px.forward(rows[n], h) for n in picks}
     table = {}
-    for k, name in enumerate(FACTORS):
+    for k, name in enumerate(factors):
         ics = [v for v in (_ic(ranks[n, :, k].astype(float), returns[n]) for n in picks) if v is not None]
         half = len(ics) // 2
         t = validate.newey_west_t(ics, lag_of(h))
@@ -367,7 +368,7 @@ def select(ranks: np.ndarray, px: validate.Prices, rows: List[int], picks: List[
         table[name] = {"ic": float(np.mean(ics)) if ics else None, "t": t, "early": early, "late": late, "dates": len(ics),
                        "chosen": bool(t is not None and t >= MIN_T and early is not None and early > 0 and late > 0),
                        "above_bonferroni": bool(t is not None and t >= BONFERRONI_T)}
-    return {"horizon": h, "factors": table, "chosen": [f for f in FACTORS if table[f]["chosen"]], "above_bonferroni": [f for f in FACTORS if table[f]["above_bonferroni"]],
+    return {"horizon": h, "factors": table, "chosen": [f for f in factors if table[f]["chosen"]], "above_bonferroni": [f for f in factors if table[f]["above_bonferroni"]],
             "first": px.dates[rows[picks[0]]] if picks else None, "last": px.dates[rows[picks[-1]]] if picks else None}
 
 
