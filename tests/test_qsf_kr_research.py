@@ -58,7 +58,7 @@ def test_only_a_jump_with_fewer_shares_after_a_halt_leaves_the_reported_change()
     halted = (4, False, 100.0, 1000.0)
     assert kr.next_level(100.0, 3000.0, 2900.0, 120.0, 40.0, halted, 5) == pytest.approx(120)
     assert kr.next_level(100.0, 3000.0, 2900.0, 120.0, 40.0, (3, True, 100.0, 1000.0), 5) == pytest.approx(120)     # a gap is a halt
-    assert kr.next_level(100.0, 3000.0, 2900.0, 120.0, 40.0, (4, True, 100.0, 1000.0), 5) == pytest.approx(3000)    # traded yesterday
+    assert kr.next_level(100.0, 1000.0, 900.0, 120.0, 40.0, (4, True, 100.0, 1000.0), 5) == pytest.approx(1000)     # traded yesterday
     assert kr.next_level(100.0, 90.0, -10.0, 2400.0, 24000.0, halted, 5) == pytest.approx(90)                       # debt swap: no gain
     assert kr.next_level(100.0, 200.0, 100.0, 300.0, 1500.0, halted, 5) == pytest.approx(200)                       # more shares
     assert kr.next_level(100.0, 80.0, -20.0, 50.0, 40.0, halted, 5) == pytest.approx(80)                            # a fall stays reported
@@ -179,3 +179,21 @@ def test_the_second_test_is_refused(tmp_path):
     p.write_text("{}")
     with pytest.raises(RuntimeError):
         kr.run_once(tmp_path)
+
+
+def test_a_replaced_holding_pays_the_cost_and_a_kept_one_does_not():
+    ret = np.array([[0.1, 0.1, 0.0], [0.0, 0.0, 0.0]])
+    picks = [np.array([True, True, False]), np.array([True, False, True])]
+    path = kr.rebalance_path(picks, ret, 0.01)
+    assert path[0] == pytest.approx(0.1 - 0.01)          # bought everything
+    assert path[1] == pytest.approx(0.0 - 0.005)         # replaced half
+
+
+def test_a_holding_with_no_return_is_left_out_of_the_average():
+    assert kr.rebalance_path([np.array([True, True])], np.array([[0.2, np.nan]]), 0.0)[0] == pytest.approx(0.2)
+    assert np.isnan(kr.rebalance_path([np.array([False, False])], np.array([[0.2, 0.1]]), 0.0)[0])
+
+
+def test_annual_growth():
+    assert kr.annual_growth([0.1] * 12, 20, 240) == pytest.approx(1.1 ** 12 - 1)
+    assert kr.annual_growth([], 20, 240) is None

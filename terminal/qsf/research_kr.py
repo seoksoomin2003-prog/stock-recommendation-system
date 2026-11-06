@@ -62,12 +62,12 @@ def next_level(level: Optional[float], close: float, chg: Optional[float], cap: 
     trigger it: a debt swap during a halt multiplies market value without any gain for a holder."""
     if level is None:
         return close
-    if chg is not None and chg > ABSURD:       # a placeholder quote of 1 won during a halt, not a price anyone traded
-        return level
     if seen is not None and chg is not None and chg > JUMP:
         last, traded, cap_before, shares_before = seen
         if (last != i - 1 or not traded) and cap_before and cap and shares_before and shares and shares <= 0.8 * shares_before:
             return level * cap / cap_before
+    if chg is not None and chg > ABSURD:       # a placeholder quote of 1 won during a halt, not a price anyone traded
+        return level
     return level * (1 + chg / 100) if chg is not None else level
 
 
@@ -267,3 +267,152 @@ def run_once(base: Path, log=print) -> Dict[str, Any]:
         log(f"{s} done")
     target.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
     return out
+
+
+# ---------------------------------------------------------------------- checks after the verdict; they change no verdict
+def rebalance_path(picks: Sequence[np.ndarray], returns: np.ndarray, cost: float) -> List[float]:
+    """Equal weight in each period, paying the round trip only on the share of holdings replaced."""
+    out, held = [], None
+    for k, p in enumerate(picks):
+        ok = p & np.isfinite(returns[k])
+        if not ok.any():
+            out.append(float("nan"))
+            continue
+        turn = 1.0 if held is None else 1 - float((ok & held).sum()) / float(ok.sum())
+        out.append(float(returns[k][ok].mean()) - cost * turn)
+        held = ok
+    return out
+
+
+def annual_growth(path: Sequence[float], h: int, sessions: int = 248) -> Optional[float]:
+    x = [v for v in path if np.isfinite(v)]
+    if not x:
+        return None
+    return float(np.exp(np.sum(np.log1p(x)) * sessions / (h * len(x))) - 1)
+
+
+def _quintiles(score: np.ndarray, px: KrPrices, rows: List[int], picks: List[int], h: int) -> Dict[str, Any]:
+    mean, median, excess = [[] for _ in range(5)], [[] for _ in range(5)], [[] for _ in range(5)]
+    for n in picks:
+        r, s = px.forward(rows[n], h), score[n].astype(float)
+        ok = np.isfinite(r) & np.isfinite(s)
+        if ok.sum() < 30:
+            continue
+        q = np.minimum((validate.rank(s[ok]) / ok.sum() * 5).astype(int), 4)
+        avg = r[ok].mean()
+        for b in range(5):
+            x = r[ok][q == b]
+            mean[b].append(x.mean()); median[b].append(np.median(x)); excess[b].append(x.mean() - avg)     # noqa: E702
+    return {f"Q{b + 1}": {"mean": float(np.mean(mean[b])), "median": float(np.mean(median[b])), "excess": float(np.mean(excess[b]))} for b in range(5)}
+
+
+def _ic_mean(score: np.ndarray, px: KrPrices, rows: List[int], picks: List[int], h: int, mask: Optional[np.ndarray] = None) -> Optional[float]:
+    v = []
+    for n in picks:
+        s = score[n].astype(float)
+        if mask is not None:
+            s = np.where(mask[n], s, np.nan)
+        x = rs._ic(s, px.forward(rows[n], h))
+        if x is not None:
+            v.append(x)
+    return float(np.mean(v)) if v else None
+
+
+def _portfolios(score: np.ndarray, top300: np.ndarray, px: KrPrices, rows: List[int], first: str, last: str, cost: float, h: int = 20) -> Dict[str, Any]:
+    every = h // STEP
+    ns = [n for n, i in enumerate(rows) if first <= px.dates[i] < last and i + h < len(px.dates)][::every]
+    m = px.col[MARKET]
+    r = np.stack([px.forward(rows[n], h) for n in ns])
+    def top(mask_row: np.ndarray, s: np.ndarray, count: Optional[int] = None) -> np.ndarray:
+        ok = mask_row & np.isfinite(s)
+        out = np.zeros(s.shape, dtype=bool)
+        if ok.sum() < 30:
+            return out
+        k = count or max(1, int(ok.sum() * 0.2))
+        idx = np.flatnonzero(ok)
+        out[idx[np.argsort(-s[idx])[:k]]] = True
+        return out
+    has = [np.isfinite(score[n].astype(float)) for n in ns]
+    t300 = [top300[n] for n in ns]
+    sets = {"top_fifth_all": [top(has[k], score[n].astype(float)) for k, n in enumerate(ns)],
+            "top_fifth_of_300": [top(t300[k], score[n].astype(float)) for k, n in enumerate(ns)],
+            "top_30_of_300": [top(t300[k], score[n].astype(float), 30) for k, n in enumerate(ns)],
+            "all_equal": has, "top300_equal": t300}
+    out = {"periods": len(ns), "first": px.dates[rows[ns[0]]], "last": px.dates[rows[ns[-1]]]}
+    for name, p in sets.items():
+        path = rebalance_path(p, r, cost)
+        out[name] = {"annual_net": annual_growth(path, h), "mean_holdings": float(np.mean([x.sum() for x in p])), "turnover": float(np.mean([1 - (p[k] & p[k - 1]).sum() / max(1, p[k].sum()) for k in range(1, len(p))]))}
+    out["cap_weighted_market"] = {"annual": annual_growth([float(v) for v in r[:, m]], h)}
+    return out
+
+
+def diagnose(base: Path, log=print) -> Dict[str, Any]:
+    """How large the result is in money, whether the arithmetic holds, and what else could explain it.  Rebuilds prices with the
+    corrected order of the two price rules, and reports the verdict on them beside the one-run verdict."""
+    prepare(base, log)
+    px = _load(base)
+    with np.load(base / FEATURES) as z:
+        rows, tensor, top300 = [int(i) for i in z["rows"]], z["tensor"], z["top300"]
+    scores = theme_ranks(tensor)
+    score = en.combine(scores, en.merge_groups(en.theme_correlation(scores, [n for n, i in enumerate(rows) if px.dates[i] < TEST_START])))
+    cost = config.round_trip_cost("KR")
+    rng = np.random.default_rng(7)
+    cap = np.stack([px.data["cap"][i].astype(float) for i in rows])
+    out: Dict[str, Any] = {"status": "CHECKED", "note": "결과를 본 뒤의 점검이다. 판정을 바꾸지 않는다.", "strategies": {}}
+    for s, h in HORIZONS.items():
+        w = windows(px, rows, h)
+        res: Dict[str, Any] = {}
+        for k, picks in w.items():
+            test = en.evaluate(score, px, rows, picks, h, {}, cost)
+            sizes = np.full(cap.shape, -1)
+            for n in picks:
+                ok = np.isfinite(score[n]) & np.isfinite(cap[n])
+                if ok.sum() >= 30:
+                    sizes[n, ok] = np.minimum((validate.rank(cap[n][ok]) / ok.sum() * 5).astype(int), 4)
+            shuffled = score.copy()
+            for n in picks:
+                ok = np.flatnonzero(np.isfinite(score[n]))
+                shuffled[n, ok] = rng.permutation(score[n, ok])
+            res[k] = {"corrected_rules": {x: test.get(x) for x in ("ic", "t", "spread_net", "top_excess", "dates")} | {x: {y: test[x].get(y) for y in ("ic", "spread_net")} for x in ("early", "late")} | test_verdict(test),
+                      "shuffled_ic": _ic_mean(shuffled, px, rows, picks, h),
+                      "score_quintiles": _quintiles(score, px, rows, picks, h),
+                      "theme_quintiles": {t: _quintiles(m, px, rows, picks, h) for t, m in scores.items()},
+                      "size_quintiles": _quintiles(np.where(sizes >= 0, cap, np.nan), px, rows, picks, h),
+                      "ic_inside_size_quintile": {f"cap_Q{b + 1}": _ic_mean(score, px, rows, picks, h, sizes == b) for b in range(5)}}
+        res["portfolios_20d"] = None
+        out["strategies"][s] = res
+    out["portfolios_20d"] = {"2011_2021": _portfolios(score, top300, px, rows, START, TEST_START, cost), "2022_on": _portfolios(score, top300, px, rows, TEST_START, "2099", cost),
+                             "2022_2023": _portfolios(score, top300, px, rows, TEST_START, "2024-01-01", cost), "2024_on": _portfolios(score, top300, px, rows, "2024-01-01", "2099", cost)}
+    out["raw_quote_check"] = raw_check(base, px, rows)
+    (base / "reports" / "qsf" / "QSF_KR_DIAGNOSTICS.json").write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    return out
+
+
+def raw_check(base: Path, px: KrPrices, rows: List[int], h: int = 20) -> Dict[str, Any]:
+    """Returns rebuilt from the plain quotes, for stocks whose share count did not change, against the adjusted series."""
+    root = base / DATA
+
+    def read(day: str) -> Dict[str, List[Any]]:
+        out: Dict[str, List[Any]] = {}
+        for b in kh.BOARDS:
+            p = kh.path_of(root, b, day)
+            if p.exists():
+                with gzip.open(p, "rt", encoding="utf-8") as fh:
+                    out.update({r[F["ISU_CD"]]: r for r in json.load(fh)})
+        return out
+    diffs: List[float] = []
+    for i in rows[::40]:
+        if i + h >= len(px.dates):
+            continue
+        a, b = read(px.dates[i + 1]), read(px.dates[i + h])
+        r = px.forward(i, h)
+        for c, x in a.items():
+            j = px.col.get(c)
+            y = b.get(c)
+            if j is None or y is None or not np.isfinite(r[j]) or x[F["LIST_SHRS"]] != y[F["LIST_SHRS"]]:
+                continue
+            o, e = num(x[F["TDD_OPNPRC"]]), num(y[F["TDD_CLSPRC"]])
+            if o and e:
+                diffs.append(abs(e / o - 1 - float(r[j])))
+    d = np.array(diffs)
+    return {"pairs": int(d.size), "median_abs_diff": float(np.median(d)), "p99_abs_diff": float(np.percentile(d, 99)), "share_above_1pct": float((d > 0.01).mean())}

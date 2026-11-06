@@ -112,6 +112,14 @@ Forward record panel (2026-11-06): top of the research tab, `terminal/record_sta
 
 QSF historical news test (2026-11-07): FNSPID headlines, development 2010-2016, one test 2017 to 2020-05: NO_EVIDENCE at 10 and 20 sessions (IC +0.0079 t 1.05, IC +0.0126 t 1.61). Not added. `reports/QSF_NEWS_RESEARCH_RESULTS.md`.
 
+QSF combined score (2026-11-07): 23 literature signals in 10 equal themes, one run: NO_EVIDENCE at 20 and 252 sessions (IC +0.0006, +0.017). Not added. `reports/QSF_ENSEMBLE_RESULTS.md`.
+
+QSF sentiment and risk (2026-11-07): VIX state flips the low risk theme, one run: NO_EVIDENCE at 20 and 252 sessions (IC +0.0143, +0.0081). Not added. `reports/QSF_SENTIMENT_RESULTS.md`.
+
+QSF short selling (2026-11-07): FINRA short interest and short volume, 5 signals: none passed development, no test run. Not added. `reports/QSF_SHORT_RESEARCH_RESULTS.md`.
+
+QSF Korean price signals (2026-11-07): whole-market KRX snapshots with delisted names, 9 signals in 3 equal themes, one run: WEAK_POSITIVE_EVIDENCE at 20 and 252 sessions, but the top fifth lost to the cap-weighted market in every period checked; the effect is the bottom fifth losing. Live score unchanged; forward record is the user's decision. `reports/QSF_KR_RESEARCH_RESULTS.md`.
+
 QSF insider purchase research (2026-11-06): SEC Form 4 officer and director open-market buys, 5 pre-registered factors, 10 and 20 sessions: none passed development, so no score and no test (`reports/QSF_INSIDER_RESEARCH_RESULTS.md`). It exposed a gap: tickers whose SEC company number changed have only the new number's filings, which also thins financial history.
 
 Live fix (2026-11-06): eight changed-number tickers join earlier SEC numbers (`sources.CIK_PREDECESSORS`), and their stopped series read as empty. Only XOM's score moved. Open: 331 of 493 other tickers have some series stopped over 400 days before their newest year, read as current by `fundamentals.metrics`, 110 of them in a core series; TFC reports net income under ProfitLoss only. Research facts are unchanged.
