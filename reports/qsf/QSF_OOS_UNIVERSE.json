@@ -1,0 +1,137 @@
+{
+"AKS": {
+"ticker": "AKS",
+"cik": "918160",
+"sec_name": "Cleveland-Cliffs Steel Holding Corp"
+},
+"ANF": {
+"ticker": "ANF",
+"cik": "1018840",
+"sec_name": "ABERCROMBIE & FITCH CO /DE/"
+},
+"APOL": {
+"ticker": "APOL",
+"cik": "929887",
+"sec_name": "APOLLO EDUCATION GROUP INC"
+},
+"BIG": {
+"ticker": "BIG",
+"cik": "768835",
+"sec_name": "FORMER BL STORES INC"
+},
+"CHK": {
+"ticker": "CHK",
+"cik": "895126",
+"sec_name": "EXPAND ENERGY Corp"
+},
+"DF": {
+"ticker": "DF",
+"cik": "931336",
+"sec_name": "DEAN FOODS CO"
+},
+"DOW~OLD": {
+"ticker": "DOW",
+"cik": "29915",
+"sec_name": "DOW CHEMICAL CO /DE/"
+},
+"FHN": {
+"ticker": "FHN",
+"cik": "36966",
+"sec_name": "FIRST HORIZON CORP"
+},
+"FII": {
+"ticker": "FII",
+"cik": "1056288",
+"sec_name": "FEDERATED HERMES, INC."
+},
+"FOXA~OLD": {
+"ticker": "FOXA",
+"cik": "1308161",
+"sec_name": "TWENTY-FIRST CENTURY FOX, INC."
+},
+"IR~OLD": {
+"ticker": "IR",
+"cik": "1466258",
+"sec_name": "Trane Technologies plc"
+},
+"ITT": {
+"ticker": "ITT",
+"cik": "216228",
+"sec_name": "ITT INC."
+},
+"JCP": {
+"ticker": "JCP",
+"cik": "1166126",
+"sec_name": "Old COPPER Company, Inc."
+},
+"JNS": {
+"ticker": "JNS",
+"cik": "1065865",
+"sec_name": "JANUS CAPITAL GROUP INC"
+},
+"LXK": {
+"ticker": "LXK",
+"cik": "1001288",
+"sec_name": "LEXMARK INTERNATIONAL INC /KY/"
+},
+"MDP": {
+"ticker": "MDP",
+"cik": "65011",
+"sec_name": "Hawkeye Acquisition, Inc."
+},
+"MIL": {
+"ticker": "MIL",
+"cik": "66479",
+"sec_name": "MILLIPORE CORP /MA"
+},
+"MWW": {
+"ticker": "MWW",
+"cik": "1020416",
+"sec_name": "MONSTER WORLDWIDE, INC."
+},
+"NYT": {
+"ticker": "NYT",
+"cik": "71691",
+"sec_name": "NEW YORK TIMES CO"
+},
+"ODP": {
+"ticker": "ODP",
+"cik": "800240",
+"sec_name": "ODP Corp"
+},
+"QLGC": {
+"ticker": "QLGC",
+"cik": "918386",
+"sec_name": "QLOGIC CORP"
+},
+"RRD": {
+"ticker": "RRD",
+"cik": "29669",
+"sec_name": "RR Donnelley & Sons Co"
+},
+"S": {
+"ticker": "S",
+"cik": "101830",
+"sec_name": "SPRINT LLC"
+},
+"SHLD": {
+"ticker": "SHLD",
+"cik": "1310067",
+"sec_name": "SEARS HOLDINGS CORP"
+},
+"SNDK~OLD": {
+"ticker": "SNDK",
+"cik": "1000180",
+"sec_name": "SANDISK CORP"
+},
+"STR": {
+"ticker": "STR",
+"cik": "751652",
+"sec_name": "DOMINION QUESTAR CORP"
+},
+"SVU": {
+"ticker": "SVU",
+"cik": "95521",
+"sec_name": "SUPERVALU INC"
+}
+}

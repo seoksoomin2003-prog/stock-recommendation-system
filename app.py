@@ -394,6 +394,11 @@ def cmd_qsf(args) -> int:
         res = research_score.develop(PROJECT_ROOT) if args.action == "research-develop" else research_score.test_once(PROJECT_ROOT)
         print(json.dumps(res["strategies"], ensure_ascii=False, indent=1, default=str))
         return 0
+    if args.action in ("oos-prepare", "oos-score", "oos-test"):
+        from terminal.qsf import validate_oos
+        res = {"oos-prepare": validate_oos.prepare, "oos-score": validate_oos.score, "oos-test": validate_oos.test_once}[args.action](PROJECT_ROOT)
+        print(json.dumps(res.get("primary", res), ensure_ascii=False, indent=1, default=str))
+        return 0
     if args.action in ("open-prepare", "open-run"):
         from terminal.qsf import validate_open
         res = validate_open.prepare(PROJECT_ROOT) if args.action == "open-prepare" else validate_open.run(PROJECT_ROOT)
@@ -492,7 +497,7 @@ def build_parser() -> argparse.ArgumentParser:
     lb = sub.add_parser("lab", help="Challenger models beside the frozen P6-11B (TERMINAL-3)")
     lb.add_argument("action", choices=["update", "status", "compare"])
     qs = sub.add_parser("qsf", help="QSF 1.1: 0-100 stock score with holding-period plan (separate from P6-11B)")
-    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "research-develop", "research-test"])
+    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test"])
     qs.add_argument("tickers", nargs="*")
     qs.add_argument("--dry-run", action="store_true", help="Scan without writing to the ledger")
     au = sub.add_parser("automation", help="Daily job: record, tracking, backup, Telegram/macOS alerts (TERMINAL-4)")

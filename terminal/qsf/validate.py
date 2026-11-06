@@ -142,11 +142,11 @@ def usable(res: Dict[str, Any]) -> bool:
 
 # ---------------------------------------------------------------------- scoring
 def score_dates(px: Prices, members: Callable[[str], List[str]], facts: Dict[str, Dict], sectors: Dict[str, Optional[str]], split_map: Dict[str, List],
-                progress=None) -> List[Dict[str, Any]]:
-    start = next(i for i, d in enumerate(px.dates) if d >= START)
+                progress=None, first: str = START, last: Optional[str] = None) -> List[Dict[str, Any]]:
+    start = next(i for i, d in enumerate(px.dates) if d >= first)
     bench_j = px.col["SPY"]
     max_h = max(max(v) for v in HORIZONS.values())
-    rows = list(range(max(start, HISTORY), len(px.dates) - 1, STEP))
+    rows = [i for i in range(max(start, HISTORY), len(px.dates) - 1, STEP) if last is None or px.dates[i] <= last]
     split_obj = {t: pit.Splits(split_map.get(t) or []) for t in px.symbols}
     out: List[Dict[str, Any]] = []
     adj = px.data["adj_close"]
