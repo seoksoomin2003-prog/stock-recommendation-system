@@ -129,8 +129,8 @@ def combine(scores: Dict[str, np.ndarray], groups: List[List[str]]) -> np.ndarra
     return _mean([_mean([scores[t] for t in g], 0.5) for g in groups], MIN_SHARE) * 100
 
 
-def evaluate(score: np.ndarray, px: validate.Prices, rows: List[int], picks: List[int], h: int, sectors: Dict[str, Optional[str]]) -> Dict[str, Any]:
-    cost = config.round_trip_cost("US")
+def evaluate(score: np.ndarray, px: validate.Prices, rows: List[int], picks: List[int], h: int, sectors: Dict[str, Optional[str]], cost: Optional[float] = None) -> Dict[str, Any]:
+    cost = config.round_trip_cost("US") if cost is None else cost
     groups = np.array([sectors.get(s) or "?" for s in px.symbols])
     daily, sc_, rt, be, ex, above, below = [], [], [], [], [], [], []
     spy = px.col["SPY"]
