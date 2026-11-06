@@ -1,0 +1,126 @@
+{
+ "status": "DEVELOPED",
+ "protocol": "reports/QSF_SHORT_RESEARCH_PROTOCOL.md",
+ "strategies": {
+  "SWING_10": {
+   "horizon": 10,
+   "factors": {
+    "si_dtc": {
+     "ic": -0.0030252708842759086,
+     "t": -0.3504558824993241,
+     "early": -0.003714642272919736,
+     "late": -0.0023358994956320833,
+     "dates": 198,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "si_ratio": {
+     "ic": 0.00283106035977896,
+     "t": 0.236470346880198,
+     "early": 0.0028272493547704556,
+     "late": 0.0028348713647874655,
+     "dates": 198,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "si_chg_3m": {
+     "ic": -0.005351390288018769,
+     "t": -0.653103885160895,
+     "early": -0.004057940119353053,
+     "late": -0.006644840456684485,
+     "dates": 186,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "sv_ratio_20": {
+     "ic": -0.0035915791049220005,
+     "t": -0.47521272687733923,
+     "early": 0.010155601932167083,
+     "late": -0.017338760142011085,
+     "dates": 168,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "sv_abn_5": {
+     "ic": -0.003963976720554753,
+     "t": -0.8345673421546619,
+     "early": 0.0028931003080797917,
+     "late": -0.0108210537491893,
+     "dates": 162,
+     "chosen": false,
+     "above_bonferroni": false
+    }
+   },
+   "chosen": [],
+   "above_bonferroni": [],
+   "first": "2018-01-03",
+   "last": "2021-12-15"
+  },
+  "SWING_20": {
+   "horizon": 20,
+   "factors": {
+    "si_dtc": {
+     "ic": -0.00393051350197445,
+     "t": -0.35195591211416954,
+     "early": -0.00955741745767381,
+     "late": 0.0016963904537249097,
+     "dates": 196,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "si_ratio": {
+     "ic": -0.0007156694205674321,
+     "t": -0.04436395005835241,
+     "early": 0.0010635801880517412,
+     "late": -0.002494919029186605,
+     "dates": 196,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "si_chg_3m": {
+     "ic": -0.005461182055502532,
+     "t": -0.5443508279760781,
+     "early": -0.005109946830654987,
+     "late": -0.005812417280350081,
+     "dates": 184,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "sv_ratio_20": {
+     "ic": -0.001669078343949124,
+     "t": -0.17082948847526858,
+     "early": 0.01309003407291498,
+     "late": -0.016428190760813227,
+     "dates": 166,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "sv_abn_5": {
+     "ic": -0.003348808178713666,
+     "t": -0.6021201150736055,
+     "early": 0.00557461444158443,
+     "late": -0.012272230799011762,
+     "dates": 160,
+     "chosen": false,
+     "above_bonferroni": false
+    }
+   },
+   "chosen": [],
+   "above_bonferroni": [],
+   "first": "2018-01-03",
+   "last": "2021-12-01"
+  }
+ },
+ "settlements": [
+  "2017-12-29",
+  "2026-10-15",
+  212
+ ],
+ "mean_stocks_with_value": {
+  "si_dtc": 440.6,
+  "si_ratio": 428.4202247191011,
+  "si_chg_3m": 416.8,
+  "sv_ratio_20": 411.75730337078653,
+  "sv_abn_5": 405.90337078651686
+ }
+}
