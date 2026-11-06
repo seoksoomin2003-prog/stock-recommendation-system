@@ -36,6 +36,21 @@ def test_earlier_numbers_are_joined_and_the_same_number_is_not_fetched_twice():
     assert seen == ["0002115436", "34088"] and set(merged["facts"]["us-gaap"]) == {"A0002115436", "A34088"}
 
 
+def test_an_earlier_number_with_no_file_adds_nothing():
+    def fetch(c):
+        if c == "1134538":
+            raise RuntimeError("SEC HTTP_404")
+        return {"facts": {"us-gaap": {"A": {"units": {"USD": []}}}}}
+    assert set(vc.joined_facts("1467373", ["1134538"], fetch)["facts"]["us-gaap"]) == {"A"}
+
+
+def test_the_current_number_with_no_file_still_raises():
+    def fetch(c):
+        raise RuntimeError("SEC HTTP_404")
+    with pytest.raises(RuntimeError):
+        vc.joined_facts("66479", [], fetch)
+
+
 def test_a_failed_earlier_number_raises():
     def fetch(c):
         if c == "34088":

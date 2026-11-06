@@ -44,11 +44,15 @@ def older_numbers(base: Path) -> Dict[str, List[str]]:
 
 
 def joined_facts(cik: str, older: List[str], fetch: Callable[[str], Dict]) -> Dict[str, Any]:
-    """A failed older fetch raises: a thin record is never saved."""
+    """An earlier number the SEC has no file for adds nothing.  Any other failed fetch raises: a thin record is never saved."""
     facts = fetch(cik)
     for c in older:
         if str(int(c)) != str(int(cik)):
-            facts = sources.merge_companyfacts(facts, fetch(c))
+            try:
+                facts = sources.merge_companyfacts(facts, fetch(c))
+            except RuntimeError as exc:
+                if "HTTP_404" not in str(exc):
+                    raise
     return facts
 
 

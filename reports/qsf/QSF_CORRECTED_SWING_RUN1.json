@@ -1,0 +1,492 @@
+{
+ "status": "DEVELOPED",
+ "protocol": "reports/QSF_CORRECTED_RECHECK_PROTOCOL.md",
+ "strategies": {
+  "SWING_10": {
+   "horizon": 10,
+   "factors": {
+    "high_52w": {
+     "ic": 0.0018109302489065135,
+     "t": 0.1552575907348357,
+     "early": 0.01200127178553393,
+     "late": -0.00834653921824791,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "ma200_ratio": {
+     "ic": -0.004147674111687994,
+     "t": -0.3915360543151748,
+     "early": 0.00010228668065742863,
+     "late": -0.008383925353090372,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "ma50_200": {
+     "ic": -0.0013466618733990589,
+     "t": -0.12491689825005495,
+     "early": -0.0024401670774466732,
+     "late": -0.0002566841054935342,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "mom_12_1": {
+     "ic": 0.00856963035120765,
+     "t": 0.7690425004351414,
+     "early": 0.026182978534205665,
+     "late": -0.008986900579587148,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "mom_6_1": {
+     "ic": -0.0026185564057215516,
+     "t": -0.2623884157036632,
+     "early": -0.005722915285902601,
+     "late": 0.0004757884135556846,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "resid_mom_12_1": {
+     "ic": 0.007287723491959104,
+     "t": 0.6465472704629632,
+     "early": 0.023246727768273162,
+     "late": -0.008619800125399106,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "breakout_55": {
+     "ic": -0.006342407951086522,
+     "t": -0.6462608724129715,
+     "early": 0.006518357002890104,
+     "late": -0.01916168656650193,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "breakout_vol": {
+     "ic": -0.008205213258986925,
+     "t": -3.3055824794801745,
+     "early": -0.007431559463613751,
+     "late": -0.008978867054360101,
+     "dates": 560,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "vcp": {
+     "ic": 0.01689197250552272,
+     "t": 3.1955589473135615,
+     "early": 0.02050275124939904,
+     "late": 0.013292841435013735,
+     "dates": 619,
+     "chosen": true,
+     "above_bonferroni": true
+    },
+    "nr7": {
+     "ic": -0.001319656219879086,
+     "t": -0.5055839401400953,
+     "early": -0.0013691435776529083,
+     "late": -0.0012703295353447893,
+     "dates": 615,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "rev_1m": {
+     "ic": 0.014251247196916148,
+     "t": 1.744704525833759,
+     "early": 0.001457405105714411,
+     "late": 0.027003818829759177,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "rev_1w": {
+     "ic": 0.006933112426048277,
+     "t": 0.9935760113482164,
+     "early": -0.0013144414818911676,
+     "late": 0.015154061321381465,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "rev_resid_1m": {
+     "ic": 0.013797231449176151,
+     "t": 1.7420247856998206,
+     "early": 0.003228376781363196,
+     "late": 0.024331993037415515,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "rev_sector_1m": {
+     "ic": 0.013511295490907268,
+     "t": 2.273624639720109,
+     "early": 0.005811774338237748,
+     "late": 0.021185979478568172,
+     "dates": 619,
+     "chosen": true,
+     "above_bonferroni": false
+    },
+    "rsi2": {
+     "ic": 0.006484950700651902,
+     "t": 1.08947312856029,
+     "early": -0.00581503083673815,
+     "late": 0.01874525487824392,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "boll_z": {
+     "ic": 0.010914841748126921,
+     "t": 1.5020150565959154,
+     "early": 0.0006142328135652313,
+     "late": 0.02118222291193196,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "pullback_uptrend": {
+     "ic": 0.007863503206358674,
+     "t": 1.2817240224115352,
+     "early": -0.001221857013410724,
+     "late": 0.016919460965869923,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "vol_252": {
+     "ic": 0.007004665545454061,
+     "t": 0.5228877648390353,
+     "early": 0.010691898350233797,
+     "late": 0.0033293270400445853,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "ivol_21": {
+     "ic": 0.009222894508291089,
+     "t": 1.062082258600623,
+     "early": 0.013996473937914639,
+     "late": 0.004464713721988901,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "max_21": {
+     "ic": 0.00890435514726464,
+     "t": 0.9458886518072641,
+     "early": 0.009733915947148137,
+     "late": 0.008077470349961409,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "vol_surge": {
+     "ic": -0.008419791508869982,
+     "t": -2.3438601925844353,
+     "early": -0.013400590765645039,
+     "late": -0.003455059346471617,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "obv_20": {
+     "ic": -0.011255992411619186,
+     "t": -1.8304738634179136,
+     "early": -0.0018815381935400697,
+     "late": -0.02060020645480128,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "pattern_net": {
+     "ic": -0.007304022104018412,
+     "t": -2.4118291613851808,
+     "early": -0.0029597903590195917,
+     "late": -0.011634240198226911,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "sue": {
+     "ic": 0.010716115879922286,
+     "t": 1.9929306088282976,
+     "early": 0.018678573082371603,
+     "late": 0.0027807418652364005,
+     "dates": 587,
+     "chosen": false,
+     "above_bonferroni": false
+    }
+   },
+   "chosen": [
+    "vcp",
+    "rev_sector_1m"
+   ],
+   "above_bonferroni": [
+    "vcp"
+   ],
+   "first": "2009-09-08",
+   "last": "2021-12-15"
+  },
+  "SWING_20": {
+   "horizon": 20,
+   "factors": {
+    "high_52w": {
+     "ic": -0.0004271008958937031,
+     "t": -0.02818090629134377,
+     "early": 0.014667637793634117,
+     "late": -0.015472989298400398,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "ma200_ratio": {
+     "ic": -0.006736833866605875,
+     "t": -0.5096586268309874,
+     "early": 0.0009613415091906378,
+     "late": -0.01441009605348395,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "ma50_200": {
+     "ic": -0.003446487764435047,
+     "t": -0.26153510845014566,
+     "early": -0.0025461249073042984,
+     "late": -0.004343936825911652,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "mom_12_1": {
+     "ic": 0.006072498607422425,
+     "t": 0.4380486896923522,
+     "early": 0.03145356812214546,
+     "late": -0.019226431523757807,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "mom_6_1": {
+     "ic": -0.0035168089764347032,
+     "t": -0.2947936373710831,
+     "early": -0.005437640461660131,
+     "late": -0.0016021937743329827,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "resid_mom_12_1": {
+     "ic": 0.005441753388945494,
+     "t": 0.37925139496563026,
+     "early": 0.027000229930981057,
+     "late": -0.016046954620591577,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "breakout_55": {
+     "ic": -0.010544073890225592,
+     "t": -0.8274870615531638,
+     "early": 0.007602127642668792,
+     "late": -0.028631549851816113,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "breakout_vol": {
+     "ic": -0.0076307750106476115,
+     "t": -3.060000606230617,
+     "early": -0.004953866465653184,
+     "late": -0.010307683555642037,
+     "dates": 558,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "vcp": {
+     "ic": 0.019102652322808267,
+     "t": 3.247908259194127,
+     "early": 0.025011306915543232,
+     "late": 0.013213119589596709,
+     "dates": 617,
+     "chosen": true,
+     "above_bonferroni": true
+    },
+    "nr7": {
+     "ic": 0.0030795821108825575,
+     "t": 1.2713784665597823,
+     "early": -0.00029957790888137905,
+     "late": 0.006447735094751499,
+     "dates": 613,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "rev_1m": {
+     "ic": 0.018921840824582176,
+     "t": 1.8883390348772233,
+     "early": 0.0034613363662354536,
+     "late": 0.03433231128791807,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "rev_1w": {
+     "ic": 0.00950513111975098,
+     "t": 1.4560494552466354,
+     "early": 0.003253310182109532,
+     "late": 0.01573671962717352,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "rev_resid_1m": {
+     "ic": 0.018379774676360143,
+     "t": 1.8573633669864795,
+     "early": 0.006140191422828659,
+     "late": 0.03057974762810026,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "rev_sector_1m": {
+     "ic": 0.013477380779132965,
+     "t": 1.868081428247727,
+     "early": 0.005338538612684464,
+     "late": 0.021589883650544414,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "rsi2": {
+     "ic": 0.009873531154593154,
+     "t": 1.7083885478817775,
+     "early": -0.00039702561597934415,
+     "late": 0.02011084987736445,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "boll_z": {
+     "ic": 0.014793228461060043,
+     "t": 1.805894885438653,
+     "early": 0.0023318721435491123,
+     "late": 0.027214256764598446,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "pullback_uptrend": {
+     "ic": 0.011113951344605385,
+     "t": 1.8811248522615622,
+     "early": 0.0008451840999620061,
+     "late": 0.021349378435857064,
+     "dates": 615,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "vol_252": {
+     "ic": 0.004070411681286789,
+     "t": 0.2281657596632595,
+     "early": 0.008821266318776584,
+     "late": -0.0006650680221010979,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "ivol_21": {
+     "ic": 0.006198647369057385,
+     "t": 0.5379560034659241,
+     "early": 0.012062043184162085,
+     "late": 0.00035422694494008025,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "max_21": {
+     "ic": 0.006834922270605996,
+     "t": 0.5630335098532191,
+     "early": 0.006354649891464236,
+     "late": 0.007313640370203607,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "vol_surge": {
+     "ic": -0.0075922672139243485,
+     "t": -1.8704568744768275,
+     "early": -0.012978655791082238,
+     "late": -0.002223310315009689,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "obv_20": {
+     "ic": -0.016225530530842587,
+     "t": -2.077973333896304,
+     "early": -0.0030383299803216145,
+     "late": -0.029370054056928212,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "pattern_net": {
+     "ic": -0.004923331786740071,
+     "t": -1.7722625249755348,
+     "early": -0.003546921681077035,
+     "late": -0.0062952874907666575,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "sue": {
+     "ic": 0.006390220389096515,
+     "t": 0.9361211633527199,
+     "early": 0.017340293112485937,
+     "late": -0.004522480072438343,
+     "dates": 585,
+     "chosen": false,
+     "above_bonferroni": false
+    }
+   },
+   "chosen": [
+    "vcp"
+   ],
+   "above_bonferroni": [
+    "vcp"
+   ],
+   "first": "2009-09-08",
+   "last": "2021-12-01"
+  }
+ },
+ "factors": [
+  "high_52w",
+  "ma200_ratio",
+  "ma50_200",
+  "mom_12_1",
+  "mom_6_1",
+  "resid_mom_12_1",
+  "breakout_55",
+  "breakout_vol",
+  "vcp",
+  "nr7",
+  "rev_1m",
+  "rev_1w",
+  "rev_resid_1m",
+  "rev_sector_1m",
+  "rsi2",
+  "boll_z",
+  "pullback_uptrend",
+  "vol_252",
+  "ivol_21",
+  "max_21",
+  "vol_surge",
+  "obv_20",
+  "pattern_net",
+  "sue"
+ ],
+ "note": "개발 구간만 계산했습니다. 시험 구간 수익률은 계산하지 않았습니다."
+}
