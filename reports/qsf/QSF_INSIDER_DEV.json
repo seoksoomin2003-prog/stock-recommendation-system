@@ -1,0 +1,198 @@
+{
+ "status": "DEVELOPED",
+ "protocol": "reports/QSF_INSIDER_RESEARCH_PROTOCOL.md",
+ "strategies": {
+  "SWING_10": {
+   "horizon": 10,
+   "factors": {
+    "insider_buyers": {
+     "ic": -0.0018158656614047555,
+     "t": -0.5605876992922596,
+     "early": -5.6450077678799255e-05,
+     "late": -0.0035696057109896617,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "insider_opp_buyers": {
+     "ic": -0.0015228069780524082,
+     "t": -0.46916474418813325,
+     "early": 0.00028275941786834555,
+     "late": -0.0033225489662443877,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "insider_buy_value": {
+     "ic": -0.0013589541274323794,
+     "t": -0.4155235153094297,
+     "early": 0.0007453575161608709,
+     "late": -0.0034564776689495224,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "insider_cluster": {
+     "ic": -0.004316365795197366,
+     "t": -1.7994290079602864,
+     "early": -0.00691116732514332,
+     "late": -0.0017299616812059306,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "insider_net": {
+     "ic": -0.00855128655313064,
+     "t": -1.7335388035515749,
+     "early": -0.006586142873699363,
+     "late": -0.010510091059402467,
+     "dates": 619,
+     "chosen": false,
+     "above_bonferroni": false
+    }
+   },
+   "chosen": [],
+   "above_bonferroni": [],
+   "first": "2009-09-08",
+   "last": "2021-12-15",
+   "each_factor_spread": {
+    "insider_buyers": {
+     "dates": 619,
+     "mean_signal_n": 69.08239095315024,
+     "spread_net": -0.0019733530615079747,
+     "t_spread": -4.061388807557909,
+     "signal_excess": 2.9664366337067543e-05
+    },
+    "insider_opp_buyers": {
+     "dates": 619,
+     "mean_signal_n": 68.70759289176091,
+     "spread_net": -0.0019397355204050595,
+     "t_spread": -4.025623903430999,
+     "signal_excess": 6.161315872803731e-05
+    },
+    "insider_buy_value": {
+     "dates": 619,
+     "mean_signal_n": 68.98061389337641,
+     "spread_net": -0.0018658436384019997,
+     "t_spread": -3.8628725792991045,
+     "signal_excess": 0.00010879001995149642
+    },
+    "insider_cluster": {
+     "dates": 617,
+     "mean_signal_n": 6.024311183144246,
+     "spread_net": -0.0027072202846158194,
+     "t_spread": -2.35717191231359,
+     "signal_excess": -0.0006863457787129075
+    },
+    "insider_net": {
+     "dates": 619,
+     "mean_signal_n": 91.49757673667204,
+     "spread_net": -0.002316493144885611,
+     "t_spread": -3.0241110641684315,
+     "signal_excess": -0.0002723765346488133
+    }
+   }
+  },
+  "SWING_20": {
+   "horizon": 20,
+   "factors": {
+    "insider_buyers": {
+     "ic": -0.001152346407444507,
+     "t": -0.2939051769975483,
+     "early": -1.745531901205663e-05,
+     "late": -0.0022835647091830006,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "insider_opp_buyers": {
+     "ic": -0.0006948640686195957,
+     "t": -0.17623373669082953,
+     "early": 0.0005127040124780761,
+     "late": -0.0018985241623998006,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "insider_buy_value": {
+     "ic": -0.0004547754054532703,
+     "t": -0.11465860953924732,
+     "early": 0.0009466249806235041,
+     "late": -0.001851640515199699,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "insider_cluster": {
+     "ic": -0.005161523345660877,
+     "t": -1.837679607921682,
+     "early": -0.007173788898403899,
+     "late": -0.003155791122634553,
+     "dates": 615,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "insider_net": {
+     "ic": -0.007301354147800773,
+     "t": -1.19315766431845,
+     "early": -0.006599182072521308,
+     "late": -0.008001253821542115,
+     "dates": 617,
+     "chosen": false,
+     "above_bonferroni": false
+    }
+   },
+   "chosen": [],
+   "above_bonferroni": [],
+   "first": "2009-09-08",
+   "last": "2021-12-01",
+   "each_factor_spread": {
+    "insider_buyers": {
+     "dates": 617,
+     "mean_signal_n": 69.08427876823339,
+     "spread_net": -0.0017919383692149354,
+     "t_spread": -2.1530497745177235,
+     "signal_excess": 0.0001910788710774686
+    },
+    "insider_opp_buyers": {
+     "dates": 617,
+     "mean_signal_n": 68.70988654781199,
+     "spread_net": -0.0017645238099341534,
+     "t_spread": -2.1416141254248053,
+     "signal_excess": 0.00021593637645047083
+    },
+    "insider_buy_value": {
+     "dates": 617,
+     "mean_signal_n": 68.98217179902755,
+     "spread_net": -0.001560039412206068,
+     "t_spread": -1.931729630190601,
+     "signal_excess": 0.0003595296328130901
+    },
+    "insider_cluster": {
+     "dates": 615,
+     "mean_signal_n": 6.009756097560976,
+     "spread_net": -0.0044213259536835135,
+     "t_spread": -2.022095684977368,
+     "signal_excess": -0.0023865858606174537
+    },
+    "insider_net": {
+     "dates": 617,
+     "mean_signal_n": 91.43760129659644,
+     "spread_net": -0.0025862158025727992,
+     "t_spread": -1.8277115796143801,
+     "signal_excess": -0.0004989130707117697
+    }
+   }
+  }
+ },
+ "factors": [
+  "insider_buyers",
+  "insider_opp_buyers",
+  "insider_buy_value",
+  "insider_cluster",
+  "insider_net"
+ ],
+ "source_end": "2026-03-31",
+ "mean_eligible": 455.3429256594724,
+ "mean_linked": 455.3189448441247
+}
