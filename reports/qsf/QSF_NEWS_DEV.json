@@ -1,0 +1,128 @@
+{
+ "status": "DEVELOPED",
+ "protocol": "reports/QSF_NEWS_RESEARCH_PROTOCOL.md",
+ "strategies": {
+  "SWING_10": {
+   "horizon": 10,
+   "factors": {
+    "news_tone_7": {
+     "ic": 0.005401632224917899,
+     "t": 1.3142496773892531,
+     "early": 0.005769027569898611,
+     "late": 0.005034236879937187,
+     "dates": 338,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "news_tone_30": {
+     "ic": 0.004951511805467396,
+     "t": 0.9494112842490334,
+     "early": 0.00937652916040825,
+     "late": 0.0005264944505265424,
+     "dates": 338,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "news_neg_share_30": {
+     "ic": 0.007316805524119112,
+     "t": 1.484440345738507,
+     "early": 0.004069480061050967,
+     "late": 0.010564130987187259,
+     "dates": 338,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "news_abnormal_7": {
+     "ic": 0.004186702316722322,
+     "t": 1.1367676317270734,
+     "early": 0.002802130187203103,
+     "late": 0.00557127444624154,
+     "dates": 338,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "news_count_91": {
+     "ic": 0.011607688148353924,
+     "t": 2.3157618182806528,
+     "early": 0.011740131999616744,
+     "late": 0.011475244297091108,
+     "dates": 338,
+     "chosen": true,
+     "above_bonferroni": false
+    }
+   },
+   "chosen": [
+    "news_count_91"
+   ],
+   "above_bonferroni": [],
+   "first": "2010-04-07",
+   "last": "2016-12-13"
+  },
+  "SWING_20": {
+   "horizon": 20,
+   "factors": {
+    "news_tone_7": {
+     "ic": 0.003578424465926028,
+     "t": 0.7683931109105203,
+     "early": 0.0032670492147281937,
+     "late": 0.0038897997171238622,
+     "dates": 336,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "news_tone_30": {
+     "ic": 0.0057213268458165606,
+     "t": 0.8566052186861334,
+     "early": 0.0033561029626739958,
+     "late": 0.008086550728959125,
+     "dates": 336,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "news_neg_share_30": {
+     "ic": 0.008920731249129517,
+     "t": 1.4090697052491055,
+     "early": 0.004993259234118442,
+     "late": 0.01284820326414059,
+     "dates": 336,
+     "chosen": false,
+     "above_bonferroni": false
+    },
+    "news_abnormal_7": {
+     "ic": 0.007855559957669877,
+     "t": 2.049060120046909,
+     "early": 0.006362238797276939,
+     "late": 0.009348881118062816,
+     "dates": 336,
+     "chosen": true,
+     "above_bonferroni": false
+    },
+    "news_count_91": {
+     "ic": 0.01338946559438053,
+     "t": 2.081372966518084,
+     "early": 0.018202752519626834,
+     "late": 0.00857617866913423,
+     "dates": 336,
+     "chosen": true,
+     "above_bonferroni": false
+    }
+   },
+   "chosen": [
+    "news_abnormal_7",
+    "news_count_91"
+   ],
+   "above_bonferroni": [],
+   "first": "2010-04-07",
+   "last": "2016-11-29"
+  }
+ },
+ "factors": [
+  "news_tone_7",
+  "news_tone_30",
+  "news_neg_share_30",
+  "news_abnormal_7",
+  "news_count_91"
+ ],
+ "mean_eligible": 448.5342465753425,
+ "mean_linked": 326.6516634050881
+}
