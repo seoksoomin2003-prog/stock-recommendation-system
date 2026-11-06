@@ -114,12 +114,28 @@ def _panel(rows=340, cols=3):
 def test_a_gap_is_kept_apart_from_no_trades():
     px = _panel()
     day = px.dates[-1]
-    b = ri.build_features(px, lambda d: ["AAA", "BBB"], {"AAA": 1}, {}, source_end=day)
+    old = ri.mark_routine([["2010-01-01", "2010-01-01", 7, "S", 5.0]])
+    b = ri.build_features(px, lambda d: ["AAA", "BBB"], {"AAA": 1, "BBB": 2}, {1: old}, source_end=day)
     k = ri.FACTORS.index("insider_buyers")
     assert b["tensor"][-1, 0, k] == 0                     # linked, no trades
-    assert np.isnan(b["tensor"][-1, 1, k])                # no company number
-    gone = ri.build_features(px, lambda d: ["AAA"], {"AAA": 1}, {}, source_end=px.dates[0])
+    assert np.isnan(b["tensor"][-1, 1, k])                # no filing of this kind anywhere
+    gone = ri.build_features(px, lambda d: ["AAA"], {"AAA": 1}, {1: old}, source_end=px.dates[0])
     assert np.isnan(gone["tensor"][-1, 0, k])             # past the data
+
+
+def test_earlier_company_numbers_join_the_current_one():
+    merged = ri.merge_aliases({5: [["2015-01-01", "2015-01-01", 1, "P", 1.0]], 9: [["2020-01-01", "2020-01-01", 1, "P", 2.0]], 3: [["2020-01-01", "2020-01-01", 2, "S", 3.0]]}, {5: 9})
+    assert sorted(merged) == [3, 9] and len(merged[9]) == 2
+
+
+def test_alias_table_never_takes_a_current_number(tmp_path):
+    target = tmp_path / ri.ALIASES
+    target.parent.mkdir(parents=True)
+    target.write_text(json.dumps({"AAA": [2]}), encoding="utf-8")
+    with pytest.raises(ValueError):
+        ri.alias_map(tmp_path, {"AAA": 1, "BBB": 2})
+    target.write_text(json.dumps({"AAA": [5]}), encoding="utf-8")
+    assert ri.alias_map(tmp_path, {"AAA": 1, "BBB": 2}) == {5: 1}
 
 
 def test_per_date_compares_signal_names_with_the_rest():

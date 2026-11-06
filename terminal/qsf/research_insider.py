@@ -34,6 +34,7 @@ QUARTERS = [(y, q) for y in range(2006, 2027) for q in (1, 2, 3, 4) if (y, q) <=
 URL = "https://www.sec.gov/files/structureddata/data/insider-transactions-data-sets/{}q{}_form345.zip"
 FOLDER = Path("data") / "qsf" / "research" / "insider"
 TRADES = "trades.json.gz"
+ALIASES = Path("reports") / "qsf" / "QSF_INSIDER_CIK_ALIASES.json"
 DEV_REPORT = Path("reports") / "qsf" / "QSF_INSIDER_DEV.json"
 TEST_REPORT = Path("reports") / "qsf" / "QSF_INSIDER_TEST.json"
 PROTOCOL = "reports/QSF_INSIDER_RESEARCH_PROTOCOL.md"
@@ -166,11 +167,11 @@ def build_features(px: validate.Prices, members: Callable[[str], List[str]], cik
         linked = 0
         for j in keep:
             cik = ciks.get(px.symbols[j])
-            if cik is None:
+            if cik is None or cik not in trades:     # no filing of this kind anywhere: unknown, not "no trades"
                 continue
             linked += 1
             adv = float(np.nanmean(d["close"][max(0, i - 19):i + 1, j] * d["volume"][max(0, i - 19):i + 1, j]))
-            f = factors_at(trades.get(cik) or [], day, adv)
+            f = factors_at(trades[cik], day, adv)
             for k, name in enumerate(FACTORS):
                 tensor[n, j, k] = f[name]
         counts.append({"date": day, "eligible": len(keep), "linked": linked})
@@ -261,6 +262,26 @@ def cik_map(base: Path) -> Dict[str, int]:
     return out
 
 
+def alias_map(base: Path, ciks: Dict[str, int]) -> Dict[int, int]:
+    """Earlier company number to the number the ticker uses now.  A number that is itself some ticker's current one is refused."""
+    table = json.loads((base / ALIASES).read_text(encoding="utf-8"))
+    current = set(ciks.values())
+    out: Dict[int, int] = {}
+    for t, old in table.items():
+        for c in old:
+            if c in current:
+                raise ValueError(f"{t}: 이전 번호가 다른 종목의 현재 번호입니다.")
+            out[int(c)] = ciks[t]
+    return out
+
+
+def merge_aliases(trades: Dict[int, List[List[Any]]], aliases: Dict[int, int]) -> Dict[int, List[List[Any]]]:
+    out: Dict[int, List[List[Any]]] = {}
+    for issuer, rows in trades.items():
+        out.setdefault(aliases.get(issuer, issuer), []).extend(rows)
+    return out
+
+
 def prepare(base: Path, log=print, http=None, pause: float = 0.2) -> Dict[str, Any]:
     """Downloads the quarterly files once each, then keeps only the fields the protocol uses."""
     import requests
@@ -272,7 +293,8 @@ def prepare(base: Path, log=print, http=None, pause: float = 0.2) -> Dict[str, A
     folder.mkdir(parents=True, exist_ok=True)
     headers = {"User-Agent": sources.sec_user_agent()}
     ciks = cik_map(base)
-    wanted = set(ciks.values())
+    aliases = alias_map(base, ciks)
+    wanted = set(ciks.values()) | set(aliases)
     merged: Dict[int, List[List[Any]]] = {}
     last, dropped, t0 = None, 0, time.time()
     for k, (y, q) in enumerate(QUARTERS, 1):
@@ -299,7 +321,7 @@ def prepare(base: Path, log=print, http=None, pause: float = 0.2) -> Dict[str, A
         last = max(last or part["last_filed"], part["last_filed"]) if part["last_filed"] else last
         dropped += part["dropped"]
         log(f"{k}/{len(QUARTERS)} {y}q{q} {time.time() - t0:.0f}s")
-    out = {"source_end": last, "dropped": dropped, "trades": {str(c): mark_routine(r) for c, r in merged.items()}}
+    out = {"source_end": last, "dropped": dropped, "trades": {str(c): mark_routine(r) for c, r in merge_aliases(merged, aliases).items()}}
     with gzip.open(base / FOLDER / TRADES, "wt", encoding="utf-8") as fh:
         json.dump(out, fh)
     n = sum(len(v) for v in out["trades"].values())
