@@ -1,0 +1,106 @@
+{
+ "status": "TESTED",
+ "protocol": "reports/QSF_SUE_TEST_PROTOCOL.md",
+ "chosen": [
+  "sue"
+ ],
+ "horizon": 10,
+ "dates": 232,
+ "first": "2022-01-06",
+ "last": "2026-08-17",
+ "split": "2024-04-30",
+ "lag": 2,
+ "mean_n": 455.98275862068965,
+ "ic": 0.005455347060160115,
+ "t": 0.707311802422742,
+ "ic_positive_share": 0.5344827586206896,
+ "ic_sector_neutral": 0.0003202455539101545,
+ "spread_net": -0.0005572117426109807,
+ "buy_excess": 0.000487974771035417,
+ "buy_dates": 232,
+ "buy_trades": 31765,
+ "early": {
+  "ic": 0.005021313783487746,
+  "spread_net": -0.0010742055371738173,
+  "dates": 116
+ },
+ "late": {
+  "ic": 0.005889380336832481,
+  "spread_net": -4.021794804814372e-05,
+  "dates": 116
+ },
+ "top_excess": 0.001161488593838576,
+ "buckets": {
+  "0-40": {
+   "n": 42319,
+   "mean_net": 0.0025412458272393488,
+   "median_net": 0.0022781724331777404,
+   "win_rate": 0.5183487322479264,
+   "mean_vs_bench_net": -0.002916389182981628,
+   "beat_bench_rate": 0.46378695148751153,
+   "mean_vs_average": 0.00030773461797603676,
+   "beat_average_rate": 0.49325362130485123
+  },
+  "40-55": {
+   "n": 15853,
+   "mean_net": 0.0004132661775697833,
+   "median_net": 0.001547961463134186,
+   "win_rate": 0.514224437015076,
+   "mean_vs_bench_net": -0.005053355544517327,
+   "beat_bench_rate": 0.4566328139784268,
+   "mean_vs_average": -0.001822139466459177,
+   "beat_average_rate": 0.4870371538510061
+  },
+  "55-70": {
+   "n": 15851,
+   "mean_net": 0.002247116755419693,
+   "median_net": 0.002529309504822665,
+   "win_rate": 0.5193994069774778,
+   "mean_vs_bench_net": -0.003218642481591603,
+   "beat_bench_rate": 0.46539650495236895,
+   "mean_vs_average": -1.6378225359032123e-05,
+   "beat_average_rate": 0.49757113115891743
+  },
+  "70-80": {
+   "n": 10519,
+   "mean_net": 0.0013264658002923476,
+   "median_net": 0.001986259182118035,
+   "win_rate": 0.5176347561555281,
+   "mean_vs_bench_net": -0.004107032527109291,
+   "beat_bench_rate": 0.45641220648350606,
+   "mean_vs_average": -0.0008700268371843898,
+   "beat_average_rate": 0.48569255632664704
+  },
+  "80-100": {
+   "n": 21246,
+   "mean_net": 0.0034267879837184515,
+   "median_net": 0.0030407436835887553,
+   "win_rate": 0.5250400075308294,
+   "mean_vs_bench_net": -0.0020338321357077018,
+   "beat_bench_rate": 0.47613668455238634,
+   "mean_vs_average": 0.0011896253042529446,
+   "beat_average_rate": 0.5075778970159088
+  }
+ },
+ "ic_spy_above_200d": {
+  "ic": -0.0009251541544872782,
+  "dates": 177
+ },
+ "ic_spy_below_200d": {
+  "ic": 0.025988960060025372,
+  "dates": 55
+ },
+ "verdict": "NO_EVIDENCE",
+ "checks": {
+  "ic": false,
+  "t": false,
+  "ic_both_halves": true,
+  "spread_both_halves": false,
+  "buy_band": true
+ },
+ "control_mom_12_1": {
+  "ic": 0.012823195617408986,
+  "t": 0.7952724495212345,
+  "dates": 232
+ }
+}
