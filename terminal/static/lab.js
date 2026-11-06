@@ -79,7 +79,7 @@ async function pollLab() {
 // ------------------------------------------------------------------ 연구실
 let labData = null, labCost = "0";
 async function renderLab() {
-  const el = $("#tab-lab");
+  const el = $("#labbody"); if (!el) return;
   if (isKR()) { el.innerHTML = '<div class="panel empty">연구실은 아직 미국 전용입니다. 위에서 미국을 선택하면 볼 수 있습니다.</div>'; return; }
   el.innerHTML = '<div class="panel empty">과거 시뮬레이션 계산 중… (처음에는 수십 초 걸릴 수 있습니다)</div>';
   let d;
@@ -132,4 +132,37 @@ function drawLab() {
   series.forEach(({ c, s }) => { const m = s.nav.length; line(ctx, s.nav, (i) => (i / (m - 1)) * (w - padR), y, cssVar(LAB_COLORS[c]), c === "SPY" ? 1.3 : 1.8); });
 }
 
-RENDER.lab = renderLab;
+// ------------------------------------------------------------------ 전향 기록 현황판
+const SPAN = (y) => (y <= 0 ? "지금 충족" : y < 1 ? `약 ${Math.max(1, Math.round(y * 12))}개월` : `약 ${y < 10 ? y.toFixed(1) : Math.round(y)}년`);
+function recordProgress(q) {
+  return (q.progress || []).reduce((a, p) => { a[`${p.strategy}|${p.horizon}`] = p; return a; }, {});
+}
+async function renderRecord() {
+  const el = $("#recpanel"); if (!el) return;
+  el.innerHTML = `<div class="panel">${loading}</div>`;
+  let d;
+  try { d = await api("/api/record"); } catch (e) { el.innerHTML = errBox(e); return; }
+  const us = d.qsf.US, kr = d.qsf.KR, b = d.baseline, a = d.automation;
+  const pu = recordProgress(us), pk = recordProgress(kr);
+  const rows = (us.progress || []).map((p) => {
+    const k = pk[`${p.strategy}|${p.horizon}`] || {};
+    const cell = (x) => `${isNum(x.independent) ? x.independent.toFixed(1) : DASH} / ${x.target} <span class="meta" style="margin:0">(만기 ${x.matured_sessions})</span>`;
+    return `<tr${p.primary ? ' class="rec-primary"' : ""}><td class="l">${p.strategy === "SWING" ? "스윙" : "장기"} ${p.horizon}거래일${p.primary ? " (주 지평)" : ""}</td><td class="num">${p.needed_sessions.toLocaleString("ko-KR")}</td><td class="num">${cell(p)}</td><td class="num">${cell(k)}</td><td class="num">${SPAN(p.remaining_years)}</td></tr>`;
+  }).join("");
+  const mk = (name, q) => `<div><span>${name} 기록 거래일</span><b class="num">${q.sessions}</b></div><div><span>${name} 현재 버전</span><b class="num">${q.current_version_sessions}</b></div><div><span>${name} 마지막 기록</span><b>${esc(q.last || "—")}</b></div>`;
+  const stat = { OK: "완료", FAILED: "실패", SKIPPED: "건너뜀" };
+  el.innerHTML = `<div class="panel"><h2>전향 기록 현황 <span class="meta" style="margin:0">${esc(d.model_version)}</span></h2>
+    ${d.alerts.length ? `<ul class="rec-alerts">${d.alerts.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("")}</ul>` : '<div class="meta">문제없이 기록이 쌓이고 있습니다.</div>'}
+    <h3>QSF 점수 기록</h3><div class="kv">${mk("미국", us)}${mk("한국", kr)}</div>
+    <h3>판단까지 남은 기간</h3><div class="tbl-wrap"><table><thead><tr><th class="l">지평</th><th>필요 거래일</th><th>미국 독립 표본</th><th>한국 독립 표본</th><th>남은 기간 (미국)</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="meta">현재 버전 기록만 셉니다. 독립 표본은 만기 거래일 수를 지평으로 나눈 값이고, ${d.minimum_independent}개가 기준입니다. 남은 기간은 매 거래일 빠짐없이 기록한다고 가정한 값입니다.</div>
+    <h3>기준 모델 기록</h3>${b.status === "REAL" ? `<div class="kv"><div><span>자본금</span><b>${b.capital_configured ? "입력됨" : '<span class="missing">미입력</span>'}</b></div><div><span>결과 확정 / 기준</span><b class="num">${b.completed} / ${b.target}</b></div><div><span>결과 대기</span><b class="num">${b.pending}</b></div><div><span>유효 스캔 날짜</span><b class="num">${b.scan_dates}</b></div><div><span>마지막 유효 스캔</span><b>${esc(b.last_scan_date || "—")}</b></div></div>` : `<div class="empty">추적 기록을 읽지 못했습니다 (${esc(b.error || "")}).</div>`}
+    <h3>자동 실행</h3><div class="kv"><div><span>설치</span><b>${a.installed ? "설치됨" : '<span class="missing">미설치</span>'}</b></div><div><span>실행 시각</span><b>${esc((a.schedule_kst || []).join(", "))}</b></div><div><span>마지막 실행</span><b>${a.last_run_at ? when(a.last_run_at) : DASH}</b></div><div><span>기준 거래일</span><b>${esc(a.latest_session || "—")}</b></div></div>
+    <div class="meta">${a.steps.map((s) => `${esc(s.name)}: ${esc(stat[s.status] || "기록 없음")}`).join(" · ")}</div>
+    <div class="meta">${esc(d.note)}</div></div>`;
+}
+RENDER.lab = async function () {
+  $("#tab-lab").innerHTML = '<div id="recpanel"></div><div id="labbody"></div>';
+  renderRecord();
+  await renderLab();
+};
