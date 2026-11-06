@@ -4,6 +4,7 @@ The terminal only READS model artifacts (runs/, tracking/); it never writes to t
 """
 import json
 import math
+import os
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -464,6 +465,27 @@ class Terminal:
         tmp.write_text(json.dumps({**new, "updated_at": self.now().isoformat()}), encoding="utf-8")
         tmp.replace(self.settings_file)
         return new
+
+    def capital(self, market: str = "US") -> Dict[str, Any]:
+        """The capital the next scan will use.  An unusable value reads as not configured, never as a number."""
+        from utils.runtime_config import CAPITAL_KEYS, CapitalNotConfigured, parse_capital
+        raw = os.getenv(CAPITAL_KEYS[market], "").strip()
+        try:
+            amount = parse_capital(raw) if raw else None
+        except CapitalNotConfigured:
+            amount = None
+        return {"market": market, "amount": amount, "currency": "KRW" if market == "KR" else "USD", "invalid": bool(raw) and amount is None}
+
+    def capital_set(self, raw: Dict[str, Any]) -> Dict[str, Any]:
+        from utils.runtime_config import CapitalNotConfigured, set_capital
+        market = (raw or {}).get("market", "US")
+        if market not in ("US", "KR"):
+            raise ValueError("시장은 US 또는 KR이어야 합니다.")
+        try:
+            set_capital(market, (raw or {}).get("amount"), self.base / ".env")
+        except CapitalNotConfigured:
+            raise ValueError("자본금은 0보다 큰 숫자로 입력하세요.") from None
+        return self.capital(market)
 
     def _today_et(self):
         return self.now().astimezone(ZoneInfo("America/New_York")).date()

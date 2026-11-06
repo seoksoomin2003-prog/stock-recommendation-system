@@ -220,7 +220,7 @@ class Daily:
         if any((steps.get(n) or {}).get("status") == FAILED for n in STEP_NAMES):
             lines.append("실패한 작업은 다음 예약 시각에 다시 시도합니다.")
         if (steps.get("SCAN") or {}).get("status") == SKIPPED:
-            lines.append("P6-11B는 오늘 기록이 없습니다. .env에 QPP_CAPITAL을 설정하면 매일 스캔합니다.")
+            lines.append("P6-11B는 오늘 기록이 없습니다. 모델 탭에서 자본금을 입력하면 매일 스캔합니다.")
         lines += ["", "[포트폴리오 경고]"]
         if alerts["status"] == "INTEGRITY":
             lines.append("🚨 거래 기록 무결성 오류: 터미널에서 확인이 필요합니다.")

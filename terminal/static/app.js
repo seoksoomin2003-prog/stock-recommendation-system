@@ -360,24 +360,57 @@ const REGIME_KO = { BULL: "상승장", BEAR: "하락장", SIDEWAYS: "횡보장",
 const OUT_KO = { PENDING_ENTRY: "진입 대기", PENDING_OUTCOME: "보유 중(결과 대기)", COMPLETED_OUTCOME: "완료", INCOMPLETE: "데이터 불완전",
   VALID_PROSPECTIVE: "유효", PRE_FIX_EXCLUDED: "수정 전 제외", DATA_INVALID: "데이터 무효" };
 const outKo = (k) => String(k).split("/").map((x) => OUT_KO[x] || x).join(" · ");
+// Amounts follow the box as typed; the list itself comes from the recorded scan and changes only at the next scan.
+function wireCapital(el, cap, b, mk) {
+  const input = $("#capInput"), note = $("#capNote");
+  let saved = isNum(cap.amount) ? cap.amount : null;
+  const money = (v) => mk === "KR" ? `${Math.round(v).toLocaleString("ko-KR")}원` : `$${Math.round(v).toLocaleString("en-US")}`;
+  const parse = () => { const t = input.value.replace(/[,_$\s]/g, ""); if (!t) return null; const v = Number(t); return Number.isFinite(v) && v > 0 ? v : NaN; };
+  const nextScan = mk === "KR" ? "한국 스캔은 일일 작업에 없으니 <code>python app.py --market KR scan</code>으로 실행하세요." : "다음 일일 작업의 스캔부터 이 금액을 씁니다.";
+  const refresh = (msg) => {
+    const typed = parse(), base = typed === null ? (isNum(b.capital) ? b.capital : null) : typed;
+    el.querySelectorAll("[data-cap-amount]").forEach((c) => { const w = parseFloat(c.dataset.w); c.innerHTML = base && !isNaN(base) && !isNaN(w) ? money(w * base) : DASH; });
+    el.querySelectorAll("[data-cap-shares]").forEach((c) => { const w = parseFloat(c.dataset.w), p = parseFloat(c.dataset.close); c.innerHTML = base && !isNaN(base) && !isNaN(w) && p > 0 ? Math.floor(w * base / p).toLocaleString("ko-KR") : DASH; });
+    const parts = [];
+    if (msg) parts.push(msg);
+    if (Number.isNaN(typed)) parts.push("0보다 큰 숫자로 입력하세요.");
+    else if (typed !== saved) parts.push("저장 전 미리보기입니다.");
+    else if (saved === null) parts.push(cap.invalid ? "저장된 값을 읽을 수 없습니다. 다시 입력하세요." : "자본금이 없어 P6-11B 스캔을 건너뜁니다.");
+    if (!Number.isNaN(typed) && base && isNum(b.capital) && base !== b.capital) parts.push(`금액과 주수만 환산했습니다. 추천 종목은 스캔 당시 자본 ${money(b.capital)} 기준이라 다음 스캔에서 달라질 수 있습니다.`);
+    note.innerHTML = parts.join(" ");
+  };
+  input.oninput = () => refresh();
+  $("#capSave").onclick = async () => {
+    if (Number.isNaN(parse())) return refresh();
+    try {
+      const r = await api("/api/capital", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ market: mk, amount: parse() === null ? "" : parse() }) });
+      saved = isNum(r.amount) ? r.amount : null;
+      refresh(saved === null ? "지웠습니다." : `저장했습니다. ${nextScan}`);
+    } catch (e) { refresh(esc(ERR_KO[e.message] || e.message)); }
+  };
+  refresh();
+}
 async function renderModel() {
   const el = $("#tab-model"), mk = state.market; el.innerHTML = loading;
   try {
-    const d = await api(mq("/api/model")); if (mk !== state.market) return; state.loaded.model = true;
+    const [d, cap] = await Promise.all([api(mq("/api/model")), api(mq("/api/capital"))]); if (mk !== state.market) return; state.loaded.model = true;
     const b = d.baseline, t = d.tracking;
     el.innerHTML = `<div class="panel"><h2>${esc(b.name)} ${badge(b.status || "FROZEN")} <span class="meta" style="margin:0">${esc(b.role)}</span></h2>
+      <div class="form" style="margin:8px 0 12px"><label>투자 자본금 (${esc(cap.currency)})<input id="capInput" inputmode="decimal" autocomplete="off" value="${isNum(cap.amount) ? cap.amount : ""}" placeholder="금액 입력"></label><button id="capSave">저장</button><div class="wide meta" id="capNote" style="margin:0"></div></div>
       ${b.run_id ? `<div class="kv"><div><span>최근 전체 스캔</span><b>${when(b.executed_at)}</b></div><div><span>결과</span><b>${esc(REC_KO[b.recommendation_status] || b.recommendation_status)}</b></div>
         <div><span>시장 국면</span><b>${esc(REGIME_KO[b.regime] || b.regime || "—")}</b></div><div><span>기준 자본</span><b class="num">${isNum(b.capital) ? b.capital.toLocaleString("ko-KR") + " " + esc(b.currency || "") : DASH}</b></div></div>
-      <h3>추천 상위 종목</h3><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th class="l">섹터</th><th>기준가</th><th>${mk === "KR" ? "점수" : "알파"}</th><th>목표 비중</th><th>손절가</th><th>보유 기간</th></tr></thead>
+      <h3>추천 상위 종목</h3><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th class="l">섹터</th><th>기준가</th><th>${mk === "KR" ? "점수" : "알파"}</th><th>목표 비중</th><th>목표 금액</th><th>주수</th><th>손절가</th><th>보유 기간</th></tr></thead>
       <tbody>${(b.top5 || []).map((r) => `<tr class="click" data-ticker="${esc(r.ticker)}"><td>${esc(r.recommendation_rank)}</td><td class="l"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span></td>
         <td class="l">${esc(r.sector || "")}</td><td class="num">${fmt(r.close, mk === "KR" ? 0 : 2)}</td><td class="num">${fmt(r.alpha, 3)}</td><td class="num">${isNum(r.target_weight) ? (r.target_weight * 100).toFixed(1) + "%" : DASH}</td>
-        <td class="num">${fmt(r.hard_stop)}</td><td>${isNum(r.horizon_days) ? r.horizon_days + "거래일" : DASH}</td></tr>`).join("") || '<tr><td colspan="8" class="empty">추천 종목 없음</td></tr>'}</tbody></table></div>
-      <div class="meta">실행 ID ${esc(b.run_id)} · 읽기 전용 표시입니다. 이 화면은 모델을 실행하거나 변경하지 않습니다.</div>` : '<div class="empty">기록된 전체 스캔이 없습니다. <code>python app.py scan --capital 금액</code> 으로 실행하세요.</div>'}</div>
+        <td class="num" data-cap-amount data-w="${isNum(r.target_weight) ? r.target_weight : ""}">${DASH}</td><td class="num" data-cap-shares data-w="${isNum(r.target_weight) ? r.target_weight : ""}" data-close="${isNum(r.close) ? r.close : ""}">${DASH}</td>
+        <td class="num">${fmt(r.hard_stop)}</td><td>${isNum(r.horizon_days) ? r.horizon_days + "거래일" : DASH}</td></tr>`).join("") || '<tr><td colspan="10" class="empty">추천 종목 없음</td></tr>'}</tbody></table></div>
+      <div class="meta">실행 ID ${esc(b.run_id)} · 읽기 전용 표시입니다. 이 화면은 모델을 실행하거나 변경하지 않습니다.</div>` : '<div class="empty">기록된 전체 스캔이 없습니다.</div>'}</div>
       <div class="panel"><h2>전향적 추적 ${badge(t.status)}</h2>${t.status === "REAL" ? `<div class="kv"><div><span>기록된 실행</span><b>${esc(t.runs)}</b></div><div><span>관찰 건수</span><b>${esc(t.observations)}</b></div>
         <div><span>최근 갱신</span><b>${esc(t.latest_update || "—")}</b></div></div>
         ${t.outcome_states ? `<div class="kv">${Object.entries(t.outcome_states).map(([k, v]) => `<div><span>${esc(outKo(k))}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
         <div class="meta">표본이 충분히 쌓이기 전에는 성과를 판단할 수 없습니다.</div>` : `<div class="empty">추적 데이터를 읽지 못했습니다 (${esc(t.error || "")}).</div>`}</div>
       <div class="panel"><h2>도전자 모델</h2><div class="empty">${esc(d.challenger_note)}</div></div>`;
+    wireCapital(el, cap, b, mk);
   } catch (e) { el.innerHTML = errBox(e); }
 }
 

@@ -110,6 +110,39 @@ def resolve_capital(cli_value=None) -> Tuple[float, str]:
         "or set QPP_CAPITAL in the project .env file.")
 
 
+CAPITAL_KEYS = {"US": "QPP_CAPITAL", "KR": "QPP_CAPITAL_KRW"}
+
+
+def set_capital(market: str, value, path: Optional[Path] = None) -> Optional[float]:
+    """Save one market's capital in the .env file and this process.  An empty value removes it.  Other lines stay exactly as they are."""
+    key = CAPITAL_KEYS[market]
+    amount = None if value is None or not str(value).strip() else parse_capital(value)
+    path = Path(path) if path else ENV_FILE
+    text = path.read_text(encoding="utf-8") if path.is_file() else ""
+    written = f"{key}={amount:.2f}".rstrip("0").rstrip(".") if amount is not None else None
+    lines, placed = [], False
+    for raw in text.splitlines():
+        body = raw.strip()
+        body = body[len("export "):].lstrip() if body.startswith("export ") else body
+        if body.startswith("#") or body.split("=", 1)[0].strip() != key or "=" not in body:
+            lines.append(raw)
+        elif written and not placed:
+            lines.append(written)
+            placed = True
+    if written and not placed:
+        lines.append(written)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text("\n".join(lines) + "\n" if lines else "", encoding="utf-8")
+    if path.is_file():
+        os.chmod(tmp, path.stat().st_mode & 0o777)
+    tmp.replace(path)
+    if amount is None:
+        os.environ.pop(key, None)
+    else:
+        os.environ[key] = written.split("=", 1)[1]
+    return amount
+
+
 def http_user_agent() -> str:
     """Identity for non-SEC public pages (Wikipedia): the SEC identity when configured, else generic."""
     if sec_configured():

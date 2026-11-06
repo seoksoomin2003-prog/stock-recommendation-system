@@ -86,6 +86,7 @@ over `.env`.
 Capital must be given explicitly every time, in one of these ways:
 
 * `--capital 50000` on the command line (wins), or
+* the capital box on the terminal's model tab (saves `QPP_CAPITAL` or `QPP_CAPITAL_KRW` in `.env`), or
 * `QPP_CAPITAL=50000` in `.env`, or
 * the interactive menu asks for it.
 
