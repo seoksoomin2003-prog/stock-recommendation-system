@@ -389,9 +389,9 @@ def cmd_lab(args) -> int:
 
 def cmd_qsf(args) -> int:
     """QSF 1.1 scoring (separate from the frozen P6-11B model; no orders are ever placed)."""
-    if args.action.startswith("corrected-"):
+    if args.action.startswith("corrected-") or args.action == "sue-test":
         from terminal.qsf import validate_corrected as vc
-        res = {"corrected-prepare": vc.prepare, "corrected-open": vc.run_open, "corrected-oos": vc.run_oos, "corrected-research": vc.run_research, "corrected-swing": vc.run_swing}[args.action](PROJECT_ROOT)
+        res = {"corrected-prepare": vc.prepare, "corrected-open": vc.run_open, "corrected-oos": vc.run_oos, "corrected-research": vc.run_research, "corrected-swing": vc.run_swing, "sue-test": vc.test_sue}[args.action](PROJECT_ROOT)
         print(json.dumps({k: res[k] for k in ("status", "companies", "failed") if k in res}, ensure_ascii=False, default=str))
         return 0
     if args.action in ("insider-prepare", "insider-develop", "insider-test"):
@@ -512,7 +512,7 @@ def build_parser() -> argparse.ArgumentParser:
     lb = sub.add_parser("lab", help="Challenger models beside the frozen P6-11B (TERMINAL-3)")
     lb.add_argument("action", choices=["update", "status", "compare"])
     qs = sub.add_parser("qsf", help="QSF 1.1: 0-100 stock score with holding-period plan (separate from P6-11B)")
-    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "insider-prepare", "insider-develop", "insider-test"])
+    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "sue-test", "insider-prepare", "insider-develop", "insider-test"])
     qs.add_argument("tickers", nargs="*")
     qs.add_argument("--dry-run", action="store_true", help="Scan without writing to the ledger")
     au = sub.add_parser("automation", help="Daily job: record, tracking, backup, Telegram/macOS alerts (TERMINAL-4)")

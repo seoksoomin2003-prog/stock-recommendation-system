@@ -18,7 +18,8 @@ from terminal.qsf import fundamentals, pit, research_score, research_swing, vali
 FOLDER = "facts_corrected"
 PROTOCOL = "reports/QSF_CORRECTED_RECHECK_PROTOCOL.md"
 ALIASES = Path("reports") / "qsf" / "QSF_INSIDER_CIK_ALIASES.json"
-REPORTS = {k: Path("reports") / "qsf" / f"QSF_CORRECTED_{k}.json" for k in ("OPEN", "OOS", "RESEARCH", "SWING")}
+REPORTS = {k: Path("reports") / "qsf" / f"QSF_CORRECTED_{k}.json" for k in ("OPEN", "OOS", "RESEARCH", "SWING", "SUE_TEST")}
+SUE_HORIZON = 10
 
 
 # ---------------------------------------------------------------------- filings
@@ -192,3 +193,18 @@ def run_swing(base: Path, log=print) -> Dict[str, Any]:
     ranks = research_swing.rank_tensor(b["tensor"])
     res = {s: research_swing.select(ranks, px, b["rows"], research_swing.dev_rows(px, b["rows"], h), h) for s, h in research_swing.HORIZONS.items()}
     return _write(out, {"status": "DEVELOPED", "protocol": PROTOCOL, "strategies": res, "factors": list(research_swing.FACTORS), "note": "개발 구간만 계산했습니다. 시험 구간 수익률은 계산하지 않았습니다."})
+
+
+def test_sue(base: Path) -> Dict[str, Any]:
+    """One run of the earnings factor alone, 10 sessions, under reports/QSF_SUE_TEST_PROTOCOL.md."""
+    out = _guard(base, "SUE_TEST")
+    root, _, px = research_swing._load(base)
+    z = np.load(root / "swing_features_corrected.npz")
+    rows = [int(i) for i in z["rows"]]
+    ranks = research_swing.rank_tensor(z["tensor"])
+    picks = research_swing.test_rows(px, rows, SUE_HORIZON)
+    res = research_swing.evaluate(ranks, px, rows, picks, SUE_HORIZON, ["sue"], px.symbols, research_swing._sectors(base, root))
+    k = research_swing.FACTORS.index("mom_12_1")
+    control = [v for v in (research_swing._ic(ranks[n, :, k].astype(float), px.forward(rows[n], SUE_HORIZON)) for n in picks) if v is not None]
+    return _write(out, {"status": "TESTED", "protocol": "reports/QSF_SUE_TEST_PROTOCOL.md", "chosen": ["sue"], "horizon": SUE_HORIZON, **res, **research_swing.test_verdict(res),
+                        "control_mom_12_1": {"ic": float(np.mean(control)) if control else None, "t": validate.newey_west_t(control, research_swing.lag_of(SUE_HORIZON)), "dates": len(control)}})

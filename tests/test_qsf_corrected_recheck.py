@@ -60,7 +60,7 @@ def test_a_failed_earlier_number_raises():
         vc.joined_facts("2115436", ["34088"], fetch)
 
 
-@pytest.mark.parametrize("key", ["OPEN", "OOS", "RESEARCH", "SWING"])
+@pytest.mark.parametrize("key", ["OPEN", "OOS", "RESEARCH", "SWING", "SUE_TEST"])
 def test_each_recheck_runs_once_and_writes_only_its_own_file(tmp_path, key):
     target = tmp_path / vc.REPORTS[key]
     target.parent.mkdir(parents=True)
@@ -75,3 +75,21 @@ def test_earlier_reading_stays_the_default():
     import inspect
     assert inspect.signature(validate.score_dates).parameters["views"].default is validate.fund_views
     assert inspect.signature(research_score.build_features).parameters["view_of"].default is research_score.earlier_view
+
+
+def test_the_earnings_test_refuses_a_second_run_before_reading_anything(tmp_path):
+    target = tmp_path / vc.REPORTS["SUE_TEST"]
+    target.parent.mkdir(parents=True)
+    target.write_text("{}")
+    with pytest.raises(RuntimeError):
+        vc.test_sue(tmp_path)
+    assert target.read_text() == "{}"
+
+
+def test_the_earnings_test_uses_only_dates_from_the_test_period():
+    from terminal.qsf import research_swing as rs
+
+    class Px:
+        dates = ["2021-12-30", "2021-12-31", "2022-01-03", "2022-01-04", "2022-01-05"]
+    assert rs.test_rows(Px, [0, 2], 1) == [1]
+    assert vc.SUE_HORIZON == 10 and "sue" in rs.FACTORS
