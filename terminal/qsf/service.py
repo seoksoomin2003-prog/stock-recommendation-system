@@ -174,7 +174,7 @@ class QSF:
             return {"status": "UNAVAILABLE", "reason": f"SEC 식별 실패 ({type(exc).__name__})"}
         if not cik:
             return {"status": "UNAVAILABLE", "reason": "SEC CIK 없음 (ETF·지수이거나 미국 상장 기업이 아님)", "no_cik": True}
-        res = self.cache.cached(f"annual:{cik}", TTL["facts"], lambda: fundamentals.extract_us(self.src.sec_companyfacts(cik)))
+        res = self.cache.cached(f"annual:{default_sources.facts_key(ticker, cik)}", TTL["facts"], lambda: self._annual(ticker, cik))
         subm = self._us_subm(cik)
         if res["data"] is None:
             return {"status": "UNAVAILABLE", "reason": f"SEC 재무 조회 실패 ({res.get('error')})", "cik": cik}
@@ -182,6 +182,10 @@ class QSF:
         fin = fundamentals.is_financial_sic((subm or {}).get("sic"))
         m = fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=fin, shares=info.get("sharesOutstanding"), insider_pct=info.get("heldPercentInsiders"))
         return {**m, "cik": cik, "name": info.get("longName") or (subm or {}).get("name"), "sector": info.get("sector")}
+
+    def _annual(self, ticker: str, cik: str) -> Dict[str, Any]:
+        annual = fundamentals.extract_us(default_sources.facts_with_predecessors(ticker, cik, self.src.sec_companyfacts))
+        return fundamentals.drop_stale_series(annual) if ticker in default_sources.CIK_PREDECESSORS else annual
 
     def _us_subm(self, cik: str) -> Optional[Dict[str, Any]]:
         def fetch():

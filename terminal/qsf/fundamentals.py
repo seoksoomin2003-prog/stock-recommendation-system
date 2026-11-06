@@ -8,6 +8,7 @@ from datetime import date, datetime
 from typing import Any, Callable, Dict, List, Optional
 
 STALE_DAYS = 540     # a fiscal year-end older than 18 months is STALE
+CHAINED_MAX_GAP = 400
 
 US_FLOW = {
     "revenue": ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet",
@@ -87,6 +88,19 @@ def _vintage(rows: List[Dict], as_of: str) -> List[Dict]:
             if cur is None or r["filed"] >= cur["filed"]:
                 per[r["end"]] = r
     return [per[k] for k in sorted(per)]
+
+
+def drop_stale_series(annual: Dict[str, List[Dict]], max_gap_days: int = CHAINED_MAX_GAP) -> Dict[str, List[Dict]]:
+    """For figures joined across SEC numbers: a series that stopped well before the company's newest year is empty, not current.
+    Debt is one sum, so losing either part drops both and the existing fallback to total liabilities applies."""
+    ends = [r["end"] for rows in annual.values() if isinstance(rows, list) for r in rows]
+    if not ends:
+        return annual
+    newest = max(ends)
+    gone = {k for k, rows in annual.items() if isinstance(rows, list) and rows and _days(max(r["end"] for r in rows), newest) > max_gap_days}
+    if gone & {"debt_long", "debt_short"}:
+        gone |= {"debt_long", "debt_short"}
+    return {k: ([] if k in gone else v) for k, v in annual.items()}
 
 
 def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_financial: bool = False, shares: Optional[float] = None,

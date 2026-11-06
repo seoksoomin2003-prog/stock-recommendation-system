@@ -148,6 +148,36 @@ def sec_companyfacts(cik: str, http=requests) -> Dict:
     return _sec_get(SEC_FACTS.format(cik=str(cik).zfill(10)), http)
 
 
+# Companies whose SEC number changed while the business and the ticker carried on.  The new number holds only what was filed under
+# it, so a company with no 10-K there yet has no annual figures at all.  Checked against SEC registrant names.
+CIK_PREDECESSORS = {"APA": ("6769",), "APO": ("1411494",), "BG": ("1144519",), "BLK": ("1364742",), "FERG": ("1832433",), "MRVL": ("1058057",), "TPL": ("97517",), "XOM": ("34088",)}
+
+
+def merge_companyfacts(current: Dict, older: Dict) -> Dict:
+    """Older filings join the same concept and unit.  Every row keeps its own period and filing date, so nothing is overwritten."""
+    facts = {tax: {name: {**c, "units": {u: list(rows) for u, rows in (c.get("units") or {}).items()}} for name, c in concepts.items()} for tax, concepts in (current.get("facts") or {}).items()}
+    for tax, concepts in (older.get("facts") or {}).items():
+        for name, c in concepts.items():
+            slot = facts.setdefault(tax, {}).setdefault(name, {**c, "units": {}})
+            for u, rows in (c.get("units") or {}).items():
+                slot["units"].setdefault(u, []).extend(rows)
+    return {**current, "facts": facts}
+
+
+def facts_key(ticker: str, cik: str) -> str:
+    """A cache name that cannot serve figures saved before the earlier numbers were joined."""
+    older = CIK_PREDECESSORS.get(ticker, ())
+    return "+".join((str(cik), *older, "2")) if older else str(cik)
+
+
+def facts_with_predecessors(ticker: str, cik: str, fetch) -> Dict:
+    """A failed fetch raises: the cache then keeps what it had instead of saving a thin record as if it were complete."""
+    out = fetch(cik)
+    for old in CIK_PREDECESSORS.get(ticker, ()):
+        out = merge_companyfacts(out, fetch(old))
+    return out
+
+
 def sec_submissions(cik: str, http=requests) -> Dict:
     return _sec_get(SEC_SUBMISSIONS.format(cik=str(cik).zfill(10)), http)
 

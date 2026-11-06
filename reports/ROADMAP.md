@@ -104,6 +104,8 @@ QSF swing chart-factor research (2026-11-06): 24 pre-registered chart and short-
 
 QSF insider purchase research (2026-11-06): SEC Form 4 officer and director open-market buys, 5 pre-registered factors, 10 and 20 sessions: none passed development, so no score and no test (`reports/QSF_INSIDER_RESEARCH_RESULTS.md`). It exposed a gap: tickers whose SEC company number changed have only the new number's filings, which also thins financial history.
 
+Live fix (2026-11-06): eight changed-number tickers join earlier SEC numbers (`sources.CIK_PREDECESSORS`), and their stopped series read as empty. Only XOM's score moved. Open: 331 of 493 other tickers have some series stopped over 400 days before their newest year, read as current by `fundamentals.metrics`, 110 of them in a core series; TFC reports net income under ProfitLoss only. Research facts are unchanged.
+
 ## Next tasks (candidates, not started)
 
 0. Multi-market:

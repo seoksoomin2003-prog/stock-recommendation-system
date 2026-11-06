@@ -254,7 +254,7 @@ class Terminal:
         cik = self._cik(ticker)
         if not cik:
             return {"status": "UNAVAILABLE", "reason": "SEC CIK를 찾을 수 없습니다 (미국 상장 기업이 아니거나 ETF/지수)."}
-        res = self.cache.cached(f"facts:{cik}", TTL["facts"], lambda: self.src.sec_companyfacts(cik))
+        res = self.cache.cached(f"facts:{sources.facts_key(ticker, cik)}", TTL["facts"], lambda: sources.facts_with_predecessors(ticker, cik, self.src.sec_companyfacts))
         if res["data"] is None:
             reason = ("SEC_USER_AGENT가 설정되지 않아 SEC를 조회하지 않았습니다." if res["error"] == "SecNotConfigured"
                       else f"SEC 조회 실패 ({res['error']})")
