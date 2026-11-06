@@ -142,7 +142,7 @@ def usable(res: Dict[str, Any]) -> bool:
 
 # ---------------------------------------------------------------------- scoring
 def score_dates(px: Prices, members: Callable[[str], List[str]], facts: Dict[str, Dict], sectors: Dict[str, Optional[str]], split_map: Dict[str, List],
-                progress=None, first: str = START, last: Optional[str] = None) -> List[Dict[str, Any]]:
+                progress=None, first: str = START, last: Optional[str] = None, views: Callable = fund_views) -> List[Dict[str, Any]]:
     start = next(i for i, d in enumerate(px.dates) if d >= first)
     bench_j = px.col["SPY"]
     max_h = max(max(v) for v in HORIZONS.values())
@@ -161,7 +161,7 @@ def score_dates(px: Prices, members: Callable[[str], List[str]], facts: Dict[str
             if len(b) < config.MIN_BARS or b[-1]["date"] != day:
                 continue
             ctxs[t] = {"market": "US", "bars": b, "bench": bench, "bench_name": "SPY", "events": None, "regime": None, "earnings": None, "expected_session": day}
-            funds[t] = fund_views(facts[t], b[-1]["close"], split_obj[t], day, sectors.get(t) == "Financials")
+            funds[t] = views(facts[t], b[-1]["close"], split_obj[t], day, sectors.get(t) == "Financials")
             a = adj[:, px.col[t]]
             if i >= 126 and a[i] == a[i] and a[i - 126] == a[i - 126] and a[i - 126] > 0:
                 rets[t] = a[i] / a[i - 126] - 1

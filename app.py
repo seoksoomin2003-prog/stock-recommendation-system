@@ -389,7 +389,12 @@ def cmd_lab(args) -> int:
 
 def cmd_qsf(args) -> int:
     """QSF 1.1 scoring (separate from the frozen P6-11B model; no orders are ever placed)."""
-    if args.action in ("insider-prepare", "insider-develop", "insider-test"):
+    if args.action.startswith("corrected-"):
+        from terminal.qsf import validate_corrected as vc
+        res = {"corrected-prepare": vc.prepare, "corrected-open": vc.run_open, "corrected-oos": vc.run_oos, "corrected-research": vc.run_research, "corrected-swing": vc.run_swing}[args.action](PROJECT_ROOT)
+        print(json.dumps({k: res[k] for k in ("status", "companies", "failed") if k in res}, ensure_ascii=False, default=str))
+        return 0
+    if args.action in ("corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "insider-prepare", "insider-develop", "insider-test"):
         from terminal.qsf import research_insider
         res = {"insider-prepare": research_insider.prepare, "insider-develop": research_insider.develop, "insider-test": research_insider.test_once}[args.action](PROJECT_ROOT)
         print(json.dumps({k: v for k, v in res.items() if k != "strategies"}, ensure_ascii=False, default=str))

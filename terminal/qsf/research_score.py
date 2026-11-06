@@ -77,7 +77,11 @@ def percentile(x: np.ndarray, good_high: bool, groups: Optional[np.ndarray] = No
     return out
 
 
-def build_features(px: validate.Prices, members: Callable[[str], List[str]], facts: Dict[str, Dict], sectors: Dict[str, Optional[str]], split_map: Dict[str, List], progress=None) -> Dict[str, Any]:
+def earlier_view(full: Dict[str, List[Dict]], day: str, splits: pit.Splits) -> Dict[str, List[Dict]]:
+    return pit.with_ttm_eps(pit.adjust_shares(pit.ttm_view(full, day), day, splits))
+
+
+def build_features(px: validate.Prices, members: Callable[[str], List[str]], facts: Dict[str, Dict], sectors: Dict[str, Optional[str]], split_map: Dict[str, List], progress=None, view_of: Callable = earlier_view) -> Dict[str, Any]:
     start = next(i for i, d in enumerate(px.dates) if d >= validate.START)
     rows = list(range(max(start, validate.HISTORY), len(px.dates) - 1, validate.STEP))
     split_obj = {t: pit.Splits(split_map.get(t) or []) for t in px.symbols}
@@ -97,7 +101,7 @@ def build_features(px: validate.Prices, members: Callable[[str], List[str]], fac
                 continue
             f = price_features(d["adj_close"][:, j], d["high"][:, j], d["close"][:, j], i)
             raw = float(d["close"][i, j]) * split_obj[t].factor(day)
-            view = pit.with_ttm_eps(pit.adjust_shares(pit.ttm_view(facts[t]["full"], day), day, split_obj[t]))
+            view = view_of(facts[t]["full"], day, split_obj[t])
             f.update(fund_features(view, raw))
             for k, name in enumerate(FACTORS):
                 v = f.get(name)
