@@ -1,0 +1,662 @@
+{
+"ADS": {
+"cik": "1101215",
+"sec_name": "BREAD FINANCIAL HOLDINGS, INC.",
+"exited_before_source_end": false
+},
+"ADT": {
+"cik": "1546640",
+"sec_name": "ADT Corp",
+"exited_before_source_end": true
+},
+"AET": {
+"cik": "1122304",
+"sec_name": "AETNA INC /PA/",
+"exited_before_source_end": false
+},
+"AGN": {
+"cik": "1578845",
+"sec_name": "Allergan plc",
+"exited_before_source_end": false
+},
+"ALTR": {
+"cik": "768251",
+"sec_name": "ALTERA CORP",
+"exited_before_source_end": true
+},
+"ALXN": {
+"cik": "899866",
+"sec_name": "ALEXION PHARMACEUTICALS, INC.",
+"exited_before_source_end": false
+},
+"APC": {
+"cik": "773910",
+"sec_name": "ANADARKO PETROLEUM CORP",
+"exited_before_source_end": false
+},
+"ARG": {
+"cik": "804212",
+"sec_name": "AIRGAS INC",
+"exited_before_source_end": true
+},
+"ATVI": {
+"cik": "718877",
+"sec_name": "Activision Blizzard, Inc.",
+"exited_before_source_end": false
+},
+"AVB": {
+"cik": "915912",
+"sec_name": "AVALONBAY COMMUNITIES INC",
+"exited_before_source_end": false
+},
+"AVP": {
+"cik": "8868",
+"sec_name": "AVON PRODUCTS INC",
+"exited_before_source_end": false
+},
+"BBBY": {
+"cik": "886158",
+"sec_name": "20230930-DK-Butterfly-1, Inc.",
+"exited_before_source_end": false
+},
+"BCR": {
+"cik": "9892",
+"sec_name": "BARD C R INC /NJ/",
+"exited_before_source_end": false
+},
+"BMS": {
+"cik": "11199",
+"sec_name": "Amcor Flexibles North America, Inc.",
+"exited_before_source_end": false
+},
+"BRCM": {
+"cik": "1054374",
+"sec_name": "BROADCOM CORP",
+"exited_before_source_end": true
+},
+"BXLT": {
+"cik": "1620546",
+"sec_name": "Baxalta Inc",
+"exited_before_source_end": true
+},
+"CA": {
+"cik": "356028",
+"sec_name": "CA, INC.",
+"exited_before_source_end": false
+},
+"CAM": {
+"cik": "941548",
+"sec_name": "CAMERON INTERNATIONAL CORP",
+"exited_before_source_end": true
+},
+"CBS": {
+"cik": "813828",
+"sec_name": "Paramount Global",
+"exited_before_source_end": false
+},
+"CCE": {
+"cik": "1491675",
+"sec_name": "COCA-COLA EUROPEAN PARTNERS US, LLC",
+"exited_before_source_end": false
+},
+"CELG": {
+"cik": "816284",
+"sec_name": "CELGENE CORP /DE/",
+"exited_before_source_end": false
+},
+"CERN": {
+"cik": "804753",
+"sec_name": "CERNER Corp",
+"exited_before_source_end": false
+},
+"CMA": {
+"cik": "28412",
+"sec_name": "COMERICA INC",
+"exited_before_source_end": false
+},
+"COG": {
+"cik": "858470",
+"sec_name": "Coterra Energy Inc.",
+"exited_before_source_end": false
+},
+"COL": {
+"cik": "1137411",
+"sec_name": "ROCKWELL COLLINS INC",
+"exited_before_source_end": false
+},
+"CPGX": {
+"cik": "1629995",
+"sec_name": "Columbia Pipeline Group, Inc.",
+"exited_before_source_end": true
+},
+"CSRA": {
+"cik": "1646383",
+"sec_name": "CSRA Inc.",
+"exited_before_source_end": false
+},
+"CTL": {
+"cik": "18926",
+"sec_name": "Lumen Technologies, Inc.",
+"exited_before_source_end": false
+},
+"CTXS": {
+"cik": "877890",
+"sec_name": "CITRIX SYSTEMS INC",
+"exited_before_source_end": false
+},
+"CVC": {
+"cik": "1053112",
+"sec_name": "CABLEVISION SYSTEMS CORP /NY",
+"exited_before_source_end": true
+},
+"CXO": {
+"cik": "1358071",
+"sec_name": "CONCHO RESOURCES INC",
+"exited_before_source_end": false
+},
+"DFS": {
+"cik": "1393612",
+"sec_name": "Discover Financial Services",
+"exited_before_source_end": false
+},
+"DISCA": {
+"cik": "1437107",
+"sec_name": "Warner Bros. Discovery, Inc.",
+"exited_before_source_end": false
+},
+"DISCK": {
+"cik": "1437107",
+"sec_name": "Warner Bros. Discovery, Inc.",
+"exited_before_source_end": false
+},
+"DISH": {
+"cik": "1001082",
+"sec_name": "DISH Network CORP",
+"exited_before_source_end": false
+},
+"DNB": {
+"cik": "1115222",
+"sec_name": "DUN & BRADSTREET CORP/NW",
+"exited_before_source_end": false
+},
+"DNR": {
+"cik": "945764",
+"sec_name": "DENBURY INC",
+"exited_before_source_end": false
+},
+"DO": {
+"cik": "949039",
+"sec_name": "DIAMOND OFFSHORE DRILLING, INC.",
+"exited_before_source_end": false
+},
+"DTV": {
+"cik": "1465112",
+"sec_name": "DIRECTV",
+"exited_before_source_end": false
+},
+"EA": {
+"cik": "712515",
+"sec_name": "ELECTRONIC ARTS INC.",
+"exited_before_source_end": false
+},
+"EMC": {
+"cik": "790070",
+"sec_name": "EMC CORP",
+"exited_before_source_end": true
+},
+"ENDP": {
+"cik": "1593034",
+"sec_name": "Endo International plc",
+"exited_before_source_end": false
+},
+"ESRX": {
+"cik": "1532063",
+"sec_name": "Express Scripts Holding Co.",
+"exited_before_source_end": false
+},
+"ESV": {
+"cik": "314808",
+"sec_name": "Valaris Ltd",
+"exited_before_source_end": false
+},
+"ETFC": {
+"cik": "1015780",
+"sec_name": "E TRADE FINANCIAL CORP",
+"exited_before_source_end": false
+},
+"EVHC": {
+"cik": "1678531",
+"sec_name": "Envision Healthcare Corp",
+"exited_before_source_end": false
+},
+"FBHS": {
+"cik": "1519751",
+"sec_name": "Fortune Brands Innovations, Inc.",
+"exited_before_source_end": false
+},
+"FDO": {
+"cik": "34408",
+"sec_name": "FAMILY DOLLAR STORES INC",
+"exited_before_source_end": true
+},
+"FL": {
+"cik": "850209",
+"sec_name": "FOOT LOCKER, INC.",
+"exited_before_source_end": false
+},
+"FLIR": {
+"cik": "354908",
+"sec_name": "Teledyne FLIR, LLC",
+"exited_before_source_end": false
+},
+"FTI": {
+"cik": "1135152",
+"sec_name": "FMC TECHNOLOGIES INC",
+"exited_before_source_end": false
+},
+"FTR": {
+"cik": "20520",
+"sec_name": "Frontier Communications Parent, Inc.",
+"exited_before_source_end": false
+},
+"GAS": {
+"cik": "1004155",
+"sec_name": "SOUTHERN CO GAS",
+"exited_before_source_end": true
+},
+"GGP": {
+"cik": "1496048",
+"sec_name": "Brookfield Property REIT Inc.",
+"exited_before_source_end": false
+},
+"GMCR": {
+"cik": "909954",
+"sec_name": "KEURIG GREEN MOUNTAIN, INC.",
+"exited_before_source_end": true
+},
+"GPS": {
+"cik": "39911",
+"sec_name": "GAP INC",
+"exited_before_source_end": false
+},
+"HAR": {
+"cik": "800459",
+"sec_name": "HARMAN INTERNATIONAL INDUSTRIES INC /DE/",
+"exited_before_source_end": true
+},
+"HCBK": {
+"cik": "921847",
+"sec_name": "HUDSON CITY BANCORP INC",
+"exited_before_source_end": true
+},
+"HES": {
+"cik": "4447",
+"sec_name": "HESS CORP",
+"exited_before_source_end": false
+},
+"HOLX": {
+"cik": "859737",
+"sec_name": "HOLOGIC INC",
+"exited_before_source_end": false
+},
+"HOT": {
+"cik": "316206",
+"sec_name": "STARWOOD HOTELS & RESORTS WORLDWIDE, LLC",
+"exited_before_source_end": true
+},
+"HSP": {
+"cik": "1274057",
+"sec_name": "HOSPIRA INC",
+"exited_before_source_end": true
+},
+"IGT": {
+"cik": "353944",
+"sec_name": "INTERNATIONAL GAME TECHNOLOGY",
+"exited_before_source_end": false
+},
+"IPG": {
+"cik": "51644",
+"sec_name": "INTERPUBLIC GROUP OF COMPANIES, INC.",
+"exited_before_source_end": false
+},
+"JNPR": {
+"cik": "1043604",
+"sec_name": "JUNIPER NETWORKS INC",
+"exited_before_source_end": false
+},
+"JOY": {
+"cik": "801898",
+"sec_name": "JOY GLOBAL INC",
+"exited_before_source_end": false
+},
+"JWN": {
+"cik": "72333",
+"sec_name": "NORDSTROM INC",
+"exited_before_source_end": false
+},
+"K": {
+"cik": "55067",
+"sec_name": "KELLANOVA",
+"exited_before_source_end": false
+},
+"KORS": {
+"cik": "1530721",
+"sec_name": "Capri Holdings Ltd",
+"exited_before_source_end": false
+},
+"KRFT": {
+"cik": "1545158",
+"sec_name": "Kraft Foods Group, Inc.",
+"exited_before_source_end": true
+},
+"KSU": {
+"cik": "54480",
+"sec_name": "KANSAS CITY SOUTHERN",
+"exited_before_source_end": false
+},
+"LB": {
+"cik": "701985",
+"sec_name": "Bath & Body Works, Inc.",
+"exited_before_source_end": false
+},
+"LEG": {
+"cik": "58492",
+"sec_name": "LEGGETT & PLATT INC",
+"exited_before_source_end": false
+},
+"LLL": {
+"cik": "1056239",
+"sec_name": "L 3 COMMUNICATIONS HOLDINGS INC",
+"exited_before_source_end": false
+},
+"LLTC": {
+"cik": "791907",
+"sec_name": "LINEAR TECHNOLOGY CORP /CA/",
+"exited_before_source_end": true
+},
+"LM": {
+"cik": "704051",
+"sec_name": "LEGG MASON, INC.",
+"exited_before_source_end": false
+},
+"LO": {
+"cik": "1424847",
+"sec_name": "LORILLARD, LLC",
+"exited_before_source_end": true
+},
+"LVLT": {
+"cik": "794323",
+"sec_name": "Level 3 Parent, LLC",
+"exited_before_source_end": false
+},
+"MJN": {
+"cik": "1452575",
+"sec_name": "Mead Johnson Nutrition Co",
+"exited_before_source_end": false
+},
+"MNK": {
+"cik": "1567892",
+"sec_name": "Keenova Therapeutics plc",
+"exited_before_source_end": false
+},
+"MON": {
+"cik": "1110783",
+"sec_name": "MONSANTO CO /NEW/",
+"exited_before_source_end": false
+},
+"MRO": {
+"cik": "101778",
+"sec_name": "MARATHON OIL CORP",
+"exited_before_source_end": false
+},
+"MWV": {
+"cik": "1159297",
+"sec_name": "MEADWESTVACO Corp",
+"exited_before_source_end": true
+},
+"MYL": {
+"cik": "69499",
+"sec_name": "MYLAN INC.",
+"exited_before_source_end": false
+},
+"NAVI": {
+"cik": "1593538",
+"sec_name": "Navient LLC",
+"exited_before_source_end": false
+},
+"NBL": {
+"cik": "72207",
+"sec_name": "NOBLE ENERGY INC",
+"exited_before_source_end": false
+},
+"NE": {
+"cik": "1458891",
+"sec_name": "Noble Corp",
+"exited_before_source_end": false
+},
+"NFX": {
+"cik": "912750",
+"sec_name": "NEWFIELD EXPLORATION CO /DE/",
+"exited_before_source_end": false
+},
+"NLSN": {
+"cik": "1492633",
+"sec_name": "Nielsen Holdings plc",
+"exited_before_source_end": false
+},
+"PBCT": {
+"cik": "1378946",
+"sec_name": "People's United Financial, Inc.",
+"exited_before_source_end": false
+},
+"PCL": {
+"cik": "849213",
+"sec_name": "PLUM CREEK TIMBER CO INC",
+"exited_before_source_end": true
+},
+"PCP": {
+"cik": "79958",
+"sec_name": "PRECISION CASTPARTS CORP",
+"exited_before_source_end": true
+},
+"PDCO": {
+"cik": "891024",
+"sec_name": "PATTERSON COMPANIES, INC.",
+"exited_before_source_end": false
+},
+"PLL": {
+"cik": "75829",
+"sec_name": "PALL CORP",
+"exited_before_source_end": true
+},
+"POM": {
+"cik": "1135971",
+"sec_name": "PEPCO HOLDINGS LLC",
+"exited_before_source_end": true
+},
+"PX": {
+"cik": "884905",
+"sec_name": "LINDE INC",
+"exited_before_source_end": false
+},
+"PXD": {
+"cik": "1038357",
+"sec_name": "PIONEER NATURAL RESOURCES CO",
+"exited_before_source_end": false
+},
+"QEP": {
+"cik": "1108827",
+"sec_name": "QEP RESOURCES, INC.",
+"exited_before_source_end": false
+},
+"QRVO": {
+"cik": "1604778",
+"sec_name": "Qorvo, Inc.",
+"exited_before_source_end": false
+},
+"RAI": {
+"cik": "1275283",
+"sec_name": "REYNOLDS AMERICAN INC",
+"exited_before_source_end": false
+},
+"RDC": {
+"cik": "85408",
+"sec_name": "ROWAN COMPANIES PLC",
+"exited_before_source_end": false
+},
+"RHT": {
+"cik": "1087423",
+"sec_name": "RED HAT INC",
+"exited_before_source_end": false
+},
+"RTN": {
+"cik": "1047122",
+"sec_name": "RAYTHEON CO/",
+"exited_before_source_end": false
+},
+"SCG": {
+"cik": "754737",
+"sec_name": "SCANA CORP",
+"exited_before_source_end": false
+},
+"SE": {
+"cik": "1373835",
+"sec_name": "Spectra Energy Corp.",
+"exited_before_source_end": true
+},
+"SEE": {
+"cik": "1012100",
+"sec_name": "SEALED AIR CORP/DE",
+"exited_before_source_end": false
+},
+"SIAL": {
+"cik": "90185",
+"sec_name": "SIGMA ALDRICH CORP",
+"exited_before_source_end": true
+},
+"SNI": {
+"cik": "1430602",
+"sec_name": "Scripps Networks Interactive, Inc.",
+"exited_before_source_end": false
+},
+"SPLS": {
+"cik": "791519",
+"sec_name": "STAPLES INC",
+"exited_before_source_end": false
+},
+"SRCL": {
+"cik": "861878",
+"sec_name": "STERICYCLE INC",
+"exited_before_source_end": false
+},
+"STI": {
+"cik": "750556",
+"sec_name": "SUNTRUST BANKS INC",
+"exited_before_source_end": false
+},
+"STJ": {
+"cik": "203077",
+"sec_name": "ST JUDE MEDICAL, LLC",
+"exited_before_source_end": true
+},
+"SWN": {
+"cik": "7332",
+"sec_name": "SOUTHWESTERN ENERGY CO",
+"exited_before_source_end": false
+},
+"TE": {
+"cik": "350563",
+"sec_name": "TECO ENERGY INC",
+"exited_before_source_end": true
+},
+"TEG": {
+"cik": "916863",
+"sec_name": "INTEGRYS HOLDING, INC.",
+"exited_before_source_end": true
+},
+"TGNA": {
+"cik": "39899",
+"sec_name": "TEGNA INC",
+"exited_before_source_end": false
+},
+"TIF": {
+"cik": "98246",
+"sec_name": "TIFFANY & CO",
+"exited_before_source_end": false
+},
+"TSS": {
+"cik": "721683",
+"sec_name": "TOTAL SYSTEM SERVICES INC",
+"exited_before_source_end": false
+},
+"TWC": {
+"cik": "1377013",
+"sec_name": "SPECTRUM MANAGEMENT HOLDING COMPANY, LLC",
+"exited_before_source_end": true
+},
+"TWX": {
+"cik": "1105705",
+"sec_name": "WARNER MEDIA, LLC",
+"exited_before_source_end": false
+},
+"VAR": {
+"cik": "203527",
+"sec_name": "VARIAN MEDICAL SYSTEMS INC",
+"exited_before_source_end": false
+},
+"VIAB": {
+"cik": "1339947",
+"sec_name": "Viacom Inc.",
+"exited_before_source_end": false
+},
+"WBA": {
+"cik": "1618921",
+"sec_name": "Walgreens Boots Alliance, Inc.",
+"exited_before_source_end": false
+},
+"WFM": {
+"cik": "865436",
+"sec_name": "WHOLE FOODS MARKET INC",
+"exited_before_source_end": false
+},
+"WIN": {
+"cik": "1282266",
+"sec_name": "WINDSTREAM HOLDINGS, INC.",
+"exited_before_source_end": false
+},
+"WPX": {
+"cik": "1518832",
+"sec_name": "WPX ENERGY, INC.",
+"exited_before_source_end": false
+},
+"WRK": {
+"cik": "1636023",
+"sec_name": "WRKCo Inc.",
+"exited_before_source_end": false
+},
+"X": {
+"cik": "1163302",
+"sec_name": "UNITED STATES STEEL CORP",
+"exited_before_source_end": false
+},
+"XEC": {
+"cik": "1168054",
+"sec_name": "CIMAREX ENERGY CO",
+"exited_before_source_end": false
+},
+"XL": {
+"cik": "875159",
+"sec_name": "XL GROUP LTD",
+"exited_before_source_end": false
+},
+"XLNX": {
+"cik": "743988",
+"sec_name": "XILINX INC",
+"exited_before_source_end": false
+},
+"XRX": {
+"cik": "108772",
+"sec_name": "XEROX CORP",
+"exited_before_source_end": false
+}
+}
