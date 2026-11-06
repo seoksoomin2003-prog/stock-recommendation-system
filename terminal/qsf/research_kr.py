@@ -35,6 +35,8 @@ HISTORY, MIN_BARS, STEP = 320, 200, 5
 CODE = re.compile(r"^\d{5}0$")
 F = {name: n for n, name in enumerate(kh.FIELDS)}
 MARKET = "MKT"
+JUMP = 30.0        # percent, the widest daily price limit
+ABSURD = 1000.0    # percent in a day
 
 
 def num(x: Any) -> Optional[float]:
@@ -52,6 +54,21 @@ def common_stock(code: Optional[str], name: Optional[str], section: Optional[str
 
 def watch_listed(section: Optional[str]) -> bool:
     return "관리종목" in (section or "") or "투자주의환기" in (section or "")
+
+
+def next_level(level: Optional[float], close: float, chg: Optional[float], cap: Optional[float], shares: Optional[float], seen: Optional[Any], i: int) -> float:
+    """The change KRX reports.  One exception: back from a halt with a jump above the widest daily limit and at least a fifth fewer
+    shares, the change compares with a price from before a consolidation, so the change in market value is used.  More shares do not
+    trigger it: a debt swap during a halt multiplies market value without any gain for a holder."""
+    if level is None:
+        return close
+    if chg is not None and chg > ABSURD:       # a placeholder quote of 1 won during a halt, not a price anyone traded
+        return level
+    if seen is not None and chg is not None and chg > JUMP:
+        last, traded, cap_before, shares_before = seen
+        if (last != i - 1 or not traded) and cap_before and cap and shares_before and shares and shares <= 0.8 * shares_before:
+            return level * cap / cap_before
+    return level * (1 + chg / 100) if chg is not None else level
 
 
 def build_prices(root: Path, log=print) -> Dict[str, Any]:
@@ -80,14 +97,17 @@ def build_prices(root: Path, log=print) -> Dict[str, Any]:
     out = {x: np.full((D, S), np.nan, dtype=np.float32) for x in ("open", "high", "low", "close", "adj_close", "volume", "value", "cap")}
     watch = np.zeros((D, S), dtype=bool)
     level: Dict[str, float] = {}
+    seen: Dict[str, Any] = {}      # code -> (last day index, traded that day, market cap, listed shares)
     for i, rows in enumerate(snap):
         for c, r in rows.items():
             j = col[c]
             close = num(r[F["TDD_CLSPRC"]])
             if not close:
                 continue
-            chg = num(r[F["FLUC_RT"]])
-            level[c] = level[c] * (1 + chg / 100) if c in level and chg is not None else level.get(c, close)
+            cap = num(r[F["MKTCAP"]])
+            shares = num(r[F["LIST_SHRS"]])
+            level[c] = next_level(level.get(c), close, num(r[F["FLUC_RT"]]), cap, shares, seen.get(c), i)
+            seen[c] = (i, bool(num(r[F["ACC_TRDVOL"]])), cap, shares)
             k = level[c] / close
             out["close"][i, j], out["adj_close"][i, j] = level[c], level[c]
             for field, name in (("open", "TDD_OPNPRC"), ("high", "TDD_HGPRC"), ("low", "TDD_LWPRC")):

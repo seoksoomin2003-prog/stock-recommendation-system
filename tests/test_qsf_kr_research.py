@@ -40,6 +40,33 @@ def test_adjusted_price_follows_the_change_not_the_quote_across_a_split(tmp_path
     assert d["open"][1, j] == pytest.approx(1000) and d["close"][1, j] == pytest.approx(1100)
 
 
+def test_a_jump_back_from_a_halt_with_fewer_shares_reads_market_value(tmp_path):
+    def r(c, chg, cap, sh, vol=1000):
+        x = row("000010", c=c, o=c, chg=chg, cap=cap, vol=vol)
+        x[kr.F["LIST_SHRS"]] = str(sh)
+        return [x]
+    write_day(tmp_path, "KOSPI", "2020-01-02", r(100, 0, 1e9, 1000))
+    write_day(tmp_path, "KOSPI", "2020-01-03", r(100, 0, 1e9, 1000, vol=0))             # halted
+    write_day(tmp_path, "KOSPI", "2020-01-06", r(3000, 2900, 1.2e9, 40))                # back after 1:25 consolidation
+    write_day(tmp_path, "KOSPI", "2020-01-07", r(3300, 10, 1.32e9, 40))
+    d = kr.build_prices(tmp_path, log=lambda m: None)
+    j = list(d["symbols"]).index("000010")
+    assert d["adj_close"][2, j] == pytest.approx(120) and d["adj_close"][3, j] == pytest.approx(132)
+
+
+def test_only_a_jump_with_fewer_shares_after_a_halt_leaves_the_reported_change():
+    halted = (4, False, 100.0, 1000.0)
+    assert kr.next_level(100.0, 3000.0, 2900.0, 120.0, 40.0, halted, 5) == pytest.approx(120)
+    assert kr.next_level(100.0, 3000.0, 2900.0, 120.0, 40.0, (3, True, 100.0, 1000.0), 5) == pytest.approx(120)     # a gap is a halt
+    assert kr.next_level(100.0, 3000.0, 2900.0, 120.0, 40.0, (4, True, 100.0, 1000.0), 5) == pytest.approx(3000)    # traded yesterday
+    assert kr.next_level(100.0, 90.0, -10.0, 2400.0, 24000.0, halted, 5) == pytest.approx(90)                       # debt swap: no gain
+    assert kr.next_level(100.0, 200.0, 100.0, 300.0, 1500.0, halted, 5) == pytest.approx(200)                       # more shares
+    assert kr.next_level(100.0, 80.0, -20.0, 50.0, 40.0, halted, 5) == pytest.approx(80)                            # a fall stays reported
+    assert kr.next_level(100.0, 100.0, None, 50.0, 40.0, halted, 5) == 100
+    assert kr.next_level(None, 77.0, 5.0, 1.0, 1.0, None, 0) == 77
+    assert kr.next_level(100.0, 67000.0, 6699900.0, 1.0, 1.0, (4, True, 1.0, 1.0), 5) == 100                        # an absurd change is not a gain
+
+
 def test_a_delisted_name_is_in_the_sample_and_a_watch_listing_is_marked(tmp_path):
     write_day(tmp_path, "KOSDAQ", "2020-01-02", [row("000020", section="관리종목(소속부없음)"), row("000030")])
     write_day(tmp_path, "KOSDAQ", "2020-01-03", [row("000030")])
