@@ -159,5 +159,6 @@
   "yahoo": 0.877,
   "tiingo": 0.967,
   "tiingo_facts": 0.954
- }
+ },
+ "correction": "cache_nonmember is measured before the join-date filter; among names actually scored the non-member share was 0.6% overall; scored names covered 61.2% of real members in 2014 and 78.8% overall"
 }
