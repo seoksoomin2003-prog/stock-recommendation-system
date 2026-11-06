@@ -106,7 +106,7 @@ QSF historical checks (2026-11-05): QSF 1.2 candidate NO_EVIDENCE (`reports/QSF_
    - configure the free `OPENDART_API_KEY` and `KRX_API_KEY` yourself (registration in the README);
    - after the keys are set: live-validate the KRX field mapping and measure DART concept coverage per industry class;
    - run the KR scan after 18:00 KST on trading days, and `--market KR tracking update` afterwards;
-   - decide what to do about the legacy live-data test `tests/test_cross_asset.py` (it depends on live Yahoo macro moves) and about the network-guard gap (yfinance `curl_cffi` bypasses the Python socket guard).
+   - `tests/test_cross_asset.py` depends on live Yahoo macro moves and is reclassified as a non-running xfail (user approved, 2026-11-06). Still open: the network-guard gap (yfinance `curl_cffi` bypasses the Python socket guard).
 
 1. Run a full scan on each trading day before 09:30 ET, then run `app.py tracking update` after 17:00 ET. Review `tracking/reports/latest.html`. No model changes.
 2. Before 2027-12-31: decide whether to fix the New Year-on-Saturday rule in `utils/market_calendar.py` (freshness gate).

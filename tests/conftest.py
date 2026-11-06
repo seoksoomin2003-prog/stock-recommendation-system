@@ -186,8 +186,20 @@ LEGACY_ISOLATED = {
 }
 
 
+# Reclassified with the user's approval on 2026-11-06.  The expected direction depends on that day's live Yahoo yields, so the test
+# passes or fails with the market, and it reaches the network.  It is reported as XFAIL without being run: a strict xfail would turn
+# into a failure on any day yields rose.
+LEGACY_LIVE_DATA = {
+    "tests/test_cross_asset.py::test_cross_asset_adjustment": (
+        "legacy CrossAssetEngine (not on the canonical route) asserts a direction from live Yahoo macro moves; the outcome follows the market."),
+}
+
+
 def pytest_collection_modifyitems(config, items):
     for item in items:
         reason = LEGACY_ISOLATED.get(item.nodeid)
         if reason:
             item.add_marker(pytest.mark.xfail(strict=True, reason=f"LEGACY_ISOLATED: {reason}"))
+        reason = LEGACY_LIVE_DATA.get(item.nodeid)
+        if reason:
+            item.add_marker(pytest.mark.xfail(run=False, reason=f"LEGACY_LIVE_DATA: {reason}"))
