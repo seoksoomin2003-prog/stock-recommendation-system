@@ -174,6 +174,19 @@ class FakeTerminal:
         raise RuntimeError("down")
 
 
+def test_the_market_is_read_on_the_stocks_own_day_and_a_lag_is_reported():
+    bars_ = [{"date": "2027-01-04", "close": 100.0}, {"date": "2027-01-05", "close": 90.0}, {"date": "2027-01-06", "close": 80.0}]
+    bench, behind, last = today.bench_section({"bars": bars_}, "2027-01-05", "M")
+    assert bench["change_pct"] == pytest.approx(-10) and bench["date"] == "2027-01-05" and behind == 1 and last == "2027-01-06"
+
+
+def test_no_market_bar_that_day_compares_nothing():
+    bars_ = [{"date": "2027-01-05", "close": 90.0}, {"date": "2027-01-06", "close": 80.0}]
+    assert today.bench_section({"bars": bars_}, "2027-01-04", "M")[0] is None
+    assert today.bench_section({"bars": bars_}, "2027-01-05", "M")[0] is None      # no earlier bar to compare with
+    assert today.bench_section({"bars": []}, "2027-01-05", "M") == (None, None, None)
+
+
 def test_each_section_fails_alone_and_says_so(monkeypatch):
     monkeypatch.setattr(news, "fetch", lambda *a, **k: {"items": [], "provider": "P"})
     d = today.build(FakeTerminal(), "AAPL", "US")

@@ -41,6 +41,18 @@ def quote_section(chart: Dict[str, Any]) -> Dict[str, Any]:
             "fetched_at": (chart.get("cache") or {}).get("fetched_at"), "source": chart.get("source")}
 
 
+def bench_section(chart: Dict[str, Any], date: Optional[str], name: str):
+    """The market's move on the stock's own last day.  A provider can hold a stock's bar back while the market's has arrived: that gap is reported."""
+    bars = chart.get("bars") or []
+    if not bars or not date:
+        return None, None, None
+    at = next((n for n, b in enumerate(bars) if b["date"] == date), None)
+    behind = sum(1 for b in bars if b["date"] > date)
+    if at is None or at == 0:
+        return None, behind, bars[-1]["date"]
+    return {"name": name, "date": date, "change_pct": _pct(bars[at].get("close"), bars[at - 1].get("close"))}, behind, bars[-1]["date"]
+
+
 def new_warnings(classified: Dict[str, Any], score_session: Optional[str]) -> List[Dict[str, str]]:
     """Events after the score's session: earlier ones are already in the score and its gates."""
     out = [{"level": level, "label": e["label"], "date": e["date"]} for key, level in LEVELS for e in classified.get(key) or []
@@ -76,9 +88,7 @@ def build(terminal: Any, ticker: str, market: str = "US") -> Dict[str, Any]:
     bench_sym, bench_name = BENCH[market]
     bench = None
     try:
-        b = quote_section(terminal.chart(bench_sym, "3mo"))
-        if b.get("date") == quote.get("date") and b.get("change_pct") is not None:      # different days would compare nothing
-            bench = {"name": bench_name, "change_pct": b["change_pct"]}
+        bench, quote["behind_market"], quote["market_date"] = bench_section(terminal.chart(bench_sym, "3mo"), quote.get("date"), bench_name)
     except Exception:
         pass
 

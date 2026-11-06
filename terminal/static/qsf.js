@@ -163,7 +163,13 @@ async function qsfToday(el, t, market) {
   try {
     const d = await api(`/api/today?t=${encodeURIComponent(t)}&market=${market}`);
     if (el.isConnected) el.innerHTML = qsfTodayHtml(d);
-  } catch (e) { if (el.isConnected) el.innerHTML = `<div class="err">당일 점검을 불러오지 못했습니다: ${esc(e.message)}</div>`; }
+  } catch (e) {
+    if (!el.isConnected) return;
+    const offline = e instanceof TypeError;      // fetch rejects this way when the local server does not answer
+    el.innerHTML = `<div class="err">${offline ? "터미널 서버가 응답하지 않아 당일 점검을 불러오지 못했습니다. 서버가 켜져 있는지 확인한 뒤 다시 시도하세요." : `당일 점검을 불러오지 못했습니다: ${esc(ERR_KO[e.message] || e.message)}`}</div>
+      <button type="button" class="qsf-retry" style="margin-top:6px">다시 시도</button>`;
+    el.querySelector(".qsf-retry").onclick = () => qsfToday(el, t, market);
+  }
 }
 function qsfTodayHtml(d) {
   const q = d.quote, m = d.market, f = d.filings, n = d.news;
@@ -171,9 +177,9 @@ function qsfTodayHtml(d) {
       <div><span>${q.intraday ? "현재가 (지연, 장중)" : `종가 (${esc(q.date)})`}</span><b class="num">${qsfPrice(q.price, m)}</b></div>
       <div><span>전 거래일 대비</span><b>${pct(q.change_pct)}</b></div>
       <div><span>시가 갭</span><b>${pct(q.gap_pct)}</b></div>
-      <div><span>시장${d.bench ? ` (${esc(d.bench.name)})` : ""}</span><b>${d.bench ? pct(d.bench.change_pct) : DASH}</b></div>
+      <div><span>같은 날 시장${d.bench ? ` (${esc(d.bench.name)})` : ""}</span><b>${d.bench ? pct(d.bench.change_pct) : DASH}</b></div>
       <div><span>거래량 / ${isNum(q.volume_ratio) ? "20일 평균 대비" : q.intraday ? "장중 누적" : "평균 대비"}</span><b class="num">${isNum(q.volume) ? q.volume.toLocaleString("ko-KR") : DASH}${isNum(q.volume_ratio) ? ` (${q.volume_ratio.toFixed(1)}배)` : ""}</b></div></div>
-    <div class="meta">점수 기준일은 ${esc(d.score_session || "확인 불가")}입니다.${q.intraday ? " 오늘 움직임은 점수에 반영되지 않았습니다." : ""}${q.status === "STALE" ? " 시세가 오래되었습니다." : ""}</div>`;
+    <div class="meta">점수 기준일은 ${esc(d.score_session || "확인 불가")}입니다.${q.intraday ? " 오늘 움직임은 점수에 반영되지 않았습니다." : ""}${q.status === "STALE" ? " 시세가 오래되었습니다." : ""}${q.behind_market ? ` <b>시세 제공처의 이 종목 자료가 시장(${esc(q.market_date)})보다 ${q.behind_market}거래일 늦습니다.</b>` : ""}</div>`;
   const warn = d.events_status !== "REAL" ? '<div class="meta">공시 경고를 확인하지 못했습니다.</div>'
     : d.warnings.length ? `<ul class="rec-alerts">${d.warnings.map((w) => `<li class="${esc(w.level)}">${esc(w.date)} ${esc(w.label)}</li>`).join("")}</ul>`
     : '<div class="meta">점수 기준일 이후 새로 확인된 공시 경고는 없습니다.</div>';
