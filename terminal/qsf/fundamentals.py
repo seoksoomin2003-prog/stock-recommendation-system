@@ -8,22 +8,26 @@ from datetime import date, datetime
 from typing import Any, Callable, Dict, List, Optional
 
 STALE_DAYS = 540     # a fiscal year-end older than 18 months is STALE
-CHAINED_MAX_GAP = 400
+STOPPED_GAP_DAYS = 400   # a series ending this far before the company's newest year has stopped
 
+# Each list names the same accounting item; a period takes its first-listed tag.  Total revenue tags come before contract revenue,
+# which leaves out rent, interest and insurance premiums.  Items with another meaning (pre-tax income for operating income) are not substitutes.
 US_FLOW = {
-    "revenue": ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet",
-                "RevenueFromContractWithCustomerIncludingAssessedTax", "RevenuesNetOfInterestExpense"],
-    "gross_profit": ["GrossProfit"], "op_income": ["OperatingIncomeLoss"], "net_income": ["NetIncomeLoss"],
-    "ocf": ["NetCashProvidedByUsedInOperatingActivities"], "capex": ["PaymentsToAcquirePropertyPlantAndEquipment"],
-    "interest": ["InterestExpense", "InterestExpenseNonoperating"],
-    "buyback": ["PaymentsForRepurchaseOfCommonStock"], "dividends": ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends"],
+    "revenue": ["Revenues", "RevenuesNetOfInterestExpense", "RegulatedAndUnregulatedOperatingRevenue", "RevenueFromContractWithCustomerExcludingAssessedTax", "SalesRevenueNet",
+                "RevenueFromContractWithCustomerIncludingAssessedTax"],
+    "gross_profit": ["GrossProfit"], "op_income": ["OperatingIncomeLoss"], "net_income": ["NetIncomeLoss", "NetIncomeLossAvailableToCommonStockholdersBasic", "ProfitLoss"],
+    "ocf": ["NetCashProvidedByUsedInOperatingActivities", "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
+    "capex": ["PaymentsToAcquirePropertyPlantAndEquipment", "PaymentsToAcquireProductiveAssets", "PaymentsForCapitalImprovements"],
+    "interest": ["InterestExpense", "InterestExpenseNonoperating", "InterestExpenseDebt", "InterestAndDebtExpense"],
+    "buyback": ["PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfEquity"], "dividends": ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends", "PaymentsOfOrdinaryDividends"],
     "shares_avg": ["WeightedAverageNumberOfDilutedSharesOutstanding"], "eps": ["EarningsPerShareDiluted"],
 }
 US_INSTANT = {
-    "equity": ["StockholdersEquity"], "assets": ["Assets"], "liabilities": ["Liabilities"],
+    "equity": ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"], "assets": ["Assets"], "liabilities": ["Liabilities"],
     "current_assets": ["AssetsCurrent"], "current_liabilities": ["LiabilitiesCurrent"],
-    "cash": ["CashAndCashEquivalentsAtCarryingValue"], "debt_long": ["LongTermDebtNoncurrent", "LongTermDebt"],
-    "debt_short": ["LongTermDebtCurrent", "ShortTermBorrowings"],
+    "cash": ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
+    "debt_long": ["LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations"],
+    "debt_short": ["LongTermDebtCurrent", "ShortTermBorrowings", "LongTermDebtAndCapitalLeaseObligationsCurrent", "DebtCurrent"],
 }
 
 
@@ -90,16 +94,17 @@ def _vintage(rows: List[Dict], as_of: str) -> List[Dict]:
     return [per[k] for k in sorted(per)]
 
 
-def drop_stale_series(annual: Dict[str, List[Dict]], max_gap_days: int = CHAINED_MAX_GAP) -> Dict[str, List[Dict]]:
-    """For figures joined across SEC numbers: a series that stopped well before the company's newest year is empty, not current.
-    Debt is one sum, so losing either part drops both and the existing fallback to total liabilities applies."""
+def drop_stale_series(annual: Dict[str, List[Dict]], max_gap_days: int = STOPPED_GAP_DAYS) -> Dict[str, List[Dict]]:
+    """A series that stopped well before the company's newest year is empty, not current.
+    Short-term debt stopping alone means long-term debt is the figure.  Long-term debt stopping leaves no debt figure,
+    so both go and the existing fallback to total liabilities applies."""
     ends = [r["end"] for rows in annual.values() if isinstance(rows, list) for r in rows]
     if not ends:
         return annual
     newest = max(ends)
     gone = {k for k, rows in annual.items() if isinstance(rows, list) and rows and _days(max(r["end"] for r in rows), newest) > max_gap_days}
-    if gone & {"debt_long", "debt_short"}:
-        gone |= {"debt_long", "debt_short"}
+    if "debt_long" in gone:
+        gone.add("debt_short")
     return {k: ([] if k in gone else v) for k, v in annual.items()}
 
 

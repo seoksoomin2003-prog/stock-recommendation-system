@@ -102,6 +102,8 @@ QSF historical checks (2026-11-05): QSF 1.2 candidate NO_EVIDENCE (`reports/QSF_
 
 QSF swing chart-factor research (2026-11-06): 24 pre-registered chart and short-term factors, 10 and 20 sessions, one-shot 2022+ test: NO_EVIDENCE for both (`reports/QSF_SWING_RESEARCH_RESULTS.md`). No factor added to the live score. The 2022+ window is now used for these factors.
 
+QSF-1.1.3 (2026-11-06): US annual figures no longer read stopped series as current, and total revenue tags come before contract revenue. Scoring maths unchanged; earlier validations used the old reading. `reports/QSF_1_1_3_FUNDAMENTALS_CORRECTION.md`.
+
 QSF insider purchase research (2026-11-06): SEC Form 4 officer and director open-market buys, 5 pre-registered factors, 10 and 20 sessions: none passed development, so no score and no test (`reports/QSF_INSIDER_RESEARCH_RESULTS.md`). It exposed a gap: tickers whose SEC company number changed have only the new number's filings, which also thins financial history.
 
 Live fix (2026-11-06): eight changed-number tickers join earlier SEC numbers (`sources.CIK_PREDECESSORS`), and their stopped series read as empty. Only XOM's score moved. Open: 331 of 493 other tickers have some series stopped over 400 days before their newest year, read as current by `fundamentals.metrics`, 110 of them in a core series; TFC reports net income under ProfitLoss only. Research facts are unchanged.

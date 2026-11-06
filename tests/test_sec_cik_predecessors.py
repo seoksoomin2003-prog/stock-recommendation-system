@@ -85,7 +85,13 @@ def test_a_fiscal_year_a_little_behind_stays():
     assert fundamentals.drop_stale_series(a)["capex"]
 
 
-def test_only_changed_number_companies_are_filtered():
+def test_short_debt_stopping_alone_leaves_long_debt_as_the_figure():
+    a = {"net_income": _series("2025-12-31"), "debt_long": _series("2025-12-31"), "debt_short": _series("2017-12-31"), "liabilities": _series("2025-12-31")}
+    out = fundamentals.drop_stale_series(a)
+    assert out["debt_short"] == [] and len(out["debt_long"]) == 1
+
+
+def test_every_company_has_stopped_series_emptied():
     from terminal.qsf.service import QSF
     stale = _facts("NetIncomeLoss", _rows(2025))
     stale["facts"]["us-gaap"]["Revenues"] = {"units": {"USD": _rows(2015)}}
@@ -96,7 +102,7 @@ def test_only_changed_number_companies_are_filtered():
             return stale
     svc = QSF.__new__(QSF)
     svc.src = Src
-    assert svc._annual("CVX", "93410")["revenue"]
+    assert svc._annual("CVX", "93410")["revenue"] == []
     assert svc._annual("XOM", "2115436")["revenue"] == []
 
 
