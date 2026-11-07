@@ -122,6 +122,18 @@ class Terminal:
             raise ValueError("INVALID_MARKET")
         return self.qsf.evaluate(clean_ticker(ticker), "US")
 
+    def qsf_history(self, ticker: str, market: str = "US") -> Dict[str, Any]:
+        """A stock's recorded scores, read from the ledger.  Same ticker checks as evaluation."""
+        from terminal.qsf import history
+        if market == "KR":
+            code = (ticker or "").strip().upper()
+            if not re.fullmatch(r"[0-9A-Z]{6}", code):
+                raise ValueError("INVALID_TICKER")
+            return history.history(self.qsf.ledger, "KR", code)
+        if market != "US":
+            raise ValueError("INVALID_MARKET")
+        return history.history(self.qsf.ledger, "US", clean_ticker(ticker))
+
     # ---------------------------------------------------------------- helpers
     def _intraday(self, last_date: Optional[str], market: str = "US") -> bool:
         """True when the last bar is today's session and the regular close (16:00 ET or 15:30 KST, +15 min for data

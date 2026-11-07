@@ -64,8 +64,26 @@ function qsfDrawDetail(d) {
     ${QSF_RANK_NOTE[d.rank_basis] ? `<div class="meta">${QSF_RANK_NOTE[d.rank_basis]}</div>` : ""}
     ${p ? `<div class="meta">P6-11B 참고: ${p.status !== "REAL" ? "기록 없음" : p.in_top5 ? `최근 스캔 상위 5 (${p.rank}위)` : "최근 스캔 상위 5 아님"} · 별도 모델이며 점수에 합치지 않습니다.</div>` : ""}
     <h3>당일 점검 <span class="meta" style="margin:0">점수에 포함되지 않음</span></h3><div id="qsftoday"></div>
-    <div class="qsf-cards">${Object.values(d.cards).map(qsfCard).join("")}</div></div>`;
+    <div class="qsf-cards">${Object.values(d.cards).map(qsfCard).join("")}</div>
+    <div id="qsfhistory"></div></div>`;
   qsfToday($("#qsftoday"), d.ticker, d.market);
+  qsfHistory($("#qsfhistory"), d.ticker, d.market);
+}
+
+// 기록된 점수 이력: 원장에 남은 값을 그대로 보여 줍니다. 다시 계산하지 않습니다.
+async function qsfHistory(box, t, market) {
+  const h = await api(`/api/qsf/history?t=${encodeURIComponent(t)}&market=${market}`).catch(() => null);
+  if (!box.isConnected || !qsfState.detail || qsfState.detail.ticker !== t) return;
+  if (!h || h.status !== "REAL") { box.innerHTML = `<details class="qsf-today-fold"><summary>기록된 점수 이력</summary><div class="empty">${esc((h && h.reason) || "이력을 불러오지 못했습니다.")}</div></details>`; return; }
+  const table = (strategy, rows) => {
+    const changed = rows.some((r) => r.model_changed);
+    const body = rows.slice().reverse().map((r) => `<tr><td class="l">${esc(r.session)}</td><td class="num">${qsfNum(r.score)}</td><td class="l"><span class="qsf-act ${qsfClass(r.action, r.score)}"><i></i>${esc(r.action_label || r.action || "")}</span></td><td class="l">${esc(QSF_CONF[r.confidence] || "")}</td><td class="num">${qsfPrice(r.price, market)}</td><td class="l">${esc(r.model_version || "")}${r.model_changed ? " *" : ""}</td></tr>`).join("");
+    return `<h3 class="qc-title">${QSF_STRAT[strategy] || esc(strategy)} <span class="meta" style="margin:0">${rows.length}개 거래일</span></h3>
+      ${changed ? `<div class="meta">* 앞 기록과 모델 버전이 다릅니다. 이 점수 차이에는 수식과 입력 수정이 섞여 있습니다.</div>` : ""}
+      <div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">거래일</th><th>점수</th><th class="l">판단</th><th class="l">신뢰도</th><th>기록 가격</th><th class="l">모델</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  };
+  box.innerHTML = `<details class="qsf-today-fold"><summary>기록된 점수 이력</summary><div class="meta">스캔 때 원장에 남긴 값입니다. 최신이 위입니다. 점수가 오르내린 기록이 앞으로의 수익을 말해 주지는 않습니다.</div>
+    ${["SWING", "LONG_TERM"].filter((k) => h.strategies[k]).map((k) => table(k, h.strategies[k])).join("")}</details>`;
 }
 
 function qsfCard(c) {
