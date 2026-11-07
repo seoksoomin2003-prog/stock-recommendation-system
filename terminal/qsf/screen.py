@@ -78,9 +78,11 @@ def _keep(row: Dict[str, Any], f: Dict[str, Any]) -> Tuple[bool, bool]:
     if f["text"] and f["text"] not in str(row.get("ticker") or "").casefold() and f["text"] not in str(row.get("name") or "").casefold():
         return False, False
     marks = row.get("filing_events") or {}
-    if (f["no_financing"] and marks.get("financing")) or (f["buyback"] and not marks.get("buyback")) or (f["no_high_risk"] and row.get("high_risk")):
+    if (f["no_financing"] and marks.get("financing")) or (f["no_high_risk"] and row.get("high_risk")):
         return False, False
-    missing = False
+    missing = bool(row.get("filing_unknown") and (f["no_financing"] or f["buyback"]))
+    if f["buyback"] and not missing and not marks.get("buyback"):
+        return False, False
     for key, low in [*f["minimums"].items(), *([("score", f["min_score"])] if f["min_score"] is not None else [])]:
         v = _value(row, key)
         if v is None:

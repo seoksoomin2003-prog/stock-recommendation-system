@@ -61,6 +61,14 @@ def test_filing_and_risk_marks_filter():
     assert set(tickers(sc.screen(data, {"no_high_risk": "1"}))) == {"FIN", "BUY", "PLAIN"}
 
 
+def test_a_stock_not_on_the_filing_record_is_unknown_not_clean():
+    data = latest(row("CLEAN"), row("NEW", filing_unknown=True))
+    out = sc.screen(data, {"no_financing": "1"})
+    assert tickers(out) == ["CLEAN"] and out["missing_value"] == 1
+    assert sc.screen(data, {"buyback": "1"})["missing_value"] == 1
+    assert set(tickers(sc.screen(data, {}))) == {"CLEAN", "NEW"}
+
+
 def test_paging():
     data = latest(*[row(f"S{i:02d}", 90 - i) for i in range(30)])
     out = sc.screen(data, {"limit": "10", "offset": "25"})

@@ -614,7 +614,7 @@ class QSF:
 
     def _filing_marks(self, market: str) -> Dict[str, Any]:
         """Korean filings of the last 252 sessions, from the separate record.  Added when read, so no score or record contains it."""
-        empty = {"session": None, "financing": set(), "buyback": set()}
+        empty = {"session": None, "financing": set(), "buyback": set(), "known": set()}
         if market != "KR":
             return empty
         from terminal.qsf import kr_events_forward
@@ -622,7 +622,7 @@ class QSF:
             found = kr_events_forward.marks(self.base)
         except (OSError, ValueError, KeyError):
             return empty
-        return {"session": found["session"], "financing": set(found["financing"]), "buyback": set(found["buyback"])}
+        return {"session": found["session"], "financing": set(found["financing"]), "buyback": set(found["buyback"]), "known": set(found["known"])}
 
     @staticmethod
     def _filing_mark(found: Dict[str, Any], ticker: str) -> Optional[Dict[str, Any]]:
@@ -640,6 +640,8 @@ class QSF:
                 mark = self._filing_mark(filed, r.get("ticker"))
                 if mark:
                     r["filing_events"] = mark
+                elif filed["session"] and r.get("ticker") not in filed["known"]:
+                    r["filing_unknown"] = True      # not on the record: unknown, not a no
             return out
         except (OSError, ValueError):
             return {"status": "UNAVAILABLE", "market": market, "rows": [], "reason": "아직 스캔 기록이 없습니다."}

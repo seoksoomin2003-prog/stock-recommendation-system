@@ -231,12 +231,13 @@ def test_the_record_is_backed_up():
 
 
 def test_marks_read_the_newest_record_and_nothing_without_one(tmp_path, built, monkeypatch):
-    assert ef.marks(tmp_path) == {"session": None, "financing": [], "buyback": []}
+    assert ef.marks(tmp_path) == {"session": None, "financing": [], "buyback": [], "known": []}
     run, days = linked(tmp_path, built)
     monkeypatch.setattr(ef.time, "sleep", lambda s: None)
     run_record(run, days, first=days[-1], get=dart_get(lambda p: {"status": "000", "total_page": 1, "list": [{"rcept_no": "20260105000001", "corp_code": "C", "stock_code": STOCKS[0], "report_nm": TITLE_FIN}, {"rcept_no": "20260105000002", "corp_code": "C", "stock_code": STOCKS[1], "report_nm": TITLE_BUY}]} if p["bgn_de"] == "20260101" else {"status": "013"}))
     got = ef.marks(run)
-    assert got == {"session": days[-1], "financing": [STOCKS[0]], "buyback": [STOCKS[1]]}
+    known = got.pop("known")
+    assert got == {"session": days[-1], "financing": [STOCKS[0]], "buyback": [STOCKS[1]]} and STOCKS[0] in known and known == sorted(known)
 
 
 def test_a_mark_never_touches_a_score_or_a_record(tmp_path, monkeypatch):
@@ -246,7 +247,7 @@ def test_a_mark_never_touches_a_score_or_a_record(tmp_path, monkeypatch):
     svc.dir.mkdir()
     row = {"ticker": STOCKS[0], "scores": {"SWING": 61.0}}
     (svc.dir / "latest_KR.json").write_text(json.dumps({"status": "REAL", "rows": [row, {"ticker": STOCKS[1]}]}), encoding="utf-8")
-    monkeypatch.setattr(ef, "marks", lambda b: {"session": "2026-11-06", "financing": [STOCKS[0]], "buyback": []})
+    monkeypatch.setattr(ef, "marks", lambda b: {"session": "2026-11-06", "financing": [STOCKS[0]], "buyback": [], "known": [STOCKS[0], STOCKS[1]]})
     before = (svc.dir / "latest_KR.json").read_bytes()
     got = svc.latest("KR")["rows"]
     assert got[0]["filing_events"] == {"session": "2026-11-06", "financing": True, "buyback": False} and got[0]["scores"] == row["scores"] and "filing_events" not in got[1]

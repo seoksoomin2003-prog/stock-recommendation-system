@@ -88,10 +88,10 @@ def marks(base: Path) -> Dict[str, Any]:
     """Who has a financing or buyback decision on the newest record.  For display: it feeds no score.  A code not on the record is unknown, not a no."""
     rows = kf.read_index(base, FOLDER)
     if not rows:
-        return {"session": None, "financing": [], "buyback": []}
+        return {"session": None, "financing": [], "buyback": [], "known": []}
     day = rows[-1]["session"]
     doc = kf._read_day(Path(base) / FOLDER, day)["rows"]
-    return {"session": day, "financing": sorted(r["code"] for r in doc if r["financing"] == 1), "buyback": sorted(r["code"] for r in doc if r["buyback"] == 1)}
+    return {"session": day, "financing": sorted(r["code"] for r in doc if r["financing"] == 1), "buyback": sorted(r["code"] for r in doc if r["buyback"] == 1), "known": sorted(r["code"] for r in doc)}
 
 
 # ---------------------------------------------------------------------- the one evaluation
