@@ -73,14 +73,15 @@ def extract_kr(statements: Dict[int, Dict[str, Dict]]) -> Dict[str, Any]:
     names = {"revenue": "revenue", "op_income": "operating_income", "net_income": "net_income_parent", "net_income_all": "net_income",
              "equity": "equity_parent", "equity_all": "total_equity", "assets": "total_assets", "liabilities": "total_liabilities",
              "current_assets": "current_assets", "current_liabilities": "current_liabilities", "cash": "cash_and_equivalents",
-             "ocf": "operating_cash_flow", "eps": "eps_basic", "dividends": "dividends_paid"}
+             "ocf": "operating_cash_flow", "capex": "capex", "eps": "eps_basic", "dividends": "dividends_paid"}
     out: Dict[str, Any] = {k: [] for k in names}
     bases = set()
     for year in sorted(statements):
         for metric, concept in names.items():
             r = statements[year].get(concept) or {}
             if r.get("status") == "REAL":
-                out[metric].append({"end": r["period_end"], "val": float(r["value"]), "filed": r["receipt_date"], "basis": r["basis"]})
+                val = abs(float(r["value"])) if metric == "capex" else float(r["value"])    # filers differ on the sign of an outflow
+                out[metric].append({"end": r["period_end"], "val": val, "filed": r["receipt_date"], "basis": r["basis"]})
                 bases.add(r["basis"])
     out["net_income"] = out["net_income"] or out.pop("net_income_all", [])
     out["equity"] = out["equity"] or out.pop("equity_all", [])
@@ -152,9 +153,11 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         return (a / b) ** (1 / n) - 1 if a is not None and b is not None and a > 0 and b > 0 else None
 
     ocf, capex = last("ocf"), last("capex")
-    fcf = ocf - capex if ocf is not None and capex is not None else None
+    # Cash flow of one year less spending of another is no figure at all: a company whose capex tag stopped has no free cash flow.
+    same_year = bool(series.get("ocf")) and bool(series.get("capex")) and series["ocf"][-1]["end"] == series["capex"][-1]["end"]
+    fcf = ocf - capex if same_year else None
     fcfs = []
-    by_end = {r["end"]: r["val"] for r in series.get("capex") or []}
+    by_end = {r["end"]: r["val"] for r in series.get("capex") or []} if same_year else {}
     for r in (series.get("ocf") or [])[-5:]:
         if r["end"] in by_end:
             fcfs.append(r["val"] - by_end[r["end"]] > 0)

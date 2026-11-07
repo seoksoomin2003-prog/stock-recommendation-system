@@ -1,4 +1,4 @@
-"""Versioned Korean accounting concept registry (KR-ACCT-0.1).
+"""Versioned Korean accounting concept registry (KR-ACCT-0.2: capital spending added).
 
 Mapping is by **XBRL standard account ID** (OpenDART ``account_id``) and statement type (``sj_div``),
 never by account-name string matching.  ``account_nm`` is kept only as provenance.  Rows whose
@@ -58,6 +58,9 @@ REGISTRY: Dict[str, Dict] = {
     "eps_basic": {"account_ids": ["ifrs-full_BasicEarningsLossPerShare"], "statements": ["IS", "CIS"],
                   "kind": "FLOW", "applicability": ALL, "confidence": "MEDIUM",
                   "validation": "finite; KRW per share; reported for the parent's ordinary shares"},
+    "capex": {"account_ids": ["ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"],
+              "statements": ["CF"], "kind": "FLOW", "applicability": ALL, "confidence": "MEDIUM",
+              "validation": "finite; filers enter the outflow as positive or negative; property, plant and equipment only, as in the US figure"},
     "dividends_paid": {"account_ids": ["ifrs-full_DividendsPaidClassifiedAsFinancingActivities",
                                        "ifrs-full_DividendsPaidClassifiedAsOperatingActivities"],
                        "statements": ["CF"], "kind": "FLOW", "applicability": ALL, "confidence": "MEDIUM",
@@ -66,7 +69,7 @@ REGISTRY: Dict[str, Dict] = {
 
 NOT_IN_STATEMENT_API = {
     "shares_outstanding": "not in fnlttSinglAcntAll; requires OpenDART stockTotqySttus (주식의 총수 현황) or "
-                          "KRX LIST_SHRS -- UNAVAILABLE in KR-ACCT-0.1",
+                          "KRX LIST_SHRS -- UNAVAILABLE in KR-ACCT-0.2",
 }
 
 

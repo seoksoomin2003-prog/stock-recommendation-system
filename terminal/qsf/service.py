@@ -269,7 +269,7 @@ class QSF:
         if not corp:
             return {"fund": {"status": "UNAVAILABLE", "reason": "DART 고유번호 없음"}, "events": {"status": "UNAVAILABLE", "reason": "DART 고유번호 없음"}}
         klass = ident.get("industry_class") or "NON_FINANCIAL"
-        res = self.cache.cached(f"krfund:{code}", TTL["facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, date.fromisoformat(as_of), self.dart)))
+        res = self.cache.cached(f"krfund2:{code}", TTL["facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, date.fromisoformat(as_of), self.dart)))
         info = self.cache.cached(f"info:{ident.get('yahoo_symbol')}", TTL["info"], lambda: self.src.yahoo_info(ident["yahoo_symbol"]))["data"] or {}
         fund = {"status": "UNAVAILABLE", "reason": f"DART 재무 조회 실패 ({res.get('error')})"}
         if res["data"]:
@@ -299,7 +299,7 @@ class QSF:
             return out
         as_of = self.now().date()
         klass = ident.get("industry_class") or "NON_FINANCIAL"
-        res = self.cache.cached(f"krfund:{code}", TTL["facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart)))
+        res = self.cache.cached(f"krfund2:{code}", TTL["facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart)))
 
         def fetch_list():
             bgn = (as_of - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")

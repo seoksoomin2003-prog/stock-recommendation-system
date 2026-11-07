@@ -90,6 +90,40 @@ def test_a_wrong_sec_scale_does_not_block_or_trigger_the_multi_class_total():
     assert f.us_total_shares({**info, "currentPrice": None}, 300.0, annual(12000.0)) == 5.0e9
 
 
+def _flow(values):
+    return [{"end": e, "filed": e[:4] + "-12-31", "val": v} for e, v in values]
+
+
+def test_free_cash_flow_needs_cash_flow_and_capex_of_the_same_year():
+    base = {"revenue": _flow([("2025-12-31", 100.0)]), "net_income": _flow([("2025-12-31", 10.0)])}
+    same = f.metrics({**base, "ocf": _flow([("2025-12-31", 30.0)]), "capex": _flow([("2025-12-31", 10.0)])}, 10.0, "2026-06-01", shares=100.0)
+    assert same["fcf"] == 20.0 and same["fcf_yield"] == pytest.approx(0.02) and same["fcf_years_positive"] == 1.0
+    stopped = f.metrics({**base, "ocf": _flow([("2024-12-31", 25.0), ("2025-12-31", 30.0)]), "capex": _flow([("2024-12-31", 10.0)])}, 10.0, "2026-06-01", shares=100.0)
+    assert stopped["fcf"] is None and stopped["fcf_yield"] is None and stopped["fcf_margin"] is None and stopped["fcf_years_positive"] is None
+
+
+def _kr_row(value, end="2025-12-31"):
+    return {"status": "REAL", "value": value, "period_end": end, "receipt_date": "2026-03-20", "basis": "CONSOLIDATED"}
+
+
+def test_korean_capex_is_positive_whichever_sign_the_filer_used():
+    for raw in (500.0, -500.0):
+        out = f.extract_kr({2025: {"capex": _kr_row(raw), "operating_cash_flow": _kr_row(800.0), "revenue": _kr_row(1000.0)}})
+        assert out["capex"][0]["val"] == 500.0
+    m = f.metrics(out, 10.0, "2026-06-01", shares=100.0)
+    assert m["fcf"] == 300.0
+
+
+def test_korean_capex_comes_from_the_standard_account_only():
+    from markets.kr import dart
+    from markets.kr.account_mapping import REGISTRY
+    assert REGISTRY["capex"]["account_ids"] == ["ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"]
+    base = {"basis": "CONSOLIDATED", "statement": "CF", "amount_type": "FY", "value": 7.0, "account_name": "유형자산의 취득", "period_start": "2025-01-01",
+            "period_end": "2025-12-31", "fiscal_year": 2025, "fiscal_period": "FY", "rcept_no": "1", "receipt_date": "2026-03-20", "currency": "KRW", "unit": "KRW", "mapping_version": "x"}
+    assert dart.extract_concepts([{**base, "account_id": "-표준계정코드 미사용-"}], "NON_FINANCIAL")["capex"]["status"] == "UNAVAILABLE"
+    assert dart.extract_concepts([{**base, "account_id": REGISTRY["capex"]["account_ids"][0]}], "NON_FINANCIAL")["capex"]["value"] == 7.0
+
+
 def _day(root, day, kospi, kosdaq):
     for board, rows in (("KOSPI", kospi), ("KOSDAQ", kosdaq)):
         p = kh.path_of(root, board, day)
