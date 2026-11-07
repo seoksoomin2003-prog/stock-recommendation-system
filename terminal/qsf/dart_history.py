@@ -42,8 +42,8 @@ def slim(rows: List[Dict[str, Any]]) -> List[List[Any]]:
     return [[r.get(f) for f in FIELDS] for r in rows]
 
 
-def download(root: Path, key: str, get: Callable[..., Any], corp_codes: Sequence[str], years: Sequence[int], sleep: Callable[[float], None] = time.sleep, cap: int = DAILY_CAP, pause: float = 0.3, log=print) -> Dict[str, Any]:
-    """A batch already stored is not asked again.  Stops at once on the daily limit or a key problem."""
+def download(root: Path, key: str, get: Callable[..., Any], corp_codes: Sequence[str], years: Sequence[int], sleep: Callable[[float], None] = time.sleep, cap: int = DAILY_CAP, pause: float = 0.3, log=print, refresh: Optional[Callable[[int, str], bool]] = None) -> Dict[str, Any]:
+    """A batch already stored is not asked again unless ``refresh`` says so.  Stops at once on the daily limit or a key problem."""
     groups = list(batches(corp_codes))
     calls = stored = rows_seen = fails = missed = 0
     stopped: Optional[str] = None
@@ -51,7 +51,7 @@ def download(root: Path, key: str, get: Callable[..., Any], corp_codes: Sequence
         for report, code in REPORTS.items():
             for n, group in enumerate(groups):
                 p = path_of(root, year, report, n)
-                if p.exists():
+                if p.exists() and not (refresh and refresh(year, report)):
                     continue
                 if calls >= cap:
                     return {"status": "STOPPED", "stopped": "DAILY_CAP", "calls": calls, "stored": stored, "rows": rows_seen}

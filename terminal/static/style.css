@@ -170,3 +170,5 @@ tr.voided td { color: var(--muted); text-decoration: line-through; }
   .qr-conf, .qr-entry, .qr-gate { grid-column: 2 / -1; font-size: 12px; }
   .qr-gate:empty { display: none; }
 }
+
+.badge.risk-note { color: var(--warn); font-weight: 500; white-space: nowrap; }

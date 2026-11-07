@@ -141,3 +141,15 @@ def test_no_data_is_stored_so_it_is_not_asked_again(tmp_path):
     res = dh.download(tmp_path, "K", lambda *a, **k: Resp({"status": "013"}), ["1"], [2015], sleep=lambda s: None, log=lambda m: None)
     assert res["status"] == "DONE" and res["stored"] == 4
     assert np.array(json.loads(gzip.open(dh.path_of(tmp_path, 2015, "FY", 0), "rt").read())).size == 0
+
+
+def test_refresh_asks_again_only_what_it_is_told(tmp_path):
+    asked = []
+
+    def get(url, params, timeout):
+        asked.append((params["bsns_year"], params["reprt_code"]))
+        return Resp({"status": "000", "list": []})
+    dh.download(tmp_path, "K", get, ["1"], [2025, 2026], sleep=lambda s: None, log=lambda m: None)
+    asked.clear()
+    dh.download(tmp_path, "K", get, ["1"], [2025, 2026], sleep=lambda s: None, log=lambda m: None, refresh=lambda y, r: y == 2026 or (y == 2025 and r == "FY"))
+    assert sorted(asked) == sorted([(2025, "11011"), (2026, "11013"), (2026, "11012"), (2026, "11014"), (2026, "11011")])

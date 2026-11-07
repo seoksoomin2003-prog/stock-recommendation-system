@@ -41,6 +41,7 @@ class QSF:
         self._dart = dart
         self._kr_master = kr_master
         self._regime: Dict[str, Dict] = {}
+        self._krx_share_cache: Dict[str, Dict[str, float]] = {}
 
     # ------------------------------------------------------------------ helpers
     @property
@@ -180,7 +181,7 @@ class QSF:
             return {"status": "UNAVAILABLE", "reason": f"SEC 재무 조회 실패 ({res.get('error')})", "cik": cik}
         info = self.cache.cached(f"info:{ticker}", TTL["info"], lambda: self.src.yahoo_info(ticker))["data"] or {}
         fin = fundamentals.is_financial_sic((subm or {}).get("sic"))
-        m = fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=fin, shares=info.get("sharesOutstanding"), insider_pct=info.get("heldPercentInsiders"))
+        m = fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=fin, shares=fundamentals.us_total_shares(info, bars[-1]["close"], res["data"]), insider_pct=info.get("heldPercentInsiders"))
         return {**m, "cik": cik, "name": info.get("longName") or (subm or {}).get("name"), "sector": info.get("sector")}
 
     def _annual(self, ticker: str, cik: str) -> Dict[str, Any]:
@@ -253,6 +254,13 @@ class QSF:
             return {str(r[col]).strip(): str(r["corp_code"]) for _, r in df.iterrows() if str(r[col]).strip()}
         return (self.cache.cached("dart:corpmap", 30 * 86400, fetch)["data"] or {}).get(code)
 
+    def _krx_shares(self, as_of: str) -> Dict[str, float]:
+        """Listed shares from the newest KRX snapshot up to ``as_of``.  Empty without one, and the caller then keeps Yahoo's count."""
+        if as_of not in self._krx_share_cache:
+            from terminal.qsf import krx_history
+            self._krx_share_cache[as_of] = krx_history.listed_shares(self.base / "research_data" / "krx", as_of)
+        return self._krx_share_cache[as_of]
+
     def _kr_fund_events(self, code: str, ident: Dict, bars: List[Dict], as_of: str) -> Dict[str, Any]:
         if not self.dart.configured:
             reason = "OPENDART_API_KEY가 없어 한국 재무·공시를 평가하지 않았습니다."
@@ -265,7 +273,7 @@ class QSF:
         info = self.cache.cached(f"info:{ident.get('yahoo_symbol')}", TTL["info"], lambda: self.src.yahoo_info(ident["yahoo_symbol"]))["data"] or {}
         fund = {"status": "UNAVAILABLE", "reason": f"DART 재무 조회 실패 ({res.get('error')})"}
         if res["data"]:
-            fund = fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=klass != "NON_FINANCIAL", shares=info.get("sharesOutstanding"), source="OpenDART 사업보고서",
+            fund = fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=klass != "NON_FINANCIAL", shares=self._krx_shares(as_of).get(code) or info.get("sharesOutstanding"), source="OpenDART 사업보고서",
                                         insider_pct=info.get("heldPercentInsiders"))
         def fetch_list():
             bgn = (date.fromisoformat(as_of) - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")
@@ -389,7 +397,8 @@ class QSF:
         pos = self._position(ticker, market)
         own = config.STYLE_TO_STRATEGY.get((pos or {}).get("style"))
         cards = {s: self.card(ctx, s, pos if own in (None, s) else None) for s in strategies}
-        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
+        risky = self._high_risk(market)
+        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None, "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
 
     def signal(self, ticker: str, weight_pct: Optional[float] = None, max_weight_pct: Optional[float] = None, market: str = "US") -> Dict[str, Any]:
         """Score and exit reading of one held position, under the profile of its own style only."""
@@ -544,9 +553,25 @@ class QSF:
         return codes, pre
 
     # ------------------------------------------------------------------ reports
+    def _high_risk(self, market: str) -> Dict[str, Any]:
+        """Korean names only: that is where the pattern was seen.  Added when read, so no score or record contains it."""
+        if market != "KR":
+            return {"session": None, "codes": set()}
+        from terminal.qsf import kr_forward
+        try:
+            found = kr_forward.high_risk(self.base)
+        except (OSError, ValueError, KeyError):
+            return {"session": None, "codes": set()}
+        return {"session": found["session"], "codes": set(found["codes"])}
+
     def latest(self, market: str = "US") -> Dict[str, Any]:
         try:
-            return json.loads((self.dir / f"latest_{market}.json").read_text(encoding="utf-8"))
+            out = json.loads((self.dir / f"latest_{market}.json").read_text(encoding="utf-8"))
+            risky = self._high_risk(market)
+            for r in out.get("rows") or []:
+                if r.get("ticker") in risky["codes"]:
+                    r["high_risk"] = {"session": risky["session"]}
+            return out
         except (OSError, ValueError):
             return {"status": "UNAVAILABLE", "market": market, "rows": [], "reason": "아직 스캔 기록이 없습니다."}
 

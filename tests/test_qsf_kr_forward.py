@@ -244,3 +244,89 @@ def test_live_prices_are_compared_with_the_krx_close_once_a_session(tmp_path):
 def test_a_scan_from_a_day_without_krx_data_is_not_checked(tmp_path):
     _live(tmp_path, "2026-11-06", [{"ticker": "000010", "price": 1.0, "data_date": "2026-11-06"}])
     assert kf.cross_check(tmp_path) is None and kf.last_check(tmp_path) is None
+
+
+def _fund_run(tmp_path, built, monkeypatch):
+    base, days = built
+    run = tmp_path / "run"
+    (run / kr.DATA.parent).mkdir(parents=True)
+    (run / kr.DATA).symlink_to(base / kr.DATA)
+    def scored(b, day):
+        return {"session": day, "protocol": kf.PROTOCOL, "groups": kf.FUND_GROUPS, "rows": [{"code": c, "score": 50.0} for c in STOCKS]}
+    monkeypatch.setattr(kf, "score_fund_day", scored)
+    monkeypatch.setattr(kf, "refresh_dart", lambda *a, **k: {"status": "DONE", "stopped": None})
+    return run, days
+
+
+def test_the_financial_record_is_separate_and_written_once(tmp_path, built, monkeypatch):
+    run, days = _fund_run(tmp_path, built, monkeypatch)
+    res = kf.record(run, key="K", get=no_calls, now=lambda: at("2026-11-07"), first=days[-2], dart_key="D", dart_get=no_calls)
+    assert res["status"] == "OK" and res["fund"] == {"status": "OK", "written": days[-2:]}
+    idx = kf.read_index(run, kf.FUND_FOLDER)
+    assert [r["late"] for r in idx] == [True, False] and kf.verify(run, kf.FUND_FOLDER)["status"] == "OK"
+    assert len(kf.read_index(run)) == 2                 # the price record has its own chain
+    assert kf.record(run, key="K", get=no_calls, now=lambda: at("2026-11-08"), first=days[-2], dart_key="D", dart_get=no_calls)["fund"]["written"] == []
+
+
+def test_a_dart_failure_keeps_the_price_record_and_is_reported(tmp_path, built, monkeypatch):
+    run, days = _fund_run(tmp_path, built, monkeypatch)
+    monkeypatch.setattr(kf, "refresh_dart", lambda *a, **k: {"status": "STOPPED", "stopped": "DART_020"})
+    res = kf.record(run, key="K", get=no_calls, now=lambda: at("2026-11-07"), first=days[-1], dart_key="D", dart_get=no_calls)
+    assert res["status"] == "FAILED" and res["fund"]["reason"] == "DART_020" and res["written"] == [days[-1]]
+    assert kf.read_index(run, kf.FUND_FOLDER) == []
+
+
+def test_an_error_message_cannot_carry_the_dart_key(tmp_path, built, monkeypatch):
+    run, days = _fund_run(tmp_path, built, monkeypatch)
+    def boom(*a, **k):
+        raise ConnectionError("failed crtfc_key=SECRET")
+    monkeypatch.setattr(kf, "refresh_dart", boom)
+    res = kf.record(run, key="K", get=no_calls, now=lambda: at("2026-11-07"), first=days[-1], dart_key="SECRET", dart_get=no_calls)
+    assert res["fund"]["reason"] == "ConnectionError" and "SECRET" not in json.dumps(res)
+
+
+def test_a_price_only_caller_does_not_touch_dart(tmp_path, built):
+    base, days = built
+    run = tmp_path / "run"
+    (run / kr.DATA.parent).mkdir(parents=True)
+    (run / kr.DATA).symlink_to(base / kr.DATA)
+    assert kf.record(run, key="K", get=no_calls, now=lambda: at("2026-11-07"), first=days[-1])["fund"] == {"status": "SKIPPED"}
+
+
+def test_the_riskiest_fifth_is_marked_and_nothing_without_a_record(tmp_path, built):
+    assert kf.high_risk(tmp_path) == {"session": None, "codes": []}
+    base, days = built
+    run = tmp_path / "run"
+    (run / kr.DATA.parent).mkdir(parents=True)
+    (run / kr.DATA).symlink_to(base / kr.DATA)
+    kf.record(run, key="K", get=no_calls, now=lambda: at("2026-11-07"), first=days[-1])
+    found = kf.high_risk(run)
+    assert found["session"] == days[-1] and len(found["codes"]) == 10
+    doc = kf._read_day(run / kf.FOLDER, days[-1])["rows"]
+    low = {r["code"]: r["low_risk"] for r in doc}
+    assert max(low[c] for c in found["codes"]) <= min(v for c, v in low.items() if c not in found["codes"])
+
+
+def test_the_real_financial_score_reads_only_receipts_before_the_day(tmp_path, built):
+    base, days = built
+    run = tmp_path / "run"
+    (run / kr.DATA.parent).mkdir(parents=True)
+    (run / kr.DATA).symlink_to(base / kr.DATA)
+    day = days[-1]
+    def put(year, report, receipt, stock_rows):
+        p = run / kf.DART_FORWARD / f"{year}_{report}" / "000.json.gz"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        with gzip.open(p, "wt", encoding="utf-8") as fh:
+            json.dump(stock_rows, fh, ensure_ascii=False)
+    def rows(receipt, scale):
+        out = []
+        for n, code in enumerate(STOCKS):
+            for acct, v in (("자산총계", 1000 + n), ("부채총계", 400), ("자본총계", 600 + n), ("유동자산", 300), ("유동부채", 100), ("매출액", (500 + n) * scale), ("영업이익", (50 + n) * scale), ("당기순이익(손실)", (30 + n) * scale)):
+                out.append([receipt, "C" + code, code, "CFS", "BS", acct, "", str(v), ""])
+        return out
+    put(2024, "FY", "x", rows("20250320000001", 1))
+    put(2025, "FY", "x", rows("20260320000001", 2))
+    first = kf.score_fund_day(run, day)
+    assert sum(r["score"] is not None for r in first["rows"]) == 50
+    put(2026, "FY", "x", rows(day.replace("-", "") + "000001", 50))       # received on the day itself
+    assert kf.score_fund_day(run, day)["rows"] == first["rows"]

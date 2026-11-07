@@ -30,6 +30,32 @@ def path_of(root: Path, board: str, day: str) -> Path:
     return root / board / f"{day}.json.gz"
 
 
+def listed_shares(root: Path, as_of: str, max_age_days: int = 10) -> Dict[str, float]:
+    """Stock code to listed shares, from the newest day up to ``as_of`` with both boards.  A snapshot too old is not used."""
+    end = date.fromisoformat(as_of)
+    for back in range(max_age_days + 1):
+        day = (end - timedelta(days=back)).isoformat()
+        out: Dict[str, float] = {}
+        for board in BOARDS:
+            p = path_of(root, board, day)
+            if not p.exists():
+                out = {}
+                break
+            with gzip.open(p, "rt", encoding="utf-8") as fh:
+                rows = json.load(fh)
+            if not rows:
+                out = {}
+                break
+            for r in rows:
+                try:
+                    out[r[0]] = float(str(r[FIELDS.index("LIST_SHRS")]).replace(",", ""))
+                except (TypeError, ValueError):
+                    continue
+        if out:
+            return out
+    return {}
+
+
 def slim(rows: List[Dict[str, Any]]) -> List[List[Any]]:
     return [[r.get(f) for f in FIELDS] for r in rows]
 

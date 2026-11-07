@@ -45,9 +45,12 @@ async function qsfEvaluate(t, market) {
   } catch (e) { $("#qsfmsg").textContent = "평가 실패: " + e.message; }
 }
 
+const QSF_RISK_NOTE = "참고용 표시입니다. 점수와 순위에 반영되지 않으며, 이 종목을 피하면 수익이 난다는 검증은 아직 없습니다. 한국 시장 변동성 상위 20%입니다.";
+const qsfRiskTag = () => `<span class="badge risk-note" title="${QSF_RISK_NOTE}">변동성 높음 · 참고</span>`;
 function qsfDrawDetail(d) {
   const p = d.p6_reference;
-  $("#qsfdetail").innerHTML = `<div class="panel"><h2>${esc(d.ticker)} ${esc(d.name || "")} <span class="badge">${d.market === "US" ? "미국" : "한국"}</span></h2>
+  $("#qsfdetail").innerHTML = `<div class="panel"><h2>${esc(d.ticker)} ${esc(d.name || "")} <span class="badge">${d.market === "US" ? "미국" : "한국"}</span>${d.high_risk ? " " + qsfRiskTag() : ""}</h2>
+    ${d.high_risk ? `<div class="meta">${QSF_RISK_NOTE} 기준일 ${esc(d.high_risk.session)}.</div>` : ""}
     ${p ? `<div class="meta">P6-11B 참고: ${p.status !== "REAL" ? "기록 없음" : p.in_top5 ? `최근 스캔 상위 5 (${p.rank}위)` : "최근 스캔 상위 5 아님"} · 별도 모델이며 점수에 합치지 않습니다.</div>` : ""}
     <h3>당일 점검 <span class="meta" style="margin:0">점수에 포함되지 않음</span></h3><div id="qsftoday"></div>
     <div class="qsf-cards">${Object.values(d.cards).map(qsfCard).join("")}</div></div>`;
@@ -118,7 +121,7 @@ function qsfRowHtml(r) {
   const out = r.actionability !== "ACTIONABLE";
   return `<div class="qsf-item"><button type="button" class="qsf-row" data-qsf="${esc(r.ticker)}" aria-expanded="false">
       <span class="qr-rank num">${r.rank}</span>
-      <span class="qr-name"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span></span>
+      <span class="qr-name"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span>${r.high_risk ? " " + qsfRiskTag() : ""}</span>
       <span class="qr-score num">${qsfNum(r.score)}</span><span class="qr-act">${qsfLabel(r)}</span>
       <span class="qr-conf">신뢰도 ${QSF_CONF[r.confidence]}</span><span class="qr-entry">${QSF_ENTRY[r.entry_status] || ""}</span>
       <span class="qr-gate">${out ? `<span class="qr-out">상위 3 제외</span> ` : ""}${r.gates.map((g) => esc(QSF_GATE[g] || g)).join(", ")}</span>
@@ -136,7 +139,7 @@ async function qsfRank() {
   box.innerHTML = `<div class="panel"><h2>상위 ${top.length}개 <span class="badge">${esc(d.session)}</span>
       <select id="qsfstrat" aria-label="전략"><option value="SWING">스윙</option><option value="LONG_TERM">장기</option></select></h2>
     <div class="meta">점수순으로 보여 줄 뿐 수익이 더 좋다는 근거는 아닙니다. 위험 게이트에 걸렸거나 데이터가 부족한 종목은 상위 3개에서 뺍니다.</div>
-    ${top.map((r) => `<section class="qsf-top"><h3><span class="qr-rank num">${r.rank}위</span> ${esc(r.ticker)} <span class="meta" style="margin:0">${esc(r.name || "")}</span></h3><div class="qsf-top-body" data-top="${esc(r.ticker)}"></div></section>`).join("") || '<div class="empty">상위에 올릴 종목이 없습니다.</div>'}
+    ${top.map((r) => `<section class="qsf-top"><h3><span class="qr-rank num">${r.rank}위</span> ${esc(r.ticker)} <span class="meta" style="margin:0">${esc(r.name || "")}</span>${r.high_risk ? " " + qsfRiskTag() : ""}</h3><div class="qsf-top-body" data-top="${esc(r.ticker)}"></div></section>`).join("") || '<div class="empty">상위에 올릴 종목이 없습니다.</div>'}
     <h3 style="margin-top:18px">나머지 순위 <span class="meta" style="margin:0">눌러서 자세히</span></h3>
     <div class="qsf-rows">${rest.map(qsfRowHtml).join("")}</div>
     <div class="meta">${d.tickers}종목 평가 · 생성 ${esc((d.generated_at || "").slice(0, 16))} UTC</div></div>`;

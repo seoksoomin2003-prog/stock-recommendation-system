@@ -72,7 +72,7 @@ def yahoo_history(symbols: List[str], period: str = "1y", download=_yf_download)
 INFO_FIELDS = ("longName", "shortName", "sector", "industry", "exchange", "currency", "marketCap",
                "trailingPE", "forwardPE", "priceToBook", "dividendYield", "beta", "fiftyTwoWeekHigh",
                "fiftyTwoWeekLow", "sharesOutstanding", "averageVolume", "website", "longBusinessSummary",
-               "heldPercentInsiders")
+               "heldPercentInsiders", "currentPrice", "regularMarketPrice")
 
 
 def _yf_info(ticker: str) -> Dict:
@@ -84,7 +84,7 @@ def yahoo_info(ticker: str, fetch=_yf_info) -> Dict:
     info = fetch(ticker)
     out = {k: info.get(k) for k in INFO_FIELDS if info.get(k) not in (None, "", "Infinity")}
     for k in ("marketCap", "trailingPE", "forwardPE", "priceToBook", "dividendYield", "beta",
-              "fiftyTwoWeekHigh", "fiftyTwoWeekLow", "sharesOutstanding", "averageVolume"):
+              "fiftyTwoWeekHigh", "fiftyTwoWeekLow", "sharesOutstanding", "averageVolume", "currentPrice", "regularMarketPrice"):
         if k in out:
             out[k] = _num(out[k])
     return {k: v for k, v in out.items() if v is not None}

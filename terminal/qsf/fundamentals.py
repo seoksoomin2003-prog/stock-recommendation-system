@@ -31,6 +31,10 @@ US_INSTANT = {
 }
 
 
+MULTI_CLASS_GAP = 1.2       # market value / (price x shares)
+MULTI_CLASS_SEC_GAP = 0.85  # Yahoo shares / SEC average shares
+
+
 def _days(a: str, b: str) -> int:
     return (datetime.strptime(b, "%Y-%m-%d") - datetime.strptime(a, "%Y-%m-%d")).days
 
@@ -169,6 +173,22 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         "market_cap": mcap, "eps": eps, "pe": div(close, eps), "pb": div(mcap, eq) if (eq or 0) > 0 else None, "fcf_yield": div(fcf, mcap), "insider_pct": insider_pct,
     }
     return out
+
+
+def us_total_shares(info: Dict[str, Any], close: Optional[float], annual: Optional[Dict[str, Any]] = None) -> Optional[float]:
+    """Yahoo's share count covers only the listed class of a company with several, while its market value covers all of them.  The
+    implied total is used only when market value is well above price x shares and SEC does not contradict it: SEC's average count must
+    also exceed Yahoo's.  A price from another moment can open such a gap by itself, so without Yahoo's own price SEC must confirm it."""
+    y, cap = info.get("sharesOutstanding"), info.get("marketCap")
+    own = info.get("currentPrice") or info.get("regularMarketPrice")
+    price = own or close
+    if not y or not cap or not price or cap / (price * y) < MULTI_CLASS_GAP:
+        return y
+    rows = (annual or {}).get("shares_avg") or []
+    sec = rows[-1].get("val") if rows else None
+    if sec and y / sec < MULTI_CLASS_SEC_GAP or (not sec and own):
+        return cap / price
+    return y
 
 
 def is_financial_sic(sic: Any) -> bool:

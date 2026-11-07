@@ -99,6 +99,11 @@ def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[
             out.append({"level": "warn", "text": "한국 결합 점수 기록이 아직 없습니다."})
         elif (forward.get("behind_sessions") or 0) >= BEHIND_ALERT:
             out.append({"level": "warn", "text": f"한국 결합 점수 기록이 {forward['behind_sessions']}거래일 뒤처져 있습니다. KRX 키와 자동 실행을 확인하세요."})
+        fund = forward.get("fund") or {}
+        if fund.get("integrity") not in (None, "OK"):
+            out.append({"level": "bad", "text": "한국 재무 점수 기록 검증에 실패했습니다. 원인을 확인해야 합니다."})
+        elif (fund.get("behind_sessions") or 0) >= BEHIND_ALERT:
+            out.append({"level": "warn", "text": f"한국 재무 점수 기록이 {fund['behind_sessions']}거래일 뒤처져 있습니다. DART 키와 자동 실행을 확인하세요."})
     failed = [STEP_LABELS.get(k, k) for k, v in (auto.get("steps") or {}).items() if isinstance(v, dict) and v.get("status") == automation.FAILED]
     if failed:
         out.append({"level": "bad", "text": f"최근 자동 실행에서 실패한 작업: {', '.join(failed)}"})
@@ -144,6 +149,7 @@ def build(terminal: Any) -> Dict[str, Any]:
     except Exception as exc:
         baseline = baseline_record(bool(auto.get("capital_configured")), None, type(exc).__name__)
     forward = kr_forward.status(terminal.base, calendars["KR"])
+    forward["fund"] = kr_forward.status(terminal.base, calendars["KR"], kr_forward.FUND_FOLDER)
     last = auto.get("last_run") or {}
     steps = [{"name": STEP_LABELS.get(k, k), "status": (auto.get("steps") or {}).get(k, {}).get("status")} for k in STEP_LABELS]
     return {"status": "REAL", "model_version": config.MODEL_VERSION, "integrity": verify.get("status"), "qsf": qsf, "baseline": baseline, "kr_forward": forward,
