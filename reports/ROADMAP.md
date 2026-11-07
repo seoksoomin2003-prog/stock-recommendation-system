@@ -108,6 +108,8 @@ QSF-1.1.4 (2026-11-07, user approved): market value inputs corrected. US multi-c
 
 QSF-1.1.5 (2026-11-07, user approved): SEC share counts on a wrong scale (100x or more against net income / EPS, or between the last two years) are treated as missing. Inputs identical for all 502 US names compared, so current scores do not change. See `reports/QSF_US_SHARE_SCALE_CHECK_2026_11_07.md`.
 
+QSF-1.1.6 (2026-11-07, user approved): Korean capital spending added from the DART standard account, so Korean free cash flow exists for the first time; free cash flow is empty when cash flow and capex latest years differ. Long scores: Korea 52 band changes, buy candidates 15 to 14; US 2 band changes. Rescan matches the prior measurement. Korean share change left out (misreads spin-offs). See `reports/QSF_KR_INPUT_ENRICH_2026_11_07.md`.
+
 QSF recheck with corrected figures (2026-11-06): verdicts unchanged, all NO_EVIDENCE; `sue` at 10 sessions narrowly passes development, a hypothesis only. `reports/QSF_CORRECTED_RECHECK_RESULTS.md`.
 
 QSF earnings factor test (2026-11-06): `sue` alone, 10 sessions, one run on 2022+: NO_EVIDENCE (IC +0.0055, t 0.71). Not added. `reports/QSF_SUE_TEST_RESULTS.md`.
