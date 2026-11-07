@@ -122,6 +122,8 @@ QSF Korean price signals (2026-11-07): whole-market KRX snapshots with delisted 
 
 Korean forward record (2026-11-07): the Korean price score is written every session by the daily job, apart from the live score, write-once and hash-chained, in git-ignored `research_data/krx_forward/`. One evaluation at 240 matured sessions, refused earlier. `reports/QSF_KR_FORWARD_PROTOCOL.md`, `terminal/qsf/kr_forward.py`.
 
+QSF Korean financial signals (2026-11-07): DART receipt dates, delisted names kept, 12 signals, one run: the rank conditions pass at 20 and 252 sessions, the money condition fails (top fifth -7.2% a year since 2022 against +15.1% for the market). Effect is again the bottom fifth losing. Not added. `reports/QSF_KR_FUND_RESULTS.md`.
+
 QSF insider purchase research (2026-11-06): SEC Form 4 officer and director open-market buys, 5 pre-registered factors, 10 and 20 sessions: none passed development, so no score and no test (`reports/QSF_INSIDER_RESEARCH_RESULTS.md`). It exposed a gap: tickers whose SEC company number changed have only the new number's filings, which also thins financial history.
 
 Live fix (2026-11-06): eight changed-number tickers join earlier SEC numbers (`sources.CIK_PREDECESSORS`), and their stopped series read as empty. Only XOM's score moved. Open: 331 of 493 other tickers have some series stopped over 400 days before their newest year, read as current by `fundamentals.metrics`, 110 of them in a core series; TFC reports net income under ProfitLoss only. Research facts are unchanged.
