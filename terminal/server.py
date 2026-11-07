@@ -16,7 +16,7 @@ from terminal.services import Terminal
 
 STATIC = Path(__file__).resolve().parent / "static"
 from terminal import automation, record_status, today  # noqa: E402
-from terminal.qsf import screen as qsf_screen  # noqa: E402
+from terminal.qsf import changes as qsf_changes, screen as qsf_screen  # noqa: E402
 
 HOST = "127.0.0.1"
 log = logging.getLogger("terminal")
@@ -26,6 +26,12 @@ def _market(m: str) -> str:
     if m not in ("US", "KR"):
         raise ValueError("INVALID_MARKET")
     return m
+
+
+def _strategy(s: str) -> str:
+    if s not in ("SWING", "LONG_TERM"):
+        raise ValueError("INVALID_STRATEGY")
+    return s
 
 
 def routes(t: Terminal) -> Dict[str, Callable]:
@@ -57,6 +63,7 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/qsf/evaluate"): lambda q, b: t.qsf_evaluate(q.get("t", ""), q.get("market", "US")),
         ("GET", "/api/qsf/latest"): lambda q, b: t.qsf.latest(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/screen"): lambda q, b: qsf_screen.screen(t.qsf.screen_rows(_market(q.get("market", "US"))), q),
+        ("GET", "/api/qsf/changes"): lambda q, b: qsf_changes.report(t.qsf.latest(_market(q.get("market", "US"))), t.qsf.ledger, _market(q.get("market", "US")), _strategy(q.get("strategy", "SWING"))),
         ("GET", "/api/qsf/validation"): lambda q, b: t.qsf.validation(),
         ("GET", "/api/record"): lambda q, b: record_status.build(t),
         ("GET", "/api/today"): lambda q, b: today.build(t, q.get("t", ""), _market(q.get("market", "US"))),

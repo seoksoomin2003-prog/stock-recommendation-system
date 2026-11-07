@@ -29,9 +29,10 @@ async function renderQsf() {
       <input id="qsfticker" placeholder="${isKR() ? "종목코드 (예: 005930)" : "티커 (예: AAPL)"}" autocomplete="off" aria-label="종목">
       <button class="btn-primary">평가</button></form>
     <div id="qsfmsg" class="meta"></div></div>
-    <div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsfscreen"></div><div id="qsfvalid"></div>`;
+    <div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsfchanges"></div><div id="qsfscreen"></div><div id="qsfvalid"></div>`;
   $("#qsfform").onsubmit = (e) => { e.preventDefault(); const t = $("#qsfticker").value.trim().toUpperCase(); if (t) { setMarket(marketOf(t)); qsfEvaluate(t, qsfState.market); } };
   qsfRank();
+  qsfChanges();
   qsfScreenBuild();
   qsfValidation();
   if (qsfState.detail && qsfState.detail.market === state.market) qsfDrawDetail(qsfState.detail);
@@ -156,7 +157,7 @@ async function qsfRank() {
     <div class="qsf-rows">${rest.map(qsfRowHtml).join("")}</div>
     <div class="meta">${d.tickers}종목 평가 · 생성 ${esc((d.generated_at || "").slice(0, 16))} UTC</div></div>`;
   $("#qsfstrat").value = qsfState.strategy;
-  $("#qsfstrat").onchange = (e) => { qsfState.strategy = e.target.value; qsfRank(); qsfScreenRun(true); };
+  $("#qsfstrat").onchange = (e) => { qsfState.strategy = e.target.value; qsfRank(); qsfChanges(); qsfScreenRun(true); };
   box.querySelectorAll(".qsf-row").forEach((btn) => {
     btn.onclick = () => {
       const panel = btn.nextElementSibling, open = btn.getAttribute("aria-expanded") === "true";
@@ -170,6 +171,34 @@ async function qsfRank() {
     const slot = box.querySelector(`[data-top="${CSS.escape(r.ticker)}"]`);
     if (slot) await qsfFillRow(slot, r, mk);
   }
+}
+
+// ------------------------------------------------------------------ 직전 거래일과 달라진 점
+const QSF_DOMAIN_NAME = { TECHNICAL: "기술", FUNDAMENTAL: "재무", RISK: "위험", EVENTS: "이벤트", REGIME: "시장 국면" };
+const qsfChangeState = { token: 0 };
+
+function qsfChangeRow(m) {
+  const delta = m.delta === null ? "" : `${m.delta > 0 ? "+" : ""}${m.delta.toFixed(1)}`;
+  const why = m.reason ? `${esc(QSF_DOMAIN_NAME[m.reason.domain] || m.reason.domain)} ${m.reason.change > 0 ? "+" : ""}${m.reason.change.toFixed(0)}` : "";
+  return `<tr><td class="l"><button type="button" class="qs-open" data-t="${esc(m.ticker)}"><b>${esc(m.ticker)}</b> <span class="meta" style="margin:0">${esc(m.name || "")}</span></button></td><td class="num">${qsfNum(m.previous_score)}</td><td class="num">${qsfNum(m.score)}</td><td class="num">${delta}</td><td class="l">${why}</td></tr>`;
+}
+function qsfChangeTable(title, rows, note) {
+  if (!rows.length) return `<h3 class="qc-title">${title} <span class="meta" style="margin:0">없음</span></h3>`;
+  return `<h3 class="qc-title">${title} <span class="meta" style="margin:0">${rows.length}개${note ? " · " + note : ""}</span></h3><div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">종목</th><th>이전</th><th>현재</th><th>변화</th><th class="l">가장 크게 움직인 영역</th></tr></thead><tbody>${rows.map(qsfChangeRow).join("")}</tbody></table></div>`;
+}
+async function qsfChanges() {
+  const box = $("#qsfchanges"); if (!box) return;
+  const mk = state.market, token = ++qsfChangeState.token;
+  const d = await api(`/api/qsf/changes?market=${mk}&strategy=${qsfState.strategy}`).catch(() => null);
+  if (token !== qsfChangeState.token || mk !== state.market) return;
+  if (!d || d.status !== "REAL") { box.innerHTML = d && d.reason ? `<div class="panel"><h2>직전 기록과 달라진 점</h2><div class="empty">${esc(d.reason)}</div></div>` : ""; return; }
+  box.innerHTML = `<div class="panel"><h2>직전 기록과 달라진 점 <span class="badge">${esc(d.previous_session)} → ${esc(d.session)}</span> <span class="meta" style="margin:0">${QSF_STRAT[d.strategy]} ${d.compared}종목 비교</span></h2>
+    ${d.model_changed ? `<div class="notice">두 기록의 모델 버전이 다릅니다(${d.previous_model_versions.map(esc).join(", ")} → ${esc(d.model_version)}). 이 차이에는 새 정보뿐 아니라 수식과 입력 수정이 섞여 있습니다.</div>` : ""}
+    <div class="meta">기록에 남은 값을 비교할 뿐입니다. 새 매수 후보가 더 좋은 수익을 낸다는 근거는 아닙니다.</div>
+    ${qsfChangeTable("새로 매수 후보가 된 종목", d.entered_buy)}${qsfChangeTable("매수 후보에서 빠진 종목", d.left_buy)}
+    <details class="qsf-today-fold"><summary>점수가 크게 움직인 종목</summary>${qsfChangeTable("오른 종목", d.up, "상위만")}${qsfChangeTable("내린 종목", d.down, "상위만")}</details>
+    ${d.new_in_scan.length || d.gone_from_scan.length ? `<div class="meta">스캔에 새로 들어옴 ${d.new_in_scan.length}개, 빠짐 ${d.gone_from_scan.length}개</div>` : ""}</div>`;
+  box.querySelectorAll(".qs-open").forEach((b) => { b.onclick = () => { qsfEvaluate(b.dataset.t, mk); $("#qsfmsg").scrollIntoView({ block: "start" }); }; });
 }
 
 // ------------------------------------------------------------------ 스크리너

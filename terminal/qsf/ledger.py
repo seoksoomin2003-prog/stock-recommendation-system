@@ -122,6 +122,13 @@ class Ledger:
                 fh.write(json.dumps(row, sort_keys=True) + "\n")
             return {"recorded": len(new), "already": len(done), "file": name}
 
+    def session_before(self, market: str, session: str) -> Optional[str]:
+        """The newest recorded session earlier than ``session``."""
+        return max((r["session"] for r in self._live_rows() if r["market"] == market and r["session"] < session), default=None)
+
+    def of_session(self, market: str, session: str, strategy: str) -> List[Dict[str, Any]]:
+        return [s for r in self._live_rows() if r["market"] == market and r["session"] == session for s in self._load(r) if s["strategy"] == strategy]
+
     def previous(self, market: str, ticker: str, strategy: str, before: str) -> Optional[Dict[str, Any]]:
         for r in reversed(self._live_rows()):
             if r["market"] == market and r["session"] < before:
