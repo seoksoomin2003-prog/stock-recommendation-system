@@ -389,8 +389,21 @@ class Terminal:
             return {"items": [], "tickers": []}
         sym = {t: self._sym(t) for t in w}
         q = self._quotes(list(sym.values()), "watch:" + ",".join(sorted(sym.values())), market)
-        return {"tickers": w, "items": [{**q["items"][sym[t]], "symbol": t, "name": self._kr_name(t)} for t in w], "cache": q["cache"],
-                "source": "Yahoo Finance (일봉 종가, 지연)"}
+        scan = self._scan_scores(market)
+        return {"tickers": w, "items": [{**q["items"][sym[t]], "symbol": t, "name": self._kr_name(t), "qsf": scan["by_ticker"].get(t)} for t in w], "cache": q["cache"],
+                "source": "Yahoo Finance (일봉 종가, 지연)", "qsf_scan": {k: scan[k] for k in ("status", "session", "model_version")}}
+
+    def _scan_scores(self, market: str) -> Dict[str, Any]:
+        """Swing and long scores from the newest recorded scan, as stored.  Nothing is scored here; a stock outside the scan gets nothing."""
+        try:
+            latest = self.qsf.latest(market)
+        except Exception:
+            latest = {"status": "UNAVAILABLE"}
+        found: Dict[str, Dict[str, Any]] = {}
+        if latest.get("status") == "REAL":
+            for r in latest.get("rows") or []:
+                found.setdefault(r.get("ticker"), {})[r.get("strategy")] = {k: r.get(k) for k in ("score", "action", "action_label", "actionability", "confidence")}
+        return {"status": latest.get("status") or "UNAVAILABLE", "session": latest.get("session"), "model_version": latest.get("model_version"), "by_ticker": found}
 
     # ---------------------------------------------------------------- model (read-only)
     def _latest_scan(self) -> Optional[Dict[str, Any]]:

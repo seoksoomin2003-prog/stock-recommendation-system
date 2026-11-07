@@ -181,6 +181,25 @@ def test_watchlist_is_split_by_market(term):
     us, kr = t.watchlist_quotes("US"), t.watchlist_quotes("KR")
     assert "AAPL" in us["tickers"] and "005930" not in us["tickers"] and kr["tickers"] == ["005930"]
     assert kr["items"][0]["symbol"] == "005930" and kr["items"][0]["close"] == 60000.0 and kr["items"][0]["name"] == "삼성전자"
+    assert kr["items"][0]["qsf"] is None and kr["qsf_scan"]["status"] == "UNAVAILABLE"       # no scan: nothing, never a made-up score
+
+
+def test_watchlist_shows_scores_from_the_newest_scan_as_stored(term):
+    import json
+    t = term({"AAPL": 100.0, "005930.KS": 60000.0, "000660.KS": 100000.0})
+    for code in ("005930", "000660"):
+        t.watchlist_add(code)
+    scan = {"status": "REAL", "market": "KR", "session": "2026-11-06", "model_version": "QSF-1.1.7", "rows": [
+        {"ticker": "005930", "strategy": "SWING", "score": 44.6, "action": "AVOID", "action_label": "신규 진입 회피", "confidence": "MEDIUM"},
+        {"ticker": "005930", "strategy": "LONG_TERM", "score": 62.5, "action": "WATCH", "action_label": "관찰", "confidence": "HIGH"}]}
+    path = t.qsf.dir / "latest_KR.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(scan), encoding="utf-8")
+    before = path.read_bytes()
+    kr = t.watchlist_quotes("KR")
+    got = {i["symbol"]: i["qsf"] for i in kr["items"]}
+    assert got["005930"]["SWING"]["score"] == 44.6 and got["005930"]["LONG_TERM"]["action"] == "WATCH" and got["000660"] is None
+    assert kr["qsf_scan"] == {"status": "REAL", "session": "2026-11-06", "model_version": "QSF-1.1.7"} and path.read_bytes() == before
 
 
 def test_name_search_prefers_exact_match(term):
