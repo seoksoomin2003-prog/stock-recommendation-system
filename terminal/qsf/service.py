@@ -273,8 +273,8 @@ class QSF:
         info = self.cache.cached(f"info:{ident.get('yahoo_symbol')}", TTL["info"], lambda: self.src.yahoo_info(ident["yahoo_symbol"]))["data"] or {}
         fund = {"status": "UNAVAILABLE", "reason": f"DART 재무 조회 실패 ({res.get('error')})"}
         if res["data"]:
-            fund = fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=klass != "NON_FINANCIAL", shares=self._krx_shares(as_of).get(code) or info.get("sharesOutstanding"), source="OpenDART 사업보고서",
-                                        insider_pct=info.get("heldPercentInsiders"))
+            fund = fundamentals.blank_mixed_cash_flow(fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=klass != "NON_FINANCIAL", shares=self._krx_shares(as_of).get(code) or info.get("sharesOutstanding"),
+                                                                           source="OpenDART 사업보고서", insider_pct=info.get("heldPercentInsiders")), code)
         def fetch_list():
             bgn = (date.fromisoformat(as_of) - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")
             r = self.dart._get("list.json", corp_code=corp, bgn_de=bgn, end_de=as_of.replace("-", ""), page_count=100).json()

@@ -114,6 +114,12 @@ def drop_stale_series(annual: Dict[str, List[Dict]], max_gap_days: int = STOPPED
     return {k: ([] if k in gone else v) for k, v in annual.items()}
 
 
+# Listed as non-financial, with a financial business in the group's cash flow.  No standard account marks them, so this is a list.
+# Look again when annual reports arrive.  Measured in reports/QSF_KR_CONSOLIDATION_CHECK_2026_11_07.md.
+FINANCE_MIXED = {"005380": "금융 자회사의 채권 증감이 연결 영업현금에 섞여 현금흐름을 평가하지 않습니다",
+                 "000880": "보험·금융 자회사의 현금이 연결 영업현금에 섞여 현금흐름을 평가하지 않습니다"}
+
+
 def _scale_differs(a: Optional[float], b: Optional[float]) -> bool:
     """Two counts of the same company's shares that cannot both be in whole shares."""
     if not a or not b or a < 0 or b < 0:
@@ -152,7 +158,19 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         a, b = last(k), last(k, n)
         return (a / b) ** (1 / n) - 1 if a is not None and b is not None and a > 0 and b > 0 else None
 
+    # Net income and equity are the parent's; liabilities, assets and cash flow are the whole group.  With outside holders in the subsidiaries
+    # the group's figures meet the group's equity and profit, and the market value, which is the parent's, meets the parent's share of cash.
+    group_equity, parent_share = None, None
+    if series.get("equity") and series.get("equity_all"):
+        same = next((r["val"] for r in series["equity_all"] if r["end"] == series["equity"][-1]["end"]), None)
+        if same and 0 < series["equity"][-1]["val"] <= same:
+            group_equity, parent_share = same, series["equity"][-1]["val"] / same
+
     ocf, capex = last("ocf"), last("capex")
+    ocf_ni = div(ocf, ni) if (ni or 0) > 0 else None
+    if group_equity and series.get("ocf") and series.get("net_income_all") and series["ocf"][-1]["end"] == series["net_income_all"][-1]["end"]:
+        group_ni = series["net_income_all"][-1]["val"]
+        ocf_ni = ocf / group_ni if group_ni > 0 else None
     # Cash flow of one year less spending of another is no figure at all: a company whose capex tag stopped has no free cash flow.
     same_year = bool(series.get("ocf")) and bool(series.get("capex")) and series["ocf"][-1]["end"] == series["capex"][-1]["end"]
     fcf = ocf - capex if same_year else None
@@ -182,13 +200,21 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         "is_financial": is_financial, "basis": latest_basis, "basis_changed": basis_changed, "basis_conflict": False,
         "roe": div(ni, eq) if (eq or 0) > 0 else None, "roe_prev": roe_prev, "op_margin": div(last("op_income"), rev), "gross_margin": div(last("gross_profit"), rev),
         "net_margin": div(ni, rev), "rev_growth": growth("revenue"), "eps_growth": growth("eps"), "rev_cagr3": cagr("revenue"), "eps_cagr3": cagr("eps"),
-        "ocf_to_ni": div(ocf, ni) if (ni or 0) > 0 else None, "fcf": fcf, "fcf_margin": div(fcf, rev), "fcf_years_positive": sum(fcfs) / len(fcfs) if fcfs else None,
-        "roe_years_positive": sum(nis) / len(nis) if nis else None, "debt_equity": 99.0 if (eq is not None and eq <= 0 and debt) else div(debt, eq), "current_ratio": div(last("current_assets"), last("current_liabilities")),
-        "interest_cover": div(last("op_income"), last("interest")), "cash_debt": div(last("cash"), debt), "equity_assets": div(eq, assets),
+        "ocf_to_ni": ocf_ni, "fcf": fcf, "fcf_margin": div(fcf, rev), "fcf_years_positive": sum(fcfs) / len(fcfs) if fcfs else None,
+        "roe_years_positive": sum(nis) / len(nis) if nis else None, "debt_equity": 99.0 if (eq is not None and eq <= 0 and debt) else div(debt, group_equity or eq), "current_ratio": div(last("current_assets"), last("current_liabilities")),
+        "interest_cover": div(last("op_income"), last("interest")), "cash_debt": div(last("cash"), debt), "equity_assets": div(group_equity or eq, assets),
         "share_change": None if change_scale_error else growth("shares_avg"), "share_scale_error": sec_scale_error or change_scale_error, "returns_capital": (bool((bb or 0) > 0 or (dv or 0) != 0) if (bb is not None or dv is not None) else None),
-        "market_cap": mcap, "eps": eps, "pe": div(close, eps), "pb": div(mcap, eq) if (eq or 0) > 0 else None, "fcf_yield": div(fcf, mcap), "insider_pct": insider_pct,
+        "market_cap": mcap, "eps": eps, "pe": div(close, eps), "pb": div(mcap, eq) if (eq or 0) > 0 else None, "fcf_yield": div(fcf * parent_share if fcf is not None and parent_share else fcf, mcap), "parent_share": parent_share, "insider_pct": insider_pct,
     }
     return out
+
+
+def blank_mixed_cash_flow(m: Dict[str, Any], code: str) -> Dict[str, Any]:
+    """No figure rather than a wrong one.  Other figures stay: reading the company as financial would change more than the error."""
+    note = FINANCE_MIXED.get(code)
+    if not note or m.get("status") == "UNAVAILABLE":
+        return m
+    return {**m, "fcf": None, "fcf_yield": None, "fcf_margin": None, "fcf_years_positive": None, "ocf_to_ni": None, "cash_flow_note": note}
 
 
 def us_total_shares(info: Dict[str, Any], close: Optional[float], annual: Optional[Dict[str, Any]] = None) -> Optional[float]:

@@ -20,7 +20,7 @@ from utils import nyse_calendar
 
 PROTOCOL = "reports/QSF_US_CHALLENGER_PROTOCOL.md"
 FOLDER = Path("research_data") / "us_challenger"
-FIRST = "2026-11-09"       # the first ledger session of QSF-1.1.6
+FIRST = "2026-11-09"       # the first ledger session after the input corrections of QSF-1.1.6 and 1.1.7
 MIN_ROWS = 400             # fewer than this in one strategy is a partial day, not a day
 STEP = 5
 MIN_T = 2.0

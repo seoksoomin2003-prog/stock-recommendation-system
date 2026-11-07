@@ -172,6 +172,8 @@ def cash_flow_quality(c) -> Dict:
         return _fund_missing(c)
     if f.get("is_financial"):
         return not_applicable("금융업은 현금흐름 품질을 같은 기준으로 비교하지 않습니다")
+    if f.get("cash_flow_note"):
+        return missing(f["cash_flow_note"])
     return _fobs(c, mean([ramp(f.get("ocf_to_ni"), 0.5, 1.2), _rr(f, "fcf_margin", -0.02, 0.15)]),
                  {k: f.get(k) for k in ("ocf_to_ni", "fcf_margin")},
                  f"영업현금/순이익 {num(f.get('ocf_to_ni'))}, FCF 마진 {pct(f.get('fcf_margin'))}")
@@ -216,6 +218,8 @@ def free_cash_flow(c) -> Dict:
         return _fund_missing(c)
     if f.get("is_financial"):
         return not_applicable("금융업은 FCF 기준을 적용하지 않습니다")
+    if f.get("cash_flow_note"):
+        return missing(f["cash_flow_note"])
     return _fobs(c, mean([_rr(f, "fcf_margin", -0.02, 0.18), f.get("fcf_years_positive")]),
                  {k: f.get(k) for k in ("fcf_margin", "fcf_years_positive")},
                  f"FCF 마진 {pct(f.get('fcf_margin'))}, FCF 흑자 연도 비율 {pct(f.get('fcf_years_positive'), 0)}")
