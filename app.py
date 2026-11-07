@@ -418,6 +418,11 @@ def cmd_qsf(args) -> int:
         res = us_challenger.record(PROJECT_ROOT)
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3}.get(res["status"], 1)
+    if args.action in ("kr-events-download", "kr-events-prepare", "kr-events-run"):
+        from terminal.qsf import research_kr_events
+        res = {"kr-events-download": research_kr_events.download, "kr-events-prepare": research_kr_events.prepare, "kr-events-run": research_kr_events.run_once}[args.action](PROJECT_ROOT)
+        print(json.dumps({k: v for k, v in res.items() if k != "scores"}, ensure_ascii=False, default=str))
+        return 0
     if args.action in ("kr-fund-download", "kr-fund-prepare", "kr-fund-run"):
         from terminal.qsf import research_kr_fund
         res = {"kr-fund-download": research_kr_fund.download, "kr-fund-prepare": research_kr_fund.prepare, "kr-fund-run": research_kr_fund.run_once}[args.action](PROJECT_ROOT)
@@ -568,7 +573,7 @@ def build_parser() -> argparse.ArgumentParser:
     nw = sub.add_parser("news", help="Record free news headlines of the scanned stocks (feeds no score)")
     nw.add_argument("action", choices=["record"])
     qs = sub.add_parser("qsf", help="QSF 1.1: 0-100 stock score with holding-period plan (separate from P6-11B)")
-    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "sue-test", "insider-prepare", "insider-develop", "insider-test", "news-prepare", "news-develop", "news-test", "ensemble-prepare", "ensemble-run", "short-download", "short-develop", "short-test", "sentiment-download", "sentiment-run", "kr-download", "kr-prepare", "kr-run", "kr-diagnose", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund", "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long", "kr-fund-download", "kr-fund-prepare", "kr-fund-run"])
+    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "sue-test", "insider-prepare", "insider-develop", "insider-test", "news-prepare", "news-develop", "news-test", "ensemble-prepare", "ensemble-run", "short-download", "short-develop", "short-test", "sentiment-download", "sentiment-run", "kr-download", "kr-prepare", "kr-run", "kr-diagnose", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund", "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long", "kr-events-download", "kr-events-prepare", "kr-events-run", "kr-fund-download", "kr-fund-prepare", "kr-fund-run"])
     qs.add_argument("tickers", nargs="*")
     qs.add_argument("--dry-run", action="store_true", help="Scan without writing to the ledger")
     au = sub.add_parser("automation", help="Daily job: record, tracking, backup, Telegram/macOS alerts (TERMINAL-4)")
