@@ -235,6 +235,10 @@ def validate(snaps: List[Dict[str, Any]], market: str, strategy: str, loader: Ca
         turnover.append(len(picks_by_session[a] ^ picks_by_session[b]) / len(u) if u else 0.0)
     out = {"market": market, "strategy": strategy, "snapshots": len(cohort), "sessions": len(sessions), "cost_round_trip_pct": cost * 100, "cost_basis": config.COSTS[market]["basis"],
            "mean_turnover_70plus": statistics.mean(turnover) if turnover else None, "horizons": {}}
+    versions: Dict[str, int] = {}
+    for s in cohort:
+        versions[str(s.get("model_version"))] = versions.get(str(s.get("model_version")), 0) + 1
+    out["model_versions"] = dict(sorted(versions.items()))        # a cohort spanning several versions measures a mix, and says so
     cache: Dict[str, Tuple[List[Dict], Optional[List[str]]]] = {}
     bench_by_date = {b["date"]: b for b in bench}
     for h in horizons:

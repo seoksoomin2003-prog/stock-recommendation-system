@@ -468,6 +468,15 @@ def test_validate_keeps_cohorts_separate_and_withholds_verdict(tmp_path):
     assert row["buckets"]["70-80"]["n"] == 1 and row["independent_samples"] < 12 and "보류" in row["verdict"]
 
 
+def test_validate_says_which_model_versions_it_mixes():
+    b = bars(60)
+    one = {**ledger.snapshot(card()), "data_date": b[10]["date"], "entry_session": b[11]["date"], "score": 75.0, "model_version": "QSF-1.1.1"}
+    two = {**one, "ticker": "MSFT", "model_version": "QSF-1.1.7"}
+    three = {**one, "ticker": "NVDA", "model_version": "QSF-1.1.7"}
+    gone = {**one, "ticker": "X", "strategy": "LONG_TERM", "model_version": "QSF-0.9"}
+    assert ledger.validate([one, two, three, gone], "US", "SWING", lambda t: b, b)["model_versions"] == {"QSF-1.1.1": 1, "QSF-1.1.7": 2}
+
+
 def test_correlation_diagnostics_need_enough_history():
     s = ledger.snapshot(card())
     assert ledger.factor_correlations([s])["status"] == "INSUFFICIENT"

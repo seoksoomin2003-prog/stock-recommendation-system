@@ -358,6 +358,13 @@ function qsfTodayHtml(d) {
   return `<div class="qsf-today"><h3>시세</h3>${quote}<h3>공시 경고</h3>${warn}<h3>최근 공시</h3>${filings}<h3>뉴스 제목</h3>${news}<div class="meta">${esc(d.note)}</div></div>`;
 }
 
+function qsfVersionNote(cohorts) {
+  const seen = {};
+  Object.values(cohorts).forEach((c) => Object.entries(c.model_versions || {}).forEach(([v, n]) => { seen[v] = (seen[v] || 0) + n; }));
+  const names = Object.keys(seen).sort();
+  if (names.length < 2) return "";
+  return `<div class="notice">이 집계에는 모델 버전 ${names.length}개의 기록이 섞여 있습니다(${names.map((v) => `${esc(v)} ${seen[v]}건`).join(", ")}). 결과는 한 수식의 성적이 아니라 그동안 쓴 수식들의 성적입니다.</div>`;
+}
 async function qsfValidation() {
   const box = $("#qsfvalid"); if (!box) return;
   const d = await api("/api/qsf/validation").catch(() => null);
@@ -366,6 +373,7 @@ async function qsfValidation() {
     return `<tr><td class="l"><b>${esc(k)}</b></td><td class="num">${c.snapshots}</td><td class="num">${c.sessions}</td><td class="num">${first.independent_samples.toFixed(1)}</td><td class="l">${esc(first.verdict)}</td></tr>`; }).join("");
   box.innerHTML = `<div class="panel"><h2>전향 검증 ${d.integrity.status === "OK" ? badge("REAL") : badge("UNAVAILABLE")}</h2>
     <div class="tbl-wrap"><table><thead><tr><th class="l">코호트</th><th>기록</th><th>거래일</th><th>독립 표본(최단 기간)</th><th class="l">판단</th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${qsfVersionNote(d.cohorts)}
     <div class="meta">코호트를 합치지 않습니다. 독립 표본 12개 전에는 점수가 수익을 예측한다고 판단하지 않습니다. 상세: <code>python app.py qsf validate</code></div></div>`;
 }
 
