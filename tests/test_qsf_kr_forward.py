@@ -220,3 +220,27 @@ def test_a_full_evaluation_runs_once_on_enough_sessions(tmp_path, monkeypatch):
     with pytest.raises(RuntimeError, match="이미"):
         kf.evaluate_once(tmp_path, log=lambda m: None)
     assert original is not quick
+
+
+def _live(base, day, rows):
+    p = base / "data" / "qsf" / "latest_KR.json"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({"session": day, "rows": rows}), encoding="utf-8")
+
+
+def test_live_prices_are_compared_with_the_krx_close_once_a_session(tmp_path):
+    day = "2026-11-06"
+    row = ["000010", "회사", "", "100", "100", "100", "1,000", "0", "1", "1", "1", "1"]
+    _write(tmp_path / kr.DATA, "KOSPI", day, [row, ["000020"] + row[1:6] + ["2000"] + row[7:]])
+    _write(tmp_path / kr.DATA, "KOSDAQ", day, [["000030"] + row[1:]])
+    assert kf.cross_check(tmp_path) is None                    # no live scan yet
+    _live(tmp_path, day, [{"ticker": "000010", "price": 1000.0, "data_date": day}, {"ticker": "000010", "price": 1000.0, "data_date": day}, {"ticker": "000020", "price": 2200.0, "data_date": day},
+                          {"ticker": "000030", "price": 1000.0, "data_date": "2026-11-05"}, {"ticker": "999990", "price": 5.0, "data_date": day}])
+    out = kf.cross_check(tmp_path)
+    assert (out["checked"], out["gaps"], out["stale"], out["absent"]) == (4, 1, 1, 1) and out["examples"][0]["ticker"] == "000020"
+    assert kf.cross_check(tmp_path) is None and kf.last_check(tmp_path)["session"] == day
+
+
+def test_a_scan_from_a_day_without_krx_data_is_not_checked(tmp_path):
+    _live(tmp_path, "2026-11-06", [{"ticker": "000010", "price": 1.0, "data_date": "2026-11-06"}])
+    assert kf.cross_check(tmp_path) is None and kf.last_check(tmp_path) is None

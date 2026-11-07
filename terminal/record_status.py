@@ -90,6 +90,9 @@ def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[
     if baseline.get("status") != "REAL":
         out.append({"level": "warn", "text": "기준 모델 추적 기록을 읽지 못했습니다."})
     if forward is not None:
+        check = forward.get("price_check") or {}
+        if check.get("gaps") or check.get("stale"):
+            out.append({"level": "bad", "text": f"한국 시세 대조({check.get('session')}): KRX 종가와 다른 종목 {check.get('gaps')}개, 날짜가 늦은 종목 {check.get('stale')}개. 해당 종목의 라이브 점수를 믿기 전에 확인하세요."})
         if forward.get("integrity") != "OK":
             out.append({"level": "bad", "text": "한국 결합 점수 기록 검증에 실패했습니다. 원인을 확인해야 합니다."})
         elif not forward.get("sessions"):

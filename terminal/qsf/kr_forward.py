@@ -161,9 +161,54 @@ def record(base: Path, key: Optional[str] = None, get: Optional[Callable[..., An
     for n, day in enumerate(have):
         if day not in done and write_record(base, day, at, n < len(have) - 1):
             wrote.append(day)
+    cross_check(base)
     last = max(done | set(wrote), default=None)
     status = "FAILED" if got.get("stopped") else "OK" if last and last >= end else "WAITING"
     return {"status": status, "written": wrote, "last": last, "expected": end, "stopped": got.get("stopped"), "calls": got.get("calls")}
+
+
+def cross_check(base: Path, tolerance: float = 0.001) -> Optional[Dict[str, Any]]:
+    """Live Korean prices come from Yahoo.  Against the KRX close of the same day, any gap means a live score read a wrong price.
+    Nothing is corrected here and no score moves.  One line per session."""
+    try:
+        live = json.loads((Path(base) / "data" / "qsf" / "latest_KR.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    day = live.get("session")
+    boards = _rows_of(Path(base) / kr.DATA, day) if day else {}
+    if not boards:
+        return None
+    file = Path(base) / FOLDER / "price_checks.jsonl"
+    if file.exists() and any(json.loads(x).get("session") == day for x in file.read_text(encoding="utf-8").splitlines() if x.strip()):
+        return None
+    close = {r[kr.F["ISU_CD"]]: kr.num(r[kr.F["TDD_CLSPRC"]]) for rows in boards.values() for r in rows}
+    seen, gaps, absent, stale = set(), [], 0, 0
+    for r in live.get("rows") or []:
+        t = r.get("ticker")
+        if t in seen:
+            continue
+        seen.add(t)
+        if r.get("data_date") != day:
+            stale += 1
+            continue
+        c, price = close.get(t), r.get("price")
+        if not c or not price:
+            absent += 1
+        elif abs(price / c - 1) > tolerance:
+            gaps.append({"ticker": t, "live": price, "krx": c})
+    out = {"session": day, "checked": len(seen), "gaps": len(gaps), "absent": absent, "stale": stale, "examples": gaps[:10]}
+    file.parent.mkdir(parents=True, exist_ok=True)
+    with open(file, "a", encoding="utf-8") as fh:
+        fh.write(json.dumps(out, ensure_ascii=False) + "\n")
+    return out
+
+
+def last_check(base: Path) -> Optional[Dict[str, Any]]:
+    file = Path(base) / FOLDER / "price_checks.jsonl"
+    if not file.exists():
+        return None
+    lines = [x for x in file.read_text(encoding="utf-8").splitlines() if x.strip()]
+    return json.loads(lines[-1]) if lines else None
 
 
 def verify(base: Path) -> Dict[str, Any]:
@@ -185,7 +230,7 @@ def status(base: Path, calendar: Optional[Sequence[str]]) -> Dict[str, Any]:
     matured = sum(1 for s in sessions if sum(1 for d in cal if d > s) >= HORIZON) if cal is not None else 0
     need = MIN_INDEPENDENT * HORIZON
     return {"sessions": len(sessions), "first": sessions[0] if sessions else None, "last": sessions[-1] if sessions else None, "late": sum(1 for r in rows if r["late"]),
-            "before_next_open": sum(1 for r in rows if r["before_next_open"]), "stocks": rows[-1]["stocks"] if rows else None, "integrity": check["status"],
+            "before_next_open": sum(1 for r in rows if r["before_next_open"]), "stocks": rows[-1]["stocks"] if rows else None, "integrity": check["status"], "price_check": last_check(base),
             "behind_sessions": sum(1 for d in cal if d > sessions[-1]) if cal is not None and sessions else None, "horizon": HORIZON, "matured": matured, "needed": need,
             "independent": matured / HORIZON, "target": MIN_INDEPENDENT, "ready": matured >= need, "remaining_sessions": max(0, need - len(sessions)) + HORIZON if len(sessions) < need else max(0, need - matured)}
 

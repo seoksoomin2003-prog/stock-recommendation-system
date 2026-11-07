@@ -102,3 +102,12 @@ def test_the_korean_record_is_watched():
     assert "뒤처져" in text({"integrity": "OK", "sessions": 3, "behind_sessions": 2})[0]
     assert "아직 없습니다" in text({"integrity": "OK", "sessions": 0})[0]
     assert "검증에 실패" in text({"integrity": "BROKEN", "sessions": 3})[0]
+
+
+def test_a_price_gap_with_krx_is_an_alert():
+    base = {"status": "REAL", "capital_configured": True}
+    auto = {"installed": True, "steps": {}}
+    good = {"integrity": "OK", "sessions": 3, "behind_sessions": 0, "price_check": {"session": "d", "gaps": 0, "stale": 0}}
+    assert not rs.alerts({}, base, auto, "OK", good)
+    bad = {**good, "price_check": {"session": "d", "gaps": 2, "stale": 0}}
+    assert "KRX 종가와 다른 종목 2개" in rs.alerts({}, base, auto, "OK", bad)[0]["text"]
