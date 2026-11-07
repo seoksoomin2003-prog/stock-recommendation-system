@@ -14,11 +14,11 @@ import shutil
 import subprocess
 import sys
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from terminal import notify
+from terminal import notify, storage
 from utils import nyse_calendar
 
 LABEL = "com.quantengine.daily"
@@ -26,11 +26,15 @@ SCHEDULE = ((7, 10), (8, 10), (12, 10), (20, 10))     # KST: the US close is 06:
 STEP_TIMEOUT = 45 * 60
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
+FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger")
+KR_STEPS = ("QSF_KR", "NEWS_KR", "KR_FORWARD")     # Korea trades on some days the US does not, and these must not wait for a US session
+KST = timezone(timedelta(hours=9))
+BACKUP_STALE_DAYS = 4                              # a long weekend with a holiday is three days without a new session
 OK, FAILED, SKIPPED, WAITING = "OK", "FAILED", "SKIPPED", "WAITING"
 STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "US_CHALLENGER": "미국 도전자 점수 기록", "BACKUP": "백업"}
 BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
-                "tracking/kr/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl")
+                "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl")
 
 
 def backup_root() -> Path:
@@ -65,8 +69,8 @@ def backup(base: Path, day: str, root: Optional[Path] = None) -> Dict[str, Any]:
             if _sha(src) != _sha(dst):
                 raise OSError("backup verification failed")
             n += 1
-    # The separate Korean record is write-once too.
-    for src in sorted(p for name in ("krx_forward", "krx_forward_fund", "krx_forward_events") for p in (base / "research_data" / name).glob("*.json.gz")):
+    # The separate records are write-once too.
+    for src in sorted(p for name in FORWARD_STORES for p in (base / "research_data" / name).glob("*.json.gz")):
         dst = root / src.parent.name / src.name
         if not dst.exists():
             dst.parent.mkdir(parents=True, exist_ok=True)
@@ -91,6 +95,55 @@ def backup(base: Path, day: str, root: Optional[Path] = None) -> Dict[str, Any]:
     for old in folders[:-KEEP_BACKUPS]:
         shutil.rmtree(old, ignore_errors=True)
     return {"files": n, "path": str(final)}
+
+
+def _previous_weekday(day: date) -> date:
+    d = day - timedelta(days=1)
+    while d.weekday() >= 5:
+        d -= timedelta(days=1)
+    return d
+
+
+def backup_status(root: Optional[Path] = None, today: Optional[date] = None) -> Dict[str, Any]:
+    root = Path(root or backup_root())
+    folders = sorted(p.name for p in root.iterdir() if p.is_dir() and _is_date_name(p.name)) if root.exists() else []
+    if not folders:
+        return {"latest": None, "age_days": None, "copies": 0}
+    return {"latest": folders[-1], "age_days": ((today or date.today()) - date.fromisoformat(folders[-1])).days, "copies": len(folders)}
+
+
+def check_backup(root: Optional[Path] = None) -> Dict[str, Any]:
+    """Restores the newest backup into a throw-away folder and runs each record's own verification on the copy.  Reads the backup and writes nothing there."""
+    import tempfile
+    from pipeline.prospective_ledger import verify_chain
+    from terminal.qsf import kr_forward
+    from terminal.qsf.ledger import Ledger
+    root = Path(root or backup_root())
+    latest = backup_status(root)["latest"]
+    if not latest:
+        return {"status": "NO_BACKUP", "latest": None, "checks": {}}
+    with tempfile.TemporaryDirectory(prefix="qsf_restore_") as tmp:
+        work = Path(tmp) / "restored"
+        shutil.copytree(root / latest, work)
+        (work / "data" / "qsf" / "ledger").mkdir(parents=True, exist_ok=True)
+        for src in (root / "qsf_ledger").glob("*.jsonl.gz") if (root / "qsf_ledger").exists() else []:
+            shutil.copy2(src, work / "data" / "qsf" / "ledger" / src.name)
+        checks: Dict[str, Any] = {}
+        for name in FORWARD_STORES:
+            store = Path("research_data") / name
+            (work / store).mkdir(parents=True, exist_ok=True)
+            for src in (root / name).glob("*.json.gz") if (root / name).exists() else []:
+                shutil.copy2(src, work / store / src.name)
+            got = kr_forward.verify(work, store)
+            checks[name] = {"status": got["status"], "sessions": got["sessions"], "bad": got["bad"]}
+        got = Ledger(work).verify()
+        checks["qsf_ledger"] = {"status": got["status"], "shards": got.get("shards")}
+        for rel in ("tracking/ledger/observations.jsonl", "tracking/ledger/events.jsonl", "tracking/kr/ledger/observations.jsonl", "tracking/updates.jsonl", "tracking/kr/updates.jsonl"):
+            if (work / rel).exists():
+                got = verify_chain(work / rel)
+                checks[rel] = {"status": "OK" if got["ok"] else "BROKEN", "rows": got["rows"], "problems": got["problems"][:5]}
+    status = "OK" if all(c["status"] == "OK" for c in checks.values()) else "BROKEN"
+    return {"status": status, "latest": latest, "checks": checks}
 
 
 def _is_date_name(name: str) -> bool:
@@ -238,7 +291,7 @@ class Daily:
 
     @staticmethod
     def compose(session: str, steps: Dict[str, Dict[str, Any]], alerts: Dict[str, Any], prev: List[str],
-                missing: List[str]) -> str:
+                missing: List[str], low_disk: Optional[str] = None) -> str:
         icon = {OK: "✅", FAILED: "❌", SKIPPED: "⏭"}
         lines = [f"📊 퀀트 터미널 일일 요약 (기준 거래일 {session})", "", "[작업]"]
         for name, label in STEP_NAMES.items():
@@ -248,6 +301,8 @@ class Daily:
             lines.append(f"{icon.get(s.get('status'), '·')} {label}" + (f": {s['detail']}" if s.get("detail") else ""))
         if any((steps.get(n) or {}).get("status") == FAILED for n in STEP_NAMES):
             lines.append("실패한 작업은 다음 예약 시각에 다시 시도합니다.")
+        if low_disk:
+            lines.append("⚠️ " + low_disk)
         if (steps.get("SCAN") or {}).get("status") == SKIPPED:
             lines.append("P6-11B는 오늘 기록이 없습니다. 모델 탭에서 자본금을 입력하면 매일 스캔합니다.")
         lines += ["", "[포트폴리오 경고]"]
@@ -291,16 +346,23 @@ class Daily:
             pending.insert(0, "LAB")                # a voided or missing record is retried even if it once reported OK
         if (steps.get("SCAN") or {}).get("status") == SKIPPED and os.getenv("QPP_CAPITAL", "").strip():
             pending.append("SCAN")                  # a skipped scan runs as soon as capital is configured
+        kr_day = _previous_weekday(self.now().astimezone(KST).date()).isoformat()
+        if st.get("kr_day") != kr_day:              # once for each weekday, whether or not the US traded on it
+            pending += [n for n in KR_STEPS if n not in pending]
         delivered = (st.get("notified") or {}).get("session") == session
         if not pending and delivered and not resend:
             return {"status": "UP_TO_DATE", "session": session}
-        for name in pending:
+        if pending and "BACKUP" not in pending:     # what the other steps just wrote is backed up today, not at the next session
+            pending.append("BACKUP")
+        order = list(STEP_NAMES)
+        for name in sorted(set(pending), key=order.index):
             steps[name] = self._step(name, session)
             self._save(st)
+        st["kr_day"] = kr_day
         alerts = self._alerts()
         prev = st.get("alerts") or []
         missing = self.missing_sessions(session)
-        text = self.compose(session, steps, alerts, prev, missing)
+        text = self.compose(session, steps, alerts, prev, missing, storage.low_disk_text(self.base))
         sig = hashlib.sha256(text.encode("utf-8")).hexdigest()
         notified = st.get("notified") or {}
         out = {"status": "DONE", "session": session, "steps": steps, "telegram": None, "macos": None}

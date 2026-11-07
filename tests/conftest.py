@@ -8,6 +8,7 @@
    snapshot, so one bad test can never destroy user data or historical
    evidence.
 """
+import ctypes
 import os
 import shutil
 import socket
@@ -59,6 +60,16 @@ def _stat_map():
 SANDBOX_COPIED = set(PROTECTED_DIRS) | {"cache", "cache.nosync", "scratch"}
 
 
+def _clone(src, dst):
+    """A copy-on-write clone where the disk has them, so two copies of the data take almost no room; a plain copy elsewhere.  A later write to either side leaves the other alone."""
+    try:
+        if ctypes.CDLL(None).clonefile(os.fsencode(src), os.fsencode(dst), 0) == 0:
+            return dst
+    except (AttributeError, OSError):
+        pass
+    return shutil.copy2(src, dst)
+
+
 _SANDBOX = {}
 
 
@@ -76,7 +87,7 @@ def pytest_configure(config):
             continue
         target = sandbox / entry.name
         if entry.name in SANDBOX_COPIED and entry.is_dir():
-            shutil.copytree(entry, target, symlinks=True,
+            shutil.copytree(entry, target, symlinks=True, copy_function=_clone,
                             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         else:
             target.symlink_to(entry)
@@ -97,7 +108,7 @@ def _protected_snapshot():
         rel = p.relative_to(ROOT)
         dst = snap_dir / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(p, dst)
+        _clone(p, dst)
     state = {"dir": snap_dir, "stats": _stat_map()}
     yield state
     shutil.rmtree(snap_dir, ignore_errors=True)

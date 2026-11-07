@@ -6,7 +6,7 @@ interpretation at the same independence minimum the ledger's own report uses: ma
 from datetime import date
 from typing import Any, Dict, List, Optional
 
-from terminal import automation
+from terminal import automation, storage
 from terminal.qsf import config, kr_events_forward, kr_forward, us_challenger
 from utils import nyse_calendar
 
@@ -145,6 +145,14 @@ def _kr_calendar(qsf_service: Any) -> Optional[List[str]]:
     return days or None
 
 
+def backup_alerts(saved: Dict[str, Any]) -> List[Dict[str, str]]:
+    if not saved.get("latest"):
+        return [{"level": "warn", "text": "백업이 아직 없습니다."}]
+    if saved["age_days"] > automation.BACKUP_STALE_DAYS:
+        return [{"level": "warn", "text": f"마지막 백업이 {saved['age_days']}일 전입니다. 자동 실행을 확인하세요."}]
+    return []
+
+
 def build(terminal: Any) -> Dict[str, Any]:
     qsf_service = terminal.qsf
     live = qsf_service.ledger._live_rows()
@@ -164,10 +172,12 @@ def build(terminal: Any) -> Dict[str, Any]:
     forward["fund"] = kr_forward.status(terminal.base, calendars["KR"], kr_forward.FUND_FOLDER)
     forward["events"] = kr_events_forward.status(terminal.base, calendars["KR"])
     challenger = us_challenger.status(terminal.base, us_calendar)
+    room = storage.disk(terminal.base)
+    saved = automation.backup_status()
     challenger["due_sessions"] = sum(1 for d in us_calendar if d >= us_challenger.FIRST)
     last = auto.get("last_run") or {}
     steps = [{"name": STEP_LABELS.get(k, k), "status": (auto.get("steps") or {}).get(k, {}).get("status")} for k in STEP_LABELS]
     return {"status": "REAL", "model_version": config.MODEL_VERSION, "integrity": verify.get("status"), "qsf": qsf, "baseline": baseline, "kr_forward": forward, "us_challenger": challenger,
             "automation": {"installed": auto.get("installed"), "schedule_kst": auto.get("schedule_kst"), "last_run_at": last.get("at"), "latest_session": auto.get("latest_session"), "steps": steps},
-            "alerts": alerts(qsf, baseline, auto, verify.get("status"), forward, challenger), "minimum_independent": config.MIN_INDEPENDENT,
+            "disk": room, "backup": saved, "alerts": ([{"level": room["level"], "text": storage.low_disk_text(terminal.base)}] if room["level"] != "ok" else []) + backup_alerts(saved) + alerts(qsf, baseline, auto, verify.get("status"), forward, challenger), "minimum_independent": config.MIN_INDEPENDENT,
             "note": "진행 상황만 보여 줍니다. 수익률을 계산하지 않으며, 기준을 채우기 전에는 점수의 성과를 판단할 수 없습니다."}

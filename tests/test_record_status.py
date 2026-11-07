@@ -121,3 +121,9 @@ def test_us_challenger_alerts_only_when_something_is_wrong():
     assert "시작되지 않았습니다" in text({"integrity": "OK", "sessions": 0, "behind_sessions": None, "due_sessions": 2})[0]
     assert "2거래일 뒤처져" in text({"integrity": "OK", "sessions": 5, "behind_sessions": 2, "due_sessions": 7})[0]
     assert "검증에 실패" in text({"integrity": "BROKEN", "sessions": 5, "behind_sessions": 0, "due_sessions": 5})[0]
+
+
+def test_backup_alerts():
+    assert rs.backup_alerts({"latest": "2026-11-06", "age_days": 2}) == []
+    assert "일 전" in rs.backup_alerts({"latest": "2026-11-01", "age_days": 7})[0]["text"]
+    assert rs.backup_alerts({"latest": None, "age_days": None})[0]["level"] == "warn"

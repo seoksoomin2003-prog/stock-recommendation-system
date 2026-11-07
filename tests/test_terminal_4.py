@@ -1,7 +1,8 @@
 """TERMINAL-4 offline tests: daily job idempotence and retries, alert de-duplication, backup, secret safety."""
+import gzip
 import json
 import plistlib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
@@ -270,3 +271,63 @@ def test_status_reports_words_only(tmp_path, monkeypatch):
     monkeypatch.setattr(automation, "is_installed", lambda: False)
     st = automation.status(tmp_path)
     assert st["telegram"] == "CONFIGURED" and TOKEN not in json.dumps(st) and "12345" not in json.dumps(st)
+
+
+def test_korean_steps_run_on_a_day_only_the_us_is_closed(tmp_path):
+    d, calls, _ = make(tmp_path, now=datetime(2026, 11, 25, 23, 0, tzinfo=timezone.utc))     # Thursday morning in Seoul, after the US Wednesday
+    d.run()
+    assert {"QSF", "QSF_KR", "KR_FORWARD"} <= set(calls)
+    first_backup = d.state()["sessions"]["2026-11-25"]["BACKUP"]["at"]
+    d2, calls2, _ = make(tmp_path, now=datetime(2026, 11, 26, 23, 0, tzinfo=timezone.utc))   # Friday morning: Thanksgiving gave no US session, Korea traded Thursday
+    res = d2.run()
+    assert res["status"] == "DONE" and calls2 == ["QSF_KR", "NEWS_KR", "KR_FORWARD"]
+    assert d2.state()["sessions"]["2026-11-25"]["BACKUP"]["at"] > first_backup
+    d3, calls3, _ = make(tmp_path, now=datetime(2026, 11, 26, 23, 30, tzinfo=timezone.utc))  # the next slot that morning
+    assert d3.run()["status"] == "UP_TO_DATE" and not calls3
+
+
+def test_a_retried_step_is_followed_by_a_backup(tmp_path):
+    d, calls, _ = make(tmp_path)
+    d.run()
+    st = d.state()
+    session = sorted(st["sessions"])[-1]
+    st["sessions"][session]["KR_FORWARD"] = {"status": "WAITING"}
+    d._save(st)
+    later = TUE_NIGHT + timedelta(minutes=1)
+    d2, calls2, _ = make(tmp_path, now=later)
+    d2.run()
+    assert calls2 == ["KR_FORWARD"] and d2.state()["sessions"][session]["BACKUP"]["at"] == later.isoformat()
+
+
+def test_backup_holds_every_record_and_a_restored_copy_verifies(tmp_path):
+    from terminal.qsf import kr_forward as kf
+    base, root = tmp_path / "p", tmp_path / "bk"
+    day = datetime(2026, 11, 7, tzinfo=timezone.utc)
+    for name in automation.FORWARD_STORES:
+        folder = base / "research_data" / name
+        folder.mkdir(parents=True)
+        with gzip.open(folder / "2026-11-06.json.gz", "wt", encoding="utf-8") as fh:
+            json.dump({"session": "2026-11-06", "rows": []}, fh)
+        kf._append_index(folder, "2026-11-06", day.isoformat(), False, True, 0)
+    (base / "tracking" / "kr" / "ledger").mkdir(parents=True)
+    (base / "tracking" / "kr" / "ledger" / "observations.jsonl").write_text("")
+    automation.backup(base, "2026-11-06", root)
+    assert (root / "2026-11-06" / "tracking" / "kr" / "ledger" / "observations.jsonl").exists()
+    for name in automation.FORWARD_STORES:
+        assert (root / name / "2026-11-06.json.gz").exists() and (root / "2026-11-06" / "research_data" / name / "index.jsonl").exists()
+    got = automation.check_backup(root)
+    assert got["status"] == "OK" and got["latest"] == "2026-11-06" and got["checks"]["us_challenger"]["sessions"] == 1
+    with gzip.open(root / "krx_forward" / "2026-11-06.json.gz", "wt", encoding="utf-8") as fh:
+        json.dump({"edited": True}, fh)
+    broken = automation.check_backup(root)
+    assert broken["status"] == "BROKEN" and broken["checks"]["krx_forward"]["bad"] == ["2026-11-06"]
+
+
+def test_backup_age_and_no_backup(tmp_path):
+    from datetime import date
+    assert automation.backup_status(tmp_path / "none") == {"latest": None, "age_days": None, "copies": 0}
+    assert automation.check_backup(tmp_path / "none")["status"] == "NO_BACKUP"
+    (tmp_path / "2026-11-01").mkdir()
+    (tmp_path / "notes").mkdir()
+    got = automation.backup_status(tmp_path, date(2026, 11, 8))
+    assert got == {"latest": "2026-11-01", "age_days": 7, "copies": 1}
