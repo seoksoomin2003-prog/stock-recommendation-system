@@ -69,6 +69,19 @@ def test_a_stock_not_on_the_filing_record_is_unknown_not_clean():
     assert set(tickers(sc.screen(data, {}))) == {"CLEAN", "NEW"}
 
 
+def test_unknown_risk_is_missing_not_low():
+    data = latest(row("LOW"), row("HIGH", high_risk={"session": "x"}), row("UNK", high_risk_unknown=True))
+    out = sc.screen(data, {"no_high_risk": "1"})
+    assert tickers(out) == ["LOW"] and out["missing_value"] == 1
+    assert set(tickers(sc.screen(data, {}))) == {"LOW", "HIGH", "UNK"}
+
+
+def test_a_known_no_buyback_is_a_plain_no_even_without_a_sector():
+    data = latest(row("NOSEC", filing_events={"financing": False, "buyback": False}), row("UNK", filing_unknown=True), row("YES", sector="Tech", filing_events={"financing": False, "buyback": True}))
+    out = sc.screen(data, {"sector": "Tech", "buyback": "1"})
+    assert tickers(out) == ["YES"] and out["missing_value"] == 1      # only UNK is unknown; NOSEC is known to have none
+
+
 def test_sector_filter_counts_and_missing():
     data = latest(row("T1", sector="Technology"), row("T2", sector="Technology"), row("F1", 90, sector="Energy"), row("N"))
     all_ = sc.screen(data, {})
@@ -94,6 +107,26 @@ def test_sectors_come_from_what_is_stored_and_never_the_network(tmp_path):
     svc._filing_marks = lambda m: {"session": None, "financing": set(), "buyback": set(), "known": set()}
     assert [r["sector"] for r in svc.screen_rows("KR")["rows"]] == ["Technology", "Communication Services", None, None]
     assert (tmp_path / "latest_KR.json").read_bytes() == before
+
+
+def test_with_no_filing_or_risk_record_every_stock_is_unknown(tmp_path):
+    import json
+
+    from terminal.cache import FileCache
+    from terminal.qsf.service import QSF
+    svc = QSF.__new__(QSF)
+    svc.base, svc.dir, svc.cache = tmp_path, tmp_path, FileCache(tmp_path / "cache")
+    (tmp_path / "latest_KR.json").write_text(json.dumps({"status": "REAL", "rows": [{"ticker": "A", "strategy": "SWING", "score": 60.0}, {"ticker": "B", "strategy": "SWING", "score": 50.0}]}), encoding="utf-8")
+    svc._high_risk = lambda m: {"session": None, "codes": set(), "ranked": set()}
+    svc._filing_marks = lambda m: {"session": None, "financing": set(), "buyback": set(), "known": set()}
+    got = svc.latest("KR")
+    for flag in ("no_financing", "buyback", "no_high_risk"):
+        out = sc.screen(got, {flag: "1"})
+        assert out["matched"] == 0 and out["missing_value"] == 2, flag
+    svc._high_risk = lambda m: {"session": "d", "codes": {"B"}, "ranked": {"A", "B"}}
+    svc._filing_marks = lambda m: {"session": "d", "financing": {"B"}, "buyback": set(), "known": {"A", "B"}}
+    got = svc.latest("KR")
+    assert tickers(sc.screen(got, {"no_high_risk": "1"})) == ["A"] and tickers(sc.screen(got, {"no_financing": "1"})) == ["A"]
 
 
 def test_paging():

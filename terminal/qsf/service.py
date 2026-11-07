@@ -605,13 +605,13 @@ class QSF:
     def _high_risk(self, market: str) -> Dict[str, Any]:
         """Korean names only: that is where the pattern was seen.  Added when read, so no score or record contains it."""
         if market != "KR":
-            return {"session": None, "codes": set()}
+            return {"session": None, "codes": set(), "ranked": set()}
         from terminal.qsf import kr_forward
         try:
             found = kr_forward.high_risk(self.base)
         except (OSError, ValueError, KeyError):
-            return {"session": None, "codes": set()}
-        return {"session": found["session"], "codes": set(found["codes"])}
+            return {"session": None, "codes": set(), "ranked": set()}
+        return {"session": found["session"], "codes": set(found["codes"]), "ranked": set(found.get("ranked") or ())}
 
     def _filing_marks(self, market: str) -> Dict[str, Any]:
         """Korean filings of the last 252 sessions, from the separate record.  Added when read, so no score or record contains it."""
@@ -638,11 +638,13 @@ class QSF:
             for r in out.get("rows") or []:
                 if r.get("ticker") in risky["codes"]:
                     r["high_risk"] = {"session": risky["session"]}
+                elif r.get("ticker") not in (risky.get("ranked") or ()):
+                    r["high_risk_unknown"] = True   # never ranked (no record, no value, or a US stock): unknown, not low
                 mark = self._filing_mark(filed, r.get("ticker"))
                 if mark:
                     r["filing_events"] = mark
-                elif filed["session"] and r.get("ticker") not in filed["known"]:
-                    r["filing_unknown"] = True      # not on the record: unknown, not a no
+                elif not (filed["session"] and r.get("ticker") in filed["known"]):
+                    r["filing_unknown"] = True      # not on the record, or no record at all: unknown, not a no
             return out
         except (OSError, ValueError):
             return {"status": "UNAVAILABLE", "market": market, "rows": [], "reason": "아직 스캔 기록이 없습니다."}

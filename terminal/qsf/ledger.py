@@ -247,8 +247,9 @@ def validate(snaps: List[Dict[str, Any]], market: str, strategy: str, loader: Ca
         for s in cohort:
             if s["ticker"] not in cache:
                 bars = loader(s["ticker"]) or []
-                days = [b["date"] for b in bars]
-                cache[s["ticker"]] = (bars, days if days == sorted(days) else None)      # bars out of order take the plain scan
+                days = [b.get("date") for b in bars]
+                ok = all(isinstance(d, str) for d in days) and days == sorted(days)
+                cache[s["ticker"]] = (bars, days if ok else None)      # bars out of order or without a date take the plain scan
             path, days = cache[s["ticker"]]
             o = outcome(path, bench, s["data_date"], h, cost, s.get("entry_session"), days, bench_by_date)
             if o:

@@ -322,14 +322,15 @@ def high_risk(base: Path) -> Dict[str, Any]:
     """Stocks in the riskiest fifth of the low risk theme on the newest record.  For display: it feeds no score and is not a tested rule."""
     rows = read_index(base)
     if not rows:
-        return {"session": None, "codes": []}
+        return {"session": None, "codes": [], "ranked": []}
     day = rows[-1]["session"]
     doc = _read_day(Path(base) / FOLDER, day)
     values = [(r["code"], r["low_risk"]) for r in doc["rows"] if r.get("low_risk") is not None]
     if len(values) < MIN_STOCKS:
-        return {"session": day, "codes": []}
+        return {"session": day, "codes": [], "ranked": []}
     ranks = validate.rank(np.array([v for _, v in values], dtype=float)) / (len(values) - 1)
-    return {"session": day, "codes": sorted(c for (c, _), q in zip(values, ranks) if q <= 0.2)}
+    # ``ranked`` is every code that was placed: a code outside it has an unknown risk, not a low one
+    return {"session": day, "codes": sorted(c for (c, _), q in zip(values, ranks) if q <= 0.2), "ranked": sorted(c for c, _ in values)}
 
 
 # ---------------------------------------------------------------------- the one evaluation

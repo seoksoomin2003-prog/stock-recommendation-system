@@ -339,7 +339,7 @@ async function renderWatch() {
       <form class="addrow" id="wadd"><input id="wq" placeholder="추가할 종목 코드" maxlength="15"><button type="submit">추가</button></form>
       ${d.items.length ? `<div class="tbl-wrap"><table><thead><tr><th>종목</th><th>종가</th><th>전일 대비</th><th>1개월</th><th class="l">추세(30일)</th><th class="l">스윙 점수</th><th class="l">장기 점수</th><th class="l">상태</th><th></th></tr></thead>
       <tbody>${d.items.map((i) => `<tr class="click" data-ticker="${esc(i.symbol)}"><td><b>${esc(i.symbol)}</b> ${i.name ? `<span class="meta" style="margin:0">${esc(i.name)}</span>` : ""}</td><td class="num">${fmt(i.close, d0)}</td><td>${pct(i.change_pct)}</td><td>${pct(i.change_1m_pct, 1)}</td>
-        <td class="l"><canvas style="width:80px;height:24px" data-spark='${JSON.stringify(i.spark || [])}'></canvas></td><td class="l">${watchScore(i.qsf, "SWING")}</td><td class="l">${watchScore(i.qsf, "LONG_TERM")}</td><td class="l">${badge(i.status)} ${liveBadge(i.intraday)} <span class="meta">${esc(i.date || "")}</span></td>
+        <td class="l"><canvas style="width:80px;height:24px" data-spark='${JSON.stringify(i.spark || [])}'></canvas></td><td class="l">${watchScore(i.qsf, "SWING", d.qsf_scan)}</td><td class="l">${watchScore(i.qsf, "LONG_TERM", d.qsf_scan)}</td><td class="l">${badge(i.status)} ${liveBadge(i.intraday)} <span class="meta">${esc(i.date || "")}</span></td>
         <td><button class="x" data-rm="${esc(i.symbol)}" title="삭제">✕</button></td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">관심종목이 없습니다.</div>'}
       ${d.qsf_scan && d.qsf_scan.status === "REAL" ? `<div class="meta">점수는 ${esc(d.qsf_scan.session)} 거래일 스캔(${esc(d.qsf_scan.model_version)})에 기록된 값입니다. 스캔 대상이 아닌 종목은 비워 둡니다. 점수 탭에서 다시 계산할 수 있습니다.</div>` : ""}
       ${d.cache ? meta(d.source, d.cache.fetched_at) : ""}<div class="meta">관심종목은 이 Mac의 data/terminal/watchlist.json 에만 저장됩니다.</div></div>`;
@@ -350,7 +350,8 @@ async function renderWatch() {
   } catch (e) { el.innerHTML = errBox(e); }
 }
 // 스캔에 기록된 점수만 보여 줍니다. 여기서 계산하지 않습니다. 색은 점수 탭과 같은 기준이고 글자로도 적습니다.
-function watchScore(q, strategy) {
+function watchScore(q, strategy, scan) {
+  if (!scan || scan.status !== "REAL") return '<span class="missing">스캔 없음</span>';
   const c = q && q[strategy];
   if (!c || c.score === null || c.score === undefined) return '<span class="missing">스캔 밖</span>';
   const tone = typeof qsfClass === "function" ? qsfClass(c.action, c.score) : "act-hold";

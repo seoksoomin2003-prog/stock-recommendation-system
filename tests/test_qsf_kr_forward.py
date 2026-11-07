@@ -294,14 +294,14 @@ def test_a_price_only_caller_does_not_touch_dart(tmp_path, built):
 
 
 def test_the_riskiest_fifth_is_marked_and_nothing_without_a_record(tmp_path, built):
-    assert kf.high_risk(tmp_path) == {"session": None, "codes": []}
+    assert kf.high_risk(tmp_path) == {"session": None, "codes": [], "ranked": []}
     base, days = built
     run = tmp_path / "run"
     (run / kr.DATA.parent).mkdir(parents=True)
     (run / kr.DATA).symlink_to(base / kr.DATA)
     kf.record(run, key="K", get=no_calls, now=lambda: at("2026-11-07"), first=days[-1])
     found = kf.high_risk(run)
-    assert found["session"] == days[-1] and len(found["codes"]) == 10
+    assert found["session"] == days[-1] and len(found["codes"]) == 10 and set(found["codes"]) <= set(found["ranked"])
     doc = kf._read_day(run / kf.FOLDER, days[-1])["rows"]
     low = {r["code"]: r["low_risk"] for r in doc}
     assert max(low[c] for c in found["codes"]) <= min(v for c, v in low.items() if c not in found["codes"])

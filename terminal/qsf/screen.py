@@ -80,11 +80,12 @@ def _keep(row: Dict[str, Any], f: Dict[str, Any]) -> Tuple[bool, bool]:
     marks = row.get("filing_events") or {}
     if (f["no_financing"] and marks.get("financing")) or (f["no_high_risk"] and row.get("high_risk")):
         return False, False
-    missing = bool(row.get("filing_unknown") and (f["no_financing"] or f["buyback"])) or bool(f["sector"] and not row.get("sector"))
+    filing_missing = bool(row.get("filing_unknown") and (f["no_financing"] or f["buyback"]))
     if f["sector"] and row.get("sector") and row["sector"] != f["sector"]:
         return False, False
-    if f["buyback"] and not missing and not marks.get("buyback"):
-        return False, False
+    if f["buyback"] and not filing_missing and not marks.get("buyback"):
+        return False, False          # known not to have one: a plain no, whatever else is missing
+    missing = filing_missing or bool(f["sector"] and not row.get("sector")) or bool(f["no_high_risk"] and row.get("high_risk_unknown"))
     for key, low in [*f["minimums"].items(), *([("score", f["min_score"])] if f["min_score"] is not None else [])]:
         v = _value(row, key)
         if v is None:

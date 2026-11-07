@@ -711,3 +711,12 @@ def test_score_uses_the_technicals_it_is_given(monkeypatch):
     want = engine.score(c, "SWING")
     monkeypatch.setattr(technicals, "compute", lambda *a, **k: pytest.fail("계산을 반복했습니다"))
     assert engine.score(c, "SWING")["score"] == want["score"]
+
+
+def test_a_bar_without_a_date_does_not_take_down_the_report():
+    b = bars(40, drift=0.004)
+    broken = b + [{**b[-1], "date": None}, {k: v for k, v in b[-1].items() if k != "date"}]
+    snap = [{"market": "US", "strategy": "SWING", "ticker": "AAA", "data_date": b[8]["date"], "score": 75.0, "actionability": "OK"}]
+    h = config.SWING_HORIZONS[0]
+    got = ledger.validate(snap, "US", "SWING", lambda t: broken, b)["horizons"][str(h)]["buckets"][ledger.bucket_of(75.0)]
+    assert got["n"] == 1 and got["mean_net"] == pytest.approx(ledger.outcome(b, b, b[8]["date"], h, config.round_trip_cost("US"))["net"])
