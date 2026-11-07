@@ -111,3 +111,13 @@ def test_a_price_gap_with_krx_is_an_alert():
     assert not rs.alerts({}, base, auto, "OK", good)
     bad = {**good, "price_check": {"session": "d", "gaps": 2, "stale": 0}}
     assert "KRX 종가와 다른 종목 2개" in rs.alerts({}, base, auto, "OK", bad)[0]["text"]
+
+
+def test_us_challenger_alerts_only_when_something_is_wrong():
+    base, auto = {"status": "REAL", "capital_configured": True}, {"installed": True}
+    text = lambda c: [a["text"] for a in rs.alerts({}, base, auto, "OK", None, c)]     # noqa: E731
+    assert not text({"integrity": "OK", "sessions": 0, "behind_sessions": None, "due_sessions": 0})      # before the first session nothing is owed
+    assert not text({"integrity": "OK", "sessions": 5, "behind_sessions": 1, "due_sessions": 6})
+    assert "시작되지 않았습니다" in text({"integrity": "OK", "sessions": 0, "behind_sessions": None, "due_sessions": 2})[0]
+    assert "2거래일 뒤처져" in text({"integrity": "OK", "sessions": 5, "behind_sessions": 2, "due_sessions": 7})[0]
+    assert "검증에 실패" in text({"integrity": "BROKEN", "sessions": 5, "behind_sessions": 0, "due_sessions": 5})[0]

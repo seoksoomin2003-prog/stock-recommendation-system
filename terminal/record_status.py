@@ -7,14 +7,14 @@ from datetime import date
 from typing import Any, Dict, List, Optional
 
 from terminal import automation
-from terminal.qsf import config, kr_forward
+from terminal.qsf import config, kr_forward, us_challenger
 from utils import nyse_calendar
 
 TRADING_DAYS_PER_YEAR = 252
 BASELINE_TARGET = 30
 BEHIND_ALERT = 2      # the record of a finished session is written at the next morning's run, so one session behind is normal
 PRIMARY = {"SWING": 20, "LONG_TERM": 252}
-STEP_LABELS = {"LAB": "도전자 기록", "SCAN": "기준 모델 스캔", "TRACK": "기준 모델 추적", "QSF": "QSF 기록(미국)", "QSF_KR": "QSF 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "BACKUP": "백업"}
+STEP_LABELS = {"LAB": "도전자 기록", "SCAN": "기준 모델 스캔", "TRACK": "기준 모델 추적", "QSF": "QSF 기록(미국)", "QSF_KR": "QSF 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "US_CHALLENGER": "미국 도전자 점수 기록", "BACKUP": "백업"}
 
 
 def horizons() -> Dict[str, List[int]]:
@@ -78,7 +78,7 @@ def baseline_record(capital_configured: bool, status: Optional[Dict[str, Any]], 
             "last_scan_date": f"{valid[-1][:4]}-{valid[-1][4:6]}-{valid[-1][6:]}" if valid else None, "latest_update_session": update.get("as_of_session")}
 
 
-def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[str, Any], integrity: str, forward: Optional[Dict[str, Any]] = None) -> List[Dict[str, str]]:
+def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[str, Any], integrity: str, forward: Optional[Dict[str, Any]] = None, challenger: Optional[Dict[str, Any]] = None) -> List[Dict[str, str]]:
     names = {"US": "미국", "KR": "한국"}
     out = []
     if integrity != "OK":
@@ -104,6 +104,13 @@ def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[
             out.append({"level": "bad", "text": "한국 재무 점수 기록 검증에 실패했습니다. 원인을 확인해야 합니다."})
         elif (fund.get("behind_sessions") or 0) >= BEHIND_ALERT:
             out.append({"level": "warn", "text": f"한국 재무 점수 기록이 {fund['behind_sessions']}거래일 뒤처져 있습니다. DART 키와 자동 실행을 확인하세요."})
+    if challenger is not None:
+        if challenger.get("integrity") != "OK":
+            out.append({"level": "bad", "text": "미국 도전자 점수 기록 검증에 실패했습니다. 원인을 확인해야 합니다."})
+        elif (challenger.get("behind_sessions") or 0) >= BEHIND_ALERT:
+            out.append({"level": "warn", "text": f"미국 도전자 점수 기록이 {challenger['behind_sessions']}거래일 뒤처져 있습니다. 자동 실행을 확인하세요."})
+        elif not challenger.get("sessions") and (challenger.get("due_sessions") or 0) >= BEHIND_ALERT:
+            out.append({"level": "warn", "text": "미국 도전자 점수 기록이 시작되지 않았습니다. 자동 실행을 확인하세요."})
     failed = [STEP_LABELS.get(k, k) for k, v in (auto.get("steps") or {}).items() if isinstance(v, dict) and v.get("status") == automation.FAILED]
     if failed:
         out.append({"level": "bad", "text": f"최근 자동 실행에서 실패한 작업: {', '.join(failed)}"})
@@ -150,9 +157,11 @@ def build(terminal: Any) -> Dict[str, Any]:
         baseline = baseline_record(bool(auto.get("capital_configured")), None, type(exc).__name__)
     forward = kr_forward.status(terminal.base, calendars["KR"])
     forward["fund"] = kr_forward.status(terminal.base, calendars["KR"], kr_forward.FUND_FOLDER)
+    challenger = us_challenger.status(terminal.base, us_calendar)
+    challenger["due_sessions"] = sum(1 for d in us_calendar if d >= us_challenger.FIRST)
     last = auto.get("last_run") or {}
     steps = [{"name": STEP_LABELS.get(k, k), "status": (auto.get("steps") or {}).get(k, {}).get("status")} for k in STEP_LABELS]
-    return {"status": "REAL", "model_version": config.MODEL_VERSION, "integrity": verify.get("status"), "qsf": qsf, "baseline": baseline, "kr_forward": forward,
+    return {"status": "REAL", "model_version": config.MODEL_VERSION, "integrity": verify.get("status"), "qsf": qsf, "baseline": baseline, "kr_forward": forward, "us_challenger": challenger,
             "automation": {"installed": auto.get("installed"), "schedule_kst": auto.get("schedule_kst"), "last_run_at": last.get("at"), "latest_session": auto.get("latest_session"), "steps": steps},
-            "alerts": alerts(qsf, baseline, auto, verify.get("status"), forward), "minimum_independent": config.MIN_INDEPENDENT,
+            "alerts": alerts(qsf, baseline, auto, verify.get("status"), forward, challenger), "minimum_independent": config.MIN_INDEPENDENT,
             "note": "진행 상황만 보여 줍니다. 수익률을 계산하지 않으며, 기준을 채우기 전에는 점수의 성과를 판단할 수 없습니다."}

@@ -413,6 +413,11 @@ def cmd_qsf(args) -> int:
         res = kr_forward.record(PROJECT_ROOT)
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3, "NO_KEY": 4}.get(res["status"], 1)
+    if args.action == "us-challenger-record":
+        from terminal.qsf import us_challenger
+        res = us_challenger.record(PROJECT_ROOT)
+        print(json.dumps(res, ensure_ascii=False, default=str))
+        return {"OK": 0, "WAITING": 3}.get(res["status"], 1)
     if args.action in ("kr-fund-download", "kr-fund-prepare", "kr-fund-run"):
         from terminal.qsf import research_kr_fund
         res = {"kr-fund-download": research_kr_fund.download, "kr-fund-prepare": research_kr_fund.prepare, "kr-fund-run": research_kr_fund.run_once}[args.action](PROJECT_ROOT)
@@ -475,6 +480,16 @@ def cmd_qsf(args) -> int:
         res = q.scan(market, tickers=args.tickers or None, record=not args.dry_run, progress=lambda st, d, t: print(f"  {st} {d}/{t}", flush=True))
         print(json.dumps({k: v for k, v in res.items() if k != "rows"} | {"errors": len(res["errors"])}, ensure_ascii=False, indent=1, default=str))
         return 0 if res["status"] == "REAL" else 3 if res["status"] == "DATA_NOT_READY" else 2
+    if args.action in ("us-challenger-evaluate-swing", "us-challenger-evaluate-long"):
+        from datetime import date
+        from terminal.qsf import us_challenger
+        from utils import nyse_calendar
+        index = us_challenger.kf.read_index(PROJECT_ROOT, us_challenger.FOLDER)
+        first = date.fromisoformat(index[0]["session"]) if index else date.fromisoformat(us_challenger.FIRST)
+        calendar = [d.isoformat() for d in nyse_calendar.sessions_between(first, nyse_calendar.latest_completed_session())]
+        res = us_challenger.evaluate_once(PROJECT_ROOT, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader("US"), calendar)
+        print(json.dumps({k: res[k] for k in ("status", "strategy", "horizon", "dates", "supports_challenger", "paired_ic")}, ensure_ascii=False, default=str))
+        return 0
     if args.action == "validate":
         print(json.dumps(q.validation(), ensure_ascii=False, indent=1, default=str))
         return 0
@@ -553,7 +568,7 @@ def build_parser() -> argparse.ArgumentParser:
     nw = sub.add_parser("news", help="Record free news headlines of the scanned stocks (feeds no score)")
     nw.add_argument("action", choices=["record"])
     qs = sub.add_parser("qsf", help="QSF 1.1: 0-100 stock score with holding-period plan (separate from P6-11B)")
-    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "sue-test", "insider-prepare", "insider-develop", "insider-test", "news-prepare", "news-develop", "news-test", "ensemble-prepare", "ensemble-run", "short-download", "short-develop", "short-test", "sentiment-download", "sentiment-run", "kr-download", "kr-prepare", "kr-run", "kr-diagnose", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund", "kr-fund-download", "kr-fund-prepare", "kr-fund-run"])
+    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "sue-test", "insider-prepare", "insider-develop", "insider-test", "news-prepare", "news-develop", "news-test", "ensemble-prepare", "ensemble-run", "short-download", "short-develop", "short-test", "sentiment-download", "sentiment-run", "kr-download", "kr-prepare", "kr-run", "kr-diagnose", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund", "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long", "kr-fund-download", "kr-fund-prepare", "kr-fund-run"])
     qs.add_argument("tickers", nargs="*")
     qs.add_argument("--dry-run", action="store_true", help="Scan without writing to the ledger")
     au = sub.add_parser("automation", help="Daily job: record, tracking, backup, Telegram/macOS alerts (TERMINAL-4)")
