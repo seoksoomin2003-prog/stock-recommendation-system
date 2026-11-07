@@ -106,6 +106,8 @@ QSF-1.1.3 (2026-11-06): US annual figures no longer read stopped series as curre
 
 QSF-1.1.4 (2026-11-07, user approved): market value inputs corrected. US multi-class companies use total shares only when Yahoo market value and SEC share counts agree; KR uses KRX listed shares. Long scores change for a few names, swing scores do not. Scoring maths unchanged. Current-version sample restarts from 0. See `reports/QSF_1_1_4_SHARE_COUNT_CORRECTION.md`.
 
+QSF-1.1.5 (2026-11-07, user approved): SEC share counts on a wrong scale (100x or more against net income / EPS, or between the last two years) are treated as missing. Inputs identical for all 502 US names compared, so current scores do not change. See `reports/QSF_US_SHARE_SCALE_CHECK_2026_11_07.md`.
+
 QSF recheck with corrected figures (2026-11-06): verdicts unchanged, all NO_EVIDENCE; `sue` at 10 sessions narrowly passes development, a hypothesis only. `reports/QSF_CORRECTED_RECHECK_RESULTS.md`.
 
 QSF earnings factor test (2026-11-06): `sue` alone, 10 sessions, one run on 2022+: NO_EVIDENCE (IC +0.0055, t 0.71). Not added. `reports/QSF_SUE_TEST_RESULTS.md`.

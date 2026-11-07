@@ -33,6 +33,7 @@ US_INSTANT = {
 
 MULTI_CLASS_GAP = 1.2       # market value / (price x shares)
 MULTI_CLASS_SEC_GAP = 0.85  # Yahoo shares / SEC average shares
+SHARE_SCALE_GAP = 100.0     # some filers enter shares in millions or thousands; no real change between two counts is this large
 
 
 def _days(a: str, b: str) -> int:
@@ -112,6 +113,13 @@ def drop_stale_series(annual: Dict[str, List[Dict]], max_gap_days: int = STOPPED
     return {k: ([] if k in gone else v) for k, v in annual.items()}
 
 
+def _scale_differs(a: Optional[float], b: Optional[float]) -> bool:
+    """Two counts of the same company's shares that cannot both be in whole shares."""
+    if not a or not b or a < 0 or b < 0:
+        return False
+    return max(a, b) / min(a, b) >= SHARE_SCALE_GAP
+
+
 def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_financial: bool = False, shares: Optional[float] = None,
             source: str = "SEC EDGAR 10-K", insider_pct: Optional[float] = None) -> Dict[str, Any]:
     series = {k: _vintage(v, as_of) for k, v in annual.items() if isinstance(v, list) and not k.startswith("_")}
@@ -156,7 +164,12 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         debt = (last("debt_long") or 0.0) + (last("debt_short") or 0.0)
     elif last("liabilities") is not None:
         debt = last("liabilities")
-    shares_used = shares or last("shares_avg")
+    sec_shares = last("shares_avg")
+    # Net income / EPS is the company's own share count in whole shares, so it tells a wrong scale from a real change.
+    implied = abs(ni / last("eps")) if ni and last("eps") and abs(last("eps")) >= 0.1 else None
+    sec_scale_error = _scale_differs(sec_shares, implied)
+    change_scale_error = _scale_differs(sec_shares, last("shares_avg", 1))
+    shares_used = shares or (None if sec_scale_error else sec_shares)
     mcap = close * shares_used if close and shares_used else None
     eps = last("eps") if last("eps") is not None else div(ni, shares_used)
     bb, dv = last("buyback"), last("dividends")
@@ -169,7 +182,7 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         "ocf_to_ni": div(ocf, ni) if (ni or 0) > 0 else None, "fcf": fcf, "fcf_margin": div(fcf, rev), "fcf_years_positive": sum(fcfs) / len(fcfs) if fcfs else None,
         "roe_years_positive": sum(nis) / len(nis) if nis else None, "debt_equity": 99.0 if (eq is not None and eq <= 0 and debt) else div(debt, eq), "current_ratio": div(last("current_assets"), last("current_liabilities")),
         "interest_cover": div(last("op_income"), last("interest")), "cash_debt": div(last("cash"), debt), "equity_assets": div(eq, assets),
-        "share_change": growth("shares_avg"), "returns_capital": (bool((bb or 0) > 0 or (dv or 0) != 0) if (bb is not None or dv is not None) else None),
+        "share_change": None if change_scale_error else growth("shares_avg"), "share_scale_error": sec_scale_error or change_scale_error, "returns_capital": (bool((bb or 0) > 0 or (dv or 0) != 0) if (bb is not None or dv is not None) else None),
         "market_cap": mcap, "eps": eps, "pe": div(close, eps), "pb": div(mcap, eq) if (eq or 0) > 0 else None, "fcf_yield": div(fcf, mcap), "insider_pct": insider_pct,
     }
     return out
@@ -186,6 +199,8 @@ def us_total_shares(info: Dict[str, Any], close: Optional[float], annual: Option
         return y
     rows = (annual or {}).get("shares_avg") or []
     sec = rows[-1].get("val") if rows else None
+    if _scale_differs(sec, y):
+        sec = None
     if sec and y / sec < MULTI_CLASS_SEC_GAP or (not sec and own):
         return cap / price
     return y

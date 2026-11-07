@@ -43,6 +43,53 @@ def test_missing_values_change_nothing():
     assert f.us_total_shares({"sharesOutstanding": 7.0, "marketCap": 100.0}, None) == 7.0
 
 
+def _facts(shares, eps=5.0, ni=5.0e9):
+    def rows(vals):
+        return [{"end": f"{2025 - len(vals) + 1 + i}-12-31", "filed": f"{2026 - len(vals) + 1 + i}-02-15", "val": v} for i, v in enumerate(vals)]
+    return {"shares_avg": rows(shares), "eps": rows([eps] * len(shares)), "net_income": rows([ni] * len(shares))}
+
+
+def test_a_share_count_in_millions_is_not_used_for_market_value():
+    m = f.metrics(_facts([1.0e9, 1000.0]), 50.0, "2026-06-01")
+    assert m["market_cap"] is None and m["share_scale_error"] is True
+
+
+def test_a_changed_scale_gives_no_share_change_instead_of_an_extreme_one():
+    m = f.metrics(_facts([1.0e9, 1000.0]), 50.0, "2026-06-01")
+    assert m["share_change"] is None
+    up = f.metrics(_facts([1000.0, 1.0e9]), 50.0, "2026-06-01")
+    assert up["share_change"] is None and up["share_scale_error"] is True
+
+
+def test_a_series_all_in_millions_keeps_its_change_but_not_its_market_value():
+    m = f.metrics(_facts([1020.0, 1000.0]), 50.0, "2026-06-01")      # MCD: consistent units, so the ratio is still right
+    assert m["share_change"] == pytest.approx(1000 / 1020 - 1)
+    assert m["market_cap"] is None and m["share_scale_error"] is True
+
+
+def test_yahoos_count_still_gives_market_value_with_a_wrong_sec_scale():
+    m = f.metrics(_facts([1020.0, 1000.0]), 50.0, "2026-06-01", shares=1.0e9)
+    assert m["market_cap"] == pytest.approx(5.0e10)
+
+
+def test_real_changes_pass():
+    split = f.metrics(_facts([1.0e8, 5.0e9]), 50.0, "2026-06-01")     # a 50-for-1 split left unrestated
+    assert split["share_change"] == pytest.approx(49.0) and split["share_scale_error"] is False
+    m = f.metrics(_facts([0.9e9, 1.0e9]), 50.0, "2026-06-01")
+    assert m["market_cap"] == pytest.approx(5.0e10) and m["share_change"] == pytest.approx(1 / 0.9 - 1)
+
+
+def test_a_tiny_eps_is_not_used_as_the_check():
+    m = f.metrics(_facts([1.0e9, 1.0e9], eps=0.01, ni=1.0e5), 50.0, "2026-06-01")
+    assert m["market_cap"] == pytest.approx(5.0e10) and m["share_scale_error"] is False
+
+
+def test_a_wrong_sec_scale_does_not_block_or_trigger_the_multi_class_total():
+    info = {"sharesOutstanding": 5.0e9, "marketCap": 3.5e12, "currentPrice": 350.0}
+    assert f.us_total_shares(info, 300.0, annual(12000.0)) == pytest.approx(1.0e10)    # treated as no SEC figure
+    assert f.us_total_shares({**info, "currentPrice": None}, 300.0, annual(12000.0)) == 5.0e9
+
+
 def _day(root, day, kospi, kosdaq):
     for board, rows in (("KOSPI", kospi), ("KOSDAQ", kosdaq)):
         p = kh.path_of(root, board, day)
