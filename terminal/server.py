@@ -28,6 +28,18 @@ def _market(m: str) -> str:
     return m
 
 
+def _days(raw) -> int:
+    if raw in (None, ""):
+        return 14
+    try:
+        v = int(raw)
+    except (TypeError, ValueError):
+        raise ValueError("INVALID_DAYS") from None
+    if not 1 <= v <= 60:
+        raise ValueError("INVALID_DAYS")
+    return v
+
+
 def _strategy(s: str) -> str:
     if s not in ("SWING", "LONG_TERM"):
         raise ValueError("INVALID_STRATEGY")
@@ -61,6 +73,7 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/lab/status"): lambda q, b: t.lab.status(),
         ("GET", "/api/automation/status"): lambda q, b: automation.status(t.base),
         ("GET", "/api/qsf/evaluate"): lambda q, b: t.qsf_evaluate(q.get("t", ""), q.get("market", "US")),
+        ("GET", "/api/qsf/earnings"): lambda q, b: t.qsf.earnings_upcoming(_market(q.get("market", "US")), _days(q.get("days"))),
         ("GET", "/api/qsf/history"): lambda q, b: t.qsf_history(q.get("t", ""), q.get("market", "US")),
         ("GET", "/api/qsf/latest"): lambda q, b: t.qsf.latest(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/screen"): lambda q, b: qsf_screen.screen(t.qsf.screen_rows(_market(q.get("market", "US"))), q),

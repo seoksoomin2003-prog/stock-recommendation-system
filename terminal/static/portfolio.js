@@ -229,6 +229,7 @@ async function renderAssist() {
         <label>계좌 금액(${curSym()}, 선택)<input name="equity" inputmode="decimal" placeholder="비우면 거래 기록 기준"></label>
         <div><button class="btn-primary" type="submit">계산</button></div>
       </form><div id="szout"></div></div>
+    <div class="panel" id="earncal">${loading}</div>
     <div class="panel"><h2>위험 관리 설정</h2>
       <form class="form" id="stform">
         <label>장기 1회 위험(%)<input name="risk_long_pct" inputmode="decimal" value="${st.risk_long_pct}"></label>
@@ -259,6 +260,22 @@ async function renderAssist() {
     catch (err) { $("#stmsg").className = "msg err"; $("#stmsg").textContent = err.message; }
   };
   loadPlan();
+  loadEarnings();
+}
+// 스캔 때 저장한 실적 일정만 읽습니다. 날짜가 없는 종목은 '발표 없음'이 아니라 '일정 모름'입니다.
+async function loadEarnings() {
+  const el = $("#earncal"), mk = state.market;
+  const d = await api(`/api/qsf/earnings?market=${mk}&days=14`).catch(() => null);
+  if (!el.isConnected || mk !== state.market) return;
+  if (!d || d.status !== "REAL") { el.innerHTML = `<h2>다가오는 실적 발표</h2><div class="empty">${esc((d && d.reason) || "일정을 불러오지 못했습니다.")}</div>`; return; }
+  const tag = (i) => [i.held ? '<span class="badge">보유</span>' : "", i.watched ? '<span class="badge">관심</span>' : "", ...i.buy.map((s) => `<span class="badge">${s === "SWING" ? "스윙" : "장기"} 매수 후보</span>`), i.stale ? `<span class="badge risk-note" title="${i.stored_days_ago}일 전에 받은 일정입니다.">오래된 일정</span>` : ""].join(" ");
+  const mine = d.items.filter((i) => i.held || i.watched || i.buy.length), rest = d.items.length - mine.length;
+  const row = (i) => `<tr><td class="l">${esc(i.date)} <span class="meta" style="margin:0">${i.days_away === 0 ? "오늘" : i.days_away + "일 뒤"}</span></td><td class="l"><b data-ticker="${esc(i.ticker)}" style="cursor:pointer">${esc(i.ticker)}</b> <span class="meta" style="margin:0">${esc(i.name || "")}</span></td><td class="l">${tag(i)}</td></tr>`;
+  const table = (rows) => `<div class="tbl-wrap"><table><thead><tr><th class="l">발표일</th><th class="l">종목</th><th class="l">표시</th></tr></thead><tbody>${rows.map(row).join("")}</tbody></table></div>`;
+  el.innerHTML = `<h2>다가오는 실적 발표 <span class="meta" style="margin:0">14일 안</span></h2>
+    ${mine.length ? table(mine) : '<div class="empty">보유·관심 종목과 매수 후보 중 14일 안에 발표 일정이 저장된 종목이 없습니다.</div>'}
+    ${rest ? `<details class="qsf-today-fold"><summary>그 밖의 스캔 종목 ${rest}개</summary>${table(d.items.filter((i) => !(i.held || i.watched || i.buy.length)))}</details>` : ""}
+    <div class="meta">${esc(d.source)}. ${d.checked}종목 중 ${d.no_date}종목은 저장된 다음 일정이 없어 빠졌습니다(발표가 없다는 뜻이 아닙니다). 스윙 보유 중 실적 발표는 갭 위험이 있습니다. 매수 후보 표시는 ${esc(d.session || "")} 거래일 스캔 기준입니다.</div>`;
 }
 let lastSizing = null;
 async function runSizing() {

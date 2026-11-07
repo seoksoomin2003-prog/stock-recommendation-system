@@ -656,6 +656,37 @@ class QSF:
                 return str(sector)
         return None
 
+    def earnings_upcoming(self, market: str = "US", days: int = 14) -> Dict[str, Any]:
+        """Stored earnings dates of the scanned stocks, holdings and watchlist.  Never asks the network."""
+        from zoneinfo import ZoneInfo
+
+        from terminal import portfolio as pf
+        from terminal.qsf import earnings_calendar
+        out = self.latest(market)
+        if out.get("status") != "REAL":
+            return {"status": out.get("status") or "UNAVAILABLE", "items": [], "reason": out.get("reason")}
+        held: set = set()
+        watched: set = set()
+        try:
+            held = set(self.terminal._book(market)[2]["positions"])
+        except Exception:
+            pass
+        try:
+            watched = {t for t in self.terminal.watchlist() if pf.market_of(t) == market}
+        except Exception:
+            pass
+
+        def read(t: str):
+            for key in ([f"earn:{t}"] if market == "US" else [f"earn:{t}.KS", f"earn:{t}.KQ"]):
+                rec = self.cache.read(key)
+                if rec is not None:
+                    return rec
+            return None
+        now = self.now()
+        today = now.astimezone(ZoneInfo("America/New_York" if market == "US" else "Asia/Seoul")).date()
+        res = earnings_calendar.upcoming(out.get("rows") or [], read, today, now.timestamp(), days, held, watched)
+        return {**res, "market": market, "session": out.get("session")}
+
     def screen_rows(self, market: str = "US") -> Dict[str, Any]:
         """The newest scan with each stock's sector.  Added when read, so no score or record contains it."""
         out = self.latest(market)
