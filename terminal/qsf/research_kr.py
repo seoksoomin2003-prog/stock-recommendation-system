@@ -71,9 +71,9 @@ def next_level(level: Optional[float], close: float, chg: Optional[float], cap: 
     return level * (1 + chg / 100) if chg is not None else level
 
 
-def build_prices(root: Path, log=print) -> Dict[str, Any]:
-    """Arrays by day and stock.  Each adjusted price is built only from changes up to that day."""
-    days = sorted({p.name[:10] for b in kh.BOARDS for p in (root / b).glob("*.json.gz")})
+def build_prices(root: Path, log=print, days: Optional[Sequence[str]] = None) -> Dict[str, Any]:
+    """Arrays by day and stock.  Each adjusted price is built only from changes up to that day.  ``days`` limits which days are read."""
+    days = sorted(days) if days is not None else sorted({p.name[:10] for b in kh.BOARDS for p in (root / b).glob("*.json.gz")})
     snap: List[Dict[str, List[Any]]] = []
     kept, boards = [], {}
     for day in days:

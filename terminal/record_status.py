@@ -7,14 +7,14 @@ from datetime import date
 from typing import Any, Dict, List, Optional
 
 from terminal import automation
-from terminal.qsf import config
+from terminal.qsf import config, kr_forward
 from utils import nyse_calendar
 
 TRADING_DAYS_PER_YEAR = 252
 BASELINE_TARGET = 30
 BEHIND_ALERT = 2      # the record of a finished session is written at the next morning's run, so one session behind is normal
 PRIMARY = {"SWING": 20, "LONG_TERM": 252}
-STEP_LABELS = {"LAB": "도전자 기록", "SCAN": "기준 모델 스캔", "TRACK": "기준 모델 추적", "QSF": "QSF 기록(미국)", "QSF_KR": "QSF 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "BACKUP": "백업"}
+STEP_LABELS = {"LAB": "도전자 기록", "SCAN": "기준 모델 스캔", "TRACK": "기준 모델 추적", "QSF": "QSF 기록(미국)", "QSF_KR": "QSF 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "BACKUP": "백업"}
 
 
 def horizons() -> Dict[str, List[int]]:
@@ -78,7 +78,7 @@ def baseline_record(capital_configured: bool, status: Optional[Dict[str, Any]], 
             "last_scan_date": f"{valid[-1][:4]}-{valid[-1][4:6]}-{valid[-1][6:]}" if valid else None, "latest_update_session": update.get("as_of_session")}
 
 
-def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[str, Any], integrity: str) -> List[Dict[str, str]]:
+def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[str, Any], integrity: str, forward: Optional[Dict[str, Any]] = None) -> List[Dict[str, str]]:
     names = {"US": "미국", "KR": "한국"}
     out = []
     if integrity != "OK":
@@ -89,6 +89,13 @@ def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[
         out.append({"level": "bad", "text": "자본금이 비어 있어 기준 모델의 매일 스캔을 건너뜁니다. 모델 탭에서 입력하세요."})
     if baseline.get("status") != "REAL":
         out.append({"level": "warn", "text": "기준 모델 추적 기록을 읽지 못했습니다."})
+    if forward is not None:
+        if forward.get("integrity") != "OK":
+            out.append({"level": "bad", "text": "한국 결합 점수 기록 검증에 실패했습니다. 원인을 확인해야 합니다."})
+        elif not forward.get("sessions"):
+            out.append({"level": "warn", "text": "한국 결합 점수 기록이 아직 없습니다."})
+        elif (forward.get("behind_sessions") or 0) >= BEHIND_ALERT:
+            out.append({"level": "warn", "text": f"한국 결합 점수 기록이 {forward['behind_sessions']}거래일 뒤처져 있습니다. KRX 키와 자동 실행을 확인하세요."})
     failed = [STEP_LABELS.get(k, k) for k, v in (auto.get("steps") or {}).items() if isinstance(v, dict) and v.get("status") == automation.FAILED]
     if failed:
         out.append({"level": "bad", "text": f"최근 자동 실행에서 실패한 작업: {', '.join(failed)}"})
@@ -133,9 +140,10 @@ def build(terminal: Any) -> Dict[str, Any]:
         baseline = baseline_record(bool(auto.get("capital_configured")), pt.status(str(terminal.base / "tracking")))
     except Exception as exc:
         baseline = baseline_record(bool(auto.get("capital_configured")), None, type(exc).__name__)
+    forward = kr_forward.status(terminal.base, calendars["KR"])
     last = auto.get("last_run") or {}
     steps = [{"name": STEP_LABELS.get(k, k), "status": (auto.get("steps") or {}).get(k, {}).get("status")} for k in STEP_LABELS]
-    return {"status": "REAL", "model_version": config.MODEL_VERSION, "integrity": verify.get("status"), "qsf": qsf, "baseline": baseline,
+    return {"status": "REAL", "model_version": config.MODEL_VERSION, "integrity": verify.get("status"), "qsf": qsf, "baseline": baseline, "kr_forward": forward,
             "automation": {"installed": auto.get("installed"), "schedule_kst": auto.get("schedule_kst"), "last_run_at": last.get("at"), "latest_session": auto.get("latest_session"), "steps": steps},
-            "alerts": alerts(qsf, baseline, auto, verify.get("status")), "minimum_independent": config.MIN_INDEPENDENT,
+            "alerts": alerts(qsf, baseline, auto, verify.get("status"), forward), "minimum_independent": config.MIN_INDEPENDENT,
             "note": "진행 상황만 보여 줍니다. 수익률을 계산하지 않으며, 기준을 채우기 전에는 점수의 성과를 판단할 수 없습니다."}

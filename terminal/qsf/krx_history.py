@@ -34,8 +34,9 @@ def slim(rows: List[Dict[str, Any]]) -> List[List[Any]]:
     return [[r.get(f) for f in FIELDS] for r in rows]
 
 
-def download(root: Path, key: str, get: Callable[..., Any], start: str, end: str, sleep: Callable[[float], None] = time.sleep, cap: int = DAILY_CAP, pause: float = 0.2, log=print) -> Dict[str, Any]:
-    """Stops at once on a refusal.  An empty answer is a day without trading and is stored, so it is not asked twice."""
+def download(root: Path, key: str, get: Callable[..., Any], start: str, end: str, sleep: Callable[[float], None] = time.sleep, cap: int = DAILY_CAP, pause: float = 0.2, log=print, keep_empty_before: Optional[str] = None) -> Dict[str, Any]:
+    """Stops at once on a refusal.  An empty answer is a day without trading and is stored, so it is not asked twice.  From
+    ``keep_empty_before`` on, an empty answer may be a day not published yet, so it is left to be asked again."""
     calls = stored = empty = 0
     stopped: Optional[str] = None
     fails = 0
@@ -71,6 +72,9 @@ def download(root: Path, key: str, get: Callable[..., Any], start: str, end: str
                 continue
             fails = 0
             rows = slim(r.json().get("OutBlock_1") or [])
+            if not rows and keep_empty_before and day >= keep_empty_before:
+                sleep(pause)
+                continue
             p.parent.mkdir(parents=True, exist_ok=True)
             tmp = p.with_suffix(".tmp")
             with gzip.open(tmp, "wt", encoding="utf-8") as fh:

@@ -120,6 +120,8 @@ QSF short selling (2026-11-07): FINRA short interest and short volume, 5 signals
 
 QSF Korean price signals (2026-11-07): whole-market KRX snapshots with delisted names, 9 signals in 3 equal themes, one run: WEAK_POSITIVE_EVIDENCE at 20 and 252 sessions, but the top fifth lost to the cap-weighted market in every period checked; the effect is the bottom fifth losing. Live score unchanged; forward record is the user's decision. `reports/QSF_KR_RESEARCH_RESULTS.md`.
 
+Korean forward record (2026-11-07): the Korean price score is written every session by the daily job, apart from the live score, write-once and hash-chained, in git-ignored `research_data/krx_forward/`. One evaluation at 240 matured sessions, refused earlier. `reports/QSF_KR_FORWARD_PROTOCOL.md`, `terminal/qsf/kr_forward.py`.
+
 QSF insider purchase research (2026-11-06): SEC Form 4 officer and director open-market buys, 5 pre-registered factors, 10 and 20 sessions: none passed development, so no score and no test (`reports/QSF_INSIDER_RESEARCH_RESULTS.md`). It exposed a gap: tickers whose SEC company number changed have only the new number's filings, which also thins financial history.
 
 Live fix (2026-11-06): eight changed-number tickers join earlier SEC numbers (`sources.CIK_PREDECESSORS`), and their stopped series read as empty. Only XOM's score moved. Open: 331 of 493 other tickers have some series stopped over 400 days before their newest year, read as current by `fundamentals.metrics`, 110 of them in a core series; TFC reports net income under ProfitLoss only. Research facts are unchanged.

@@ -65,19 +65,37 @@ def test_runs_each_step_once_per_session(tmp_path, monkeypatch):
     monkeypatch.setenv("QPP_CAPITAL", "1000")
     d, calls, sent = make(tmp_path)
     assert d.run()["status"] == "DONE"
-    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR"] and len(sent) == 1
+    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR", "KR_FORWARD"] and len(sent) == 1
     assert d.run()["status"] == "UP_TO_DATE"              # the next firing the same day does nothing
-    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR"] and len(sent) == 1
+    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR", "KR_FORWARD"] and len(sent) == 1
 
 
 def test_failed_step_retries_alone_and_others_still_run(tmp_path, monkeypatch):
     monkeypatch.setenv("QPP_CAPITAL", "1000")
     d, calls, sent = make(tmp_path, rc={"SCAN": 2})
     d.run()
-    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR"] and "❌ P6-11B 스캔" in sent[0]
+    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR", "KR_FORWARD"] and "❌ P6-11B 스캔" in sent[0]
     d2, calls2, sent2 = make(tmp_path)
     d2.run()
     assert calls2 == ["SCAN"] and "✅ P6-11B 스캔" in sent2[0]
+
+
+def test_a_korean_day_not_published_yet_waits_quietly_and_retries(tmp_path, monkeypatch):
+    monkeypatch.setenv("QPP_CAPITAL", "1000")
+    d, calls, sent = make(tmp_path, rc={"KR_FORWARD": 3})
+    res = d.run()
+    assert res["steps"]["KR_FORWARD"]["status"] == automation.WAITING and "한국 결합 점수" not in sent[0] and len(sent) == 1
+    d2, calls2, sent2 = make(tmp_path)
+    assert d2.run()["steps"]["KR_FORWARD"]["status"] == automation.OK
+    assert calls2 == ["KR_FORWARD"] and sent2 == []               # the same message is not sent twice
+    assert d2.run()["status"] == "UP_TO_DATE"
+
+
+def test_a_failed_korean_record_is_told_and_a_missing_key_is_named(tmp_path, monkeypatch):
+    monkeypatch.setenv("QPP_CAPITAL", "1000")
+    d, _, sent = make(tmp_path, rc={"KR_FORWARD": 4})
+    d.run()
+    assert "❌ 한국 결합 점수 기록: KRX 키 없음" in sent[0]
 
 
 def test_lab_exit_zero_without_todays_record_is_a_failure(tmp_path):

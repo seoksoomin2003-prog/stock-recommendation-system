@@ -92,3 +92,13 @@ def test_one_session_behind_is_normal_and_two_is_not():
     assert rs.alerts({"KR": rs.market_record([_row("2027-01-01")], _days(2))}, ok, auto, "OK") == []
     assert "뒤처져" in rs.alerts({"KR": rs.market_record([_row("2027-01-01")], _days(3))}, ok, auto, "OK")[0]["text"]
 
+
+
+def test_the_korean_record_is_watched():
+    base = {"status": "REAL", "capital_configured": True}
+    auto = {"installed": True, "steps": {}}
+    text = lambda f: [a["text"] for a in rs.alerts({}, base, auto, "OK", f)]     # noqa: E731
+    assert not text({"integrity": "OK", "sessions": 3, "behind_sessions": 1})
+    assert "뒤처져" in text({"integrity": "OK", "sessions": 3, "behind_sessions": 2})[0]
+    assert "아직 없습니다" in text({"integrity": "OK", "sessions": 0})[0]
+    assert "검증에 실패" in text({"integrity": "BROKEN", "sessions": 3})[0]

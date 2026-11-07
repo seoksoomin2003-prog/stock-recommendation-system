@@ -26,11 +26,11 @@ SCHEDULE = ((7, 10), (8, 10), (12, 10), (20, 10))     # KST: the US close is 06:
 STEP_TIMEOUT = 45 * 60
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
-OK, FAILED, SKIPPED = "OK", "FAILED", "SKIPPED"
-STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "BACKUP": "백업"}
+OK, FAILED, SKIPPED, WAITING = "OK", "FAILED", "SKIPPED", "WAITING"
+STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "BACKUP": "백업"}
 BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
-                "tracking/kr/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl")
+                "tracking/kr/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl")
 
 
 def backup_root() -> Path:
@@ -61,6 +61,15 @@ def backup(base: Path, day: str, root: Optional[Path] = None) -> Dict[str, Any]:
         dst = mirror / src.name
         if not dst.exists():
             mirror.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, dst)
+            if _sha(src) != _sha(dst):
+                raise OSError("backup verification failed")
+            n += 1
+    # The separate Korean record is write-once too.
+    for src in sorted((base / "research_data" / "krx_forward").glob("*.json.gz")):
+        dst = root / "krx_forward" / src.name
+        if not dst.exists():
+            dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(src, dst)
             if _sha(src) != _sha(dst):
                 raise OSError("backup verification failed")
@@ -174,6 +183,9 @@ class Daily:
             if name in ("NEWS", "NEWS_KR"):
                 rc = self.runner(name, ["news", "record"] if name == "NEWS" else ["--market", "KR", "news", "record"])
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "점수 기록 없음" if rc == 3 else f"코드 {rc}"}
+            if name == "KR_FORWARD":                                # waiting is not a failure: the day may not be published yet
+                rc = self.runner(name, ["qsf", "kr-forward-record"])
+                return {"status": OK if rc == 0 else WAITING if rc == 3 else FAILED, "at": at, "detail": None if rc in (0, 3) else "KRX 키 없음" if rc == 4 else f"코드 {rc}"}
             res = backup(self.base, session, self.backup_dir)
             return {"status": OK, "at": at, "detail": f"{res['files']}개 파일"}
         except Exception as exc:                                    # one failed step never stops the others
@@ -228,6 +240,8 @@ class Daily:
         lines = [f"📊 퀀트 터미널 일일 요약 (기준 거래일 {session})", "", "[작업]"]
         for name, label in STEP_NAMES.items():
             s = steps.get(name) or {}
+            if name == "KR_FORWARD" and s.get("status") != FAILED:      # no daily message over a record that is on track
+                continue
             lines.append(f"{icon.get(s.get('status'), '·')} {label}" + (f": {s['detail']}" if s.get("detail") else ""))
         if any((steps.get(n) or {}).get("status") == FAILED for n in STEP_NAMES):
             lines.append("실패한 작업은 다음 예약 시각에 다시 시도합니다.")

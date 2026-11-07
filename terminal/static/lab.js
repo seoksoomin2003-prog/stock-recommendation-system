@@ -150,13 +150,16 @@ async function renderRecord() {
     return `<tr${p.primary ? ' class="rec-primary"' : ""}><td class="l">${p.strategy === "SWING" ? "스윙" : "장기"} ${p.horizon}거래일${p.primary ? " (주 지평)" : ""}</td><td class="num">${p.needed_sessions.toLocaleString("ko-KR")}</td><td class="num">${cell(p)}</td><td class="num">${cell(k)}</td><td class="num">${SPAN(p.remaining_years)}</td></tr>`;
   }).join("");
   const mk = (name, q) => `<div><span>${name} 기록 거래일</span><b class="num">${q.sessions}</b></div><div><span>${name} 현재 버전</span><b class="num">${q.current_version_sessions}</b></div><div><span>${name} 마지막 기록</span><b>${esc(q.last || "—")}</b></div>`;
-  const stat = { OK: "완료", FAILED: "실패", SKIPPED: "건너뜀" };
+  const stat = { OK: "완료", FAILED: "실패", SKIPPED: "건너뜀", WAITING: "자료 대기" };
+  const f = d.kr_forward;
   el.innerHTML = `<div class="panel"><h2>전향 기록 현황 <span class="meta" style="margin:0">${esc(d.model_version)}</span></h2>
     ${d.alerts.length ? `<ul class="rec-alerts">${d.alerts.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("")}</ul>` : '<div class="meta">문제없이 기록이 쌓이고 있습니다.</div>'}
     <h3>QSF 점수 기록</h3><div class="kv">${mk("미국", us)}${mk("한국", kr)}</div>
     <h3>판단까지 남은 기간</h3><div class="tbl-wrap"><table><thead><tr><th class="l">지평</th><th>필요 거래일</th><th>미국 독립 표본</th><th>한국 독립 표본</th><th>남은 기간 (미국)</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="meta">현재 버전 기록만 셉니다. 독립 표본은 만기 거래일 수를 지평으로 나눈 값이고, ${d.minimum_independent}개가 기준입니다. 남은 기간은 매 거래일 빠짐없이 기록한다고 가정한 값입니다.</div>
     <h3>기준 모델 기록</h3>${b.status === "REAL" ? `<div class="kv"><div><span>자본금</span><b>${b.capital_configured ? "입력됨" : '<span class="missing">미입력</span>'}</b></div><div><span>결과 확정 / 기준</span><b class="num">${b.completed} / ${b.target}</b></div><div><span>결과 대기</span><b class="num">${b.pending}</b></div><div><span>유효 스캔 날짜</span><b class="num">${b.scan_dates}</b></div><div><span>마지막 유효 스캔</span><b>${esc(b.last_scan_date || "—")}</b></div></div>` : `<div class="empty">추적 기록을 읽지 못했습니다 (${esc(b.error || "")}).</div>`}
+    <h3>한국 결합 점수 기록 <span class="meta" style="margin:0">라이브와 분리</span></h3><div class="kv"><div><span>기록 거래일</span><b class="num">${f.sessions}</b></div><div><span>마지막 기록</span><b>${esc(f.last || "—")}</b></div><div><span>늦은 기록</span><b class="num">${f.late}</b></div><div><span>독립 표본 (20거래일)</span><b class="num">${f.independent.toFixed(1)} / ${f.target}</b></div><div><span>남은 기간</span><b>${SPAN(f.remaining_sessions / 252)}</b></div></div>
+    <div class="meta">점수와 날짜만 쌓습니다. 수익률은 표본이 찬 뒤 한 번만 평가합니다. 이 점수는 추천과 라이브 점수에 쓰이지 않습니다.</div>
     <h3>자동 실행</h3><div class="kv"><div><span>설치</span><b>${a.installed ? "설치됨" : '<span class="missing">미설치</span>'}</b></div><div><span>실행 시각</span><b>${esc((a.schedule_kst || []).join(", "))}</b></div><div><span>마지막 실행</span><b>${a.last_run_at ? when(a.last_run_at) : DASH}</b></div><div><span>기준 거래일</span><b>${esc(a.latest_session || "—")}</b></div></div>
     <div class="meta">${a.steps.map((s) => `${esc(s.name)}: ${esc(stat[s.status] || "기록 없음")}`).join(" · ")}</div>
     <div class="meta">${esc(d.note)}</div></div>`;
