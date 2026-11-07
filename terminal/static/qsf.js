@@ -177,11 +177,13 @@ async function qsfRank() {
 const QSF_SCREEN_COLS = [["score", "점수"], ["technical", "기술"], ["fundamental", "재무"], ["risk", "위험"], ["events", "이벤트"]];
 const QSF_SCREEN_DOMAIN = { technical: "TECHNICAL", fundamental: "FUNDAMENTAL", risk: "RISK", events: "EVENTS" };
 const QSF_SCREEN_PAGE = 100;
+const QSF_SECTOR = { "Technology": "기술", "Financial Services": "금융", "Healthcare": "헬스케어", "Consumer Cyclical": "경기소비재", "Consumer Defensive": "필수소비재", "Industrials": "산업재", "Basic Materials": "소재", "Energy": "에너지", "Utilities": "유틸리티", "Real Estate": "부동산", "Communication Services": "커뮤니케이션" };
+const qsfSector = (s) => QSF_SECTOR[s] || s || "";
 const qsfScreenState = { form: {}, sort: "score", order: "desc", shown: QSF_SCREEN_PAGE, token: 0, timer: null };
 
 function qsfScreenQuery(limit, offset) {
   const f = qsfScreenState.form, p = new URLSearchParams({ market: state.market, strategy: qsfState.strategy, sort: qsfScreenState.sort, order: qsfScreenState.order, limit, offset });
-  for (const k of ["q", "action", "entry", "confidence", "min_score", "min_technical", "min_fundamental", "min_risk"]) if (f[k]) p.set(k, f[k]);
+  for (const k of ["q", "sector", "action", "entry", "confidence", "min_score", "min_technical", "min_fundamental", "min_risk"]) if (f[k]) p.set(k, f[k]);
   const flags = isKR() ? ["actionable", "no_financing", "no_high_risk", "buyback"] : ["actionable"];
   for (const k of flags) if (f[k]) p.set(k, "1");
   return p.toString();
@@ -197,6 +199,7 @@ function qsfScreenBuild() {
     <div class="meta">최신 스캔의 전 종목을 거르고 정렬합니다. 점수를 바꾸지 않으며, 걸러 낸 목록이 수익이 더 좋다는 근거는 아닙니다. 물어본 값이 없는 종목은 0점으로 치지 않고 빼서 따로 셉니다.</div>
     <form id="qsfscreenform" class="qs-form" autocomplete="off">
       <label class="qs-wide">검색<input type="search" name="q" maxlength="40" placeholder="코드 또는 이름" value="${esc(f.q || "")}"></label>
+      <label>업종<select name="sector"><option value="">전체</option>${f.sector ? `<option value="${esc(f.sector)}" selected>${esc(qsfSector(f.sector))}</option>` : ""}</select></label>
       <label>판단<select name="action">${opt("action", "", "전체")}${opt("action", "BUY", "매수 후보")}${opt("action", "WATCH", "관찰")}${opt("action", "AVOID", "회피")}</select></label>
       <label>진입<select name="entry">${opt("entry", "", "전체")}${Object.keys(QSF_ENTRY).map((k) => opt("entry", k, esc(QSF_ENTRY[k]))).join("")}</select></label>
       <label>신뢰도<select name="confidence">${opt("confidence", "", "전체")}${opt("confidence", "MEDIUM", "보통 이상")}${opt("confidence", "HIGH", "높음")}</select></label>
@@ -226,13 +229,20 @@ async function qsfScreenRun(fresh) {
   if (token !== qsfScreenState.token || mk !== state.market) return;
   if (d.status !== "REAL") { $("#qsfscreencount").textContent = ""; body.innerHTML = `<div class="empty">아직 스캔 기록이 없습니다.</div>`; return; }
   $("#qsfscreencount").textContent = `${QSF_STRAT[d.strategy]} ${d.total}개 중 ${d.matched}개 · 기준 ${d.session}${d.missing_value ? ` · 값이 없어 뺀 종목 ${d.missing_value}개` : ""}`;
+  const pick = $("#qsfscreenform").elements.sector;
+  if (pick.options.length <= 2) {      // 처음 받은 응답의 업종으로 선택지를 채웁니다
+    const now = pick.value;
+    pick.innerHTML = `<option value="">전체</option>` + Object.entries(d.sectors).map(([k, n]) => `<option value="${esc(k)}">${esc(qsfSector(k))} (${n})</option>`).join("");
+    pick.value = now;
+  }
   if (!d.matched) { body.innerHTML = `<div class="empty">조건에 맞는 종목이 없습니다.</div>`; return; }
+  const spread = Object.entries(d.matched_sectors).slice(0, 6).map(([k, n]) => `${esc(qsfSector(k))} ${n}`).join(" · ");
   const head = QSF_SCREEN_COLS.map(([k, label]) => { const on = qsfScreenState.sort === k;
     return `<th aria-sort="${on ? (qsfScreenState.order === "desc" ? "descending" : "ascending") : "none"}"><button type="button" class="qs-sort" data-sort="${k}">${label}${on ? (qsfScreenState.order === "desc" ? " ▼" : " ▲") : ""}</button></th>`; }).join("");
   const rows = d.rows.map((r) => `<tr><td class="l"><button type="button" class="qs-open" data-t="${esc(r.ticker)}"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span></button>${r.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(r.filing_events)}</td>
-      <td class="num">${qsfNum(r.score)}</td>${Object.values(QSF_SCREEN_DOMAIN).map((k) => `<td class="num">${qsfNum((r.domains || {})[k], 0)}</td>`).join("")}
+      <td class="l">${r.sector ? esc(qsfSector(r.sector)) : '<span class="missing">없음</span>'}</td><td class="num">${qsfNum(r.score)}</td>${Object.values(QSF_SCREEN_DOMAIN).map((k) => `<td class="num">${qsfNum((r.domains || {})[k], 0)}</td>`).join("")}
       <td class="l">${qsfLabel(r)}</td><td class="l">${esc(QSF_CONF[r.confidence] || "")}</td><td class="l">${esc(QSF_ENTRY[r.entry_status] || "")}${r.gates.length ? `<div class="meta" style="margin:0">${r.gates.map((g) => esc(QSF_GATE[g] || g)).join(", ")}</div>` : ""}</td></tr>`).join("");
-  body.innerHTML = `<div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">종목</th>${head}<th class="l">판단</th><th class="l">신뢰도</th><th class="l">진입과 게이트</th></tr></thead><tbody>${rows}</tbody></table></div>
+  body.innerHTML = `${spread ? `<div class="meta">결과의 업종 분포: ${spread}</div>` : ""}<div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">종목</th><th class="l">업종</th>${head}<th class="l">판단</th><th class="l">신뢰도</th><th class="l">진입과 게이트</th></tr></thead><tbody>${rows}</tbody></table></div>
     ${d.matched > d.rows.length ? `<button type="button" id="qsfscreenmore" style="margin-top:10px">${d.matched - d.rows.length}개 더 보기</button>` : ""}`;
   body.querySelectorAll(".qs-sort").forEach((b) => { b.onclick = () => { const k = b.dataset.sort;
     qsfScreenState.order = qsfScreenState.sort === k && qsfScreenState.order === "desc" ? "asc" : "desc"; qsfScreenState.sort = k; qsfScreenRun(false); }; });
@@ -254,11 +264,11 @@ async function qsfScreenCsv() {
   try { d = await api(`/api/qsf/screen?${qsfScreenQuery(2000, 0)}`); } catch (e) { msg.textContent = "저장 실패: " + e.message; return; }
   if (d.status !== "REAL") { msg.textContent = "저장할 스캔 기록이 없습니다."; return; }
   const round = (v) => (typeof v === "number" ? Math.round(v * 10) / 10 : v);
-  const lines = [["기준일", "전략", "코드", "이름", "점수", "기술", "재무", "위험", "이벤트", "판단", "신뢰도", "진입", "게이트", "가격", "자금조달 결정", "자사주 취득", "변동성 높음"].join(",")];
+  const lines = [["기준일", "전략", "코드", "이름", "업종", "점수", "기술", "재무", "위험", "이벤트", "판단", "신뢰도", "진입", "게이트", "가격", "자금조달 결정", "자사주 취득", "변동성 높음"].join(",")];
   for (const r of d.rows) {
     const dom = r.domains || {}, mark = r.filing_events;
     const marks = d.market === "KR" ? [mark && mark.financing ? "예" : "", mark && mark.buyback ? "예" : "", r.high_risk ? "예" : ""] : ["", "", ""];
-    lines.push([d.session, QSF_STRAT[d.strategy], r.ticker, r.name, round(r.score), round(dom.TECHNICAL), round(dom.FUNDAMENTAL), round(dom.RISK), round(dom.EVENTS), r.action_label, QSF_CONF[r.confidence], QSF_ENTRY[r.entry_status], r.gates.map((g) => QSF_GATE[g] || g).join(" / "), r.price, ...marks].map(qsfCsvCell).join(","));
+    lines.push([d.session, QSF_STRAT[d.strategy], r.ticker, r.name, qsfSector(r.sector), round(r.score), round(dom.TECHNICAL), round(dom.FUNDAMENTAL), round(dom.RISK), round(dom.EVENTS), r.action_label, QSF_CONF[r.confidence], QSF_ENTRY[r.entry_status], r.gates.map((g) => QSF_GATE[g] || g).join(" / "), r.price, ...marks].map(qsfCsvCell).join(","));
   }
   const url = URL.createObjectURL(new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }));
   const a = document.createElement("a");

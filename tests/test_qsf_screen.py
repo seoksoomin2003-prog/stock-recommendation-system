@@ -69,6 +69,33 @@ def test_a_stock_not_on_the_filing_record_is_unknown_not_clean():
     assert set(tickers(sc.screen(data, {}))) == {"CLEAN", "NEW"}
 
 
+def test_sector_filter_counts_and_missing():
+    data = latest(row("T1", sector="Technology"), row("T2", sector="Technology"), row("F1", 90, sector="Energy"), row("N"))
+    all_ = sc.screen(data, {})
+    assert all_["sectors"] == {"Technology": 2, "Energy": 1} and all_["matched_sectors"] == all_["sectors"]
+    out = sc.screen(data, {"sector": "Technology"})
+    assert set(tickers(out)) == {"T1", "T2"} and out["missing_value"] == 1 and out["sectors"]["Energy"] == 1 and out["matched_sectors"] == {"Technology": 2}
+    assert sc.screen(data, {"sector": "Nothing"})["matched"] == 0
+
+
+def test_sectors_come_from_what_is_stored_and_never_the_network(tmp_path):
+    import json
+
+    from terminal.cache import FileCache
+    from terminal.qsf.service import QSF
+    svc = QSF.__new__(QSF)
+    svc.base, svc.dir, svc.cache, svc._sector_memo = tmp_path, tmp_path, FileCache(tmp_path / "cache"), {}
+    svc.cache.write("info:005930.KS", {"sector": "Technology"})
+    svc.cache.write("info:035720.KQ", {"sector": "Communication Services"})
+    svc.cache.write("info:000000.KS", {"longName": "x"})
+    (tmp_path / "latest_KR.json").write_text(json.dumps({"status": "REAL", "generated_at": "a", "rows": [{"ticker": "005930"}, {"ticker": "035720"}, {"ticker": "000000"}, {"ticker": "111111"}]}), encoding="utf-8")
+    before = (tmp_path / "latest_KR.json").read_bytes()
+    svc._high_risk = lambda m: {"session": None, "codes": set()}
+    svc._filing_marks = lambda m: {"session": None, "financing": set(), "buyback": set(), "known": set()}
+    assert [r["sector"] for r in svc.screen_rows("KR")["rows"]] == ["Technology", "Communication Services", None, None]
+    assert (tmp_path / "latest_KR.json").read_bytes() == before
+
+
 def test_paging():
     data = latest(*[row(f"S{i:02d}", 90 - i) for i in range(30)])
     out = sc.screen(data, {"limit": "10", "offset": "25"})
@@ -103,7 +130,7 @@ def test_the_route_serves_the_scan_and_passes_bad_input_up_as_a_refusal():
     from terminal.server import routes
 
     class Qsf:
-        def latest(self, market):
+        def screen_rows(self, market):
             assert market == "KR"
             return latest(row("A", 80), row("B", 40))
 

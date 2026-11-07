@@ -50,6 +50,7 @@ class QSF:
         self.now = now or (lambda: datetime.now(timezone.utc))
         self.dir = self.base / "data" / "qsf"
         self.cache = FileCache(self.dir / "cache")
+        self._sector_memo: Dict[str, Any] = {}
         self.ledger = ledger.Ledger(self.base)
         self._terminal = terminal
         self._dart = dart
@@ -645,6 +646,25 @@ class QSF:
             return out
         except (OSError, ValueError):
             return {"status": "UNAVAILABLE", "market": market, "rows": [], "reason": "아직 스캔 기록이 없습니다."}
+
+    def _sector_of(self, market: str, ticker: str) -> Optional[str]:
+        """From the company information the scan already stored.  Never asks the network, and a stock with no stored sector has none."""
+        for key in ([f"info:{ticker}"] if market == "US" else [f"info:{ticker}.KS", f"info:{ticker}.KQ"]):
+            rec = self.cache.read(key)
+            sector = ((rec or {}).get("data") or {}).get("sector")
+            if sector:
+                return str(sector)
+        return None
+
+    def screen_rows(self, market: str = "US") -> Dict[str, Any]:
+        """The newest scan with each stock's sector.  Added when read, so no score or record contains it."""
+        out = self.latest(market)
+        memo = self._sector_memo.get(market)
+        if not memo or memo[0] != out.get("generated_at"):
+            memo = self._sector_memo[market] = (out.get("generated_at"), {t: self._sector_of(market, t) for t in {r.get("ticker") for r in out.get("rows") or []}})
+        for r in out.get("rows") or []:
+            r["sector"] = memo[1].get(r.get("ticker"))
+        return out
 
     def _loader(self, market: str) -> Callable[[str], List[Dict]]:
         if market == "US":

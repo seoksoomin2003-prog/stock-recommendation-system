@@ -54,7 +54,7 @@ def parse(q: Dict[str, Any]) -> Dict[str, Any]:
     order = q.get("order") or "desc"
     if order not in ("asc", "desc"):
         raise ValueError("INVALID_ORDER")
-    return {"strategy": strategy, "actions": actions, "entry": entry, "confidence": conf, "sort": sort, "order": order,
+    return {"sector": str(q.get("sector") or "")[:MAX_QUERY] or None, "strategy": strategy, "actions": actions, "entry": entry, "confidence": conf, "sort": sort, "order": order,
             "actionable": _flag(q.get("actionable"), "actionable"), "no_financing": _flag(q.get("no_financing"), "no_financing"), "no_high_risk": _flag(q.get("no_high_risk"), "no_high_risk"), "buyback": _flag(q.get("buyback"), "buyback"),
             "minimums": {k: v for k in DOMAINS if (v := _number(q.get(f"min_{k}"), f"min_{k}", 0, 100)) is not None}, "min_score": _number(q.get("min_score"), "min_score", 0, 100),
             "text": str(q.get("q") or "").strip().casefold()[:MAX_QUERY], "limit": int(_number(q.get("limit"), "limit", 1, MAX_LIMIT) or 100), "offset": int(_number(q.get("offset"), "offset", 0, 1e6) or 0)}
@@ -80,7 +80,9 @@ def _keep(row: Dict[str, Any], f: Dict[str, Any]) -> Tuple[bool, bool]:
     marks = row.get("filing_events") or {}
     if (f["no_financing"] and marks.get("financing")) or (f["no_high_risk"] and row.get("high_risk")):
         return False, False
-    missing = bool(row.get("filing_unknown") and (f["no_financing"] or f["buyback"]))
+    missing = bool(row.get("filing_unknown") and (f["no_financing"] or f["buyback"])) or bool(f["sector"] and not row.get("sector"))
+    if f["sector"] and row.get("sector") and row["sector"] != f["sector"]:
+        return False, False
     if f["buyback"] and not missing and not marks.get("buyback"):
         return False, False
     for key, low in [*f["minimums"].items(), *([("score", f["min_score"])] if f["min_score"] is not None else [])]:
@@ -90,6 +92,15 @@ def _keep(row: Dict[str, Any], f: Dict[str, Any]) -> Tuple[bool, bool]:
         elif v < low:
             return False, False
     return not missing, missing
+
+
+def _counts(rows: List[Dict[str, Any]]) -> Dict[str, int]:
+    """How many stocks per sector, most first.  A stock with no sector is left out of the table rather than given one."""
+    found: Dict[str, int] = {}
+    for r in rows:
+        if r.get("sector"):
+            found[r["sector"]] = found.get(r["sector"], 0) + 1
+    return dict(sorted(found.items(), key=lambda x: (-x[1], x[0])))
 
 
 def screen(latest: Dict[str, Any], query: Dict[str, Any]) -> Dict[str, Any]:
@@ -110,4 +121,4 @@ def screen(latest: Dict[str, Any], query: Dict[str, Any]) -> Dict[str, Any]:
     ordered = known + sorted(unknown, key=lambda r: str(r.get("ticker")))
     page = ordered[f["offset"]:f["offset"] + f["limit"]]
     return {"status": "REAL", "market": latest.get("market"), "session": latest.get("session"), "model_version": latest.get("model_version"), "generated_at": latest.get("generated_at"), "strategy": f["strategy"],
-            "total": len(rows), "matched": len(ordered), "missing_value": missing, "offset": f["offset"], "limit": f["limit"], "sort": f["sort"], "order": f["order"], "rows": page}
+            "total": len(rows), "matched": len(ordered), "missing_value": missing, "offset": f["offset"], "limit": f["limit"], "sort": f["sort"], "order": f["order"], "sectors": _counts(rows), "matched_sectors": _counts(ordered), "rows": page}
