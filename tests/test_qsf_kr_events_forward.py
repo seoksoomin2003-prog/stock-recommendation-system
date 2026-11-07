@@ -228,3 +228,38 @@ def test_a_full_evaluation_runs_once_with_fixed_sets(tmp_path, monkeypatch):
 def test_the_record_is_backed_up():
     from terminal import automation
     assert "research_data/krx_forward_events/index.jsonl" in automation.BACKUP_GLOBS
+
+
+def test_marks_read_the_newest_record_and_nothing_without_one(tmp_path, built, monkeypatch):
+    assert ef.marks(tmp_path) == {"session": None, "financing": [], "buyback": []}
+    run, days = linked(tmp_path, built)
+    monkeypatch.setattr(ef.time, "sleep", lambda s: None)
+    run_record(run, days, first=days[-1], get=dart_get(lambda p: {"status": "000", "total_page": 1, "list": [{"rcept_no": "20260105000001", "corp_code": "C", "stock_code": STOCKS[0], "report_nm": TITLE_FIN}, {"rcept_no": "20260105000002", "corp_code": "C", "stock_code": STOCKS[1], "report_nm": TITLE_BUY}]} if p["bgn_de"] == "20260101" else {"status": "013"}))
+    got = ef.marks(run)
+    assert got == {"session": days[-1], "financing": [STOCKS[0]], "buyback": [STOCKS[1]]}
+
+
+def test_a_mark_never_touches_a_score_or_a_record(tmp_path, monkeypatch):
+    from terminal.qsf.service import QSF
+    svc = QSF.__new__(QSF)
+    svc.base, svc.dir = tmp_path, tmp_path / "qsf"
+    svc.dir.mkdir()
+    row = {"ticker": STOCKS[0], "scores": {"SWING": 61.0}}
+    (svc.dir / "latest_KR.json").write_text(json.dumps({"status": "REAL", "rows": [row, {"ticker": STOCKS[1]}]}), encoding="utf-8")
+    monkeypatch.setattr(ef, "marks", lambda b: {"session": "2026-11-06", "financing": [STOCKS[0]], "buyback": []})
+    before = (svc.dir / "latest_KR.json").read_bytes()
+    got = svc.latest("KR")["rows"]
+    assert got[0]["filing_events"] == {"session": "2026-11-06", "financing": True, "buyback": False} and got[0]["scores"] == row["scores"] and "filing_events" not in got[1]
+    assert (svc.dir / "latest_KR.json").read_bytes() == before
+
+
+def test_marks_are_korean_only_and_a_broken_record_shows_nothing(tmp_path, monkeypatch):
+    from terminal.qsf.service import QSF
+    svc = QSF.__new__(QSF)
+    svc.base = tmp_path
+    assert svc._filing_mark(svc._filing_marks("US"), "AAPL") is None
+
+    def boom(b):
+        raise OSError("gone")
+    monkeypatch.setattr(ef, "marks", boom)
+    assert svc._filing_mark(svc._filing_marks("KR"), STOCKS[0]) is None

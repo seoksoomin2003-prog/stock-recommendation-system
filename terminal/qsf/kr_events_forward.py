@@ -84,6 +84,16 @@ def status(base: Path, calendar: Optional[Sequence[str]]) -> Dict[str, Any]:
     return kf.status(base, calendar, FOLDER)
 
 
+def marks(base: Path) -> Dict[str, Any]:
+    """Who has a financing or buyback decision on the newest record.  For display: it feeds no score.  A code not on the record is unknown, not a no."""
+    rows = kf.read_index(base, FOLDER)
+    if not rows:
+        return {"session": None, "financing": [], "buyback": []}
+    day = rows[-1]["session"]
+    doc = kf._read_day(Path(base) / FOLDER, day)["rows"]
+    return {"session": day, "financing": sorted(r["code"] for r in doc if r["financing"] == 1), "buyback": sorted(r["code"] for r in doc if r["buyback"] == 1)}
+
+
 # ---------------------------------------------------------------------- the one evaluation
 def _sets(fin: np.ndarray, buy: np.ndarray, px: kr.KrPrices, rows: List[int], picks: List[int], cost: float) -> Dict[str, Any]:
     """Fixed sets with no ranking inside, as in the test, each half held to the same rule."""

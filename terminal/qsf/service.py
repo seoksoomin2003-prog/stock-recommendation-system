@@ -415,7 +415,7 @@ class QSF:
         own = config.STYLE_TO_STRATEGY.get((pos or {}).get("style"))
         cards = {s: self.card(ctx, s, pos if own in (None, s) else None) for s in strategies}
         risky = self._high_risk(market)
-        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None, "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
+        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None, "filing_events": self._filing_mark(self._filing_marks(market), ticker), "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
 
     def signal(self, ticker: str, weight_pct: Optional[float] = None, max_weight_pct: Optional[float] = None, market: str = "US") -> Dict[str, Any]:
         """Score and exit reading of one held position, under the profile of its own style only."""
@@ -427,7 +427,7 @@ class QSF:
             return {"status": "UNAVAILABLE", "ticker": ticker, "reason": ctx["reason"]}
         strategy = config.STYLE_TO_STRATEGY[pos["style"]]
         c = self.card(ctx, strategy, {**pos, "weight_pct": weight_pct, "max_weight_pct": max_weight_pct})
-        out = {"status": "REAL", "ticker": ticker, "style": pos["style"], "strategy": strategy, "rank_basis": ctx["rank_basis"], "score": c["score"], "band_label": c["band_label"], "confidence": c["confidence"],
+        out = {"status": "REAL", "ticker": ticker, "style": pos["style"], "strategy": strategy, "rank_basis": ctx["rank_basis"], "filing_events": self._filing_mark(self._filing_marks(market), ticker), "score": c["score"], "band_label": c["band_label"], "confidence": c["confidence"],
                "coverage": c["coverage"], "data_date": c["data_date"], "gates": c["gates"], "exit": c["exit"], "earnings_date": (ctx.get("earnings") or {}).get("date")}
         if strategy == "SWING":
             step = holding.stepper(market)
@@ -612,13 +612,34 @@ class QSF:
             return {"session": None, "codes": set()}
         return {"session": found["session"], "codes": set(found["codes"])}
 
+    def _filing_marks(self, market: str) -> Dict[str, Any]:
+        """Korean filings of the last 252 sessions, from the separate record.  Added when read, so no score or record contains it."""
+        empty = {"session": None, "financing": set(), "buyback": set()}
+        if market != "KR":
+            return empty
+        from terminal.qsf import kr_events_forward
+        try:
+            found = kr_events_forward.marks(self.base)
+        except (OSError, ValueError, KeyError):
+            return empty
+        return {"session": found["session"], "financing": set(found["financing"]), "buyback": set(found["buyback"])}
+
+    @staticmethod
+    def _filing_mark(found: Dict[str, Any], ticker: str) -> Optional[Dict[str, Any]]:
+        financing, buyback = ticker in found["financing"], ticker in found["buyback"]
+        return {"session": found["session"], "financing": financing, "buyback": buyback} if financing or buyback else None
+
     def latest(self, market: str = "US") -> Dict[str, Any]:
         try:
             out = json.loads((self.dir / f"latest_{market}.json").read_text(encoding="utf-8"))
             risky = self._high_risk(market)
+            filed = self._filing_marks(market)
             for r in out.get("rows") or []:
                 if r.get("ticker") in risky["codes"]:
                     r["high_risk"] = {"session": risky["session"]}
+                mark = self._filing_mark(filed, r.get("ticker"))
+                if mark:
+                    r["filing_events"] = mark
             return out
         except (OSError, ValueError):
             return {"status": "UNAVAILABLE", "market": market, "rows": [], "reason": "아직 스캔 기록이 없습니다."}

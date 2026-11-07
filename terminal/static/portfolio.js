@@ -128,7 +128,8 @@ async function loadSignals() {
       if (a !== "HOLD") notes.push(`<li class="${tone === "act-sell" ? "bad" : "warn"}"><b>${esc(t)} ${esc(QSF_EXIT[a] || a)}</b>: ${esc(s.exit.reason)}</li>`);
     });
     const noRank = d.items.filter((s) => s.rank_basis === "NO_SCAN").map((s) => s.ticker);
-    out.innerHTML = `${notes.length ? `<ul class="alerts">${notes.join("")}</ul>` : "조치가 필요한 종목이 없습니다."}<div class="meta">${esc(d.note)}</div>${noRank.length ? `<div class="meta">${esc(noRank.join(", "))}: ${QSF_RANK_NOTE.NO_SCAN}</div>` : ""}`;
+    const financed = d.items.filter((s) => s.filing_events && s.filing_events.financing).map((s) => s.ticker);
+    out.innerHTML = `${notes.length ? `<ul class="alerts">${notes.join("")}</ul>` : "조치가 필요한 종목이 없습니다."}<div class="meta">${esc(d.note)}</div>${financed.length ? `<div class="meta">${esc(financed.join(", "))}: 최근 252거래일 안에 자금조달 결정 공시가 있습니다. 참고용이며 판정과 점수에 반영되지 않습니다.</div>` : ""}${noRank.length ? `<div class="meta">${esc(noRank.join(", "))}: ${QSF_RANK_NOTE.NO_SCAN}</div>` : ""}`;
   } catch (e) { out.innerHTML = `<span class="err">판정을 계산하지 못했습니다: ${esc(e.message)}</span>`; }
 }
 function styleStatsHtml(by) {

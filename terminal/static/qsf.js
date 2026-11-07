@@ -47,6 +47,8 @@ async function qsfEvaluate(t, market) {
 
 const QSF_RISK_NOTE = "참고용 표시입니다. 점수와 순위에 반영되지 않으며, 이 종목을 피하면 수익이 난다는 검증은 아직 없습니다. 한국 시장 변동성 상위 20%입니다.";
 const qsfRiskTag = () => `<span class="badge risk-note" title="${QSF_RISK_NOTE}">변동성 높음 · 참고</span>`;
+const QSF_FILING_NOTE = "참고용 표시입니다. 점수와 순위에 반영되지 않습니다. 최근 252거래일 안의 첫 공시를 제목으로 읽었고, 취소 여부와 규모는 보지 않습니다. 과거 시험에서 자금조달 결정 종목의 평균 수익은 낮았지만, 앞으로의 자료로는 아직 확인되지 않았습니다. 자사주 묶음은 과거에도 시장을 이기지 못했습니다.";
+const qsfFilingTags = (f) => !f ? "" : (f.financing ? ` <span class="badge risk-note" title="${QSF_FILING_NOTE}">자금조달 결정 · 참고</span>` : "") + (f.buyback ? ` <span class="badge" title="${QSF_FILING_NOTE}">자사주 취득 · 참고</span>` : "");
 const QSF_RANK_NOTE = {
   NO_SCAN: "이 거래일의 전 종목 순위가 아직 없어 상대강도를 벤치마크 대비로 계산했습니다. 스캔이 끝나면 점수가 달라질 수 있습니다.",
   OUTSIDE_UNIVERSE: "스캔 대상이 아닌 종목입니다. 상대강도는 스캔 종목의 수익률 분포에 넣어 계산했습니다.",
@@ -54,8 +56,9 @@ const QSF_RANK_NOTE = {
 };
 function qsfDrawDetail(d) {
   const p = d.p6_reference;
-  $("#qsfdetail").innerHTML = `<div class="panel"><h2>${esc(d.ticker)} ${esc(d.name || "")} <span class="badge">${d.market === "US" ? "미국" : "한국"}</span>${d.high_risk ? " " + qsfRiskTag() : ""}</h2>
+  $("#qsfdetail").innerHTML = `<div class="panel"><h2>${esc(d.ticker)} ${esc(d.name || "")} <span class="badge">${d.market === "US" ? "미국" : "한국"}</span>${d.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(d.filing_events)}</h2>
     ${d.high_risk ? `<div class="meta">${QSF_RISK_NOTE} 기준일 ${esc(d.high_risk.session)}.</div>` : ""}
+    ${d.filing_events ? `<div class="meta">${QSF_FILING_NOTE} 기준일 ${esc(d.filing_events.session)}.</div>` : ""}
     ${QSF_RANK_NOTE[d.rank_basis] ? `<div class="meta">${QSF_RANK_NOTE[d.rank_basis]}</div>` : ""}
     ${p ? `<div class="meta">P6-11B 참고: ${p.status !== "REAL" ? "기록 없음" : p.in_top5 ? `최근 스캔 상위 5 (${p.rank}위)` : "최근 스캔 상위 5 아님"} · 별도 모델이며 점수에 합치지 않습니다.</div>` : ""}
     <h3>당일 점검 <span class="meta" style="margin:0">점수에 포함되지 않음</span></h3><div id="qsftoday"></div>
@@ -127,7 +130,7 @@ function qsfRowHtml(r) {
   const out = r.actionability !== "ACTIONABLE";
   return `<div class="qsf-item"><button type="button" class="qsf-row" data-qsf="${esc(r.ticker)}" aria-expanded="false">
       <span class="qr-rank num">${r.rank}</span>
-      <span class="qr-name"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span>${r.high_risk ? " " + qsfRiskTag() : ""}</span>
+      <span class="qr-name"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span>${r.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(r.filing_events)}</span>
       <span class="qr-score num">${qsfNum(r.score)}</span><span class="qr-act">${qsfLabel(r)}</span>
       <span class="qr-conf">신뢰도 ${QSF_CONF[r.confidence]}</span><span class="qr-entry">${QSF_ENTRY[r.entry_status] || ""}</span>
       <span class="qr-gate">${out ? `<span class="qr-out">상위 3 제외</span> ` : ""}${r.gates.map((g) => esc(QSF_GATE[g] || g)).join(", ")}</span>
@@ -146,7 +149,8 @@ async function qsfRank() {
       <select id="qsfstrat" aria-label="전략"><option value="SWING">스윙</option><option value="LONG_TERM">장기</option></select></h2>
     <div class="meta">점수순으로 보여 줄 뿐 수익이 더 좋다는 근거는 아닙니다. 위험 게이트에 걸렸거나 데이터가 부족한 종목은 상위 3개에서 뺍니다.</div>
     ${all.some((r) => r.high_risk) ? `<div class="meta">변동성 높음 · 참고: ${QSF_RISK_NOTE}</div>` : ""}
-    ${top.map((r) => `<section class="qsf-top"><h3><span class="qr-rank num">${r.rank}위</span> ${esc(r.ticker)} <span class="meta" style="margin:0">${esc(r.name || "")}</span>${r.high_risk ? " " + qsfRiskTag() : ""}</h3><div class="qsf-top-body" data-top="${esc(r.ticker)}"></div></section>`).join("") || '<div class="empty">상위에 올릴 종목이 없습니다.</div>'}
+    ${all.some((r) => r.filing_events) ? `<div class="meta">공시 표시 · 참고: ${QSF_FILING_NOTE}</div>` : ""}
+    ${top.map((r) => `<section class="qsf-top"><h3><span class="qr-rank num">${r.rank}위</span> ${esc(r.ticker)} <span class="meta" style="margin:0">${esc(r.name || "")}</span>${r.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(r.filing_events)}</h3><div class="qsf-top-body" data-top="${esc(r.ticker)}"></div></section>`).join("") || '<div class="empty">상위에 올릴 종목이 없습니다.</div>'}
     <h3 style="margin-top:18px">나머지 순위 <span class="meta" style="margin:0">눌러서 자세히</span></h3>
     <div class="qsf-rows">${rest.map(qsfRowHtml).join("")}</div>
     <div class="meta">${d.tickers}종목 평가 · 생성 ${esc((d.generated_at || "").slice(0, 16))} UTC</div></div>`;
