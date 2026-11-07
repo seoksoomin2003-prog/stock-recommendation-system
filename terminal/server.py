@@ -16,6 +16,7 @@ from terminal.services import Terminal
 
 STATIC = Path(__file__).resolve().parent / "static"
 from terminal import automation, record_status, today  # noqa: E402
+from terminal.qsf import screen as qsf_screen  # noqa: E402
 
 HOST = "127.0.0.1"
 log = logging.getLogger("terminal")
@@ -55,6 +56,7 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/automation/status"): lambda q, b: automation.status(t.base),
         ("GET", "/api/qsf/evaluate"): lambda q, b: t.qsf_evaluate(q.get("t", ""), q.get("market", "US")),
         ("GET", "/api/qsf/latest"): lambda q, b: t.qsf.latest(_market(q.get("market", "US"))),
+        ("GET", "/api/qsf/screen"): lambda q, b: qsf_screen.screen(t.qsf.latest(_market(q.get("market", "US"))), q),
         ("GET", "/api/qsf/validation"): lambda q, b: t.qsf.validation(),
         ("GET", "/api/record"): lambda q, b: record_status.build(t),
         ("GET", "/api/today"): lambda q, b: today.build(t, q.get("t", ""), _market(q.get("market", "US"))),

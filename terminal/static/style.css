@@ -162,6 +162,24 @@ tr.voided td { color: var(--muted); text-decoration: line-through; }
 .qsf-today-fold { margin-top: 10px; font-size: 13px; }
 .qsf-today-fold > summary { cursor: pointer; font-weight: 600; }
 .qsf-today h3 { margin: 12px 0 6px; font-size: 13px; }
+.qs-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px 10px; margin: 10px 0; align-items: end; }
+.qs-form label { display: grid; gap: 3px; font-size: 12px; min-width: 0; }
+.qs-form input, .qs-form select { width: 100%; min-width: 0; box-sizing: border-box; }
+.qs-form .qs-wide { grid-column: span 2; }
+.qs-form .qs-checks { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.qs-form .qs-check { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; }
+.qs-form .qs-check input { width: auto; }
+.qs-form .qs-actions { grid-column: 1 / -1; display: flex; gap: 8px; }
+.qs-sort, .qs-open { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.qs-sort { font-weight: 600; white-space: nowrap; }
+.qs-sort:hover, .qs-open:hover b { color: var(--accent); }
+.qs-table td { vertical-align: top; }
+@media (max-width: 720px) {
+  .qs-form .qs-wide { grid-column: 1 / -1; }
+  .qs-table td:first-child { white-space: normal; }
+  .qs-table .qs-open { display: block; width: 116px; white-space: normal; overflow-wrap: anywhere; }
+  .qs-table .badge { white-space: normal; }
+}
 .qsf-news { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .qsf-news li { display: grid; gap: 1px; min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 720px) {
