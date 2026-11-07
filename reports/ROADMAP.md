@@ -128,6 +128,8 @@ QSF insider purchase research (2026-11-06): SEC Form 4 officer and director open
 
 Live fix (2026-11-06): eight changed-number tickers join earlier SEC numbers (`sources.CIK_PREDECESSORS`), and their stopped series read as empty. Only XOM's score moved. Open: 331 of 493 other tickers have some series stopped over 400 days before their newest year, read as current by `fundamentals.metrics`, 110 of them in a core series; TFC reports net income under ProfitLoss only. Research facts are unchanged.
 
+Live input checks (2026-11-07): Korean prices and DART figures match KRX and a second DART endpoint. US multi-class companies carry a market value too low because Yahoo counts one share class; 19 names confirmed, 5 long-term buy candidates affected. Not fixed, awaits approval. `reports/QSF_US_SHARECLASS_CHECK_2026_11_07.md`, `reports/DECISIONS_FOR_USER.md`.
+
 ## Next tasks (candidates, not started)
 
 0. Multi-market:
