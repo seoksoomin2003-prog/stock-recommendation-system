@@ -342,8 +342,10 @@ class QSF:
         regime = self.regime(market)
         session = self._session(market) if market == "US" else regime.get("session") or self._session("KR", bench)
         bars, bench = _clean(bars, session), _clean(bench or [], session)
-        if len(bars) < 30:
+        if not bars:
             return {"error": "NO_PRICE", "reason": "가격 이력을 받지 못했습니다."}
+        if len(bars) < 30:
+            return {"error": "SHORT_HISTORY", "reason": f"거래 이력이 {len(bars)}거래일뿐이라 점수를 내지 않습니다. 30거래일이 필요합니다."}
         ctx = {"market": market, "ticker": ticker, "symbol": sym, "bars": bars, "bench": bench, "bench_name": "SPY" if market == "US" else ("코스닥" if bench_sym == "^KQ11" else "코스피"),
                "benchmark": bench_sym, "regime": regime, "rs_rank": pre.get("rs_rank"), "expected_session": session, "price_fresh": bars[-1]["date"] == session, "name": name, "identity_ok": True}
         ctx["tech"] = technicals.compute(bars, bench)
