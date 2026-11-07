@@ -29,6 +29,20 @@ def _clean(rows: List[Dict], last: str) -> List[Dict]:
     return [r for r in rows if r["date"] <= last]
 
 
+def _six_month_return(rows: List[Dict]) -> Optional[float]:
+    """Return behind the universe rank; ``rows`` are already cut at the session."""
+    if len(rows) > 126 and rows[-127].get("adj_close") and rows[-1].get("adj_close"):
+        return rows[-1]["adj_close"] / rows[-127]["adj_close"] - 1
+    return None
+
+
+def _rank_in(ordered: List[float], value: float) -> float:
+    return float(np.searchsorted(ordered, value, side="right") / len(ordered))
+
+
+MIN_RANK_NAMES = 20
+
+
 class QSF:
     def __init__(self, base: Path, src=default_sources, now: Callable[[], datetime] = None, terminal: Any = None, dart: Any = None, kr_master: Any = None):
         self.base = Path(base)
@@ -341,7 +355,8 @@ class QSF:
                 return {"error": "UNKNOWN_SECURITY", "reason": "한국 거래소 종목 목록에서 찾을 수 없습니다."}
             sym, name = ident["yahoo_symbol"], ident.get("company_name")
             bench_sym = config.BENCHMARK["KR_KOSDAQ" if ident.get("market") == "KOSDAQ" else "KR_KOSPI"]
-        if "bars" in pre:
+        scanning = "bars" in pre
+        if scanning:
             bars, bench = pre["bars"], pre.get("bench")
         else:
             hist = self._history([sym, bench_sym])
@@ -354,8 +369,10 @@ class QSF:
             return {"error": "NO_PRICE", "reason": "가격 이력을 받지 못했습니다."}
         if len(bars) < 30:
             return {"error": "SHORT_HISTORY", "reason": f"거래 이력이 {len(bars)}거래일뿐이라 점수를 내지 않습니다. 30거래일이 필요합니다."}
+        # A scan brings its own rank.  The stock screen and held signals take theirs from the last scan of the same session.
+        rs_rank, rank_basis = (pre.get("rs_rank"), None) if scanning else self._stored_rank(ticker, market, session, bars)
         ctx = {"market": market, "ticker": ticker, "symbol": sym, "bars": bars, "bench": bench, "bench_name": "SPY" if market == "US" else ("코스닥" if bench_sym == "^KQ11" else "코스피"),
-               "benchmark": bench_sym, "regime": regime, "rs_rank": pre.get("rs_rank"), "expected_session": session, "price_fresh": bars[-1]["date"] == session, "name": name, "identity_ok": True}
+               "benchmark": bench_sym, "regime": regime, "rs_rank": rs_rank, "rank_basis": rank_basis, "expected_session": session, "price_fresh": bars[-1]["date"] == session, "name": name, "identity_ok": True}
         ctx["tech"] = technicals.compute(bars, bench)
         ctx["levels"] = technicals.levels(ctx["tech"], market)
         if market == "US":
@@ -398,7 +415,7 @@ class QSF:
         own = config.STYLE_TO_STRATEGY.get((pos or {}).get("style"))
         cards = {s: self.card(ctx, s, pos if own in (None, s) else None) for s in strategies}
         risky = self._high_risk(market)
-        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None, "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
+        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None, "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
 
     def signal(self, ticker: str, weight_pct: Optional[float] = None, max_weight_pct: Optional[float] = None, market: str = "US") -> Dict[str, Any]:
         """Score and exit reading of one held position, under the profile of its own style only."""
@@ -410,7 +427,7 @@ class QSF:
             return {"status": "UNAVAILABLE", "ticker": ticker, "reason": ctx["reason"]}
         strategy = config.STYLE_TO_STRATEGY[pos["style"]]
         c = self.card(ctx, strategy, {**pos, "weight_pct": weight_pct, "max_weight_pct": max_weight_pct})
-        out = {"status": "REAL", "ticker": ticker, "style": pos["style"], "strategy": strategy, "score": c["score"], "band_label": c["band_label"], "confidence": c["confidence"],
+        out = {"status": "REAL", "ticker": ticker, "style": pos["style"], "strategy": strategy, "rank_basis": ctx["rank_basis"], "score": c["score"], "band_label": c["band_label"], "confidence": c["confidence"],
                "coverage": c["coverage"], "data_date": c["data_date"], "gates": c["gates"], "exit": c["exit"], "earnings_date": (ctx.get("earnings") or {}).get("date")}
         if strategy == "SWING":
             step = holding.stepper(market)
@@ -445,12 +462,42 @@ class QSF:
     def _prefetch(tickers: List[str], bars: Dict[str, List[Dict]], bench_sym: str, session: str, sym_of: Optional[Dict[str, str]] = None) -> Dict[str, Dict]:
         rets = {}
         for t in tickers:
-            r = _clean(bars.get((sym_of or {}).get(t, t)) or [], session)
-            if len(r) > 126 and r[-127].get("adj_close") and r[-1].get("adj_close"):
-                rets[t] = r[-1]["adj_close"] / r[-127]["adj_close"] - 1
+            v = _six_month_return(_clean(bars.get((sym_of or {}).get(t, t)) or [], session))
+            if v is not None:
+                rets[t] = v
         ordered = sorted(rets.values())
-        rank = {t: float(np.searchsorted(ordered, v, side="right") / len(ordered)) for t, v in rets.items()} if len(ordered) >= 20 else {}
+        rank = {t: _rank_in(ordered, v) for t, v in rets.items()} if len(ordered) >= MIN_RANK_NAMES else {}
         return {t: {"bars": bars.get((sym_of or {}).get(t, t)) or [], "bench": bars.get(bench_sym) or [], "rs_rank": rank.get(t)} for t in tickers}
+
+    def _write_ranks(self, market: str, session: str, pre: Dict[str, Dict]) -> None:
+        """The returns this scan ranked, so the stock screen and held signals can read the same rank.  Too few names means no rank, as in the scan."""
+        rets = {t: v for t, v in ((t, _six_month_return(_clean(x["bars"], session))) for t, x in pre.items()) if v is not None}
+        if len(rets) < MIN_RANK_NAMES:
+            return
+        tmp = self.dir / f"ranks_{market}.json.tmp"
+        tmp.write_text(json.dumps({"market": market, "session": session, "returns": rets}), encoding="utf-8")
+        os.replace(tmp, self.dir / f"ranks_{market}.json")
+
+    def _read_ranks(self, market: str, session: str) -> Optional[Dict[str, float]]:
+        """Returns of the scan of this session.  Another session's or an unreadable file counts as no scan."""
+        try:
+            d = json.loads((self.dir / f"ranks_{market}.json").read_text(encoding="utf-8"))
+            rets = {str(t): float(v) for t, v in d["returns"].items()}
+            ok = d["market"] == market and d["session"] == session
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            return None
+        return rets if ok and len(rets) >= MIN_RANK_NAMES and all(np.isfinite(v) for v in rets.values()) else None
+
+    def _stored_rank(self, ticker: str, market: str, session: str, bars: List[Dict]):
+        """Rank and how it was found.  Without a rank the relative strength factor uses its benchmark formula, and the screen says so."""
+        rets = self._read_ranks(market, session)
+        if rets is None:
+            return None, "NO_SCAN"
+        ordered = sorted(rets.values())
+        if ticker in rets:                       # the scan's own number, so a separate price request cannot move the rank
+            return _rank_in(ordered, rets[ticker]), "UNIVERSE"
+        own = _six_month_return(bars)
+        return (None, "SHORT_HISTORY") if own is None else (_rank_in(ordered, own), "OUTSIDE_UNIVERSE")
 
     def scan(self, market: str = "US", tickers: Optional[List[str]] = None, record: bool = True, progress=None) -> Dict[str, Any]:
         started = time.time()
@@ -493,6 +540,7 @@ class QSF:
         if not record:
             return summary                  # a dry run leaves the published ranking alone
         self.dir.mkdir(parents=True, exist_ok=True)
+        self._write_ranks(market, day, pre)
         tmp = self.dir / f"latest_{market}.json.tmp"
         tmp.write_text(json.dumps(summary, ensure_ascii=False, default=str), encoding="utf-8")
         os.replace(tmp, self.dir / f"latest_{market}.json")

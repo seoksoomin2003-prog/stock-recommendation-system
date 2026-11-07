@@ -127,7 +127,8 @@ async function loadSignals() {
       const rev = cell("review", t); if (rev) rev.textContent = s.earnings_date ? `실적 ${s.earnings_date}` : "분기 실적 공시 후";
       if (a !== "HOLD") notes.push(`<li class="${tone === "act-sell" ? "bad" : "warn"}"><b>${esc(t)} ${esc(QSF_EXIT[a] || a)}</b>: ${esc(s.exit.reason)}</li>`);
     });
-    out.innerHTML = `${notes.length ? `<ul class="alerts">${notes.join("")}</ul>` : "조치가 필요한 종목이 없습니다."}<div class="meta">${esc(d.note)}</div>`;
+    const noRank = d.items.filter((s) => s.rank_basis === "NO_SCAN").map((s) => s.ticker);
+    out.innerHTML = `${notes.length ? `<ul class="alerts">${notes.join("")}</ul>` : "조치가 필요한 종목이 없습니다."}<div class="meta">${esc(d.note)}</div>${noRank.length ? `<div class="meta">${esc(noRank.join(", "))}: ${QSF_RANK_NOTE.NO_SCAN}</div>` : ""}`;
   } catch (e) { out.innerHTML = `<span class="err">판정을 계산하지 못했습니다: ${esc(e.message)}</span>`; }
 }
 function styleStatsHtml(by) {
