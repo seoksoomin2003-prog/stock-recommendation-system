@@ -176,7 +176,7 @@ def _read_day(folder: Path, day: str) -> Dict[str, Any]:
         return json.load(fh)
 
 
-def write_record(base: Path, day: str, at: datetime, late: bool, store: Path = FOLDER) -> bool:
+def write_record(base: Path, day: str, at: datetime, late: bool, store: Path = FOLDER, scorer: Optional[Callable[[Path, str], Dict[str, Any]]] = None) -> bool:
     """Write-once.  A file left without its index line by a crash gets the line it was written with."""
     folder = Path(base) / store
     folder.mkdir(parents=True, exist_ok=True)
@@ -184,7 +184,7 @@ def write_record(base: Path, day: str, at: datetime, late: bool, store: Path = F
         return False
     p = folder / f"{day}.json.gz"
     if not p.exists():
-        scored = score_fund_day(base, day) if store == FUND_FOLDER else score_day(Path(base) / kr.DATA, day)
+        scored = scorer(base, day) if scorer else score_fund_day(base, day) if store == FUND_FOLDER else score_day(Path(base) / kr.DATA, day)
         doc = {**scored, "recorded_at": at.isoformat(), "late": late, "before_next_open": at < next_open(day)}
         tmp = p.with_suffix(".tmp")
         with gzip.open(tmp, "wt", encoding="utf-8") as fh:
@@ -215,9 +215,9 @@ def _record_fund(base: Path, have: List[str], at: datetime, key: Optional[str], 
 
 
 def record(base: Path, key: Optional[str] = None, get: Optional[Callable[..., Any]] = None, now: Callable[[], datetime] = _utcnow, first: str = FIRST, log=print, sleep=None,
-           dart_key: Optional[str] = None, dart_get: Optional[Callable[..., Any]] = None) -> Dict[str, Any]:
+           dart_key: Optional[str] = None, dart_get: Optional[Callable[..., Any]] = None, events_get: Optional[Callable[..., Any]] = None) -> Dict[str, Any]:
     """OK: caught up to the previous weekday.  WAITING: that day is not published yet, or was a holiday; asked again at the next slot.
-    A caller passing its own ``get`` without ``dart_get`` records the price score only."""
+    A caller passing its own ``get`` without ``dart_get`` or ``events_get`` records the price score only."""
     live_run = get is None
     at = now()
     today = at.astimezone(KST).date()
@@ -242,8 +242,12 @@ def record(base: Path, key: Optional[str] = None, get: Optional[Callable[..., An
     fund: Dict[str, Any] = {"status": "SKIPPED"}
     if live_run or dart_get:
         fund = _record_fund(base, have, at, dart_key if dart_key is not None else os.environ.get("OPENDART_API_KEY"), dart_get or get, first, log, sleep)
-    status = "FAILED" if got.get("stopped") or fund["status"] == "FAILED" else "OK" if last and last >= end else "WAITING"
-    return {"status": status, "written": wrote, "last": last, "expected": end, "stopped": got.get("stopped"), "calls": got.get("calls"), "fund": fund}
+    events: Dict[str, Any] = {"status": "SKIPPED"}
+    if live_run or events_get:
+        from terminal.qsf import kr_events_forward
+        events = kr_events_forward.record(base, have, at, dart_key if dart_key is not None else os.environ.get("OPENDART_API_KEY"), events_get or get, first, log, sleep)
+    status = "FAILED" if got.get("stopped") or fund["status"] == "FAILED" or events["status"] == "FAILED" else "OK" if last and last >= end else "WAITING"
+    return {"status": status, "written": wrote, "last": last, "expected": end, "stopped": got.get("stopped"), "calls": got.get("calls"), "fund": fund, "events": events}
 
 
 def cross_check(base: Path, tolerance: float = 0.001) -> Optional[Dict[str, Any]]:

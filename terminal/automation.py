@@ -30,7 +30,7 @@ OK, FAILED, SKIPPED, WAITING = "OK", "FAILED", "SKIPPED", "WAITING"
 STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "US_CHALLENGER": "미국 도전자 점수 기록", "BACKUP": "백업"}
 BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
-                "tracking/kr/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/us_challenger/index.jsonl")
+                "tracking/kr/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl")
 
 
 def backup_root() -> Path:
@@ -66,7 +66,7 @@ def backup(base: Path, day: str, root: Optional[Path] = None) -> Dict[str, Any]:
                 raise OSError("backup verification failed")
             n += 1
     # The separate Korean record is write-once too.
-    for src in sorted(p for name in ("krx_forward", "krx_forward_fund") for p in (base / "research_data" / name).glob("*.json.gz")):
+    for src in sorted(p for name in ("krx_forward", "krx_forward_fund", "krx_forward_events") for p in (base / "research_data" / name).glob("*.json.gz")):
         dst = root / src.parent.name / src.name
         if not dst.exists():
             dst.parent.mkdir(parents=True, exist_ok=True)

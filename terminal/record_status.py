@@ -7,7 +7,7 @@ from datetime import date
 from typing import Any, Dict, List, Optional
 
 from terminal import automation
-from terminal.qsf import config, kr_forward, us_challenger
+from terminal.qsf import config, kr_events_forward, kr_forward, us_challenger
 from utils import nyse_calendar
 
 TRADING_DAYS_PER_YEAR = 252
@@ -104,6 +104,11 @@ def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[
             out.append({"level": "bad", "text": "한국 재무 점수 기록 검증에 실패했습니다. 원인을 확인해야 합니다."})
         elif (fund.get("behind_sessions") or 0) >= BEHIND_ALERT:
             out.append({"level": "warn", "text": f"한국 재무 점수 기록이 {fund['behind_sessions']}거래일 뒤처져 있습니다. DART 키와 자동 실행을 확인하세요."})
+        events = forward.get("events") or {}
+        if events.get("integrity") not in (None, "OK"):
+            out.append({"level": "bad", "text": "한국 공시 사건 기록 검증에 실패했습니다. 원인을 확인해야 합니다."})
+        elif (events.get("behind_sessions") or 0) >= BEHIND_ALERT:
+            out.append({"level": "warn", "text": f"한국 공시 사건 기록이 {events['behind_sessions']}거래일 뒤처져 있습니다. DART 키와 자동 실행을 확인하세요."})
     if challenger is not None:
         if challenger.get("integrity") != "OK":
             out.append({"level": "bad", "text": "미국 도전자 점수 기록 검증에 실패했습니다. 원인을 확인해야 합니다."})
@@ -157,6 +162,7 @@ def build(terminal: Any) -> Dict[str, Any]:
         baseline = baseline_record(bool(auto.get("capital_configured")), None, type(exc).__name__)
     forward = kr_forward.status(terminal.base, calendars["KR"])
     forward["fund"] = kr_forward.status(terminal.base, calendars["KR"], kr_forward.FUND_FOLDER)
+    forward["events"] = kr_events_forward.status(terminal.base, calendars["KR"])
     challenger = us_challenger.status(terminal.base, us_calendar)
     challenger["due_sessions"] = sum(1 for d in us_calendar if d >= us_challenger.FIRST)
     last = auto.get("last_run") or {}

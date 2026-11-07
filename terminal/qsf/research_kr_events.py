@@ -33,6 +33,7 @@ KINDS = {**{t: "financing" for t in FINANCING}, **{t: "buyback" for t in BUYBACK
 SIGNALS = ("financing", "buyback")
 FORM = re.compile(r"^주요사항보고서\((.+)\)$")
 MAX_CALLS = 3000
+MIN_KEPT = 0.9             # a quarter asked again may lose a withdrawn filing, not a tenth of its list
 LIMIT, NO_DATA = "020", "013"
 KEY_TROUBLE = ("010", "011", "012", "901")
 PORTFOLIO_PERIODS = {"2018_2021": (REF_START, TEST_START), "2022_2023": (TEST_START, "2024-01-01"), "2024_on": ("2024-01-01", "2099"), "2022_on": (TEST_START, "2099")}
@@ -56,15 +57,17 @@ def quarters(first_year: int, last: date) -> List[Tuple[str, str, str]]:
     return out
 
 
-def download(base: Path, log=print, get: Optional[Callable[..., Any]] = None, sleep: Callable[[float], None] = time.sleep, today: Optional[date] = None, pause: float = 0.2) -> Dict[str, Any]:
-    """A finished quarter stored once is not asked again.  Stops at once on the daily limit or a key problem.  Errors report the type only."""
-    key = os.environ.get("OPENDART_API_KEY")
+def download(base: Path, log=print, get: Optional[Callable[..., Any]] = None, sleep: Callable[[float], None] = time.sleep, today: Optional[date] = None, pause: float = 0.2,
+             key: Optional[str] = None, root: Optional[Path] = None, first_year: int = FIRST_YEAR, refresh: Optional[Callable[[str], bool]] = None) -> Dict[str, Any]:
+    """A finished quarter stored once is not asked again, unless ``refresh`` names it.  Stops at once on the daily limit or a key problem.  Errors report the type only.
+    A quarter asked again keeps its stored list if the new one is empty or much shorter: an odd answer must not erase filings."""
+    key = key or os.environ.get("OPENDART_API_KEY")
     if not key:
         return {"status": "NO_KEY"}
     if get is None:
         import requests
         get = requests.get
-    root = base / DATA
+    root = root or base / DATA
     root.mkdir(parents=True, exist_ok=True)
     today = today or date.today()
     corp_file = root / "corp.json"
@@ -72,9 +75,9 @@ def download(base: Path, log=print, get: Optional[Callable[..., Any]] = None, sl
         r = get(dh.BASE + "corpCode.xml", params={"crtfc_key": key}, timeout=120)
         corp_file.write_text(json.dumps({v: k for k, v in dh.parse_corp_list(r.content).items()}), encoding="utf-8")
     calls = fails = 0
-    for name, start, end in quarters(FIRST_YEAR, today):
+    for name, start, end in quarters(first_year, today):
         p = root / f"{name}.json.gz"
-        if p.exists():
+        if p.exists() and not (refresh and refresh(name)):
             continue
         rows, page, total = [], 1, 1
         while page <= total:
@@ -105,6 +108,11 @@ def download(base: Path, log=print, get: Optional[Callable[..., Any]] = None, sl
             total = int(body.get("total_page") or 1)
             page += 1
             sleep(pause)
+        if p.exists():
+            with gzip.open(p, "rt", encoding="utf-8") as fh:
+                stored = len(json.load(fh))
+            if len(rows) < stored * MIN_KEPT:
+                return {"status": "STOPPED", "stopped": "LIST_SHRANK", "calls": calls}
         tmp = p.with_suffix(".tmp")
         with gzip.open(tmp, "wt", encoding="utf-8") as fh:
             json.dump(rows, fh, ensure_ascii=False)
