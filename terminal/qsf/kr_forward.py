@@ -126,7 +126,7 @@ def score_fund_day(base: Path, day: str) -> Dict[str, Any]:
     for j in np.flatnonzero(kr.eligible(z, i)):
         code = str(z["symbols"][j])
         rows.append({"code": code, "name": names.get(code), "board": "KOSPI" if z["kospi"][j] else "KOSDAQ", "score": val(final[j]),
-                     **{t: val(themes[t][0, j] * 100) for t in rf.THEMES}, "cap": val(z["cap"][i, j]), "value": val(z["value"][i, j])})
+                     **{f"theme_{t}": val(themes[t][0, j] * 100) for t in rf.THEMES}, "cap": val(z["cap"][i, j]), "traded": val(z["value"][i, j])})
     if sum(1 for r in rows if r["score"] is not None) < MIN_STOCKS:
         raise ValueError("TOO_FEW_SCORES")
     return {"session": day, "protocol": PROTOCOL, "groups": FUND_GROUPS, "rows": rows}

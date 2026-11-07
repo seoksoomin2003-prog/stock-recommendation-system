@@ -328,5 +328,6 @@ def test_the_real_financial_score_reads_only_receipts_before_the_day(tmp_path, b
     put(2025, "FY", "x", rows("20260320000001", 2))
     first = kf.score_fund_day(run, day)
     assert sum(r["score"] is not None for r in first["rows"]) == 50
+    assert 0 <= first["rows"][0]["theme_value"] <= 100 and first["rows"][0]["traded"] == 5e9      # the value theme and traded value stay apart
     put(2026, "FY", "x", rows(day.replace("-", "") + "000001", 50))       # received on the day itself
     assert kf.score_fund_day(run, day)["rows"] == first["rows"]

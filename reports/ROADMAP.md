@@ -104,6 +104,8 @@ QSF swing chart-factor research (2026-11-06): 24 pre-registered chart and short-
 
 QSF-1.1.3 (2026-11-06): US annual figures no longer read stopped series as current, and total revenue tags come before contract revenue. Scoring maths unchanged; earlier validations used the old reading. `reports/QSF_1_1_3_FUNDAMENTALS_CORRECTION.md`.
 
+QSF-1.1.4 (2026-11-07, user approved): market value inputs corrected. US multi-class companies use total shares only when Yahoo market value and SEC share counts agree; KR uses KRX listed shares. Long scores change for a few names, swing scores do not. Scoring maths unchanged. Current-version sample restarts from 0. See `reports/QSF_1_1_4_SHARE_COUNT_CORRECTION.md`.
+
 QSF recheck with corrected figures (2026-11-06): verdicts unchanged, all NO_EVIDENCE; `sue` at 10 sessions narrowly passes development, a hypothesis only. `reports/QSF_CORRECTED_RECHECK_RESULTS.md`.
 
 QSF earnings factor test (2026-11-06): `sue` alone, 10 sessions, one run on 2022+: NO_EVIDENCE (IC +0.0055, t 0.71). Not added. `reports/QSF_SUE_TEST_RESULTS.md`.
