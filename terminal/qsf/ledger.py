@@ -4,13 +4,14 @@ Each batch is an immutable gzip shard; ``index.jsonl`` is an append-only hash ch
 cohorts are never pooled.  Later reassessments are new snapshots; an original is never rewritten.  Outcomes are computed
 when reading, from prices that exist by then: entry at the session after the signal (open), exit at the close H sessions later.
 """
+import bisect
 import fcntl
 import gzip
 import hashlib
 import json
 import statistics
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -175,11 +176,16 @@ def factor_correlations(snaps: List[Dict[str, Any]], min_obs: int = 30, flag: fl
 
 
 # ---------------------------------------------------------------------- forward outcomes
-def outcome(path: List[Dict[str, Any]], bench: List[Dict[str, Any]], signal_session: str, h: int, cost: float, entry_session: Optional[str] = None) -> Optional[Dict[str, float]]:
+def outcome(path: List[Dict[str, Any]], bench: List[Dict[str, Any]], signal_session: str, h: int, cost: float, entry_session: Optional[str] = None,
+            dates: Optional[List[str]] = None, bench_by_date: Optional[Dict[str, Dict[str, Any]]] = None) -> Optional[Dict[str, float]]:
     """Bars must be dated.  Entry is the open (dividend-adjusted basis) of the recorded entry session, or the next bar for a
     historical check; a snapshot can never enter at an open that passed before it was written.  Exit is the h-th bar's close.
-    None until matured, or when a price is missing: never zero."""
-    idx = next((i for i, b in enumerate(path) if (b["date"] >= entry_session if entry_session else b["date"] > signal_session)), None)
+    None until matured, or when a price is missing: never zero.
+    ``dates`` (the bars' dates, in order) and ``bench_by_date`` only save repeating the same work across many snapshots; the answer is the same without them."""
+    if dates is not None:
+        idx = bisect.bisect_left(dates, entry_session) if entry_session else bisect.bisect_right(dates, signal_session)
+    else:
+        idx = next((i for i, b in enumerate(path) if (b["date"] >= entry_session if entry_session else b["date"] > signal_session)), None)
     if idx is None or idx + h - 1 >= len(path):
         return None
     start, end = path[idx], path[idx + h - 1]
@@ -189,7 +195,7 @@ def outcome(path: List[Dict[str, Any]], bench: List[Dict[str, Any]], signal_sess
     gross = end["adj_close"] / adj_open - 1
     window = path[idx:idx + h]
     low = min(b["adj_close"] for b in window if b.get("adj_close"))
-    bmap = {b["date"]: b for b in bench}
+    bmap = bench_by_date if bench_by_date is not None else {b["date"]: b for b in bench}
     bs, be = bmap.get(start["date"]), bmap.get(end["date"])
     rel = None
     if bs and be and bs.get("open") and bs.get("adj_close") and be.get("adj_close"):
@@ -222,13 +228,18 @@ def validate(snaps: List[Dict[str, Any]], market: str, strategy: str, loader: Ca
         turnover.append(len(picks_by_session[a] ^ picks_by_session[b]) / len(u) if u else 0.0)
     out = {"market": market, "strategy": strategy, "snapshots": len(cohort), "sessions": len(sessions), "cost_round_trip_pct": cost * 100, "cost_basis": config.COSTS[market]["basis"],
            "mean_turnover_70plus": statistics.mean(turnover) if turnover else None, "horizons": {}}
-    cache: Dict[str, List[Dict]] = {}
+    cache: Dict[str, Tuple[List[Dict], Optional[List[str]]]] = {}
+    bench_by_date = {b["date"]: b for b in bench}
     for h in horizons:
         buckets: Dict[str, List[Dict[str, float]]] = {}
         matured = set()
         for s in cohort:
-            path = cache.setdefault(s["ticker"], loader(s["ticker"]) or [])
-            o = outcome(path, bench, s["data_date"], h, cost, s.get("entry_session"))
+            if s["ticker"] not in cache:
+                bars = loader(s["ticker"]) or []
+                days = [b["date"] for b in bars]
+                cache[s["ticker"]] = (bars, days if days == sorted(days) else None)      # bars out of order take the plain scan
+            path, days = cache[s["ticker"]]
+            o = outcome(path, bench, s["data_date"], h, cost, s.get("entry_session"), days, bench_by_date)
             if o:
                 buckets.setdefault(bucket_of(s["score"]), []).append(o)
                 matured.add(s["data_date"])

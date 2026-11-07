@@ -668,3 +668,37 @@ def test_void_session_keeps_lines_and_allows_rerecord(tmp_path):
     assert recs == [] and integ["status"] == "OK" and len(lab.ledger_file.read_text().splitlines()) == 2
     with pytest.raises(LabError):
         lab.void_session("2020-01-01", "none")
+
+
+def test_validation_loads_each_ticker_once_and_shortcuts_change_nothing():
+    b = bars(60, drift=0.004)
+    calls = []
+
+    def loader(t):
+        calls.append(t)
+        return b
+    snaps = [{"market": "US", "strategy": "SWING", "ticker": t, "data_date": b[n]["date"], "score": 40.0 + n, "actionability": "OK", "entry_session": b[n + 1]["date"] if n % 2 else None} for t in ("AAA", "BBB") for n in (5, 10, 20, 58)]
+    out = ledger.validate(snaps, "US", "SWING", loader, b)
+    assert sorted(calls) == ["AAA", "BBB"] and out["snapshots"] == 8
+    days, by_date = [x["date"] for x in b], {x["date"]: x for x in b}
+    for n in (0, 5, 20, 58, 59):
+        for entry in (None, b[n]["date"], "1900-01-01", "2999-01-01"):
+            assert ledger.outcome(b, b, b[n]["date"], 5, 0.01, entry, days, by_date) == ledger.outcome(b, b, b[n]["date"], 5, 0.01, entry)
+
+
+def test_bars_out_of_order_still_get_the_plain_answer():
+    b = bars(40, drift=0.004)
+    mixed = b[:10] + b[12:] + b[10:12]
+    snap = [{"market": "US", "strategy": "SWING", "ticker": "AAA", "data_date": b[8]["date"], "score": 75.0, "actionability": "OK"}]
+    h = config.SWING_HORIZONS[0]
+    want = ledger.outcome(mixed, b, b[8]["date"], h, config.round_trip_cost("US"))
+    got = ledger.validate(snap, "US", "SWING", lambda t: mixed, b)["horizons"][str(h)]["buckets"][ledger.bucket_of(75.0)]
+    assert want is not None and got["n"] == 1 and got["mean_net"] == pytest.approx(want["net"])
+
+
+def test_score_uses_the_technicals_it_is_given(monkeypatch):
+    c = ctx()
+    c["tech"] = technicals.compute(c["bars"], c.get("bench"))
+    want = engine.score(c, "SWING")
+    monkeypatch.setattr(technicals, "compute", lambda *a, **k: pytest.fail("계산을 반복했습니다"))
+    assert engine.score(c, "SWING")["score"] == want["score"]

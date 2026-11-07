@@ -73,8 +73,10 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
     market = ctx["market"]
     profile = config.PROFILES[f"{market}_{strategy}_V1"]
     ctx = dict(ctx)
-    ctx.setdefault("tech", technicals.compute(ctx["bars"], ctx.get("bench")))
-    ctx.setdefault("levels", technicals.levels(ctx["tech"], market))
+    if "tech" not in ctx:
+        ctx["tech"] = technicals.compute(ctx["bars"], ctx.get("bench"))
+    if "levels" not in ctx:
+        ctx["levels"] = technicals.levels(ctx["tech"], market)
     rows, domains = [], {}
     tot_w, tot_c, tot_app, tot_eff = 0.0, 0.0, 0.0, 0.0
     missing_names, stale_names = [], []
