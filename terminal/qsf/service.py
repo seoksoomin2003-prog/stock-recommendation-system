@@ -649,8 +649,23 @@ class QSF:
         except (OSError, ValueError):
             return {"status": "UNAVAILABLE", "market": market, "rows": [], "reason": "아직 스캔 기록이 없습니다."}
 
-    def _sector_of(self, market: str, ticker: str) -> Optional[str]:
-        """From the company information the scan already stored.  Never asks the network, and a stock with no stored sector has none."""
+    def _kr_industries(self) -> Dict[str, str]:
+        """KRX KIND industry per code, from the newest stored master snapshot.  Read only: an old snapshot is still read, never refetched."""
+        sdir = self.base / "data" / "kr" / "security_master"
+        try:
+            meta = json.loads((sdir / "LATEST.json").read_text(encoding="utf-8"))
+            import pandas as pd
+            df = pd.read_csv(sdir / meta["file"], dtype=str, usecols=["canonical_ticker", "industry"])
+        except (OSError, ValueError, KeyError):
+            return {}
+        return {c: i for c, i in zip(df["canonical_ticker"], df["industry"]) if isinstance(c, str) and isinstance(i, str) and i.strip()}
+
+    def _sector_of(self, market: str, ticker: str, kr_industry: Optional[Dict[str, str]] = None) -> Optional[str]:
+        """From what is already stored.  Never asks the network, and a stock with no stored sector has none.
+        Korea uses the exchange's own Korean industry, which every listed stock has; Yahoo's sector for Korea is missing for some
+        and does not map onto the exchange's industries, so the two are never mixed."""
+        if market == "KR" and kr_industry is not None:
+            return kr_industry.get(ticker)
         for key in ([f"info:{ticker}"] if market == "US" else [f"info:{ticker}.KS", f"info:{ticker}.KQ"]):
             rec = self.cache.read(key)
             sector = ((rec or {}).get("data") or {}).get("sector")
@@ -694,7 +709,8 @@ class QSF:
         out = self.latest(market)
         memo = self._sector_memo.get(market)
         if not memo or memo[0] != out.get("generated_at"):
-            memo = self._sector_memo[market] = (out.get("generated_at"), {t: self._sector_of(market, t) for t in {r.get("ticker") for r in out.get("rows") or []}})
+            kr = (self._kr_industries() or None) if market == "KR" else None     # no stored master: Yahoo sectors, as before
+            memo = self._sector_memo[market] = (out.get("generated_at"), {t: self._sector_of(market, t, kr) for t in {r.get("ticker") for r in out.get("rows") or []}})
         for r in out.get("rows") or []:
             r["sector"] = memo[1].get(r.get("ticker"))
         return out

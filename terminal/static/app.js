@@ -27,6 +27,9 @@ function big(v, unit = "USD") {
   if (a >= 1e4) return `${s}${p}${(a / 1e4).toLocaleString("ko-KR", { maximumFractionDigits: 1 })}만`;
   return `${s}${p}${a.toLocaleString("ko-KR", { maximumFractionDigits: 2 })}`;
 }
+// Yahoo's sector names in Korean; any other name (a Korean exchange industry, for one) is shown as it is.
+const SECTOR_KO = { "Technology": "기술", "Financial Services": "금융", "Healthcare": "헬스케어", "Consumer Cyclical": "경기소비재", "Consumer Defensive": "필수소비재", "Industrials": "산업재", "Basic Materials": "소재", "Energy": "에너지", "Utilities": "유틸리티", "Real Estate": "부동산", "Communication Services": "커뮤니케이션" };
+const sectorKo = (s) => SECTOR_KO[s] || s || "";
 function badge(st) { return `<span class="badge ${esc(st)}">${esc(STATUS_KO[st] || st)}</span>`; }
 const liveBadge = (on) => (on ? '<span class="badge live" title="정규장 진행 중: 마지막 일봉은 아직 확정되지 않았습니다">장중·미확정</span>' : "");
 function when(iso) {
@@ -203,7 +206,7 @@ function renderProfile(c) {
   $("#s-head").innerHTML = `<div class="head"><h2 style="margin:0">${esc(p.longName || p.shortName || c.ticker)} <span class="meta" style="margin:0">${esc(c.ticker)} · ${esc(p.exchange || "")}</span></h2>
       <button class="ghost" id="addw">＋ 관심종목</button></div>
     <div class="head" id="s-price"></div>
-    <div class="meta">${esc([p.sector, p.industry].filter(Boolean).join(" · "))}${p.website ? ` · <a href="${esc(p.website)}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>
+    <div class="meta">${esc([sectorKo(p.sector), p.industry].filter(Boolean).join(" · "))}${p.website ? ` · <a href="${esc(p.website)}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>
     <div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span><b class="num">${v}</b></div>`).join("")}</div>
     ${p.longBusinessSummary ? `<div class="summary" id="sum" title="눌러서 펼치기">${esc(p.longBusinessSummary)}</div><div class="meta">사업 설명은 Yahoo 제공 영문 원문입니다.</div>` : ""}
     ${meta(c.profile.source, c.profile.fetched_at, badge(c.profile.status))}`;
@@ -410,7 +413,7 @@ async function renderModel() {
         <div><span>시장 국면</span><b>${esc(REGIME_KO[b.regime] || b.regime || "—")}</b></div><div><span>기준 자본</span><b class="num">${isNum(b.capital) ? b.capital.toLocaleString("ko-KR") + " " + esc(b.currency || "") : DASH}</b></div></div>
       <h3>추천 상위 종목</h3><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th class="l">섹터</th><th>기준가</th><th>${mk === "KR" ? "점수" : "알파"}</th><th>목표 비중</th><th>목표 금액</th><th>주수</th><th>손절가</th><th>보유 기간</th></tr></thead>
       <tbody>${(b.top5 || []).map((r) => `<tr class="click" data-ticker="${esc(r.ticker)}"><td>${esc(r.recommendation_rank)}</td><td class="l"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span></td>
-        <td class="l">${esc(r.sector || "")}</td><td class="num">${fmt(r.close, mk === "KR" ? 0 : 2)}</td><td class="num">${fmt(r.alpha, 3)}</td><td class="num">${isNum(r.target_weight) ? (r.target_weight * 100).toFixed(1) + "%" : DASH}</td>
+        <td class="l">${esc(sectorKo(r.sector))}</td><td class="num">${fmt(r.close, mk === "KR" ? 0 : 2)}</td><td class="num">${fmt(r.alpha, 3)}</td><td class="num">${isNum(r.target_weight) ? (r.target_weight * 100).toFixed(1) + "%" : DASH}</td>
         <td class="num" data-cap-amount data-w="${isNum(r.target_weight) ? r.target_weight : ""}">${DASH}</td><td class="num" data-cap-shares data-w="${isNum(r.target_weight) ? r.target_weight : ""}" data-close="${isNum(r.close) ? r.close : ""}">${DASH}</td>
         <td class="num">${fmt(r.hard_stop)}</td><td>${isNum(r.horizon_days) ? r.horizon_days + "거래일" : DASH}</td></tr>`).join("") || '<tr><td colspan="10" class="empty">추천 종목 없음</td></tr>'}</tbody></table></div>
       <div class="meta">실행 ID ${esc(b.run_id)} · 읽기 전용 표시입니다. 이 화면은 모델을 실행하거나 변경하지 않습니다.</div>` : '<div class="empty">기록된 전체 스캔이 없습니다.</div>'}</div>

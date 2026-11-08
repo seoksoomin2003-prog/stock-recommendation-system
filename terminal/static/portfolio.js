@@ -56,7 +56,7 @@ async function renderPortfolio() {
       <ul class="alerts">${d.alerts.map((a) => `<li class="${esc(a.level)}">${esc(a.text)}</li>`).join("")}</ul></div>` : ""}
     ${holdingsHtml(d)}
     ${Object.keys(d.sectors).length ? `<div class="panel"><h2>섹터 비중 <span class="meta" style="margin:0">한도 ${d.settings.max_sector_pct}%</span></h2><table><tbody>
-      ${Object.entries(d.sectors).map(([k, v]) => `<tr><td>${esc(k)}</td><td style="width:60%"><div class="bar ${v > d.settings.max_sector_pct ? "over" : ""}"><i style="width:${Math.min(100, v).toFixed(1)}%"></i></div></td><td class="num">${v.toFixed(1)}%</td></tr>`).join("")}
+      ${Object.entries(d.sectors).map(([k, v]) => `<tr><td>${esc(sectorKo(k))}</td><td style="width:60%"><div class="bar ${v > d.settings.max_sector_pct ? "over" : ""}"><i style="width:${Math.min(100, v).toFixed(1)}%"></i></div></td><td class="num">${v.toFixed(1)}%</td></tr>`).join("")}
       </tbody></table></div>` : ""}
     <div class="panel"><h2>계좌 수익률 vs ${esc(d.benchmark)}</h2><div id="eq-sum" class="meta">불러오는 중…</div><div class="chart"><canvas id="eqc"></canvas></div><div id="eq-meta"></div></div>
     <div class="panel"><h2>매매 성과 (매도 건 기준)</h2>${statsHtml(d.stats)}
@@ -94,7 +94,7 @@ function holdingRow(h) {
     <td class="num">${isNum(h.weight_pct) ? h.weight_pct.toFixed(1) + "%" : DASH}</td><td class="num" data-sig="score" data-t="${esc(h.ticker)}">${DASH}</td><td class="l" data-sig="action" data-t="${esc(h.ticker)}">${DASH}</td><td class="num">${stop}</td>
     ${swing ? `<td class="num">${h.target ? money(h.target) : DASH}</td><td class="l" data-sig="left" data-t="${esc(h.ticker)}">${DASH}</td>` : `<td class="l" data-sig="review" data-t="${esc(h.ticker)}">${DASH}</td>`}
     <td>${pnl(h.unrealized)} ${pct(h.unrealized_pct, 1)}</td><td>${pct(h.change_pct)}</td><td class="num">${qtyFmt(h.qty)}</td><td class="num">${money(h.avg_cost)}</td><td class="num">${money(h.close)}</td><td class="num">${money(h.value)}</td>
-    <td class="l">${esc(h.sector || "미분류")}</td></tr>`;
+    <td class="l">${esc(sectorKo(h.sector) || "미분류")}</td></tr>`;
 }
 function holdingTable(title, rows, style, sum, target) {
   if (!rows.length) return "";

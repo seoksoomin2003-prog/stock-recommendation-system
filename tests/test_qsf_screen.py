@@ -173,3 +173,24 @@ def test_the_route_serves_the_scan_and_passes_bad_input_up_as_a_refusal():
     assert tickers(fn({"market": "KR", "min_score": "50"}, {})) == ["A"]
     with pytest.raises(ValueError):      # the server turns this into a 400
         fn({"market": "KR", "sort": "nope"}, {})
+
+
+def test_korea_uses_the_exchange_industry_when_a_master_is_stored(tmp_path):
+    import json
+
+    import pandas as pd
+
+    from terminal.cache import FileCache
+    from terminal.qsf.service import QSF
+    svc = QSF.__new__(QSF)
+    svc.base, svc.dir, svc.cache, svc._sector_memo = tmp_path, tmp_path, FileCache(tmp_path / "cache"), {}
+    sdir = tmp_path / "data" / "kr" / "security_master"
+    sdir.mkdir(parents=True)
+    pd.DataFrame({"canonical_ticker": ["005930", "035720", "000000"], "industry": ["반도체 제조업", "자료처리업", None]}).to_csv(sdir / "m.csv.gz", index=False, compression="gzip")
+    (sdir / "LATEST.json").write_text(json.dumps({"file": "m.csv.gz", "retrieved_at": "2020-01-01T00:00:00+00:00"}), encoding="utf-8")
+    svc.cache.write("info:000000.KS", {"sector": "Technology"})          # a Yahoo sector is never mixed in
+    (tmp_path / "latest_KR.json").write_text(json.dumps({"status": "REAL", "generated_at": "a", "rows": [{"ticker": "005930"}, {"ticker": "035720"}, {"ticker": "000000"}]}), encoding="utf-8")
+    svc._high_risk = lambda m: {"session": None, "codes": set()}
+    svc._filing_marks = lambda m: {"session": None, "financing": set(), "buyback": set(), "known": set()}
+    assert [r["sector"] for r in svc.screen_rows("KR")["rows"]] == ["반도체 제조업", "자료처리업", None]
+    assert sorted(p.name for p in sdir.iterdir()) == ["LATEST.json", "m.csv.gz"]       # an old snapshot is read, not refetched

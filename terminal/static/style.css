@@ -191,3 +191,9 @@ tr.voided td { color: var(--muted); text-decoration: line-through; }
 }
 
 .badge.risk-note { color: var(--warn); font-weight: 500; white-space: nowrap; }
+
+/* score tab: one part at a time */
+.qsf-nav { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+.qsf-nav .seg button { padding: 6px 14px; }
+.qsf-plan { margin-top: 10px; font-size: 13px; }
+.qsf-plan > summary { cursor: pointer; font-weight: 600; }
