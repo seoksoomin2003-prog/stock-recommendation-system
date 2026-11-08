@@ -660,6 +660,46 @@ class QSF:
             return {}
         return {c: i for c, i in zip(df["canonical_ticker"], df["industry"]) if isinstance(c, str) and isinstance(i, str) and i.strip()}
 
+    HEAT_SPANS = {"1d": 1, "5d": 5, "1m": 21}
+
+    def heatmap(self, market: str = "US", strategy: str = "SWING") -> Dict[str, Any]:
+        """Every scanned stock with its sector, market value, price change and score, for the market map.  Read only, from what is
+        stored: the scan, its own price store, Yahoo company data already cached (US) and the KRX listing (KR).  A missing value stays
+        missing; a stock without a market value is listed, not drawn."""
+        if strategy not in config.STRATEGIES:
+            raise ValueError("INVALID_STRATEGY")
+        return self._memo(f"heat:{market}:{strategy}", self._stamp([]), lambda: self._heatmap(market, strategy))
+
+    def _heatmap(self, market: str, strategy: str) -> Dict[str, Any]:
+        out = self.screen_rows(market)
+        if out.get("status") != "REAL":
+            return {"status": out.get("status") or "UNAVAILABLE", "market": market, "items": [], "reason": out.get("reason")}
+        session, load = out.get("session"), self._scan_loader(market)
+        shares: Dict[str, float] = {}
+        if market == "KR":
+            try:
+                shares = self._krx_shares(session) or {}            # KRX listed shares (10 days old at most) times the scan close
+            except Exception:
+                shares = {}
+        items = []
+        for r in out.get("rows") or []:
+            if r.get("strategy") != strategy:
+                continue
+            t = r["ticker"]
+            bars = [b for b in load(t) or [] if _n(b.get("close"))]
+            fresh = bool(bars) and bars[-1]["date"] == session
+            change = {k: (bars[-1]["close"] / bars[-1 - n]["close"] - 1 if fresh and len(bars) > n else None) for k, n in self.HEAT_SPANS.items()}
+            cap = shares.get(t) * bars[-1]["close"] if market == "KR" and fresh and shares.get(t) else None
+            if market == "US":
+                info = (self.cache.read(f"info:{t}") or {}).get("data") or {}
+                cap = _n(info.get("marketCap"))
+            items.append({"ticker": t, "name": r.get("name"), "sector": r.get("sector"), "market_cap": cap if cap and cap > 0 else None,
+                          "score": r.get("score"), "band": r.get("band"), "band_label": r.get("band_label"), "change": change})
+        return {"status": "REAL", "market": market, "strategy": strategy, "session": session, "model_version": out.get("model_version"), "items": items,
+                "without_cap": sorted(i["ticker"] for i in items if i["market_cap"] is None),
+                "source": "QSF 스캔 · 스캔 일봉 · " + ("KRX 상장 주식 수 × 스캔 종가" if market == "KR" else "Yahoo 회사 정보 시가총액(저장된 값)"),
+                "basis": "등락은 스캔 거래일 종가 기준입니다. 시가총액이 없는 종목은 지도에서 빠지고 목록에만 남습니다."}
+
     def _sector_of(self, market: str, ticker: str, kr_industry: Optional[Dict[str, str]] = None) -> Optional[str]:
         """From what is already stored.  Never asks the network, and a stock with no stored sector has none.
         Korea uses the exchange's own Korean industry, which every listed stock has; Yahoo's sector for Korea is missing for some
