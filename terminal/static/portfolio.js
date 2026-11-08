@@ -231,6 +231,7 @@ async function renderAssist() {
         <label>계좌 금액(${curSym()}, 선택)<input name="equity" inputmode="decimal" placeholder="비우면 거래 기록 기준"></label>
         <div><button class="btn-primary" type="submit">계산</button></div>
       </form><div id="szout"></div></div>
+    <div class="panel" id="alertc"></div>
     <div class="panel" id="earncal">${loading}</div>
     <div class="panel"><h2>위험 관리 설정</h2>
       <form class="form" id="stform">
@@ -263,6 +264,7 @@ async function renderAssist() {
   };
   loadPlan();
   loadEarnings();
+  if (typeof renderAlerts === "function") renderAlerts($("#alertc"));
 }
 // 스캔 때 저장한 실적 일정만 읽습니다. 날짜가 없는 종목은 '발표 없음'이 아니라 '일정 모름'입니다.
 async function loadEarnings() {

@@ -1,7 +1,7 @@
 """Local web server for the terminal (standard library only).
 
 Binds to 127.0.0.1 only (never 0.0.0.0): the terminal is reachable from this Mac alone.
-JSON API under /api/..., static files from terminal/static/.  Read-only except the local watchlist.
+JSON API under /api/..., static files from terminal/static/.  Read-only except the local watchlist, alert rules and journal.
 """
 import json
 import logging
@@ -58,6 +58,11 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/macro"): lambda q, b: t.macro(_market(q.get("market", "US"))),
         ("GET", "/api/watchlist"): lambda q, b: t.watchlist_quotes(_market(q.get("market", "US"))),
         ("POST", "/api/watchlist/add"): lambda q, b: {"tickers": t.watchlist_add(b.get("ticker", ""))},
+        ("GET", "/api/alerts"): lambda q, b: t.alerts_view(),
+        ("GET", "/api/alerts/check"): lambda q, b: {k: v for k, v in t.alert_check().items() if k != "state"},
+        ("POST", "/api/alerts/add"): lambda q, b: t.alert_add(b),
+        ("POST", "/api/alerts/remove"): lambda q, b: t.alert_remove(b.get("id", "")),
+        ("POST", "/api/alerts/rearm"): lambda q, b: t.alert_rearm(b.get("id", "")),
         ("POST", "/api/watchlist/remove"): lambda q, b: {"tickers": t.watchlist_remove(b.get("ticker", ""))},
         ("GET", "/api/model"): lambda q, b: t.model(_market(q.get("market", "US"))),
         ("GET", "/api/portfolio"): lambda q, b: t.portfolio(_market(q.get("market", "US"))),

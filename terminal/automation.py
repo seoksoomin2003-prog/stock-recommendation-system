@@ -32,7 +32,7 @@ KST = timezone(timedelta(hours=9))
 BACKUP_STALE_DAYS = 4                              # a long weekend with a holiday is three days without a new session
 OK, FAILED, SKIPPED, WAITING = "OK", "FAILED", "SKIPPED", "WAITING"
 STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "US_CHALLENGER": "미국 도전자 점수 기록", "BACKUP": "백업"}
-BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json",
+BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json", "data/terminal/alerts.json", "data/terminal/alerts_log.jsonl",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
                 "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl", "data/qsf/top3/index.jsonl", "data/qsf/top3/*.json.gz",
                 "data/qsf/price_archive/*.json.gz")
@@ -258,11 +258,25 @@ class Daily:
             return None
 
     # ------------------------------------------------------------------ alerts and gaps
+    def _term(self):
+        if self._terminal is None:
+            from terminal.services import Terminal
+            self._terminal = Terminal(self.base, now=self.now)
+        return self._terminal
+
+    def _rule_alerts(self) -> Dict[str, Any]:
+        """The user's own alert rules (terminal alert center), checked on final daily closes."""
+        from terminal import alert_rules
+        if not any(r.get("status") == "ACTIVE" for r in alert_rules.Store(self.base / "data" / "terminal").rules()):
+            return {"status": "NONE", "alerts": []}
+        try:
+            return {"status": "OK", **self._term().alert_check()}
+        except Exception as exc:
+            return {"status": "UNAVAILABLE", "error": type(exc).__name__, "alerts": []}
+
     def _alerts(self) -> Dict[str, Any]:
         try:
-            if self._terminal is None:
-                from terminal.services import Terminal
-                self._terminal = Terminal(self.base, now=self.now)
+            self._term()
             pf = self._terminal.portfolio()
             kr = self._terminal.portfolio("KR")
         except Exception as exc:
@@ -282,6 +296,15 @@ class Daily:
         out["items"].sort(key=lambda a: {"bad": 0, "warn": 1, "info": 2}[a["level"]])
         return out
 
+    def _commit_rules(self, rules: Dict[str, Any], delivered: bool) -> None:
+        if rules.get("status") != "OK":
+            return
+        try:
+            from terminal import alert_rules
+            alert_rules.Store(self.base / "data" / "terminal").commit(rules["state"], rules["alerts"] if delivered else [], self.now().isoformat(timespec="seconds"))
+        except OSError:
+            pass                                        # the rule fires again next run: a repeat, never a silent loss
+
     def missing_sessions(self, session: str) -> List[str]:
         from terminal.lab.service import Lab
         recs, _ = Lab(self.base, now=self.now).read_ledger()
@@ -292,7 +315,7 @@ class Daily:
 
     @staticmethod
     def compose(session: str, steps: Dict[str, Dict[str, Any]], alerts: Dict[str, Any], prev: List[str],
-                missing: List[str], low_disk: Optional[str] = None) -> str:
+                missing: List[str], low_disk: Optional[str] = None, rules: Optional[Dict[str, Any]] = None) -> str:
         icon = {OK: "✅", FAILED: "❌", SKIPPED: "⏭"}
         lines = [f"📊 퀀트 터미널 일일 요약 (기준 거래일 {session})", "", "[작업]"]
         for name, label in STEP_NAMES.items():
@@ -325,6 +348,11 @@ class Daily:
             lines.append("⚠️ 보유 종목 판정을 계산하지 못했습니다.")
         if alerts.get("stale"):
             lines.append("오래되었거나 없는 시세로 계산: " + ", ".join(alerts["stale"]))
+        if rules and rules.get("status") == "OK" and rules["alerts"]:
+            mark = {"bad": "🚨", "warn": "⚠️", "info": "🔔"}
+            lines += ["", "[내 알림 조건]"] + [f"{mark[a['level']]} {'[한국] ' if a.get('market') == 'KR' else ''}{a['text']}" for a in rules["alerts"]]
+        elif rules and rules.get("status") == "UNAVAILABLE":
+            lines += ["", "[내 알림 조건]", "⚠️ 알림 조건을 확인하지 못했습니다."]
         if missing:
             lines += ["", f"⚠️ 도전자 기록이 빠진 거래일 {len(missing)}일: {', '.join(missing[-5:])}",
                       "지난 날짜는 소급 기록하지 않습니다."]
@@ -363,22 +391,28 @@ class Daily:
         alerts = self._alerts()
         prev = st.get("alerts") or []
         missing = self.missing_sessions(session)
-        text = self.compose(session, steps, alerts, prev, missing, storage.low_disk_text(self.base))
+        rules = self._rule_alerts()
+        text = self.compose(session, steps, alerts, prev, missing, storage.low_disk_text(self.base), rules)
         sig = hashlib.sha256(text.encode("utf-8")).hexdigest()
         notified = st.get("notified") or {}
         out = {"status": "DONE", "session": session, "steps": steps, "telegram": None, "macos": None}
+        sent = notified.get("signature") == sig            # the same text already went out: its rule alerts were delivered then
         if resend or notified.get("signature") != sig:
             out["telegram"] = self.telegram(text)
             failures = [STEP_NAMES[n] for n in STEP_NAMES if (steps.get(n) or {}).get("status") == FAILED]
             urgent = sum(1 for a in alerts["items"] if a["level"] == "bad")
             body = (f"실패: {', '.join(failures)}. " if failures else "") + f"경고 {len(alerts['items'])}건" + \
-                   (f", 긴급 {urgent}건" if urgent else "")
+                   (f", 긴급 {urgent}건" if urgent else "") + (f", 알림 조건 {len(rules['alerts'])}건" if rules["alerts"] else "")
             out["macos"] = self.macos(f"퀀트 터미널 {session}", body)
             ok = out["telegram"]["status"] == "SENT" if out["telegram"]["status"] != "NOT_CONFIGURED" \
                 else out["macos"]["status"] == "SENT"
             if ok:
                 st["notified"] = {"session": session, "signature": sig, "at": self.now().isoformat()}
                 st["alerts"] = sorted(_key(a) for a in alerts["items"])    # "new" clears only once actually delivered
+                self._commit_rules(rules, delivered=True)
+                sent = None
+        if sent is not None and rules.get("status") == "OK" and (sent or not rules["alerts"]):
+            self._commit_rules(rules, delivered=False)     # nothing new fired, or it fired in a message already delivered
         st["last_run"] = {"at": self.now().isoformat(), "session": session, "telegram": out["telegram"],
                           "macos": out["macos"], "missing_sessions": missing}
         self._save(st)

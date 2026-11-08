@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
-from terminal import TERMINAL_VERSION, portfolio as pf, sources
+from terminal import TERMINAL_VERSION, alert_rules, portfolio as pf, sources
 from terminal.cache import FileCache
 
 TTL = {"quote": 900, "chart": 900, "info": 20 * 3600, "facts": 20 * 3600, "filings": 3600, "macro": 6 * 3600}
@@ -476,6 +476,76 @@ class Terminal:
         return {"items": out, "source": "FRED, Federal Reserve Bank of St. Louis (개인·비상업적 이용, 출처 표시)"}
 
     # ---------------------------------------------------------------- watchlist
+    # ---------------------------------------------------------------- alert rules (TERMINAL alert center)
+    @property
+    def alert_store(self) -> "alert_rules.Store":
+        return alert_rules.Store(self.base / "data" / "terminal")
+
+    def alerts_view(self) -> Dict[str, Any]:
+        rules = self.alert_store.rules()
+        return {"rules": [{**r, "name": alert_rules.describe(r)} for r in rules], "log": self.alert_store.log(),
+                "types": alert_rules.TYPES, "basis": "하루 한 번 자동 실행 때 일봉 종가로 확인해 텔레그램·맥 알림으로 보냅니다. 실시간 알림이 아니며 주문은 실행하지 않습니다."}
+
+    def alert_add(self, body: Dict[str, Any]) -> Dict[str, Any]:
+        body = dict(body or {})
+        if body.get("ticker"):
+            body["ticker"] = clean_ticker(body["ticker"])
+        rule = self.alert_store.add(alert_rules.validate(body, pf.market_of))
+        return {"rule": {**rule, "name": alert_rules.describe(rule)}}
+
+    def alert_remove(self, rule_id: str) -> Dict[str, Any]:
+        return {"removed": self.alert_store.remove(str(rule_id or ""))}
+
+    def alert_rearm(self, rule_id: str) -> Dict[str, Any]:
+        return {"rearmed": self.alert_store.rearm(str(rule_id or ""))}
+
+    def _final_bars(self, tickers: List[str], market: str) -> Dict[str, Dict[str, Any]]:
+        """Last FINAL daily close per ticker (a delayed intraday bar is dropped), with the close before it.  Old bars are left out."""
+        if not tickers:
+            return {}
+        sym = {t: self._sym(t) for t in tickers}
+        res = self.cache.cached("alertbars:" + ",".join(sorted(sym.values())), TTL["quote"], lambda: self.src.yahoo_history(sorted(set(sym.values())), "3mo"))
+        data, out = res["data"] or {}, {}
+        for t, s in sym.items():
+            rows = [r for r in data.get(s) or [] if isinstance(r.get("close"), (int, float)) and math.isfinite(r["close"])]
+            if rows and self._intraday(rows[-1]["date"], market):
+                rows = rows[:-1]
+            if not rows or self._bar_status(rows[-1]["date"], "REAL") != "REAL":
+                continue
+            out[t] = {"date": rows[-1]["date"], "close": rows[-1]["close"], "prev_close": rows[-2]["close"] if len(rows) > 1 else None}
+        return out
+
+    def alert_check(self) -> Dict[str, Any]:
+        """Evaluate every active rule now.  Nothing is stored or sent: the daily run does that once the message is delivered."""
+        rules = [r for r in self.alert_store.rules() if r.get("status") == "ACTIVE"]
+        markets = sorted({r["market"] for r in rules})
+        watched: Dict[str, List[str]] = {}
+        for m in markets:
+            held = [h["ticker"] for h in self.portfolio(m).get("holdings") or []]
+            watched[m] = list(dict.fromkeys(held + [t for t in self.watchlist() if pf.market_of(t) == m]))
+        def who(r):
+            return [r["ticker"]] if r["ticker"] else watched.get(r["market"], [])
+        bars: Dict[str, Any] = {}
+        for m in markets:
+            need = sorted({t for r in rules if r["market"] == m and r["type"] in ("PRICE_ABOVE", "PRICE_BELOW", "MOVE") for t in who(r)})
+            bars.update(self._final_bars(need, m))
+        bands = {}
+        for m in markets:
+            if any(r["market"] == m and r["type"] == "BAND_CHANGE" for r in rules):
+                latest = self.qsf.latest(m)
+                by = {}
+                for row in latest.get("rows") or []:
+                    by.setdefault(row.get("ticker"), {})[row.get("strategy")] = {k: row.get(k) for k in ("band", "band_label", "score")}
+                bands[m] = {"session": latest.get("session"), "by_ticker": by}
+        earnings = {}
+        for t in sorted({t for r in rules if r["type"] == "EARNINGS_SOON" for t in who(r)}):
+            rec = self.qsf.cache.read(f"earn:{self._sym(t)}")          # what the scan already fetched; nothing is downloaded here
+            if rec and isinstance(rec.get("data"), list):
+                earnings[t] = rec["data"]
+        today = self.now().astimezone(ZoneInfo("Asia/Seoul")).date().isoformat()
+        alerts, state, notes = alert_rules.evaluate(rules, {"bars": bars, "watched": watched, "bands": bands, "earnings": earnings, "today": today})
+        return {"alerts": alerts, "state": state, "notes": notes, "checked_at": self.now().isoformat(timespec="seconds"), "rules": len(rules)}
+
     def watchlist(self) -> List[str]:
         try:
             return json.loads(self.watchlist_file.read_text(encoding="utf-8"))["tickers"]
