@@ -6,8 +6,14 @@ JSON API under /api/..., static files from terminal/static/.  Read-only except t
 import json
 import logging
 import mimetypes
+import os
+import re
+import sys
 import threading
+import traceback
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Callable, Dict, Optional
 from urllib.parse import parse_qs, urlparse
@@ -20,6 +26,57 @@ from terminal.qsf import changes as qsf_changes, screen as qsf_screen  # noqa: E
 
 HOST = "127.0.0.1"
 log = logging.getLogger("terminal")
+REQUEST_TIMEOUT_S = 60          # a client that connects and sends nothing does not hold a thread forever
+MAX_BODY = 10_000
+ERROR_LOG_BYTES, ERROR_LOG_KEEP = 1_000_000, 3
+
+# Values that must never reach a log: every environment variable whose name says it is a credential or private setting
+# (the .env values are loaded into the environment), and any e-mail address.
+_SECRET_NAME = re.compile(r"KEY|TOKEN|SECRET|AGENT|PASS|CAPITAL|CHAT|EMAIL|CRUMB|COOKIE", re.I)
+_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(\.[\w-]+)+")
+
+
+def redact(text: str) -> str:
+    for k, v in os.environ.items():
+        if v and len(v) >= 4 and _SECRET_NAME.search(k):
+            text = text.replace(v, "[REDACTED]")
+    return _EMAIL.sub("[EMAIL]", text)
+
+
+class _RedactingFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        return redact(super().format(record))
+
+
+class ErrorTally:
+    """Unexpected server errors since start, for the health line.  Type and API path only."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self.count, self.last = 0, None
+
+    def note(self, path: str, exc: BaseException) -> None:
+        with self._lock:
+            self.count += 1
+            self.last = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "path": path, "type": type(exc).__name__}
+
+    def view(self) -> Dict:
+        with self._lock:
+            return {"count": self.count, "last": self.last}
+
+
+def setup_error_log(base: Path) -> Path:
+    """Unexpected errors go, with their traceback and secrets removed, to data/terminal/logs/server_errors.log (rotated at 1MB,
+    3 kept).  Without this the server's errors were visible only on a console that is often not open."""
+    folder = Path(base) / "data" / "terminal" / "logs"
+    folder.mkdir(parents=True, exist_ok=True)
+    path = folder / "server_errors.log"
+    if not any(getattr(h, "baseFilename", None) == str(path) for h in log.handlers):
+        h = RotatingFileHandler(path, maxBytes=ERROR_LOG_BYTES, backupCount=ERROR_LOG_KEEP, encoding="utf-8")
+        h.setLevel(logging.WARNING)
+        h.setFormatter(_RedactingFormatter("%(asctime)s %(levelname)s %(message)s"))
+        log.addHandler(h)
+    return path
 
 
 def _market(m: str) -> str:
@@ -46,9 +103,10 @@ def _strategy(s: str) -> str:
     return s
 
 
-def routes(t: Terminal) -> Dict[str, Callable]:
+def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callable]:
+    errors = errors or ErrorTally()
     return {
-        ("GET", "/api/health"): lambda q, b: t.health(),
+        ("GET", "/api/health"): lambda q, b: {**t.health(), "server_errors": errors.view()},
         ("GET", "/api/overview"): lambda q, b: t.overview(_market(q.get("market", "US"))),
         ("GET", "/api/chart"): lambda q, b: t.chart(q.get("t", ""), q.get("range", "1y")),
         ("GET", "/api/compare"): lambda q, b: t.compare(q.get("t", ""), q.get("range", "1y")),
@@ -100,11 +158,14 @@ def routes(t: Terminal) -> Dict[str, Callable]:
     }
 
 
-def make_handler(t: Terminal):
-    table = routes(t)
+def make_handler(t: Terminal, errors: Optional[ErrorTally] = None):
+    errors = errors or ErrorTally()
+    table = routes(t, errors)
+    writes = threading.Lock()       # saves (watchlist, alerts, journal, settings) run one at a time: no lost update, no shared temp file
 
     class Handler(BaseHTTPRequestHandler):
         server_version = "QSETerminal/1.0"
+        timeout = REQUEST_TIMEOUT_S
 
         def log_message(self, fmt, *args):          # quiet; never logs request bodies or headers
             log.debug("%s %s", self.command, self.path.split("?")[0])
@@ -133,20 +194,31 @@ def make_handler(t: Terminal):
                     if self.headers.get("Origin") not in (None, f"http://{HOST}:{self.server.server_port}",
                                                           f"http://localhost:{self.server.server_port}"):
                         return self._json(403, {"error": "FORBIDDEN_ORIGIN"})
-                    n = min(int(self.headers.get("Content-Length") or 0), 10_000)
+                    try:
+                        n = int(self.headers.get("Content-Length") or 0)
+                    except ValueError:
+                        return self._json(400, {"error": "BAD_LENGTH"})
+                    if n < 0 or n > MAX_BODY:
+                        return self._json(413 if n > MAX_BODY else 400, {"error": "BAD_LENGTH"})
                     try:
                         body = json.loads(self.rfile.read(n) or b"{}")
                         if not isinstance(body, dict):
                             raise ValueError
-                    except ValueError:
+                    except (ValueError, RecursionError):
                         return self._json(400, {"error": "BAD_JSON"})
                 q = {k: v[0] for k, v in parse_qs(u.query).items()}
                 try:
-                    return self._json(200, _finite(fn(q, body)))
+                    if method == "POST":
+                        with writes:
+                            out = fn(q, body)
+                    else:
+                        out = fn(q, body)
+                    return self._json(200, _finite(out))
                 except ValueError as exc:
                     return self._json(400, {"error": str(exc)})
-                except Exception as exc:                 # never leak internals or credentials
-                    log.warning("api error on %s: %s", u.path, type(exc).__name__)
+                except Exception as exc:                 # never leak internals or credentials to the page
+                    errors.note(u.path, exc)
+                    log.error("api error on %s %s: %s\n%s", method, u.path, type(exc).__name__, traceback.format_exc())
                     return self._json(500, {"error": "INTERNAL_ERROR", "type": type(exc).__name__})
             if method != "GET":
                 return self._json(405, {"error": "METHOD_NOT_ALLOWED"})
@@ -179,11 +251,20 @@ def _finite(o):
     return o
 
 
+class _Server(ThreadingHTTPServer):
+    daemon_threads = True
+
+    def handle_error(self, request, client_address):
+        exc = sys.exc_info()[1]
+        if isinstance(exc, (ConnectionError, TimeoutError)):       # the browser left mid-reply, or sent nothing in time
+            return
+        log.error("request failed: %s\n%s", type(exc).__name__, traceback.format_exc())
+
+
 def serve(port: int = 8765, base_dir: Path = Path("."), terminal: Optional[Terminal] = None,
           background: bool = False) -> ThreadingHTTPServer:
     t = terminal or Terminal(base_dir)
-    httpd = ThreadingHTTPServer((HOST, port), make_handler(t))
-    httpd.daemon_threads = True
+    httpd = _Server((HOST, port), make_handler(t))
     if background:
         threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd

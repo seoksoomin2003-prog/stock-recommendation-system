@@ -7,7 +7,7 @@ when the list has run out instead of looking empty.  When a source page publishe
 shows the date only.
 """
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from zoneinfo import ZoneInfo
 
 KST = ZoneInfo("Asia/Seoul")

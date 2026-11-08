@@ -453,7 +453,16 @@ const RENDER = { overview: renderOverview, macro: renderMacro, watch: renderWatc
 // ------------------------------------------------------------------ boot
 applyTheme(theme);
 paintMarket();
-api("/api/health").then((h) => ($("#health").textContent = `· ${h.version} · SEC ${h.sec === "CONFIGURED" ? "연결 설정됨" : "미설정"} · ECOS ${h.ecos === "CONFIGURED" ? "연결 설정됨" : "미설정"}`)).catch(() => {});
+function loadHealth() {
+  api("/api/health").then((h) => {
+    const e = h.server_errors || {}, el = $("#health");
+    el.textContent = `· ${h.version} · SEC ${h.sec === "CONFIGURED" ? "연결 설정됨" : "미설정"} · ECOS ${h.ecos === "CONFIGURED" ? "연결 설정됨" : "미설정"}` +
+      (e.count ? ` · 서버 오류 ${e.count}건` : "");
+    el.title = e.count && e.last ? `마지막 오류 ${e.last.at} ${e.last.path} (${e.last.type}). 자세한 내용: data/terminal/logs/server_errors.log` : "";
+  }).catch(() => {});
+}
+loadHealth();
+setInterval(loadHealth, 5 * 60 * 1000);
 let booted = false;
 function fromHash() {
   const [tab, tk] = location.hash.replace(/^#/, "").split("/");

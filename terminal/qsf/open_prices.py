@@ -8,7 +8,7 @@ import csv
 import io
 import tarfile
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional
 
 SOURCE_END = "2017-03-31"
 MAX_GAP_MOVE = 0.5      # across a missing file the raw close is used only if it moved less than this; otherwise the series stops

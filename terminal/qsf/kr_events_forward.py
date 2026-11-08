@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import numpy as np
 
-from terminal.qsf import config, kr_forward as kf, krx_history as kh, research_ensemble as en, research_kr as kr, research_kr_events as ke, research_swing as rs, validate
+from terminal.qsf import config, kr_forward as kf, krx_history as kh, research_ensemble as en, research_kr as kr, research_kr_events as ke, research_swing as rs
 from terminal.qsf.research_score import test_verdict
 
 PROTOCOL = "reports/QSF_KR_EVENTS_FORWARD_PROTOCOL.md"

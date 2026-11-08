@@ -8,7 +8,7 @@ import gzip
 import json
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Set
+from typing import Any, Callable, Dict, Iterable, List, Set
 
 import numpy as np
 

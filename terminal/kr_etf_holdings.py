@@ -16,7 +16,7 @@ import re
 import time
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Optional
 
 FUNDS = {   # rotation symbol: (page id, fund name)
     "091160": ("2ETF07", "KODEX 반도체"), "091170": ("2ETF08", "KODEX 은행"), "102970": ("2ETF15", "KODEX 증권"),

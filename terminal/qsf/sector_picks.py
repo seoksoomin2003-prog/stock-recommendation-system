@@ -8,7 +8,7 @@ matched by KRX industry (and, for holding companies filed under "기타 금융�
 approximation.  The rule used is returned so the screen can show it.
 """
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 TOP = 3
 
