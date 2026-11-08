@@ -183,32 +183,64 @@ def factor_correlations(snaps: List[Dict[str, Any]], min_obs: int = 30, flag: fl
 
 
 # ---------------------------------------------------------------------- forward outcomes
+STOP_GAP = 5          # market sessions with no bar after a stock's last one before it counts as no longer trading (a lag of a day or two is not)
+
+
+def _stopped_exit(path: List[Dict[str, Any]], idx: int, h: int, calendar: List[str]) -> Optional[Tuple[Dict[str, Any], str]]:
+    """The last traded bar of a stock that stopped trading inside the horizon, and the horizon's last market session.
+    Approved by the user on 2026-11-08: such a stock is sold at its last trade and held as cash to the horizon, as in the research tests
+    and the US challenger record.  None when the horizon has not ended on the market calendar, or the stock may only be lagging."""
+    j = bisect.bisect_left(calendar, path[idx]["date"])
+    if j >= len(calendar) or calendar[j] != path[idx]["date"] or j + h - 1 >= len(calendar):
+        return None
+    horizon_end = calendar[j + h - 1]
+    last = next((b for b in reversed(path[idx:]) if b.get("adj_close") and b.get("close") and b["date"] <= horizon_end), None)
+    if last is None or any(b.get("adj_close") and b["date"] > last["date"] for b in path[idx:]):
+        return None                    # it traded again later: a gap, not a stop
+    if len(calendar) - bisect.bisect_right(calendar, last["date"]) < STOP_GAP:
+        return None
+    return last, horizon_end
+
+
 def outcome(path: List[Dict[str, Any]], bench: List[Dict[str, Any]], signal_session: str, h: int, cost: float, entry_session: Optional[str] = None,
-            dates: Optional[List[str]] = None, bench_by_date: Optional[Dict[str, Dict[str, Any]]] = None) -> Optional[Dict[str, float]]:
+            dates: Optional[List[str]] = None, bench_by_date: Optional[Dict[str, Dict[str, Any]]] = None,
+            calendar: Optional[List[str]] = None) -> Optional[Dict[str, float]]:
     """Bars must be dated.  Entry is the open (dividend-adjusted basis) of the recorded entry session, or the next bar for a
     historical check; a snapshot can never enter at an open that passed before it was written.  Exit is the h-th bar's close.
+    With ``calendar`` (the market's sessions, in order), a stock that stopped trading before its h-th bar exits at its last trade and
+    is compared with the benchmark over the whole horizon; it carries ``stopped``.  Without it, such a stock stays None as before.
     None until matured, or when a price is missing: never zero.
     ``dates`` (the bars' dates, in order) and ``bench_by_date`` only save repeating the same work across many snapshots; the answer is the same without them."""
     if dates is not None:
         idx = bisect.bisect_left(dates, entry_session) if entry_session else bisect.bisect_right(dates, signal_session)
     else:
         idx = next((i for i, b in enumerate(path) if (b["date"] >= entry_session if entry_session else b["date"] > signal_session)), None)
-    if idx is None or idx + h - 1 >= len(path):
+    if idx is None or idx >= len(path):
         return None
-    start, end = path[idx], path[idx + h - 1]
-    if not start.get("open") or not start.get("close") or not end.get("adj_close") or not start.get("adj_close"):
+    start = path[idx]
+    if not start.get("open") or not start.get("close") or not start.get("adj_close"):
+        return None
+    end, bench_end, stopped = (path[idx + h - 1] if idx + h - 1 < len(path) else None), None, False
+    if (end is None or not end.get("adj_close")) and calendar:
+        got = _stopped_exit(path, idx, h, calendar)
+        if got:
+            end, bench_end, stopped = got[0], got[1], True
+    if end is None or not end.get("adj_close"):
         return None
     adj_open = start["open"] * start["adj_close"] / start["close"]
     gross = end["adj_close"] / adj_open - 1
-    window = path[idx:idx + h]
+    window = [b for b in path[idx:idx + h] if b["date"] <= end["date"]]
     low = min(b["adj_close"] for b in window if b.get("adj_close"))
     bmap = bench_by_date if bench_by_date is not None else {b["date"]: b for b in bench}
-    bs, be = bmap.get(start["date"]), bmap.get(end["date"])
+    bs, be = bmap.get(start["date"]), bmap.get(bench_end or end["date"])
     rel = None
     if bs and be and bs.get("open") and bs.get("adj_close") and be.get("adj_close"):
         rel = gross - (be["adj_close"] / (bs["open"] * bs["adj_close"] / bs["close"]) - 1)
-    return {"gross": gross, "net": gross - cost, "relative_net": rel - cost if rel is not None else None, "worst": low / adj_open - 1,
-            "entry_date": start["date"], "exit_date": end["date"]}
+    out = {"gross": gross, "net": gross - cost, "relative_net": rel - cost if rel is not None else None, "worst": low / adj_open - 1,
+           "entry_date": start["date"], "exit_date": end["date"]}
+    if stopped:
+        out["stopped"] = True
+    return out
 
 
 def bucket_of(score: float) -> str:
@@ -241,6 +273,7 @@ def validate(snaps: List[Dict[str, Any]], market: str, strategy: str, loader: Ca
     out["model_versions"] = dict(sorted(versions.items()))        # a cohort spanning several versions measures a mix, and says so
     cache: Dict[str, Tuple[List[Dict], Optional[List[str]]]] = {}
     bench_by_date = {b["date"]: b for b in bench}
+    calendar = sorted(bench_by_date)          # the market's sessions: a recorded stock that stopped trading exits at its last trade
     for h in horizons:
         buckets: Dict[str, List[Dict[str, float]]] = {}
         matured = set()
@@ -251,7 +284,7 @@ def validate(snaps: List[Dict[str, Any]], market: str, strategy: str, loader: Ca
                 ok = all(isinstance(d, str) for d in days) and days == sorted(days)
                 cache[s["ticker"]] = (bars, days if ok else None)      # bars out of order or without a date take the plain scan
             path, days = cache[s["ticker"]]
-            o = outcome(path, bench, s["data_date"], h, cost, s.get("entry_session"), days, bench_by_date)
+            o = outcome(path, bench, s["data_date"], h, cost, s.get("entry_session"), days, bench_by_date, calendar)
             if o:
                 buckets.setdefault(bucket_of(s["score"]), []).append(o)
                 matured.add(s["data_date"])

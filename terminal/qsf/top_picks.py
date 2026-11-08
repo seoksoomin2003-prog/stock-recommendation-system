@@ -164,9 +164,12 @@ class _Prices:
         return sum(1 for b in bars if isinstance(b.get("date"), str) and b["date"] >= entry)
 
 
-def _out(px: _Prices, bench: _Prices, t: str, bsym: Optional[str], entry: str, h: int, cost: float) -> Optional[Dict[str, float]]:
+CALENDAR = {"US": "SPY", "KR": "^KS11"}   # whose sessions are the market calendar for a stock that stopped trading
+
+
+def _out(px: _Prices, bench: _Prices, t: str, bsym: Optional[str], entry: str, h: int, cost: float, calendar: Optional[List[str]] = None) -> Optional[Dict[str, float]]:
     bars, days = px.get(t)
-    return lg.outcome(bars, bench.get(bsym)[0] if bsym else [], entry, h, cost, entry, days)
+    return lg.outcome(bars, bench.get(bsym)[0] if bsym else [], entry, h, cost, entry, days, calendar=calendar)
 
 
 def _spearman(x: List[float], y: List[float]) -> Optional[float]:
@@ -178,17 +181,17 @@ def _spearman(x: List[float], y: List[float]) -> Optional[float]:
     return float(np.corrcoef(a, b)[0, 1])
 
 
-def day_report(doc: Dict[str, Any], strategy: str, px: _Prices, bench: _Prices, cost: float) -> Dict[str, Any]:
+def day_report(doc: Dict[str, Any], strategy: str, px: _Prices, bench: _Prices, cost: float, calendar: Optional[List[str]] = None) -> Dict[str, Any]:
     entry, part = doc["entry_session"], doc["strategies"][strategy]
     top = []
     for p in part["top"]:
         held = px.held(p["ticker"], entry)
         now = _out(px, bench, p["ticker"], p.get("benchmark"), entry, held, cost) if held else None
         top.append({**p, "so_far": now, "sessions_held": held,
-                    "horizons": {str(h): _out(px, bench, p["ticker"], p.get("benchmark"), entry, h, cost) for h in HORIZONS[strategy]}})
+                    "horizons": {str(h): _out(px, bench, p["ticker"], p.get("benchmark"), entry, h, cost, calendar) for h in HORIZONS[strategy]}})
     horizons = {}
     for h in HORIZONS[strategy]:
-        got = [(s, o) for t, s in part["scores"] for o in [_out(px, bench, t, None, entry, h, cost)] if o]
+        got = [(s, o) for t, s in part["scores"] for o in [_out(px, bench, t, None, entry, h, cost, calendar)] if o]
         tops = [x["horizons"][str(h)] for x in top if x["horizons"][str(h)]]
         uni = statistics.mean(o["net"] for _, o in got) if got else None
         horizons[str(h)] = {"universe_n": len(got), "universe_mean_net": uni,
@@ -234,8 +237,9 @@ def report(docs: List[Dict[str, Any]], market: str, loader: Callable[[str], List
            cost: Optional[float] = None) -> Dict[str, Any]:
     cost = config.round_trip_cost(market) if cost is None else cost
     px, bench = _Prices(loader), _Prices(bench_loader)
+    calendar = sorted({b["date"] for b in bench.get(CALENDAR[market])[0] if isinstance(b.get("date"), str)}) or None
     out = {"market": market, "protocol": PROTOCOL, "cost_round_trip_pct": cost * 100, "verdict_horizon": VERDICT_H, "strategies": {}}
     for strategy in config.STRATEGIES:
-        days = [day_report(d, strategy, px, bench, cost) for d in sorted(docs, key=lambda d: d["session"]) if d["market"] == market and strategy in d["strategies"]]
+        days = [day_report(d, strategy, px, bench, cost, calendar) for d in sorted(docs, key=lambda d: d["session"]) if d["market"] == market and strategy in d["strategies"]]
         out["strategies"][strategy] = {"summary": summarize(days, strategy), "days": days[::-1]}
     return out

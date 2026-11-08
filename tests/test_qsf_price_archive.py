@@ -73,3 +73,55 @@ def test_service_loader_reads_the_archive(tmp_path):
     svc = QSF.__new__(QSF)
     svc.base, svc.dir = tmp_path, tmp_path / "data" / "qsf"
     assert svc._loader("KR")("111110")[0]["date"] == "2026-11-06"
+
+
+# ---------------------------------------------------------------- a stock that stops trading inside the horizon (user decision 2026-11-08)
+from terminal.qsf import ledger as lg   # noqa: E402
+
+CAL = ["2026-11-09", "2026-11-10", "2026-11-11", "2026-11-12", "2026-11-13", "2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20"]
+
+
+def px(days, closes):
+    return [{"date": d, "open": c, "close": c, "adj_close": c} for d, c in zip(days, closes)]
+
+
+def test_a_stock_that_stopped_trading_exits_at_its_last_trade_against_the_whole_horizon():
+    bench = px(CAL, [100.0 + i for i in range(len(CAL))])
+    path = px(CAL[:3], [10.0, 12.0, 15.0])                   # taken over: last trade 11-11, the market keeps going
+    o = lg.outcome(path, bench, "2026-11-06", 5, 0.0, "2026-11-09", calendar=CAL)
+    assert o["stopped"] and o["exit_date"] == "2026-11-11" and o["gross"] == 0.5
+    assert o["relative_net"] == 0.5 - (104.0 / 100.0 - 1)      # benchmark to the horizon's last session, 11-13
+    assert lg.outcome(path, bench, "2026-11-06", 5, 0.0, "2026-11-09") is None          # no calendar: the old answer
+    assert lg.outcome(path, bench, "2026-11-06", 20, 0.0, "2026-11-09", calendar=CAL) is None   # horizon not over yet
+
+
+def test_a_short_lag_or_a_halt_that_resumes_is_not_a_stop():
+    bench = px(CAL, [100.0] * len(CAL))
+    lag = px(CAL[:6], [10.0] * 6)                            # four sessions behind the market: may only be late data
+    assert lg.outcome(lag, bench, "2026-11-06", 8, 0.0, "2026-11-09", calendar=CAL) is None
+    halted = px(CAL[:2] + CAL[8:], [10.0, 9.0, 11.0, 12.0])    # suspended, then traded again: counted by its own bars as before
+    o = lg.outcome(halted, bench, "2026-11-06", 3, 0.0, "2026-11-09", calendar=CAL)
+    assert "stopped" not in o and o["exit_date"] == "2026-11-19"
+    assert lg.outcome(halted, bench, "2026-11-06", 5, 0.0, "2026-11-09", calendar=CAL) is None
+
+
+def test_top_three_and_ledger_count_a_stopped_stock_instead_of_dropping_it(monkeypatch):
+    from terminal.qsf import top_picks as tp
+    monkeypatch.setitem(tp.MIN_ROWS, "US", 4)
+    rows = []
+    for i, t in enumerate("ABCDE"):
+        rows += [{"ticker": t, "name": t, "strategy": s, "score": 60 + i, "action": "WATCH", "price": 10.0, "actionability": "ACTIONABLE",
+                  "data_date": "2026-11-06"} for s in ("SWING", "LONG_TERM")]
+    latest = {"status": "REAL", "session": "2026-11-06", "model_version": "V", "rows": rows}
+    snaps = [{"ticker": t, "strategy": s, "benchmark": "SPY", "entry_session": "2026-11-09"} for t in "ABCDE" for s in ("SWING", "LONG_TERM")]
+    from datetime import datetime, timezone
+    doc = tp.build(latest, snaps, "US", datetime(2026, 11, 8, 3, tzinfo=timezone.utc))
+    prices = {"SPY": px(CAL, [100.0] * 10), "E": px(CAL[:2], [10.0, 5.0])}
+    for t in "ABCD":
+        prices[t] = px(CAL, [10.0] * 10)
+    load = lambda t: prices.get(t, [])                       # noqa: E731
+    h5 = tp.report([doc], "US", load, load, cost=0.0)["strategies"]["SWING"]["days"][0]
+    assert h5["horizons"]["5"]["universe_n"] == 5 and h5["top"][0]["horizons"]["5"]["stopped"] and h5["top"][0]["horizons"]["5"]["net"] == -0.5
+    snap = {"market": "US", "strategy": "SWING", "ticker": "E", "score": 80.0, "data_date": "2026-11-06", "entry_session": "2026-11-09", "model_version": "V"}
+    out = lg.validate([snap], "US", "SWING", load, prices["SPY"], cost=0.0)
+    assert sum(b["n"] for b in out["horizons"]["5"]["buckets"].values()) == 1 and out["horizons"]["5"]["matured_sessions"] == 1
