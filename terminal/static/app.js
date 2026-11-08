@@ -221,7 +221,7 @@ function renderProfile(c) {
     ["PBR", fmt(p.priceToBook, 2)], ["배당수익률", isNum(p.dividendYield) ? `${fmt(p.dividendYield, 2)}%` : DASH],
     ["베타", fmt(p.beta, 2)], ["평균 거래량", big(p.averageVolume, "")], ["상장 주식수", big(p.sharesOutstanding, "")]];
   $("#s-head").innerHTML = `<div class="head"><h2 style="margin:0">${esc(p.longName || p.shortName || c.ticker)} <span class="meta" style="margin:0">${esc(c.ticker)} · ${esc(p.exchange || "")}</span></h2>
-      <button class="ghost" id="addw">＋ 관심종목</button></div>
+      <span><button class="ghost" id="addw">＋ 관심종목</button> <button class="ghost" id="addc" type="button">비교 차트</button></span></div>
     <div class="head" id="s-price"></div>
     <div class="meta">${esc([sectorKo(p.sector), p.industry].filter(Boolean).join(" · "))}${p.website ? ` · <a href="${esc(p.website)}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>
     <div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span><b class="num">${v}</b></div>`).join("")}</div>
@@ -229,6 +229,7 @@ function renderProfile(c) {
     ${meta(c.profile.source, c.profile.fetched_at, badge(c.profile.status))}`;
   renderHeadPrice();
   const s = $("#sum"); if (s) s.onclick = () => s.classList.toggle("open");
+  $("#addc").onclick = () => compareWith([c.ticker]);
   $("#addw").onclick = async () => { try { await api("/api/watchlist/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: c.ticker }) }); $("#addw").textContent = "✓ 추가됨"; state.loaded.watch = false; } catch (e) { alert(ERR_KO[e.message] || e.message); } };
 }
 function renderFund(f) {

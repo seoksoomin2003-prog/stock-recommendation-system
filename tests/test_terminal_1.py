@@ -411,3 +411,28 @@ def test_app_cli_has_terminal_command():
     import app
     args = app.build_parser().parse_args(["terminal", "--port", "9999"])
     assert args.command == "terminal" and args.port == 9999 and args.open is False
+
+
+def test_compare_common_days_total_return_and_missing(tmp_path):
+    def history(syms, period):
+        s = syms[0]
+        if s == "ZZZZ":
+            return {}
+        days = [f"2026-10-{d:02d}" for d in range(1, 11)]
+        if s == "^KS11":
+            days = days[2:]                                       # a market that opened later: only common days are kept
+        step = {"AAPL": 1.0, "SPY": 0.5}.get(s, -1.0)
+        return {s: [{"date": d, "close": 100 + step * i, "adj_close": 100 + step * i} for i, d in enumerate(days)]}
+    t = Terminal(tmp_path, src=fake_src(yahoo_history=history), now=lambda: AFTER)
+    d = t.compare("aapl, SPY, ^KS11, ZZZZ, AAPL", "1y")
+    assert d["status"] == "REAL" and d["missing"] == ["ZZZZ"] and [s["ticker"] for s in d["series"]] == ["AAPL", "SPY", "^KS11"]
+    assert d["dates"][0] == "2026-10-03" and len(d["dates"]) == 8 and d["mixed_markets"]
+    a = d["series"][0]
+    assert a["points"][0] == 0 and a["total_return"] == pytest.approx(109 / 102 - 1) and a["max_drawdown"] == 0
+    assert d["series"][2]["max_drawdown"] == pytest.approx(93 / 100 - 1)
+    assert d["correlation"][0][1] == pytest.approx(1.0, abs=1e-3) and d["correlation"][0][2] == pytest.approx(d["correlation"][2][0])
+    with pytest.raises(ValueError):
+        t.compare("", "1y")
+    with pytest.raises(ValueError):
+        t.compare("AAPL", "10y")
+    assert t.compare("ZZZZ", "1y")["status"] == "UNAVAILABLE"

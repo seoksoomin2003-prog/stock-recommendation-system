@@ -51,6 +51,7 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/health"): lambda q, b: t.health(),
         ("GET", "/api/overview"): lambda q, b: t.overview(_market(q.get("market", "US"))),
         ("GET", "/api/chart"): lambda q, b: t.chart(q.get("t", ""), q.get("range", "1y")),
+        ("GET", "/api/compare"): lambda q, b: t.compare(q.get("t", ""), q.get("range", "1y")),
         ("GET", "/api/company"): lambda q, b: t.company(q.get("t", "")),
         ("GET", "/api/filings"): lambda q, b: t.filings(q.get("t", "")),
         ("GET", "/api/macro"): lambda q, b: t.macro(_market(q.get("market", "US"))),

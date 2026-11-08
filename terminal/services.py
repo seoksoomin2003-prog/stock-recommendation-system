@@ -228,6 +228,70 @@ class Terminal:
                 "cache": {k: res[k] for k in ("status", "fetched_at", "error")},
                 "source": "Yahoo Finance (분할 조정 일봉)"}
 
+    COMPARE_INDEX = {"^GSPC": "S&P 500", "^IXIC": "나스닥 종합", "^KS11": "코스피", "^KQ11": "코스닥"}
+    COMPARE_MAX = 8
+
+    def compare(self, tickers: str, rng: str = "1y") -> Dict[str, Any]:
+        """Several stocks and indices from one common start, as total return (dividend-adjusted closes) in each one's own currency.
+        Days are those all of them traded; a stock without prices is listed as missing, never drawn as flat."""
+        period, keep = {"3mo": ("2y", 63), "1y": ("2y", 252), "5y": ("10y", 1260)}.get(rng, (None, None))
+        if not period:
+            raise ValueError("INVALID_RANGE")
+        names = []
+        for raw in (tickers or "").split(","):
+            t = raw.strip().upper()
+            if not t:
+                continue
+            t = clean_ticker(t)
+            if t not in names:
+                names.append(t)
+        if not names:
+            raise ValueError("INVALID_TICKER")
+        names = names[:self.COMPARE_MAX]
+        series, missing, fetched = {}, [], []
+        for t in names:
+            sym = t if t in self.COMPARE_INDEX else self._sym(t)
+            res = self.cache.cached(f"chart:{sym}:{period}", TTL["chart"], lambda sym=sym: self.src.yahoo_history([sym], period))
+            rows = [r for r in ((res["data"] or {}).get(sym) or []) if isinstance(r.get("adj_close") or r.get("close"), (int, float))]
+            if len(rows) < 2:
+                missing.append(t)
+                continue
+            series[t] = {r["date"]: (r.get("adj_close") or r["close"]) for r in rows[-keep - 1:]}
+            fetched.append(res.get("fetched_at"))
+        if not series:
+            return {"status": "UNAVAILABLE", "range": rng, "series": [], "missing": missing}
+        common = sorted(set.intersection(*[set(v) for v in series.values()]))
+        if len(common) < 2:
+            return {"status": "UNAVAILABLE", "range": rng, "series": [], "missing": missing, "reason": "NO_COMMON_DAYS"}
+        out = []
+        for t, m in series.items():
+            vals = [m[d] for d in common]
+            peak, mdd = vals[0], 0.0
+            for v in vals:
+                peak = max(peak, v)
+                mdd = min(mdd, v / peak - 1)
+            rets = [vals[i] / vals[i - 1] - 1 for i in range(1, len(vals))]
+            mean = sum(rets) / len(rets)
+            vol = math.sqrt(sum((r - mean) ** 2 for r in rets) / (len(rets) - 1)) * math.sqrt(252) if len(rets) > 1 else None
+            out.append({"ticker": t, "name": self.COMPARE_INDEX.get(t), "market": "KR" if t in ("^KS11", "^KQ11") else ("US" if t in self.COMPARE_INDEX else pf.market_of(t)),
+                        "points": [v / vals[0] - 1 for v in vals], "total_return": vals[-1] / vals[0] - 1, "volatility": vol, "max_drawdown": mdd, "_rets": rets})
+        corr = []
+        for a in out:
+            row = []
+            for b in out:
+                x, y = a["_rets"], b["_rets"]
+                mx, my = sum(x) / len(x), sum(y) / len(y)
+                sxy = sum((p - mx) * (q - my) for p, q in zip(x, y))
+                sx, sy = math.sqrt(sum((p - mx) ** 2 for p in x)), math.sqrt(sum((q - my) ** 2 for q in y))
+                row.append(sxy / (sx * sy) if sx and sy else None)
+            corr.append(row)
+        for o in out:
+            o.pop("_rets")
+        mixed = len({o["market"] for o in out}) > 1
+        return {"status": "REAL", "range": rng, "dates": common, "series": out, "correlation": corr, "missing": missing, "mixed_markets": mixed,
+                "fetched_at": min((f for f in fetched if f), default=None), "source": "Yahoo Finance 일봉 (배당 조정 종가, 지연)",
+                "basis": "모두가 거래한 날만 씁니다. 수익률은 각 종목의 통화 기준이며 환율은 반영하지 않습니다."}
+
     def _kr_fundamentals(self, c: Dict[str, Any]) -> Dict[str, Any]:
         if not c.get("annual"):
             return {"status": "UNAVAILABLE", "reason": c.get("reason") or "DART 재무 데이터가 없습니다."}
