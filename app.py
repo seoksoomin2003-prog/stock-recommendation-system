@@ -22,6 +22,7 @@ Multi-market (P6-21..25): ``--market`` selects the market (default US, unchanged
     python app.py dashboard [--open]   unified US/KR dashboard (read-only, tracking/dashboard.html)
     python app.py migrate-storage      idempotent, additive storage layout v2 (backs up tracking/ first)
     python app.py terminal [--open]    personal terminal, local web app at http://127.0.0.1:8765 (TERMINAL-1..3)
+    python app.py terminal-agent [status|install|uninstall]   keep the terminal running (start at login, restart on exit)
     python app.py lab update           refresh the lab price panel and record today's challenger signals (TERMINAL-3)
     python app.py lab status           challenger ledger and panel status
 
@@ -562,16 +563,28 @@ def cmd_automation(args) -> int:
     return 0
 
 
+def cmd_terminal_agent(args) -> int:
+    from terminal import server_agent
+    if args.action == "install":
+        res = server_agent.install(PROJECT_ROOT)
+    elif args.action == "uninstall":
+        res = server_agent.uninstall()
+    else:
+        res = server_agent.status(PROJECT_ROOT)
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if args.action != "install" or res["installed"] else 1
+
+
 def cmd_terminal(args) -> int:
     from terminal.server import HOST, serve, setup_error_log
     try:
         httpd = serve(port=args.port, base_dir=PROJECT_ROOT)
         setup_error_log(PROJECT_ROOT)
     except OSError as exc:
-        print(f"터미널 서버를 시작할 수 없습니다 (포트 {args.port}): {exc.strerror}. --port 로 다른 포트를 지정하세요.")
+        print(f"터미널 서버를 시작할 수 없습니다 (포트 {args.port}): {exc.strerror}. --port 로 다른 포트를 지정하세요.", flush=True)
         return 2
     url = f"http://{HOST}:{args.port}/"
-    print(f"퀀트 터미널: {url}  (이 Mac에서만 접속 가능 · 종료: Ctrl+C)")
+    print(f"퀀트 터미널: {url}  (이 Mac에서만 접속 가능 · 종료: Ctrl+C)", flush=True)
     if args.open and sys.platform == "darwin":
         os.system(f"open '{url}'")
     try:
@@ -605,6 +618,8 @@ def build_parser() -> argparse.ArgumentParser:
     tm = sub.add_parser("terminal", help="Personal terminal: local web app on 127.0.0.1 (TERMINAL-1, read-only)")
     tm.add_argument("--port", type=int, default=8765)
     tm.add_argument("--open", action="store_true", help="Open the terminal in the default browser")
+    ta = sub.add_parser("terminal-agent", help="launchd agent that starts the terminal at login and restarts it when it stops")
+    ta.add_argument("action", choices=["status", "install", "uninstall"], nargs="?", default="status")
     sub.add_parser("migrate-storage", help="Additive storage layout v2 (idempotent; backs up tracking/ first)")
     s = sub.add_parser("scan", help="Automated Market Scan of the current S&P 500")
     s.add_argument("--capital", default=None,
@@ -652,6 +667,8 @@ def main(argv=None) -> int:
         return 0
     if args.command == "terminal":
         return cmd_terminal(args)
+    if args.command == "terminal-agent":
+        return cmd_terminal_agent(args)
     if args.command == "lab":
         return cmd_lab(args)
     if args.command == "automation":
