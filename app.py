@@ -507,7 +507,27 @@ def cmd_qsf(args) -> int:
     if args.action == "scan":
         res = q.scan(market, tickers=args.tickers or None, record=not args.dry_run, progress=lambda st, d, t: print(f"  {st} {d}/{t}", flush=True))
         print(json.dumps({k: v for k, v in res.items() if k != "rows"} | {"errors": len(res["errors"])}, ensure_ascii=False, indent=1, default=str))
+        if res["status"] == "REAL" and not args.dry_run and not args.tickers:
+            try:                    # the top three are frozen right after a full scan; a failure here never fails the scan
+                from terminal.qsf import top_picks
+                print("top3:", json.dumps(top_picks.freeze(PROJECT_ROOT, market), ensure_ascii=False, default=str))
+            except Exception as exc:
+                print("top3: FAILED", type(exc).__name__)
         return 0 if res["status"] == "REAL" else 3 if res["status"] == "DATA_NOT_READY" else 2
+    if args.action == "top3-freeze":
+        from terminal.qsf import top_picks
+        res = top_picks.freeze(PROJECT_ROOT, market)
+        print(json.dumps(res, ensure_ascii=False, default=str))
+        return {"OK": 0, "WAITING": 3}.get(res["status"], 1)
+    if args.action == "top3-report":
+        res = q.top3(market)
+        for st, part in (res.get("strategies") or {}).items():
+            for d in part["days"][:5]:
+                print(st, d["session"], "→", d["entry_session"], [(p["ticker"], round(p["score"], 1), None if not p["so_far"] else round(p["so_far"]["relative_net"] * 100, 2) if p["so_far"]["relative_net"] is not None else None) for p in d["top"]])
+            print(st, json.dumps(part["summary"], ensure_ascii=False, default=str))
+        if res["status"] != "REAL":
+            print(json.dumps(res, ensure_ascii=False, default=str))
+        return 0
     if args.action in ("us-challenger-evaluate-swing", "us-challenger-evaluate-long"):
         from datetime import date
         from terminal.qsf import us_challenger
@@ -596,7 +616,7 @@ def build_parser() -> argparse.ArgumentParser:
     nw = sub.add_parser("news", help="Record free news headlines of the scanned stocks (feeds no score)")
     nw.add_argument("action", choices=["record"])
     qs = sub.add_parser("qsf", help="QSF 1.1: 0-100 stock score with holding-period plan (separate from P6-11B)")
-    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "sue-test", "insider-prepare", "insider-develop", "insider-test", "news-prepare", "news-develop", "news-test", "ensemble-prepare", "ensemble-run", "short-download", "short-develop", "short-test", "sentiment-download", "sentiment-run", "kr-download", "kr-prepare", "kr-run", "kr-diagnose", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund", "kr-forward-evaluate-events", "cache-report", "cache-prune", "backup-check", "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long", "kr-events-download", "kr-events-prepare", "kr-events-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-fund-download", "kr-fund-prepare", "kr-fund-run"])
+    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "sue-test", "insider-prepare", "insider-develop", "insider-test", "news-prepare", "news-develop", "news-test", "ensemble-prepare", "ensemble-run", "short-download", "short-develop", "short-test", "sentiment-download", "sentiment-run", "kr-download", "kr-prepare", "kr-run", "kr-diagnose", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund", "kr-forward-evaluate-events", "cache-report", "cache-prune", "backup-check", "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long", "kr-events-download", "kr-events-prepare", "kr-events-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-fund-download", "kr-fund-prepare", "kr-fund-run", "top3-freeze", "top3-report"])
     qs.add_argument("tickers", nargs="*")
     qs.add_argument("--dry-run", action="store_true", help="Scan without writing to the ledger")
     qs.add_argument("--apply", action="store_true", help="cache-prune only: remove the files instead of listing them")

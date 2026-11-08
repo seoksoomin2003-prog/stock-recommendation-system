@@ -79,6 +79,7 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/qsf/screen"): lambda q, b: qsf_screen.screen(t.qsf.screen_rows(_market(q.get("market", "US"))), q),
         ("GET", "/api/qsf/changes"): lambda q, b: qsf_changes.report(t.qsf.latest(_market(q.get("market", "US"))), t.qsf.ledger, _market(q.get("market", "US")), _strategy(q.get("strategy", "SWING"))),
         ("GET", "/api/qsf/validation"): lambda q, b: t.qsf.validation(),
+        ("GET", "/api/qsf/top3"): lambda q, b: t.qsf.top3(_market(q.get("market", "US"))),
         ("GET", "/api/record"): lambda q, b: record_status.build(t),
         ("GET", "/api/today"): lambda q, b: today.build(t, q.get("t", ""), _market(q.get("market", "US"))),
         ("GET", "/api/lab/compare"): lambda q, b: t.lab.comparison(),

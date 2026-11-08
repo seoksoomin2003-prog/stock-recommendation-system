@@ -716,6 +716,24 @@ class QSF:
             data = {}
         return lambda t: data.get(t) or []
 
+    def top3(self, market: str = "US") -> Dict[str, Any]:
+        """The frozen top three of each session and how they did since.  Read only."""
+        from terminal.qsf import top_picks
+        got = top_picks.read(self.base, market)
+        if got["status"] != "OK":
+            return {"status": "UNAVAILABLE", "market": market, "reason": "INTEGRITY", "bad_files": got["bad_files"]}
+        if not got["docs"]:
+            return {"status": "NO_RECORD", "market": market, "first": top_picks.FIRST, "protocol": top_picks.PROTOCOL}
+        loader = self._loader(market)
+        if market == "US":
+            bench_loader = loader
+        else:
+            idx = self._history(["^KS11", "^KQ11"])["data"] or {}
+
+            def bench_loader(s):
+                return idx.get(s) or []
+        return {"status": "REAL", **top_picks.report(got["docs"], market, loader, bench_loader)}
+
     def validation(self) -> Dict[str, Any]:
         out = {"integrity": self.ledger.verify(), "cohorts": {}, "correlations": {}}
         for market in config.MARKETS:

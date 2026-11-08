@@ -29,10 +29,11 @@ async function renderQsf() {
       <input id="qsfticker" placeholder="${isKR() ? "종목코드 (예: 005930)" : "티커 (예: AAPL)"}" autocomplete="off" aria-label="종목">
       <button class="btn-primary">평가</button></form>
     <div id="qsfmsg" class="meta"></div></div>
-    <div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsfchanges"></div><div id="qsfscreen"></div><div id="qsfvalid"></div>`;
+    <div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsfchanges"></div><div id="qsftop3"></div><div id="qsfscreen"></div><div id="qsfvalid"></div>`;
   $("#qsfform").onsubmit = (e) => { e.preventDefault(); const t = $("#qsfticker").value.trim().toUpperCase(); if (t) { setMarket(marketOf(t)); qsfEvaluate(t, qsfState.market); } };
   qsfRank();
   qsfChanges();
+  qsfTop3();
   qsfScreenBuild();
   qsfValidation();
   if (qsfState.detail && qsfState.detail.market === state.market) qsfDrawDetail(qsfState.detail);
@@ -175,7 +176,7 @@ async function qsfRank() {
     <div class="qsf-rows">${rest.map(qsfRowHtml).join("")}</div>
     <div class="meta">${d.tickers}종목 평가 · 생성 ${esc((d.generated_at || "").slice(0, 16))} UTC</div></div>`;
   $("#qsfstrat").value = qsfState.strategy;
-  $("#qsfstrat").onchange = (e) => { qsfState.strategy = e.target.value; qsfRank(); qsfChanges(); qsfScreenRun(true); };
+  $("#qsfstrat").onchange = (e) => { qsfState.strategy = e.target.value; qsfRank(); qsfChanges(); qsfTop3(); qsfScreenRun(true); };
   box.querySelectorAll(".qsf-row").forEach((btn) => {
     btn.onclick = () => {
       const panel = btn.nextElementSibling, open = btn.getAttribute("aria-expanded") === "true";
@@ -375,6 +376,41 @@ async function qsfValidation() {
     <div class="tbl-wrap"><table><thead><tr><th class="l">코호트</th><th>기록</th><th>거래일</th><th>독립 표본(최단 기간)</th><th class="l">판단</th></tr></thead><tbody>${rows}</tbody></table></div>
     ${qsfVersionNote(d.cohorts)}
     <div class="meta">코호트를 합치지 않습니다. 독립 표본 12개 전에는 점수가 수익을 예측한다고 판단하지 않습니다. 상세: <code>python app.py qsf validate</code></div></div>`;
+}
+
+function qsfPct(v) {
+  if (v === null || v === undefined) return '<span class="missing">없음</span>';
+  const x = v * 100;
+  return `<span class="${x > 0 ? "up" : x < 0 ? "down" : ""}">${x > 0 ? "+" : ""}${x.toFixed(2)}%</span>`;
+}
+function qsfTop3Pick(p) {
+  const o = p.so_far;
+  const now = o ? `${qsfPct(o.net)} <span class="meta" style="margin:0">(지수 대비 ${qsfPct(o.relative_net)}, ${p.sessions_held}거래일)</span>` : '<span class="meta" style="margin:0">진입 전</span>';
+  return `<tr><td class="num">${p.rank}</td><td class="l"><b>${esc(p.ticker)}</b> ${esc(p.name || "")}</td><td class="num">${qsfNum(p.score)}</td><td class="l">${now}</td></tr>`;
+}
+async function qsfTop3() {
+  const box = $("#qsftop3"); if (!box) return;
+  const market = qsfState.market, strategy = qsfState.strategy;
+  const d = await api(`/api/qsf/top3?market=${market}`).catch(() => null);
+  if (!d || market !== qsfState.market || strategy !== qsfState.strategy) return;
+  const title = `<h2>점수 상위 3종목 추적 ${d.status === "REAL" ? badge("REAL") : badge("UNAVAILABLE")}</h2>`;
+  if (d.status !== "REAL") {
+    box.innerHTML = `<div class="panel">${title}<div class="meta">${d.status === "NO_RECORD" ? `아직 고정된 기록이 없습니다. ${esc(d.first)} 거래일부터 스캔 직후 자동으로 고정합니다.` : "기록 검사에 실패해 보여 주지 않습니다."}</div></div>`;
+    return;
+  }
+  const part = d.strategies[strategy];
+  const days = part.days.slice(0, 10);
+  const h = String(d.verdict_horizon[strategy]);
+  const sums = Object.entries(part.summary).map(([v, s]) => { const r = s.horizons[h];
+    return `<tr><td class="l">${esc(v)}</td><td class="num">${s.days}</td><td class="num">${r.picks}</td><td class="num">${r.beat_benchmark === null ? '<span class="missing">없음</span>' : (r.beat_benchmark * 100).toFixed(0) + "%"}</td><td class="num">${qsfPct(r.mean_relative_net)}</td><td class="num">${qsfPct(r.mean_top_minus_universe)}</td><td class="num">${qsfNum(r.mean_rank_corr, 3)}</td><td class="l">${esc(r.verdict || "")}</td></tr>`; }).join("");
+  const blocks = days.map((x) => `<h3>${esc(x.session)} 점수 → ${esc(x.entry_session)} 시가 진입 <span class="meta" style="margin:0">${esc(x.model_version)}${x.before_open ? "" : " · 개장 뒤 고정이라 집계에서 뺌"}</span></h3>
+    <div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th>점수</th><th class="l">진입 후 지금까지 (비용 차감)</th></tr></thead><tbody>${x.top.map(qsfTop3Pick).join("")}</tbody></table></div>`).join("");
+  box.innerHTML = `<div class="panel">${title}
+    <div class="meta">${strategy === "SWING" ? "스윙" : "장기"} 점수 상위 3개를 스캔 직후, 진입일 개장 전에 고정합니다. 진입일 시가에 사서 종가로 평가하고, 왕복 비용 ${d.cost_round_trip_pct.toFixed(2)}%를 뺍니다.</div>
+    ${blocks}
+    <h3>집계 (${h}거래일 기준)</h3>
+    <div class="tbl-wrap"><table><thead><tr><th class="l">모델</th><th>기록일</th><th>끝난 종목</th><th>지수 이긴 비율</th><th>지수 대비 평균</th><th>전체 평균 대비</th><th>순위 상관</th><th class="l">판정</th></tr></thead><tbody>${sums}</tbody></table></div>
+    <div class="notice">3종목은 아주 작은 표본이라 몇 주의 성적은 우연과 구분되지 않습니다. 독립 표본 12개 전에는 판정하지 않으며, 이 결과로 점수 수식을 바꾸지 않습니다. 규칙: <code>${esc(d.protocol)}</code></div></div>`;
 }
 
 RENDER.qsf = renderQsf;
