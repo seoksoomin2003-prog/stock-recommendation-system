@@ -5,7 +5,7 @@ from terminal.qsf import sector_picks as sp
 
 
 def row(t, strategy, score, sector, name=None, session="2026-11-06", **kw):
-    return {"ticker": t, "name": name or t, "strategy": strategy, "score": score, "sector": sector, "data_date": session,
+    return {"ticker": t, "name": name or t, "strategy": strategy, "score": score, "sector": sector, "industry": sector, "data_date": session,
             "actionability": kw.pop("actionability", "ACTIONABLE"), "band": kw.pop("band", "HOLD_WATCH"), "gates": [], **kw}
 
 

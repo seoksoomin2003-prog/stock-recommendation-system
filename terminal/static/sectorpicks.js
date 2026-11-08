@@ -21,7 +21,7 @@ async function loadSectorPicks(f) {
   const col = (k) => {
     const s = d.strategies[k];
     const list = s.top.length ? s.top.map((p) => `<button type="button" class="sp-pick" data-t="${esc(p.ticker)}">
-        <span class="sp-rank">${p.rank}</span><span class="sp-name"><b>${esc(p.name || p.ticker)}</b> <span class="meta" style="margin:0">${esc(p.ticker)}${isKR() ? ` · ${esc(p.sector || "")}` : ""}</span></span>
+        <span class="sp-rank">${p.rank}</span><span class="sp-name"><b>${esc(p.name || p.ticker)}</b> <span class="meta" style="margin:0">${esc(p.ticker)}${isKR() ? ` · ${esc(p.industry || "")}` : ""}</span></span>
         <span class="sp-score num">${fmt(p.score, 1)}</span><span class="grade ${SP_BAND[p.band] || ""}" style="width:auto;padding:0 6px">${esc(p.band_label || "")}</span>
         ${p.gates && p.gates.length ? `<span class="badge risk-note">${p.gates.map((g) => esc(QSF_GATE[g] || g)).join(", ")}</span>` : ""}${p.high_risk ? '<span class="badge risk-note">고위험 표시</span>' : ""}</button>`).join("")
       : '<div class="empty">점수가 있는 종목이 없습니다.</div>';

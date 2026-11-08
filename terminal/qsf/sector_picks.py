@@ -22,7 +22,7 @@ KR_FUNDS = {
     "117460": (("기초 화학물질 제조업", "석유 정제품 제조업", "화학섬유 제조업", "일차전지 및 이차전지 제조업"), None),
     "117680": (("1차 철강 제조업", "1차 비철금속 제조업"), None),
     "117700": (("건물 건설업", "토목 건설업", "건축기술, 엔지니어링 및 관련 기술 서비스업"), None),
-    "102960": (("선박 및 보트 건조업",), r"조선"),
+    "102960": (("일반 목적용 기계 제조업", "특수 목적용 기계 제조업"), None),       # KODEX 기계장비 (not shipbuilding)
     "266420": (("의약품 제조업", "기초 의약물질 제조업", "의료용품 및 기타 의약 관련제품 제조업", "의료용 기기 제조업"), None),
     "266390": (("종합 소매업", "무점포 소매업", "오디오물 출판 및 원판 녹음업"), None),
     "266410": (("기타 식품 제조업", "담배 제조업"), None),
@@ -36,15 +36,16 @@ def fund_code(fund: str) -> str:
 
 
 def member(market: str, fund: str, row: Dict[str, Any]) -> bool:
-    code, sector = fund_code(fund), row.get("sector")
+    code = fund_code(fund)
     if market == "US":
-        return code in US_FUNDS and sector == US_FUNDS[code]
-    if code not in KR_FUNDS or not sector:
+        return code in US_FUNDS and row.get("sector") == US_FUNDS[code]
+    industry = row.get("industry")                 # the detailed KRX industry; ``sector`` is the broad group
+    if code not in KR_FUNDS or not industry:
         return False
     industries, holdco = KR_FUNDS[code]
-    if sector in industries:
+    if industry in industries:
         return True
-    return bool(holdco and sector == HOLDCO_INDUSTRY and re.search(holdco, row.get("name") or ""))
+    return bool(holdco and industry == HOLDCO_INDUSTRY and re.search(holdco, row.get("name") or ""))
 
 
 def rule_text(market: str, fund: str) -> Optional[str]:
@@ -77,5 +78,5 @@ def picks(latest: Dict[str, Any], market: str, fund: str) -> Dict[str, Any]:
 
 
 def _pick(rank: int, r: Dict[str, Any]) -> Dict[str, Any]:
-    keep = ("ticker", "name", "score", "action", "action_label", "band", "band_label", "confidence", "entry_status", "gates", "price", "data_date", "sector")
+    keep = ("ticker", "name", "score", "action", "action_label", "band", "band_label", "confidence", "entry_status", "gates", "price", "data_date", "sector", "industry")
     return {"rank": rank, **{k: r.get(k) for k in keep}, "high_risk": bool(r.get("high_risk")), "filing_events": r.get("filing_events")}

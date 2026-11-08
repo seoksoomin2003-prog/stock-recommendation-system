@@ -649,16 +649,32 @@ class QSF:
         except (OSError, ValueError):
             return {"status": "UNAVAILABLE", "market": market, "rows": [], "reason": "아직 스캔 기록이 없습니다."}
 
-    def _kr_industries(self) -> Dict[str, str]:
-        """KRX KIND industry per code, from the newest stored master snapshot.  Read only: an old snapshot is still read, never refetched."""
+    def _kr_industries(self) -> Dict[str, Dict[str, Optional[str]]]:
+        """KRX KIND industry and this project's broad sector (``terminal.kr_sectors``) per code, from the newest stored master
+        snapshot.  Read only: an old snapshot is still read, never refetched."""
+        from terminal import kr_sectors
         sdir = self.base / "data" / "kr" / "security_master"
         try:
             meta = json.loads((sdir / "LATEST.json").read_text(encoding="utf-8"))
             import pandas as pd
-            df = pd.read_csv(sdir / meta["file"], dtype=str, usecols=["canonical_ticker", "industry"])
+            df = pd.read_csv(sdir / meta["file"], dtype=str, usecols=lambda c: c in ("canonical_ticker", "industry", "company_name"))
+            codes, industries = df["canonical_ticker"], df["industry"]
         except (OSError, ValueError, KeyError):
             return {}
-        return {c: i for c, i in zip(df["canonical_ticker"], df["industry"]) if isinstance(c, str) and isinstance(i, str) and i.strip()}
+        names = df["company_name"] if "company_name" in df else [None] * len(df)
+        return {c: {"industry": i, "sector": kr_sectors.broad_sector(c, i, n if isinstance(n, str) else None)}
+                for c, i, n in zip(codes, industries, names) if isinstance(c, str) and isinstance(i, str) and i.strip()}
+
+    def kr_sector(self, code: str) -> Dict[str, Optional[str]]:
+        """Broad sector and KRX industry of any listed Korean code (held stocks need not be in the scan)."""
+        try:
+            stamp = (self.base / "data" / "kr" / "security_master" / "LATEST.json").stat().st_mtime
+        except OSError:
+            stamp = None
+        memo = getattr(self, "_memo_kr_master", None)
+        if not memo or memo[0] != stamp:                   # a new master snapshot is read again
+            memo = self._memo_kr_master = (stamp, self._kr_industries())
+        return memo[1].get(code) or {"industry": None, "sector": None}
 
     PEER_METRICS = {"valuation": ("pe", "pb", "fcf_yield"), "business_quality": ("op_margin", "roe"), "growth_quality": ("rev_cagr3",),
                     "balance_dilution": ("debt_equity",)}
@@ -702,16 +718,12 @@ class QSF:
         if (ticker, "SWING") not in rows and (ticker, "LONG_TERM") not in rows:
             return {"status": "NOT_SCANNED", "ticker": ticker, "market": market}
         me = rows.get((ticker, "SWING")) or rows.get((ticker, "LONG_TERM"))
-        sector = me.get("sector")
+        sector, mine = me.get("sector"), me.get("industry")
         group, basis = sector, "업종"
-        if market == "US":
-            ind = lambda t: ((self.cache.read(f"info:{t}") or {}).get("data") or {}).get("industry")     # noqa: E731
-            mine = ind(ticker)
-            same = [t for (t, st) in rows if st == me["strategy"] and ind(t) == mine] if mine else []
-            if mine and len(same) >= self.PEER_MIN:
-                group, basis = mine, "세부 업종"
-        members = sorted({t for (t, st), r in rows.items() if (r.get("sector") == sector if basis == "업종" else
-                          ((self.cache.read(f"info:{t}") or {}).get("data") or {}).get("industry") == group)})
+        same = [t for (t, st), r in rows.items() if st == me["strategy"] and r.get("industry") == mine] if mine else []
+        if mine and len(same) >= self.PEER_MIN:                 # the detailed industry when it has enough scanned members
+            group, basis = mine, "세부 업종"
+        members = sorted({t for (t, st), r in rows.items() if (r.get("sector") == sector if basis == "업종" else r.get("industry") == group)})
         if not group:
             members = [ticker]
         ratios = self._ratios(market)
@@ -782,18 +794,17 @@ class QSF:
                 "source": "QSF 스캔 · 스캔 일봉 · " + ("KRX 상장 주식 수 × 스캔 종가" if market == "KR" else "Yahoo 회사 정보 시가총액(저장된 값)"),
                 "basis": "등락은 스캔 거래일 종가 기준입니다. 시가총액이 없는 종목은 지도에서 빠지고 목록에만 남습니다."}
 
-    def _sector_of(self, market: str, ticker: str, kr_industry: Optional[Dict[str, str]] = None) -> Optional[str]:
-        """From what is already stored.  Never asks the network, and a stock with no stored sector has none.
-        Korea uses the exchange's own Korean industry, which every listed stock has; Yahoo's sector for Korea is missing for some
-        and does not map onto the exchange's industries, so the two are never mixed."""
+    def _sector_of(self, market: str, ticker: str, kr_industry: Optional[Dict[str, Dict[str, Optional[str]]]] = None) -> Dict[str, Optional[str]]:
+        """Sector and industry from what is already stored.  Never asks the network, and a stock with no stored sector has none.
+        Korea uses the exchange's own Korean industry, which every listed stock has, grouped into a broad sector; Yahoo's sector for
+        Korea is missing for some and does not map onto the exchange's industries, so the two are never mixed."""
         if market == "KR" and kr_industry is not None:
-            return kr_industry.get(ticker)
+            return kr_industry.get(ticker) or {"sector": None, "industry": None}
         for key in ([f"info:{ticker}"] if market == "US" else [f"info:{ticker}.KS", f"info:{ticker}.KQ"]):
-            rec = self.cache.read(key)
-            sector = ((rec or {}).get("data") or {}).get("sector")
-            if sector:
-                return str(sector)
-        return None
+            data = (self.cache.read(key) or {}).get("data") or {}
+            if data.get("sector"):
+                return {"sector": str(data["sector"]), "industry": str(data["industry"]) if data.get("industry") else None}
+        return {"sector": None, "industry": None}
 
     def earnings_upcoming(self, market: str = "US", days: int = 14) -> Dict[str, Any]:
         """Stored earnings dates of the scanned stocks, holdings and watchlist.  Never asks the network."""
@@ -827,14 +838,15 @@ class QSF:
         return {**res, "market": market, "session": out.get("session")}
 
     def screen_rows(self, market: str = "US") -> Dict[str, Any]:
-        """The newest scan with each stock's sector.  Added when read, so no score or record contains it."""
+        """The newest scan with each stock's sector and industry.  Added when read, so no score or record contains it."""
         out = self.latest(market)
         memo = self._sector_memo.get(market)
         if not memo or memo[0] != out.get("generated_at"):
             kr = (self._kr_industries() or None) if market == "KR" else None     # no stored master: Yahoo sectors, as before
             memo = self._sector_memo[market] = (out.get("generated_at"), {t: self._sector_of(market, t, kr) for t in {r.get("ticker") for r in out.get("rows") or []}})
         for r in out.get("rows") or []:
-            r["sector"] = memo[1].get(r.get("ticker"))
+            got = memo[1].get(r.get("ticker")) or {}
+            r["sector"], r["industry"] = got.get("sector"), got.get("industry")
         return out
 
     def _loader(self, market: str) -> Callable[[str], List[Dict]]:

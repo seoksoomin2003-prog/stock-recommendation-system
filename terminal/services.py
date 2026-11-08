@@ -296,7 +296,7 @@ class Terminal:
         "US": ("SPY", "S&P 500 (SPY)", [("XLK", "기술"), ("XLF", "금융"), ("XLV", "헬스케어"), ("XLY", "경기소비재"), ("XLP", "필수소비재"), ("XLI", "산업재"),
                                        ("XLB", "소재"), ("XLE", "에너지"), ("XLU", "유틸리티"), ("XLRE", "부동산"), ("XLC", "커뮤니케이션")]),
         "KR": ("^KS11", "코스피", [("091160.KS", "반도체"), ("091170.KS", "은행"), ("102970.KS", "증권"), ("091180.KS", "자동차"), ("117460.KS", "에너지화학"),
-                                  ("117680.KS", "철강"), ("117700.KS", "건설"), ("102960.KS", "조선"), ("266420.KS", "헬스케어"), ("266390.KS", "경기소비재"),
+                                  ("117680.KS", "철강"), ("117700.KS", "건설"), ("102960.KS", "기계장비"), ("266420.KS", "헬스케어"), ("266390.KS", "경기소비재"),
                                   ("266410.KS", "필수소비재"), ("140710.KS", "운송")]),
     }
     RRG_WINDOW, RRG_MOM, RRG_TAIL = 10, 5, 8
@@ -741,6 +741,13 @@ class Terminal:
         return {"entry": self.journal.append({"kind": "VOID", "ref": str(ref or "")}, self.now())}
 
     def _sector(self, ticker: str) -> Optional[str]:
+        """A holding's sector for the sector limit.  Korean stocks use the exchange industry's broad sector (the same one the
+        screens show); a code missing from the master has none, it is never filled from Yahoo."""
+        if pf.market_of(ticker) == "KR":
+            try:
+                return self.qsf.kr_sector(ticker).get("sector")
+            except Exception:
+                return None
         sym = self._sym(ticker)
         res = self.cache.cached(f"info:{sym}", TTL["info"], lambda: self.src.yahoo_info(sym))
         return (res["data"] or {}).get("sector")

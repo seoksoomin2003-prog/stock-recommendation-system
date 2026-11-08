@@ -192,5 +192,7 @@ def test_korea_uses_the_exchange_industry_when_a_master_is_stored(tmp_path):
     (tmp_path / "latest_KR.json").write_text(json.dumps({"status": "REAL", "generated_at": "a", "rows": [{"ticker": "005930"}, {"ticker": "035720"}, {"ticker": "000000"}]}), encoding="utf-8")
     svc._high_risk = lambda m: {"session": None, "codes": set()}
     svc._filing_marks = lambda m: {"session": None, "financing": set(), "buyback": set(), "known": set()}
-    assert [r["sector"] for r in svc.screen_rows("KR")["rows"]] == ["반도체 제조업", "자료처리업", None]
+    rows = svc.screen_rows("KR")["rows"]
+    assert [r["industry"] for r in rows] == ["반도체 제조업", "자료처리업", None]
+    assert [r["sector"] for r in rows] == ["기술", None, None]           # broad group; an industry the table does not know stays empty
     assert sorted(p.name for p in sdir.iterdir()) == ["LATEST.json", "m.csv.gz"]       # an old snapshot is read, not refetched
