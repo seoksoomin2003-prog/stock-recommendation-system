@@ -716,6 +716,30 @@ class QSF:
         return out
 
     def _loader(self, market: str) -> Callable[[str], List[Dict]]:
+        """The scan's prices, with the archived prices of recorded stocks that have left the scan (``price_archive``)."""
+        from terminal.qsf import price_archive
+        return price_archive.loader(self.base, market, self._scan_loader(market))
+
+    def archive_prices(self, market: str) -> Dict[str, Any]:
+        """Keep the prices of every recorded stock, including those the scan no longer carries.  Writes only the price archive."""
+        from terminal.qsf import price_archive
+        if market == "US":
+            symbol_of = lambda t: [t]                                                       # noqa: E731
+        else:
+            master = self._kr_master
+            if master is None:
+                try:
+                    from markets.kr import security_master
+                    master = security_master.load_master(self.base / "data" / "kr", now=self.now())["master"]
+                except Exception:
+                    master = None
+            known = {} if master is None else {c: y for c, y in zip(master["canonical_ticker"], master["yahoo_symbol"]) if isinstance(y, str) and y}
+
+            def symbol_of(t):
+                return [known[t]] if t in known else [f"{t}.KS", f"{t}.KQ"]
+        return price_archive.update(self.base, market, self._scan_loader(market), lambda syms: self.src.yahoo_history(syms, "1y"), symbol_of, self.now)
+
+    def _scan_loader(self, market: str) -> Callable[[str], List[Dict]]:
         if market == "US":
             p = self.terminal.lab.panel()
 
@@ -741,8 +765,9 @@ class QSF:
                 return Path(path).stat().st_mtime_ns
             except OSError:
                 return None
-        from terminal.qsf import top_picks
-        files = [self.ledger.index, self.base / top_picks.FOLDER / "index.jsonl", self.dir / "bars_KR.json.gz", self.terminal.lab.panel_file]
+        from terminal.qsf import price_archive, top_picks
+        files = [self.ledger.index, self.base / top_picks.FOLDER / "index.jsonl", self.dir / "bars_KR.json.gz", self.terminal.lab.panel_file,
+                 price_archive.path_of(self.base, "US"), price_archive.path_of(self.base, "KR")]
         return tuple(m(f) for f in files) + tuple(m(self.cache._path(k)) for k in cache_keys) + (self.now().date().isoformat(),)
 
     def _memo(self, name: str, stamp: tuple, compute: Callable[[], Dict[str, Any]]) -> Dict[str, Any]:

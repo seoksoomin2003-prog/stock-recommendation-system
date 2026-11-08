@@ -419,7 +419,7 @@ QSF_ONE_SHOT = {
     **{a: ("validate_pit", f, _primary, 1) for a, f in (("pit-prepare", "prepare"), ("pit-run", "run"))},
     **{a: ("validate", f, _primary, 1) for a, f in (("history-prepare", "prepare"), ("history-run", "run"))},
 }
-QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-report", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund",
+QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-report", "price-archive", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund",
                "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
                "backup-check", "cache-report", "cache-prune", *QSF_ONE_SHOT]
 
@@ -477,7 +477,16 @@ def cmd_qsf(args) -> int:
                 print("top3:", json.dumps(top_picks.freeze(PROJECT_ROOT, market), ensure_ascii=False, default=str))
             except Exception as exc:
                 print("top3: FAILED", type(exc).__name__)
+            try:                    # prices of recorded stocks, kept after they leave the scan; never fails the scan either
+                print("prices:", json.dumps({k: v for k, v in q.archive_prices(market).items() if k != "not_in_scan"}, ensure_ascii=False))
+            except Exception as exc:
+                print("prices: FAILED", type(exc).__name__)
         return 0 if res["status"] == "REAL" else 3 if res["status"] == "DATA_NOT_READY" else 2
+    if args.action == "price-archive":
+        res = q.archive_prices(market)
+        from terminal.qsf import price_archive
+        print(json.dumps({**res, "now": price_archive.status(PROJECT_ROOT, market)}, ensure_ascii=False, default=str))
+        return 0
     if args.action == "top3-freeze":
         from terminal.qsf import top_picks
         res = top_picks.freeze(PROJECT_ROOT, market)
