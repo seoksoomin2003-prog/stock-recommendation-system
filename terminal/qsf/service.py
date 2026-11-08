@@ -732,8 +732,33 @@ class QSF:
             data = {}
         return lambda t: data.get(t) or []
 
+    # ------------------------------------------------------------------ read-only reports, reused while their inputs stay the same
+    def _stamp(self, cache_keys: List[str]) -> tuple:
+        """What the reports read: the ledger, the top-three record, both price stores and the index caches, plus the date.
+        Any write to one of them, or a new day, gives a new stamp and the report is computed again."""
+        def m(path):
+            try:
+                return Path(path).stat().st_mtime_ns
+            except OSError:
+                return None
+        from terminal.qsf import top_picks
+        files = [self.ledger.index, self.base / top_picks.FOLDER / "index.jsonl", self.dir / "bars_KR.json.gz", self.terminal.lab.panel_file]
+        return tuple(m(f) for f in files) + tuple(m(self.cache._path(k)) for k in cache_keys) + (self.now().date().isoformat(),)
+
+    def _memo(self, name: str, stamp: tuple, compute: Callable[[], Dict[str, Any]]) -> Dict[str, Any]:
+        memos = self.__dict__.setdefault("_memos", {})
+        hit = memos.get(name)
+        if hit is not None and hit[0] == stamp:
+            return hit[1]
+        out = compute()
+        memos[name] = (stamp, out)
+        return out
+
     def top3(self, market: str = "US") -> Dict[str, Any]:
-        """The frozen top three of each session and how they did since.  Read only."""
+        """The frozen top three of each session and how they did since.  Read only; reused until an input changes."""
+        return self._memo(f"top3:{market}", self._stamp(["bars:2y:^KQ11,^KS11"]), lambda: self._top3(market))
+
+    def _top3(self, market: str) -> Dict[str, Any]:
         from terminal.qsf import top_picks
         got = top_picks.read(self.base, market)
         if got["status"] != "OK":
@@ -751,6 +776,10 @@ class QSF:
         return {"status": "REAL", **top_picks.report(got["docs"], market, loader, bench_loader)}
 
     def validation(self) -> Dict[str, Any]:
+        """Reused until an input changes."""
+        return self._memo("validation", self._stamp(["bars:2y:^KS11"]), self._validation)
+
+    def _validation(self) -> Dict[str, Any]:
         out = {"integrity": self.ledger.verify(), "cohorts": {}, "correlations": {}}
         for market in config.MARKETS:
             snaps = self.ledger.snapshots(market=market)

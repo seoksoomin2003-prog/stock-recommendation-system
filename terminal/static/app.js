@@ -92,8 +92,15 @@ function setMarket(m, render = true) {
   if (state.ticker && marketOf(state.ticker) !== m) state.ticker = null;
   if (render) show(state.tab);
 }
+// Recently opened stocks, on this browser only.  Shown as shortcuts on the empty stock tab.
+function recentTickers() { try { return JSON.parse(localStorage.getItem("recentTickers") || "[]").filter((x) => typeof x === "string"); } catch (e) { return []; } }
+function rememberTicker(t) {
+  try { localStorage.setItem("recentTickers", JSON.stringify([t, ...recentTickers().filter((x) => x !== t)].slice(0, 12))); } catch (e) { /* not remembered */ }
+}
+function tickerChips(list) { return list.map((t) => `<button type="button" class="chip" data-ticker="${esc(t)}">${esc(t)}</button>`).join(""); }
 function openTicker(t) {
   state.ticker = String(t).toUpperCase(); state.loaded.stock = null;
+  rememberTicker(state.ticker);
   setMarket(marketOf(state.ticker), false);
   show("stock");
   window.scrollTo(0, 0);
@@ -161,7 +168,17 @@ function card(i) {
 // ------------------------------------------------------------------ 종목
 async function renderStock() {
   const el = $("#tab-stock");
-  if (!state.ticker) { el.innerHTML = `<div class="panel empty">위 검색창에 ${isKR() ? "종목 코드나 회사명을 입력하세요 (예: 005930, 삼성전자)." : "종목 코드를 입력하세요 (예: AAPL, MSFT, NVDA)."}</div>`; return; }
+  if (!state.ticker) {
+    const mk = state.market, recent = recentTickers().filter((t) => marketOf(t) === mk);
+    el.innerHTML = `<div class="panel"><div class="empty">위 검색창에 ${isKR() ? "종목 코드나 회사명을 입력하세요 (예: 005930, 삼성전자)." : "종목 코드를 입력하세요 (예: AAPL, MSFT, NVDA)."}</div>
+      ${recent.length ? `<h3>최근 본 종목</h3><div class="chips">${tickerChips(recent)}</div>` : ""}<div id="s-watch"></div></div>`;
+    api(mq("/api/watchlist")).then((d) => {
+      const list = (d.tickers || []).filter((t) => !t.startsWith("^") && marketOf(t) === mk);
+      const box = $("#s-watch");
+      if (box && list.length && mk === state.market && !state.ticker) box.innerHTML = `<h3>관심종목</h3><div class="chips">${tickerChips(list)}</div>`;
+    }).catch(() => {});
+    return;
+  }
   if (state.loaded.stock === state.ticker) return;
   state.loaded.stock = state.ticker;
   const t = state.ticker;

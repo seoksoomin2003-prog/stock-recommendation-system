@@ -197,3 +197,5 @@ tr.voided td { color: var(--muted); text-decoration: line-through; }
 .qsf-nav .seg button { padding: 6px 14px; }
 .qsf-plan { margin-top: 10px; font-size: 13px; }
 .qsf-plan > summary { cursor: pointer; font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 4px 10px; border-radius: 14px; font-size: 13px; }

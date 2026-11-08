@@ -132,7 +132,7 @@ def test_route_and_service_without_records(tmp_path):
     from terminal.server import routes
     svc = QSF.__new__(QSF)
     svc.base = tmp_path
-    assert svc.top3("US")["status"] == "NO_RECORD"
+    assert svc._top3("US")["status"] == "NO_RECORD"
 
     class T:
         class qsf:
@@ -143,3 +143,27 @@ def test_route_and_service_without_records(tmp_path):
     assert fn({"market": "KR"}, {}) == {"market": "KR"} and fn({}, {}) == {"market": "US"}
     with pytest.raises(ValueError):
         fn({"market": "JP"}, {})
+
+
+def test_reports_are_reused_until_an_input_changes(tmp_path):
+    from terminal.cache import FileCache
+    from terminal.qsf.service import QSF
+    svc = QSF.__new__(QSF)
+    svc.base, svc.dir, svc.cache, svc.ledger = tmp_path, tmp_path, FileCache(tmp_path / "cache"), Ledger(tmp_path)
+    svc.now = lambda: SUNDAY
+
+    class Lab:
+        panel_file = tmp_path / "panel.json.gz"
+
+    class Term:
+        lab = Lab()
+    svc._terminal = Term()
+    calls = []
+    svc._validation = lambda: calls.append(1) or {"n": len(calls)}
+    assert svc.validation() == {"n": 1} and svc.validation() == {"n": 1} and len(calls) == 1
+    (tmp_path / "bars_KR.json.gz").write_bytes(b"x")                       # new prices: computed again
+    assert svc.validation() == {"n": 2}
+    svc.cache.write("bars:2y:^KS11", [1])                                  # a refreshed index too
+    assert svc.validation() == {"n": 3}
+    svc.now = lambda: datetime(2026, 11, 9, 3, tzinfo=timezone.utc)        # and a new day
+    assert svc.validation() == {"n": 4} and svc.validation() == {"n": 4}

@@ -4,7 +4,7 @@ const QSF_STRAT = { SWING: "스윙", LONG_TERM: "장기" };
 const QSF_ENTRY = { ENTRY_NOW: "지금 진입 가능 구간", WAIT_FOR_PULLBACK: "눌림 대기", WAIT_FOR_BREAKOUT_CONFIRMATION: "돌파 확인 대기", WAIT_FOR_EARNINGS: "실적 발표 대기", OVERVALUED_AT_CURRENT_PRICE: "현재 가격 고평가", NO_VALID_ENTRY_SETUP: "유효한 진입 근거 없음" };
 const QSF_CONF = { HIGH: "높음", MEDIUM: "보통", LOW: "낮음", INSUFFICIENT: "부족" };
 const QSF_EXIT = { HOLD: "보유", HOLD_AND_REVIEW: "보유하며 재검토", PARTIAL_TAKE_PROFIT: "일부 차익 실현 검토", REDUCE: "비중 축소 검토", EXIT: "청산 검토", THESIS_INVALIDATED: "투자 논리 무효", TIME_STOP_REVIEW: "시간 손절 재평가" };
-const qsfState = { get market() { return state.market; }, strategy: "SWING", view: (() => { try { return localStorage.getItem("qsfView") || "rank"; } catch (e) { return "rank"; } })(), detail: null, evals: {}, rankToken: 0 };
+const qsfState = { get market() { return state.market; }, strategy: "SWING", view: (() => { try { return localStorage.getItem("qsfView") || "rank"; } catch (e) { return "rank"; } })(), fresh: {}, detail: null, evals: {}, rankToken: 0 };
 
 function qsfClass(a, score) {
   if (a === "AVOID" && score !== null && score >= 40) return "act-reduce";   // 40-54.99 is the orange band; red starts below 40
@@ -29,12 +29,25 @@ function qsfSetView(v) {
   document.querySelectorAll("#tab-qsf [data-view]").forEach((el) => { el.hidden = el.dataset.view !== v; });
   document.querySelectorAll("#qsfview button").forEach((b) => b.classList.toggle("on", b.dataset.v === v));
   try { localStorage.setItem("qsfView", v); } catch (e) { /* private mode: the view is simply not remembered */ }
+  qsfLoadView(v);
+}
+// A view is fetched when first shown, and again after the market or strategy changes; hidden views cost nothing.
+const QSF_LOADERS = {
+  rank: () => { qsfRank(); qsfChanges(); },
+  screen: () => ($("#qsfscreenform") ? qsfScreenRun(true) : qsfScreenBuild()),
+  track: () => { qsfTop3(); qsfValidation(); },
+};
+function qsfLoadView(v) {
+  if (qsfState.fresh[v]) return;
+  qsfState.fresh[v] = true;
+  QSF_LOADERS[v]();
 }
 function qsfMarkStrategy() { document.querySelectorAll("#qsfstratseg button").forEach((b) => b.classList.toggle("on", b.dataset.s === qsfState.strategy)); }
 function qsfSetStrategy(s) {
   if (s === qsfState.strategy) return;
   qsfState.strategy = s; qsfMarkStrategy();
-  qsfRank(); qsfChanges(); qsfTop3(); qsfScreenRun(true);
+  qsfState.fresh = {};
+  qsfLoadView(qsfState.view);
 }
 
 async function renderQsf() {
@@ -54,14 +67,10 @@ async function renderQsf() {
     <div data-view="track"><div id="qsftop3"></div><div id="qsfvalid"></div></div>`;
   $("#qsfview").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetView(b.dataset.v)));
   $("#qsfstratseg").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetStrategy(b.dataset.s)));
-  qsfSetView(qsfState.view);
+  qsfState.fresh = {};
   qsfMarkStrategy();
+  qsfSetView(qsfState.view);
   $("#qsfform").onsubmit = (e) => { e.preventDefault(); const t = $("#qsfticker").value.trim().toUpperCase(); if (t) { setMarket(marketOf(t)); qsfSetView("rank"); qsfEvaluate(t, qsfState.market); } };
-  qsfRank();
-  qsfChanges();
-  qsfTop3();
-  qsfScreenBuild();
-  qsfValidation();
   if (qsfState.detail && qsfState.detail.market === state.market) qsfDrawDetail(qsfState.detail);
 }
 
