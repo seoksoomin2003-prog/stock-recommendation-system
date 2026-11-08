@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Callable, Dict, Optional
 from urllib.parse import parse_qs, urlparse
 
-from terminal.services import Terminal
+from terminal.services import Terminal, clean_ticker
 
 STATIC = Path(__file__).resolve().parent / "static"
 from terminal import automation, record_status, today  # noqa: E402
@@ -82,6 +82,7 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/qsf/changes"): lambda q, b: qsf_changes.report(t.qsf.latest(_market(q.get("market", "US"))), t.qsf.ledger, _market(q.get("market", "US")), _strategy(q.get("strategy", "SWING"))),
         ("GET", "/api/qsf/validation"): lambda q, b: t.qsf.validation(),
         ("GET", "/api/qsf/top3"): lambda q, b: t.qsf.top3(_market(q.get("market", "US"))),
+        ("GET", "/api/qsf/peers"): lambda q, b: t.qsf.peers(clean_ticker(q.get("t", "")), _market(q.get("market", "US"))),
         ("GET", "/api/qsf/heatmap"): lambda q, b: t.qsf.heatmap(_market(q.get("market", "US")), _strategy(q.get("strategy", "SWING"))),
         ("GET", "/api/record"): lambda q, b: record_status.build(t),
         ("GET", "/api/today"): lambda q, b: today.build(t, q.get("t", ""), _market(q.get("market", "US"))),

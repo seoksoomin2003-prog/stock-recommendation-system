@@ -660,6 +660,88 @@ class QSF:
             return {}
         return {c: i for c, i in zip(df["canonical_ticker"], df["industry"]) if isinstance(c, str) and isinstance(i, str) and i.strip()}
 
+    PEER_METRICS = {"valuation": ("pe", "pb", "fcf_yield"), "business_quality": ("op_margin", "roe"), "growth_quality": ("rev_cagr3",),
+                    "balance_dilution": ("debt_equity",)}
+    PEER_DOMAINS = ("TECHNICAL", "FUNDAMENTAL", "RISK", "EVENTS")
+    PEER_MIN = 6
+
+    @staticmethod
+    def grade(q: Optional[float]) -> Optional[str]:
+        if q is None:
+            return None
+        return "A" if q >= 0.8 else "B" if q >= 0.6 else "C" if q >= 0.4 else "D" if q >= 0.2 else "F"
+
+    def peers(self, ticker: str, market: str = "US") -> Dict[str, Any]:
+        """The stock beside the scanned stocks of its industry: scores, the ratios the score itself read, and where each score part
+        stands inside the group as a letter.  Read only.  Ratios come only from ledger records of the live model version."""
+        return self._memo(f"peers:{market}:{ticker}", self._stamp([]), lambda: self._peers(ticker, market))
+
+    def _ratios(self, market: str) -> Dict[str, Any]:
+        def build():
+            snaps = [s for s in self.ledger.snapshots(market) if s.get("strategy") == "LONG_TERM" and s.get("model_version") == config.MODEL_VERSION]
+            if not snaps:
+                return {"session": None, "rows": {}}
+            session = max(s["data_date"] for s in snaps)
+            rows = {}
+            for s in snaps:
+                if s["data_date"] != session:
+                    continue
+                vals = {}
+                for f in s.get("factors") or []:
+                    for k in self.PEER_METRICS.get(f.get("factor"), ()):
+                        v = (f.get("raw") or {}).get(k) if f.get("status") == "REAL" else None
+                        vals[k] = v if isinstance(v, (int, float)) and np.isfinite(v) else None
+                rows[s["ticker"]] = vals
+            return {"session": session, "rows": rows}
+        return self._memo(f"ratios:{market}", self._stamp([]), build)
+
+    def _peers(self, ticker: str, market: str) -> Dict[str, Any]:
+        heat = {st: {i["ticker"]: i for i in self.heatmap(market, st).get("items") or []} for st in config.STRATEGIES}
+        out = self.screen_rows(market)
+        rows = {(r["ticker"], r["strategy"]): r for r in out.get("rows") or []}
+        if (ticker, "SWING") not in rows and (ticker, "LONG_TERM") not in rows:
+            return {"status": "NOT_SCANNED", "ticker": ticker, "market": market}
+        me = rows.get((ticker, "SWING")) or rows.get((ticker, "LONG_TERM"))
+        sector = me.get("sector")
+        group, basis = sector, "업종"
+        if market == "US":
+            ind = lambda t: ((self.cache.read(f"info:{t}") or {}).get("data") or {}).get("industry")     # noqa: E731
+            mine = ind(ticker)
+            same = [t for (t, st) in rows if st == me["strategy"] and ind(t) == mine] if mine else []
+            if mine and len(same) >= self.PEER_MIN:
+                group, basis = mine, "세부 업종"
+        members = sorted({t for (t, st), r in rows.items() if (r.get("sector") == sector if basis == "업종" else
+                          ((self.cache.read(f"info:{t}") or {}).get("data") or {}).get("industry") == group)})
+        if not group:
+            members = [ticker]
+        ratios = self._ratios(market)
+        table = []
+        for t in members:
+            sw, lt = rows.get((t, "SWING")) or {}, rows.get((t, "LONG_TERM")) or {}
+            h = heat["SWING"].get(t) or {}
+            table.append({"ticker": t, "name": sw.get("name") or lt.get("name"), "market_cap": h.get("market_cap"), "change_1m": (h.get("change") or {}).get("1m"),
+                          "swing": sw.get("score"), "long": lt.get("score"), "swing_band": sw.get("band_label"), "long_band": lt.get("band_label"),
+                          "ratios": ratios["rows"].get(t), "domains": {"SWING": sw.get("domains") or {}, "LONG_TERM": lt.get("domains") or {}}})
+        grades = {}
+        for st, key in (("SWING", "swing"), ("LONG_TERM", "long")):
+            parts = {}
+            for d in ("SCORE",) + self.PEER_DOMAINS:
+                vals = [(r[key] if d == "SCORE" else r["domains"][st].get(d)) for r in table]
+                mine_v = next((v for r, v in zip(table, vals) if r["ticker"] == ticker), None)
+                pool = [v for v in vals if isinstance(v, (int, float))]
+                if mine_v is None or len(pool) < self.PEER_MIN:
+                    parts[d] = {"value": mine_v, "percentile": None, "grade": None, "n": len(pool)}
+                    continue
+                q = (sum(v < mine_v for v in pool) + 0.5 * sum(v == mine_v for v in pool)) / len(pool)
+                parts[d] = {"value": mine_v, "percentile": q, "grade": self.grade(q), "n": len(pool)}
+            grades[st] = parts
+        for r in table:
+            r.pop("domains")
+        table.sort(key=lambda r: -(r["market_cap"] or 0))
+        return {"status": "REAL", "ticker": ticker, "market": market, "group": group, "basis": basis, "peers": table, "grades": grades,
+                "session": out.get("session"), "model_version": out.get("model_version"), "ratio_session": ratios["session"], "ratio_version": config.MODEL_VERSION,
+                "basis_note": "같은 업종 스캔 종목 안에서의 상대 위치입니다(A 상위 20%, F 하위 20%). 미래 수익으로 검증된 등급이 아닙니다."}
+
     HEAT_SPANS = {"1d": 1, "5d": 5, "1m": 21}
 
     def heatmap(self, market: str = "US", strategy: str = "SWING") -> Dict[str, Any]:

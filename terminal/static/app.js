@@ -186,10 +186,12 @@ async function renderStock() {
     <div class="panel"><h2>가격 차트 <span class="seg" id="rng">${["3mo", "1y", "5y"].map((r) => `<button data-r="${r}" class="${r === state.range ? "on" : ""}">${{ "3mo": "3개월", "1y": "1년", "5y": "5년" }[r]}</button>`).join("")}</span>
       <span class="legend"><span><i style="background:var(--sma20)"></i>20일선</span><span><i style="background:var(--sma50)"></i>50일선</span><span><i style="background:var(--sma200)"></i>200일선</span></span></h2>
       <div class="chart"><canvas id="pc"></canvas></div><div id="c-meta"></div></div>
+    <div class="panel" id="s-peers"></div>
     <div class="panel" id="s-fund">${loading}</div>
     <div class="panel" id="s-fil">${loading}</div>`;
   $("#rng").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; state.range = b.dataset.r; $("#rng").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); loadChart(t); };
   loadChart(t);
+  if (typeof loadPeers === "function") loadPeers(t);
   api(`/api/company?t=${encodeURIComponent(t)}`).then((c) => { if (state.ticker === t) { renderProfile(c); renderFund(c.fundamentals); } })
     .catch((e) => { if (state.ticker === t) { $("#s-fund").innerHTML = `<span class="err">${esc(ERR_KO[e.message] || e.message)}</span>`; $("#s-head").innerHTML = `<div class="err">${esc(ERR_KO[e.message] || e.message)}</div>`; } });
   api(`/api/filings?t=${encodeURIComponent(t)}`).then((f) => state.ticker === t && renderFilings(f))

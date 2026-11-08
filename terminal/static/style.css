@@ -222,3 +222,14 @@ tr.voided td { color: var(--muted); text-decoration: line-through; }
 .cmp-bar input { width: 160px; }
 .chip .x { border: 0; background: transparent; color: var(--muted); padding: 0 0 0 6px; cursor: pointer; font-size: 14px; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); margin: 6px 0; }
+
+/* 동종업계 비교 */
+.grade { display: inline-block; min-width: 22px; padding: 1px 6px; border-radius: 4px; font-weight: 700; text-align: center; border: 1px solid var(--line); }
+.g-A { background: var(--accent); color: #fff; border-color: transparent; }
+.g-B { background: color-mix(in srgb, var(--accent) 55%, transparent); color: var(--ink); border-color: transparent; }
+.g-C { background: var(--chip); color: var(--ink); }
+.g-D, .g-F { background: transparent; color: var(--muted); }
+table.grades td, table.grades th { text-align: center; }
+th.sort { cursor: pointer; white-space: nowrap; }
+th.sort.on { color: var(--ink); }
+tr.me td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
