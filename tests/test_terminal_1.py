@@ -436,3 +436,30 @@ def test_compare_common_days_total_return_and_missing(tmp_path):
     with pytest.raises(ValueError):
         t.compare("AAPL", "10y")
     assert t.compare("ZZZZ", "1y")["status"] == "UNAVAILABLE"
+
+
+def test_rotation_weekly_ratio_momentum_and_quadrants(tmp_path):
+    from datetime import date, timedelta
+    days = [date(2025, 1, 6) + timedelta(days=i) for i in range(7 * 40) if (date(2025, 1, 6) + timedelta(days=i)).weekday() < 5]
+
+    def history(syms, period):
+        out = {}
+        for s in syms:
+            if s == "XLE":
+                continue                                                    # no prices: listed as missing
+            rows = []
+            for i, d in enumerate(days):
+                w = i // 5
+                v = {"SPY": 100.0, "XLK": 100.0 * 1.01 ** w, "XLF": 100.0 * 0.99 ** (w * w / 10)}.get(s, 100.0)
+                rows.append({"date": d.isoformat(), "close": v, "adj_close": v})
+            out[s] = rows
+        return out
+    t = Terminal(tmp_path, src=fake_src(yahoo_history=history), now=lambda: AFTER)
+    d = t.rotation("US")
+    by = {f["symbol"]: f for f in d["funds"]}
+    assert d["status"] == "REAL" and "에너지" in d["missing"] and len(by["XLK"]["tail"]) == 8
+    assert by["XLK"]["quadrant"] == "LEADING" and by["XLF"]["quadrant"] == "LAGGING" and by["XLV"]["quadrant"] == "LEADING"   # flat: exactly 100 counts as leading
+    assert by["XLK"]["tail"][-1]["ratio"] > 100 and by["XLK"]["relative"]["4w"] == pytest.approx(1.01 ** 4 - 1)
+    assert by["XLV"]["tail"][-1]["ratio"] == pytest.approx(100.0) and by["XLV"]["tail"][-1]["momentum"] == pytest.approx(100.0)
+    empty = Terminal(tmp_path / "e", src=fake_src(yahoo_history=lambda s, p: {}), now=lambda: AFTER)
+    assert empty.rotation("KR")["status"] == "UNAVAILABLE"

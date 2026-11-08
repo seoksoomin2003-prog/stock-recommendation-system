@@ -292,6 +292,62 @@ class Terminal:
                 "fetched_at": min((f for f in fetched if f), default=None), "source": "Yahoo Finance 일봉 (배당 조정 종가, 지연)",
                 "basis": "모두가 거래한 날만 씁니다. 수익률은 각 종목의 통화 기준이며 환율은 반영하지 않습니다."}
 
+    ROTATION = {
+        "US": ("SPY", "S&P 500 (SPY)", [("XLK", "기술"), ("XLF", "금융"), ("XLV", "헬스케어"), ("XLY", "경기소비재"), ("XLP", "필수소비재"), ("XLI", "산업재"),
+                                       ("XLB", "소재"), ("XLE", "에너지"), ("XLU", "유틸리티"), ("XLRE", "부동산"), ("XLC", "커뮤니케이션")]),
+        "KR": ("^KS11", "코스피", [("091160.KS", "반도체"), ("091170.KS", "은행"), ("102970.KS", "증권"), ("091180.KS", "자동차"), ("117460.KS", "에너지화학"),
+                                  ("117680.KS", "철강"), ("117700.KS", "건설"), ("102960.KS", "조선"), ("266420.KS", "헬스케어"), ("266390.KS", "경기소비재"),
+                                  ("266410.KS", "필수소비재"), ("140710.KS", "운송")]),
+    }
+    RRG_WINDOW, RRG_MOM, RRG_TAIL = 10, 5, 8
+
+    def rotation(self, market: str = "US") -> Dict[str, Any]:
+        """Sector funds against the market on weekly closes, as relative strength and its momentum (a public approximation of the
+        relative rotation graph, not the licensed JdK formula).  ratio = 100 x (fund/market) / its 10-week mean;
+        momentum = 100 x ratio / its 5-week mean.  Above 100 on both is leading.  A fund without prices is listed as missing."""
+        bench, bench_name, funds = self.ROTATION[market]
+        syms = [bench] + [f for f, _ in funds]
+        res = self.cache.cached(f"rotation:{market}:2y", TTL["chart"], lambda: self.src.yahoo_history(syms, "2y"))
+        data = res["data"] or {}
+
+        def weekly(rows):
+            out = {}
+            for r in rows or []:
+                v = r.get("adj_close") or r.get("close")
+                if isinstance(v, (int, float)) and v > 0:
+                    y, w, _ = datetime.strptime(r["date"], "%Y-%m-%d").isocalendar()
+                    out[(y, w)] = (r["date"], v)          # the last session of each week wins
+            return out
+        bw = weekly(data.get(bench))
+        if len(bw) < self.RRG_WINDOW + self.RRG_MOM + self.RRG_TAIL:
+            return {"status": "UNAVAILABLE", "market": market, "funds": [], "reason": "NO_BENCHMARK"}
+        items, missing = [], []
+        for sym, name in funds:
+            fw = weekly(data.get(sym))
+            weeks = sorted(set(fw) & set(bw))
+            if len(weeks) < self.RRG_WINDOW + self.RRG_MOM + self.RRG_TAIL:
+                missing.append(name)
+                continue
+            rs = [fw[k][1] / bw[k][1] for k in weeks]
+            ratio = [None] * len(rs)
+            for i in range(self.RRG_WINDOW - 1, len(rs)):
+                ratio[i] = 100 * rs[i] / (sum(rs[i - self.RRG_WINDOW + 1:i + 1]) / self.RRG_WINDOW)
+            pts = []
+            for i in range(len(rs)):
+                win = ratio[max(0, i - self.RRG_MOM + 1):i + 1]
+                if ratio[i] is None or len(win) < self.RRG_MOM or any(v is None for v in win):
+                    continue
+                pts.append({"date": fw[weeks[i]][0], "ratio": ratio[i], "momentum": 100 * ratio[i] / (sum(win) / self.RRG_MOM)})
+            tail = pts[-self.RRG_TAIL:]
+            last = tail[-1]
+            quad = ("LEADING" if last["momentum"] >= 100 else "WEAKENING") if last["ratio"] >= 100 else ("IMPROVING" if last["momentum"] >= 100 else "LAGGING")
+            rel = {k: (rs[-1] / rs[-1 - n] - 1 if len(rs) > n else None) for k, n in (("4w", 4), ("13w", 13))}
+            items.append({"symbol": sym, "name": name, "tail": tail, "quadrant": quad, "relative": rel})
+        return {"status": "REAL" if items else "UNAVAILABLE", "market": market, "benchmark": bench_name, "funds": items, "missing": missing,
+                "as_of": max((i["tail"][-1]["date"] for i in items), default=None), "fetched_at": res.get("fetched_at"),
+                "source": "Yahoo Finance 일봉 (배당 조정 종가, 지연) · 미국 SPDR 업종 ETF / 한국 KODEX 업종 ETF",
+                "method": f"주간 종가. 상대강도 비율 = 100 × (ETF/지수) ÷ 최근 {self.RRG_WINDOW}주 평균, 모멘텀 = 100 × 비율 ÷ 최근 {self.RRG_MOM}주 평균. 공개된 근사식이며 RRG 원 공식과 다릅니다."}
+
     def _kr_fundamentals(self, c: Dict[str, Any]) -> Dict[str, Any]:
         if not c.get("annual"):
             return {"status": "UNAVAILABLE", "reason": c.get("reason") or "DART 재무 데이터가 없습니다."}
