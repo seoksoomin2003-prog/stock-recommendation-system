@@ -68,9 +68,9 @@ def test_no_cache_folder_is_fine(tmp_path):
     assert storage.prune_scanbars(tmp_path)["files"] == 0
 
 
-def test_nothing_on_a_schedule_removes_files():
+def test_the_schedule_removes_cache_only_through_prune_cache():
     code = (Path(__file__).resolve().parents[1] / "terminal" / "automation.py").read_text(encoding="utf-8")
-    assert "prune_scanbars" not in code
+    assert "prune_scanbars" not in code and code.count("prune_cache(") == 1 and "unlink(" not in code.split("def _cache_prune")[1].split("def ")[0]
 
 
 def test_a_test_copy_is_independent_of_the_original(tmp_path):
@@ -102,4 +102,3 @@ def test_every_superseded_key_is_unread_by_code():
     code = subprocess.run(["git", "grep", "-n", "-E", r"f?[\"']annual:", "--", "terminal", "app.py", "markets"],
                           capture_output=True, text=True, cwd=Path(__file__).resolve().parents[1]).stdout
     assert code == ""
-    assert "prune_cache" not in (Path(__file__).resolve().parents[1] / "terminal" / "automation.py").read_text(encoding="utf-8")

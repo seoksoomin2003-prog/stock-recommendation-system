@@ -1,7 +1,8 @@
 """Room left on the disk, the one cache that grows without limit, and cache entries left behind by older versions.
 
-A full disk would stop every record at once, so the daily summary and the record screen warn before that.  Removing files needs the user's word:
-``prune_scanbars`` only lists what it would remove unless ``apply`` is passed, and nothing calls it on a schedule.
+A full disk would stop every record at once, so the daily summary and the record screen warn before that.  ``prune_cache`` only lists
+what it would remove unless ``apply`` is passed.  The daily job applies it once per session (the user's decision of 2026-11-09);
+it removes cache files only, matched by name, never records or backups.
 """
 import re
 import shutil

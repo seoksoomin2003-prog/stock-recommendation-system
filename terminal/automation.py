@@ -268,6 +268,19 @@ class Daily:
         st["kr_holdings"] = {"day": today.isoformat(), "result": "OK" if rc == 0 else "NOT_SAVED", "code": rc}
         return st["kr_holdings"]
 
+    def _cache_prune(self, st: Dict[str, Any], session: str) -> Optional[Dict[str, Any]]:
+        """Once per session (user decision, 2026-11-09): remove scan price files older than the newest ``storage.KEEP_SESSIONS``
+        sessions and cache entries no code reads (``storage.prune_cache``).  Only cache files; records and backups are never touched."""
+        if (st.get("cache_prune") or {}).get("session") == session:
+            return None
+        try:
+            res = storage.prune_cache(self.base, apply=True)
+            st["cache_prune"] = {"session": session, "at": self.now().isoformat(), "removed": res["scanbars"]["removed"] + res["superseded"]["removed"],
+                                 "mb": round(res["scanbars"]["old_mb"] + res["superseded"]["mb"], 1)}
+        except Exception as exc:                                    # never stops the run
+            st["cache_prune"] = {"session": session, "at": self.now().isoformat(), "error": type(exc).__name__}
+        return st["cache_prune"]
+
     def _scan_status(self) -> Optional[str]:
         runs = sorted((self.base / "runs").glob("*_market_scan_*"), key=lambda p: p.name)
         if not runs:
@@ -409,6 +422,7 @@ class Daily:
             self._save(st)
         st["kr_day"] = kr_day
         self._kr_holdings(st)
+        self._cache_prune(st, session)
         self._save(st)
         alerts = self._alerts()
         prev = st.get("alerts") or []
