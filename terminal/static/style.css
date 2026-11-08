@@ -233,3 +233,5 @@ table.grades td, table.grades th { text-align: center; }
 th.sort { cursor: pointer; white-space: nowrap; }
 th.sort.on { color: var(--ink); }
 tr.me td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+table.cal tr.day-start td { border-top: 1px solid var(--grid); }
+table.cal tbody tr:not(.day-start) td { border-top: 0; }

@@ -323,7 +323,7 @@ async function renderMacro() {
   const el = $("#tab-macro"), mk = state.market; el.innerHTML = loading;
   try {
     const d = await api(mq("/api/macro")); if (mk !== state.market) return; state.loaded.macro = true;
-    el.innerHTML = `${d.reason ? `<div class="notice">${esc(d.reason)}</div>` : ""}<div class="panel"><h2>${mk === "KR" ? "한국" : "미국"} 거시 지표</h2><div class="mgrid">${d.items.map((m) => `<div class="mcard">
+    el.innerHTML = `${d.reason ? `<div class="notice">${esc(d.reason)}</div>` : ""}<div class="panel" id="econcal"></div><div class="panel"><h2>${mk === "KR" ? "한국" : "미국"} 거시 지표</h2><div class="mgrid">${d.items.map((m) => `<div class="mcard">
       <div class="nm meta" style="margin:0">${esc(m.label)} <span>${esc(m.id)}</span> ${m.status !== "REAL" ? badge(m.status) : ""}</div>
       <div class="row" style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span class="px num" style="font-size:20px;font-weight:650">${fmtMacro(m, m.value)}</span>
         <span class="meta" style="margin:0">${esc(m.date || "")}</span></div>
@@ -332,6 +332,7 @@ async function renderMacro() {
       <div class="meta">${mk === "KR" ? "소비자물가" : "CPI"}는 전년 동월 대비 상승률(%)로 계산해 표시합니다. 차트는 최근 약 260개 관측치입니다.</div>${meta(d.source)}</div>`;
     const draw = () => d.items.forEach((m) => { const cv = el.querySelector(`canvas[data-m="${m.id}"]`); if (cv && cv.isConnected) mini(cv, m.series); });
     draw(); redrawers.add(draw);
+    if (typeof loadCalendar === "function") loadCalendar($("#econcal"));
   } catch (e) { el.innerHTML = errBox(e); }
 }
 function fmtMacro(m, v) {

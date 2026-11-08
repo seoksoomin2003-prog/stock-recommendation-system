@@ -546,6 +546,18 @@ class Terminal:
         alerts, state, notes = alert_rules.evaluate(rules, {"bars": bars, "watched": watched, "bands": bands, "earnings": earnings, "today": today})
         return {"alerts": alerts, "state": state, "notes": notes, "checked_at": self.now().isoformat(timespec="seconds"), "rules": len(rules)}
 
+    def econ_calendar(self, market: str = "US", days: int = 60) -> Dict[str, Any]:
+        """Official policy and data release dates (both countries), with the stored earnings dates of holdings and watchlist."""
+        from terminal import econ_calendar
+        out = econ_calendar.upcoming(self.now().astimezone(ZoneInfo("Asia/Seoul")).date(), days)
+        try:
+            e = self.qsf.earnings_upcoming(market, days)
+            out["earnings"] = [i for i in e.get("items") or [] if i.get("held") or i.get("watched")]
+            out["earnings_status"] = e.get("status")
+        except Exception as exc:
+            out["earnings"], out["earnings_status"] = [], f"UNAVAILABLE ({type(exc).__name__})"
+        return out
+
     def watchlist(self) -> List[str]:
         try:
             return json.loads(self.watchlist_file.read_text(encoding="utf-8"))["tickers"]

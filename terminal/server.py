@@ -58,6 +58,7 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/macro"): lambda q, b: t.macro(_market(q.get("market", "US"))),
         ("GET", "/api/watchlist"): lambda q, b: t.watchlist_quotes(_market(q.get("market", "US"))),
         ("POST", "/api/watchlist/add"): lambda q, b: {"tickers": t.watchlist_add(b.get("ticker", ""))},
+        ("GET", "/api/calendar"): lambda q, b: t.econ_calendar(_market(q.get("market", "US")), _days(q.get("days") or "60")),
         ("GET", "/api/alerts"): lambda q, b: t.alerts_view(),
         ("GET", "/api/alerts/check"): lambda q, b: {k: v for k, v in t.alert_check().items() if k != "state"},
         ("POST", "/api/alerts/add"): lambda q, b: t.alert_add(b),
