@@ -419,7 +419,7 @@ QSF_ONE_SHOT = {
     **{a: ("validate_pit", f, _primary, 1) for a, f in (("pit-prepare", "prepare"), ("pit-run", "run"))},
     **{a: ("validate", f, _primary, 1) for a, f in (("history-prepare", "prepare"), ("history-run", "run"))},
 }
-QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-report", "price-archive", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund",
+QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-report", "price-archive", "kr-etf-holdings", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund",
                "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
                "backup-check", "cache-report", "cache-prune", *QSF_ONE_SHOT]
 
@@ -482,6 +482,11 @@ def cmd_qsf(args) -> int:
             except Exception as exc:
                 print("prices: FAILED", type(exc).__name__)
         return 0 if res["status"] == "REAL" else 3 if res["status"] == "DATA_NOT_READY" else 2
+    if args.action == "kr-etf-holdings":
+        from terminal import kr_etf_holdings
+        res = kr_etf_holdings.refresh(PROJECT_ROOT)
+        print(json.dumps(res, ensure_ascii=False, default=str))
+        return 0 if res["status"] == "OK" else 2
     if args.action == "price-archive":
         res = q.archive_prices(market)
         from terminal.qsf import price_archive

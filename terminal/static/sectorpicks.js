@@ -25,7 +25,7 @@ async function loadSectorPicks(f) {
         <span class="sp-score num">${fmt(p.score, 1)}</span><span class="grade ${SP_BAND[p.band] || ""}" style="width:auto;padding:0 6px">${esc(p.band_label || "")}</span>
         ${p.gates && p.gates.length ? `<span class="badge risk-note">${p.gates.map((g) => esc(QSF_GATE[g] || g)).join(", ")}</span>` : ""}${p.high_risk ? '<span class="badge risk-note">고위험 표시</span>' : ""}</button>`).join("")
       : '<div class="empty">점수가 있는 종목이 없습니다.</div>';
-    return `<div><h3>${QSF_STRAT[k]} 점수 상위 3 <span class="meta" style="margin:0">업종 ${s.ranked}개 중 · 매수 후보 ${s.buy_candidates}개</span></h3>${list}</div>`;
+    return `<div><h3>${QSF_STRAT[k]} 점수 상위 3 <span class="meta" style="margin:0">${d.basis_kind === "HOLDINGS" ? `ETF 보유 ${d.fund_holdings}종목 중 스캔 대상 ${s.ranked}개` : `업종 ${s.ranked}개 중`} · 매수 후보 ${s.buy_candidates}개</span></h3>${list}</div>`;
   };
   box.innerHTML = `<h2>${esc(f.name)} 업종 점수 상위 종목 <span class="meta" style="margin:0">스캔 거래일 ${esc(d.session)} · ${esc(d.model_version || "")}</span></h2>
     <div class="sp-cols">${col("SWING")}${col("LONG_TERM")}</div>

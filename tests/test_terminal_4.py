@@ -66,16 +66,16 @@ def test_runs_each_step_once_per_session(tmp_path, monkeypatch):
     monkeypatch.setenv("QPP_CAPITAL", "1000")
     d, calls, sent = make(tmp_path)
     assert d.run()["status"] == "DONE"
-    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR", "KR_FORWARD", "US_CHALLENGER"] and len(sent) == 1
+    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR", "KR_FORWARD", "US_CHALLENGER", "KR_HOLDINGS"] and len(sent) == 1
     assert d.run()["status"] == "UP_TO_DATE"              # the next firing the same day does nothing
-    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR", "KR_FORWARD", "US_CHALLENGER"] and len(sent) == 1
+    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR", "KR_FORWARD", "US_CHALLENGER", "KR_HOLDINGS"] and len(sent) == 1
 
 
 def test_failed_step_retries_alone_and_others_still_run(tmp_path, monkeypatch):
     monkeypatch.setenv("QPP_CAPITAL", "1000")
     d, calls, sent = make(tmp_path, rc={"SCAN": 2})
     d.run()
-    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR", "KR_FORWARD", "US_CHALLENGER"] and "❌ P6-11B 스캔" in sent[0]
+    assert calls == ["LAB", "SCAN", "TRACK", "QSF", "QSF_KR", "NEWS", "NEWS_KR", "KR_FORWARD", "US_CHALLENGER", "KR_HOLDINGS"] and "❌ P6-11B 스캔" in sent[0]
     d2, calls2, sent2 = make(tmp_path)
     d2.run()
     assert calls2 == ["SCAN"] and "✅ P6-11B 스캔" in sent2[0]
@@ -331,3 +331,17 @@ def test_backup_age_and_no_backup(tmp_path):
     (tmp_path / "notes").mkdir()
     got = automation.backup_status(tmp_path, date(2026, 11, 8))
     assert got == {"latest": "2026-11-01", "age_days": 7, "copies": 1}
+
+
+def test_kodex_holdings_tried_weekly_only_while_missing_or_old(tmp_path, monkeypatch):
+    from terminal import kr_etf_holdings as kh
+    monkeypatch.delenv("QPP_CAPITAL", raising=False)
+    d, calls, _ = make(tmp_path, rc={"KR_HOLDINGS": 2})            # the site refused
+    st = {"sessions": {}}
+    assert d._kr_holdings(st)["result"] == "NOT_SAVED" and calls == ["KR_HOLDINGS"]
+    assert d._kr_holdings(st) is None and calls == ["KR_HOLDINGS"]                 # not again within a week
+    st["kr_holdings"]["day"] = "2026-10-01"
+    assert d._kr_holdings(st)["result"] == "NOT_SAVED" and calls.count("KR_HOLDINGS") == 2
+    monkeypatch.setattr(kh, "status", lambda base, today=None: {"status": "OK", "age_days": 10})
+    st.pop("kr_holdings")
+    assert d._kr_holdings(st) is None and calls.count("KR_HOLDINGS") == 2          # a recent snapshot needs nothing

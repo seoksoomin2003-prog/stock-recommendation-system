@@ -24,6 +24,7 @@ from utils import nyse_calendar
 LABEL = "com.quantengine.daily"
 SCHEDULE = ((7, 10), (8, 10), (12, 10), (20, 10))     # KST: the US close is 06:00-07:00, later slots are retries
 STEP_TIMEOUT = 45 * 60
+HOLDINGS_EVERY_DAYS, HOLDINGS_FRESH_DAYS = 7, 90     # KODEX holdings: retry cadence while missing, and refresh age
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
 FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger")
@@ -248,6 +249,25 @@ class Daily:
         except Exception as exc:                                    # one failed step never stops the others
             return {"status": FAILED, "at": at, "detail": type(exc).__name__}
 
+    def _kr_holdings(self, st: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """KODEX holdings for the sector picks (``terminal.kr_etf_holdings``): tried at most once a week while the stored snapshot
+        is missing or older than HOLDINGS_FRESH_DAYS.  The site may refuse scripted reads; the command then stops after one request
+        and the picks keep their industry match.  A refusal is not a failure of the day's run and is not sent as an alert."""
+        from terminal import kr_etf_holdings
+        today = self.now().astimezone(KST).date()
+        snap = kr_etf_holdings.status(self.base, today)
+        if snap["status"] != "NONE" and snap["age_days"] <= HOLDINGS_FRESH_DAYS:
+            return None
+        last = (st.get("kr_holdings") or {}).get("day")
+        if last and (today - date.fromisoformat(last)).days < HOLDINGS_EVERY_DAYS:
+            return None
+        try:
+            rc = self.runner("KR_HOLDINGS", ["--market", "KR", "qsf", "kr-etf-holdings"])
+        except Exception as exc:                                    # never stops the run
+            rc = type(exc).__name__
+        st["kr_holdings"] = {"day": today.isoformat(), "result": "OK" if rc == 0 else "NOT_SAVED", "code": rc}
+        return st["kr_holdings"]
+
     def _scan_status(self) -> Optional[str]:
         runs = sorted((self.base / "runs").glob("*_market_scan_*"), key=lambda p: p.name)
         if not runs:
@@ -388,6 +408,8 @@ class Daily:
             steps[name] = self._step(name, session)
             self._save(st)
         st["kr_day"] = kr_day
+        self._kr_holdings(st)
+        self._save(st)
         alerts = self._alerts()
         prev = st.get("alerts") or []
         missing = self.missing_sessions(session)

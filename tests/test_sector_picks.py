@@ -38,3 +38,13 @@ def test_unknown_fund_and_missing_scan():
     with pytest.raises(ValueError):
         sp.picks(latest([]), "US", "QQQ")
     assert sp.picks({"status": "UNAVAILABLE", "rows": []}, "KR", "091160.KS")["status"] == "UNAVAILABLE"
+
+
+def test_every_rotation_fund_has_a_pick_rule():
+    from terminal.services import Terminal
+    from terminal.qsf import sector_picks as sp
+    for market, (_, _, funds) in Terminal.ROTATION.items():
+        for sym, _ in funds:
+            assert sp.rule_text(market, sym), (market, sym)
+    from terminal import kr_etf_holdings as kh
+    assert set(kh.FUNDS) <= {sp.fund_code(s) for s, _ in Terminal.ROTATION["KR"][2]}

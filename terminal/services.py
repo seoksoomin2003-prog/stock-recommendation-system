@@ -297,7 +297,8 @@ class Terminal:
                                        ("XLB", "소재"), ("XLE", "에너지"), ("XLU", "유틸리티"), ("XLRE", "부동산"), ("XLC", "커뮤니케이션")]),
         "KR": ("^KS11", "코스피", [("091160.KS", "반도체"), ("091170.KS", "은행"), ("102970.KS", "증권"), ("091180.KS", "자동차"), ("117460.KS", "에너지화학"),
                                   ("117680.KS", "철강"), ("117700.KS", "건설"), ("102960.KS", "기계장비"), ("266420.KS", "헬스케어"), ("266390.KS", "경기소비재"),
-                                  ("266410.KS", "필수소비재"), ("140710.KS", "운송")]),
+                                  ("266410.KS", "필수소비재"), ("140710.KS", "운송"), ("305720.KS", "2차전지"), ("140700.KS", "보험"),
+                                  ("494670.KS", "조선"), ("315270.KS", "커뮤니케이션")]),
     }
     RRG_WINDOW, RRG_MOM, RRG_TAIL = 10, 5, 8
 
@@ -345,7 +346,7 @@ class Terminal:
             items.append({"symbol": sym, "name": name, "tail": tail, "quadrant": quad, "relative": rel})
         return {"status": "REAL" if items else "UNAVAILABLE", "market": market, "benchmark": bench_name, "funds": items, "missing": missing,
                 "as_of": max((i["tail"][-1]["date"] for i in items), default=None), "fetched_at": res.get("fetched_at"),
-                "source": "Yahoo Finance 일봉 (배당 조정 종가, 지연) · 미국 SPDR 업종 ETF / 한국 KODEX 업종 ETF",
+                "source": "Yahoo Finance 일봉 (배당 조정 종가, 지연) · 미국 SPDR 업종 ETF / 한국 KODEX 업종 ETF(조선·커뮤니케이션은 TIGER)",
                 "method": f"주간 종가. 상대강도 비율 = 100 × (ETF/지수) ÷ 최근 {self.RRG_WINDOW}주 평균, 모멘텀 = 100 × 비율 ÷ 최근 {self.RRG_MOM}주 평균. 공개된 근사식이며 RRG 원 공식과 다릅니다."}
 
     def _kr_fundamentals(self, c: Dict[str, Any]) -> Dict[str, Any]:
@@ -557,6 +558,16 @@ class Terminal:
         except Exception as exc:
             out["earnings"], out["earnings_status"] = [], f"UNAVAILABLE ({type(exc).__name__})"
         return out
+
+    def sector_picks(self, market: str, fund: str) -> Dict[str, Any]:
+        """Top scores inside one rotation fund.  Korean funds use the stored KODEX holdings when a snapshot exists."""
+        from terminal import kr_etf_holdings
+        from terminal.qsf import sector_picks
+        held, stale = None, False
+        if market == "KR":
+            held = kr_etf_holdings.members(self.base, sector_picks.fund_code(fund))
+            stale = kr_etf_holdings.status(self.base, self.now().date()).get("status") == "STALE"
+        return sector_picks.picks(self.qsf.screen_rows(market), market, fund, held, stale)
 
     def watchlist(self) -> List[str]:
         try:
