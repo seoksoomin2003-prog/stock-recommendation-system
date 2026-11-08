@@ -705,6 +705,30 @@ class Terminal:
                 "cache": cache, "source": "사용자 거래 기록 + Yahoo Finance 일봉 종가(지연)", "benchmark": BENCH[market][1],
                 "note": "주문 기능은 없습니다. 보유 현황은 직접 기록한 거래로만 계산합니다."}
 
+    def portfolio_risk(self, market: str = "US") -> Dict[str, Any]:
+        """Beta, volatility, one-day loss at the 5% tail, each holding's share of the risk and their correlations, on the past year
+        with today's weights held fixed.  Read only; a description of the mix, not a forecast."""
+        from terminal import portfolio_risk
+        _, integ, _, val, _, _ = self._valued(market)
+        eq = val["summary"].get("equity")
+        held = [h for h in val["holdings"] if h.get("weight_pct") is not None]
+        if integ["status"] != "OK" or not held or not eq:
+            return {"status": "UNAVAILABLE", "market": market, "reason": "NO_HOLDINGS" if not held else "INCOMPLETE_VALUATION"}
+        bench, bench_name = BENCH[market]
+        hist, fetched = {}, []
+        for t in [h["ticker"] for h in held] + [bench]:
+            sym = bench if t == bench else self._sym(t)
+            res = self.cache.cached(f"chart:{sym}:2y", TTL["chart"], lambda sym=sym: self.src.yahoo_history([sym], "2y"))
+            hist[t] = (res["data"] or {}).get(sym) or []
+            fetched.append(res.get("fetched_at"))
+        out = portfolio_risk.analyse({h["ticker"]: h["weight_pct"] / 100 for h in held}, hist, hist[bench], eq)
+        names = {h["ticker"]: h.get("name") for h in held}
+        for h in out.get("holdings") or []:
+            h["name"] = names.get(h["ticker"])
+        return {**out, "market": market, "benchmark": bench_name, "equity": eq, "fetched_at": min((f for f in fetched if f), default=None),
+                "source": "사용자 거래 기록 + Yahoo Finance 일봉 (배당 조정 종가, 지연)",
+                "basis": "지금 비중을 지난 1년 동안 그대로 들고 있었다고 가정한 계산입니다. 현금은 수익 0으로 봅니다. 앞으로의 손실 한도나 예측이 아닙니다."}
+
     def equity(self, market: str = "US") -> Dict[str, Any]:
         recs, integ, state = self._book(market)
         eff = pf.effective(recs)

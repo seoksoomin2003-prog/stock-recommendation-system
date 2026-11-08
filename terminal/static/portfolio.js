@@ -58,6 +58,7 @@ async function renderPortfolio() {
     ${Object.keys(d.sectors).length ? `<div class="panel"><h2>섹터 비중 <span class="meta" style="margin:0">한도 ${d.settings.max_sector_pct}%</span></h2><table><tbody>
       ${Object.entries(d.sectors).map(([k, v]) => `<tr><td>${esc(sectorKo(k))}</td><td style="width:60%"><div class="bar ${v > d.settings.max_sector_pct ? "over" : ""}"><i style="width:${Math.min(100, v).toFixed(1)}%"></i></div></td><td class="num">${v.toFixed(1)}%</td></tr>`).join("")}
       </tbody></table></div>` : ""}
+    ${d.holdings.length ? '<div class="panel" id="risk-panel"><h2>위험 분석</h2><div class="meta">불러오는 중…</div></div>' : ""}
     <div class="panel"><h2>계좌 수익률 vs ${esc(d.benchmark)}</h2><div id="eq-sum" class="meta">불러오는 중…</div><div class="chart"><canvas id="eqc"></canvas></div><div id="eq-meta"></div></div>
     <div class="panel"><h2>매매 성과 (매도 건 기준)</h2>${statsHtml(d.stats)}
       ${d.stats.count ? styleStatsHtml(d.stats_by_style) : ""}
@@ -76,6 +77,7 @@ async function renderPortfolio() {
     try { await post("/api/journal/void", { ref: b.dataset.void }); renderPortfolio(); } catch (err) { alert(err.message); }
   }));
   loadEquity();
+  if (d.holdings.length) loadRisk();
 }
 function totalHtml(t) {
   if (!t) return "";
@@ -326,3 +328,38 @@ async function loadPlan() {
 
 RENDER.portfolio = renderPortfolio;
 RENDER.assist = renderAssist;
+
+// 위험 분석: 지금 비중을 지난 1년에 그대로 적용한 베타·변동성·꼬리 손실·위험 기여도·상관관계.  읽기 전용.
+const RISK_WHY = { NO_HOLDINGS: "보유 종목이 없습니다.", INCOMPLETE_VALUATION: "시세가 없는 종목이 있어 비중을 확정할 수 없습니다.", NO_HISTORY: "가격 이력이 120거래일보다 짧습니다.",
+  NO_BENCHMARK: "비교 지수 가격을 받지 못했습니다.", NO_COMMON_DAYS: "보유 종목들이 함께 거래한 날이 부족합니다." };
+async function loadRisk() {
+  const box = $("#risk-panel"), mk = state.market;
+  if (!box) return;
+  try {
+    const r = await api(mq("/api/portfolio/risk"));
+    if (mk !== state.market || !$("#risk-panel")) return;
+    if (r.status !== "REAL") { box.innerHTML = `<h2>위험 분석</h2><div class="empty">${esc(RISK_WHY[r.reason] || r.reason || "계산할 수 없습니다.")}</div>`; return; }
+    const p = (v, d = 1) => (isNum(v) ? `${(v * 100).toFixed(d)}%` : DASH);
+    const corr = r.correlation;
+    box.innerHTML = `<h2>위험 분석 <span class="meta" style="margin:0">${esc(r.from)} ~ ${esc(r.to)} · ${r.days}거래일</span></h2>
+      <div class="kv">
+        <div><span>시장 베타 (${esc(r.benchmark)} 대비)</span><b class="num">${fmt(r.beta, 2)}</b></div>
+        <div><span>연 변동성</span><b class="num">${p(r.volatility)}</b> <span class="meta" style="margin:0">지수 ${p(r.benchmark_volatility)}</span></div>
+        <div><span>하루 손실 5% 꼬리 (VaR 95%)</span><b class="num">${p(r.var95, 2)}</b> <span class="meta" style="margin:0">${money(r.var95_amount)}</span></div>
+        <div><span>그 꼬리의 평균 손실</span><b class="num">${p(r.es95, 2)}</b> <span class="meta" style="margin:0">${money(r.es95_amount)}</span></div>
+        <div><span>최악의 하루</span><b class="num">${pct(isNum(r.worst_day) ? r.worst_day * 100 : null, 2)}</b> <span class="meta" style="margin:0">${esc(r.worst_day_date)}</span></div>
+        <div><span>최악의 20거래일</span><b class="num">${pct(isNum(r.worst_20d) ? r.worst_20d * 100 : null, 1)}</b></div>
+        <div><span>최대 낙폭</span><b class="num">${pct(isNum(r.max_drawdown) ? r.max_drawdown * 100 : null, 1)}</b></div>
+        <div><span>실질 종목 수</span><b class="num">${fmt(r.effective_n, 1)}</b> <span class="meta" style="margin:0">평균 상관 ${fmt(r.avg_correlation, 2)}</span></div>
+      </div>
+      <div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>비중</th><th>위험 기여</th><th>연 변동성</th><th>베타</th></tr></thead><tbody>
+        ${r.holdings.map((h) => `<tr class="click" data-ticker="${esc(h.ticker)}"><td class="l"><b>${esc(h.name || h.ticker)}</b> <span class="meta" style="margin:0">${esc(h.ticker)}</span></td><td class="num">${p(h.weight)}</td>
+          <td style="width:30%"><div class="bar"><i style="width:${isNum(h.risk_share) ? Math.max(0, Math.min(100, h.risk_share * 100)).toFixed(1) : 0}%"></i></div> <span class="num">${p(h.risk_share)}</span></td>
+          <td class="num">${p(h.volatility)}</td><td class="num">${fmt(h.beta, 2)}</td></tr>`).join("")}</tbody></table></div>
+      ${r.short_history.length ? `<div class="meta">가격 이력이 짧아 계산에서 뺀 종목: ${esc(r.short_history.join(", "))}</div>` : ""}
+      ${corr && corr.tickers.length > 1 ? `<h3>종목 간 상관계수</h3><div class="tbl-wrap"><table><thead><tr><th class="l"></th>${corr.tickers.map((t) => `<th>${esc(t)}</th>`).join("")}</tr></thead><tbody>
+        ${corr.tickers.map((t, i) => `<tr><td class="l">${esc(t)}</td>${corr.matrix[i].map((v, j) => `<td class="num">${i === j ? DASH : fmt(v, 2)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : ""}
+      <div class="meta">위험 기여는 계좌 전체 변동 중 그 종목 몫입니다. 실질 종목 수는 비중 쏠림을 반영한 종목 수입니다. ${esc(r.basis)}</div>
+      ${meta(r.source, r.fetched_at)}`;
+  } catch (e) { if ($("#risk-panel")) $("#risk-panel").innerHTML = `<h2>위험 분석</h2>${errBox(e)}`; }
+}

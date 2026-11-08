@@ -62,6 +62,7 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/model"): lambda q, b: t.model(_market(q.get("market", "US"))),
         ("GET", "/api/portfolio"): lambda q, b: t.portfolio(_market(q.get("market", "US"))),
         ("GET", "/api/portfolio/equity"): lambda q, b: t.equity(_market(q.get("market", "US"))),
+        ("GET", "/api/portfolio/risk"): lambda q, b: t.portfolio_risk(_market(q.get("market", "US"))),
         ("GET", "/api/portfolio/signals"): lambda q, b: t.portfolio_signals(_market(q.get("market", "US"))),
         ("POST", "/api/journal/add"): lambda q, b: t.journal_add(b),
         ("POST", "/api/journal/void"): lambda q, b: t.journal_void(b.get("ref", "")),
