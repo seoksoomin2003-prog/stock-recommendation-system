@@ -52,7 +52,9 @@ async function automationLine() {
   const run = a.installed ? `자동 실행 켜짐 (한국 시간 ${a.schedule_kst[0]})` : "자동 실행 꺼짐";
   const last = a.last_run ? `마지막 실행 ${a.last_run.at.slice(0, 16).replace("T", " ")} UTC, 기준 거래일 ${a.last_run.session}` : "실행 기록 없음";
   const gaps = a.last_run && a.last_run.missing_sessions.length ? `, 빠진 거래일 ${a.last_run.missing_sessions.length}일` : "";
-  return `${run} · ${tg} · ${last}${gaps}`;
+  const sa = a.server_agent;
+  const srv = sa ? (sa.installed ? `서버 자동 재시작 켜짐${sa.runs > 1 ? ` (재시작 ${sa.runs - 1}회)` : ""}` : "서버 자동 재시작 꺼짐") : "";
+  return `${run} · ${srv ? srv + " · " : ""}${tg} · ${last}${gaps}`;
 }
 async function startLabRun() {
   try { await post("/api/lab/run", {}); pollLab(); } catch (e) { $("#labmsg").textContent = e.message; }

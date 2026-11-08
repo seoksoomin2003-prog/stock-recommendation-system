@@ -338,6 +338,45 @@ News comes from free feeds: Yahoo Finance RSS (US) and Google News RSS (KR). Yah
 
 `python app.py news record` (also `--market KR`) stores new headlines of every scanned stock in `data/news/`: title, link, source and time only. It runs in the daily job and stops at once if a feed refuses requests.
 
+**Stage 4 (TERMINAL-4): daily job and alerts.**
+
+```bash
+python app.py automation install       # launchd job at 07:10, 08:10, 12:10, 20:10 KST (later slots retry what failed)
+python app.py automation status        # schedule, last run, missed sessions, Telegram status
+python app.py automation uninstall
+```
+
+The job records the day's scores, the lab signals, tracking, news and Korean forward records, backs up the ledgers to
+`~/QuantEngineBackups`, checks your alerts at the close and sends one summary by Telegram (optional, `TELEGRAM_BOT_TOKEN` and
+`TELEGRAM_CHAT_ID` in `.env`) and as a macOS notification. Each step runs once per session; a failed step is retried in the
+next slot. Logs: `data/automation/`. Specification: `reports/TERMINAL_4_SPECIFICATION.md`.
+
+**More terminal tools (2026-11-08):** command bar (`/` or ⌘K, keys 1-9 switch tabs), multi-stock comparison chart (비교),
+market heat map and sector rotation graph with each sector's top-scored stocks (시장 지도), peer comparison and A-F grades by
+score area (종목), portfolio risk (beta, volatility, VaR, correlation), alert centre (매매 보조) and the economic calendar
+(거시: FOMC, US CPI and jobs report, Bank of Korea rate meetings, earnings dates of held and watched stocks). The calendar
+dates are copied from the official pages and end where those pages end; add new dates to `terminal/econ_calendar.py`.
+None of these change scores or records. See `reports/QSF_TERMINAL_FEATURES_2026_11_08.md`.
+
+**Keeping the terminal running.**
+
+```bash
+python app.py terminal-agent install   # start the terminal at login and restart it within 30 s whenever it stops
+python app.py terminal-agent status    # installed, running, pid, number of starts
+python app.py terminal-agent uninstall # stop it and remove the launchd job
+```
+
+* The agent is `~/Library/LaunchAgents/com.quantengine.terminal.plist`. It runs the same `app.py terminal --port 8765` and
+  reads `.env` through a login shell; no key is written into the plist.
+* While it is installed, `pkill` or Ctrl+C does not keep the server down: launchd starts it again. To stop it for a while use
+  `launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.quantengine.terminal.plist` (it comes back at the next login), or
+  `uninstall`. To load new code: `launchctl kickstart -k gui/$(id -u)/com.quantengine.terminal`.
+* Logs, in `data/terminal/logs/`:
+  * `launchd.log`: start-up messages, replaced when over 1 MB;
+  * `server_errors.log`: unexpected request errors with tracebacks, `.env` values and e-mail addresses removed, rotated at
+    1 MB (3 kept). The status line at the bottom of the screen shows "서버 오류 N건" when there are any since the last start.
+* The automation line on the 모델 tab (US view) shows whether auto-restart is on.
+
 ### Where things are
 
 | Path | Content |
@@ -443,6 +482,7 @@ Frozen-core parity only:
 | `NOTE: SEC EDGAR disabled` | Set `SEC_USER_AGENT="QuantStockEngine/1.0 <your e-mail>"` in `.env` or in your shell profile. |
 | `LIVE DATA UNAVAILABLE` | Run `app.py doctor --network`. The cause is usually connectivity, or Yahoo or Wikipedia being temporarily unavailable. Try again later; rate limits are never bypassed. |
 | Disk almost full (`doctor` WARN) | Safe to delete (regenerable): `cache.nosync/`, `.venv` (recreate it per §2). Do not delete `data/`, `tracking/` or the `runs/<id>/` folders of recorded runs: `tracking verify` and the diagnostics need them. |
+| The terminal page does not open | Run `app.py terminal-agent status`. If it is not installed, start it with `app.py terminal` or install the agent. If it is running but the page fails, read `data/terminal/logs/launchd.log` and `server_errors.log`. |
 | `tracking update` says FAILED | The provider was unreachable. Earlier records and outcomes are untouched; run it again later. |
 | All observations `PENDING_OUTCOME` | Expected until the entry session's daily bar is complete (after 17:00 ET) and the 30-day window has passed. |
 | Removing the old Desktop copy | Only after you have checked the new location. Move `~/Desktop/퀀트 예측 프로그램` to the Trash in Finder (reversible until you empty the Trash). |

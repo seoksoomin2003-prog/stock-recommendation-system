@@ -1,4 +1,4 @@
-"""Room left on the disk, and the one cache that grows without limit.
+"""Room left on the disk, the one cache that grows without limit, and cache entries left behind by older versions.
 
 A full disk would stop every record at once, so the daily summary and the record screen warn before that.  Removing files needs the user's word:
 ``prune_scanbars`` only lists what it would remove unless ``apply`` is passed, and nothing calls it on a schedule.
@@ -14,6 +14,8 @@ BAD_FREE = 2 * GB
 CACHE = Path("data") / "qsf" / "cache"
 SCANBARS = re.compile(r"^scanbars_(\d{4}-\d{2}-\d{2})_[0-9a-f]+_[0-9a-f]+\.json$")
 KEEP_SESSIONS = 5
+# cache entries no program code reads any more: (file pattern, why)
+SUPERSEDED = ((re.compile(r"^annual_\d{10}_[0-9a-z_]+\.json$"), "QSF-1.1.3부터 annual2로 바뀐 예전 연간 재무"),)
 
 
 def disk(base: Path, usage=shutil.disk_usage) -> Dict[str, Any]:
@@ -58,3 +60,26 @@ def prune_scanbars(base: Path, keep: int = KEEP_SESSIONS, apply: bool = False) -
             f.unlink()
             removed += 1
     return {**rep, "applied": bool(apply), "removed": removed}
+
+
+def superseded_report(base: Path) -> Dict[str, Any]:
+    """Cache files of a key format the code no longer reads (``SUPERSEDED``); listing only."""
+    root = Path(base) / CACHE
+    groups = []
+    for pattern, why in SUPERSEDED:
+        files = sorted(f for f in root.iterdir() if f.is_file() and pattern.match(f.name)) if root.exists() else []
+        groups.append({"what": why, "files": len(files), "mb": round(sum(f.stat().st_size for f in files) / 1024 ** 2, 1), "_paths": files})
+    return {"groups": groups, "files": sum(g["files"] for g in groups), "mb": round(sum(g["mb"] for g in groups), 1)}
+
+
+def prune_cache(base: Path, keep: int = KEEP_SESSIONS, apply: bool = False) -> Dict[str, Any]:
+    """Old scan sessions plus superseded entries.  Lists by default; ``apply`` removes exactly the listed files."""
+    scan = prune_scanbars(base, keep, apply)
+    old = superseded_report(base)
+    removed = 0
+    for g in old["groups"]:
+        for f in g.pop("_paths"):
+            if apply:
+                f.unlink()
+                removed += 1
+    return {"scanbars": scan, "superseded": {**old, "removed": removed}, "applied": bool(apply)}

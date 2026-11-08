@@ -52,6 +52,6 @@ def test_status_reads_state_and_pid(tmp_path, monkeypatch):
     monkeypatch.setattr(server_agent, "plist_path", lambda: plist)
     monkeypatch.setattr(server_agent, "_launchctl", lambda *a: SimpleNamespace(returncode=0, stderr="", stdout=out))
     st = server_agent.status(tmp_path)
-    assert st["installed"] and st["state"] == "running" and st["pid"] == "4242" and st["runs"] == "3"
+    assert st["installed"] and st["state"] == "running" and st["pid"] == 4242 and st["runs"] == 3 and st["last_exit_code"] == 0
     monkeypatch.setattr(server_agent, "_launchctl", lambda *a: SimpleNamespace(returncode=113, stderr="", stdout=""))
     assert server_agent.status(tmp_path)["installed"] is False

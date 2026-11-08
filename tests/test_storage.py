@@ -81,3 +81,25 @@ def test_a_test_copy_is_independent_of_the_original(tmp_path):
     assert dst.read_text() == "one" and src.read_text() == "two"
     dst.write_text("three")
     assert src.read_text() == "two"
+
+
+def test_superseded_annual_entries_listed_then_removed_only_on_apply(tmp_path):
+    root = cache(tmp_path, DAYS)
+    for name in ("annual_0001811074_97517_2_46b69d446d.json", "annual_0000320193_ab12cd34ef.json"):
+        (root / name).write_text("{}")
+    got = storage.prune_cache(tmp_path)
+    assert got["superseded"]["files"] == 2 and got["superseded"]["removed"] == 0 and len(list(root.glob("annual_0*"))) == 2
+    assert "_paths" not in got["superseded"]["groups"][0]
+    got = storage.prune_cache(tmp_path, apply=True)
+    left = {p.name for p in root.iterdir()}
+    assert got["superseded"]["removed"] == 2 and not any(n.startswith("annual_0") for n in left)
+    assert "annual2_1_ab.json" in left and got["scanbars"]["removed"] == 6
+
+
+def test_every_superseded_key_is_unread_by_code():
+    """The cache file name is the key with ':' turned into '_'; no code may still build the old key."""
+    import subprocess
+    code = subprocess.run(["git", "grep", "-n", "-E", r"f?[\"']annual:", "--", "terminal", "app.py", "markets"],
+                          capture_output=True, text=True, cwd=Path(__file__).resolve().parents[1]).stdout
+    assert code == ""
+    assert "prune_cache" not in (Path(__file__).resolve().parents[1] / "terminal" / "automation.py").read_text(encoding="utf-8")

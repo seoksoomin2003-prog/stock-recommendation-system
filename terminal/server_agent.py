@@ -67,5 +67,5 @@ def status(base: Path) -> Dict[str, Any]:
     for line in res.stdout.splitlines() if loaded else []:
         key, _, value = line.strip().partition(" = ")
         if key in ("state", "pid", "runs", "last exit code"):
-            info[key.replace(" ", "_")] = value
+            info[key.replace(" ", "_")] = int(value) if value.lstrip("-").isdigit() else value
     return {"installed": loaded, "port": PORT, **info, "log": str(log_path(base))}

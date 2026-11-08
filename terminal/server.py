@@ -21,7 +21,7 @@ from urllib.parse import parse_qs, urlparse
 from terminal.services import Terminal, clean_ticker
 
 STATIC = Path(__file__).resolve().parent / "static"
-from terminal import automation, record_status, today  # noqa: E402
+from terminal import automation, record_status, server_agent, today  # noqa: E402
 from terminal.qsf import changes as qsf_changes, screen as qsf_screen  # noqa: E402
 
 HOST = "127.0.0.1"
@@ -138,7 +138,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
         ("GET", "/api/kr/search"): lambda q, b: {"items": t.qsf.kr_search(q.get("q", ""))},
         ("GET", "/api/model/plan"): lambda q, b: t.model_plan(),
         ("GET", "/api/lab/status"): lambda q, b: t.lab.status(),
-        ("GET", "/api/automation/status"): lambda q, b: automation.status(t.base),
+        ("GET", "/api/automation/status"): lambda q, b: {**automation.status(t.base), "server_agent": server_agent.status(t.base)},
         ("GET", "/api/qsf/evaluate"): lambda q, b: t.qsf_evaluate(q.get("t", ""), q.get("market", "US")),
         ("GET", "/api/qsf/earnings"): lambda q, b: t.qsf.earnings_upcoming(_market(q.get("market", "US")), _days(q.get("days"))),
         ("GET", "/api/qsf/history"): lambda q, b: t.qsf_history(q.get("t", ""), q.get("market", "US")),
