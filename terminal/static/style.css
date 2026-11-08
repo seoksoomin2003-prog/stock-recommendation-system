@@ -235,3 +235,11 @@ th.sort.on { color: var(--ink); }
 tr.me td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 table.cal tr.day-start td { border-top: 1px solid var(--grid); }
 table.cal tbody tr:not(.day-start) td { border-top: 0; }
+.sp-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 700px) { .sp-cols { grid-template-columns: 1fr; } }
+.sp-pick { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; margin: 0 0 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); cursor: pointer; flex-wrap: wrap; }
+.sp-pick:hover, .sp-pick.on { border-color: var(--accent); }
+.sp-rank { font-weight: 700; color: var(--muted); width: 1.2em; }
+.sp-name { flex: 1 1 160px; min-width: 0; }
+.sp-score { font-weight: 650; font-size: 16px; }
+table.sp-ret td { padding: 4px 8px; }

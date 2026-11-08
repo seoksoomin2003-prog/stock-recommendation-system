@@ -16,7 +16,7 @@ from terminal.services import Terminal, clean_ticker
 
 STATIC = Path(__file__).resolve().parent / "static"
 from terminal import automation, record_status, today  # noqa: E402
-from terminal.qsf import changes as qsf_changes, screen as qsf_screen  # noqa: E402
+from terminal.qsf import changes as qsf_changes, screen as qsf_screen, sector_picks as qsf_sector_picks  # noqa: E402
 
 HOST = "127.0.0.1"
 log = logging.getLogger("terminal")
@@ -90,6 +90,7 @@ def routes(t: Terminal) -> Dict[str, Callable]:
         ("GET", "/api/qsf/validation"): lambda q, b: t.qsf.validation(),
         ("GET", "/api/qsf/top3"): lambda q, b: t.qsf.top3(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/peers"): lambda q, b: t.qsf.peers(clean_ticker(q.get("t", "")), _market(q.get("market", "US"))),
+        ("GET", "/api/qsf/sector-picks"): lambda q, b: qsf_sector_picks.picks(t.qsf.screen_rows(_market(q.get("market", "US"))), _market(q.get("market", "US")), q.get("fund", "")),
         ("GET", "/api/qsf/heatmap"): lambda q, b: t.qsf.heatmap(_market(q.get("market", "US")), _strategy(q.get("strategy", "SWING"))),
         ("GET", "/api/record"): lambda q, b: record_status.build(t),
         ("GET", "/api/today"): lambda q, b: today.build(t, q.get("t", ""), _market(q.get("market", "US"))),
