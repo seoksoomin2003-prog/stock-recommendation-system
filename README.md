@@ -361,6 +361,8 @@ News comes from free feeds: Yahoo Finance RSS (US) and Google News RSS (KR). Yah
 | `data/lab/` | lab price panel, challenger ledger, membership cache, research cache (local, ignored by git) |
 | `data/terminal/` | terminal cache, watchlist, trade journal `journal.jsonl` and risk settings (local, private, ignored by git) |
 | `reports/` | phase reports, roadmap, test results |
+| `reports/legacy/` | early P3 reports and outputs that used to sit at the project root |
+| git tag `legacy-before-cleanup-2026-11-08` | the last commit holding the P3/P5/P6 research code (`entity/`, `providers/`, `research/`, `scripts/run_p*`, ...) and its tests, removed on 2026-11-08 because nothing the program runs used them; `git checkout <tag> -- <path>` brings a file back |
 
 ### Korean market in the terminal
 

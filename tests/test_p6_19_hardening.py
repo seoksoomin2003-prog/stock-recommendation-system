@@ -23,7 +23,6 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from data.loader import DataLoader
-from pipeline import forward_tracking
 from pipeline.run_recorder import frozen_source_hashes
 from pipeline.service import run_direct_evaluation, run_market_scan
 from tests.p6_18_fakes import FakeLoader, FakeSystem, FakeUniverse, make_financials, make_market, pipeline_for
@@ -532,73 +531,6 @@ class TestCli(unittest.TestCase):
         self.assertIn("SEC_USER_AGENT", out.stdout)
         self.assertIn("capital", out.stdout)
         self.assertNotIn("@", out.stdout.split("SEC_USER_AGENT", 1)[1].splitlines()[0])  # never prints the contact
-
-
-# ---------------------------------------------------------- forward tracking
-class TestForwardTracking(unittest.TestCase):
-    def _validation(self, run_id="R1", scope="full", status="REAL RECOMMENDATION", mode="market_scan"):
-        recs = [{"ticker": f"T{i}", "recommendation_rank": i + 1, "last_bar": "2026-01-02", "close": 100.0,
-                 "hard_stop": 90.0, "horizon_days": 30, "sector": "Energy", "alpha": 1.0} for i in range(5)]
-        return {"run_id": run_id, "mode": mode, "validation_scope": scope, "recommendation_status": status,
-                "recommendations": recs, "executed_at": "2026-01-02T22:00:00+00:00"}
-
-    def test_only_full_real_scans_recorded_and_idempotent(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            self.assertEqual(forward_tracking.record_run(self._validation(scope="bounded"), tmp), 0)
-            self.assertEqual(forward_tracking.record_run(
-                self._validation(status="DATA-INCOMPLETE / NO VALID RECOMMENDATION"), tmp), 0)
-            self.assertEqual(forward_tracking.record_run(self._validation(mode="direct_evaluation"), tmp), 0)
-            self.assertEqual(forward_tracking.record_run(self._validation(), tmp), 5)
-            self.assertEqual(forward_tracking.record_run(self._validation(), tmp), 0)  # no duplicates
-            self.assertEqual(len(forward_tracking.read_ledger(tmp)), 5)
-
-    def test_outcomes_use_observed_closes_and_small_samples_are_flagged(self):
-        days = pd.bdate_range("2026-01-02", periods=40)
-        closes = pd.DataFrame({f"T{i}": 100.0 * (1 + 0.01 * np.arange(40)) for i in range(5)}, index=days)
-        closes["T4"] = 100.0 * (1 - 0.005 * np.arange(40))
-        closes["SPY"] = 100.0
-        with tempfile.TemporaryDirectory() as tmp:
-            forward_tracking.record_run(self._validation(), tmp)
-            summary = forward_tracking.evaluate_ledger(tmp, price_fetcher=lambda t, s: closes)
-            out = json.loads((Path(tmp) / "outcomes.json").read_text())["outcomes"]
-        t0 = next(o for o in out if o["ticker"] == "T0")
-        self.assertAlmostEqual(t0["ret_5d"], 0.05)
-        self.assertAlmostEqual(t0["excess_5d"], 0.05)
-        self.assertAlmostEqual(t0["ret_5d_after_cost"], 0.05 - forward_tracking.ASSUMED_ROUND_TRIP_COST)
-        t4 = next(o for o in out if o["ticker"] == "T4")
-        self.assertLess(t4["mae_close"], 0)
-        self.assertEqual(t4["status"], "MATURED")
-        self.assertEqual(summary["horizons"]["5d"]["observations"], 5)
-        self.assertEqual(summary["horizons"]["5d"]["sample_status"], "INSUFFICIENT_SAMPLE")
-        self.assertAlmostEqual(summary["horizons"]["5d"]["win_rate"], 0.8)
-        self.assertIn("not evidence of profitability", summary["disclaimer"])
-
-    def test_unmatured_horizons_are_missing_not_zero(self):
-        days = pd.bdate_range("2026-01-02", periods=3)
-        closes = pd.DataFrame({f"T{i}": 100.0 for i in range(5)}, index=days)
-        closes["SPY"] = 100.0
-        with tempfile.TemporaryDirectory() as tmp:
-            forward_tracking.record_run(self._validation(), tmp)
-            summary = forward_tracking.evaluate_ledger(tmp, price_fetcher=lambda t, s: closes)
-        self.assertEqual(summary["horizons"]["5d"]["observations"], 0)
-        self.assertIsNone(summary["horizons"]["5d"]["mean_return"])
-
-
-    def test_excluded_runs_keep_rows_but_leave_statistics(self):
-        days = pd.bdate_range("2026-01-02", periods=10)
-        closes = pd.DataFrame({f"T{i}": 100.0 * (1 + 0.01 * np.arange(10)) for i in range(5)}, index=days)
-        closes["SPY"] = 100.0
-        with tempfile.TemporaryDirectory() as tmp:
-            forward_tracking.record_run(self._validation("BAD"), tmp)
-            forward_tracking.record_run(self._validation("GOOD"), tmp)
-            (Path(tmp) / forward_tracking.EXCLUSIONS_FILE).write_text(json.dumps({"BAD": "input defect"}))
-            summary = forward_tracking.evaluate_ledger(tmp, price_fetcher=lambda t, s: closes)
-            out = json.loads((Path(tmp) / "outcomes.json").read_text())["outcomes"]
-            self.assertEqual(len(forward_tracking.read_ledger(tmp)), 10)          # ledger untouched
-        self.assertEqual(summary["ledger_rows"], 5)
-        self.assertEqual(summary["excluded_rows"], 5)
-        self.assertEqual(summary["horizons"]["5d"]["independent_runs"], 1)
-        self.assertEqual(sum(1 for o in out if o.get("excluded_from_statistics")), 5)
 
 
 if __name__ == "__main__":

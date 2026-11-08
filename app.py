@@ -387,22 +387,51 @@ def cmd_lab(args) -> int:
     return 0
 
 
+def _without(key):
+    return lambda res, mod: {k: v for k, v in res.items() if k != key}
+
+
+def _primary(res, mod):
+    return res.get("primary", res)
+
+
+# One-shot QSF research and validation runs: action -> (module in terminal.qsf, function, what to print, json indent).
+# Each was run once under a protocol in reports/; the commands stay so the methods remain readable and runnable.
+QSF_ONE_SHOT = {
+    **{a: ("validate_corrected", f, lambda r, m: {k: r[k] for k in ("status", "companies", "failed") if k in r}, None) for a, f in (
+        ("corrected-prepare", "prepare"), ("corrected-open", "run_open"), ("corrected-oos", "run_oos"), ("corrected-research", "run_research"),
+        ("corrected-swing", "run_swing"), ("sue-test", "test_sue"))},
+    **{a: ("research_short", f, _without("strategies"), None) for a, f in (("short-download", "fetch_all"), ("short-develop", "develop"), ("short-test", "test_once"))},
+    **{a: ("research_sentiment", f, _without("strategies"), None) for a, f in (("sentiment-download", "fetch_vix"), ("sentiment-run", "run_once"))},
+    "kr-forward-evaluate-events": ("kr_events_forward", "evaluate_once", _without("buckets"), None),
+    **{a: ("research_kr_events", f, _without("scores"), None) for a, f in (("kr-events-download", "download"), ("kr-events-prepare", "prepare"), ("kr-events-run", "run_once"))},
+    **{a: ("research_kr_fund", f, _without("scores"), None) for a, f in (("kr-fund-download", "download"), ("kr-fund-prepare", "prepare"), ("kr-fund-run", "run_once"))},
+    **{a: ("research_kr", f, _without("strategies"), None) for a, f in (("kr-download", "download"), ("kr-prepare", "prepare"), ("kr-run", "run_once"), ("kr-diagnose", "diagnose"))},
+    **{a: ("research_ensemble", f, _without("strategies"), None) for a, f in (("ensemble-prepare", "prepare"), ("ensemble-run", "run_once"))},
+    **{a: ("research_news", f, _without("strategies"), None) for a, f in (("news-prepare", "prepare"), ("news-develop", "develop"), ("news-test", "test_once"))},
+    **{a: ("research_insider", f, _without("strategies"), None) for a, f in (("insider-prepare", "prepare"), ("insider-develop", "develop"), ("insider-test", "test_once"))},
+    "swing-develop": ("research_swing", "develop", lambda r, m: {"status": r["status"], "report": str(m.DEV_REPORT)}, None),
+    "swing-test": ("research_swing", "test_once", lambda r, m: {"status": r["status"], "report": str(m.TEST_REPORT)}, None),
+    "research-develop": ("research_score", "develop", lambda r, m: r["strategies"], 1),
+    "research-test": ("research_score", "test_once", lambda r, m: r["strategies"], 1),
+    **{a: ("validate_oos", f, _primary, 1) for a, f in (("oos-prepare", "prepare"), ("oos-score", "score"), ("oos-test", "test_once"))},
+    **{a: ("validate_open", f, _primary, 1) for a, f in (("open-prepare", "prepare"), ("open-run", "run"))},
+    **{a: ("validate_pit", f, _primary, 1) for a, f in (("pit-prepare", "prepare"), ("pit-run", "run"))},
+    **{a: ("validate", f, _primary, 1) for a, f in (("history-prepare", "prepare"), ("history-run", "run"))},
+}
+QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-report", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund",
+               "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
+               "backup-check", "cache-report", "cache-prune", *QSF_ONE_SHOT]
+
+
 def cmd_qsf(args) -> int:
     """QSF 1.1 scoring (separate from the frozen P6-11B model; no orders are ever placed)."""
-    if args.action.startswith("corrected-") or args.action == "sue-test":
-        from terminal.qsf import validate_corrected as vc
-        res = {"corrected-prepare": vc.prepare, "corrected-open": vc.run_open, "corrected-oos": vc.run_oos, "corrected-research": vc.run_research, "corrected-swing": vc.run_swing, "sue-test": vc.test_sue}[args.action](PROJECT_ROOT)
-        print(json.dumps({k: res[k] for k in ("status", "companies", "failed") if k in res}, ensure_ascii=False, default=str))
-        return 0
-    if args.action in ("short-download", "short-develop", "short-test"):
-        from terminal.qsf import research_short
-        res = {"short-download": research_short.fetch_all, "short-develop": research_short.develop, "short-test": research_short.test_once}[args.action](PROJECT_ROOT)
-        print(json.dumps({k: v for k, v in res.items() if k != "strategies"}, ensure_ascii=False, default=str))
-        return 0
-    if args.action in ("sentiment-download", "sentiment-run"):
-        from terminal.qsf import research_sentiment
-        res = {"sentiment-download": research_sentiment.fetch_vix, "sentiment-run": research_sentiment.run_once}[args.action](PROJECT_ROOT)
-        print(json.dumps({k: v for k, v in res.items() if k != "strategies"}, ensure_ascii=False, default=str))
+    spec = QSF_ONE_SHOT.get(args.action)
+    if spec:                        # the one-shot research and validation runs: each prints its own summary
+        import importlib
+        module, func, view, indent = spec
+        mod = importlib.import_module(f"terminal.qsf.{module}")
+        print(json.dumps(view(getattr(mod, func)(PROJECT_ROOT), mod), ensure_ascii=False, indent=indent, default=str))
         return 0
     if args.action in ("kr-holder-download", "kr-holder-prepare", "kr-holder-run"):
         from terminal.qsf import research_kr_holder as rh
@@ -422,11 +451,6 @@ def cmd_qsf(args) -> int:
         res = storage.prune_scanbars(PROJECT_ROOT, apply=args.action == "cache-prune" and args.apply)
         print(json.dumps({"disk": storage.disk(PROJECT_ROOT), **res}, ensure_ascii=False))
         return 0
-    if args.action == "kr-forward-evaluate-events":
-        from terminal.qsf import kr_events_forward
-        res = kr_events_forward.evaluate_once(PROJECT_ROOT)
-        print(json.dumps({k: v for k, v in res.items() if k != "buckets"}, ensure_ascii=False, default=str))
-        return 0
     if args.action in ("kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund"):
         from terminal.qsf import kr_forward
         if args.action in ("kr-forward-evaluate", "kr-forward-evaluate-fund"):
@@ -441,66 +465,6 @@ def cmd_qsf(args) -> int:
         res = us_challenger.record(PROJECT_ROOT)
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3}.get(res["status"], 1)
-    if args.action in ("kr-events-download", "kr-events-prepare", "kr-events-run"):
-        from terminal.qsf import research_kr_events
-        res = {"kr-events-download": research_kr_events.download, "kr-events-prepare": research_kr_events.prepare, "kr-events-run": research_kr_events.run_once}[args.action](PROJECT_ROOT)
-        print(json.dumps({k: v for k, v in res.items() if k != "scores"}, ensure_ascii=False, default=str))
-        return 0
-    if args.action in ("kr-fund-download", "kr-fund-prepare", "kr-fund-run"):
-        from terminal.qsf import research_kr_fund
-        res = {"kr-fund-download": research_kr_fund.download, "kr-fund-prepare": research_kr_fund.prepare, "kr-fund-run": research_kr_fund.run_once}[args.action](PROJECT_ROOT)
-        print(json.dumps({k: v for k, v in res.items() if k != "scores"}, ensure_ascii=False, default=str))
-        return 0
-    if args.action in ("kr-download", "kr-prepare", "kr-run", "kr-diagnose"):
-        from terminal.qsf import research_kr
-        res = {"kr-download": research_kr.download, "kr-prepare": research_kr.prepare, "kr-run": research_kr.run_once, "kr-diagnose": research_kr.diagnose}[args.action](PROJECT_ROOT)
-        print(json.dumps({k: v for k, v in res.items() if k != "strategies"}, ensure_ascii=False, default=str))
-        return 0
-    if args.action in ("ensemble-prepare", "ensemble-run"):
-        from terminal.qsf import research_ensemble
-        res = {"ensemble-prepare": research_ensemble.prepare, "ensemble-run": research_ensemble.run_once}[args.action](PROJECT_ROOT)
-        print(json.dumps({k: v for k, v in res.items() if k != "strategies"}, ensure_ascii=False, default=str))
-        return 0
-    if args.action in ("news-prepare", "news-develop", "news-test"):
-        from terminal.qsf import research_news
-        res = {"news-prepare": research_news.prepare, "news-develop": research_news.develop, "news-test": research_news.test_once}[args.action](PROJECT_ROOT)
-        print(json.dumps({k: v for k, v in res.items() if k != "strategies"}, ensure_ascii=False, default=str))
-        return 0
-    if args.action in ("insider-prepare", "insider-develop", "insider-test"):
-        from terminal.qsf import research_insider
-        res = {"insider-prepare": research_insider.prepare, "insider-develop": research_insider.develop, "insider-test": research_insider.test_once}[args.action](PROJECT_ROOT)
-        print(json.dumps({k: v for k, v in res.items() if k != "strategies"}, ensure_ascii=False, default=str))
-        return 0
-    if args.action in ("swing-develop", "swing-test"):
-        from terminal.qsf import research_swing
-        res = research_swing.develop(PROJECT_ROOT) if args.action == "swing-develop" else research_swing.test_once(PROJECT_ROOT)
-        print(json.dumps({"status": res["status"], "report": str(research_swing.DEV_REPORT if args.action == "swing-develop" else research_swing.TEST_REPORT)}, ensure_ascii=False))
-        return 0
-    if args.action in ("research-develop", "research-test"):
-        from terminal.qsf import research_score
-        res = research_score.develop(PROJECT_ROOT) if args.action == "research-develop" else research_score.test_once(PROJECT_ROOT)
-        print(json.dumps(res["strategies"], ensure_ascii=False, indent=1, default=str))
-        return 0
-    if args.action in ("oos-prepare", "oos-score", "oos-test"):
-        from terminal.qsf import validate_oos
-        res = {"oos-prepare": validate_oos.prepare, "oos-score": validate_oos.score, "oos-test": validate_oos.test_once}[args.action](PROJECT_ROOT)
-        print(json.dumps(res.get("primary", res), ensure_ascii=False, indent=1, default=str))
-        return 0
-    if args.action in ("open-prepare", "open-run"):
-        from terminal.qsf import validate_open
-        res = validate_open.prepare(PROJECT_ROOT) if args.action == "open-prepare" else validate_open.run(PROJECT_ROOT)
-        print(json.dumps(res.get("primary", res), ensure_ascii=False, indent=1, default=str))
-        return 0
-    if args.action in ("pit-prepare", "pit-run"):
-        from terminal.qsf import validate_pit
-        res = validate_pit.prepare(PROJECT_ROOT) if args.action == "pit-prepare" else validate_pit.run(PROJECT_ROOT)
-        print(json.dumps(res.get("primary", res), ensure_ascii=False, indent=1, default=str))
-        return 0
-    if args.action in ("history-prepare", "history-run"):
-        from terminal.qsf import validate
-        res = validate.prepare(PROJECT_ROOT) if args.action == "history-prepare" else validate.run(PROJECT_ROOT)
-        print(json.dumps(res.get("primary", res), ensure_ascii=False, indent=1, default=str))
-        return 0
     from terminal.qsf.service import QSF
     q = QSF(PROJECT_ROOT)
     market = args.market
@@ -616,7 +580,7 @@ def build_parser() -> argparse.ArgumentParser:
     nw = sub.add_parser("news", help="Record free news headlines of the scanned stocks (feeds no score)")
     nw.add_argument("action", choices=["record"])
     qs = sub.add_parser("qsf", help="QSF 1.1: 0-100 stock score with holding-period plan (separate from P6-11B)")
-    qs.add_argument("action", choices=["evaluate", "scan", "validate", "verify", "history-prepare", "history-run", "pit-prepare", "pit-run", "open-prepare", "open-run", "oos-prepare", "oos-score", "oos-test", "research-develop", "research-test", "swing-develop", "swing-test", "corrected-prepare", "corrected-open", "corrected-oos", "corrected-research", "corrected-swing", "sue-test", "insider-prepare", "insider-develop", "insider-test", "news-prepare", "news-develop", "news-test", "ensemble-prepare", "ensemble-run", "short-download", "short-develop", "short-test", "sentiment-download", "sentiment-run", "kr-download", "kr-prepare", "kr-run", "kr-diagnose", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund", "kr-forward-evaluate-events", "cache-report", "cache-prune", "backup-check", "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long", "kr-events-download", "kr-events-prepare", "kr-events-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-fund-download", "kr-fund-prepare", "kr-fund-run", "top3-freeze", "top3-report"])
+    qs.add_argument("action", choices=QSF_ACTIONS)
     qs.add_argument("tickers", nargs="*")
     qs.add_argument("--dry-run", action="store_true", help="Scan without writing to the ledger")
     qs.add_argument("--apply", action="store_true", help="cache-prune only: remove the files instead of listing them")
