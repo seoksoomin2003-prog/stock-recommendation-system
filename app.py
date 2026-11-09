@@ -422,7 +422,7 @@ QSF_ONE_SHOT = {
 }
 QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-report", "price-archive", "kr-etf-holdings", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund",
                "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
-               "backup-check", "cache-report", "cache-prune", *QSF_ONE_SHOT]
+               "backup-check", "cache-report", "cache-prune", "price-audit", *QSF_ONE_SHOT]
 
 
 def cmd_qsf(args) -> int:
@@ -447,6 +447,12 @@ def cmd_qsf(args) -> int:
         res = automation.check_backup()
         print(json.dumps({**automation.backup_status(), **res}, ensure_ascii=False, default=str))
         return 0 if res["status"] == "OK" else 1
+    if args.action == "price-audit":
+        from terminal.qsf import price_audit
+        from utils import nyse_calendar
+        res = price_audit.run(PROJECT_ROOT, nyse_calendar.sessions_between)
+        print(json.dumps(res, ensure_ascii=False, indent=1))
+        return 0
     if args.action in ("cache-report", "cache-prune"):
         from terminal import storage
         res = storage.prune_cache(PROJECT_ROOT, apply=args.action == "cache-prune" and args.apply)

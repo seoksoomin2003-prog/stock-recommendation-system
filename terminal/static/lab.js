@@ -139,6 +139,19 @@ const SPAN = (y) => (y <= 0 ? "지금 충족" : y < 1 ? `약 ${Math.max(1, Math.
 function recordProgress(q) {
   return (q.progress || []).reduce((a, p) => { a[`${p.strategy}|${p.horizon}`] = p; return a; }, {});
 }
+// 시세 이력 점검: 점수를 계산한 일봉 자체가 맞는지. 읽기 전용, 점수를 고치지 않습니다.
+function recAudit(pa) {
+  if (!pa) return "";
+  const one = (name, x) => {
+    if (!x || x.status !== "REAL") return `<div class="meta">${name}: 점검 결과 없음</div>`;
+    const kinds = Object.entries(x.by_kind || {}).map(([k, n]) => `${esc(x.kind_text[k])} ${n}건`).join(", ");
+    const days = (x.common_dates || []).map((c) => `${esc(c.date)}(${c.stocks}종목)`).join(", ");
+    return `<div class="kv"><div><span>${name} 점검 종목</span><b class="num">${x.checked}</b></div><div><span>문제 있는 종목</span><b class="num">${x.flagged}${x.bad ? ` <span class="meta" style="margin:0">(심각 ${x.bad})</span>` : ""}</b></div><div><span>기준 스캔</span><b>${esc(x.session)}</b></div>${x.market === "US" ? `<div><span>확정 전 마지막 일봉</span><b class="num">${x.provisional_last_bars}</b></div>` : ""}</div>
+      <div class="meta">${esc(x.source)}. ${kinds ? `${kinds}.` : "문제를 찾지 못했습니다."}${days ? ` 여러 종목이 함께 틀린 날: ${days}.` : ""}</div>`;
+  };
+  return `<h3>시세 이력 점검 <span class="meta" style="margin:0">점수 입력 확인 · 점수에 반영 안 함</span></h3>${one("미국", pa.US)}${one("한국", pa.KR)}
+    <div class="meta">최근 1년(${(pa.KR && pa.KR.window_sessions) || (pa.US && pa.US.window_sessions) || 253}거래일)만 봅니다. 한국은 KRX 공식 일별 시세와, 미국은 두 번째 무료 출처가 없어 NYSE 거래일 달력과 일봉 자체의 앞뒤만 맞춰 봅니다.</div>`;
+}
 async function renderRecord() {
   const el = $("#recpanel"); if (!el) return;
   el.innerHTML = `<div class="panel">${loading}</div>`;
@@ -166,6 +179,7 @@ async function renderRecord() {
     ${f.events ? `<div class="meta">공시 사건 기록: ${f.events.sessions}거래일 · 마지막 ${esc(f.events.last || "—")} · 독립 표본 ${f.events.independent.toFixed(1)} / ${f.events.target}</div>` : ""}
     <h3>미국 도전자 점수 기록 <span class="meta" style="margin:0">라이브와 분리</span></h3><div class="kv"><div><span>기록 거래일</span><b class="num">${u.sessions}</b></div><div><span>마지막 기록</span><b>${esc(u.last || "—")}</b></div><div><span>늦은 기록</span><b class="num">${u.late}</b></div><div><span>스윙 독립 표본 (20거래일)</span><b class="num">${u.independent.toFixed(1)} / ${u.target}</b></div><div><span>장기 독립 표본 (63거래일)</span><b class="num">${u.long_independent.toFixed(1)} / ${u.target}</b></div></div>
     <div class="meta">점수와 날짜만 쌓습니다. 수익률은 표본이 찬 뒤 한 번만 평가합니다. 이 점수는 추천과 라이브 점수에 쓰이지 않습니다.${u.sessions ? "" : ` 첫 기록 대상은 ${esc(u.first_due)}입니다.`}</div>
+    ${recAudit(d.price_audit)}
     <h3>자동 실행</h3><div class="kv">${d.disk ? `<div><span>디스크 여유</span><b class="num">${d.disk.free_gb}GB</b></div>` : ""}${d.backup ? `<div><span>마지막 백업</span><b>${esc(d.backup.latest || "—")}</b></div>` : ""}<div><span>설치</span><b>${a.installed ? "설치됨" : '<span class="missing">미설치</span>'}</b></div><div><span>실행 시각</span><b>${esc((a.schedule_kst || []).join(", "))}</b></div><div><span>마지막 실행</span><b>${a.last_run_at ? when(a.last_run_at) : DASH}</b></div><div><span>기준 거래일</span><b>${esc(a.latest_session || "—")}</b></div></div>
     <div class="meta">${a.steps.map((s) => `${esc(s.name)}: ${esc(stat[s.status] || "기록 없음")}`).join(" · ")}</div>
     <div class="meta">${esc(d.note)}</div></div>`;

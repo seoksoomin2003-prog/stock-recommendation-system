@@ -117,10 +117,16 @@ class Terminal:
         if market == "KR":
             if not re.fullmatch(r"[0-9A-Z]{6}", (ticker or "").strip().upper()):
                 raise ValueError("INVALID_TICKER")
-            return self.qsf.evaluate(ticker.strip().upper(), "KR")
-        if market != "US":
+            code = ticker.strip().upper()
+        elif market != "US":
             raise ValueError("INVALID_MARKET")
-        return self.qsf.evaluate(clean_ticker(ticker), "US")
+        else:
+            code = clean_ticker(ticker)
+        res = self.qsf.evaluate(code, market)
+        if isinstance(res, dict) and res.get("cards"):
+            from terminal.qsf import price_audit
+            res = {**res, "price_audit": price_audit.for_stock(self.base, market, code)}     # shown beside the score, never part of it
+        return res
 
     def qsf_history(self, ticker: str, market: str = "US") -> Dict[str, Any]:
         """A stock's recorded scores, read from the ledger.  Same ticker checks as evaluation."""

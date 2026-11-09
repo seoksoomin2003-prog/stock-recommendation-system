@@ -153,6 +153,17 @@ def backup_alerts(saved: Dict[str, Any]) -> List[Dict[str, str]]:
     return []
 
 
+def audit_alerts(audits: Dict[str, Dict[str, Any]]) -> List[Dict[str, str]]:
+    names = {"US": "미국", "KR": "한국"}
+    out = []
+    for m, a in audits.items():
+        if a.get("status") == "REAL" and a.get("flagged"):
+            kinds = ", ".join(f"{a['kind_text'][k]} {n}건" for k, n in a["by_kind"].items())
+            out.append({"level": "bad" if a.get("bad") else "warn",
+                        "text": f"{names[m]} 시세 이력 점검({a['session']}): {a['checked']}종목 중 {a['flagged']}종목에서 문제가 있습니다({kinds}). 점수는 이 시세로 계산됐고 고치지 않았습니다. 종목 화면에 날짜가 표시됩니다."})
+    return out
+
+
 def build(terminal: Any) -> Dict[str, Any]:
     qsf_service = terminal.qsf
     live = qsf_service.ledger._live_rows()
@@ -174,10 +185,12 @@ def build(terminal: Any) -> Dict[str, Any]:
     challenger = us_challenger.status(terminal.base, us_calendar)
     room = storage.disk(terminal.base)
     saved = automation.backup_status()
+    from terminal.qsf import price_audit
+    audits = price_audit.summary_view(terminal.base)
     challenger["due_sessions"] = sum(1 for d in us_calendar if d >= us_challenger.FIRST)
     last = auto.get("last_run") or {}
     steps = [{"name": STEP_LABELS.get(k, k), "status": (auto.get("steps") or {}).get(k, {}).get("status")} for k in STEP_LABELS]
     return {"status": "REAL", "model_version": config.MODEL_VERSION, "integrity": verify.get("status"), "qsf": qsf, "baseline": baseline, "kr_forward": forward, "us_challenger": challenger,
             "automation": {"installed": auto.get("installed"), "schedule_kst": auto.get("schedule_kst"), "last_run_at": last.get("at"), "latest_session": auto.get("latest_session"), "steps": steps},
-            "disk": room, "backup": saved, "alerts": ([{"level": room["level"], "text": storage.low_disk_text(terminal.base)}] if room["level"] != "ok" else []) + backup_alerts(saved) + alerts(qsf, baseline, auto, verify.get("status"), forward, challenger), "minimum_independent": config.MIN_INDEPENDENT,
+            "disk": room, "backup": saved, "alerts": ([{"level": room["level"], "text": storage.low_disk_text(terminal.base)}] if room["level"] != "ok" else []) + backup_alerts(saved) + audit_alerts(audits) + alerts(qsf, baseline, auto, verify.get("status"), forward, challenger), "price_audit": audits, "minimum_independent": config.MIN_INDEPENDENT,
             "note": "진행 상황만 보여 줍니다. 수익률을 계산하지 않으며, 기준을 채우기 전에는 점수의 성과를 판단할 수 없습니다."}

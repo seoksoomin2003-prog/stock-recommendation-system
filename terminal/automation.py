@@ -281,6 +281,16 @@ class Daily:
             st["cache_prune"] = {"session": session, "at": self.now().isoformat(), "error": type(exc).__name__}
         return st["cache_prune"]
 
+    def _price_audit(self, st: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Checks the price history the day's scores read (``qsf.price_audit``): Korean bars against KRX, US bars against the NYSE
+        calendar.  Read only, a few seconds; a failure is noted and never stops the run."""
+        from terminal.qsf import price_audit
+        try:
+            st["price_audit"] = {"at": self.now().isoformat(), **price_audit.run(self.base, nyse_calendar.sessions_between, self.now())}
+        except Exception as exc:                                    # never stops the run
+            st["price_audit"] = {"at": self.now().isoformat(), "error": type(exc).__name__}
+        return st["price_audit"]
+
     def _scan_status(self) -> Optional[str]:
         runs = sorted((self.base / "runs").glob("*_market_scan_*"), key=lambda p: p.name)
         if not runs:
@@ -423,6 +433,7 @@ class Daily:
         st["kr_day"] = kr_day
         self._kr_holdings(st)
         self._cache_prune(st, session)
+        self._price_audit(st)
         self._save(st)
         alerts = self._alerts()
         prev = st.get("alerts") or []

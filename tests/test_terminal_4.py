@@ -374,3 +374,14 @@ def test_daily_run_records_cache_cleanup(tmp_path):
     d, _, _ = make(tmp_path)
     d.run()
     assert d.state()["cache_prune"]["removed"] == 0
+
+
+def test_price_audit_runs_in_the_daily_job_and_never_stops_it(tmp_path, monkeypatch):
+    from terminal.qsf import price_audit
+    d, _, _ = make(tmp_path)
+    d.run()
+    got = d.state()["price_audit"]
+    assert got["US"]["status"] == "UNAVAILABLE" and got["KR"]["status"] == "UNAVAILABLE"      # no scan bars in a fresh folder
+    monkeypatch.setattr(price_audit, "run", lambda *a, **k: 1 / 0)
+    st = {"sessions": {}}
+    assert d._price_audit(st)["error"] == "ZeroDivisionError"

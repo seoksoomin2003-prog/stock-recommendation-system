@@ -92,12 +92,23 @@ const QSF_RANK_NOTE = {
   OUTSIDE_UNIVERSE: "스캔 대상이 아닌 종목입니다. 상대강도는 스캔 종목의 수익률 분포에 넣어 계산했습니다.",
   SHORT_HISTORY: "거래 이력이 6개월보다 짧아 상대강도를 벤치마크 대비로 계산했습니다.",
 };
+// 시세 이력 점검: 점수를 계산한 일봉을 KRX 공식 자료(한국) 또는 거래일 달력(미국)과 맞춰 본 결과입니다. 점수에는 넣지 않습니다.
+const QSF_AUDIT_NOTE = "점수는 이 시세로 계산됐습니다. 고치지 않았으므로, 표시된 날이 1년 수익률·변동성 같은 값에 영향을 줄 수 있습니다.";
+function qsfAuditLine(a) {
+  if (!a) return "";
+  const prov = a.last_bar_provisional ? " 마지막 날 일봉이 아직 확정되지 않았습니다(고가·저가가 시가·종가를 감싸지 않음)." : "";
+  if (a.level === "ok") return `<div class="meta">시세 이력 점검(${esc(a.session)}): 문제 없음.${prov} ${esc(a.source)}.</div>`;
+  const ex = (a.examples || []).map((e) => `${esc(e.date)}${e.yahoo_pct !== undefined ? ` (${e.yahoo_pct}% / KRX ${e.krx_pct}%)` : e.krx_pct !== undefined ? ` (KRX ${e.krx_pct}%)` : ""}`).join(", ");
+  return `<div class="notice">시세 이력 점검(${esc(a.session)}): ${esc(a.text)}${ex ? ` 예: ${ex}.` : ""}${prov} ${QSF_AUDIT_NOTE} <span class="meta" style="margin:0">${esc(a.source)}</span></div>`;
+}
+const qsfAuditTag = (a) => (a && a.level !== "ok" ? ` <span class="badge risk-note" title="${esc(a.text)}">시세 이력 확인 필요</span>` : "");
 function qsfDrawDetail(d) {
   const p = d.p6_reference;
-  $("#qsfdetail").innerHTML = `<div class="panel"><h2>${esc(d.ticker)} ${esc(d.name || "")} <span class="badge">${d.market === "US" ? "미국" : "한국"}</span>${d.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(d.filing_events)}</h2>
+  $("#qsfdetail").innerHTML = `<div class="panel"><h2>${esc(d.ticker)} ${esc(d.name || "")} <span class="badge">${d.market === "US" ? "미국" : "한국"}</span>${d.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(d.filing_events)}${qsfAuditTag(d.price_audit)}</h2>
     ${d.high_risk ? `<div class="meta">${QSF_RISK_NOTE} 기준일 ${esc(d.high_risk.session)}.</div>` : ""}
     ${d.filing_events ? `<div class="meta">${QSF_FILING_NOTE} 기준일 ${esc(d.filing_events.session)}.</div>` : ""}
     ${QSF_RANK_NOTE[d.rank_basis] ? `<div class="meta">${QSF_RANK_NOTE[d.rank_basis]}</div>` : ""}
+    ${qsfAuditLine(d.price_audit)}
     ${p ? `<div class="meta">P6-11B 참고: ${p.status !== "REAL" ? "기록 없음" : p.in_top5 ? `최근 스캔 상위 5 (${p.rank}위)` : "최근 스캔 상위 5 아님"} · 별도 모델이며 점수에 합치지 않습니다.</div>` : ""}
     <h3>당일 점검 <span class="meta" style="margin:0">점수에 포함되지 않음</span></h3><div id="qsftoday"></div>
     <div class="qsf-cards">${Object.values(d.cards).map((c) => qsfCard(c, true)).join("")}</div>
@@ -178,7 +189,7 @@ async function qsfFillRow(box, r, market) {
     if (!box.isConnected) return;
     if (d.status !== "REAL") { box.innerHTML = `<div class="empty">평가할 수 없습니다: ${esc(d.reason || "")}</div>`; return; }
     const c = d.cards[qsfState.strategy];
-    box.innerHTML = `${qsfScanNote(r, c)}<div class="qsf-cards">${qsfCard(c)}</div>
+    box.innerHTML = `${qsfScanNote(r, c)}${d.price_audit && d.price_audit.level !== "ok" ? qsfAuditLine(d.price_audit) : ""}<div class="qsf-cards">${qsfCard(c)}</div>
       <details class="qsf-today-fold"><summary>당일 점검 (시세·공시·뉴스)</summary><div class="qsf-today-slot"></div></details>`;
     const fold = box.querySelector(".qsf-today-fold");
     fold.addEventListener("toggle", () => { if (fold.open && !fold.dataset.done) { fold.dataset.done = "1"; qsfToday(fold.querySelector(".qsf-today-slot"), r.ticker, market); } });
@@ -188,7 +199,7 @@ function qsfRowHtml(r) {
   const out = r.actionability !== "ACTIONABLE";
   return `<div class="qsf-item"><button type="button" class="qsf-row" data-qsf="${esc(r.ticker)}" aria-expanded="false">
       <span class="qr-rank num">${r.rank}</span>
-      <span class="qr-name"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span>${r.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(r.filing_events)}</span>
+      <span class="qr-name"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span>${r.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(r.filing_events)}${qsfAuditTag(r.price_audit)}</span>
       <span class="qr-score num">${qsfNum(r.score)}</span><span class="qr-act">${qsfLabel(r)}</span>
       <span class="qr-conf">신뢰도 ${QSF_CONF[r.confidence]}</span><span class="qr-entry">${QSF_ENTRY[r.entry_status] || ""}</span>
       <span class="qr-gate">${out ? `<span class="qr-out">상위 3 제외</span> ` : ""}${r.gates.map((g) => esc(QSF_GATE[g] || g)).join(", ")}</span>

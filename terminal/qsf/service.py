@@ -635,7 +635,13 @@ class QSF:
             out = json.loads((self.dir / f"latest_{market}.json").read_text(encoding="utf-8"))
             risky = self._high_risk(market)
             filed = self._filing_marks(market)
+            from terminal.qsf import price_audit
+            audit = price_audit.load(self.base, market) or {}
+            checked = audit.get("stocks") if audit.get("session") == out.get("session") else None   # an older check says nothing about this scan
             for r in out.get("rows") or []:
+                a = (checked or {}).get(r.get("ticker"))
+                if a and a["level"] in ("warn", "bad"):
+                    r["price_audit"] = {"level": a["level"], "text": "최근 1년 시세 이력: " + ", ".join(f"{price_audit.KIND_TEXT[k]} {n}일" for k, n in sorted(a["counts"].items()))}
                 if r.get("ticker") in risky["codes"]:
                     r["high_risk"] = {"session": risky["session"]}
                 elif r.get("ticker") not in (risky.get("ranked") or ()):
