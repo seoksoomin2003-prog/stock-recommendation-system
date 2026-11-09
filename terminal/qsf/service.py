@@ -10,7 +10,7 @@ import os
 import time
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -346,6 +346,18 @@ class QSF:
         # A position that became a swing later counts its time limit from that change.
         return {"avg_cost": p["avg"], "opened": p.get("style_since") or p["opened"], "qty": p["qty"], "stop": plan.get("stop"), "target": plan.get("target"), "style": p.get("style")}
 
+    def _krx_bars(self, bars: Dict[str, List[Dict]]) -> Tuple[Dict[str, List[Dict]], Dict[str, Any]]:
+        """Korean bars rebuilt from the KRX daily snapshots (``kr_bars``).  Without any snapshot the Yahoo bars stay, and the summary says so."""
+        from terminal.qsf import kr_bars
+        try:
+            pan = kr_bars.panel(self.base, self.now().date())
+        except Exception as exc:                                   # a broken cache must not stop scoring; the summary names it
+            return bars, {"stocks": len(bars), "by_source": {"YAHOO": len(bars)}, "error": type(exc).__name__}
+        out, infos = {}, {}
+        for code, rows in bars.items():
+            out[code], infos[code] = kr_bars.rebuild(code, rows, pan)
+        return out, kr_bars.summary(infos)
+
     def context(self, ticker: str, market: str, prefetched: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         pre = prefetched or {}
         if market == "US":
@@ -363,6 +375,8 @@ class QSF:
             hist = self._history([sym, bench_sym])
             data = hist["data"] or {}
             bars, bench = data.get(sym) or [], data.get(bench_sym) or []
+            if market == "KR" and bars:
+                bars = self._krx_bars({ticker: bars})[0][ticker]
         regime = self.regime(market)
         session = self._session(market) if market == "US" else regime.get("session") or self._session("KR", bench)
         bars, bench = _clean(bars, session), _clean(bench or [], session)
@@ -537,7 +551,8 @@ class QSF:
         if record and cards:
             rec = self.ledger.append(session, market, cards)
         summary = {"status": "REAL" if cards else "UNAVAILABLE", "market": market, "session": session, "model_version": config.MODEL_VERSION, "tickers": len(tickers), "scored": len(cards), "errors": errors,
-                   "elapsed_seconds": round(time.time() - started, 1), "ledger": rec, "generated_at": self.now().isoformat(), "rows": sorted(rows, key=lambda r: -(r["score"] or -1))}
+                   "elapsed_seconds": round(time.time() - started, 1), "ledger": rec, "generated_at": self.now().isoformat(),
+                   **({"price_source": self._kr_bars_info} if market == "KR" and getattr(self, "_kr_bars_info", None) else {}), "rows": sorted(rows, key=lambda r: -(r["score"] or -1))}
         if not record:
             return summary                  # a dry run leaves the published ranking alone
         self.dir.mkdir(parents=True, exist_ok=True)
@@ -585,6 +600,7 @@ class QSF:
             bars[code] = [{"date": pd.Timestamp(r.date).strftime("%Y-%m-%d"), "open": _n(r.open), "high": _n(r.high), "low": _n(r.low), "close": _n(r.close), "adj_close": _n(r.adj_close), "volume": _n(r.volume)}
                           for r in rows.itertuples() if _n(r.close)]
         session = latest.strftime("%Y-%m-%d")
+        bars, self._kr_bars_info = self._krx_bars(bars)          # QSF-1.1.8: KRX official daily data, Yahoo only for days KRX has not published
         above = [b[-1]["close"] > np.mean([x["close"] for x in b[-200:]]) for b in bars.values() if len(b) >= 200 and b[-1]["date"] == session]
         if len(above) >= 50:
             self.dir.mkdir(parents=True, exist_ok=True)

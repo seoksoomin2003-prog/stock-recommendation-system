@@ -7,6 +7,11 @@ wrong price, not an adjustment.  Found on 2026-11-09: whole days missing (2025-0
 previous close while the stock moved (2024-10-14, 2024-11-07, 2026-03-27), single bad prints, and history from before a stock's
 KOSDAQ listing.
 
+Since QSF-1.1.8 (the user's decision of 2026-11-09) the scan builds the Korean bars from these same KRX snapshots
+(``kr_bars``), so for most days the check now confirms the rebuild rather than an independent source.  What it can still flag:
+the newest days KRX has not published yet (taken from Yahoo), stocks KRX does not list (Yahoo bars kept), and a rebuild that
+went wrong.
+
 United States: no second free daily source is used, so the check is internal: sessions missing against the NYSE calendar,
 bars that repeat the previous bar exactly, days with no volume, and high/low that do not contain the open and close.  The last
 bar is checked apart: right after the close Yahoo's day bar can still be provisional.
@@ -182,7 +187,7 @@ def audit_kr(base: Path, now: Optional[datetime] = None) -> Dict[str, Any]:
     days = sorted(krx)[-WINDOW:]
     session = max((v[-1]["date"] for v in bars.values() if v), default=None)
     stocks = {code: audit_kr_stock(rows, code, krx, days) for code, rows in bars.items()}
-    return _summary("KR", session, stocks, f"Yahoo 일봉(스캔 입력) 대 KRX 일별 시세 {days[0]}~{days[-1]}", now)
+    return _summary("KR", session, stocks, f"스캔 입력 일봉(QSF-1.1.8부터 KRX 자료로 재구성, 최근 미공개일은 Yahoo) 대 KRX 일별 시세 {days[0]}~{days[-1]}", now)
 
 
 def latest_us_bars(base: Path) -> Dict[str, Any]:

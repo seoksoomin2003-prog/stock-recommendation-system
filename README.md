@@ -452,6 +452,10 @@ and what would change the label.
 * Missing data lowers coverage and is never treated as 0. Snapshots are stored in `data/qsf/ledger/` as append-only, hash-chained
   shards. A shard recorded from bad data gets a VOID row and stays on disk.
 * Exit code 3 from `qsf scan` means Yahoo has not finished the session yet. The daily job retries at its next slot.
+* Korean daily bars (QSF-1.1.8): built from the KRX daily snapshots in `research_data/krx` by chaining each day's official change
+  rate, which already allows for splits; Yahoo is used only for days KRX has not published yet and for its dividend ratio
+  (`terminal/qsf/kr_bars.py`, cache `data/qsf/krx_panel.npz`). `qsf price-audit` checks the bars the scores read
+  (`reports/QSF_PRICE_AUDIT_2026_11_09.md`).
 
 ## 6. Tests
 

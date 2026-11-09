@@ -155,12 +155,13 @@ def backup_alerts(saved: Dict[str, Any]) -> List[Dict[str, str]]:
 
 def audit_alerts(audits: Dict[str, Dict[str, Any]]) -> List[Dict[str, str]]:
     names = {"US": "미국", "KR": "한국"}
+    fixed = {"KR": " 한국 일봉은 KRX 공식 자료로 다시 만들며(QSF-1.1.8), 남은 것은 KRX가 아직 내지 않은 최근 날이나 KRX에 없는 종목입니다."}
     out = []
     for m, a in audits.items():
         if a.get("status") == "REAL" and a.get("flagged"):
             kinds = ", ".join(f"{a['kind_text'][k]} {n}건" for k, n in a["by_kind"].items())
             out.append({"level": "bad" if a.get("bad") else "warn",
-                        "text": f"{names[m]} 시세 이력 점검({a['session']}): {a['checked']}종목 중 {a['flagged']}종목에서 문제가 있습니다({kinds}). 점수는 이 시세로 계산됐고 고치지 않았습니다. 종목 화면에 날짜가 표시됩니다."})
+                        "text": f"{names[m]} 시세 이력 점검({a['session']}): {a['checked']}종목 중 {a['flagged']}종목에서 문제가 있습니다({kinds}). 점수는 이 시세로 계산됐고 이 문제들은 고치지 않았습니다.{fixed.get(m, '')} 종목 화면에 날짜가 표시됩니다."})
     return out
 
 
