@@ -50,10 +50,36 @@ function qsfSetStrategy(s) {
   qsfLoadView(qsfState.view);
 }
 
+// What the stored one-run historical checks said, next to the score.  Numbers come from report files; nothing is computed here.
+const QSF_STRATEGY_NAME = { SWING: "스윙", LONG_TERM: "장기" };
+function qsfRecordHtml(d) {
+  if (!d || d.status !== "REAL") return "";
+  const p1 = (v) => (isNum(v) ? pct(v * 100, 1) : DASH);
+  const rows = d.rows.map((r) => `<tr><td class="l">${QSF_STRATEGY_NAME[r.strategy] || esc(r.strategy)} · ${r.horizon}거래일</td>
+    <td>${isNum(r.pair_win) ? (r.pair_win * 100).toFixed(1) + "%" : DASH}</td><td>${p1(r.top_fifth_excess)}</td><td>${p1(r.bottom_fifth_excess)}</td>
+    <td>${p1(r.buy_excess)}</td><td>${isNum(r.universe_return) && isNum(r.market_return) ? `${p1(r.universe_return)} / ${p1(r.market_return)}` : DASH}</td>
+    <td class="l">${esc(r.reading_label)}${r.beats_market === false ? " · 시장은 못 이김" : ""}</td></tr>`).join("");
+  return `<details class="qsf-record" open><summary>과거 성적: 이 점수를 얼마나 믿을 수 있나</summary>
+    <div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">점수 · 보유 기간</th><th title="임의의 두 종목 중 점수가 높은 쪽의 수익이 더 좋았던 비율. 50%면 동전 던지기입니다.">높은 점수가 이긴 비율</th>
+      <th title="같은 날 스캔한 종목 평균 대비">상위 20%</th><th title="같은 날 스캔한 종목 평균 대비">하위 20%</th><th title="같은 날 스캔한 종목 평균 대비">70점 이상</th>
+      <th title="스캔한 종목 전체의 평균 수익과 같은 기간 시장 수익">대상 평균 / 시장</th><th class="l">판정</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="meta">${esc(d.what)}. ${d.caveats.map(esc).join(" ")} 출처: ${esc(d.source)}</div></details>`;
+}
+async function qsfLoadRecord() {
+  const el = $("#qsfrecord");
+  if (!el) return;
+  try {
+    el.innerHTML = qsfRecordHtml(await api(`/api/qsf/track-record?market=${isKR() ? "KR" : "US"}`));
+  } catch (e) {
+    el.innerHTML = "";
+  }
+}
+
 async function renderQsf() {
   const el = $("#tab-qsf");
   el.innerHTML = `<div class="panel"><h2>종목 점수 (QSF 1.1)</h2>
     <div class="notice"><b>미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. 한국 과거 재현(2019~2026)에서 장기 점수는 종목 순위를 설명했지만 상위 종목이 시장을 이기지는 못했고, 스윙 점수는 근거가 부족했습니다. 참고용으로만 쓰세요.</b><br>모델 탭의 기준 모델(미국 종목에 순위를 매겨 상위 5개와 진입·손절 계획을 내는, 규칙이 고정된 모델)과 별개인 규칙 기반 점수이며, 두 결과를 합치지 않습니다. 가중치와 구간은 사전에 정한 연구 기본값입니다. 주문을 실행하지 않고, 투자 자문이 아닙니다.</div>
+    <div id="qsfrecord"></div>
     <form id="qsfform" class="qsf-form">
       <input id="qsfticker" placeholder="${isKR() ? "종목코드 (예: 005930)" : "티커 (예: AAPL)"}" autocomplete="off" aria-label="종목">
       <button class="btn-primary">평가</button></form>
@@ -68,6 +94,7 @@ async function renderQsf() {
   $("#qsfview").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetView(b.dataset.v)));
   $("#qsfstratseg").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetStrategy(b.dataset.s)));
   qsfState.fresh = {};
+  qsfLoadRecord();
   qsfMarkStrategy();
   qsfSetView(qsfState.view);
   $("#qsfform").onsubmit = (e) => { e.preventDefault(); const t = $("#qsfticker").value.trim().toUpperCase(); if (t) { setMarket(marketOf(t)); qsfSetView("rank"); qsfEvaluate(t, qsfState.market); } };

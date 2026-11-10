@@ -260,7 +260,9 @@ def test_plist_schedules_and_holds_no_secret(tmp_path, monkeypatch):
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", TOKEN)
     raw = automation.plist_bytes(tmp_path / "with space")
     pl = plistlib.loads(raw)
-    assert pl["RunAtLoad"] is True and {"Hour": 7, "Minute": 10} in pl["StartCalendarInterval"]
+    slots = pl["StartCalendarInterval"]
+    assert pl["RunAtLoad"] is True and slots[0] == {"Hour": 7, "Minute": 10} and slots[-1] == {"Hour": 23, "Minute": 10} and len(slots) == 17      # hourly, never before the US session is complete
+    assert "caffeinate -i" in pl["ProgramArguments"][2] or not automation.Path(automation.CAFFEINATE).exists()
     assert "'" in pl["ProgramArguments"][2] and "automation run" in pl["ProgramArguments"][2]
     assert TOKEN.encode() not in raw and "EnvironmentVariables" not in pl
 

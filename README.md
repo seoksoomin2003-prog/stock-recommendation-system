@@ -341,7 +341,7 @@ News comes from free feeds: Yahoo Finance RSS (US) and Google News RSS (KR). Yah
 **Stage 4 (TERMINAL-4): daily job and alerts.**
 
 ```bash
-python app.py automation install       # launchd job at 07:10, 08:10, 12:10, 20:10 KST (later slots retry what failed)
+python app.py automation install       # launchd job hourly from 07:10 to 23:10 KST (later slots retry what failed; a finished day ends in seconds)
 python app.py automation status        # schedule, last run, missed sessions, Telegram status
 python app.py automation uninstall
 ```
@@ -474,6 +474,25 @@ and what would change the label.
   market; the swing score did not pass; the scanned universe itself (top 300 by traded value) lagged a market-value universe
   (`reports/QSF_KR_LIVE_REPLAY_RESULTS.md`, `reports/QSF_KR_UNIVERSE_TEST_RESULTS.md`). A swing challenger without the technical
   domain is recorded daily apart from the live score (`reports/QSF_KR_SWING_CHALLENGER_PROTOCOL.md`).
+* Forward verdict of the live score (2026-11-11): `reports/QSF_LIVE_FORWARD_PROTOCOL.md` fixes, before any return exists, how the
+  ledger's record will be judged: every recorded session, a Newey-West t, the five historical conditions plus a money condition,
+  and the buy band's return against the index split into score effect and universe effect. One evaluation per market and strategy
+  at a fixed sample (swing: 240 matured sessions; long: 756). `qsf live-forward-status` only counts sessions;
+  `live-forward-evaluate-swing|long` refuses before the sample is full (`terminal/qsf/live_forward.py`). What that verdict can
+  detect in a year is estimated in `reports/QSF_LIVE_FORWARD_POWER_2026_11_11.md` (strong effects only).
+* Korean market-value universe challenger (2026-11-11): each session the day's 300 largest eligible stocks are scored with the
+  live code by a scan that writes no live file, and stored apart (`terminal/qsf/kr_cap_universe.py`,
+  `research_data/kr_cap_universe/`, inside the daily Korean forward step). One evaluation at 240 matured sessions
+  (`reports/QSF_KR_CAP_UNIVERSE_PROTOCOL.md`). The avoid marks (high risk, weak fundamentals, financing) are read once at the same
+  sample from records already kept (`reports/QSF_KR_AVOID_MARKS_PROTOCOL.md`, `terminal/qsf/kr_avoid_marks.py`).
+* Korean technical domain, earlier window (2026-11-11): one confirmation run on 2012-2019 with the live scoring code on prices
+  only (`terminal/qsf/research_kr_tech.py`). The swing technical domain's 20-session rank correlation was negative again and it
+  cancelled the risk domain's ranking power (`reports/QSF_KR_TECH_EARLY_RESULTS.md`). Nothing live was changed.
+* Past record next to the score (2026-11-11): the score tab shows, per strategy, what the stored one-run reports said (share of
+  pairs the higher score won, top and bottom fifth, buy band, universe against market, verdict). It reads report files only
+  (`terminal/qsf/track_record.py`, `/api/qsf/track-record`).
+* Day-to-day stability: `qsf stability` compares consecutive sessions of one model version in the ledger (rank correlation,
+  band changes, buy-band turnover). No price is read (`terminal/qsf/stability.py`).
 * Korean daily bars (QSF-1.1.8): built from the KRX daily snapshots in `research_data/krx` by chaining each day's official change
   rate, which already allows for splits; Yahoo is used only for days KRX has not published yet and for its dividend ratio
   (`terminal/qsf/kr_bars.py`, cache `data/qsf/krx_panel.npz`). `qsf price-audit` checks the bars the scores read

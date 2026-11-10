@@ -23,7 +23,9 @@ from terminal import notify, storage
 from utils import nyse_calendar
 
 LABEL = "com.quantengine.daily"
-SCHEDULE = ((7, 10), (8, 10), (12, 10), (20, 10))     # KST: the US close is 06:00-07:00, later slots are retries
+# KST: the US close is 06:00-07:00.  Hourly from 07:10 (user decision, 2026-11-11): a run cut short while the Mac slept is retried
+# within the hour it is awake again, and a finished day ends in seconds.  Before 07:10 the US session is not complete.
+SCHEDULE = tuple((h, 10) for h in range(7, 24))
 STEP_TIMEOUT = 45 * 60
 RUNNING_FILE = "running.json"                       # the run in progress: pid, step, steps done
 CAFFEINATE = "/usr/bin/caffeinate"
@@ -31,7 +33,7 @@ SLEPT_NOTE_S = 120                                  # a step during which the Ma
 HOLDINGS_EVERY_DAYS, HOLDINGS_FRESH_DAYS = 7, 90     # KODEX holdings: retry cadence while missing, and refresh age
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
-FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger", "kr_swing_challenger")
+FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger", "kr_swing_challenger", "kr_cap_universe")
 KR_STEPS = ("QSF_KR", "NEWS_KR", "KR_FORWARD")     # Korea trades on some days the US does not, and these must not wait for a US session
 KST = timezone(timedelta(hours=9))
 BACKUP_STALE_DAYS = 4                              # a long weekend with a holiday is three days without a new session
@@ -39,7 +41,7 @@ OK, FAILED, SKIPPED, WAITING = "OK", "FAILED", "SKIPPED", "WAITING"
 STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "US_CHALLENGER": "미국 도전자 점수 기록", "BACKUP": "백업"}
 BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json", "data/terminal/alerts.json", "data/terminal/alerts_log.jsonl",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
-                "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl", "research_data/kr_swing_challenger/index.jsonl", "data/qsf/top3/index.jsonl", "data/qsf/top3/*.json.gz",
+                "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl", "research_data/kr_swing_challenger/index.jsonl", "research_data/kr_cap_universe/index.jsonl", "data/qsf/top3/index.jsonl", "data/qsf/top3/*.json.gz",
                 "data/qsf/price_archive/*.json.gz")
 
 
@@ -572,7 +574,8 @@ def plist_path() -> Path:
 def plist_bytes(base: Path) -> bytes:
     """A login shell supplies the user's environment: nothing secret is copied into the plist."""
     py = shlex.quote(sys.executable)
-    cmd = f"cd {shlex.quote(str(base))} && exec {py} app.py automation run"
+    awake = f"{CAFFEINATE} -i " if Path(CAFFEINATE).exists() else ""      # held against idle sleep while it runs, like a button run
+    cmd = f"cd {shlex.quote(str(base))} && exec {awake}{py} app.py automation run"
     logs = base / "data" / "automation"
     return plistlib.dumps({
         "Label": LABEL, "ProgramArguments": ["/bin/zsh", "-lc", cmd], "RunAtLoad": True,
@@ -613,6 +616,7 @@ def status(base: Path) -> Dict[str, Any]:
     sessions = st.get("sessions") or {}
     latest = sorted(sessions)[-1] if sessions else None
     return {"installed": is_installed(), "schedule_kst": [f"{h:02d}:{m:02d}" for h, m in SCHEDULE],
+            "schedule_text": f"{SCHEDULE[0][0]:02d}:{SCHEDULE[0][1]:02d}부터 {SCHEDULE[-1][0]:02d}:{SCHEDULE[-1][1]:02d}까지 매시간",
             "telegram": notify.telegram_status(), "capital_configured": bool(os.getenv("QPP_CAPITAL", "").strip()),
             "latest_session": latest, "steps": sessions.get(latest) if latest else None,
             "last_run": st.get("last_run"), "last_attempt": st.get("last_attempt"), "running": running(base), "earnings_gap": st.get("earnings_gap"),

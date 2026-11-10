@@ -192,6 +192,6 @@ def build(terminal: Any) -> Dict[str, Any]:
     last = auto.get("last_run") or {}
     steps = [{"name": STEP_LABELS.get(k, k), "status": (auto.get("steps") or {}).get(k, {}).get("status")} for k in STEP_LABELS]
     return {"status": "REAL", "model_version": config.MODEL_VERSION, "integrity": verify.get("status"), "qsf": qsf, "baseline": baseline, "kr_forward": forward, "us_challenger": challenger,
-            "automation": {"installed": auto.get("installed"), "schedule_kst": auto.get("schedule_kst"), "last_run_at": last.get("at"), "latest_session": auto.get("latest_session"), "steps": steps},
+            "automation": {"installed": auto.get("installed"), "schedule_kst": auto.get("schedule_kst"), "schedule_text": auto.get("schedule_text"), "last_run_at": last.get("at"), "latest_session": auto.get("latest_session"), "steps": steps},
             "disk": room, "backup": saved, "alerts": ([{"level": room["level"], "text": storage.low_disk_text(terminal.base)}] if room["level"] != "ok" else []) + backup_alerts(saved) + audit_alerts(audits) + alerts(qsf, baseline, auto, verify.get("status"), forward, challenger), "price_audit": audits, "minimum_independent": config.MIN_INDEPENDENT,
             "note": "진행 상황만 보여 줍니다. 수익률을 계산하지 않으며, 기준을 채우기 전에는 점수의 성과를 판단할 수 없습니다."}

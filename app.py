@@ -426,8 +426,10 @@ QSF_ONE_SHOT = {
 }
 QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-report", "price-archive", "kr-etf-holdings", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund",
                "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long",
-               "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
-               "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", *QSF_ONE_SHOT]
+               "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate",
+               "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
+               "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
+               "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
 
 
 def cmd_qsf(args) -> int:
@@ -475,13 +477,38 @@ def cmd_qsf(args) -> int:
             res["swing_challenger"] = kr_swing_challenger.record(PROJECT_ROOT)
         except Exception as exc:
             res["swing_challenger"] = {"status": "FAILED", "reason": type(exc).__name__}
+        try:                        # the market-value universe record scores with a scan that writes no live file; it never fails the step either
+            from terminal.qsf import kr_cap_universe
+            from terminal.qsf.service import QSF
+            res["cap_universe"] = kr_cap_universe.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
+        except Exception as exc:
+            res["cap_universe"] = {"status": "FAILED", "reason": type(exc).__name__}
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3, "NO_KEY": 4}.get(res["status"], 1)
+    if args.action in ("kr-tech-early-prepare", "kr-tech-early-run"):          # one confirmation run (reports/QSF_KR_TECH_EARLY_PROTOCOL.md)
+        from terminal.qsf import research_kr_tech as rt
+        res = rt.prepare(PROJECT_ROOT) if args.action.endswith("prepare") else rt.run_once(PROJECT_ROOT)
+        keep = ("status", "days", "first", "last", "records", "mean_universe", "technical_scored_share", "fund_present", "technical", "risk_minus_composite")
+        print(json.dumps({k: res[k] for k in keep if k in res}, ensure_ascii=False, indent=1, default=str))
+        return 0
+    if args.action in ("kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate"):
+        from terminal.qsf import kr_cap_universe as cu
+        if args.action.endswith("record"):
+            from terminal.qsf.service import QSF
+            res = cu.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
+        else:
+            res = cu.status(PROJECT_ROOT) if args.action.endswith("status") else {k: v for k, v in cu.evaluate_once(PROJECT_ROOT).items() if k != "long_reference"}
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+        return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
     if args.action in ("kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate"):
         from terminal.qsf import kr_swing_challenger as sc
         res = sc.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sc.status(PROJECT_ROOT) if args.action.endswith("status") else sc.record(PROJECT_ROOT)
         print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
         return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
+    if args.action == "stability":                   # read only: how much the live score moves between sessions of one model version
+        from terminal.qsf import stability
+        print(json.dumps(stability.report(PROJECT_ROOT), ensure_ascii=False, indent=1))
+        return 0
     if args.action == "us-earnings-gap":             # read only: the count the daily job takes once on or after earnings_gap.DUE
         from terminal.qsf import earnings_gap
         res = earnings_gap.count(PROJECT_ROOT)
@@ -544,6 +571,23 @@ def cmd_qsf(args) -> int:
         calendar = [d.isoformat() for d in nyse_calendar.sessions_between(first, nyse_calendar.latest_completed_session())]
         res = us_challenger.evaluate_once(PROJECT_ROOT, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader("US"), calendar)
         print(json.dumps({k: res[k] for k in ("status", "strategy", "horizon", "dates", "supports_challenger", "paired_ic")}, ensure_ascii=False, default=str))
+        return 0
+    if args.action in ("live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate"):
+        # the one forward verdict of the live score (reports/QSF_LIVE_FORWARD_PROTOCOL.md); the status only counts sessions
+        from terminal.qsf import live_forward
+
+        def bench_of(m):
+            return q._loader("US")("SPY") if m == "US" else (q._history(["^KS11"])["data"] or {}).get("^KS11") or []
+        if args.action == "live-forward-status":
+            res = live_forward.status(PROJECT_ROOT, {m: sorted(b["date"] for b in bench_of(m)) for m in ("US", "KR")})
+        elif args.action == "kr-avoid-marks-evaluate":          # read once at the Korean swing verdict's sample (reports/QSF_KR_AVOID_MARKS_PROTOCOL.md)
+            from terminal.qsf import kr_avoid_marks
+            res = kr_avoid_marks.evaluate_once(PROJECT_ROOT, q._loader("KR"), bench_of("KR"))
+            res = {k: res.get(k) for k in ("status", "sessions_used", "days", "verdict", "reading_1", "reading_2", "buy_band_filter")}
+        else:
+            res = live_forward.evaluate_once(PROJECT_ROOT, market, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader(market), bench_of(market))
+            res = {k: res.get(k) for k in ("status", "market", "strategy", "horizon", "sessions_used", "verdict", "condition_a", "condition_b", "pooled")}
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
         return 0
     if args.action == "validate":
         print(json.dumps(q.validation(), ensure_ascii=False, indent=1, default=str))
