@@ -521,14 +521,18 @@ class QSF:
         own = _six_month_return(bars)
         return (None, "SHORT_HISTORY") if own is None else (_rank_in(ordered, own), "OUTSIDE_UNIVERSE")
 
-    def scan(self, market: str = "US", tickers: Optional[List[str]] = None, record: bool = True, progress=None) -> Dict[str, Any]:
+    def scan(self, market: str = "US", tickers: Optional[List[str]] = None, record: bool = True, progress=None, side_files: bool = True) -> Dict[str, Any]:
+        """``side_files=False`` (Korea): the scan leaves the live breadth and bar files alone, for a separate record that scores another
+        set of stocks (``kr_cap_universe``).  It cannot be combined with ``record``."""
+        if record and not side_files:
+            raise ValueError("a recorded scan writes its side files")
         started = time.time()
         self._download_failures, self._download_chunks = [], None          # only this scan's requests count
         if market == "US":
             tickers = tickers or sorted(set(self.terminal.lab.universe()["tickers"]) | {t for t in self.terminal.watchlist() if not t.startswith("^")})
             pre = self._us_scan_input(tickers, progress)
         else:
-            tickers, pre = self._kr_scan_input(tickers, progress)
+            tickers, pre = self._kr_scan_input(tickers, progress, side_files)
         day = self._session("US") if market == "US" else self.regime("KR").get("session")
         at_session = sum(1 for x in pre.values() if (lambda r: r and r[-1]["date"] == day)(_clean(x["bars"], day)))
         # US needs its benchmark at the session.  KR's index can skip a day: its relative return is then missing, not faked.
@@ -589,7 +593,7 @@ class QSF:
             d -= timedelta(days=1)
         return d.isoformat()
 
-    def _kr_scan_input(self, tickers: Optional[List[str]], progress=None):
+    def _kr_scan_input(self, tickers: Optional[List[str]], progress=None, side_files: bool = True):
         import pandas as pd
         from markets.kr import acquisition, security_master, universe
         from markets.kr.market_data import YahooKRProvider
@@ -621,12 +625,13 @@ class QSF:
         session = latest.strftime("%Y-%m-%d")
         bars, self._kr_bars_info = self._krx_bars(bars)          # QSF-1.1.8: KRX official daily data, Yahoo only for days KRX has not published
         above = [b[-1]["close"] > np.mean([x["close"] for x in b[-200:]]) for b in bars.values() if len(b) >= 200 and b[-1]["date"] == session]
-        if len(above) >= 50:
+        if len(above) >= 50 and side_files:
             self.dir.mkdir(parents=True, exist_ok=True)
             (self.dir / "breadth_KR.json").write_text(json.dumps({"status": "REAL", "value": float(np.mean(above)), "n": len(above), "date": session, "source": "한국 유동성 상위 유니버스 (Yahoo)"}), encoding="utf-8")
             self._regime.pop("KR", None)
-        with gzip.open(self.dir / "bars_KR.json.gz", "wt", encoding="utf-8") as fh:
-            json.dump(bars, fh)
+        if side_files:
+            with gzip.open(self.dir / "bars_KR.json.gz", "wt", encoding="utf-8") as fh:
+                json.dump(bars, fh)
         codes = [c for c in members["canonical_ticker"] if c in bars]
         bench = self._history(["^KS11", "^KQ11"])["data"] or {}
         all_rows = {**bars, **{k: v for k, v in bench.items()}}
