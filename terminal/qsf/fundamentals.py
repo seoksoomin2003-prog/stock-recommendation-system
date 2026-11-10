@@ -206,7 +206,9 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     change_scale_error = _scale_differs(sec_shares, at("shares_avg", year_back("shares_avg")))
     shares_used = shares or (None if sec_scale_error else sec_shares)
     mcap = close * shares_used if close and shares_used else None
-    eps = eps_reported if eps_reported is not None else div(ni, shares_used)
+    # Price over reported EPS is wrong after a split: the price is on today's share count and the EPS is not.  So PER is market value over
+    # the parent's profit and EPS is that profit per current share; reported EPS is used only when there is no market value.
+    pe, eps = (div(mcap, ni), div(ni, shares_used)) if mcap is not None else (div(close, eps_reported), eps_reported)
     bb, dv = at("buyback"), at("dividends")
     prev = year_back("net_income")
     roe_prev = div(at("net_income", prev), at("equity", prev)) if (at("equity", prev) or 0) > 0 else None
@@ -219,7 +221,7 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         "roe_years_positive": sum(nis) / len(nis) if nis else None, "debt_equity": 99.0 if (eq is not None and eq <= 0 and debt) else div(debt, group_equity or eq), "current_ratio": div(at("current_assets"), at("current_liabilities")),
         "interest_cover": div(at("op_income"), at("interest")), "cash_debt": div(at("cash"), debt), "equity_assets": div(group_equity or eq, assets),
         "share_change": None if change_scale_error else growth("shares_avg"), "share_scale_error": sec_scale_error or change_scale_error, "returns_capital": (bool((bb or 0) > 0 or (dv or 0) != 0) if (bb is not None or dv is not None) else None),
-        "market_cap": mcap, "eps": eps, "pe": div(close, eps), "pb": div(mcap, eq) if (eq or 0) > 0 else None, "fcf_yield": div(fcf * parent_share if fcf is not None and parent_share else fcf, mcap), "parent_share": parent_share, "insider_pct": insider_pct,
+        "market_cap": mcap, "eps": eps, "eps_reported": eps_reported, "pe": pe, "pb": div(mcap, eq) if (eq or 0) > 0 else None, "fcf_yield": div(fcf * parent_share if fcf is not None and parent_share else fcf, mcap), "parent_share": parent_share, "insider_pct": insider_pct,
     }
     return out
 

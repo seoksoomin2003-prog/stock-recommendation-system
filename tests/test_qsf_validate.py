@@ -72,7 +72,7 @@ def test_pe_uses_the_price_quoted_at_the_time():
                       "revenue": [{"end": "2019-09-28", "val": 260e9, "filed": "2019-10-30"}], "shares_avg": [{"end": "2019-09-28", "val": 4.6e9, "filed": "2019-10-30"}]},
            "full": {}}
     a = validate.fund_views(rec, 60.0, s, "2020-01-15", False)["A"]      # quoted 240
-    assert a["pe"] == pytest.approx(20.0)
+    assert a["pe"] == pytest.approx(240 * 4.6e9 / 55e9)                  # market value over profit, about 240 / 12
     assert a["market_cap"] == pytest.approx(240 * 4.6e9)
 
 

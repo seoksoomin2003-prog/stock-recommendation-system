@@ -83,3 +83,25 @@ def test_positive_year_shares_stop_with_the_series_and_reach_five_years():
 def test_balance_sheet_newer_than_the_income_statement_gives_no_flow_ratio():
     m = metrics({"revenue": rows([100.0, 120.0], last=2024), "net_income": rows([10.0, 12.0], last=2024), "equity": rows([50.0, 60.0, 70.0]), "assets": rows([100.0] * 3)})
     assert m["fiscal_end"] == "2025-12-31" and m["roe"] is None and m["rev_growth"] is None and m["equity_assets"] == pytest.approx(0.7)
+
+
+# ---------------------------------------------------------------------- PER from market value
+def test_per_is_market_value_over_profit_so_a_split_after_the_report_cannot_distort_it():
+    d = base(eps=rows([20.0, 22.5, 25.0, 30.0]))                 # reported before a 25-for-1 split: 0.4 shares then, 10 now
+    m = metrics(d, close=24.0, shares=10.0)
+    assert m["pe"] == pytest.approx(24.0 * 10.0 / 12.0) and m["eps"] == pytest.approx(1.2) and m["eps_reported"] == 30.0
+    assert m["pe"] * m["eps"] == pytest.approx(24.0)
+
+
+def test_a_loss_keeps_a_negative_per_and_no_profit_gives_none():
+    assert metrics(base(net_income=rows([8.0, 9.0, 10.0, -4.0])), close=24.0)["pe"] == pytest.approx(-60.0)
+    m = metrics(base(net_income=rows([8.0, 9.0, 10.0, None]), eps=rows([0.8, 0.9, 1.0, 1.2])), close=24.0)
+    assert m["pe"] is None and m["eps"] is None           # market value exists: an EPS without its profit is not trusted against the price
+    assert metrics(base(net_income=rows([8.0, 9.0, 10.0, 0.0])), close=24.0)["pe"] is None
+
+
+def test_reported_eps_is_the_fallback_only_without_market_value():
+    m = f.metrics(base(eps=rows([0.8, 0.9, 1.0, 1.2])), 24.0, AS_OF)
+    assert m["market_cap"] is None and m["pe"] == pytest.approx(20.0) and m["eps"] == 1.2
+    stopped = f.metrics(base(eps=rows([0.8, 0.9, 1.0, None])), 24.0, AS_OF)
+    assert stopped["pe"] is None and stopped["eps"] is None
