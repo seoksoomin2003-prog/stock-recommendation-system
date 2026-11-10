@@ -439,8 +439,9 @@ def ensure_panel(base: Path, log=print) -> Panel:
     return Panel(z)
 
 
-def download(base: Path, log=print, cap: int = DAILY_CAP, by: str = "value") -> Dict[str, Any]:
-    """Statements and industry codes the replay needs.  Reads no return.  Run again on a later day if the cap stops it."""
+def download(base: Path, log=print, cap: int = DAILY_CAP, by: str = "value", rows: Optional[Sequence[int]] = None) -> Dict[str, Any]:
+    """Statements and industry codes the replay needs.  Reads no return.  Run again on a later day if the cap stops it.
+    ``rows``: other evaluation rows than the replay's own (the earlier-window run); the live session is then not added."""
     import requests
     from terminal.qsf import dart_history as dh
     base = Path(base)
@@ -448,9 +449,10 @@ def download(base: Path, log=print, cap: int = DAILY_CAP, by: str = "value") -> 
     if not key:
         return {"status": "NO_KEY"}
     px = ensure_panel(base, log)
-    rows = eval_rows(px)
+    own = rows is None
+    rows = eval_rows(px) if own else list(rows)
     live = _live_session(base)
-    extra = [px.dates.index(live)] if live in px.dates else []
+    extra = [px.dates.index(live)] if own and live in px.dates else []
     wanted = needs(px, rows, extra, by=by)
     corp_of = dh.parse_corp_list(requests.get(dh.BASE + "corpCode.xml", params={"crtfc_key": key}, timeout=120).content)
     calls = 0

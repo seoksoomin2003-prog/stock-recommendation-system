@@ -427,7 +427,7 @@ QSF_ONE_SHOT = {
 QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-report", "price-archive", "kr-etf-holdings", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund",
                "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long",
                "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate",
-               "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
+               "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
 
@@ -485,6 +485,14 @@ def cmd_qsf(args) -> int:
             res["cap_universe"] = {"status": "FAILED", "reason": type(exc).__name__}
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3, "NO_KEY": 4}.get(res["status"], 1)
+    if args.action in ("kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run"):     # reports/QSF_KR_LONG_EARLY_PROTOCOL.md
+        from terminal.qsf import research_kr_long_early as le
+        res = le.download(PROJECT_ROOT) if args.action.endswith("download") else le.prepare(PROJECT_ROOT) if args.action.endswith("prepare") else le.run_once(PROJECT_ROOT)
+        if args.action.endswith("run"):
+            p = res["primary"]
+            res = {"status": res["status"], "days": res["days"], "reading": p["reading"], "dates": p.get("dates"), "ic": p.get("ic"), "t": p.get("t"), "condition_a": p["condition_a"], "condition_b": p["condition_b"]}
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+        return 0 if res.get("status") in ("REAL", "OK", "DONE") else 3
     if args.action in ("kr-tech-early-prepare", "kr-tech-early-run"):          # one confirmation run (reports/QSF_KR_TECH_EARLY_PROTOCOL.md)
         from terminal.qsf import research_kr_tech as rt
         res = rt.prepare(PROJECT_ROOT) if args.action.endswith("prepare") else rt.run_once(PROJECT_ROOT)
