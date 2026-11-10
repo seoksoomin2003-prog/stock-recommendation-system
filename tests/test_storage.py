@@ -27,7 +27,7 @@ def test_the_daily_summary_says_so_only_when_short():
     assert "⚠️ 디스크 여유가 1.0GB" in Daily.compose("2026-11-09", {}, alerts, [], [], storage.low_disk_text(Path("."), room(1)))
 
 
-def cache(tmp_path, sessions, extra=("annual2_1_ab.json", "scanbars_notes.json", "bars_2020-01-01_ab_cd.json")):
+def cache(tmp_path, sessions, extra=("annual3_1_ab.json", "scanbars_notes.json", "bars_2020-01-01_ab_cd.json")):
     root = tmp_path / storage.CACHE
     root.mkdir(parents=True)
     for day in sessions:
@@ -55,7 +55,7 @@ def test_apply_removes_only_old_scan_files(tmp_path):
     left = sorted(p.name for p in root.iterdir())
     assert got["removed"] == 6 and not any(d in n for d in DAYS[:3] for n in left if n.startswith("scanbars_2"))
     assert sum(n.startswith("scanbars_2") for n in left) == 10
-    assert {"annual2_1_ab.json", "scanbars_notes.json", "bars_2020-01-01_ab_cd.json"} <= set(left)
+    assert {"annual3_1_ab.json", "scanbars_notes.json", "bars_2020-01-01_ab_cd.json"} <= set(left)
 
 
 def test_the_newest_session_cannot_be_removed(tmp_path):
@@ -93,7 +93,7 @@ def test_superseded_annual_entries_listed_then_removed_only_on_apply(tmp_path):
     got = storage.prune_cache(tmp_path, apply=True)
     left = {p.name for p in root.iterdir()}
     assert got["superseded"]["removed"] == 2 and not any(n.startswith("annual_0") for n in left)
-    assert "annual2_1_ab.json" in left and got["scanbars"]["removed"] == 6
+    assert "annual3_1_ab.json" in left and got["scanbars"]["removed"] == 6
 
 
 def test_every_superseded_key_is_unread_by_code():

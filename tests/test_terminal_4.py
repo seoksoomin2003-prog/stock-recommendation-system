@@ -358,7 +358,7 @@ def test_cache_cleanup_once_per_session_keeps_newest_five_and_records(tmp_path):
     for day in days:
         (root / f"scanbars_{day}_{0:016x}_{1:010x}.json").write_bytes(b"x" * 2048)
     (root / "annual_0000320193_ab12cd34ef.json").write_text("{}")
-    (root / "annual2_0000320193_ab12cd34ef.json").write_text("{}")
+    (root / "annual3_0000320193_ab12cd34ef.json").write_text("{}")
     ledger = tmp_path / "data" / "qsf" / "ledger"
     ledger.mkdir(parents=True, exist_ok=True)
     (ledger / "scanbars_2026-10-20_0_1.json").write_text("{}")        # same name pattern outside the cache stays
@@ -367,7 +367,7 @@ def test_cache_cleanup_once_per_session_keeps_newest_five_and_records(tmp_path):
     left = sorted(p.name for p in root.iterdir())
     assert got["removed"] == 3 and "error" not in got
     assert [n for n in left if n.startswith("scanbars_")] == [f"scanbars_{x}_{0:016x}_{1:010x}.json" for x in days[2:]]
-    assert "annual2_0000320193_ab12cd34ef.json" in left and (ledger / "scanbars_2026-10-20_0_1.json").exists()
+    assert "annual3_0000320193_ab12cd34ef.json" in left and (ledger / "scanbars_2026-10-20_0_1.json").exists()
     assert d._cache_prune(st, "2026-10-26") is None                     # once per session
     assert d._cache_prune(st, "2026-10-27")["removed"] == 0
 

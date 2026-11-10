@@ -15,7 +15,8 @@ BAD_FREE = 2 * GB
 CACHE = Path("data") / "qsf" / "cache"
 SCANBARS = re.compile(r"^scanbars_(\d{4}-\d{2}-\d{2})_[0-9a-f]+_[0-9a-f]+\.json$")
 KEEP_SESSIONS = 5
-# cache entries no program code reads any more: (file pattern, why)
+# cache entries no program code reads any more: (file pattern, why).  QSF-1.1.9 moved the extracted annual series to the keys
+# annual3 and krfund3; the annual2 and krfund2 files are deliberately not listed here yet, so a return to 1.1.8 needs no download.
 SUPERSEDED = ((re.compile(r"^annual_\d{10}_[0-9a-z_]+\.json$"), "QSF-1.1.3부터 annual2로 바뀐 예전 연간 재무"),)
 
 

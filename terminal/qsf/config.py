@@ -5,7 +5,8 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.1.8"     # 1.1.8: Korean daily bars from KRX official data (kr_bars); US unchanged
+MODEL_VERSION = "QSF-1.1.9"     # 1.1.9: fundamental inputs after the 2026-11-11 audit (one fiscal year per figure, share bases, Korean account ids,
+#                                  currency, who is scored as financial); factor formulas and weights unchanged.  1.1.8: Korean daily bars from KRX
 VALIDATION_NOTICE = ("미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. "
                      "한국 과거 재현(2019~2026)에서 장기 점수는 종목 순위를 설명했지만 상위 종목이 시장을 이기지는 못했고, 스윙 점수는 근거가 부족했습니다. 참고용으로만 쓰세요.")
 STYLE_TO_STRATEGY = {"LONG": "LONG_TERM", "SWING": "SWING"}

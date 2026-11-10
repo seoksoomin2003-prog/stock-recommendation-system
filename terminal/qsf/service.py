@@ -196,7 +196,7 @@ class QSF:
             return {"status": "UNAVAILABLE", "reason": f"SEC 식별 실패 ({type(exc).__name__})"}
         if not cik:
             return {"status": "UNAVAILABLE", "reason": "SEC CIK 없음 (ETF·지수이거나 미국 상장 기업이 아님)", "no_cik": True}
-        res = self.cache.cached(f"annual2:{default_sources.facts_key(ticker, cik)}", TTL["facts"], lambda: self._annual(ticker, cik))
+        res = self.cache.cached(f"annual3:{default_sources.facts_key(ticker, cik)}", TTL["facts"], lambda: self._annual(ticker, cik))
         subm = self._us_subm(cik)
         if res["data"] is None:
             return {"status": "UNAVAILABLE", "reason": f"SEC 재무 조회 실패 ({res.get('error')})", "cik": cik}
@@ -290,11 +290,11 @@ class QSF:
         if not corp:
             return {"fund": {"status": "UNAVAILABLE", "reason": "DART 고유번호 없음"}, "events": {"status": "UNAVAILABLE", "reason": "DART 고유번호 없음"}}
         klass = ident.get("industry_class") or "NON_FINANCIAL"
-        res = self.cache.cached(f"krfund2:{code}", TTL["facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, date.fromisoformat(as_of), self.dart)))
+        res = self.cache.cached(f"krfund3:{code}", TTL["facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, date.fromisoformat(as_of), self.dart)))
         info = self.cache.cached(f"info:{ident.get('yahoo_symbol')}", TTL["info"], lambda: self.src.yahoo_info(ident["yahoo_symbol"]))["data"] or {}
         fund = {"status": "UNAVAILABLE", "reason": f"DART 재무 조회 실패 ({res.get('error')})"}
         if res["data"]:
-            fund = fundamentals.blank_mixed_cash_flow(fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=klass != "NON_FINANCIAL", shares=self._krx_shares(as_of).get(code) or info.get("sharesOutstanding"),
+            fund = fundamentals.blank_mixed_cash_flow(fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=fundamentals.is_financial_kr(klass, res["data"]), shares=self._krx_shares(as_of).get(code) or info.get("sharesOutstanding"),
                                                                            source="OpenDART 사업보고서", insider_pct=info.get("heldPercentInsiders")), code)
         def fetch_list():
             bgn = (date.fromisoformat(as_of) - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")
@@ -320,7 +320,7 @@ class QSF:
             return out
         as_of = self.now().date()
         klass = ident.get("industry_class") or "NON_FINANCIAL"
-        res = self.cache.cached(f"krfund2:{code}", TTL["facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart)))
+        res = self.cache.cached(f"krfund3:{code}", TTL["facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart)))
 
         def fetch_list():
             bgn = (as_of - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")

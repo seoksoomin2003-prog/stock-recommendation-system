@@ -493,6 +493,13 @@ and what would change the label.
   (`terminal/qsf/track_record.py`, `/api/qsf/track-record`).
 * Day-to-day stability: `qsf stability` compares consecutive sessions of one model version in the ledger (rank correlation,
   band changes, buy-band turnover). No price is read (`terminal/qsf/stability.py`).
+* Fundamental inputs (QSF-1.1.9, after `reports/QSF_FUND_INPUT_AUDIT_2026_11_11.md`): every figure is the latest fiscal year's or
+  empty, a ratio needs both ends in that year and growth needs the year exactly before; PER keeps reported EPS while its share
+  count is today's and is market value over parent profit otherwise; EPS growth is never taken across two share bases; Korean
+  EPS is read from its continuing and discontinued parts when no total line exists; statements in another currency are not set
+  against the won price; holding companies of industrial groups and US exchanges, health plans, insurance brokers and real
+  estate firms are scored as non-financial.  Extracted series moved to the cache keys `annual3` and `krfund3`
+  (`terminal/qsf/fundamentals.py`, tests in `tests/test_qsf_fund_inputs.py`).
 * Korean daily bars (QSF-1.1.8): built from the KRX daily snapshots in `research_data/krx` by chaining each day's official change
   rate, which already allows for splits; Yahoo is used only for days KRX has not published yet and for its dividend ratio
   (`terminal/qsf/kr_bars.py`, cache `data/qsf/krx_panel.npz`). `qsf price-audit` checks the bars the scores read
