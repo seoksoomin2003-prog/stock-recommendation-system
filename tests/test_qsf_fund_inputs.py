@@ -362,3 +362,12 @@ def test_contract_revenue_below_the_years_profit_is_not_total_revenue():
     assert whole["rev_growth"] == pytest.approx(0.2) and "revenue_note" not in whole
     total_tag = metrics(base(revenue=rows([10.0, 11.0, 12.0, 13.0], alias="Revenues"), net_income=rows([300.0, 320.0, 350.0, 384.0])))
     assert total_tag["rev_growth"] == pytest.approx(13.0 / 12.0 - 1)      # a total-revenue tag is taken as filed
+
+
+# ---------------------------------------------------------------------- version and cache keys
+def test_extracted_series_have_new_cache_keys_and_the_version_moved():
+    from pathlib import Path
+    from terminal.qsf import config
+    code = (Path(__file__).resolve().parents[1] / "terminal" / "qsf" / "service.py").read_text(encoding="utf-8")
+    assert code.count('f"annual3:') == 1 and code.count('f"krfund3:') == 2 and "annual2:" not in code and "krfund2:" not in code
+    assert config.MODEL_VERSION == "QSF-1.1.9"

@@ -69,7 +69,7 @@ def main(path):
         if ctx.get("error"):
             continue
         fund = ctx["fund"]
-        cached = q.cache.read(f"krfund2:{c}") or {}
+        cached = q.cache.read(f"krfund3:{c}") or {}
         data = cached.get("data") or {}
         fp = paired(fund, data, ctx["expected_session"]) if fund.get("status") != "UNAVAILABLE" else fund
         ff = as_financial(fund) if c in FINANCE_GROUPS else fund
