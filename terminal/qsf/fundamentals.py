@@ -414,13 +414,43 @@ def us_total_shares(info: Dict[str, Any], close: Optional[float], annual: Option
     return y
 
 
+# SEC SIC codes whose balance sheet is the business itself, so debt ratios, current ratio, margins and free cash flow say nothing and
+# the capital ratio is read instead.  Left out since QSF-1.1.9 (they were 6000-6797 before): 6200 exchanges, 6324 health plans,
+# 6411 insurance brokers, 65xx real estate, 67xx royalty and holding codes other than 6799.  They have ordinary borrowings, classified
+# balance sheets and operating margins.  6282 (asset managers) stays in: half of those in the S&P 500 carry an insurer's or their
+# funds' liabilities (AMP, APO, KKR, ARES) and the code cannot tell them from the others.  6798 REITs were already out.
+FINANCIAL_SIC = ((6000, 6199),      # banks, savings institutions, card and consumer lenders
+                 (6210, 6229),      # security and commodity brokers and dealers
+                 (6282, 6282),      # investment advice
+                 (6300, 6323), (6325, 6399),      # insurance carriers: life, accident and health, property and casualty, surety, title
+                 (6799, 6799))      # investors not elsewhere classified, as before
+
+
 def is_financial_sic(sic: Any) -> bool:
-    """SEC SIC 6000-6799: banks, insurers, brokers (6798 REITs have ordinary cash flows and stay non-financial)."""
+    """True for the SIC codes in ``FINANCIAL_SIC``."""
     try:
         s = int(sic)
     except (TypeError, ValueError):
         return False
-    return 6000 <= s < 6798 or 6799 == s
+    return any(lo <= s <= hi for lo, hi in FINANCIAL_SIC)
+
+
+KR_FINANCIAL_CLASSES = ("BANK", "INSURANCE", "SECURITIES_AND_FINANCIAL_SERVICES")
+KR_MIXED_CLASS = "HOLDING_OR_OTHER_FINANCIAL"
+
+
+def is_financial_kr(industry_class: Optional[str], annual: Optional[Dict[str, Any]]) -> bool:
+    """Banks, insurers and securities firms use the financial rule.  KIND's "기타 금융업" mixes holding companies of industrial
+    groups (SK, LG, GS, CJ, LS, HD Hyundai) with financial groups, card and capital companies, so the statements decide: a
+    financial institution lists its balance sheet by liquidity, an industrial holding company splits current from non-current.
+    A holding company with current assets and current liabilities in its statements is scored as a non-financial company.
+    Any other class that is not NON_FINANCIAL stays financial, as before."""
+    if not industry_class or industry_class == "NON_FINANCIAL":
+        return False
+    if industry_class != KR_MIXED_CLASS:
+        return True
+    a = annual or {}
+    return not (a.get("current_assets") and a.get("current_liabilities"))
 
 
 def load_kr_statements(corp_code: str, code: str, industry_class: str, as_of: date, client: Any,

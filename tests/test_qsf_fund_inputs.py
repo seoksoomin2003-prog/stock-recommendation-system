@@ -323,3 +323,29 @@ def test_a_company_that_never_shows_a_parent_line_is_read_as_before():
     assert [r["val"] for r in sep["net_income"]] == [9.0, 10.0] and "net_income_all" not in sep and "equity_all" not in sep
     grp = f.extract_kr({2025: kr_year(2025, "CONSOLIDATED", ni=10.0, ni_parent=8.0, eq=50.0, eq_parent=40.0)})
     assert grp["net_income"][0]["val"] == 8.0 and grp["net_income_all"][0]["val"] == 10.0 and grp["equity_all"][0]["val"] == 50.0
+
+
+# ---------------------------------------------------------------------- who is scored by the financial rule
+def test_us_financial_rule_is_for_balance_sheet_institutions():
+    for sic in ("6021", "6022", "6035", "6141", "6199", "6211", 6282, "6311", "6321", "6331", "6351", "6399", "6799"):
+        assert f.is_financial_sic(sic), sic
+    for sic in ("6200", "6324", "6411", "6500", "6510", "6531", "6792", "6794", "6798", "7372", None, "", "abc"):
+        assert not f.is_financial_sic(sic), sic
+
+
+def test_korean_financial_rule_is_decided_by_the_statements_for_holding_companies():
+    classified = {"current_assets": rows([1.0]), "current_liabilities": rows([1.0]), "assets": rows([5.0])}
+    by_liquidity = {"assets": rows([5.0]), "liabilities": rows([4.0])}
+    assert f.is_financial_kr("HOLDING_OR_OTHER_FINANCIAL", classified) is False       # SK, LG, GS ...
+    assert f.is_financial_kr("HOLDING_OR_OTHER_FINANCIAL", by_liquidity) is True       # financial groups, card and capital companies
+    assert f.is_financial_kr("HOLDING_OR_OTHER_FINANCIAL", None) is True               # nothing to decide with: as before
+    for klass in ("BANK", "INSURANCE", "SECURITIES_AND_FINANCIAL_SERVICES", "TRUST_AND_COLLECTIVE_INVESTMENT"):
+        assert f.is_financial_kr(klass, classified) is True
+    assert f.is_financial_kr("NON_FINANCIAL", by_liquidity) is False and f.is_financial_kr(None, by_liquidity) is False
+
+
+def test_the_live_korean_score_uses_the_statement_rule(tmp_path):
+    import inspect
+    from terminal.qsf import research_kr_live, service
+    assert "is_financial_kr(klass" in inspect.getsource(service.QSF._kr_fund_events)
+    assert "is_financial_kr(klass" in inspect.getsource(research_kr_live.Statements.fund)

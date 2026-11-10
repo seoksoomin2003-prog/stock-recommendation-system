@@ -362,7 +362,7 @@ class Statements:
         if not annual:
             return {"status": "UNAVAILABLE", "reason": "DART 재무제표 없음"}
         klass = self.klass_of.get(code, "NON_FINANCIAL")
-        return fundamentals.blank_mixed_cash_flow(fundamentals.metrics(annual, close, as_of, is_financial=klass != "NON_FINANCIAL", shares=shares, source="OpenDART 사업보고서"), code)
+        return fundamentals.blank_mixed_cash_flow(fundamentals.metrics(annual, close, as_of, is_financial=fundamentals.is_financial_kr(klass, annual), shares=shares, source="OpenDART 사업보고서"), code)
 
 
 # ---------------------------------------------------------------------- scoring
