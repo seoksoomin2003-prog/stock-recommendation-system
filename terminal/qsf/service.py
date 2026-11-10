@@ -20,6 +20,7 @@ from terminal.cache import FileCache
 from terminal.qsf import config, engine, events, fundamentals, holding, ledger, technicals
 from utils import nyse_calendar
 
+KR_MIN_UNIVERSE = 200       # a whole-market Korean scan with fewer stocks than this is a partial day, not a day (the universe is 300)
 TTL = {"bars": 1800, "regime": 3600, "facts": 7 * 86400, "subm": 20 * 3600, "info": 7 * 86400, "earn": 3 * 86400, "form4": 3650 * 86400}
 REGIME_FRESH_DAYS = 5
 UNAVAILABLE_KR = {"vkospi": "VKOSPI는 합법적인 무료 공개 출처에서 안정적으로 받을 수 없어 사용하지 않습니다.",
@@ -528,6 +529,7 @@ class QSF:
             raise ValueError("a recorded scan writes its side files")
         started = time.time()
         self._download_failures, self._download_chunks = [], None          # only this scan's requests count
+        whole_universe = not tickers
         if market == "US":
             tickers = tickers or sorted(set(self.terminal.lab.universe()["tickers"]) | {t for t in self.terminal.watchlist() if not t.startswith("^")})
             pre = self._us_scan_input(tickers, progress)
@@ -538,10 +540,13 @@ class QSF:
         # US needs its benchmark at the session.  KR's index can skip a day: its relative return is then missing, not faked.
         bench_ok = market != "US" or all((lambda r: r and r[-1]["date"] == day)(_clean(x["bench"], day)) for x in list(pre.values())[:1])
         behind = market == "KR" and day < self._last_weekday_done()
-        if record and (not bench_ok or behind or at_session < 0.9 * max(len(tickers), 1)):
+        # The Korean universe is built from the day's bars.  From a partial download it comes out with a handful of stocks, all of
+        # them at the session, so the share check below passes: on 2026-11-11 a scan of two stocks was recorded as the day.
+        small = market == "KR" and whole_universe and len(tickers) < KR_MIN_UNIVERSE
+        if record and (not bench_ok or behind or small or at_session < 0.9 * max(len(tickers), 1)):
             # Recording now would permanently store a day of blocked or partial snapshots.  Retried at the next slot.
             return {"status": "DATA_NOT_READY", "market": market, "session": day, "at_session": at_session, "tickers": len(tickers), "rows": [], "errors": {},
-                    **self._not_ready_reason(pre, day, bench_ok, behind, at_session < 0.9 * max(len(tickers), 1))}
+                    **self._not_ready_reason(pre, day, bench_ok, behind, at_session < 0.9 * max(len(tickers), 1), small)}
         rows, cards, errors = [], [], {}
         for k, t in enumerate(tickers, 1):
             try:
@@ -575,13 +580,14 @@ class QSF:
         os.replace(tmp, self.dir / f"latest_{market}.json")
         return summary
 
-    def _not_ready_reason(self, pre: Dict[str, Dict], day: str, bench_ok: bool, behind: bool, few: bool) -> Dict[str, Any]:
+    def _not_ready_reason(self, pre: Dict[str, Dict], day: str, bench_ok: bool, behind: bool, few: bool, small: bool = False) -> Dict[str, Any]:
         """Why a scan was not recorded.  DOWNLOAD_FAILED: some price requests failed outright (no connection, empty reply), so the
-        day may well be published; NOT_PUBLISHED: the replies came back without the session for too many stocks; KR_BEHIND and
-        BENCHMARK_NOT_READY name the other check that failed."""
+        day may well be published; NOT_PUBLISHED: the replies came back without the session for too many stocks; UNIVERSE_TOO_SMALL:
+        the Korean universe came out far below its size, which a partial day of bars does; KR_BEHIND and BENCHMARK_NOT_READY name
+        the other check that failed."""
         failed = list(getattr(self, "_download_failures", []) or [])
         last = Counter(_clean(x["bars"], day)[-1]["date"] for x in pre.values() if _clean(x["bars"], day))
-        reason = "DOWNLOAD_FAILED" if failed else "KR_BEHIND" if behind else "NOT_PUBLISHED" if few else "BENCHMARK_NOT_READY"
+        reason = "DOWNLOAD_FAILED" if failed else "KR_BEHIND" if behind else "UNIVERSE_TOO_SMALL" if small else "NOT_PUBLISHED" if few else "BENCHMARK_NOT_READY"
         return {"reason": reason, "download": {"chunks": getattr(self, "_download_chunks", None), "failed": len(failed), "kinds": dict(Counter(failed))},
                 "last_dates": dict(last.most_common(3)), "no_bars": sum(1 for x in pre.values() if not _clean(x["bars"], day))}
 
@@ -612,11 +618,11 @@ class QSF:
         else:
             elig = master[master["eligible"].astype(bool)]
             s, e = acquisition.window(now, 60)
-            ub = acquisition.bars(prov, elig, s, e, now, cache_dir, "universe")
+            ub = acquisition.bars(prov, elig, s, e, now, cache_dir, "universe", fresh_at=latest)
             uni = universe.build(elig, ub["bars"], sessions[sessions >= pd.Timestamp(s)], latest)
             members = master.set_index("canonical_ticker").loc[uni["members"]["ticker"]].reset_index()
         hs, he = acquisition.window(now, 800)
-        hb = acquisition.bars(YahooKRProvider(), members, hs, he, now, cache_dir, "history")["bars"]
+        hb = acquisition.bars(YahooKRProvider(), members, hs, he, now, cache_dir, "history", fresh_at=latest)["bars"]
         bars: Dict[str, List[Dict]] = {}
         for code, g in hb.groupby("ticker"):
             rows = g.sort_values("date")

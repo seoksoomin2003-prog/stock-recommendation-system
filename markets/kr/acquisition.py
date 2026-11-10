@@ -27,21 +27,41 @@ def index_bars(provider: YahooKRProvider, start: str, end: str, now) -> Dict[str
     return out
 
 
+STALE_CACHE_SHARE = 0.8      # a stored download where fewer symbols than this reach the session asked for was taken too early
+
+
+def _reaches(df: pd.DataFrame, session) -> bool:
+    """True when most symbols in a stored download have a bar on ``session`` or later.  A complete download has it for every symbol
+    (measured on six stored files: 100%); one taken while the provider was still publishing the day has it for a part (28% on
+    2026-11-11 02:27 KST), and reusing that file for the rest of the day left the scan with two stocks."""
+    if df.empty:
+        return False
+    last = df.groupby("ticker")["date"].max()
+    return float((last >= pd.Timestamp(session)).mean()) >= STALE_CACHE_SHARE
+
+
 def bars(provider: YahooKRProvider, securities: pd.DataFrame, start: str, end: str, now, cache_dir: Path,
-         tag: str) -> Dict:
+         tag: str, fresh_at=None) -> Dict:
     """Validated canonical bars, incomplete (intraday) bars removed.  Cached per (symbols, window); the
-    cache key includes ``end`` (the day after the latest complete session), so a new session refetches."""
+    cache key includes ``end`` (the day after the latest complete session), so a new session refetches.
+
+    ``fresh_at``: the session the caller is about to score.  A stored file that does not reach it for most symbols is not
+    reused: it is downloaded again and replaced, so a run that came before the provider finished the day cannot pin the
+    stale bars for every later run of the same day."""
     cache_dir.mkdir(parents=True, exist_ok=True)
     path = _cache_file(cache_dir, tag, securities["yahoo_symbol"].tolist(), start, end)
+    stale = False
     if path.exists():
         df = pd.read_csv(path, dtype={"ticker": str, "quality_flags": str, "quality_status": str}, parse_dates=["date"])
         df["quality_flags"] = df["quality_flags"].fillna("")
-        return {"bars": df, "cache_hit": True, "file": str(path), "events": []}
+        if fresh_at is None or _reaches(df, fresh_at):
+            return {"bars": df, "cache_hit": True, "file": str(path), "events": []}
+        stale = True
     df = provider.fetch(securities, start, end)
     if not df.empty:
         df = krcal.drop_incomplete(df, now, date_col="date")
         df.to_csv(path, index=False, compression="gzip")
-    return {"bars": df, "cache_hit": False, "file": str(path) if not df.empty else None,
+    return {"bars": df, "cache_hit": False, "stale_cache_found": stale, "file": str(path) if not df.empty else None,
             "events": list(provider.events)}
 
 
