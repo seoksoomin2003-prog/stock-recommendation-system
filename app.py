@@ -405,6 +405,7 @@ QSF_ONE_SHOT = {
     **{a: ("research_short", f, _without("strategies"), None) for a, f in (("short-download", "fetch_all"), ("short-develop", "develop"), ("short-test", "test_once"))},
     **{a: ("research_sentiment", f, _without("strategies"), None) for a, f in (("sentiment-download", "fetch_vix"), ("sentiment-run", "run_once"))},
     "kr-forward-evaluate-events": ("kr_events_forward", "evaluate_once", _without("buckets"), None),
+    "picks-sim": ("sim_picks", "run_once", lambda r, m: {"primary": r["picks"]["primary"], "report": str(m.REPORT)}, 1),
     **{a: ("research_kr_events", f, _without("scores"), None) for a, f in (("kr-events-download", "download"), ("kr-events-prepare", "prepare"), ("kr-events-run", "run_once"))},
     **{a: ("research_kr_fund", f, _without("scores"), None) for a, f in (("kr-fund-download", "download"), ("kr-fund-prepare", "prepare"), ("kr-fund-run", "run_once"))},
     **{a: ("research_kr", f, _without("strategies"), None) for a, f in (("kr-download", "download"), ("kr-prepare", "prepare"), ("kr-run", "run_once"), ("kr-diagnose", "diagnose"))},
