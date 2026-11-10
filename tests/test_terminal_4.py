@@ -408,3 +408,64 @@ def test_a_cut_download_and_a_sleeping_mac_are_named(tmp_path, monkeypatch):
     d2, _, _ = make(tmp_path / "awake", rc={"QSF": 3})
     got = d2.run()["steps"]["QSF"]
     assert got["detail"] == "데이터 미준비" and "slept_minutes" not in got
+
+
+def test_a_run_leaves_its_marker_only_while_it_runs_and_its_outcome_after(tmp_path, monkeypatch):
+    monkeypatch.setenv("QPP_CAPITAL", "1000")
+    monkeypatch.setattr(automation, "is_installed", lambda: False)
+    seen = []
+    d, calls, _ = make(tmp_path)
+    plain = d.runner
+
+    def runner(name, argv):
+        seen.append(automation.status(tmp_path)["running"])
+        return plain(name, argv)
+    d.runner = runner
+    assert automation.status(tmp_path)["running"] is None
+    assert d.run()["status"] == "DONE"
+    assert seen[0]["step"] == "LAB" and seen[0]["done"] == 0 and seen[0]["total"] == 10           # nine processes and the backup
+    assert seen[-1]["step"] == "WRAP_UP" and seen[-1]["done"] == 10                                # the weekly holdings fetch runs after the steps
+    assert [s["step"] for s in seen[:3]] == ["LAB", "SCAN", "TRACK"] and seen[2]["done"] == 2
+    st = automation.status(tmp_path)
+    assert st["running"] is None and st["last_attempt"]["status"] == "DONE" and st["last_attempt"]["session"] == "2026-11-03"
+    assert st["step_names"]["QSF"] == "QSF 점수 기록(미국)" and not (tmp_path / "data" / "automation" / automation.RUNNING_FILE).exists()
+    assert d.run()["status"] == "UP_TO_DATE" and automation.status(tmp_path)["last_attempt"]["status"] == "UP_TO_DATE"
+
+
+def test_a_marker_left_by_a_dead_process_does_not_count(tmp_path):
+    folder = tmp_path / "data" / "automation"
+    folder.mkdir(parents=True)
+    (folder / automation.RUNNING_FILE).write_text(json.dumps({"pid": 2 ** 22 + 12345, "started_at": "x", "step": "QSF", "done": 1, "total": 3}))
+    assert automation.running(tmp_path) is None
+    (folder / automation.RUNNING_FILE).write_text("not json")
+    assert automation.running(tmp_path) is None
+
+
+def test_a_failed_run_still_clears_its_marker_and_says_so(tmp_path, monkeypatch):
+    d, _, _ = make(tmp_path)
+    monkeypatch.setattr(d, "_run", lambda resend: (_ for _ in ()).throw(RuntimeError("boom")))
+    with pytest.raises(RuntimeError):
+        d.run()
+    assert automation.running(tmp_path) is None and d.state()["last_attempt"]["status"] == "ERROR" and d.state()["last_attempt"]["type"] == "RuntimeError"
+
+
+def test_start_now_spawns_the_same_job_detached_and_never_twice(tmp_path, monkeypatch):
+    import os
+    spawned = []
+
+    def popen(cmd, **kw):
+        spawned.append((cmd, kw))
+    monkeypatch.setattr(automation, "CAFFEINATE", str(tmp_path / "no-such-tool"))
+    res = automation.start_now(tmp_path, popen=popen, now=lambda: TUE_NIGHT)
+    cmd, kw = spawned[0]
+    assert res == {"status": "STARTED", "at": TUE_NIGHT.isoformat()} and cmd[1:] == [str(tmp_path / "app.py"), "automation", "run"]
+    assert kw["start_new_session"] is True and kw["cwd"] == tmp_path and (tmp_path / "data" / "automation" / "manual_run.log").exists()
+    tool = tmp_path / "caffeinate"
+    tool.write_text("")
+    monkeypatch.setattr(automation, "CAFFEINATE", str(tool))
+    automation.start_now(tmp_path, popen=popen)
+    assert spawned[1][0][:2] == [str(tool), "-i"] and spawned[1][0][-2:] == ["automation", "run"]          # held awake against idle sleep
+    marker = tmp_path / "data" / "automation" / automation.RUNNING_FILE
+    marker.write_text(json.dumps({"pid": os.getpid(), "started_at": "2026-11-03T23:00:00+00:00", "step": "QSF", "done": 3, "total": 9}))
+    again = automation.start_now(tmp_path, popen=popen)
+    assert again["status"] == "ALREADY_RUNNING" and again["running"]["step"] == "QSF" and len(spawned) == 2

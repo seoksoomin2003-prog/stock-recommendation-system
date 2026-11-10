@@ -155,6 +155,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
         ("GET", "/api/lab/compare"): lambda q, b: t.lab.comparison(),
         ("GET", "/api/lab/research"): lambda q, b: t.lab.research(),
         ("POST", "/api/lab/run"): lambda q, b: t.lab.run_background(),
+        ("POST", "/api/automation/run"): lambda q, b: automation.start_now(t.base),
     }
 
 

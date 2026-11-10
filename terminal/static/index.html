@@ -14,8 +14,10 @@
     <input id="q" name="q" placeholder="종목 코드 또는 한글 회사명" maxlength="30" aria-label="종목 코드 또는 회사명">
     <button type="submit">조회</button>
   </form>
+  <button id="collect" class="ghost" type="button" title="최신 자료 수집: 매일 자동 실행과 같은 작업을 지금 시작합니다. 이미 끝난 단계는 건너뜁니다.">지금 수집</button>
   <button id="cmdbtn" class="ghost" type="button" title="명령창 (/ 또는 ⌘K)" aria-label="명령창 열기">⌘K</button>
   <button id="theme" class="ghost" title="화면 테마 전환" aria-label="화면 테마 전환">◐</button>
+  <div id="collectbar" class="collectbar" role="status" aria-live="polite" hidden></div>
 </header>
 <nav class="tabs" role="tablist">
   <button data-tab="overview" class="on">시장 개요</button>
@@ -60,5 +62,6 @@
 <script src="sectorpicks.js"></script>
 <script src="peers.js"></script>
 <script src="command.js"></script>
+<script src="collect.js"></script>
 </body>
 </html>

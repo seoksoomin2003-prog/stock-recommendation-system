@@ -25,6 +25,8 @@ from utils import nyse_calendar
 LABEL = "com.quantengine.daily"
 SCHEDULE = ((7, 10), (8, 10), (12, 10), (20, 10))     # KST: the US close is 06:00-07:00, later slots are retries
 STEP_TIMEOUT = 45 * 60
+RUNNING_FILE = "running.json"                       # the run in progress: pid, step, steps done
+CAFFEINATE = "/usr/bin/caffeinate"
 SLEPT_NOTE_S = 120                                  # a step during which the Mac slept this long says so
 HOLDINGS_EVERY_DAYS, HOLDINGS_FRESH_DAYS = 7, 90     # KODEX holdings: retry cadence while missing, and refresh age
 KEEP_BACKUPS = 60
@@ -424,7 +426,32 @@ class Daily:
         with self._exclusive() as got:
             if not got:
                 return {"status": "ALREADY_RUNNING"}
-            return self._run(resend)
+            self._mark(None, 0, 0)
+            try:
+                out = self._run(resend)
+            except Exception as exc:
+                self._attempt({"status": "ERROR", "type": type(exc).__name__})
+                raise
+            finally:
+                (self.dir / RUNNING_FILE).unlink(missing_ok=True)
+            self._attempt({"status": out["status"], "session": out.get("session")})
+            return out
+
+    def _mark(self, step: Optional[str], done: int, total: int) -> None:
+        """What the run is doing now, for the screen.  A separate small file: the lock is not probed, so a status poll can never
+        make a starting run think another one holds it."""
+        self.dir.mkdir(parents=True, exist_ok=True)
+        if step is None:
+            self._started = self.now().isoformat()
+        tmp = self.dir / (RUNNING_FILE + ".tmp")
+        tmp.write_text(json.dumps({"pid": os.getpid(), "started_at": self._started, "step": step, "done": done, "total": total}), encoding="utf-8")
+        tmp.replace(self.dir / RUNNING_FILE)
+
+    def _attempt(self, res: Dict[str, Any]) -> None:
+        """Every run that got the lock leaves its outcome, also one that found nothing to do."""
+        st = self.state()
+        st["last_attempt"] = {"at": self.now().isoformat(), **res}
+        self._save(st)
 
     def _run(self, resend: bool) -> Dict[str, Any]:
         session = nyse_calendar.latest_completed_session(self.now()).isoformat()
@@ -444,9 +471,12 @@ class Daily:
         if pending and "BACKUP" not in pending:     # what the other steps just wrote is backed up today, not at the next session
             pending.append("BACKUP")
         order = list(STEP_NAMES)
-        for name in sorted(set(pending), key=order.index):
+        todo = sorted(set(pending), key=order.index)
+        for k, name in enumerate(todo):
+            self._mark(name, k, len(todo))
             steps[name] = self._timed_step(name, session)
             self._save(st)
+        self._mark("WRAP_UP", len(todo), len(todo))
         st["kr_day"] = kr_day
         self._kr_holdings(st)
         self._cache_prune(st, session)
@@ -557,4 +587,33 @@ def status(base: Path) -> Dict[str, Any]:
     return {"installed": is_installed(), "schedule_kst": [f"{h:02d}:{m:02d}" for h, m in SCHEDULE],
             "telegram": notify.telegram_status(), "capital_configured": bool(os.getenv("QPP_CAPITAL", "").strip()),
             "latest_session": latest, "steps": sessions.get(latest) if latest else None,
-            "last_run": st.get("last_run"), "backup_dir": str(backup_root())}
+            "last_run": st.get("last_run"), "last_attempt": st.get("last_attempt"), "running": running(base),
+            "step_names": {**STEP_NAMES, "WRAP_UP": "점검과 알림"}, "backup_dir": str(backup_root())}
+
+
+def running(base: Path) -> Optional[Dict[str, Any]]:
+    """The run in progress, scheduled or started from the screen; None when there is none.  A marker whose process is gone
+    (a crash, a restart) does not count."""
+    try:
+        m = json.loads((Path(base) / "data" / "automation" / RUNNING_FILE).read_text(encoding="utf-8"))
+        os.kill(int(m["pid"]), 0)
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return {k: m.get(k) for k in ("started_at", "step", "done", "total")}
+
+
+def start_now(base: Path, popen: Callable = subprocess.Popen, now: Callable[[], datetime] = lambda: datetime.now(timezone.utc)) -> Dict[str, Any]:
+    """Start the daily job now, from the screen.  It is the same job as the scheduled one: only steps not yet done for the
+    session run, nothing is recorded from a day that is not ready, and a second run cannot start while one holds the lock.
+    The process is detached from the server, and held awake against idle sleep while it runs (``caffeinate -i``)."""
+    base = Path(base)
+    if running(base):
+        return {"status": "ALREADY_RUNNING", "running": running(base)}
+    folder = base / "data" / "automation"
+    folder.mkdir(parents=True, exist_ok=True)
+    cmd = [sys.executable, str(base / "app.py"), "automation", "run"]
+    if Path(CAFFEINATE).exists():
+        cmd = [CAFFEINATE, "-i", *cmd]
+    with open(folder / "manual_run.log", "w", encoding="utf-8") as fh:
+        popen(cmd, cwd=base, stdout=fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
+    return {"status": "STARTED", "at": now().isoformat()}

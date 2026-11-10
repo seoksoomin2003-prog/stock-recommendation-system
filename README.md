@@ -351,6 +351,13 @@ The job records the day's scores, the lab signals, tracking, news and Korean for
 `TELEGRAM_CHAT_ID` in `.env`) and as a macOS notification. Each step runs once per session; a failed step is retried in the
 next slot. Logs: `data/automation/`. Specification: `reports/TERMINAL_4_SPECIFICATION.md`.
 
+**Collect now (2026-11-10):** the 지금 수집 button in the top bar starts the same job at once (`POST /api/automation/run`), so the
+schedule is a safety net, not a requirement. Only steps not yet done for the session run; when everything is current it says so
+within seconds. A second run cannot start while one is going, and a day that is not ready is still not recorded. The bar under the
+header shows the step in progress (also for a scheduled run) and, at the end, what failed or is not published yet. The run is
+detached from the server and held awake against idle sleep (`caffeinate -i`); closing the lid still stops it. Output of the last
+button run: `data/automation/manual_run.log`.
+
 **More terminal tools (2026-11-08):** command bar (`/` or ⌘K, keys 1-9 switch tabs), multi-stock comparison chart (비교),
 market heat map and sector rotation graph with each sector's top-scored stocks (시장 지도), peer comparison and A-F grades by
 score area (종목), portfolio risk (beta, volatility, VaR, correlation), alert centre (매매 보조) and the economic calendar

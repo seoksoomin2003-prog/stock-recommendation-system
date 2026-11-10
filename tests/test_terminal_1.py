@@ -394,6 +394,19 @@ def test_static_files_and_traversal(live):
     assert _get(base + "/%2e%2e/services.py")[0] == 404
 
 
+def test_collect_now_route_starts_the_daily_job_and_refuses_other_origins(live, monkeypatch):
+    base, _ = live
+    started = []
+    monkeypatch.setattr(server.automation, "start_now", lambda b: started.append(b) or {"status": "STARTED", "at": "2026-11-10T03:00:00+00:00"})
+    code, body = _post(base + "/api/automation/run", {}, origin="http://evil.example")
+    assert code == 403 and not started
+    code, body = _post(base + "/api/automation/run", {})
+    assert code == 200 and body["status"] == "STARTED" and len(started) == 1
+    assert _get(base + "/api/automation/run")[0] == 404                      # starting is never a GET
+    page = _get(base + "/")[2].decode()
+    assert 'id="collect"' in page and "collect.js" in page and _get(base + "/collect.js")[0] == 200
+
+
 def test_finite_never_emits_nan():
     assert server._finite({"a": float("nan"), "b": [float("inf"), 1.0], "c": 0.0}) == {"a": None, "b": [None, 1.0], "c": 0.0}
 
@@ -401,7 +414,7 @@ def test_finite_never_emits_nan():
 def test_static_ui_has_no_external_resources():
     from pathlib import Path
     root = Path(server.STATIC)
-    for f in ("index.html", "app.js", "style.css"):
+    for f in ("index.html", "app.js", "style.css", "collect.js"):
         text = (root / f).read_text(encoding="utf-8")
         assert "http://" not in text.replace("http://127.0.0.1", "") and "https://" not in text, f
     assert "lang=\"ko\"" in (root / "index.html").read_text(encoding="utf-8")
