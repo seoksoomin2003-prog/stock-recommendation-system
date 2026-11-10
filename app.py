@@ -425,7 +425,8 @@ QSF_ONE_SHOT = {
     **{a: ("validate", f, _primary, 1) for a, f in (("history-prepare", "prepare"), ("history-run", "run"))},
 }
 QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-report", "price-archive", "kr-etf-holdings", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund",
-               "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
+               "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long",
+               "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", *QSF_ONE_SHOT]
 
 
@@ -469,8 +470,18 @@ def cmd_qsf(args) -> int:
             print(json.dumps({k: v for k, v in res.items() if k != "buckets"}, ensure_ascii=False, default=str))
             return 0
         res = kr_forward.record(PROJECT_ROOT)
+        try:                        # the swing challenger reads the ledger only; a failure here never fails the forward step
+            from terminal.qsf import kr_swing_challenger
+            res["swing_challenger"] = kr_swing_challenger.record(PROJECT_ROOT)
+        except Exception as exc:
+            res["swing_challenger"] = {"status": "FAILED", "reason": type(exc).__name__}
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3, "NO_KEY": 4}.get(res["status"], 1)
+    if args.action in ("kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate"):
+        from terminal.qsf import kr_swing_challenger as sc
+        res = sc.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sc.status(PROJECT_ROOT) if args.action.endswith("status") else sc.record(PROJECT_ROOT)
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+        return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
     if args.action == "us-challenger-record":
         from terminal.qsf import us_challenger
         res = us_challenger.record(PROJECT_ROOT)
