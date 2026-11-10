@@ -294,9 +294,18 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     change_scale_error = _scale_differs(sec_shares, at("shares_avg", year_back("shares_avg")))
     shares_used = shares or (None if sec_scale_error else sec_shares)
     mcap = close * shares_used if close and shares_used else None
-    # Price over reported EPS is wrong after a split: the price is on today's share count and the EPS is not.  So PER is market value over
-    # the parent's profit and EPS is that profit per current share; reported EPS is used only when there is no market value.
-    pe, eps = (div(mcap, ni), div(ni, shares_used)) if mcap is not None else (div(close, eps_reported), eps_reported)
+    # Price over reported EPS is wrong when the EPS is on another share count than the price: after a split (BKNG 0.99 for 24.7) or
+    # when the newest report has no EPS and an older one would be read.  Reported EPS is kept while the count behind it is within
+    # SHARE_BASIS_BREAK of today's count: it is exact about share classes, preferred dividends and treasury shares, which a market
+    # value built from one listed class is not.  Otherwise PER is market value over the parent's profit, and EPS that profit per
+    # current share.  Without a current count nothing can be checked and the reported EPS is all there is.
+    count = eps_count(latest)
+    on_todays_basis = eps_reported is not None and bool(count) and bool(shares_used) and 1 / SHARE_BASIS_BREAK < shares_used / count < SHARE_BASIS_BREAK
+    if mcap is None or on_todays_basis:
+        pe, eps, pe_basis = div(close, eps_reported), eps_reported, "REPORTED_EPS"
+    else:
+        pe, eps, pe_basis = div(mcap, ni), div(ni, shares_used), "MARKET_VALUE"
+
     bb, dv = at("buyback"), at("dividends")
     prev = year_back("net_income")
     roe_prev = div(at("net_income", prev), at("equity", prev)) if (at("equity", prev) or 0) > 0 else None
@@ -309,7 +318,7 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         "roe_years_positive": sum(nis) / len(nis) if nis else None, "debt_equity": 99.0 if (eq is not None and eq <= 0 and debt) else div(debt, group_equity or eq), "current_ratio": div(at("current_assets"), at("current_liabilities")),
         "interest_cover": div(at("op_income"), at("interest")), "cash_debt": div(at("cash"), debt), "equity_assets": div(group_equity or eq, assets),
         "share_change": None if change_scale_error else growth("shares_avg"), "share_scale_error": sec_scale_error or change_scale_error, "returns_capital": (bool((bb or 0) > 0 or (dv or 0) != 0) if (bb is not None or dv is not None) else None),
-        "market_cap": mcap, "eps": eps, "eps_reported": eps_reported, "pe": pe, "pb": div(mcap, eq) if (eq or 0) > 0 else None, "fcf_yield": div(fcf * parent_share if fcf is not None and parent_share else fcf, mcap), "parent_share": parent_share, "insider_pct": insider_pct,
+        "market_cap": mcap, "eps": eps, "eps_reported": eps_reported, "pe": pe, "pe_basis": pe_basis if pe is not None else None, "pb": div(mcap, eq) if (eq or 0) > 0 else None, "fcf_yield": div(fcf * parent_share if fcf is not None and parent_share else fcf, mcap), "parent_share": parent_share, "insider_pct": insider_pct,
     }
     return out
 

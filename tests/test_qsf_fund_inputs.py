@@ -86,17 +86,24 @@ def test_balance_sheet_newer_than_the_income_statement_gives_no_flow_ratio():
 
 
 # ---------------------------------------------------------------------- PER from market value
-def test_per_is_market_value_over_profit_so_a_split_after_the_report_cannot_distort_it():
+def test_per_is_market_value_over_profit_when_a_split_followed_the_report():
     d = base(eps=rows([20.0, 22.5, 25.0, 30.0]))                 # reported before a 25-for-1 split: 0.4 shares then, 10 now
     m = metrics(d, close=24.0, shares=10.0)
     assert m["pe"] == pytest.approx(24.0 * 10.0 / 12.0) and m["eps"] == pytest.approx(1.2) and m["eps_reported"] == 30.0
-    assert m["pe"] * m["eps"] == pytest.approx(24.0)
+    assert m["pe"] * m["eps"] == pytest.approx(24.0) and m["pe_basis"] == "MARKET_VALUE"
+
+
+def test_reported_eps_is_kept_while_its_share_count_is_todays():
+    d = base(eps=rows([0.64, 0.72, 0.8, 0.96]))                  # 12.5 shares earn the profit, 10 of them are the listed class
+    m = metrics(d, close=24.0, shares=10.0)
+    assert m["pe"] == pytest.approx(25.0) and m["eps"] == 0.96 and m["pe_basis"] == "REPORTED_EPS"
+    assert m["market_cap"] == pytest.approx(240.0) and m["pb"] == pytest.approx(4.0)        # market value itself is unchanged
 
 
 def test_a_loss_keeps_a_negative_per_and_no_profit_gives_none():
     assert metrics(base(net_income=rows([8.0, 9.0, 10.0, -4.0])), close=24.0)["pe"] == pytest.approx(-60.0)
     m = metrics(base(net_income=rows([8.0, 9.0, 10.0, None]), eps=rows([0.8, 0.9, 1.0, 1.2])), close=24.0)
-    assert m["pe"] is None and m["eps"] is None           # market value exists: an EPS without its profit is not trusted against the price
+    assert m["pe"] is None and m["eps"] is None           # no profit to check the EPS share count with, and none for market value either
     assert metrics(base(net_income=rows([8.0, 9.0, 10.0, 0.0])), close=24.0)["pe"] is None
 
 
