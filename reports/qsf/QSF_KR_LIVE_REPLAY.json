@@ -1,0 +1,968 @@
+{
+ "status": "REAL",
+ "protocol": "reports/QSF_KR_LIVE_REPLAY_PROTOCOL.md",
+ "evaluations": 26700,
+ "evaluation_days": 89,
+ "first": "2019-04-01",
+ "last": "2026-10-13",
+ "cost_round_trip": 0.0053,
+ "fidelity": {
+  "status": "REAL",
+  "session": "2026-11-09",
+  "live_version": "QSF-1.1.8",
+  "replay_names": 300,
+  "tables": {
+   "SWING": {
+    "compared": 294,
+    "TECHNICAL": {
+     "rank_corr": 0.9999357780944275,
+     "median_abs_diff": 0.06644183096967993,
+     "both_have": 294,
+     "only_live": 0,
+     "only_replay": 0
+    },
+    "FUNDAMENTAL": {
+     "rank_corr": 0.9999999999999998,
+     "median_abs_diff": 0.0,
+     "both_have": 291,
+     "only_live": 2,
+     "only_replay": 0
+    },
+    "RISK": {
+     "rank_corr": 0.9999905554750146,
+     "median_abs_diff": 0.0006826768672514305,
+     "both_have": 294,
+     "only_live": 0,
+     "only_replay": 0
+    }
+   },
+   "LONG_TERM": {
+    "compared": 294,
+    "TECHNICAL": {
+     "rank_corr": 0.9997432162516394,
+     "median_abs_diff": 0.11796033790640337,
+     "both_have": 293,
+     "only_live": 0,
+     "only_replay": 0
+    },
+    "FUNDAMENTAL": {
+     "rank_corr": 1.0,
+     "median_abs_diff": 4.704454426018856e-08,
+     "both_have": 291,
+     "only_live": 2,
+     "only_replay": 0
+    },
+    "RISK": {
+     "rank_corr": 0.9945854960143232,
+     "median_abs_diff": 0.0,
+     "both_have": 294,
+     "only_live": 0,
+     "only_replay": 0
+    }
+   }
+  },
+  "live_names": 295,
+  "both": 294,
+  "passed": true,
+  "threshold": 0.9
+ },
+ "tables": {
+  "SWING|5": {
+   "dates": 89,
+   "first": "2019-04-01",
+   "last": "2026-10-13",
+   "split": "2022-12-23",
+   "lag": 1,
+   "mean_n": 281.2247191011236,
+   "ic": 0.018112314180134696,
+   "t": 1.0981455467132337,
+   "ic_positive_share": 0.5842696629213483,
+   "ic_sector_neutral": null,
+   "spread_net": -0.00016545099529164268,
+   "buy_excess": 0.0037945753687568745,
+   "buy_dates": 55,
+   "buy_trades": 113,
+   "early": {
+    "ic": 0.0244345969680701,
+    "spread_net": 0.0021061762730158664,
+    "dates": 44
+   },
+   "late": {
+    "ic": 0.011930526565264521,
+    "spread_net": -0.002386597657636764,
+    "dates": 45
+   },
+   "top_fifth_excess": 0.004792137511706175,
+   "bottom_fifth_excess": -0.0003424114930021815,
+   "average_return": -0.005988105992774204,
+   "market_return": 0.0016669436786951645
+  },
+  "SWING|10": {
+   "dates": 89,
+   "first": "2019-04-01",
+   "last": "2026-10-13",
+   "split": "2022-12-23",
+   "lag": 1,
+   "mean_n": 281.2247191011236,
+   "ic": 0.01394217111953582,
+   "t": 0.8808607903232203,
+   "ic_positive_share": 0.6292134831460674,
+   "ic_sector_neutral": null,
+   "spread_net": 0.0010695636788207656,
+   "buy_excess": -0.0020625733143788405,
+   "buy_dates": 55,
+   "buy_trades": 113,
+   "early": {
+    "ic": 0.009647006359121732,
+    "spread_net": 0.0008008663483126886,
+    "dates": 44
+   },
+   "late": {
+    "ic": 0.01814188777416293,
+    "spread_net": 0.0013322899575397738,
+    "dates": 45
+   },
+   "top_fifth_excess": 0.005847606417630838,
+   "bottom_fifth_excess": -0.0005219572611899272,
+   "average_return": -0.004896271168061429,
+   "market_return": 0.005983176526058925
+  },
+  "SWING|20": {
+   "dates": 88,
+   "first": "2019-04-01",
+   "last": "2026-09-08",
+   "split": "2022-12-23",
+   "lag": 1,
+   "mean_n": 281.1136363636364,
+   "ic": 0.028020197407177583,
+   "t": 1.8965660401992712,
+   "ic_positive_share": 0.625,
+   "ic_sector_neutral": null,
+   "spread_net": 0.010207982721805127,
+   "buy_excess": 0.027918471525140796,
+   "buy_dates": 55,
+   "buy_trades": 113,
+   "early": {
+    "ic": 0.019247009648428116,
+    "spread_net": 0.005859025560225239,
+    "dates": 44
+   },
+   "late": {
+    "ic": 0.036793385165927055,
+    "spread_net": 0.014556939883385018,
+    "dates": 44
+   },
+   "top_fifth_excess": 0.010863260863098986,
+   "bottom_fifth_excess": -0.004644721858706139,
+   "average_return": -0.005776336993417744,
+   "market_return": 0.012401399964636023
+  },
+  "LONG_TERM|63": {
+   "dates": 86,
+   "first": "2019-04-01",
+   "last": "2026-07-08",
+   "split": "2022-11-24",
+   "lag": 3,
+   "mean_n": 256.8953488372093,
+   "ic": 0.1115112262627341,
+   "t": 7.178032602910987,
+   "ic_positive_share": 0.8488372093023255,
+   "ic_sector_neutral": null,
+   "spread_net": 0.030031596868778217,
+   "buy_excess": 0.024798596958223406,
+   "buy_dates": 86,
+   "buy_trades": 2628,
+   "early": {
+    "ic": 0.10489679177053753,
+    "spread_net": 0.019846310563711157,
+    "dates": 43
+   },
+   "late": {
+    "ic": 0.11812566075493076,
+    "spread_net": 0.04021688317384529,
+    "dates": 43
+   },
+   "top_fifth_excess": 0.023407968427442395,
+   "bottom_fifth_excess": -0.011923628441335822,
+   "average_return": 1.4678042062741413e-05,
+   "market_return": 0.042479646760363914
+  },
+  "LONG_TERM|126": {
+   "dates": 83,
+   "first": "2019-04-01",
+   "last": "2026-04-06",
+   "split": "2022-09-23",
+   "lag": 6,
+   "mean_n": 255.85542168674698,
+   "ic": 0.12787465416046012,
+   "t": 6.983724743840297,
+   "ic_positive_share": 0.8554216867469879,
+   "ic_sector_neutral": null,
+   "spread_net": 0.06207349848416489,
+   "buy_excess": 0.0404666215832497,
+   "buy_dates": 83,
+   "buy_trades": 2532,
+   "early": {
+    "ic": 0.11122276713661135,
+    "spread_net": 0.0365272984076358,
+    "dates": 41
+   },
+   "late": {
+    "ic": 0.1441300676837411,
+    "spread_net": 0.08701145570172898,
+    "dates": 42
+   },
+   "top_fifth_excess": 0.04002193994750619,
+   "bottom_fifth_excess": -0.027351558536658695,
+   "average_return": 0.022551891342682092,
+   "market_return": 0.10323837076325014
+  },
+  "LONG_TERM|252": {
+   "dates": 77,
+   "first": "2019-04-01",
+   "last": "2025-09-24",
+   "split": "2022-06-23",
+   "lag": 12,
+   "mean_n": 254.64935064935065,
+   "ic": 0.13598670492583664,
+   "t": 8.202944268777442,
+   "ic_positive_share": 0.987012987012987,
+   "ic_sector_neutral": null,
+   "spread_net": 0.06889033738977082,
+   "buy_excess": 0.04324403202821113,
+   "buy_dates": 77,
+   "buy_trades": 2312,
+   "early": {
+    "ic": 0.12284836970741982,
+    "spread_net": 0.045628088030545015,
+    "dates": 38
+   },
+   "late": {
+    "ic": 0.1487881597540377,
+    "spread_net": 0.09155611881670876,
+    "dates": 39
+   },
+   "top_fifth_excess": 0.03072292509819816,
+   "bottom_fifth_excess": -0.04346741229157266,
+   "average_return": 0.07857898607076952,
+   "market_return": 0.2144622260873968
+  }
+ },
+ "reference_2022": {
+  "SWING|5": {
+   "dates": 56,
+   "first": "2022-01-17",
+   "last": "2026-10-13",
+   "split": "2024-06-11",
+   "lag": 1,
+   "mean_n": 280.0,
+   "ic": 0.006453439111254766,
+   "t": 0.3475686095157224,
+   "ic_positive_share": 0.5892857142857143,
+   "ic_sector_neutral": null,
+   "spread_net": -0.0024312809259465526,
+   "buy_excess": -0.004742344593784162,
+   "buy_dates": 40,
+   "buy_trades": 77,
+   "early": {
+    "ic": -0.007394439875455653,
+    "spread_net": -0.0024648417883955955,
+    "dates": 28
+   },
+   "late": {
+    "ic": 0.020301318097965194,
+    "spread_net": -0.0023977200634975105,
+    "dates": 28
+   },
+   "top_fifth_excess": 0.003138823035651054,
+   "bottom_fifth_excess": 0.0002701039615976078,
+   "average_return": 0.0005225212336780932,
+   "market_return": 0.005695830498422895
+  },
+  "SWING|10": {
+   "dates": 56,
+   "first": "2022-01-17",
+   "last": "2026-10-13",
+   "split": "2024-06-11",
+   "lag": 1,
+   "mean_n": 280.0,
+   "ic": 0.006052104142462912,
+   "t": 0.32348350127013675,
+   "ic_positive_share": 0.625,
+   "ic_sector_neutral": null,
+   "spread_net": -0.00019270159186466143,
+   "buy_excess": -0.019754259396722894,
+   "buy_dates": 40,
+   "buy_trades": 77,
+   "early": {
+    "ic": -0.01538226965180005,
+    "spread_net": -0.0023402809097485366,
+    "dates": 28
+   },
+   "late": {
+    "ic": 0.027486477936725873,
+    "spread_net": 0.001954877726019215,
+    "dates": 28
+   },
+   "top_fifth_excess": 0.0044152280095495315,
+   "bottom_fifth_excess": -0.0006920703985858077,
+   "average_return": 0.0005027133611499665,
+   "market_return": 0.011621478412832533
+  },
+  "SWING|20": {
+   "dates": 55,
+   "first": "2022-01-17",
+   "last": "2026-09-08",
+   "split": "2024-05-09",
+   "lag": 1,
+   "mean_n": 279.8,
+   "ic": 0.028410074425956562,
+   "t": 1.6595958569610294,
+   "ic_positive_share": 0.6363636363636364,
+   "ic_sector_neutral": null,
+   "spread_net": 0.01134606875240657,
+   "buy_excess": 0.004142676294346821,
+   "buy_dates": 40,
+   "buy_trades": 77,
+   "early": {
+    "ic": 0.020163733546693912,
+    "spread_net": 0.010986187599424447,
+    "dates": 27
+   },
+   "late": {
+    "ic": 0.036361903130959834,
+    "spread_net": 0.011693097007067896,
+    "dates": 28
+   },
+   "top_fifth_excess": 0.01124670136943552,
+   "bottom_fifth_excess": -0.005399367382971043,
+   "average_return": -0.00516546431937221,
+   "market_return": 0.015196495706384832
+  },
+  "LONG_TERM|63": {
+   "dates": 53,
+   "first": "2022-01-17",
+   "last": "2026-07-08",
+   "split": "2024-04-05",
+   "lag": 3,
+   "mean_n": 261.2830188679245,
+   "ic": 0.11033744307320129,
+   "t": 5.974067435827883,
+   "ic_positive_share": 0.8867924528301887,
+   "ic_sector_neutral": null,
+   "spread_net": 0.03940179520147811,
+   "buy_excess": 0.024003096946303547,
+   "buy_dates": 53,
+   "buy_trades": 1965,
+   "early": {
+    "ic": 0.10110396945951436,
+    "spread_net": 0.035285249722893215,
+    "dates": 26
+   },
+   "late": {
+    "ic": 0.11922893618267759,
+    "spread_net": 0.04336587603270799,
+    "dates": 27
+   },
+   "top_fifth_excess": 0.022036710186038123,
+   "bottom_fifth_excess": -0.02266508501543998,
+   "average_return": -0.00018615209998382648,
+   "market_return": 0.050741535312724566
+  },
+  "LONG_TERM|126": {
+   "dates": 50,
+   "first": "2022-01-17",
+   "last": "2026-04-06",
+   "split": "2024-03-07",
+   "lag": 6,
+   "mean_n": 259.82,
+   "ic": 0.13836731877567732,
+   "t": 6.35523005839383,
+   "ic_positive_share": 0.88,
+   "ic_sector_neutral": null,
+   "spread_net": 0.08462828904829882,
+   "buy_excess": 0.0517847115112443,
+   "buy_dates": 50,
+   "buy_trades": 1869,
+   "early": {
+    "ic": 0.11895993149732861,
+    "spread_net": 0.06402511964319228,
+    "dates": 25
+   },
+   "late": {
+    "ic": 0.157774706054026,
+    "spread_net": 0.10523145845340537,
+    "dates": 25
+   },
+   "top_fifth_excess": 0.04402253852371931,
+   "bottom_fifth_excess": -0.045905750524579514,
+   "average_return": 0.027849575363129472,
+   "market_return": 0.13289610624313355
+  },
+  "LONG_TERM|252": {
+   "dates": 44,
+   "first": "2022-01-17",
+   "last": "2025-09-24",
+   "split": "2023-12-01",
+   "lag": 12,
+   "mean_n": 258.25,
+   "ic": 0.1444185060630128,
+   "t": 12.485100727637377,
+   "ic_positive_share": 1.0,
+   "ic_sector_neutral": null,
+   "spread_net": 0.09066940787682311,
+   "buy_excess": 0.047872883309520935,
+   "buy_dates": 44,
+   "buy_trades": 1649,
+   "early": {
+    "ic": 0.13685116136611866,
+    "spread_net": 0.0835755020453822,
+    "dates": 22
+   },
+   "late": {
+    "ic": 0.15198585075990698,
+    "spread_net": 0.09776331370826406,
+    "dates": 22
+   },
+   "top_fifth_excess": 0.031012334121240003,
+   "bottom_fifth_excess": -0.06495707375558311,
+   "average_return": 0.10752324010023763,
+   "market_return": 0.2962161058729345
+  }
+ },
+ "domains": {
+  "SWING|TECHNICAL|5": {
+   "dates": 89,
+   "ic": -0.033171912590647716,
+   "t": -2.0454390100307256,
+   "early": {
+    "ic": -0.033333674803289415,
+    "spread_net": -0.0029552596409530897,
+    "dates": 44
+   },
+   "late": {
+    "ic": -0.03301374509384251,
+    "spread_net": -0.004386290800763266,
+    "dates": 45
+   }
+  },
+  "SWING|FUNDAMENTAL|5": {
+   "dates": 89,
+   "ic": 0.03538902533326244,
+   "t": 3.781603547817146,
+   "early": {
+    "ic": 0.04424720095003784,
+    "spread_net": 0.0024379274191642943,
+    "dates": 44
+   },
+   "late": {
+    "ic": 0.026727698063526487,
+    "spread_net": -0.004608006606217471,
+    "dates": 45
+   }
+  },
+  "SWING|RISK|5": {
+   "dates": 89,
+   "ic": 0.12521668097257035,
+   "t": 8.580411502315052,
+   "early": {
+    "ic": 0.14410235474950384,
+    "spread_net": 0.011076226374888113,
+    "dates": 44
+   },
+   "late": {
+    "ic": 0.10675068883512424,
+    "spread_net": 0.008107507132848942,
+    "dates": 45
+   }
+  },
+  "SWING|TECHNICAL|10": {
+   "dates": 89,
+   "ic": -0.03811051315530976,
+   "t": -2.4013501814659337,
+   "early": {
+    "ic": -0.04144235723225955,
+    "spread_net": 0.0009423679587100178,
+    "dates": 44
+   },
+   "late": {
+    "ic": -0.034852710057847736,
+    "spread_net": -0.002284359629401374,
+    "dates": 45
+   }
+  },
+  "SWING|FUNDAMENTAL|10": {
+   "dates": 89,
+   "ic": 0.048368132108808165,
+   "t": 5.3901339073078365,
+   "early": {
+    "ic": 0.04645683360800037,
+    "spread_net": 0.002249324734268644,
+    "dates": 44
+   },
+   "late": {
+    "ic": 0.05023695730959802,
+    "spread_net": 0.002723867608854834,
+    "dates": 45
+   }
+  },
+  "SWING|RISK|10": {
+   "dates": 89,
+   "ic": 0.12532727615932668,
+   "t": 9.821174340792854,
+   "early": {
+    "ic": 0.12478266168879948,
+    "spread_net": 0.006224302587201366,
+    "dates": 44
+   },
+   "late": {
+    "ic": 0.1258597880860644,
+    "spread_net": 0.015134729371968728,
+    "dates": 45
+   }
+  },
+  "SWING|TECHNICAL|20": {
+   "dates": 88,
+   "ic": -0.03537983991200046,
+   "t": -2.2979006223352707,
+   "early": {
+    "ic": -0.046437271827817754,
+    "spread_net": 0.0004706729377678357,
+    "dates": 44
+   },
+   "late": {
+    "ic": -0.024322407996183182,
+    "spread_net": 0.0042362182257464675,
+    "dates": 44
+   }
+  },
+  "SWING|FUNDAMENTAL|20": {
+   "dates": 88,
+   "ic": 0.05588071128904879,
+   "t": 5.876800489956854,
+   "early": {
+    "ic": 0.058259950703673936,
+    "spread_net": 0.006144077846000839,
+    "dates": 44
+   },
+   "late": {
+    "ic": 0.053501471874423646,
+    "spread_net": 0.007183775793165772,
+    "dates": 44
+   }
+  },
+  "SWING|RISK|20": {
+   "dates": 88,
+   "ic": 0.1540302923081408,
+   "t": 11.372331568911244,
+   "early": {
+    "ic": 0.14993008016408824,
+    "spread_net": 0.016497652624796497,
+    "dates": 44
+   },
+   "late": {
+    "ic": 0.15813050445219334,
+    "spread_net": 0.033247405325535544,
+    "dates": 44
+   }
+  },
+  "LONG_TERM|TECHNICAL|63": {
+   "dates": 86,
+   "ic": -0.05902825809415466,
+   "t": -2.6795770856155214,
+   "early": {
+    "ic": -0.088276116892053,
+    "spread_net": -0.013501693669463457,
+    "dates": 43
+   },
+   "late": {
+    "ic": -0.029780399296256317,
+    "spread_net": 0.045933426085673676,
+    "dates": 43
+   }
+  },
+  "LONG_TERM|FUNDAMENTAL|63": {
+   "dates": 86,
+   "ic": 0.13416457623387093,
+   "t": 8.279575808151803,
+   "early": {
+    "ic": 0.12933567606524352,
+    "spread_net": 0.020776509427207195,
+    "dates": 43
+   },
+   "late": {
+    "ic": 0.1389934764024984,
+    "spread_net": 0.045370576586680186,
+    "dates": 43
+   }
+  },
+  "LONG_TERM|RISK|63": {
+   "dates": 86,
+   "ic": 0.045422393932711545,
+   "t": 3.2003448377535455,
+   "early": {
+    "ic": 0.027790575103913088,
+    "spread_net": 0.0071355463589424075,
+    "dates": 43
+   },
+   "late": {
+    "ic": 0.06305421276151,
+    "spread_net": 0.027998048191596514,
+    "dates": 43
+   }
+  },
+  "LONG_TERM|TECHNICAL|126": {
+   "dates": 83,
+   "ic": -0.05900597642494352,
+   "t": -2.27216492241655,
+   "early": {
+    "ic": -0.10685780896220914,
+    "spread_net": -0.040747727076739335,
+    "dates": 41
+   },
+   "late": {
+    "ic": -0.012293473233803288,
+    "spread_net": 0.12526231089846748,
+    "dates": 42
+   }
+  },
+  "LONG_TERM|FUNDAMENTAL|126": {
+   "dates": 83,
+   "ic": 0.15140451350592032,
+   "t": 8.914115504458495,
+   "early": {
+    "ic": 0.14085414354453002,
+    "spread_net": 0.032310511383043104,
+    "dates": 41
+   },
+   "late": {
+    "ic": 0.16170368418251563,
+    "spread_net": 0.07247692975605088,
+    "dates": 42
+   }
+  },
+  "LONG_TERM|RISK|126": {
+   "dates": 83,
+   "ic": 0.0535486945243187,
+   "t": 2.902794344144595,
+   "early": {
+    "ic": 0.0314645003633602,
+    "spread_net": -0.0026478647994784455,
+    "dates": 41
+   },
+   "late": {
+    "ic": 0.07510707453858771,
+    "spread_net": 0.057721271731404296,
+    "dates": 42
+   }
+  },
+  "LONG_TERM|TECHNICAL|252": {
+   "dates": 77,
+   "ic": -0.07242766884887746,
+   "t": -2.5720075404362186,
+   "early": {
+    "ic": -0.10556317794830482,
+    "spread_net": -0.06534099670154132,
+    "dates": 38
+   },
+   "late": {
+    "ic": -0.04014178818789692,
+    "spread_net": 0.05641221507066328,
+    "dates": 39
+   }
+  },
+  "LONG_TERM|FUNDAMENTAL|252": {
+   "dates": 77,
+   "ic": 0.16196233551977574,
+   "t": 20.669896874882266,
+   "early": {
+    "ic": 0.15307286878144646,
+    "spread_net": 0.04975396281045198,
+    "dates": 38
+   },
+   "late": {
+    "ic": 0.17062386721353237,
+    "spread_net": 0.09193923195776928,
+    "dates": 39
+   }
+  },
+  "LONG_TERM|RISK|252": {
+   "dates": 77,
+   "ic": 0.05950756445037773,
+   "t": 1.9700310366215272,
+   "early": {
+    "ic": 0.02882084149428237,
+    "spread_net": -0.022961938873945164,
+    "dates": 38
+   },
+   "late": {
+    "ic": 0.08940744835631682,
+    "spread_net": 0.0753933169489186,
+    "dates": 39
+   }
+  }
+ },
+ "money": {
+  "SWING": {
+   "horizon": 21,
+   "early": {
+    "periods": 44,
+    "first": "2019-04-01",
+    "last": "2022-11-24",
+    "top_fifth_annual_net": -0.07812656051195699,
+    "all_scored_equal_annual_net": -0.160805080918343,
+    "cap_weighted_market_annual": 0.01216790893813724,
+    "beats_market": false
+   },
+   "late": {
+    "periods": 44,
+    "first": "2022-12-23",
+    "last": "2026-09-08",
+    "top_fifth_annual_net": 0.13944257744862276,
+    "all_scored_equal_annual_net": -0.04352187968635535,
+    "cap_weighted_market_annual": 0.26246228316763176,
+    "beats_market": false
+   },
+   "whole": {
+    "periods": 88,
+    "first": "2019-04-01",
+    "last": "2026-09-08",
+    "top_fifth_annual_net": 0.025225816134497814,
+    "all_scored_equal_annual_net": -0.10367165351789531,
+    "cap_weighted_market_annual": 0.13040869125597587,
+    "beats_market": false
+   },
+   "mean_holdings": 55.79545454545455,
+   "passed": false
+  },
+  "LONG_TERM": {
+   "horizon": 21,
+   "early": {
+    "periods": 44,
+    "first": "2019-04-01",
+    "last": "2022-11-24",
+    "top_fifth_annual_net": -0.07251053365170534,
+    "all_scored_equal_annual_net": -0.16652087454226594,
+    "cap_weighted_market_annual": 0.01216790893813724,
+    "beats_market": false
+   },
+   "late": {
+    "periods": 44,
+    "first": "2022-12-23",
+    "last": "2026-09-08",
+    "top_fifth_annual_net": 0.12246179852479289,
+    "all_scored_equal_annual_net": -0.04123967309667664,
+    "cap_weighted_market_annual": 0.26246228316763176,
+    "beats_market": false
+   },
+   "whole": {
+    "periods": 88,
+    "first": "2019-04-01",
+    "last": "2026-09-08",
+    "top_fifth_annual_net": 0.02081187035415688,
+    "all_scored_equal_annual_net": -0.10567067314652057,
+    "cap_weighted_market_annual": 0.13040869125597587,
+    "beats_market": false
+   },
+   "mean_holdings": 51.10227272727273,
+   "passed": false
+  }
+ },
+ "primary": {
+  "SWING": {
+   "horizon": 20,
+   "dates": 88,
+   "ic": 0.028020197407177583,
+   "t": 1.8965660401992712,
+   "spread_net": 0.010207982721805127,
+   "buy_excess": 0.027918471525140796,
+   "buy_dates": 55,
+   "early": {
+    "ic": 0.019247009648428116,
+    "spread_net": 0.005859025560225239,
+    "dates": 44
+   },
+   "late": {
+    "ic": 0.036793385165927055,
+    "spread_net": 0.014556939883385018,
+    "dates": 44
+   },
+   "top_fifth_excess": 0.010863260863098986,
+   "bottom_fifth_excess": -0.004644721858706139,
+   "condition_a": {
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": true,
+     "t": false,
+     "ic_both_halves": true,
+     "spread_both_halves": true,
+     "buy_band": true
+    }
+   },
+   "condition_b": false,
+   "reading": "NO_EVIDENCE"
+  },
+  "LONG_TERM": {
+   "horizon": 252,
+   "dates": 77,
+   "ic": 0.13598670492583664,
+   "t": 8.202944268777442,
+   "spread_net": 0.06889033738977082,
+   "buy_excess": 0.04324403202821113,
+   "buy_dates": 77,
+   "early": {
+    "ic": 0.12284836970741982,
+    "spread_net": 0.045628088030545015,
+    "dates": 38
+   },
+   "late": {
+    "ic": 0.1487881597540377,
+    "spread_net": 0.09155611881670876,
+    "dates": 39
+   },
+   "top_fifth_excess": 0.03072292509819816,
+   "bottom_fifth_excess": -0.04346741229157266,
+   "condition_a": {
+    "verdict": "WEAK_POSITIVE_EVIDENCE",
+    "checks": {
+     "ic": true,
+     "t": true,
+     "ic_both_halves": true,
+     "spread_both_halves": true,
+     "buy_band": true
+    }
+   },
+   "condition_b": false,
+   "reading": "RANK_ONLY"
+  }
+ },
+ "note": "구성 신호가 같은 구간에서 시험된 적이 있어 완전히 독립된 증거가 아닙니다. 국면·이벤트 영역과 배당은 빠져 있습니다.",
+ "top3": {
+  "SWING|5": {
+   "days": 89,
+   "first": "2019-04-01",
+   "last": "2026-10-13",
+   "picks": 267,
+   "mean_excess": 0.00257030088739772,
+   "median_excess": 0.0005696523343805444,
+   "t": 0.48527182915357786,
+   "days_above_average": 0.5168539325842697,
+   "mean_vs_spy": -0.00508474878407165,
+   "days_above_spy": 0.48314606741573035,
+   "early_excess": 0.00924483777582056,
+   "late_excess": -0.003955912959060169,
+   "percentile_vs_random": 91.78,
+   "random": {
+    "p2_5": -0.0160674721153387,
+    "p50": -0.005313155433159408,
+    "p97_5": 0.0057637040631392696
+   },
+   "reading": "NOT_DISTINCT_FROM_RANDOM"
+  },
+  "SWING|10": {
+   "days": 89,
+   "first": "2019-04-01",
+   "last": "2026-10-13",
+   "picks": 267,
+   "mean_excess": 0.0028342762210410606,
+   "median_excess": 0.001841670783454919,
+   "t": 0.3947889474371386,
+   "days_above_average": 0.5393258426966292,
+   "mean_vs_spy": -0.008045171473079296,
+   "days_above_spy": 0.449438202247191,
+   "early_excess": 0.003940779266252242,
+   "late_excess": 0.0017523621323901272,
+   "percentile_vs_random": 85.02,
+   "random": {
+    "p2_5": -0.020564893125077442,
+    "p50": -0.005650881116262953,
+    "p97_5": 0.011269311871662177
+   },
+   "reading": "NOT_DISTINCT_FROM_RANDOM"
+  },
+  "SWING|20": {
+   "days": 88,
+   "first": "2019-04-01",
+   "last": "2026-09-08",
+   "picks": 264,
+   "mean_excess": 0.020711499331071182,
+   "median_excess": 0.008120474303149402,
+   "t": 1.9779495528957394,
+   "days_above_average": 0.5454545454545454,
+   "mean_vs_spy": 0.0025337623730174123,
+   "days_above_spy": 0.5,
+   "early_excess": 0.028001967689803363,
+   "late_excess": 0.013421030972339003,
+   "percentile_vs_random": 98.42,
+   "random": {
+    "p2_5": -0.026419588398783545,
+    "p50": -0.005352677621832893,
+    "p97_5": 0.01824705518480244
+   },
+   "reading": "DISTINCT_FROM_RANDOM"
+  },
+  "LONG_TERM|63": {
+   "days": 29,
+   "first": "2019-04-01",
+   "last": "2026-06-09",
+   "picks": 87,
+   "mean_excess": 0.009532939178939468,
+   "median_excess": -0.022429860919313906,
+   "t": 0.2657610378647049,
+   "days_above_average": 0.4482758620689655,
+   "mean_vs_spy": -0.03857092486250268,
+   "days_above_spy": 0.41379310344827586,
+   "early_excess": 0.02878706375938229,
+   "late_excess": -0.008437577096140503,
+   "percentile_vs_random": 68.72500000000001,
+   "random": {
+    "p2_5": -0.06702122924375957,
+    "p50": -0.006992573546467144,
+    "p97_5": 0.06651393406682239
+   },
+   "reading": "NOT_DISTINCT_FROM_RANDOM"
+  },
+  "LONG_TERM|126": {
+   "days": 14,
+   "first": "2019-04-01",
+   "last": "2025-11-28",
+   "picks": 42,
+   "mean_excess": -0.01446065518555266,
+   "median_excess": -0.05836551620868763,
+   "t": -0.1826126532654616,
+   "days_above_average": 0.42857142857142855,
+   "mean_vs_spy": -0.11151017918968169,
+   "days_above_spy": 0.42857142857142855,
+   "early_excess": 0.023108191954736006,
+   "late_excess": -0.052029502325841324,
+   "percentile_vs_random": 49.395,
+   "random": {
+    "p2_5": -0.13133776691198898,
+    "p50": -0.013261974987634473,
+    "p97_5": 0.16577317934268976
+   },
+   "reading": "NOT_DISTINCT_FROM_RANDOM"
+  },
+  "LONG_TERM|252": {
+   "days": 7,
+   "first": "2019-04-01",
+   "last": "2025-05-26",
+   "picks": 21,
+   "mean_excess": 0.15546431777087877,
+   "median_excess": -0.02560558998410134,
+   "t": 0.4477177540154153,
+   "days_above_average": 0.42857142857142855,
+   "mean_vs_spy": -0.07438016464166289,
+   "days_above_spy": 0.42857142857142855,
+   "early_excess": 0.09067854921979746,
+   "late_excess": 0.20405364418418986,
+   "percentile_vs_random": 83.355,
+   "random": {
+    "p2_5": -0.28531630092441695,
+    "p50": -0.03597909891507308,
+    "p97_5": 0.4745311026661424
+   },
+   "reading": "NOT_DISTINCT_FROM_RANDOM"
+  }
+ }
+}
