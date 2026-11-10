@@ -310,6 +310,33 @@ class Daily:
             st["price_audit"] = {"at": self.now().isoformat(), "error": type(exc).__name__}
         return st["price_audit"]
 
+    def _earnings_gap(self, st: Dict[str, Any], steps: Dict[str, Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """Once (``qsf.earnings_gap``, decision-list item on the US earnings dates): at the first run on or after ``DUE`` whose US
+        scores were recorded, count the US stocks without a next earnings date, note it in the decision list and tell the user.
+        The count is taken once; an undelivered message is sent again at later runs.  Read only for scores and records."""
+        from terminal.qsf import earnings_gap
+        got = dict(st.get("earnings_gap") or {})
+        if got.get("delivered") or self.now().astimezone(KST).date() < earnings_gap.DUE:
+            return None
+        try:
+            if "blank" not in got:
+                if (steps.get("QSF") or {}).get("status") != OK:
+                    return None                                     # today's US scores are not in the ledger yet
+                res = earnings_gap.count(self.base)
+                if res is None:
+                    return None
+                got = {**res, "at": self.now().isoformat(), "noted": earnings_gap.write_note(self.base, res), "delivered": False}
+                st["earnings_gap"] = got                            # the count stays even if telling fails below
+            tg = self.telegram(earnings_gap.text(got))
+            if tg["status"] == "NOT_CONFIGURED":
+                tg = self.macos("미국 실적 발표일 빈칸 재집계", earnings_gap.short(got))
+            got["delivered"] = tg["status"] == "SENT"
+            got.pop("error", None)
+        except Exception as exc:                                    # never stops the run
+            got["error"] = type(exc).__name__
+        st["earnings_gap"] = got
+        return got
+
     def _scan_status(self) -> Optional[str]:
         runs = sorted((self.base / "runs").glob("*_market_scan_*"), key=lambda p: p.name)
         if not runs:
@@ -481,6 +508,7 @@ class Daily:
         self._kr_holdings(st)
         self._cache_prune(st, session)
         self._price_audit(st)
+        self._earnings_gap(st, steps)
         self._save(st)
         alerts = self._alerts()
         prev = st.get("alerts") or []
@@ -587,7 +615,7 @@ def status(base: Path) -> Dict[str, Any]:
     return {"installed": is_installed(), "schedule_kst": [f"{h:02d}:{m:02d}" for h, m in SCHEDULE],
             "telegram": notify.telegram_status(), "capital_configured": bool(os.getenv("QPP_CAPITAL", "").strip()),
             "latest_session": latest, "steps": sessions.get(latest) if latest else None,
-            "last_run": st.get("last_run"), "last_attempt": st.get("last_attempt"), "running": running(base),
+            "last_run": st.get("last_run"), "last_attempt": st.get("last_attempt"), "running": running(base), "earnings_gap": st.get("earnings_gap"),
             "step_names": {**STEP_NAMES, "WRAP_UP": "점검과 알림"}, "backup_dir": str(backup_root())}
 
 

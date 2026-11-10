@@ -427,7 +427,7 @@ QSF_ONE_SHOT = {
 QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-report", "price-archive", "kr-etf-holdings", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund",
                "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long",
                "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
-               "backup-check", "cache-report", "cache-prune", "price-audit", *QSF_ONE_SHOT]
+               "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", *QSF_ONE_SHOT]
 
 
 def cmd_qsf(args) -> int:
@@ -482,6 +482,11 @@ def cmd_qsf(args) -> int:
         res = sc.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sc.status(PROJECT_ROOT) if args.action.endswith("status") else sc.record(PROJECT_ROOT)
         print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
         return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
+    if args.action == "us-earnings-gap":             # read only: the count the daily job takes once on or after earnings_gap.DUE
+        from terminal.qsf import earnings_gap
+        res = earnings_gap.count(PROJECT_ROOT)
+        print(json.dumps(res if res else {"status": "NO_US_SESSION"}, ensure_ascii=False))
+        return 0 if res else 3
     if args.action == "us-challenger-record":
         from terminal.qsf import us_challenger
         res = us_challenger.record(PROJECT_ROOT)

@@ -358,6 +358,12 @@ header shows the step in progress (also for a scheduled run) and, at the end, wh
 detached from the server and held awake against idle sleep (`caffeinate -i`); closing the lid still stops it. Output of the last
 button run: `data/automation/manual_run.log`.
 
+**US earnings-date recount (2026-11-10):** at the first run on or after 2026-12-15 (KST) whose US scores were recorded, the job
+counts once how many US stocks have no next earnings date in the newest ledger session (`terminal/qsf/earnings_gap.py`), sends the
+number by Telegram (macOS notification without Telegram) and writes one line under the item in `reports/DECISIONS_FOR_USER.md`.
+An undelivered message is sent again at later runs with the same count. Nothing is scored or recorded differently; filling the
+blanks stays a user decision. To count now: `python app.py qsf us-earnings-gap`.
+
 **More terminal tools (2026-11-08):** command bar (`/` or ⌘K, keys 1-9 switch tabs), multi-stock comparison chart (비교),
 market heat map and sector rotation graph with each sector's top-scored stocks (시장 지도), peer comparison and A-F grades by
 score area (종목), portfolio risk (beta, volatility, VaR, correlation), alert centre (매매 보조) and the economic calendar
