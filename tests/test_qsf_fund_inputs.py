@@ -349,3 +349,16 @@ def test_the_live_korean_score_uses_the_statement_rule(tmp_path):
     from terminal.qsf import research_kr_live, service
     assert "is_financial_kr(klass" in inspect.getsource(service.QSF._kr_fund_events)
     assert "is_financial_kr(klass" in inspect.getsource(research_kr_live.Statements.fund)
+
+
+# ---------------------------------------------------------------------- a part of revenue is not revenue
+def test_contract_revenue_below_the_years_profit_is_not_total_revenue():
+    contract = f.CONTRACT_REVENUE[0]
+    bank = base(revenue=rows([10.0, 11.0, 12.0, 13.0], alias=contract), net_income=rows([300.0, 320.0, 350.0, 384.0]), op_income=rows([9.0, 10.0, 11.0, 12.0]))
+    m = metrics(bank)
+    assert m["rev_growth"] is None and m["rev_cagr3"] is None and m["net_margin"] is None and m["op_margin"] is None and "총매출" in m["revenue_note"]
+    assert m["roe"] == pytest.approx(384.0 / 60.0)                        # everything that does not need revenue stays
+    whole = metrics(base(revenue=rows([80.0, 90.0, 100.0, 120.0], alias=contract)))
+    assert whole["rev_growth"] == pytest.approx(0.2) and "revenue_note" not in whole
+    total_tag = metrics(base(revenue=rows([10.0, 11.0, 12.0, 13.0], alias="Revenues"), net_income=rows([300.0, 320.0, 350.0, 384.0])))
+    assert total_tag["rev_growth"] == pytest.approx(13.0 / 12.0 - 1)      # a total-revenue tag is taken as filed

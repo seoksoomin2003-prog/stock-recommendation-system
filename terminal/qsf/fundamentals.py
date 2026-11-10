@@ -23,6 +23,7 @@ US_FLOW = {
     "buyback": ["PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfEquity"], "dividends": ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends", "PaymentsOfOrdinaryDividends"],
     "shares_avg": ["WeightedAverageNumberOfDilutedSharesOutstanding"], "eps": ["EarningsPerShareDiluted"],
 }
+CONTRACT_REVENUE = ("RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax")
 US_INSTANT = {
     "equity": ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"], "assets": ["Assets"], "liabilities": ["Liabilities"],
     "current_assets": ["AssetsCurrent"], "current_liabilities": ["LiabilitiesCurrent"],
@@ -276,6 +277,15 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
             return []
         return [r for r in series[k] if _days(r["end"], latest) <= 365 * (years - 1) + YEAR_DAYS[1] - 365]
 
+    # Contract revenue leaves out rent, interest and insurance premiums.  It is the fallback tag, and for most companies it is all of
+    # revenue; where it is below the same year's own profit it can only be a part (a bank's fees, a landlord's service income), and a
+    # part gives no revenue, margin or revenue growth.
+    revenue_note = None
+    newest = next((r for r in reversed(series.get("revenue") or []) if r["end"] == latest), None)
+    profits = [v for v in (at("net_income"), at("op_income")) if v is not None]
+    if newest and newest.get("alias") in CONTRACT_REVENUE and profits and max(profits) > newest["val"]:
+        series["revenue"] = [r for r in series["revenue"] if r.get("alias") not in CONTRACT_REVENUE]
+        revenue_note = "계약 매출 항목이 그해 이익보다 작아 총매출이 아닙니다. 매출·마진·매출 성장률을 계산하지 않습니다."
     rev, ni, eq, assets = at("revenue"), at("net_income"), at("equity"), at("assets")
 
     def div(a, b):
@@ -382,6 +392,8 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         "share_change": None if change_scale_error else growth("shares_avg"), "share_scale_error": sec_scale_error or change_scale_error, "returns_capital": (bool((bb or 0) > 0 or (dv or 0) != 0) if (bb is not None or dv is not None) else None),
         "market_cap": mcap, "eps": eps, "eps_reported": eps_reported, "pe": pe, "pe_basis": pe_basis if pe is not None else None, "pb": div(mcap, eq) if (eq or 0) > 0 else None, "fcf_yield": div(fcf * parent_share if fcf is not None and parent_share else fcf, mcap), "parent_share": parent_share, "insider_pct": insider_pct,
     }
+    if revenue_note:
+        out["revenue_note"] = revenue_note
     if currency:
         out.update({k: None for k in ("pe", "pe_basis", "pb", "fcf_yield", "eps")}, currency=currency,
                    currency_note=f"재무제표가 {currency} 기준이라 원화 주가와 비교하는 PER·PBR·FCF 수익률·주당순이익을 계산하지 않습니다.")
