@@ -90,6 +90,14 @@ def test_a_stock_gone_before_the_exit_closes_at_its_last_trade(tmp_path):
     assert np.isnan(px.forward(20, 5)[j])                                                          # already gone on the entry day
 
 
+def test_a_holiday_the_exchange_answers_with_nothing_is_not_a_session(tmp_path):
+    ds = days(12)
+    by = {d: {"KOSPI": [] if k == 5 else [snap("000010", "가", 1000 + k, 0.1, 100, 1000)], "KOSDAQ": []} for k, d in enumerate(ds)}
+    write_days(tmp_path, by)
+    px = rl.Panel(rl.build_panel(tmp_path, log=lambda m: None))
+    assert len(px.dates) == 11 and ds[5] not in px.dates and np.isfinite(px.data["close"][:, px.col["000010"]]).all()
+
+
 def test_universe_ranks_by_traded_value_and_drops_halted_and_short_stocks(panel):
     px, ds = panel
     got = [px.symbols[j] for j in rl.universe(px, len(ds) - 1)]
@@ -199,6 +207,21 @@ def test_fundamentals_use_the_live_mapping_and_only_filed_reports(tmp_path):
     early = st.fund("000010", "2023-03-01", 10000.0, 1_000_000.0)             # the 2022 report is not filed yet: the 2021 figures stand
     assert early["pe"] == pytest.approx(10000.0 * 1_000_000 / (900 * 1e7))
     assert st.fund("000099", "2023-06-01", 100.0, 10.0)["status"] == "UNAVAILABLE"
+
+
+def test_statements_in_the_older_dart_spelling_are_read_the_same(tmp_path):
+    for year, rev in ((2016, 800), (2017, 900)):
+        stored(tmp_path, "C1", year, f"{year + 1}0320000001", rev * 1e8, rev * 1e7, rev * 2e8, rev * 1e8)
+        p = rl.statement_path(tmp_path, "C1", year)
+        with gzip.open(p, "rt", encoding="utf-8") as fh:
+            rec = json.load(fh)
+        k = rl.ROW_FIELDS.index("account_id")
+        for r in rec["rows"]:
+            r[k] = r[k].replace("ifrs-full_", "ifrs_")
+        with gzip.open(p, "wt", encoding="utf-8") as fh:
+            json.dump(rec, fh)
+    got = rl.Statements(tmp_path, {"000010": "C1"}, {}).fund("000010", "2018-06-01", 10000.0, 1_000_000.0)
+    assert got["status"] in ("REAL", "STALE") and got["pe"] == pytest.approx(10000.0 * 1_000_000 / (900 * 1e7)) and got["rev_growth"] == pytest.approx(0.125)
 
 
 def test_a_day_is_scored_by_the_live_engine_without_reading_a_return(tmp_path):

@@ -45,6 +45,7 @@ F = {name: n for n, name in enumerate(kh.FIELDS)}
 BOARD_INDEX = {"KOSPI": "IDX_KOSPI", "KOSDAQ": "IDX_KOSDAQ"}
 MARKET = "IDX_ALL"            # every common stock, capitalisation-weighted: the comparison market of the money condition
 CODE = re.compile(r"^[0-9A-Z]{5}0$")          # common shares end in 0; codes issued since 2024 carry letters
+OLD_PREFIX, NEW_PREFIX = "ifrs_", "ifrs-full_"      # the live mapping knows only the newer spelling: it never reads years before 2019
 NOT_OPERATING = ("TRUST_AND_COLLECTIVE_INVESTMENT", "REIT")
 KSIC_CLASS = (("641", "BANK"), ("642", "TRUST_AND_COLLECTIVE_INVESTMENT"), ("649", "HOLDING_OR_OTHER_FINANCIAL"), ("651", "INSURANCE"), ("652", "INSURANCE"),
               ("661", "SECURITIES_AND_FINANCIAL_SERVICES"), ("662", "INSURANCE"))
@@ -71,11 +72,17 @@ def build_panel(root: Path, log=print) -> Dict[str, np.ndarray]:
                     if eligible_stock(r[F["ISU_CD"]], r[F["ISU_NM"]], r[F["SECT_TP_NM"]]):
                         yield board, r
     boards: Dict[str, str] = {}
+    traded = []
     for n, day in enumerate(days):
+        any_close = False
         for board, r in rows_of(day):
             boards[r[F["ISU_CD"]]] = board
+            any_close = any_close or bool(kr.num(r[F["TDD_CLSPRC"]]))
+        if any_close:                       # the exchange answers for a holiday too, with nothing in it: that is not a session
+            traded.append(day)
         if n % 500 == 0:
             log(f"codes {n}/{len(days)}")
+    days = traded
     symbols = sorted(boards) + list(BOARD_INDEX.values()) + [MARKET]
     col = {c: j for j, c in enumerate(symbols)}
     D, S = len(days), len(symbols)
@@ -328,6 +335,9 @@ class Statements:
                     rec = json.load(fh)
                 if rec.get("rows"):
                     rows = [dict(zip(ROW_FIELDS, r)) for r in rec["rows"]]
+                    for r in rows:                      # DART wrote the same IFRS elements as ``ifrs_X`` until the 2019 business year
+                        if str(r.get("account_id") or "").startswith(OLD_PREFIX):
+                            r["account_id"] = NEW_PREFIX + r["account_id"][len(OLD_PREFIX):]
                     obs = dart.normalize_statements(rows, corp_code=corp, ticker=code, year=year, reprt_code="11011", fs_div=rec["fs_div"])
                     self._year[key] = dart.extract_concepts(obs, self.klass_of.get(code, "NON_FINANCIAL"))
         return self._year[key]

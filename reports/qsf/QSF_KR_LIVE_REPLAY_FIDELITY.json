@@ -1,0 +1,60 @@
+{
+ "status": "REAL",
+ "session": "2026-11-09",
+ "live_version": "QSF-1.1.8",
+ "replay_names": 300,
+ "tables": {
+  "SWING": {
+   "compared": 294,
+   "TECHNICAL": {
+    "rank_corr": 0.9999357780944275,
+    "median_abs_diff": 0.06644183096967993,
+    "both_have": 294,
+    "only_live": 0,
+    "only_replay": 0
+   },
+   "FUNDAMENTAL": {
+    "rank_corr": 0.9999999999999998,
+    "median_abs_diff": 0.0,
+    "both_have": 291,
+    "only_live": 2,
+    "only_replay": 0
+   },
+   "RISK": {
+    "rank_corr": 0.9999905554750146,
+    "median_abs_diff": 0.0006826768672514305,
+    "both_have": 294,
+    "only_live": 0,
+    "only_replay": 0
+   }
+  },
+  "LONG_TERM": {
+   "compared": 294,
+   "TECHNICAL": {
+    "rank_corr": 0.9997432162516394,
+    "median_abs_diff": 0.11796033790640337,
+    "both_have": 293,
+    "only_live": 0,
+    "only_replay": 0
+   },
+   "FUNDAMENTAL": {
+    "rank_corr": 1.0,
+    "median_abs_diff": 4.704454426018856e-08,
+    "both_have": 291,
+    "only_live": 2,
+    "only_replay": 0
+   },
+   "RISK": {
+    "rank_corr": 0.9945854960143232,
+    "median_abs_diff": 0.0,
+    "both_have": 294,
+    "only_live": 0,
+    "only_replay": 0
+   }
+  }
+ },
+ "live_names": 295,
+ "both": 294,
+ "passed": true,
+ "threshold": 0.9
+}
