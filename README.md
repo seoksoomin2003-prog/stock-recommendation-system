@@ -463,6 +463,11 @@ and what would change the label.
   job retries at its next slot. The printed `reason`, `download` and `last_dates` say which. The daily job also notes on a failed
   step how long the Mac slept while it ran: a sleeping Mac only runs in short maintenance wakes, which on 2026-11-10 stretched a
   7-minute step to 2.5 hours and cut the US download. Keep the Mac awake (on power) around 07:10 KST.
+* Korean validation (2026-11-10): the live Korean scores were replayed on 2019-2026 with point-in-time inputs
+  (`terminal/qsf/research_kr_live.py`). The long score ranks stocks within the scanned universe but its top fifth did not beat the
+  market; the swing score did not pass; the scanned universe itself (top 300 by traded value) lagged a market-value universe
+  (`reports/QSF_KR_LIVE_REPLAY_RESULTS.md`, `reports/QSF_KR_UNIVERSE_TEST_RESULTS.md`). A swing challenger without the technical
+  domain is recorded daily apart from the live score (`reports/QSF_KR_SWING_CHALLENGER_PROTOCOL.md`).
 * Korean daily bars (QSF-1.1.8): built from the KRX daily snapshots in `research_data/krx` by chaining each day's official change
   rate, which already allows for splits; Yahoo is used only for days KRX has not published yet and for its dividend ratio
   (`terminal/qsf/kr_bars.py`, cache `data/qsf/krx_panel.npz`). `qsf price-audit` checks the bars the scores read
