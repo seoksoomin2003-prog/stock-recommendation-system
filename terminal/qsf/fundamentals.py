@@ -90,17 +90,45 @@ def kr_basic_eps(concepts: Dict[str, Dict]) -> Dict[str, Any]:
     return {**cont, "value": value}
 
 
+PARENT_OF = {"net_income": "net_income_all", "equity": "equity_all"}      # the parent's series and the whole group's
+SAME_FIGURE = 0.001
+
+
+def _real(row: Optional[Dict]) -> bool:
+    return bool(row) and row.get("status") == "REAL"
+
+
+def _no_outside_holders(concepts: Dict[str, Dict]) -> bool:
+    """The whole is the parent's in this statement: no parent line (a separate statement, or a group without outside holders),
+    or parent lines equal to the totals.  One parent line that differs from its total means outside holders exist."""
+    for parent, total in (("net_income_parent", "net_income"), ("equity_parent", "total_equity")):
+        p, t = concepts.get(parent), concepts.get(total)
+        if _real(p) and _real(t) and abs(float(p["value"]) - float(t["value"])) > SAME_FIGURE * abs(float(t["value"])):
+            return False
+    return True
+
+
 def extract_kr(statements: Dict[int, Dict[str, Dict]]) -> Dict[str, Any]:
-    """``statements``: {year: {concept: extract_concepts row}}.  One basis across years or growth stops at the change."""
+    """``statements``: {year: {concept: extract_concepts row}}.  One basis across years or growth stops at the change.
+
+    Profit and equity are the parent's.  A year whose statement has no parent line takes the total when that statement shows no
+    outside holders: separate statements never have the line, so a company that moved between consolidated and separate reports
+    used to lose profit and equity for every year on its current basis (131970, 010580, 033790)."""
     names = {"revenue": "revenue", "op_income": "operating_income", "net_income": "net_income_parent", "net_income_all": "net_income",
              "equity": "equity_parent", "equity_all": "total_equity", "assets": "total_assets", "liabilities": "total_liabilities",
              "current_assets": "current_assets", "current_liabilities": "current_liabilities", "cash": "cash_and_equivalents",
              "ocf": "operating_cash_flow", "capex": "capex", "eps": "eps_basic", "dividends": "dividends_paid"}
     out: Dict[str, Any] = {k: [] for k in names}
     bases = set()
+    has_parent_line = {k: False for k in PARENT_OF}
     for year in sorted(statements):
+        whole_is_parents = _no_outside_holders(statements[year])
         for metric, concept in names.items():
             r = kr_basic_eps(statements[year]) if metric == "eps" else statements[year].get(concept) or {}
+            if metric in PARENT_OF:
+                has_parent_line[metric] = has_parent_line[metric] or _real(r)
+                if not _real(r) and whole_is_parents:
+                    r = statements[year].get(names[PARENT_OF[metric]]) or {}
             if r.get("status") == "REAL":
                 val = abs(float(r["value"])) if metric == "capex" else float(r["value"])    # filers differ on the sign of an outflow
                 row = {"end": r["period_end"], "val": val, "filed": r["receipt_date"], "basis": r["basis"]}
@@ -108,8 +136,9 @@ def extract_kr(statements: Dict[int, Dict[str, Dict]]) -> Dict[str, Any]:
                     row["currency"] = r["currency"]          # a few groups file in dollars; the price is in won
                 out[metric].append(row)
                 bases.add(r["basis"])
-    out["net_income"] = out["net_income"] or out.pop("net_income_all", [])
-    out["equity"] = out["equity"] or out.pop("equity_all", [])
+    for metric, whole in PARENT_OF.items():
+        if not has_parent_line[metric]:       # no parent line in any year: the whole stands in and is not kept a second time
+            out[metric] = out.pop(whole, [])
     out["_bases"] = sorted(bases)
     return out
 

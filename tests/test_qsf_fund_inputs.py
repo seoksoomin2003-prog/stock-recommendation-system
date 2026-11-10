@@ -290,3 +290,36 @@ def test_won_statements_carry_no_currency_mark_and_are_unchanged():
 
 def dart_year(*accounts):
     return kr_concepts(*accounts)
+
+
+# ---------------------------------------------------------------------- a year without a parent line
+def kr_year(y, basis, **vals):
+    """One year's concepts: ni / ni_parent / eq / eq_parent given only when the statement has the line."""
+    concept = {"ni": "net_income", "ni_parent": "net_income_parent", "eq": "total_equity", "eq_parent": "equity_parent", "rev": "revenue", "assets": "total_assets", "liab": "total_liabilities"}
+    return {concept[k]: {"status": "REAL", "value": v, "period_end": f"{y}-12-31", "receipt_date": f"{y + 1}-03-20", "basis": basis} for k, v in vals.items()}
+
+
+def test_a_company_that_went_back_to_separate_statements_keeps_profit_and_equity():
+    st = {2022: kr_year(2022, "SEPARATE", ni=8.0, eq=40.0, rev=80.0, assets=100.0, liab=60.0), 2023: kr_year(2023, "SEPARATE", ni=9.0, eq=45.0, rev=90.0, assets=100.0, liab=55.0),
+          2024: kr_year(2024, "CONSOLIDATED", ni=11.0, ni_parent=10.0, eq=55.0, eq_parent=50.0, rev=100.0, assets=120.0, liab=65.0),
+          2025: kr_year(2025, "SEPARATE", ni=12.0, eq=60.0, rev=120.0, assets=100.0, liab=40.0)}
+    out = f.extract_kr(st)
+    assert [(r["end"][:4], r["val"], r["basis"][0]) for r in out["net_income"]] == [("2022", 8.0, "S"), ("2023", 9.0, "S"), ("2024", 10.0, "C"), ("2025", 12.0, "S")]
+    m = metrics(out, close=10.0, shares=30.0)
+    assert m["basis"] == "SEPARATE" and m["roe"] == pytest.approx(0.2) and m["pb"] == pytest.approx(5.0) and m["debt_equity"] == pytest.approx(40.0 / 60.0)
+    assert m["rev_growth"] is None and m["rev_cagr3"] == pytest.approx(1.5 ** (1 / 3) - 1)        # 2024 is on the other basis
+
+
+def test_a_consolidated_year_without_the_parent_line_takes_the_total_only_without_outside_holders():
+    whole = f.extract_kr({2024: kr_year(2024, "CONSOLIDATED", ni=10.0, ni_parent=10.0, eq=50.0, eq_parent=50.0), 2025: kr_year(2025, "CONSOLIDATED", ni=-4.0, eq=46.0, eq_parent=46.0)})
+    assert [r["val"] for r in whole["net_income"]] == [10.0, -4.0]
+    outside = f.extract_kr({2024: kr_year(2024, "CONSOLIDATED", ni=10.0, ni_parent=8.0, eq=50.0, eq_parent=40.0), 2025: kr_year(2025, "CONSOLIDATED", ni=-4.0, eq=46.0, eq_parent=37.0)})
+    assert [r["end"][:4] for r in outside["net_income"]] == ["2024"]               # the 2025 total includes other holders: no parent profit that year
+    assert metrics({**outside, "revenue": rows([100.0, 120.0], basis="CONSOLIDATED")})["roe"] is None
+
+
+def test_a_company_that_never_shows_a_parent_line_is_read_as_before():
+    sep = f.extract_kr({y: kr_year(y, "SEPARATE", ni=float(y - 2015), eq=50.0) for y in (2024, 2025)})
+    assert [r["val"] for r in sep["net_income"]] == [9.0, 10.0] and "net_income_all" not in sep and "equity_all" not in sep
+    grp = f.extract_kr({2025: kr_year(2025, "CONSOLIDATED", ni=10.0, ni_parent=8.0, eq=50.0, eq_parent=40.0)})
+    assert grp["net_income"][0]["val"] == 8.0 and grp["net_income_all"][0]["val"] == 10.0 and grp["equity_all"][0]["val"] == 50.0
