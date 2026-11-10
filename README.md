@@ -504,6 +504,10 @@ and what would change the label.
   rate, which already allows for splits; Yahoo is used only for days KRX has not published yet and for its dividend ratio
   (`terminal/qsf/kr_bars.py`, cache `data/qsf/krx_panel.npz`). `qsf price-audit` checks the bars the scores read
   (`reports/QSF_PRICE_AUDIT_2026_11_09.md`).
+* Korean scan safeguards (2026-11-11): a stored download of Korean bars is reused only when at least 80% of its symbols have a
+  bar on the session being scored, otherwise it is downloaded again; a whole-market Korean scan with fewer than 200 stocks is not
+  recorded (`UNIVERSE_TOO_SMALL`) and waits for the next run (`markets/kr/acquisition.py`, `tests/test_kr_stale_cache.py`,
+  `reports/QSF_KR_PARTIAL_RECORD_2026_11_11.md`).
 
 ## 6. Tests
 
