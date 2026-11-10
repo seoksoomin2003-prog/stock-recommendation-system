@@ -254,3 +254,39 @@ def test_product_sales_are_revenue_only_when_the_statement_proves_it():
     assert kr_concepts(("IS", GOODS, "100"))["revenue"]["status"] == "UNAVAILABLE"                                                 # nothing to prove it with
     std = kr_concepts(("IS", REV, "300"), ("IS", GOODS, "100"), ("IS", "ifrs-full_CostOfSales", "20"), ("IS", "ifrs-full_GrossProfit", "80"))
     assert std["revenue"]["value"] == 300.0
+
+
+# ---------------------------------------------------------------------- statements in another currency than the price
+def usd_group():
+    """Won statements for 2022, dollar statements since 2023 (241560)."""
+    def series(vals):
+        return [{**r, **({} if r["end"] < "2023" else {"currency": "USD"})} for r in rows(vals, basis="CONSOLIDATED")]
+    return {"revenue": series([8.0e12, 7.0e9, 6.5e9, 6.0e9]), "net_income": series([6.0e11, 7.0e8, 4.0e8, 3.0e8]), "equity": series([5.0e12, 4.6e9, 4.8e9, 5.0e9]),
+            "assets": series([1.0e13, 8.0e9, 8.5e9, 9.0e9]), "ocf": series([9.0e11, 9.0e8, 8.0e8, 7.0e8]), "capex": series([2.0e11, 2.0e8, 2.0e8, 2.0e8]),
+            "eps": series([6000.0, 7.0, 4.0, 3.0])}
+
+
+def test_dollar_statements_are_never_set_against_a_won_price():
+    m = metrics(usd_group(), close=51600.0, shares=1.0e8)
+    assert m["pe"] is None and m["pb"] is None and m["fcf_yield"] is None and m["eps"] is None
+    assert m["currency"] == "USD" and "USD" in m["currency_note"] and m["market_cap"] == pytest.approx(5.16e12)
+    assert m["roe"] == pytest.approx(0.06) and m["net_margin"] == pytest.approx(0.05) and m["fcf_margin"] == pytest.approx(5.0e8 / 6.0e9)    # inside the statements
+
+
+def test_growth_stops_where_the_currency_changed():
+    m = metrics(usd_group(), close=51600.0, shares=1.0e8)
+    assert m["rev_growth"] == pytest.approx(6.0 / 6.5 - 1) and m["eps_growth"] == pytest.approx(-0.25)
+    assert m["rev_cagr3"] is None and m["eps_cagr3"] is None          # 2022 is in won
+
+
+def test_won_statements_carry_no_currency_mark_and_are_unchanged():
+    won = kr_concepts(("IS", REV, "300"), ("IS", "ifrs-full_ProfitLoss", "30"))
+    usd = {2025: {k: v for k, v in dart_year(("IS", REV, "300", "USD"), ("IS", "ifrs-full_ProfitLoss", "30", "USD")).items()}}
+    assert "currency" not in f.extract_kr({2025: won})["revenue"][0]
+    assert f.extract_kr(usd)["revenue"][0]["currency"] == "USD" and f.extract_kr(usd)["net_income"][0]["currency"] == "USD"
+    m = metrics(base(eps=rows([0.8, 0.9, 1.0, 1.2])))
+    assert "currency" not in m and m["pe"] == pytest.approx(10.0 / 1.2)
+
+
+def dart_year(*accounts):
+    return kr_concepts(*accounts)

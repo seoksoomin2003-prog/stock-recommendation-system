@@ -72,6 +72,7 @@ def extract_us(facts: Dict[str, Any]) -> Dict[str, List[Dict]]:
     return out
 
 
+PRICE_CURRENCY_KR = "KRW"
 EPS_PART_REPEAT = 0.02      # a "discontinued" EPS within this of the continuing one is the same figure tagged twice, not a second part
 
 
@@ -102,7 +103,10 @@ def extract_kr(statements: Dict[int, Dict[str, Dict]]) -> Dict[str, Any]:
             r = kr_basic_eps(statements[year]) if metric == "eps" else statements[year].get(concept) or {}
             if r.get("status") == "REAL":
                 val = abs(float(r["value"])) if metric == "capex" else float(r["value"])    # filers differ on the sign of an outflow
-                out[metric].append({"end": r["period_end"], "val": val, "filed": r["receipt_date"], "basis": r["basis"]})
+                row = {"end": r["period_end"], "val": val, "filed": r["receipt_date"], "basis": r["basis"]}
+                if r.get("currency") not in (None, "", PRICE_CURRENCY_KR):
+                    row["currency"] = r["currency"]          # a few groups file in dollars; the price is in won
+                out[metric].append(row)
                 bases.add(r["basis"])
     out["net_income"] = out["net_income"] or out.pop("net_income_all", [])
     out["equity"] = out["equity"] or out.pop("equity_all", [])
@@ -214,6 +218,13 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     if latest_basis:
         series = {k: [r for r in s if r.get("basis", latest_basis) == latest_basis] for k, s in series.items()}
         known = {k: [r for r in s if r.get("basis", latest_basis) == latest_basis] for k, s in known.items()}
+    # One currency only, the newest statement's: a row says so only when it is not the price's currency.  Growth stops at a change, and
+    # nothing in another currency is set against the price or the market value.
+    rows = [r for s in series.values() for r in s]
+    currency = max(rows, key=lambda r: (r["end"], r["filed"])).get("currency") if rows else None
+    if any(r.get("currency") != currency for r in rows):
+        series = {k: [r for r in s if r.get("currency") == currency] for k, s in series.items()}
+        known = {k: [r for r in s if r.get("currency") == currency] for k, s in known.items()}
 
     if not series.get("net_income") and not series.get("revenue"):
         return {"status": "UNAVAILABLE", "reason": "재무 수치를 찾지 못했습니다."}
@@ -342,6 +353,9 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         "share_change": None if change_scale_error else growth("shares_avg"), "share_scale_error": sec_scale_error or change_scale_error, "returns_capital": (bool((bb or 0) > 0 or (dv or 0) != 0) if (bb is not None or dv is not None) else None),
         "market_cap": mcap, "eps": eps, "eps_reported": eps_reported, "pe": pe, "pe_basis": pe_basis if pe is not None else None, "pb": div(mcap, eq) if (eq or 0) > 0 else None, "fcf_yield": div(fcf * parent_share if fcf is not None and parent_share else fcf, mcap), "parent_share": parent_share, "insider_pct": insider_pct,
     }
+    if currency:
+        out.update({k: None for k in ("pe", "pe_basis", "pb", "fcf_yield", "eps")}, currency=currency,
+                   currency_note=f"재무제표가 {currency} 기준이라 원화 주가와 비교하는 PER·PBR·FCF 수익률·주당순이익을 계산하지 않습니다.")
     return out
 
 
