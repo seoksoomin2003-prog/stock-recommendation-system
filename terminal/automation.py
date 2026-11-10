@@ -13,6 +13,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 from contextlib import contextmanager
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -24,6 +25,7 @@ from utils import nyse_calendar
 LABEL = "com.quantengine.daily"
 SCHEDULE = ((7, 10), (8, 10), (12, 10), (20, 10))     # KST: the US close is 06:00-07:00, later slots are retries
 STEP_TIMEOUT = 45 * 60
+SLEPT_NOTE_S = 120                                  # a step during which the Mac slept this long says so
 HOLDINGS_EVERY_DAYS, HOLDINGS_FRESH_DAYS = 7, 90     # KODEX holdings: retry cadence while missing, and refresh age
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
@@ -158,7 +160,8 @@ def _is_date_name(name: str) -> bool:
 
 class Daily:
     def __init__(self, base: Path, now: Callable[[], datetime] = None, runner: Callable = None,
-                 telegram: Callable = None, macos: Callable = None, terminal: Any = None, backup_dir: Path = None):
+                 telegram: Callable = None, macos: Callable = None, terminal: Any = None, backup_dir: Path = None,
+                 clocks: Any = None):
         self.base = Path(base)
         self.dir = self.base / "data" / "automation"
         self.state_file = self.dir / "state.json"
@@ -168,6 +171,8 @@ class Daily:
         self.macos = macos or notify.send_macos
         self._terminal = terminal
         self.backup_dir = backup_dir
+        # wall time keeps running while the Mac sleeps, mach_absolute_time (time.monotonic) does not: the gap is time asleep
+        self.clocks = clocks or (time.time, time.monotonic)
 
     # ------------------------------------------------------------------ state
     def state(self) -> Dict[str, Any]:
@@ -214,6 +219,18 @@ class Daily:
         recs, integ = Lab(self.base, now=self.now).read_ledger()
         return integ["status"] == "OK" and any(r["signal_session"] == session for r in recs)
 
+    def _timed_step(self, name: str, session: str) -> Dict[str, Any]:
+        """A step, plus how long the Mac slept while it ran.  A sleeping Mac only runs in short maintenance wakes, so a step can take
+        hours and its downloads get cut (2026-11-10).  A failure says so, so it is not read as a data or code problem."""
+        wall, mono = (c() for c in self.clocks)
+        res = self._step(name, session)
+        slept = (self.clocks[0]() - wall) - (self.clocks[1]() - mono)
+        if slept >= SLEPT_NOTE_S:
+            res["slept_minutes"] = round(slept / 60)
+            if res.get("status") == FAILED:
+                res["detail"] = f"{res.get('detail') or '실패'} · 실행 중 맥이 약 {res['slept_minutes']}분 잠듦"
+        return res
+
     def _step(self, name: str, session: str) -> Dict[str, Any]:
         at = self.now().isoformat()
         try:
@@ -231,10 +248,10 @@ class Daily:
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else f"코드 {rc}"}
             if name == "QSF":
                 rc = self.runner(name, ["qsf", "scan"])
-                return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else f"코드 {rc}"}
+                return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else "다운로드 끊김" if rc == 4 else f"코드 {rc}"}
             if name == "QSF_KR":
                 rc = self.runner(name, ["--market", "KR", "qsf", "scan"])
-                return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else f"코드 {rc}"}
+                return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else "다운로드 끊김" if rc == 4 else f"코드 {rc}"}
             if name in ("NEWS", "NEWS_KR"):
                 rc = self.runner(name, ["news", "record"] if name == "NEWS" else ["--market", "KR", "news", "record"])
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "점수 기록 없음" if rc == 3 else f"코드 {rc}"}
@@ -428,7 +445,7 @@ class Daily:
             pending.append("BACKUP")
         order = list(STEP_NAMES)
         for name in sorted(set(pending), key=order.index):
-            steps[name] = self._step(name, session)
+            steps[name] = self._timed_step(name, session)
             self._save(st)
         st["kr_day"] = kr_day
         self._kr_holdings(st)

@@ -575,6 +575,25 @@ def test_scan_records_and_refuses_partial_data(tmp_path):
     q2 = QSF(tmp_path / "b", src=Late(), now=lambda: NOW, terminal=FakeTerm())
     r2 = q2.scan("US", tickers=[f"T{k}" for k in range(25)])
     assert r2["status"] == "DATA_NOT_READY" and not q2.ledger.read_index()["rows"]
+    assert r2["reason"] == "NOT_PUBLISHED" and r2["download"]["failed"] == 0 and r2["last_dates"] == {"2026-11-03": 25}
+
+
+def test_a_cut_download_is_not_called_unpublished(tmp_path):
+    class Cut(FakeSrc):
+        def yahoo_history(self, symbols, period="2y"):
+            if "SPY" in symbols or len(symbols) > 3:          # the scan's price chunks; context series still answer
+                raise ConnectionError("asleep")
+            return super().yahoo_history(symbols, period)
+    q = QSF(tmp_path, src=Cut(), now=lambda: NOW, terminal=FakeTerm())
+    r = q.scan("US", tickers=[f"T{k}" for k in range(25)])
+    assert r["status"] == "DATA_NOT_READY" and r["reason"] == "DOWNLOAD_FAILED" and not q.ledger.read_index()["rows"]
+    assert r["download"] == {"chunks": 1, "failed": 1, "kinds": {"ConnectionError": 1}} and r["no_bars"] == 25
+
+    class Empty(FakeSrc):
+        def yahoo_history(self, symbols, period="2y"):
+            return {} if len(symbols) > 3 else super().yahoo_history(symbols, period)
+    r = QSF(tmp_path / "e", src=Empty(), now=lambda: NOW, terminal=FakeTerm()).scan("US", tickers=[f"T{k}" for k in range(25)])
+    assert r["reason"] == "DOWNLOAD_FAILED" and r["download"]["kinds"] == {"EMPTY_REPLY": 1}
 
 
 def test_kr_uses_no_us_indicators_and_missing_key_is_not_zero(tmp_path):

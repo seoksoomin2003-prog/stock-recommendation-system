@@ -385,3 +385,26 @@ def test_price_audit_runs_in_the_daily_job_and_never_stops_it(tmp_path, monkeypa
     monkeypatch.setattr(price_audit, "run", lambda *a, **k: 1 / 0)
     st = {"sessions": {}}
     assert d._price_audit(st)["error"] == "ZeroDivisionError"
+
+
+def test_a_cut_download_and_a_sleeping_mac_are_named(tmp_path, monkeypatch):
+    monkeypatch.setenv("QPP_CAPITAL", "1000")
+    d, _, _ = make(tmp_path, rc={"QSF": 4, "QSF_KR": 3})
+    ticks = {"wall": 0.0, "mono": 0.0}
+
+    def wall():
+        ticks["wall"] += 700.0
+        return ticks["wall"]
+
+    def mono():
+        ticks["mono"] += 100.0
+        return ticks["mono"]
+    d.clocks = (wall, mono)                                    # each step: 600 s more on the wall clock than awake
+    steps = d.run()["steps"]
+    assert steps["QSF"]["status"] == automation.FAILED and steps["QSF"]["detail"] == "다운로드 끊김 · 실행 중 맥이 약 10분 잠듦"
+    assert steps["QSF_KR"]["detail"] == "데이터 미준비 · 실행 중 맥이 약 10분 잠듦" and steps["QSF"]["slept_minutes"] == 10
+    assert steps["TRACK"]["status"] == automation.OK and steps["TRACK"]["detail"] is None and steps["TRACK"]["slept_minutes"] == 10
+    (tmp_path / "awake").mkdir()
+    d2, _, _ = make(tmp_path / "awake", rc={"QSF": 3})
+    got = d2.run()["steps"]["QSF"]
+    assert got["detail"] == "데이터 미준비" and "slept_minutes" not in got

@@ -488,7 +488,9 @@ def cmd_qsf(args) -> int:
                 print("prices:", json.dumps({k: v for k, v in q.archive_prices(market).items() if k != "not_in_scan"}, ensure_ascii=False))
             except Exception as exc:
                 print("prices: FAILED", type(exc).__name__)
-        return 0 if res["status"] == "REAL" else 3 if res["status"] == "DATA_NOT_READY" else 2
+        if res["status"] == "DATA_NOT_READY":           # 4: price requests failed outright (no connection, the Mac asleep); 3: the day is not out yet
+            return 4 if res.get("reason") == "DOWNLOAD_FAILED" else 3
+        return 0 if res["status"] == "REAL" else 2
     if args.action == "kr-etf-holdings":
         from terminal import kr_etf_holdings
         res = kr_etf_holdings.refresh(PROJECT_ROOT)

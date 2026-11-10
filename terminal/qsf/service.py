@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import time
+from collections import Counter
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -48,6 +49,8 @@ class QSF:
         self.base = Path(base)
         self.src = src
         self.now = now or (lambda: datetime.now(timezone.utc))
+        self._download_failures: List[str] = []           # price requests of the current US scan that failed outright
+        self._download_chunks: Optional[int] = None
         self.dir = self.base / "data" / "qsf"
         self.cache = FileCache(self.dir / "cache")
         self._sector_memo: Dict[str, Any] = {}
@@ -92,8 +95,11 @@ class QSF:
             return old["data"]
         try:
             data = self.src.yahoo_history(chunk, "2y") or {}
-        except Exception:
+        except Exception as exc:            # a cut connection (the Mac asleep, DNS) is told apart from a day Yahoo has not published
+            self._download_failures.append(type(exc).__name__)
             return {}
+        if not data:
+            self._download_failures.append("EMPTY_REPLY")
         if ready(data):
             self.cache.write(key, data)
         return data
@@ -467,6 +473,7 @@ class QSF:
         session = self._session("US")
         symbols = sorted(set(tickers) | {"SPY"})
         bars: Dict[str, List[Dict]] = {}
+        self._download_failures, self._download_chunks = [], (len(symbols) + 99) // 100
         for i in range(0, len(symbols), 100):
             bars.update(self._session_bars(symbols[i:i + 100], session))
             if progress:
@@ -516,6 +523,7 @@ class QSF:
 
     def scan(self, market: str = "US", tickers: Optional[List[str]] = None, record: bool = True, progress=None) -> Dict[str, Any]:
         started = time.time()
+        self._download_failures, self._download_chunks = [], None          # only this scan's requests count
         if market == "US":
             tickers = tickers or sorted(set(self.terminal.lab.universe()["tickers"]) | {t for t in self.terminal.watchlist() if not t.startswith("^")})
             pre = self._us_scan_input(tickers, progress)
@@ -528,7 +536,8 @@ class QSF:
         behind = market == "KR" and day < self._last_weekday_done()
         if record and (not bench_ok or behind or at_session < 0.9 * max(len(tickers), 1)):
             # Recording now would permanently store a day of blocked or partial snapshots.  Retried at the next slot.
-            return {"status": "DATA_NOT_READY", "market": market, "session": day, "at_session": at_session, "tickers": len(tickers), "rows": [], "errors": {}}
+            return {"status": "DATA_NOT_READY", "market": market, "session": day, "at_session": at_session, "tickers": len(tickers), "rows": [], "errors": {},
+                    **self._not_ready_reason(pre, day, bench_ok, behind, at_session < 0.9 * max(len(tickers), 1))}
         rows, cards, errors = [], [], {}
         for k, t in enumerate(tickers, 1):
             try:
@@ -561,6 +570,16 @@ class QSF:
         tmp.write_text(json.dumps(summary, ensure_ascii=False, default=str), encoding="utf-8")
         os.replace(tmp, self.dir / f"latest_{market}.json")
         return summary
+
+    def _not_ready_reason(self, pre: Dict[str, Dict], day: str, bench_ok: bool, behind: bool, few: bool) -> Dict[str, Any]:
+        """Why a scan was not recorded.  DOWNLOAD_FAILED: some price requests failed outright (no connection, empty reply), so the
+        day may well be published; NOT_PUBLISHED: the replies came back without the session for too many stocks; KR_BEHIND and
+        BENCHMARK_NOT_READY name the other check that failed."""
+        failed = list(getattr(self, "_download_failures", []) or [])
+        last = Counter(_clean(x["bars"], day)[-1]["date"] for x in pre.values() if _clean(x["bars"], day))
+        reason = "DOWNLOAD_FAILED" if failed else "KR_BEHIND" if behind else "NOT_PUBLISHED" if few else "BENCHMARK_NOT_READY"
+        return {"reason": reason, "download": {"chunks": getattr(self, "_download_chunks", None), "failed": len(failed), "kinds": dict(Counter(failed))},
+                "last_dates": dict(last.most_common(3)), "no_bars": sum(1 for x in pre.values() if not _clean(x["bars"], day))}
 
     def _last_weekday_done(self) -> str:
         """Latest weekday whose KRX bar should be complete.  A holiday also lands here: no bar means no snapshot, which is right."""

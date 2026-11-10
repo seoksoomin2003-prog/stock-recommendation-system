@@ -451,7 +451,11 @@ and what would change the label.
 * QSF is separate from the frozen P6-11B model. It imports nothing from the frozen core, and the two scores are never merged.
 * Missing data lowers coverage and is never treated as 0. Snapshots are stored in `data/qsf/ledger/` as append-only, hash-chained
   shards. A shard recorded from bad data gets a VOID row and stays on disk.
-* Exit code 3 from `qsf scan` means Yahoo has not finished the session yet. The daily job retries at its next slot.
+* Exit code 3 from `qsf scan` means Yahoo has not finished the session yet; exit code 4 means price requests failed outright
+  (no connection, or the Mac went to sleep mid-download), so the day may well be out. Either way nothing is recorded and the daily
+  job retries at its next slot. The printed `reason`, `download` and `last_dates` say which. The daily job also notes on a failed
+  step how long the Mac slept while it ran: a sleeping Mac only runs in short maintenance wakes, which on 2026-11-10 stretched a
+  7-minute step to 2.5 hours and cut the US download. Keep the Mac awake (on power) around 07:10 KST.
 * Korean daily bars (QSF-1.1.8): built from the KRX daily snapshots in `research_data/krx` by chaining each day's official change
   rate, which already allows for splits; Yahoo is used only for days KRX has not published yet and for its dividend ratio
   (`terminal/qsf/kr_bars.py`, cache `data/qsf/krx_panel.npz`). `qsf price-audit` checks the bars the scores read
