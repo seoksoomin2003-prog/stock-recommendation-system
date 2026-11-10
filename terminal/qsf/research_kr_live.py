@@ -190,7 +190,7 @@ class Panel:
         return out
 
 
-def universe(px: Panel, i: int, size: int = SIZE, exclude: Optional[np.ndarray] = None) -> np.ndarray:
+def universe(px: Panel, i: int, size: int = SIZE, exclude: Optional[np.ndarray] = None, by: str = "value") -> np.ndarray:
     """Columns of the day's liquid universe, by the live rule: mean traded value of the last 20 valid sessions, top ``size``.
     ``exclude`` marks columns that are not operating companies (fund vehicles), known only once the industry classes are."""
     d = px.data
@@ -207,8 +207,12 @@ def universe(px: Panel, i: int, size: int = SIZE, exclude: Optional[np.ndarray] 
     ok = np.isfinite(d["close"][i]) & (count >= WINDOW) & ~halted & ~px.is_index
     if exclude is not None:
         ok &= ~exclude
+    key = mean
+    if by == "cap":                       # the universe test: the same conditions, ranked by the day's market value instead
+        key = d["cap"][i].astype(float)
+        ok &= np.isfinite(key)
     idx = np.flatnonzero(ok)
-    idx = idx[np.lexsort((np.array(px.symbols)[idx], -mean[idx]))]
+    idx = idx[np.lexsort((np.array(px.symbols)[idx], -key[idx]))]
     return idx[:size]
 
 
@@ -227,12 +231,12 @@ def statement_path(root: Path, corp: str, year: int) -> Path:
     return root / str(year) / f"{corp}.json.gz"
 
 
-def needs(px: Panel, rows: Sequence[int], extra_rows: Sequence[int] = ()) -> Dict[str, List[int]]:
+def needs(px: Panel, rows: Sequence[int], extra_rows: Sequence[int] = (), by: str = "value") -> Dict[str, List[int]]:
     """Stock code -> business years a score will ask for (the last four before each day the stock is in the universe)."""
     out: Dict[str, set] = {}
     for i in [*rows, *extra_rows]:
         y = int(px.dates[i][:4])
-        for j in universe(px, i):
+        for j in universe(px, i, by=by):
             out.setdefault(px.symbols[j], set()).update(range(max(2015, y - YEARS_BACK), y))
     return {c: sorted(v) for c, v in out.items()}
 
@@ -362,13 +366,13 @@ class Statements:
 
 
 # ---------------------------------------------------------------------- scoring
-def score_day(px: Panel, i: int, st: Statements) -> List[Dict[str, Any]]:
+def score_day(px: Panel, i: int, st: Statements, by: str = "value") -> List[Dict[str, Any]]:
     """Every universe stock scored by the live engine with what was public on day ``i``.  No return is read."""
     day = px.dates[i]
     bench = {b: px.bars(px.col[name], i) for b, name in BOARD_INDEX.items()}
     close = px.data["close"]
     ctxs, rets = {}, {}
-    for j in universe(px, i, exclude=st.not_operating(px)):
+    for j in universe(px, i, exclude=st.not_operating(px), by=by):
         b = px.bars(j, i)
         if not b or b[-1]["date"] != day:
             continue
@@ -402,8 +406,8 @@ def score_day(px: Panel, i: int, st: Statements) -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------- steps without returns
-def _scores_path(base: Path) -> Path:
-    return Path(base) / DATA / "scores.json.gz"
+def _scores_path(base: Path, by: str = "value") -> Path:
+    return Path(base) / DATA / ("scores.json.gz" if by == "value" else f"scores_{by}.json.gz")
 
 
 def _live_session(base: Path) -> Optional[str]:
@@ -435,7 +439,7 @@ def ensure_panel(base: Path, log=print) -> Panel:
     return Panel(z)
 
 
-def download(base: Path, log=print, cap: int = DAILY_CAP) -> Dict[str, Any]:
+def download(base: Path, log=print, cap: int = DAILY_CAP, by: str = "value") -> Dict[str, Any]:
     """Statements and industry codes the replay needs.  Reads no return.  Run again on a later day if the cap stops it."""
     import requests
     from terminal.qsf import dart_history as dh
@@ -447,7 +451,7 @@ def download(base: Path, log=print, cap: int = DAILY_CAP) -> Dict[str, Any]:
     rows = eval_rows(px)
     live = _live_session(base)
     extra = [px.dates.index(live)] if live in px.dates else []
-    wanted = needs(px, rows, extra)
+    wanted = needs(px, rows, extra, by=by)
     corp_of = dh.parse_corp_list(requests.get(dh.BASE + "corpCode.xml", params={"crtfc_key": key}, timeout=120).content)
     calls = 0
 
@@ -484,7 +488,9 @@ def download(base: Path, log=print, cap: int = DAILY_CAP) -> Dict[str, Any]:
     skipped = sum(len(ys) for ys in wanted.values()) - sum(len(ys) for ys in known.values())
     res = download_statements(base / SINGLE, known, corp_of, hint,
                               lambda corp, year, fs: get("fnlttSinglAcntAll.json", corp_code=corp, bsns_year=str(year), reprt_code="11011", fs_div=fs), cap=cap - calls, log=log)
-    (base / DATA / "corp_codes.json").write_text(json.dumps({c: corp_of[c] for c in wanted if c in corp_of}), encoding="utf-8")
+    codes_path = base / DATA / "corp_codes.json"
+    kept = json.loads(codes_path.read_text(encoding="utf-8")) if codes_path.exists() else {}
+    codes_path.write_text(json.dumps({**kept, **{c: corp_of[c] for c in wanted if c in corp_of}}), encoding="utf-8")
     return {**res, "calls": calls, "stocks": len(wanted), "company_years": sum(len(v) for v in wanted.values()), "not_asked_no_report": skipped,
             "no_dart_code": sorted(c for c in wanted if c not in corp_of)[:50]}
 
@@ -535,7 +541,7 @@ def fidelity(base: Path, log=print) -> Dict[str, Any]:
     return out
 
 
-def prepare(base: Path, log=print) -> Dict[str, Any]:
+def prepare(base: Path, log=print, by: str = "value") -> Dict[str, Any]:
     """Scores for every evaluation day, stored for the one test.  Reads no return."""
     base = Path(base)
     px = ensure_panel(base, log)
@@ -544,11 +550,11 @@ def prepare(base: Path, log=print) -> Dict[str, Any]:
     recs: List[Dict[str, Any]] = []
     t0 = time.time()
     for n, i in enumerate(rows, 1):
-        day = score_day(px, i, st)
+        day = score_day(px, i, st, by)
         recs.extend(day)
         if n % 5 == 0 or n == len(rows):
             log(f"scores {n}/{len(rows)} {px.dates[i]} {len(day)} stocks {time.time() - t0:.0f}s")
-    with gzip.open(_scores_path(base), "wt", encoding="utf-8") as fh:
+    with gzip.open(_scores_path(base, by), "wt", encoding="utf-8") as fh:
         json.dump({"dates": px.dates, "rows": rows, "records": recs}, fh)
     by_day: Dict[int, List[Dict[str, Any]]] = {}
     for r in recs:
@@ -691,3 +697,116 @@ def run_once(base: Path, log=print) -> Dict[str, Any]:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
     return result
+
+
+# ---------------------------------------------------------------------- the universe test (reports/QSF_KR_UNIVERSE_TEST_PROTOCOL.md)
+UNIVERSE_REPORT = Path("reports") / "qsf" / "QSF_KR_UNIVERSE_TEST.json"
+UNIVERSE_PROTOCOL = "reports/QSF_KR_UNIVERSE_TEST_PROTOCOL.md"
+
+
+def download_cap(base: Path, log=print) -> Dict[str, Any]:
+    return download(base, log, by="cap")
+
+
+def prepare_cap(base: Path, log=print) -> Dict[str, Any]:
+    return prepare(base, log, by="cap")
+
+
+def _by_day(stored: Dict[str, Any]) -> Dict[int, List[Dict[str, Any]]]:
+    out: Dict[int, List[Dict[str, Any]]] = {}
+    for r in stored["records"]:
+        out.setdefault(r["i"], []).append(r)
+    return out
+
+
+def universe_returns(view: _View, sets: Dict[str, Dict[int, List[Dict[str, Any]]]], h: int = STEP) -> Dict[str, Any]:
+    """Question 1: each universe held at equal weight and rolled on every evaluation day, next to the market, in each half."""
+    cost = config.round_trip_cost("KR")
+    days = sorted(i for i in set.intersection(*(set(v) for v in sets.values())) if i + h < len(view.dates))
+    S = len(view.px.symbols)
+    r = np.stack([view.px.forward(i, h) for i in days])
+    market = [view.px.market_return(i, h) for i in days]
+    masks = {}
+    for name, by_i in sets.items():
+        m = np.zeros((len(days), S), dtype=bool)
+        for k, i in enumerate(days):
+            m[k, [view.col[x["t"]] for x in by_i[i]]] = True
+        masks[name] = m
+    mid = len(days) // 2
+    out: Dict[str, Any] = {"horizon": h, "periods": len(days), "split": view.dates[days[mid]]}
+    for part, (lo, hi) in {"early": (0, mid), "late": (mid, len(days)), "whole": (0, len(days))}.items():
+        row: Dict[str, Any] = {"first": view.dates[days[lo]], "last": view.dates[days[hi - 1]], "cap_weighted_market": kr.annual_growth(market[lo:hi], h)}
+        for name, m in masks.items():
+            row[name] = kr.annual_growth(kr.rebalance_path(list(m[lo:hi]), r[lo:hi], cost), h)
+        out[part] = row
+    better = [out[p]["cap"] is not None and out[p]["value"] is not None and out[p]["cap"] > out[p]["value"] for p in ("early", "late")]
+    out["reading"] = "FITS_THE_HYPOTHESIS" if all(better) else "DEPENDS_ON_THE_PERIOD" if any(better) else "DOES_NOT_FIT"
+    out["overlap_mean"] = float(np.mean([(masks["cap"][k] & masks["value"][k]).sum() for k in range(len(days))]))
+    return out
+
+
+def _evaluate(view: _View, by_i: Dict[int, List[Dict[str, Any]]], log=print) -> Dict[str, Any]:
+    """Conditions A and B, the other horizons, the domains and the top three, by the first test's code."""
+    from terminal.qsf import sim_picks
+    result: Dict[str, Any] = {"tables": {}, "domains": {}, "money": {}, "primary": {}, "top3": {}}
+    for strategy, hs in HORIZONS.items():
+        for h in hs:
+            result["tables"][f"{strategy}|{h}"] = tables(view, by_i, strategy, h)
+            for d in DOMAINS:
+                result["domains"][f"{strategy}|{d}|{h}"] = {k: v for k, v in tables(view, by_i, f"{strategy}|{d}", h).items() if k in ("dates", "ic", "t", "early", "late")}
+        h = PRIMARY[strategy]
+        t = result["tables"][f"{strategy}|{h}"]
+        a = validate.verdict(t)
+        b = money(view, by_i, strategy)
+        result["money"][strategy] = b
+        result["primary"][strategy] = {"horizon": h, **{k: t.get(k) for k in ("dates", "ic", "t", "spread_net", "buy_excess", "buy_dates", "early", "late", "top_fifth_excess", "bottom_fifth_excess")},
+                                       "condition_a": a, "condition_b": b["passed"], "reading": reading(a["verdict"] == "WEAK_POSITIVE_EVIDENCE", b["passed"])}
+        log(f"{strategy} {h}: {result['primary'][strategy]['reading']}")
+    rng = np.random.default_rng(sim_picks.SEED)
+    cost = config.round_trip_cost("KR")
+    for strategy, hs in HORIZONS.items():
+        for h in hs:
+            rows = sim_picks.day_rows(by_i, view, strategy, h, STEP)
+            if not rows:
+                continue
+            top = [sim_picks.pick_top(r["score"], r["names"], sim_picks.TOP) for r in rows]
+            m = sim_picks.measure(rows, top, cost)
+            sims = sim_picks.random_screens(rows, sim_picks.TOP, cost, rng, sim_picks.RANDOM_SCREENS)
+            m["percentile_vs_random"] = float((sims < m["mean_excess"]).mean() * 100)
+            m["random"] = {"p2_5": float(np.percentile(sims, 2.5)), "p50": float(np.percentile(sims, 50)), "p97_5": float(np.percentile(sims, 97.5))}
+            m["reading"] = sim_picks.reading(m["percentile_vs_random"], m.get("early_excess"), m.get("late_excess"))
+            result["top3"][f"{strategy}|{h}"] = m
+    return result
+
+
+def run_universe_once(base: Path, log=print) -> Dict[str, Any]:
+    base = Path(base)
+    out = base / UNIVERSE_REPORT
+    if out.exists():
+        raise RuntimeError("시험은 한 번만 실행합니다. 이미 결과가 있습니다.")
+    stored = {}
+    for by in ("value", "cap"):
+        with gzip.open(_scores_path(base, by), "rt", encoding="utf-8") as fh:
+            stored[by] = json.load(fh)
+    px = load_panel(base)
+    if any(px.dates[:len(v["dates"])] != v["dates"][:len(px.dates)] for v in stored.values()) or stored["value"]["rows"] != stored["cap"]["rows"]:
+        raise RuntimeError("두 대상의 점수와 가격 패널의 날짜가 맞지 않습니다.")
+    view = _View(px)
+    sets = {by: _by_day(v) for by, v in stored.items()}
+    cap = sets["cap"]
+    recs = stored["cap"]["records"]
+    result: Dict[str, Any] = {"status": "REAL", "protocol": UNIVERSE_PROTOCOL, "evaluations": len(recs), "evaluation_days": len(cap), "first": px.dates[min(cap)], "last": px.dates[max(cap)],
+                              "cost_round_trip": config.round_trip_cost("KR"), "scored_share": {s: float(np.mean([s in r for r in recs])) for s in HORIZONS},
+                              "why_not_scored": {s: _count(w for r in recs for w in r.get(f"{s}|WHY", [])) for s in HORIZONS},
+                              "universe": universe_returns(view, sets),
+                              "note": "첫 재현 시험의 결과를 본 뒤 대상만 바꾼 탐색입니다. 첫 시험의 판정을 바꾸지 않습니다."}
+    result.update(_evaluate(view, cap, log))
+    out.write_text(json.dumps(result, ensure_ascii=False, indent=1), encoding="utf-8")
+    return result
+
+
+def _count(items: Iterable[str]) -> Dict[str, int]:
+    out: Dict[str, int] = {}
+    for x in items:
+        out[x] = out.get(x, 0) + 1
+    return out

@@ -259,3 +259,27 @@ def test_the_return_test_needs_a_passed_fidelity_check_and_runs_once(tmp_path):
     (tmp_path / rl.REPORT).write_text("{}")
     with pytest.raises(RuntimeError, match="한 번만"):
         rl.run_once(tmp_path)
+
+
+def test_market_value_universe_ranks_by_the_days_capitalisation(panel):
+    px, ds = panel
+    assert [px.symbols[j] for j in rl.universe(px, len(ds) - 1, by="cap")][:2] == ["000010", "000020"]
+    assert [px.symbols[j] for j in rl.universe(px, len(ds) - 1, size=1, by="cap")] == ["000010"]
+    assert rl._scores_path(px and __import__("pathlib").Path("/x"), "cap").name == "scores_cap.json.gz" and rl._scores_path(__import__("pathlib").Path("/x")).name == "scores.json.gz"
+
+
+def test_universe_returns_compare_the_two_universes_in_each_half(panel):
+    px, ds = panel
+    view = rl._View(px)
+    days_ = [25, 30, 35, 40]
+    up, down = [{"t": "000010"}], [{"t": "000020"}]                # the rising stock against the falling one
+    got = rl.universe_returns(view, {"value": {i: down for i in days_}, "cap": {i: up for i in days_}}, h=5)
+    assert got["periods"] == 4 and got["reading"] == "FITS_THE_HYPOTHESIS" and got["early"]["cap"] > 0 > got["early"]["value"] and got["overlap_mean"] == 0
+    assert rl.universe_returns(view, {"value": {i: up for i in days_}, "cap": {i: down for i in days_}}, h=5)["reading"] == "DOES_NOT_FIT"
+
+
+def test_the_universe_test_runs_once(tmp_path):
+    (tmp_path / rl.UNIVERSE_REPORT).parent.mkdir(parents=True)
+    (tmp_path / rl.UNIVERSE_REPORT).write_text("{}")
+    with pytest.raises(RuntimeError, match="한 번만"):
+        rl.run_universe_once(tmp_path)
