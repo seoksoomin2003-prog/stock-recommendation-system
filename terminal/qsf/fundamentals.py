@@ -279,9 +279,14 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     by_end = {r["end"]: r["val"] for r in series.get("capex") or []} if fcf is not None else {}
     fcfs = [r["val"] - by_end[r["end"]] > 0 for r in recent("ocf") if r["end"] in by_end]
     nis = [r["val"] > 0 for r in recent("net_income")]
-    # Long-term debt that stopped leaves no debt figure from the parts (short-term debt alone would understate it), so total liabilities apply,
-    # as in ``drop_stale_series``.  Short-term debt missing in the latest year means long-term debt is the figure.
-    debt, debt_long, debt_short = None, at("debt_long"), at("debt_short")
+    # Debt is the two parts of the latest year.  Filers leave a zero untagged, so a part that was exactly 0 a year earlier and is not
+    # in the latest report is still 0.  Long-term debt that stopped at an amount leaves no figure from the parts (short-term debt alone
+    # would understate it) and total liabilities apply, as in ``drop_stale_series``; short-term debt that stopped leaves long-term debt.
+    def debt_part(k):
+        v = at(k)
+        return 0.0 if v is None and at(k, year_back(k)) == 0 else v
+
+    debt, debt_long, debt_short = None, debt_part("debt_long"), debt_part("debt_short")
     long_stopped = bool(series.get("debt_long")) and debt_long is None
     if not long_stopped and (debt_long is not None or debt_short is not None):
         debt = (debt_long or 0.0) + (debt_short or 0.0)
