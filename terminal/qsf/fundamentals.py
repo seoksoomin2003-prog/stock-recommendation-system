@@ -9,6 +9,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 STALE_DAYS = 540     # a fiscal year-end older than 18 months is STALE
 STOPPED_GAP_DAYS = 400   # a series ending this far before the company's newest year has stopped
+YEAR_DAYS = (340, 400)   # two fiscal year-ends this far apart are consecutive years (52- and 53-week years included)
 
 # Each list names the same accounting item; a period takes its first-listed tag.  Total revenue tags come before contract revenue,
 # which leaves out rent, interest and insurance premiums.  Items with another meaning (pre-tax income for operating income) are not substitutes.
@@ -129,6 +130,8 @@ def _scale_differs(a: Optional[float], b: Optional[float]) -> bool:
 
 def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_financial: bool = False, shares: Optional[float] = None,
             source: str = "SEC EDGAR 10-K", insider_pct: Optional[float] = None) -> Dict[str, Any]:
+    """One fiscal year per figure: every level and flow is the latest fiscal year's or None, a ratio needs both ends in the same
+    year, and growth needs the year exactly one (or n) before.  A series that stopped gives no figure, never an older year's."""
     series = {k: _vintage(v, as_of) for k, v in annual.items() if isinstance(v, list) and not k.startswith("_")}
     # One basis only: a company that began consolidating uses the years on its latest basis, and growth stops at the change.
     tagged = [r for s in series.values() for r in s if r.get("basis")]
@@ -137,72 +140,84 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     if latest_basis:
         series = {k: [r for r in s if r.get("basis", latest_basis) == latest_basis] for k, s in series.items()}
 
-    def last(k, back=0):
-        s = series.get(k) or []
-        return s[-1 - back]["val"] if len(s) > back else None
-
     if not series.get("net_income") and not series.get("revenue"):
         return {"status": "UNAVAILABLE", "reason": "재무 수치를 찾지 못했습니다."}
     latest = max((s[-1]["end"] for s in series.values() if s), default=None)
     filed = max((s[-1]["filed"] for s in series.values() if s and s[-1]["end"] == latest), default=None)
-    rev, ni, eq, assets = last("revenue"), last("net_income"), last("equity"), last("assets")
+
+    def at(k, end=latest):
+        """The value of the fiscal year ending ``end``; None when the series has no such year."""
+        return next((r["val"] for r in reversed(series.get(k) or []) if r["end"] == end), None) if end else None
+
+    def year_back(k, n=1):
+        """End of the fiscal year ``n`` years before the latest in this series, or None when that year is not there."""
+        lo, hi = YEAR_DAYS[0] + 365 * (n - 1), YEAR_DAYS[1] + 365 * (n - 1)
+        near = [r["end"] for r in series.get(k) or [] if lo <= _days(r["end"], latest) <= hi]
+        return min(near, key=lambda e: abs(_days(e, latest) - 365 * n)) if near else None
+
+    def recent(k, years=5):
+        """Rows of the latest ``years`` fiscal years, only when the series reaches the latest year."""
+        if at(k) is None:
+            return []
+        return [r for r in series[k] if _days(r["end"], latest) <= 365 * (years - 1) + YEAR_DAYS[1] - 365]
+
+    rev, ni, eq, assets = at("revenue"), at("net_income"), at("equity"), at("assets")
 
     def div(a, b):
         return a / b if a is not None and b not in (None, 0) else None
 
     def growth(k, back=1):
-        a, b = last(k), last(k, back)
+        a, b = at(k), at(k, year_back(k, back))
         return (a / b - 1) if a is not None and b is not None and b > 0 else None
 
     def cagr(k, n=3):
-        a, b = last(k), last(k, n)
+        a, b = at(k), at(k, year_back(k, n))
         return (a / b) ** (1 / n) - 1 if a is not None and b is not None and a > 0 and b > 0 else None
 
     # Net income and equity are the parent's; liabilities, assets and cash flow are the whole group.  With outside holders in the subsidiaries
     # the group's figures meet the group's equity and profit, and the market value, which is the parent's, meets the parent's share of cash.
     group_equity, parent_share = None, None
-    if series.get("equity") and series.get("equity_all"):
-        same = next((r["val"] for r in series["equity_all"] if r["end"] == series["equity"][-1]["end"]), None)
-        if same and 0 < series["equity"][-1]["val"] <= same:
-            group_equity, parent_share = same, series["equity"][-1]["val"] / same
+    same = at("equity_all")
+    if eq is not None and same and 0 < eq <= same:
+        group_equity, parent_share = same, eq / same
 
-    ocf, capex = last("ocf"), last("capex")
+    ocf, capex = at("ocf"), at("capex")
     ocf_ni = div(ocf, ni) if (ni or 0) > 0 else None
-    if group_equity and series.get("ocf") and series.get("net_income_all") and series["ocf"][-1]["end"] == series["net_income_all"][-1]["end"]:
-        group_ni = series["net_income_all"][-1]["val"]
+    group_ni = at("net_income_all")
+    if group_equity and ocf is not None and group_ni is not None:
         ocf_ni = ocf / group_ni if group_ni > 0 else None
     # Cash flow of one year less spending of another is no figure at all: a company whose capex tag stopped has no free cash flow.
-    same_year = bool(series.get("ocf")) and bool(series.get("capex")) and series["ocf"][-1]["end"] == series["capex"][-1]["end"]
-    fcf = ocf - capex if same_year else None
-    fcfs = []
-    by_end = {r["end"]: r["val"] for r in series.get("capex") or []} if same_year else {}
-    for r in (series.get("ocf") or [])[-5:]:
-        if r["end"] in by_end:
-            fcfs.append(r["val"] - by_end[r["end"]] > 0)
-    nis = [r["val"] > 0 for r in (series.get("net_income") or [])[-5:]]
-    debt = None
-    if last("debt_long") is not None or last("debt_short") is not None:
-        debt = (last("debt_long") or 0.0) + (last("debt_short") or 0.0)
-    elif last("liabilities") is not None:
-        debt = last("liabilities")
-    sec_shares = last("shares_avg")
+    fcf = ocf - capex if ocf is not None and capex is not None else None
+    by_end = {r["end"]: r["val"] for r in series.get("capex") or []} if fcf is not None else {}
+    fcfs = [r["val"] - by_end[r["end"]] > 0 for r in recent("ocf") if r["end"] in by_end]
+    nis = [r["val"] > 0 for r in recent("net_income")]
+    # Long-term debt that stopped leaves no debt figure from the parts (short-term debt alone would understate it), so total liabilities apply,
+    # as in ``drop_stale_series``.  Short-term debt missing in the latest year means long-term debt is the figure.
+    debt, debt_long, debt_short = None, at("debt_long"), at("debt_short")
+    long_stopped = bool(series.get("debt_long")) and debt_long is None
+    if not long_stopped and (debt_long is not None or debt_short is not None):
+        debt = (debt_long or 0.0) + (debt_short or 0.0)
+    elif at("liabilities") is not None:
+        debt = at("liabilities")
+    sec_shares, eps_reported = at("shares_avg"), at("eps")
     # Net income / EPS is the company's own share count in whole shares, so it tells a wrong scale from a real change.
-    implied = abs(ni / last("eps")) if ni and last("eps") and abs(last("eps")) >= 0.1 else None
+    implied = abs(ni / eps_reported) if ni and eps_reported and abs(eps_reported) >= 0.1 else None
     sec_scale_error = _scale_differs(sec_shares, implied)
-    change_scale_error = _scale_differs(sec_shares, last("shares_avg", 1))
+    change_scale_error = _scale_differs(sec_shares, at("shares_avg", year_back("shares_avg")))
     shares_used = shares or (None if sec_scale_error else sec_shares)
     mcap = close * shares_used if close and shares_used else None
-    eps = last("eps") if last("eps") is not None else div(ni, shares_used)
-    bb, dv = last("buyback"), last("dividends")
-    roe_prev = div(last("net_income", 1), last("equity", 1)) if (last("equity", 1) or 0) > 0 else None
+    eps = eps_reported if eps_reported is not None else div(ni, shares_used)
+    bb, dv = at("buyback"), at("dividends")
+    prev = year_back("net_income")
+    roe_prev = div(at("net_income", prev), at("equity", prev)) if (at("equity", prev) or 0) > 0 else None
     out = {
         "status": "STALE" if latest and _days(latest, as_of) > STALE_DAYS else "REAL", "source": source, "fiscal_end": latest, "filed": filed,
         "is_financial": is_financial, "basis": latest_basis, "basis_changed": basis_changed, "basis_conflict": False,
-        "roe": div(ni, eq) if (eq or 0) > 0 else None, "roe_prev": roe_prev, "op_margin": div(last("op_income"), rev), "gross_margin": div(last("gross_profit"), rev),
+        "roe": div(ni, eq) if (eq or 0) > 0 else None, "roe_prev": roe_prev, "op_margin": div(at("op_income"), rev), "gross_margin": div(at("gross_profit"), rev),
         "net_margin": div(ni, rev), "rev_growth": growth("revenue"), "eps_growth": growth("eps"), "rev_cagr3": cagr("revenue"), "eps_cagr3": cagr("eps"),
         "ocf_to_ni": ocf_ni, "fcf": fcf, "fcf_margin": div(fcf, rev), "fcf_years_positive": sum(fcfs) / len(fcfs) if fcfs else None,
-        "roe_years_positive": sum(nis) / len(nis) if nis else None, "debt_equity": 99.0 if (eq is not None and eq <= 0 and debt) else div(debt, group_equity or eq), "current_ratio": div(last("current_assets"), last("current_liabilities")),
-        "interest_cover": div(last("op_income"), last("interest")), "cash_debt": div(last("cash"), debt), "equity_assets": div(group_equity or eq, assets),
+        "roe_years_positive": sum(nis) / len(nis) if nis else None, "debt_equity": 99.0 if (eq is not None and eq <= 0 and debt) else div(debt, group_equity or eq), "current_ratio": div(at("current_assets"), at("current_liabilities")),
+        "interest_cover": div(at("op_income"), at("interest")), "cash_debt": div(at("cash"), debt), "equity_assets": div(group_equity or eq, assets),
         "share_change": None if change_scale_error else growth("shares_avg"), "share_scale_error": sec_scale_error or change_scale_error, "returns_capital": (bool((bb or 0) > 0 or (dv or 0) != 0) if (bb is not None or dv is not None) else None),
         "market_cap": mcap, "eps": eps, "pe": div(close, eps), "pb": div(mcap, eq) if (eq or 0) > 0 else None, "fcf_yield": div(fcf * parent_share if fcf is not None and parent_share else fcf, mcap), "parent_share": parent_share, "insider_pct": insider_pct,
     }
