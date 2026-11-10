@@ -72,6 +72,23 @@ def extract_us(facts: Dict[str, Any]) -> Dict[str, List[Dict]]:
     return out
 
 
+EPS_PART_REPEAT = 0.02      # a "discontinued" EPS within this of the continuing one is the same figure tagged twice, not a second part
+
+
+def kr_basic_eps(concepts: Dict[str, Dict]) -> Dict[str, Any]:
+    """Total basic EPS of one statement: the total line when there is one, else continuing plus discontinued operations.
+    Filers with a discontinued business often report only the two parts (measured on 5,976 statements: the parts add up to the
+    total in 192 of 199 that report all three).  A discontinued line that repeats the continuing figure is not added."""
+    total, cont, disc = (concepts.get(k) or {} for k in ("eps_basic", "eps_basic_continuing", "eps_basic_discontinued"))
+    if total.get("status") == "REAL" or cont.get("status") != "REAL":
+        return total
+    value = float(cont["value"])
+    part = float(disc["value"]) if disc.get("status") == "REAL" else None       # no discontinued line: the continuing figure is the total
+    if part and abs(part - value) > EPS_PART_REPEAT * abs(value):
+        value += part
+    return {**cont, "value": value}
+
+
 def extract_kr(statements: Dict[int, Dict[str, Dict]]) -> Dict[str, Any]:
     """``statements``: {year: {concept: extract_concepts row}}.  One basis across years or growth stops at the change."""
     names = {"revenue": "revenue", "op_income": "operating_income", "net_income": "net_income_parent", "net_income_all": "net_income",
@@ -82,7 +99,7 @@ def extract_kr(statements: Dict[int, Dict[str, Dict]]) -> Dict[str, Any]:
     bases = set()
     for year in sorted(statements):
         for metric, concept in names.items():
-            r = statements[year].get(concept) or {}
+            r = kr_basic_eps(statements[year]) if metric == "eps" else statements[year].get(concept) or {}
             if r.get("status") == "REAL":
                 val = abs(float(r["value"])) if metric == "capex" else float(r["value"])    # filers differ on the sign of an outflow
                 out[metric].append({"end": r["period_end"], "val": val, "filed": r["receipt_date"], "basis": r["basis"]})

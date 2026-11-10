@@ -199,3 +199,58 @@ def test_a_break_between_the_two_years_is_seen_without_a_count_at_the_older_end(
 def test_without_counts_the_reported_figures_stand():
     m = metrics(kr([800.0, 900.0, 1000.0, 1200.0], ni=(None, None, None, 12.0e9)), shares=1.0e7)
     assert m["eps_growth"] == pytest.approx(0.2) and m["eps_cagr3"] == pytest.approx(1.5 ** (1 / 3) - 1)
+
+
+# ---------------------------------------------------------------------- Korean account ids
+def kr_obs(*accounts, rcept="20260320000001"):
+    from markets.kr import dart
+    raw = [{"sj_div": sj, "account_id": acc, "account_nm": acc, "thstrm_amount": amount, "rcept_no": rcept, "currency": cur}
+           for sj, acc, amount, *rest in accounts for cur in [rest[0] if rest else "KRW"]]
+    return dart.normalize_statements(raw, corp_code="c", ticker="000000", year=2025, reprt_code="11011", fs_div="CFS")
+
+
+def kr_concepts(*accounts, klass="NON_FINANCIAL"):
+    from markets.kr import dart
+    return dart.extract_concepts(kr_obs(*accounts), klass)
+
+
+EPS, CONT, DISC = "ifrs-full_BasicEarningsLossPerShare", "ifrs-full_BasicEarningsLossPerShareFromContinuingOperations", "ifrs-full_BasicEarningsLossPerShareFromDiscontinuedOperations"
+
+
+def test_total_basic_eps_is_preferred_and_the_two_parts_are_added_without_it():
+    assert f.kr_basic_eps(kr_concepts(("IS", EPS, "900"), ("IS", CONT, "1000"), ("IS", DISC, "-100")))["value"] == 900.0
+    assert f.kr_basic_eps(kr_concepts(("IS", EPS, "900"), ("IS", CONT, "1000")))["value"] == 900.0          # the other part is under a company id
+    both = f.kr_basic_eps(kr_concepts(("CIS", CONT, "45935"), ("CIS", DISC, "781")))
+    assert both["status"] == "REAL" and both["value"] == 46716.0 and both["period_end"] == "2025-12-31"
+    assert f.kr_basic_eps(kr_concepts(("CIS", CONT, "-3951"), ("CIS", DISC, "-12")))["value"] == -3963.0
+
+
+def test_continuing_eps_alone_is_the_total_and_a_repeated_line_is_not_added():
+    assert f.kr_basic_eps(kr_concepts(("IS", CONT, "55832")))["value"] == 55832.0
+    assert f.kr_basic_eps(kr_concepts(("IS", CONT, "55832"), ("IS", DISC, "")))["value"] == 55832.0
+    assert f.kr_basic_eps(kr_concepts(("IS", CONT, "571"), ("IS", DISC, "571")))["value"] == 571.0           # one figure tagged twice
+    assert f.kr_basic_eps(kr_concepts(("IS", CONT, "10569"), ("IS", DISC, "10567")))["value"] == 10569.0     # the preferred share's line
+    assert f.kr_basic_eps(kr_concepts(("IS", DISC, "120"))).get("status") != "REAL"                          # a part alone is no EPS
+
+
+def test_korean_series_take_the_newest_year_from_the_eps_parts():
+    def year(y, *accounts):
+        from markets.kr import dart
+        raw = [{"sj_div": sj, "account_id": acc, "account_nm": acc, "thstrm_amount": amount, "rcept_no": f"{y + 1}0320000001"} for sj, acc, amount in accounts]
+        return dart.extract_concepts(dart.normalize_statements(raw, corp_code="c", ticker="000000", year=y, reprt_code="11011", fs_div="CFS"), "NON_FINANCIAL")
+    out = f.extract_kr({2022: year(2022, ("IS", EPS, "3964"), ("IS", "ifrs-full_Revenue", "100")),
+                        2025: year(2025, ("IS", CONT, "28530"), ("IS", DISC, "0"), ("IS", "ifrs-full_Revenue", "300"))})
+    assert [(r["end"], r["val"]) for r in out["eps"]] == [("2022-12-31", 3964.0), ("2025-12-31", 28530.0)]
+
+
+REV, GOODS = "ifrs-full_Revenue", "dart_RevenueFromSaleOfGoodsProduct"
+
+
+def test_product_sales_are_revenue_only_when_the_statement_proves_it():
+    proven = kr_concepts(("IS", GOODS, "258497722389"), ("IS", "ifrs-full_CostOfSales", "220277193240"), ("IS", "ifrs-full_GrossProfit", "38220529149"))
+    assert proven["revenue"]["status"] == "REAL" and proven["revenue"]["value"] == 258497722389.0 and proven["revenue"]["account_id"] == GOODS
+    part = kr_concepts(("IS", GOODS, "100"), ("IS", "ifrs-full_CostOfSales", "220"), ("IS", "ifrs-full_GrossProfit", "80"))       # sales of 300 in all
+    assert part["revenue"] == {"status": "UNAVAILABLE", "reason": "NOT_REPORTED_UNDER_STANDARD_ACCOUNT"}
+    assert kr_concepts(("IS", GOODS, "100"))["revenue"]["status"] == "UNAVAILABLE"                                                 # nothing to prove it with
+    std = kr_concepts(("IS", REV, "300"), ("IS", GOODS, "100"), ("IS", "ifrs-full_CostOfSales", "20"), ("IS", "ifrs-full_GrossProfit", "80"))
+    assert std["revenue"]["value"] == 300.0

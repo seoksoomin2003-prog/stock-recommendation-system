@@ -15,7 +15,8 @@ Normalisation rules
 * balance-sheet amounts are instants at the period end.
 * receipt date = first 8 digits of ``rcept_no`` (OpenDART receipt number); an observation is usable at an
   as-of instant only if its receipt date is strictly before the as-of KST date (no receipt time exists).
-* account mapping by XBRL ``account_id`` via ``account_mapping.REGISTRY`` only.
+* account mapping by XBRL ``account_id`` via ``account_mapping.REGISTRY`` only; a registry ``alternatives`` id is read only
+  when the primary ids have no row and the statement's own sum proves it (see account_mapping).
 """
 import io
 import json
@@ -33,6 +34,7 @@ from markets.kr import KR_ACCOUNT_MAPPING_VERSION
 from markets.kr.account_mapping import NON_STANDARD_ACCOUNT, REGISTRY
 
 DART_BASE = "https://opendart.fss.or.kr/api"
+ALTERNATIVE_TOLERANCE = 0.005      # an alternative account id must equal the sum that proves it within this
 REPORT_CODES = {"11013": "Q1", "11012": "H1", "11014": "Q3", "11011": "FY"}
 FS_BASIS = {"CFS": "CONSOLIDATED", "OFS": "SEPARATE"}
 
@@ -161,11 +163,23 @@ def extract_concepts(observations: List[Dict], industry_class: str, amount_type:
             out[concept] = {"status": "NOT_APPLICABLE", "reason": f"NOT_APPLICABLE_FOR_{industry_class}"}
             continue
         want = "INSTANT" if d["kind"] == "INSTANT" else amount_type
-        cands = [o for o in observations if o["account_id"] in d["account_ids"] and o["statement"] in d["statements"]
+
+        def rows_of(ids, d=d, want=want):
+            c = [o for o in observations if o["account_id"] in ids and o["statement"] in d["statements"]
                  and o["amount_type"] == want and o["account_id"] != NON_STANDARD_ACCOUNT]
-        if as_of_date:
-            cands = [o for o in cands if o.get("receipt_date") and o["receipt_date"] < as_of_date]
+            return [o for o in c if o.get("receipt_date") and o["receipt_date"] < as_of_date] if as_of_date else c
+        cands = rows_of(d["account_ids"])
         finite = [o for o in cands if np.isfinite(o["value"])]
+        if not cands:           # an alternative id counts only when the statement itself shows it is the whole line
+            for alt in d.get("alternatives", ()):
+                parts = [{o["value"] for o in rows_of([a]) if np.isfinite(o["value"])} for a in alt["equals_sum_of"]]
+                if all(len(x) == 1 for x in parts):
+                    total = sum(next(iter(x)) for x in parts)
+                    proven = [o for o in rows_of(alt["account_ids"]) if np.isfinite(o["value"])
+                              and abs(o["value"] - total) <= ALTERNATIVE_TOLERANCE * abs(total)]
+                    if proven:
+                        cands = finite = proven
+                        break
         if not finite:
             reason = "NOT_REPORTED_UNDER_STANDARD_ACCOUNT" if not cands else "VALUE_MISSING"
             if as_of_date and not cands and any(o["account_id"] in d["account_ids"] for o in observations):
