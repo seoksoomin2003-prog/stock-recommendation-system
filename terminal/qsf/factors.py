@@ -373,6 +373,10 @@ def earnings_calendar(c) -> Dict:
     e = c.get("earnings") or {}
     if e.get("sessions") is None:
         return missing("다음 실적 발표일을 확인하지 못했습니다")
+    if e.get("basis") == "ESTIMATE":
+        when = "추정일이 지났고 아직 공시 없음" if e.get("overdue") else f"{e['sessions']}거래일 후"
+        return obs(ramp(float(e["sessions"]), 2, 15), {"next_earnings": e.get("date"), "sessions": e["sessions"], "basis": "ESTIMATE", "from": e.get("from"), "overdue": bool(e.get("overdue"))},
+                   f"다음 실적 발표 추정 {e.get('date')} ({when}, 작년 같은 분기 {e.get('from')} 기준)", e.get("source", "추정"), c["tech"]["date"])
     return obs(ramp(float(e["sessions"]), 2, 15), {"next_earnings": e.get("date"), "sessions": e["sessions"]},
                f"다음 실적 발표 {e.get('date')} ({e['sessions']}거래일 후)", e.get("source", "Yahoo 일정"), c["tech"]["date"])
 

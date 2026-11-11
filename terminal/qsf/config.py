@@ -5,7 +5,8 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.3.0"     # 1.3.0: the live Korean scan covers the 300 largest companies by market value instead of the 300 most traded
+MODEL_VERSION = "QSF-1.3.1"     # 1.3.1: a missing next earnings date is estimated from the company's own past dates (earnings_estimate), labelled
+#                                  as an estimate and read with a wider window; user decision 2026-11-11.  1.3.0: the live Korean scan covers the 300 largest companies by market value instead of the 300 most traded
 #                                  (KR_UNIVERSE, user decision 2026-11-11); the score itself is unchanged.  1.2.1: inputs the 2026-11-11 audit left (US debt read from its parts and never from total liabilities, annual figures
 #                                  STALE once a newer report is overdue, no cash-flow ratio for financial companies, business years of
 #                                  non-December Korean companies) and the Korean credit factor read from Bank of Korea yields; formulas and
@@ -102,6 +103,7 @@ GATES = {"US": {"min_price": 5.0, "min_adv_value": 20_000_000.0},
 MIN_BARS = 200
 EXTREME_MOVE = 0.60        # |1-day move| above this on the last 5 bars is a data anomaly until explained
 EARNINGS_BLOCK_SESSIONS = 2
+EARNINGS_BLOCK_SESSIONS_ESTIMATE = 5     # an estimated date: five weekdays either side held 96% of the actual Korean dates (2026-11-11 check)
 
 # Costs, one way.  KR tax: 0.20% on sells from 2026-01-01 (Securities Transaction Tax Act revision, verified
 # 2026-11-05).  Commission and spread depend on the broker and are ASSUMPTIONS shown wherever a net figure appears.

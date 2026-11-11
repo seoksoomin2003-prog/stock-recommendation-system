@@ -513,6 +513,12 @@ and what would change the label.
   ratio; Korean companies whose year does not end in December are read up to their newest business year.  The Korean
   `credit_liquidity` factor reads the 3-year AA- corporate spread over the treasury yield from the Bank of Korea (ECOS 817Y002).
   Extracted US series moved to the cache key `annual4` (`tests/test_qsf_inputs_2.py`, `reports/QSF_INPUTS_2_2026_11_11.md`).
+* Earnings date estimate (QSF-1.3.1, 2026-11-11, user decision): when Yahoo shows no upcoming earnings date (most Korean stocks,
+  about half of the US ones after a report), the date is estimated as the same quarter a year on from the company's own past
+  dates: SEC 8-K item 2.02 filings, DART preliminary results or periodic reports (`terminal/qsf/earnings_estimate.py`).  An
+  estimate is labelled, blocks a new swing entry from five sessions ahead and while it is overdue, and fills the
+  `earnings_calendar` factor.  It was within 7 days for 96% of Korean and 90% of US events in the check; nothing says the rule
+  earns anything (`reports/QSF_EARNINGS_DATE_RESEARCH_2026_11_11.md`, tests in `tests/test_earnings_estimate.py`).
 * Korean universe (QSF-1.3.0, 2026-11-11, user decision): the live Korean scan scores the 300 largest companies by market value
   on the newest KRX day on file (`config.KR_UNIVERSE`, `QSF.kr_market_cap_universe`), instead of the 300 most traded.  The former
   universe lagged the market by 15 to 24 points a year in two separate past windows; the market-value figures come from one

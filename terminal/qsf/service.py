@@ -17,7 +17,7 @@ import numpy as np
 
 from terminal import sources as default_sources
 from terminal.cache import FileCache
-from terminal.qsf import config, engine, events, fundamentals, holding, ledger, technicals
+from terminal.qsf import config, earnings_estimate, engine, events, fundamentals, holding, ledger, technicals
 from utils import nyse_calendar
 
 KR_MIN_UNIVERSE = 200       # a whole-market Korean scan with fewer stocks than this is a partial day, not a day (the universe is 300)
@@ -270,18 +270,59 @@ class QSF:
         ev["insider"] = events.insider_summary(parsed)
         return ev
 
-    def _earnings(self, ticker: str, market: str, as_of: str) -> Dict[str, Any]:
+    def _earnings(self, ticker: str, market: str, as_of: str, code: Optional[str] = None, cik: Optional[str] = None) -> Dict[str, Any]:
+        """Yahoo's calendar date when it has one ahead; otherwise an estimate from the company's own past dates, marked as such."""
         def fetch():
             return self.src.yahoo_earnings_dates(ticker)
         days = self.cache.cached(f"earn:{ticker}", TTL["earn"], fetch)["data"]
+        step = holding.stepper(market)
+
+        def sessions_to(target: str) -> int:
+            d, n, end = date.fromisoformat(as_of), 0, date.fromisoformat(target)
+            while d < end and n < 300:
+                d, n = step(d), n + 1
+            return n
         nxt = next((d for d in (days or []) if d > as_of), None)
-        if not nxt:
+        if nxt:
+            return {"date": nxt, "sessions": sessions_to(nxt), "source": "Yahoo 실적 일정 (회사 확정 전에는 추정치)"}
+        try:
+            past, source = self._past_result_dates(market, as_of, code, cik)
+        except Exception:
+            past, source = [], None
+        est = earnings_estimate.next_estimate(past, as_of) if past else None
+        if not est:
             return {"sessions": None}
-        step, d, n = holding.stepper(market), date.fromisoformat(as_of), 0
-        target = date.fromisoformat(nxt)
-        while d < target and n < 300:
-            d, n = step(d), n + 1
-        return {"date": nxt, "sessions": n, "source": "Yahoo 실적 일정 (회사 확정 전에는 추정치)"}
+        return {"date": est["date"], "sessions": 0 if est["overdue"] else sessions_to(est["date"]), "basis": "ESTIMATE", "from": est["from"], "overdue": est["overdue"], "source": source}
+
+    def _past_result_dates(self, market: str, as_of: str, code: Optional[str], cik: Optional[str]) -> Tuple[List[str], Optional[str]]:
+        """US: 8-K item 2.02 dates from the stored SEC list (no extra request).  Korea: preliminary results or, without any, periodic
+        report dates from two DART list requests kept for a week, joined with the daily list so a new disclosure is seen the next day."""
+        if market == "US":
+            if not cik:
+                return [], None
+            return earnings_estimate.us_result_dates((self._us_subm(cik) or {}).get("filings")), "SEC 8-K 실적 공시일(항목 2.02) 기준 추정"
+        if not code or not self.dart.configured:
+            return [], None
+        corp = self._corp_code(code)
+        if not corp:
+            return [], None
+        end = as_of.replace("-", "")
+        bgn = (date.fromisoformat(as_of) - timedelta(days=earnings_estimate.LOOKBACK_DAYS + 30)).strftime("%Y%m%d")
+
+        def fetch_history():
+            rows = []
+            for extra in ({"pblntf_detail_ty": "I002"}, {"pblntf_ty": "A"}):         # fair disclosures (preliminary results), periodic reports
+                body = self.dart._get("list.json", corp_code=corp, bgn_de=bgn, end_de=end, page_count=100, **extra).json()
+                if body.get("status") not in ("000", "013"):                          # 013: no filing of that kind.  Anything else is not an answer
+                    raise RuntimeError("DART list unavailable")
+                rows += body.get("list") or []
+            # a company with no such filing is stored as one empty row, so it is not asked again every scan
+            return [{"report_nm": r.get("report_nm"), "rcept_dt": r.get("rcept_dt")} for r in rows] or [{"report_nm": "", "rcept_dt": ""}]
+        rows = list(self.cache.cached(f"krearn:{corp}", TTL["kr_facts"], fetch_history)["data"] or [])
+        daily = self.cache.read(f"krlist:{corp}")                                    # written by the day's filing check; read, never fetched here
+        rows += [{"report_nm": r.get("report_nm"), "rcept_dt": r.get("rcept_dt")} for r in ((daily or {}).get("data") or [])]
+        got = earnings_estimate.kr_result_dates(rows, as_of)
+        return got["dates"], "DART 잠정실적 공시일 기준 추정" if got["kind"] == "PRELIMINARY" else "DART 정기보고서 제출일 기준 추정"
 
     # KR: every field below is OpenDART; without a key the factors stay missing, they are not scored as zero.
     @property
@@ -436,7 +477,7 @@ class QSF:
             fe = self._kr_fund_events(ticker, ident, bars, session)
             ctx["fund"], ctx["events"] = fe["fund"], fe["events"]
         try:
-            ctx["earnings"] = self._earnings(sym, market, session)
+            ctx["earnings"] = self._earnings(sym, market, session, code=ticker, cik=(ctx.get("fund") or {}).get("cik"))
         except Exception:
             ctx["earnings"] = {"sessions": None}
         return ctx

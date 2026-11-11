@@ -64,7 +64,12 @@ def hard_gates(ctx: Dict[str, Any], strategy: str) -> List[Dict[str, str]]:
     if fund.get("basis_conflict"):
         add("INVALID_ACCOUNTING", "연결·별도 재무제표 기준이 섞여 있어 재무 값을 쓸 수 없습니다.")
     e = ctx.get("earnings") or {}
-    if strategy == "SWING" and e.get("sessions") is not None and e["sessions"] <= config.EARNINGS_BLOCK_SESSIONS:
+    if strategy == "SWING" and e.get("sessions") is not None and e.get("basis") == "ESTIMATE":
+        if e.get("overdue"):
+            add("EARNINGS_IMMINENT", f"실적 발표 추정일({e.get('date')})이 지났는데 아직 공시가 없어 스윙 신규 진입을 막습니다.")
+        elif e["sessions"] <= config.EARNINGS_BLOCK_SESSIONS_ESTIMATE:
+            add("EARNINGS_IMMINENT", f"실적 발표 추정일({e.get('date')}, 작년 같은 분기 기준)이 {e['sessions']}거래일 안이라 스윙 신규 진입을 막습니다.")
+    elif strategy == "SWING" and e.get("sessions") is not None and e["sessions"] <= config.EARNINGS_BLOCK_SESSIONS:
         add("EARNINGS_IMMINENT", f"실적 발표가 {e['sessions']}거래일 안에 있어 스윙 신규 진입을 막습니다.")
     return out
 
