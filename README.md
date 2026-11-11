@@ -507,6 +507,9 @@ and what would change the label.
   next to it every session (`terminal/qsf/kr_swing_prior.py`, `reports/QSF_KR_SWING_PRIOR_PROTOCOL.md`, one evaluation at twelve
   separate 20-session samples).  US scores and the Korean long-term score are unchanged.  The on-screen notice and the past-record
   table now carry the second Korean long-term window (2016-2019, not confirmed) next to the first.  `reports/QSF_KR_SWING_V2_2026_11_11.md`.
+* Second Korean list (2026-11-11, user request): the score tab shows the newest day of the market-value top-300 record next to
+  the live ranking, read only (`terminal/qsf/kr_cap_view.py`, `/api/qsf/cap-universe`).  The live ranking, the top 3 and alerts
+  still use the traded-value top 300; the record and its one evaluation are untouched.
 * Statement keep-time (2026-11-11): extracted US annual statements are kept 20 hours, so a new 10-K is scored at the next
   morning's run instead of up to seven days later; a failed SEC read keeps the stored copy.  Korean statements keep seven days
   (`TTL["facts"]`, `TTL["kr_facts"]` in `terminal/qsf/service.py`, tests in `tests/test_qsf_statement_keep_time.py`).

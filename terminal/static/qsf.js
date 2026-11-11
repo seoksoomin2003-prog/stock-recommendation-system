@@ -33,7 +33,7 @@ function qsfSetView(v) {
 }
 // A view is fetched when first shown, and again after the market or strategy changes; hidden views cost nothing.
 const QSF_LOADERS = {
-  rank: () => { qsfRank(); qsfChanges(); },
+  rank: () => { qsfRank(); qsfCap(); qsfChanges(); },
   screen: () => ($("#qsfscreenform") ? qsfScreenRun(true) : qsfScreenBuild()),
   track: () => { qsfTop3(); qsfValidation(); },
 };
@@ -89,7 +89,7 @@ async function renderQsf() {
       <span class="seg" id="qsfview" role="group" aria-label="보기">${Object.entries(QSF_VIEWS).map(([k, v]) => `<button type="button" data-v="${k}">${v}</button>`).join("")}</span>
       <span class="seg" id="qsfstratseg" role="group" aria-label="전략"><button type="button" data-s="SWING">스윙</button><button type="button" data-s="LONG_TERM">장기</button></span>
     </div>
-    <div data-view="rank"><div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsfchanges"></div></div>
+    <div data-view="rank"><div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsfcap"></div><div id="qsfchanges"></div></div>
     <div data-view="screen"><div id="qsfscreen"></div></div>
     <div data-view="track"><div id="qsftop3"></div><div id="qsfvalid"></div></div>`;
   $("#qsfview").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetView(b.dataset.v)));
@@ -278,6 +278,26 @@ function qsfChangeTable(title, rows, note) {
   if (!rows.length) return `<h3 class="qc-title">${title} <span class="meta" style="margin:0">없음</span></h3>`;
   return `<h3 class="qc-title">${title} <span class="meta" style="margin:0">${rows.length}개${note ? " · " + note : ""}</span></h3><div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">종목</th><th>이전</th><th>현재</th><th>변화</th><th class="l">가장 크게 움직인 영역</th></tr></thead><tbody>${rows.map(qsfChangeRow).join("")}</tbody></table></div>`;
 }
+// Korea only: the same scores on the market-value top 300, from the separate daily record.  A second list, never the live ranking.
+const QSF_ACT = { ACTIONABLE: "", BLOCKED: "차단", INSUFFICIENT_DATA: "자료 부족" };
+function qsfCapHtml(d) {
+  const rows = d.rows.map((r) => `<tr><td class="num">${r.rank}</td><td class="l"><a href="#stock/${esc(r.ticker)}">${esc(r.name || r.ticker)}</a> <span class="meta" style="margin:0">${esc(r.ticker)}</span></td>
+    <td class="num">${qsfNum(r.score)}</td><td class="num">${r.cap_rank}</td><td class="l">${r.in_live ? "라이브 대상에도 있음" : "<b>시가총액 대상에만</b>"}</td><td class="l">${esc(QSF_ACT[r.actionability] ?? r.actionability ?? "")}</td></tr>`).join("");
+  return `<div class="panel"><h2>시가총액 상위 ${d.size} 대상으로 본 순위 <small class="meta" style="margin:0">비교용 · ${QSF_STRAT[d.strategy]} · 기준 ${esc(d.session)} · ${esc(d.model_version || "")}</small></h2>
+    <div class="notice">${d.notes.map(esc).join("<br>")}</div>
+    <div class="meta">점수가 나온 ${d.scored}종목 중 상위 ${d.rows.length}개 · 두 대상에 모두 있는 종목 ${d.in_both}개 · 시가총액 대상에만 ${d.cap_only}개 · 라이브 대상에만 ${d.live_only}개 · 70점 이상 ${d.buy_band}개 · 쌓인 기록 ${d.records}일</div>
+    <div class="tbl-wrap"><table class="qs-table"><thead><tr><th>순위</th><th class="l">종목</th><th>점수</th><th title="그날 KRX 시가총액 순위">시가총액 순위</th><th class="l">라이브 대상</th><th class="l">상태</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="meta">점수는 그날 기록에 적힌 값입니다(다시 계산하지 않음). 규칙: ${esc(d.protocol)}</div></div>`;
+}
+async function qsfCap() {
+  const box = $("#qsfcap"); if (!box) return;
+  if (!isKR()) { box.innerHTML = ""; return; }
+  const mk = state.market, st = qsfState.strategy;
+  const d = await api(`/api/qsf/cap-universe?strategy=${st}`).catch(() => null);
+  if (mk !== state.market || st !== qsfState.strategy) return;
+  box.innerHTML = d && d.status === "REAL" ? qsfCapHtml(d) : "";
+}
+
 async function qsfChanges() {
   const box = $("#qsfchanges"); if (!box) return;
   const mk = state.market, token = ++qsfChangeState.token;
