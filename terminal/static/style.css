@@ -252,3 +252,11 @@ table.sp-ret td { padding: 4px 8px; }
 .qsf-record { margin: 8px 0 10px; }
 .qsf-record > summary { cursor: pointer; font-weight: 600; margin-bottom: 6px; }
 .qsf-record .meta { margin-top: 6px; }
+.qsf-record tr:has(+ tr.qsf-why) td { border-bottom: 0; }
+.qsf-record .qs-table > tbody > tr > td:last-child { white-space: normal; min-width: 96px; }
+.qsf-record tr.qsf-why > td { white-space: normal; text-align: left; font-size: 13px; padding-top: 0; }
+.qsf-record tr.qsf-why > td > * { max-width: calc(100vw - 80px); }
+.qsf-record tr.qsf-why details { margin-top: 4px; }
+.qsf-record tr.qsf-why summary { cursor: pointer; color: var(--muted); }
+.qsf-record tr.qsf-why ul { margin: 6px 0; padding-left: 18px; }
+.qsf-record tr.qsf-why table { margin: 4px 0 8px; width: auto; }

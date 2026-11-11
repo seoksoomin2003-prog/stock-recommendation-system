@@ -52,18 +52,46 @@ function qsfSetStrategy(s) {
 
 // What the stored one-run historical checks said, next to the score.  Numbers come from report files; nothing is computed here.
 const QSF_STRATEGY_NAME = { SWING: "스윙", LONG_TERM: "장기" };
+function qsfWhyHtml(r) {
+  const why = r.why || [];
+  if (!why.length) return "";
+  const p1 = (v) => (isNum(v) ? pct(v * 100, 1) : DASH), n3 = (v) => (isNum(v) ? (v > 0 ? "+" : "") + v.toFixed(3) : DASH), share = (v) => (isNum(v) ? (v * 100).toFixed(1) + "%" : DASH);
+  const checks = (r.checks || []).map((c) => `<tr><td class="l">${esc(c.label)}</td><td class="l">${esc(c.need)}</td><td class="l">${esc(c.value)}</td><td class="l">${c.passed ? "충족" : "<b>미달</b>"}</td></tr>`).join("");
+  const domains = (r.domains || []).map((x) => `<tr><td class="l">${esc(x.name)}</td><td>${share(x.pair_win)}</td><td>${isNum(x.t) ? x.t.toFixed(2) : DASH}</td><td>${n3(x.early_ic)}</td><td>${n3(x.late_ic)}</td></tr>`).join("");
+  const bands = (r.bands || []).map((x) => `<tr><td class="l">${esc(x.band)}점</td><td>${isNum(x.n) ? x.n.toLocaleString() : DASH}</td><td>${p1(x.vs_average)}</td><td>${p1(x.vs_index_net)}</td><td>${share(x.beat_average_rate)}</td></tr>`).join("");
+  return `<tr class="qsf-why"><td colspan="7" class="l"><div>${why.slice(0, 2).map(esc).join(" ")}</div>
+    <details><summary>판정 근거 자세히 (다섯 조건 중 ${r.checks_passed}개 충족)</summary>
+      ${why.length > 2 ? `<ul>${why.slice(2).map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}
+      <div class="tbl-wrap"><table><thead><tr><th class="l">사전에 정한 조건</th><th class="l">기준</th><th class="l">실제 (전반 / 후반)</th><th class="l">결과</th></tr></thead><tbody>${checks}</tbody></table></div>
+      ${domains ? `<div class="meta">영역 하나만으로 같은 시험을 본 결과입니다. 판정에는 쓰지 않습니다. t값이 2.24보다 작으면 우연과 구별되지 않습니다.</div>
+      <div class="tbl-wrap"><table><thead><tr><th class="l">영역</th><th>높은 점수가 이긴 비율</th><th>t값</th><th>전반 IC</th><th>후반 IC</th></tr></thead><tbody>${domains}</tbody></table></div>` : ""}
+      ${bands ? `<div class="meta">${esc(r.band_note || "")}</div>
+      <div class="tbl-wrap"><table><thead><tr><th class="l">점수 구간</th><th>건수</th><th>같은 날 평균 대비</th><th>지수 대비</th><th>평균을 이긴 비율</th></tr></thead><tbody>${bands}</tbody></table></div>` : ""}
+    </details></td></tr>`;
+}
+function qsfForwardHtml(f) {
+  const s = f && f.strategies;
+  if (!s || !s.SWING || !s.LONG_TERM) return "";
+  const one = (name, c) => `${name}은 ${c.horizon}거래일 보유가 끝난 날이 ${c.needed}개가 되는 ${esc(c.expected || "시점")}`;
+  return `<div class="meta"><b>이 판정을 바꿀 수 있는 것은 앞으로의 기록뿐입니다.</b> ${esc(f.first)} 거래일부터 매일 점수를 고정해 기록하고 있고 지금 ${s.SWING.recorded}거래일이 쌓였습니다.
+    ${one("스윙", s.SWING)}, ${one("장기", s.LONG_TERM)}에 같은 조건으로 한 번 판정합니다. 지난 구간을 기준이나 구성을 바꿔 가며 다시 시험하지는 않습니다. 결과가 좋아 보일 때까지 고치면 그 수치는 근거가 되지 못합니다.</div>`;
+}
 function qsfRecordHtml(d) {
   if (!d || d.status !== "REAL") return "";
   const p1 = (v) => (isNum(v) ? pct(v * 100, 1) : DASH);
   const span = (r) => (r.first && r.last ? `${r.first.slice(0, 7)} ~ ${r.last.slice(0, 7)}` : "");
+  const win = (r) => (isNum(r.pair_win) ? (r.pair_win * 100).toFixed(1) + "%" + (r.pair_win_range ? `<div class="meta" style="margin:0">${(r.pair_win_range[0] * 100).toFixed(1)}~${(r.pair_win_range[1] * 100).toFixed(1)}%</div>` : "") : DASH);
+  const fifths = (r) => (isNum(r.top_fifth_excess) || isNum(r.bottom_fifth_excess) || !isNum(r.spread_net) ? `<td>${p1(r.top_fifth_excess)}</td><td>${p1(r.bottom_fifth_excess)}</td>`
+    : `<td colspan="2" title="상위 20%에서 하위 20%를 뺀 수익, 비용 차감 후">차이 ${p1(r.spread_net)}</td>`);
   const rows = d.rows.map((r) => `<tr><td class="l">${QSF_STRATEGY_NAME[r.strategy] || esc(r.strategy)} · ${r.horizon}거래일${r.superseded ? " (이전 구성)" : ""}<div class="meta" style="margin:0">${esc([r.universe, span(r)].filter(Boolean).join(" · "))}</div></td>
-    <td>${isNum(r.pair_win) ? (r.pair_win * 100).toFixed(1) + "%" : DASH}</td><td>${p1(r.top_fifth_excess)}</td><td>${p1(r.bottom_fifth_excess)}</td>
-    <td>${p1(r.buy_excess)}</td><td>${isNum(r.universe_return) && isNum(r.market_return) ? `${p1(r.universe_return)} / ${p1(r.market_return)}` : DASH}</td>
-    <td class="l">${esc(r.reading_label)}${r.beats_market === false ? " · 시장은 못 이김" : ""}</td></tr>`).join("");
+    <td>${win(r)}</td>${fifths(r)}
+    <td>${p1(r.buy_excess)}</td><td${r.not_stored_note ? ` title="${esc(r.not_stored_note)}"` : ""}>${isNum(r.universe_return) && isNum(r.market_return) ? `${p1(r.universe_return)} / ${p1(r.market_return)}` : DASH}</td>
+    <td class="l">${esc(r.reading_label)}${r.beats_market === false ? " · 시장은 못 이김" : ""}</td></tr>${qsfWhyHtml(r)}`).join("");
   return `<details class="qsf-record" open><summary>과거 성적: 이 점수를 얼마나 믿을 수 있나</summary>
-    <div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">점수 · 보유 기간</th><th title="임의의 두 종목 중 점수가 높은 쪽의 수익이 더 좋았던 비율. 50%면 동전 던지기입니다.">높은 점수가 이긴 비율</th>
+    <div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">점수 · 보유 기간</th><th title="임의의 두 종목 중 점수가 높은 쪽의 수익이 더 좋았던 비율. 50%면 동전 던지기입니다. 아래 작은 숫자는 오차 범위(약 95%)입니다.">높은 점수가 이긴 비율</th>
       <th title="같은 날 스캔한 종목 평균 대비">상위 20%</th><th title="같은 날 스캔한 종목 평균 대비">하위 20%</th><th title="같은 날 스캔한 종목 평균 대비">70점 이상</th>
       <th title="스캔한 종목 전체의 평균 수익과 같은 기간 시장 수익">대상 평균 / 시장</th><th class="l">판정</th></tr></thead><tbody>${rows}</tbody></table></div>
+    ${qsfForwardHtml(d.forward)}
     <div class="meta">${esc(d.what)}. ${d.caveats.map(esc).join(" ")} 출처: ${[d.source, ...(d.more_sources || [])].map(esc).join(", ")}</div></details>`;
 }
 async function qsfLoadRecord() {
