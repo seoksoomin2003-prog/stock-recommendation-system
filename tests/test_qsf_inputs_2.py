@@ -44,31 +44,43 @@ def test_all_current_debt_already_holds_the_borrowings_and_a_total_holds_everyth
     assert cur["debt_equity"] == pytest.approx(25.0 / 60.0)
     own = {"debt_long": rows([20.0] * 4, alias="LongTermDebtNoncurrent"), "debt_short": rows([2.0] * 4, alias="LongTermDebtCurrent"), "debt_borrow": rows([3.0] * 4, alias="CommercialPaper")}
     total = m(us(debt_total=rows([30.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount"), **own))
-    assert total["debt_equity"] == pytest.approx(30.0 / 60.0)             # the company's own total stands before the parts
+    assert total["debt_equity"] == pytest.approx(30.0 / 60.0) and total["debt_basis"] == "OWN_TOTAL"             # the company's own total stands before the parts
     assert m(us(debt_total=rows([30.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount")))["debt_equity"] == pytest.approx(0.5)
     zero = m(us(debt_total=rows([0.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount"), **own))
     assert zero["debt_equity"] == pytest.approx(25.0 / 60.0)              # a zero total next to positive parts is not a total
     small = m(us(debt_total=rows([0.5] * 4, alias="DebtLongtermAndShorttermCombinedAmount"), **own))
     assert small["debt_equity"] == pytest.approx(25.0 / 60.0)             # nor is a total below its own long-term part
-    assert m(us(debt_total=rows([0.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount")))["debt_equity"] is None       # a lone zero is not trusted
+    assert m(us(debt_total=rows([0.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount")))["debt_basis"] == "TOTAL_LIABILITIES"       # a lone zero is not trusted
     none = {"debt_long": rows([0.0] * 4, alias="LongTermDebtNoncurrent")}
     assert m(us(debt_total=rows([0.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount"), **none))["debt_equity"] == 0.0  # the parts say zero too
     old_total = m(us(debt_total=rows([30.0, 30.0, None, None], alias="DebtLongtermAndShorttermCombinedAmount"), **own))
     assert old_total["debt_equity"] == pytest.approx(25.0 / 60.0)         # a total of an older year is not this year's
 
 
-def test_a_us_company_without_a_debt_tag_has_no_debt_figure_rather_than_total_liabilities():
+def test_without_a_borrowings_figure_total_liabilities_stand_in_and_the_basis_says_so():
     got = m(us())
-    assert got["debt_equity"] is None and got["cash_debt"] is None and got["equity_assets"] == pytest.approx(0.6)
+    assert got["debt_equity"] == pytest.approx(40.0 / 60.0) and got["debt_basis"] == "TOTAL_LIABILITIES"
     stopped = m(us(debt_long=rows([20.0, 20.0, None, None], alias="LongTermDebt"), debt_borrow=rows([3.0] * 4, alias="ShortTermBorrowings")))
-    assert stopped["debt_equity"] is None                               # long-term debt stopped at an amount: the borrowings alone would understate it
-    paper_only = m(us(debt_borrow=rows([3.0] * 4, alias="CommercialPaper"), debt_short=rows([1.0] * 4, alias="LongTermDebtCurrent")))
-    assert paper_only["debt_equity"] is None                            # no long-term figure at all: commercial paper is not the company's debt
-
-
-def test_statements_without_any_borrowings_account_are_still_read_on_total_liabilities():
+    assert stopped["debt_basis"] == "TOTAL_LIABILITIES"                  # long-term debt stopped at an amount: the borrowings alone would understate it
+    paper_only = m(us(debt_borrow=rows([3.0] * 4, alias="CommercialPaper")))
+    assert paper_only["debt_equity"] == pytest.approx(40.0 / 60.0) and paper_only["debt_basis"] == "TOTAL_LIABILITIES"       # commercial paper alone is not the company's debt
+    borrowings_only = m(us(debt_borrow=rows([3.0] * 4, alias="ShortTermBorrowings")))
+    assert borrowings_only["debt_equity"] == pytest.approx(3.0 / 60.0) and borrowings_only["debt_basis"] == "PARTS"         # as before: a company with a small credit line and nothing else
     kr = {k: v for k, v in us().items() if not k.startswith("debt_")}
-    assert m(kr, source="OpenDART 사업보고서")["debt_equity"] == pytest.approx(40.0 / 60.0)
+    assert m(kr, source="OpenDART 사업보고서")["debt_basis"] == "TOTAL_LIABILITIES"
+    no_balance = {k: v for k, v in kr.items() if k != "liabilities"}
+    assert m(no_balance)["debt_equity"] is None and m(no_balance)["debt_basis"] is None
+
+
+def test_convertible_notes_are_long_term_debt_when_no_other_long_term_tag_exists():
+    def fact(val):
+        return {"units": {"USD": [{"end": "2025-12-31", "val": val, "filed": "2026-02-15", "form": "10-K"}]}}
+    only = f.extract_us({"facts": {"us-gaap": {"ConvertibleLongTermNotesPayable": fact(4.0), "ConvertibleNotesPayableCurrent": fact(1.0), "Liabilities": fact(13.0)}}})
+    assert only["debt_long"][0]["alias"] == "ConvertibleLongTermNotesPayable" and only["debt_short"][0]["alias"] == "ConvertibleNotesPayableCurrent"
+    both = f.extract_us({"facts": {"us-gaap": {"ConvertibleLongTermNotesPayable": fact(4.0), "LongTermDebtNoncurrent": fact(9.0)}}})
+    assert both["debt_long"][0] == {"end": "2025-12-31", "val": 9.0, "filed": "2026-02-15", "alias": "LongTermDebtNoncurrent"}      # the wider tag wins
+    got = m(us(debt_long=rows([4.0] * 4, alias="ConvertibleLongTermNotesPayable"), debt_short=rows([1.0] * 4, alias="ConvertibleNotesPayableCurrent")))
+    assert got["debt_equity"] == pytest.approx(5.0 / 60.0) and got["debt_basis"] == "PARTS"
 
 
 def test_a_zero_left_untagged_is_still_zero_for_each_part():

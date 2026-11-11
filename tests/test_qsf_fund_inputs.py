@@ -65,7 +65,7 @@ def test_debt_parts_of_the_latest_year_only():
     short_gone = metrics({**d, "debt_long": rows([10.0] * 4), "debt_short": rows([2.0, 2.0, 0.0, None])})
     assert short_gone["debt_equity"] == pytest.approx(10.0 / 60.0)         # long-term debt is the figure
     long_gone = metrics({**d, "debt_long": rows([10.0, 10.0, 10.0, None]), "debt_short": rows([2.0] * 4)})
-    assert long_gone["debt_equity"] is None                                # not short-term debt alone, not last year's sum, and (QSF-1.2.1) not total liabilities
+    assert long_gone["debt_equity"] == pytest.approx(30.0 / 60.0)          # not short-term debt alone, not last year's sum
 
 
 def test_a_zero_the_filer_stopped_tagging_is_still_zero():
@@ -73,9 +73,9 @@ def test_a_zero_the_filer_stopped_tagging_is_still_zero():
     repaid = metrics({**d, "debt_long": rows([10.0, 10.0, 0.0, None]), "debt_short": rows([2.0, 2.0, 2.0, 0.0])})
     assert repaid["debt_equity"] == 0.0 and repaid["cash_debt"] is None
     never = metrics({**d, "debt_short": rows([0.0, 0.0, 0.0, None])})
-    assert never["debt_equity"] is None                                    # QSF-1.2.1: without a long-term figure the short part alone is no debt figure
+    assert never["debt_equity"] == 0.0
     older = metrics({**d, "debt_short": rows([0.0, 0.0, None, None])})      # two years without the tag: no longer known
-    assert older["debt_equity"] is None                                    # QSF-1.2.1: and total liabilities do not stand in for it
+    assert older["debt_equity"] == pytest.approx(30.0 / 60.0)
 
 
 def test_capital_return_is_unknown_when_both_tags_stopped():

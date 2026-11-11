@@ -35,8 +35,11 @@ US_INSTANT = {
     # short-term borrowings.  Filers tag the parts differently and some tags already hold another part (LONG_HOLDS_CURRENT,
     # SHORT_HOLDS_BORROWINGS), so the alias decides what is added.
     "debt_total": ["DebtLongtermAndShorttermCombinedAmount", "DebtAndCapitalLeaseObligations"],
-    "debt_long": ["LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations", "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities"],
-    "debt_short": ["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent", "DebtCurrent"],
+    # Convertible notes come last: for a company that tags no other long-term debt they are its long-term debt (several software and
+    # device companies), and total liabilities, mostly deferred revenue there, would be far from it.
+    "debt_long": ["LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations", "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities",
+                  "ConvertibleLongTermNotesPayable", "ConvertibleDebtNoncurrent"],
+    "debt_short": ["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent", "DebtCurrent", "ConvertibleNotesPayableCurrent", "ConvertibleDebtCurrent"],
     "debt_borrow": ["ShortTermBorrowings", "CommercialPaper"],
 }
 # Checked on the newest 10-K of every scanned company (2026-11-11): LongTermDebt equals its noncurrent and current parts together in 119
@@ -170,7 +173,7 @@ def _vintage(rows: List[Dict], as_of: str) -> List[Dict]:
 def drop_stale_series(annual: Dict[str, List[Dict]], max_gap_days: int = STOPPED_GAP_DAYS) -> Dict[str, List[Dict]]:
     """A series that stopped well before the company's newest year is empty, not current.
     Short-term debt stopping alone means long-term debt is the figure.  Long-term debt stopping leaves no debt figure,
-    so every part goes: a US company then has no debt figure, a source without borrowings accounts uses total liabilities."""
+    so every part goes and the fallback to total liabilities applies."""
     ends = [r["end"] for rows in annual.values() if isinstance(rows, list) for r in rows]
     if not ends:
         return annual
@@ -359,9 +362,8 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     fcfs = [r["val"] - by_end[r["end"]] > 0 for r in recent("ocf") if r["end"] in by_end]
     nis = [r["val"] > 0 for r in recent("net_income")]
     # Debt is the company's own total, or the parts of the latest year.  Filers leave a zero untagged, so a part that was exactly 0 a
-    # year earlier and is not in the latest report is still 0.  Without a long-term figure there is no figure from the parts: the
-    # current part or commercial paper alone would understate it (two REITs showed commercial paper and nothing else).  Short-term
-    # debt that stopped leaves long-term debt.
+    # year earlier and is not in the latest report is still 0.  Long-term debt that stopped at an amount leaves no figure from the
+    # parts (the others alone would understate it) and total liabilities apply; short-term debt that stopped leaves long-term debt.
     def debt_part(k):
         v = at(k)
         return 0.0 if v is None and at(k, year_back(k)) == 0 else v
@@ -374,20 +376,25 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         debt_short = None                                   # already inside the long-term figure
     if debt_short is not None and alias_at("debt_short") in SHORT_HOLDS_BORROWINGS:
         debt_borrow = None                                  # already inside the current figure
-    parts = None if debt_long is None else debt_long + (debt_short or 0.0) + (debt_borrow or 0.0)
+    long_stopped = bool(series.get("debt_long")) and debt_long is None
+    # Commercial paper is issued by companies with term debt somewhere: alone it is not the company's debt (two REITs showed nothing else).
+    paper_only = debt_long is None and debt_short is None and alias_at("debt_borrow") == "CommercialPaper"
+    have_parts = not long_stopped and not paper_only and any(x is not None for x in (debt_long, debt_short, debt_borrow))
+    parts = (debt_long or 0.0) + (debt_short or 0.0) + (debt_borrow or 0.0) if have_parts else None
     own_total = at("debt_total")
-    # A source that tags borrowings (SEC) and shows none has no debt figure: total liabilities would put that company on another
-    # scale than its peers (36 US companies were).  Korean statements here carry no borrowings account at all, so every Korean
-    # company is read on total liabilities, the same for all of them.
-    tags_borrowings = any(k.startswith("debt_") for k in series)
     # The total tag is misused by a few filers (a credit line's balance, or zero, next to billions of notes): a total below its own
     # long-term part is not a total, and a zero stands only when the parts say zero too.
+    # Without any borrowings figure, total liabilities stand in.  They are an upper bound, not the debt: leaving the figure empty was
+    # tried and read worse, because companies with heavy debt under tags of their own (a lender arm, a REIT) then lost the penalty
+    # they deserve (2026-11-11 dry run: +8 to +9 points).  ``debt_basis`` says which of the three the figure is.  Korean statements
+    # here carry no borrowings account, so every Korean company is read on total liabilities.
+    debt_basis = None
     if own_total is not None and own_total >= (debt_long or 0.0) * (1 - RESTATED) and (own_total > 0 or parts == 0):
-        debt = own_total
+        debt, debt_basis = own_total, "OWN_TOTAL"
     elif parts is not None:
-        debt = parts
-    elif not tags_borrowings and at("liabilities") is not None:
-        debt = at("liabilities")
+        debt, debt_basis = parts, "PARTS"
+    elif at("liabilities") is not None:
+        debt, debt_basis = at("liabilities"), "TOTAL_LIABILITIES"
     sec_shares, eps_reported = at("shares_avg"), at("eps")
     # Net income / EPS is the company's own share count in whole shares, so it tells a wrong scale from a real change.
     implied = abs(ni / eps_reported) if ni and eps_reported and abs(eps_reported) >= 0.1 else None
@@ -415,7 +422,7 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         "is_financial": is_financial, "basis": latest_basis, "basis_changed": basis_changed, "basis_conflict": False,
         "roe": div(ni, eq) if (eq or 0) > 0 else None, "roe_prev": roe_prev, "op_margin": div(at("op_income"), rev), "gross_margin": div(at("gross_profit"), rev),
         "net_margin": div(ni, rev), "rev_growth": growth("revenue"), "eps_growth": eps_growth(), "rev_cagr3": cagr("revenue"), "eps_cagr3": eps_growth(3),
-        "ocf_to_ni": None if is_financial else ocf_ni, "fcf": fcf, "fcf_margin": div(fcf, rev), "fcf_years_positive": sum(fcfs) / len(fcfs) if fcfs else None,
+        "debt_basis": debt_basis, "ocf_to_ni": None if is_financial else ocf_ni, "fcf": fcf, "fcf_margin": div(fcf, rev), "fcf_years_positive": sum(fcfs) / len(fcfs) if fcfs else None,
         "roe_years_positive": sum(nis) / len(nis) if nis else None, "debt_equity": 99.0 if (eq is not None and eq <= 0 and debt) else div(debt, group_equity or eq), "current_ratio": div(at("current_assets"), at("current_liabilities")),
         "interest_cover": div(at("op_income"), at("interest")), "cash_debt": div(at("cash"), debt), "equity_assets": div(group_equity or eq, assets),
         "share_change": None if change_scale_error else growth("shares_avg"), "share_scale_error": sec_scale_error or change_scale_error, "returns_capital": (bool((bb or 0) > 0 or (dv or 0) != 0) if (bb is not None or dv is not None) else None),
