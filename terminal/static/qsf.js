@@ -273,8 +273,10 @@ function qsfRowHtml(r) {
 async function qsfRank() {
   const box = $("#qsfrank"); if (!box) return;
   const mk = state.market, token = ++qsfState.rankToken;
-  const d = await api(`/api/qsf/latest?market=${mk}`).catch(() => null);
+  let failed = null;
+  const d = await api(`/api/qsf/latest?market=${mk}`).catch((e) => { failed = e; return null; });
   if (token !== qsfState.rankToken || mk !== state.market) return;
+  if (failed) { box.innerHTML = `<div class="panel"><h2>순위</h2><div class="empty">순위를 불러오지 못했습니다: ${esc(ERR_KO[failed.message] || failed.message)} 스캔 기록이 없다는 뜻이 아닙니다.</div></div>`; return; }
   if (!d || d.status !== "REAL") { box.innerHTML = `<div class="panel"><h2>순위</h2><div class="empty">아직 스캔 기록이 없습니다. <code>python app.py qsf scan</code> 또는 매일 자동 실행 후 표시됩니다.</div></div>`; return; }
   const all = d.rows.filter((r) => r.strategy === qsfState.strategy).slice(0, 50).map((r, i) => ({ ...r, rank: i + 1 }));
   const top = all.filter((r) => r.actionability === "ACTIONABLE").slice(0, QSF_TOP);

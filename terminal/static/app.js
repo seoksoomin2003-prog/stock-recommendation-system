@@ -40,13 +40,35 @@ function when(iso) {
 function meta(source, fetched, extra = "") {
   return `<div class="meta">출처: ${esc(source)}${fetched ? ` · 받아온 시각 ${when(fetched)}` : ""}${extra ? " · " + extra : ""}</div>`;
 }
+// 서버가 응답하지 않으면 화면 위에 알린다.  요청 실패가 '기록 없음'으로 읽히지 않게 하려는 것이다.
+let netTimer = null;
+function netDown(down) {
+  const bar = $("#netbar");
+  if (!bar) return;
+  if (!down) {
+    const was = !bar.hidden;
+    bar.hidden = true;
+    if (netTimer) { clearInterval(netTimer); netTimer = null; }
+    if (was) { state.loaded = {}; show(state.tab, false); }      // 서버가 돌아왔다: 지금 탭을 다시 읽는다
+    return;
+  }
+  if (!bar.hidden) return;
+  bar.hidden = false;
+  bar.innerHTML = `<span>터미널 서버(${esc(location.host)})에 연결되지 않습니다. 지금 화면의 '기록 없음'이나 빈칸은 실제로 기록이 없다는 뜻이 아닐 수 있습니다. 서버가 응답하면 자동으로 다시 읽습니다.</span><button type="button" class="ghost" id="netretry">다시 시도</button>`;
+  const ping = () => fetch("/api/automation/status", { cache: "no-store" }).then((r) => { if (r.ok) netDown(false); }).catch(() => {});
+  $("#netretry").onclick = ping;
+  netTimer = setInterval(ping, 5000);
+}
 async function api(path, opts) {
-  const r = await fetch(path, opts);
+  let r;
+  try { r = await fetch(path, opts); }
+  catch (e) { netDown(true); throw new Error("SERVER_UNREACHABLE"); }
+  if ($("#netbar") && !$("#netbar").hidden) netDown(false);
   const j = await r.json().catch(() => ({ error: "BAD_RESPONSE" }));
   if (!r.ok) throw new Error(j.error || `HTTP_${r.status}`);
   return j;
 }
-const ERR_KO = { INVALID_TICKER: "종목 코드 형식이 올바르지 않습니다.", WATCHLIST_FULL: "관심종목은 최대 100개입니다.",
+const ERR_KO = { INVALID_TICKER: "종목 코드 형식이 올바르지 않습니다.", WATCHLIST_FULL: "관심종목은 최대 100개입니다.", SERVER_UNREACHABLE: "터미널 서버에 연결되지 않습니다.",
   INTERNAL_ERROR: "서버 내부 오류가 발생했습니다.", INVALID_RANGE: "기간 값이 올바르지 않습니다." };
 const errBox = (e) => `<div class="panel err">불러오지 못했습니다: ${esc(ERR_KO[e.message] || e.message)}</div>`;
 const loading = '<div class="panel empty">불러오는 중…</div>';

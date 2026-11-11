@@ -44,6 +44,10 @@ button:disabled { opacity: .55; cursor: default; }
 .collectbar .collect-text { flex: 1; min-width: 0; }
 .collectbar .err { color: var(--bad); }
 .collectbar button { padding: 2px 8px; font-size: 12px; }
+.netbar { flex-basis: 100%; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--bad); font-weight: 600; }
+.netbar[hidden] { display: none; }
+.netbar span { flex: 1; min-width: 0; }
+.netbar button { padding: 2px 8px; font-size: 12px; }
 .tabs { display: flex; gap: 2px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--line);
         overflow-x: auto; scrollbar-width: none; }
 .tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 10px 12px;
