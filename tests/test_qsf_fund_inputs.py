@@ -65,7 +65,7 @@ def test_debt_parts_of_the_latest_year_only():
     short_gone = metrics({**d, "debt_long": rows([10.0] * 4), "debt_short": rows([2.0, 2.0, 0.0, None])})
     assert short_gone["debt_equity"] == pytest.approx(10.0 / 60.0)         # long-term debt is the figure
     long_gone = metrics({**d, "debt_long": rows([10.0, 10.0, 10.0, None]), "debt_short": rows([2.0] * 4)})
-    assert long_gone["debt_equity"] == pytest.approx(30.0 / 60.0)          # not short-term debt alone, not last year's sum
+    assert long_gone["debt_equity"] is None                                # not short-term debt alone, not last year's sum, and (QSF-1.2.1) not total liabilities
 
 
 def test_a_zero_the_filer_stopped_tagging_is_still_zero():
@@ -369,5 +369,5 @@ def test_extracted_series_have_new_cache_keys_and_the_version_moved():
     from pathlib import Path
     from terminal.qsf import config
     code = (Path(__file__).resolve().parents[1] / "terminal" / "qsf" / "service.py").read_text(encoding="utf-8")
-    assert code.count('f"annual3:') == 1 and code.count('f"krfund3:') == 2 and "annual2:" not in code and "krfund2:" not in code
-    assert config.MODEL_VERSION == "QSF-1.2.0"          # 1.1.9 moved the keys; 1.2.0 changed only the Korean swing composition
+    assert code.count('f"annual4:') == 1 and code.count('f"krfund3:') == 2 and "annual2:" not in code and "annual3:" not in code and "krfund2:" not in code
+    assert config.MODEL_VERSION == "QSF-1.2.1"          # 1.1.9 moved the keys; 1.2.1 moved the US key again for the debt parts

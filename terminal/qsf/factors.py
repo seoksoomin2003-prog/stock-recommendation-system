@@ -297,7 +297,7 @@ def usdkrw_regime(c) -> Dict:
 
 
 def credit_liquidity(c) -> Dict:
-    return _series_factor(c, "kr_credit", lambda s: obs(s.get("normalized"), {"value": s.get("value")}, s.get("text", ""), s.get("source", ""), s.get("date")))
+    return _series_factor(c, "kr_credit", lambda s: obs(s.get("normalized"), {"value": s.get("value"), "percentile": s.get("percentile"), "window_obs": s.get("n")}, s.get("text", ""), s.get("source", ""), s.get("date")))
 
 
 # ---------------------------------------------------------------------- risk

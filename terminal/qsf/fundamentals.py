@@ -4,10 +4,13 @@ US: SEC companyfacts 10-K.  KR: OpenDART annual statements, one basis only (cons
 years use different bases is flagged and growth is not computed across them).  Only the small extracted series is cached,
 never the multi-megabyte source file.  This is display and scoring input for QSF; P6-11B keeps its own P6-20-A inputs.
 """
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional
 
-STALE_DAYS = 540     # a fiscal year-end older than 18 months is STALE
+# A newer annual report is due 12 months after the year-end plus the filing deadline (90 days for a Korean business report, 60 to 90
+# for a 10-K).  Past that, with two weeks of grace, the figures are last year's and say so.  It was 540 days, which let a company
+# whose newest year never arrived (CLX: 497 days) pass as current.
+STALE_DAYS = 365 + 90 + 14
 STOPPED_GAP_DAYS = 400   # a series ending this far before the company's newest year has stopped
 YEAR_DAYS = (340, 400)   # two fiscal year-ends this far apart are consecutive years (52- and 53-week years included)
 
@@ -28,9 +31,18 @@ US_INSTANT = {
     "equity": ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"], "assets": ["Assets"], "liabilities": ["Liabilities"],
     "current_assets": ["AssetsCurrent"], "current_liabilities": ["LiabilitiesCurrent"],
     "cash": ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
-    "debt_long": ["LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations"],
-    "debt_short": ["LongTermDebtCurrent", "ShortTermBorrowings", "LongTermDebtAndCapitalLeaseObligationsCurrent", "DebtCurrent"],
+    # Debt is three parts: long-term debt, the part of it due within a year, and short-term borrowings.  Filers tag them differently,
+    # and some tags already hold another part (see LONG_HOLDS_CURRENT and the sets after it), so the alias decides what is added.
+    "debt_long": ["LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations", "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities",
+                  "DebtLongtermAndShorttermCombinedAmount", "DebtAndCapitalLeaseObligations"],
+    "debt_short": ["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent", "DebtCurrent"],
+    "debt_borrow": ["ShortTermBorrowings", "CommercialPaper"],
 }
+# Checked on the newest 10-K of every scanned company (2026-11-11): LongTermDebt equals its noncurrent and current parts together in 119
+# of 136 companies that tag all three, so the current part is not added to it again.
+LONG_HOLDS_CURRENT = {"LongTermDebt", "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities"}
+LONG_HOLDS_ALL = {"DebtLongtermAndShorttermCombinedAmount", "DebtAndCapitalLeaseObligations"}      # every borrowing, short-term too
+SHORT_HOLDS_BORROWINGS = {"DebtCurrent"}                                                          # all debt due within a year
 
 
 MULTI_CLASS_GAP = 1.2       # market value / (price x shares)
@@ -158,14 +170,14 @@ def _vintage(rows: List[Dict], as_of: str) -> List[Dict]:
 def drop_stale_series(annual: Dict[str, List[Dict]], max_gap_days: int = STOPPED_GAP_DAYS) -> Dict[str, List[Dict]]:
     """A series that stopped well before the company's newest year is empty, not current.
     Short-term debt stopping alone means long-term debt is the figure.  Long-term debt stopping leaves no debt figure,
-    so both go and the existing fallback to total liabilities applies."""
+    so every part goes: a US company then has no debt figure, a source without borrowings accounts uses total liabilities."""
     ends = [r["end"] for rows in annual.values() if isinstance(rows, list) for r in rows]
     if not ends:
         return annual
     newest = max(ends)
     gone = {k for k, rows in annual.items() if isinstance(rows, list) and rows and _days(max(r["end"] for r in rows), newest) > max_gap_days}
     if "debt_long" in gone:
-        gone.add("debt_short")
+        gone |= {"debt_short", "debt_borrow"}
     return {k: ([] if k in gone else v) for k, v in annual.items()}
 
 
@@ -346,18 +358,30 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     by_end = {r["end"]: r["val"] for r in series.get("capex") or []} if fcf is not None else {}
     fcfs = [r["val"] - by_end[r["end"]] > 0 for r in recent("ocf") if r["end"] in by_end]
     nis = [r["val"] > 0 for r in recent("net_income")]
-    # Debt is the two parts of the latest year.  Filers leave a zero untagged, so a part that was exactly 0 a year earlier and is not
-    # in the latest report is still 0.  Long-term debt that stopped at an amount leaves no figure from the parts (short-term debt alone
-    # would understate it) and total liabilities apply, as in ``drop_stale_series``; short-term debt that stopped leaves long-term debt.
+    # Debt is the parts of the latest year.  Filers leave a zero untagged, so a part that was exactly 0 a year earlier and is not
+    # in the latest report is still 0.  Long-term debt that stopped at an amount leaves no figure from the parts (the others alone
+    # would understate it); short-term debt that stopped leaves long-term debt.
     def debt_part(k):
         v = at(k)
         return 0.0 if v is None and at(k, year_back(k)) == 0 else v
 
-    debt, debt_long, debt_short = None, debt_part("debt_long"), debt_part("debt_short")
+    def alias_at(k):
+        return next((r.get("alias") for r in reversed(series.get(k) or []) if r["end"] == latest), None)
+
+    debt, debt_long, debt_short, debt_borrow = None, debt_part("debt_long"), debt_part("debt_short"), debt_part("debt_borrow")
+    long_alias = alias_at("debt_long")
+    if long_alias in LONG_HOLDS_CURRENT | LONG_HOLDS_ALL:
+        debt_short = None                                   # already inside the long-term figure
+    if long_alias in LONG_HOLDS_ALL or (debt_short is not None and alias_at("debt_short") in SHORT_HOLDS_BORROWINGS):
+        debt_borrow = None                                  # already inside the figure that is counted
     long_stopped = bool(series.get("debt_long")) and debt_long is None
-    if not long_stopped and (debt_long is not None or debt_short is not None):
-        debt = (debt_long or 0.0) + (debt_short or 0.0)
-    elif at("liabilities") is not None:
+    # A source that tags borrowings (SEC) and shows none has no debt figure: total liabilities would put that company on another
+    # scale than its peers (36 US companies were).  Korean statements here carry no borrowings account at all, so every Korean
+    # company is read on total liabilities, the same for all of them.
+    tags_borrowings = "debt_long" in series
+    if not long_stopped and any(x is not None for x in (debt_long, debt_short, debt_borrow)):
+        debt = (debt_long or 0.0) + (debt_short or 0.0) + (debt_borrow or 0.0)
+    elif not tags_borrowings and at("liabilities") is not None:
         debt = at("liabilities")
     sec_shares, eps_reported = at("shares_avg"), at("eps")
     # Net income / EPS is the company's own share count in whole shares, so it tells a wrong scale from a real change.
@@ -386,7 +410,7 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         "is_financial": is_financial, "basis": latest_basis, "basis_changed": basis_changed, "basis_conflict": False,
         "roe": div(ni, eq) if (eq or 0) > 0 else None, "roe_prev": roe_prev, "op_margin": div(at("op_income"), rev), "gross_margin": div(at("gross_profit"), rev),
         "net_margin": div(ni, rev), "rev_growth": growth("revenue"), "eps_growth": eps_growth(), "rev_cagr3": cagr("revenue"), "eps_cagr3": eps_growth(3),
-        "ocf_to_ni": ocf_ni, "fcf": fcf, "fcf_margin": div(fcf, rev), "fcf_years_positive": sum(fcfs) / len(fcfs) if fcfs else None,
+        "ocf_to_ni": None if is_financial else ocf_ni, "fcf": fcf, "fcf_margin": div(fcf, rev), "fcf_years_positive": sum(fcfs) / len(fcfs) if fcfs else None,
         "roe_years_positive": sum(nis) / len(nis) if nis else None, "debt_equity": 99.0 if (eq is not None and eq <= 0 and debt) else div(debt, group_equity or eq), "current_ratio": div(at("current_assets"), at("current_liabilities")),
         "interest_cover": div(at("op_income"), at("interest")), "cash_debt": div(at("cash"), debt), "equity_assets": div(group_equity or eq, assets),
         "share_change": None if change_scale_error else growth("shares_avg"), "share_scale_error": sec_scale_error or change_scale_error, "returns_capital": (bool((bb or 0) > 0 or (dv or 0) != 0) if (bb is not None or dv is not None) else None),
@@ -465,16 +489,30 @@ def is_financial_kr(industry_class: Optional[str], annual: Optional[Dict[str, An
     return not (a.get("current_assets") and a.get("current_liabilities"))
 
 
+def last_business_year(as_of: date, fiscal_month: int = 12) -> int:
+    """The newest business year that has ended by ``as_of``; DART names a business year by the calendar year it ends in.
+    A December company's is last year.  A June company's is this year from July on (030960 was read a year late)."""
+    end_of_month = date(as_of.year + (fiscal_month == 12), fiscal_month % 12 + 1, 1) - timedelta(days=1)
+    return as_of.year if as_of > end_of_month else as_of.year - 1
+
+
+def fiscal_month_of(text: Any) -> int:
+    """'06월' or 6 -> 6; anything unreadable is December, the month of all but a few companies."""
+    digits = "".join(ch for ch in str(text or "") if ch.isdigit())
+    return int(digits) if digits and 1 <= int(digits) <= 12 else 12
+
+
 def load_kr_statements(corp_code: str, code: str, industry_class: str, as_of: date, client: Any,
-                       extract: Optional[Callable] = None) -> Dict[int, Dict[str, Dict]]:
+                       extract: Optional[Callable] = None, fiscal_month: int = 12) -> Dict[int, Dict[str, Dict]]:
     """Last four business years of annual statements, chosen per year as CFS then OFS and never mixed within a year."""
     from markets.kr import dart
     out = {}
-    for year in range(as_of.year - 4, as_of.year):
+    last = last_business_year(as_of, fiscal_month)
+    for year in range(last - 3, last + 1):
         fetched = {fs: client.statements(corp_code, year, "11011", fs) for fs in ("CFS", "OFS")}
         chosen = dart.choose_basis(fetched)
         if not chosen.get("rows"):
             continue
-        obs = dart.normalize_statements(chosen["rows"], corp_code=corp_code, ticker=code, year=year, reprt_code="11011", fs_div=chosen["fs_div"])
+        obs = dart.normalize_statements(chosen["rows"], corp_code=corp_code, ticker=code, year=year, reprt_code="11011", fs_div=chosen["fs_div"], fiscal_month=fiscal_month)
         out[year] = (extract or dart.extract_concepts)(obs, industry_class)
     return out

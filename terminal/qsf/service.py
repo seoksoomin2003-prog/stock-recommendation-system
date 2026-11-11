@@ -25,8 +25,16 @@ KR_MIN_UNIVERSE = 200       # a whole-market Korean scan with fewer stocks than 
 # 20 hours, not 24: a copy stored at 07:15 must be old enough for the next day's 07:10 run.  Korean statements keep 7 days ("kr_facts").
 TTL = {"bars": 1800, "regime": 3600, "facts": 20 * 3600, "kr_facts": 7 * 86400, "subm": 20 * 3600, "info": 7 * 86400, "earn": 3 * 86400, "form4": 3650 * 86400}
 REGIME_FRESH_DAYS = 5
+
+
+def _kr_fund_key(code: str, fiscal_month: int) -> str:
+    """December companies keep their stored statements; the few others were read with the wrong year and get a key of their own."""
+    return f"krfund3:{code}" if fiscal_month == 12 else f"krfund3:{code}:fm{fiscal_month:02d}"
 UNAVAILABLE_KR = {"vkospi": "VKOSPI는 합법적인 무료 공개 출처에서 안정적으로 받을 수 없어 사용하지 않습니다.",
-                  "kr_credit": "한국 신용·유동성 지표의 검증된 무료 출처를 아직 연결하지 않았습니다."}
+                  "kr_credit": "한국은행 ECOS에서 회사채·국고채 금리를 받지 못했습니다(키가 없거나 응답 없음)."}
+# Korean credit conditions, read the way the US high-yield spread is: 3-year AA- corporate yield less the 3-year treasury yield, daily,
+# Bank of Korea ECOS table 817Y002, placed within its own last ten years.  A research default fixed in advance, not a fitted choice.
+KR_CREDIT = {"stat": "817Y002", "corporate": "010300000", "treasury": "010200000", "years": 10, "min_rows": 250}
 
 
 def _clean(rows: List[Dict], last: str) -> List[Dict]:
@@ -169,6 +177,25 @@ class QSF:
         day = p.dates[last]
         return {"status": "REAL" if day == self._session("US") else "STALE", "value": float((a[-1][ok] > ma[ok]).mean()), "n": int(ok.sum()), "date": day, "source": "S&P 500 패널"}
 
+    def _kr_credit(self) -> Dict[str, Any]:
+        """The spread's place in its own history; a narrow spread scores high.  Missing key, failed request or short history: UNAVAILABLE."""
+        k = KR_CREDIT
+        end = self.now().date()
+        start = end - timedelta(days=365 * k["years"])
+
+        def fetch():
+            a, b = (self.src.ecos_series(k["stat"], "D", start.strftime("%Y%m%d"), end.strftime("%Y%m%d"), [k[name]]) for name in ("corporate", "treasury"))
+            return {"corporate": a, "treasury": b}
+        res = self.cache.cached("ecos:kr_credit_spread", TTL["regime"], fetch)
+        data = res["data"] or {}
+        gov = {d: v for d, v in data.get("treasury") or [] if v is not None}
+        rows = [{"date": d, "close": v - gov[d]} for d, v in data.get("corporate") or [] if v is not None and d in gov]
+        if len(rows) < k["min_rows"]:
+            return {"status": "UNAVAILABLE", "reason": UNAVAILABLE_KR["kr_credit"] if not rows else "회사채 스프레드 이력 부족"}
+        lv = self._level(rows)
+        return {**lv, "normalized": 1 - lv["percentile"], "source": f"한국은행 ECOS {k['stat']} (회사채 3년 AA- − 국고채 3년, {rows[0]['date']}부터)",
+                "text": f"회사채(AA-, 3년) − 국고채(3년) 스프레드 {lv['value']:.2f}%p, 최근 {k['years']}년({lv['n']}개 관측) 내 위치 {lv['percentile'] * 100:.0f}% (좁을수록 신용 여건 양호)"}
+
     def _regime_kr(self) -> Dict[str, Any]:
         # Yahoo's index series can skip a session that stocks have, so a large constituent also marks the calendar.
         hist = self._history(["^KS11", "^KQ11", "KRW=X", "005930.KS"], "2y")
@@ -176,7 +203,7 @@ class QSF:
         session = self._session("KR", sorted((data.get("^KS11") or []) + (data.get("005930.KS") or []), key=lambda r: r["date"]))
         ks, fx = _clean(data.get("^KS11") or [], session), data.get("KRW=X") or []
         out: Dict[str, Any] = {"index": self._index(ks, "KOSPI"), "kosdaq": self._index(_clean(data.get("^KQ11") or [], session), "KOSDAQ"),
-                               "vkospi": {"status": "UNAVAILABLE", "reason": UNAVAILABLE_KR["vkospi"]}, "kr_credit": {"status": "UNAVAILABLE", "reason": UNAVAILABLE_KR["kr_credit"]},
+                               "vkospi": {"status": "UNAVAILABLE", "reason": UNAVAILABLE_KR["vkospi"]}, "kr_credit": self._kr_credit(),
                                "session": session}
         if len(fx) > 64:
             out["usdkrw"] = {**self._level(fx), "change_63": fx[-1]["close"] / fx[-64]["close"] - 1, "source": "Yahoo KRW=X"}
@@ -199,7 +226,7 @@ class QSF:
             return {"status": "UNAVAILABLE", "reason": f"SEC 식별 실패 ({type(exc).__name__})"}
         if not cik:
             return {"status": "UNAVAILABLE", "reason": "SEC CIK 없음 (ETF·지수이거나 미국 상장 기업이 아님)", "no_cik": True}
-        res = self.cache.cached(f"annual3:{default_sources.facts_key(ticker, cik)}", TTL["facts"], lambda: self._annual(ticker, cik))
+        res = self.cache.cached(f"annual4:{default_sources.facts_key(ticker, cik)}", TTL["facts"], lambda: self._annual(ticker, cik))
         subm = self._us_subm(cik)
         if res["data"] is None:
             return {"status": "UNAVAILABLE", "reason": f"SEC 재무 조회 실패 ({res.get('error')})", "cik": cik}
@@ -293,7 +320,8 @@ class QSF:
         if not corp:
             return {"fund": {"status": "UNAVAILABLE", "reason": "DART 고유번호 없음"}, "events": {"status": "UNAVAILABLE", "reason": "DART 고유번호 없음"}}
         klass = ident.get("industry_class") or "NON_FINANCIAL"
-        res = self.cache.cached(f"krfund3:{code}", TTL["kr_facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, date.fromisoformat(as_of), self.dart)))
+        fm = fundamentals.fiscal_month_of(ident.get("fiscal_month"))
+        res = self.cache.cached(_kr_fund_key(code, fm), TTL["kr_facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, date.fromisoformat(as_of), self.dart, fiscal_month=fm)))
         info = self.cache.cached(f"info:{ident.get('yahoo_symbol')}", TTL["info"], lambda: self.src.yahoo_info(ident["yahoo_symbol"]))["data"] or {}
         fund = {"status": "UNAVAILABLE", "reason": f"DART 재무 조회 실패 ({res.get('error')})"}
         if res["data"]:
@@ -323,7 +351,8 @@ class QSF:
             return out
         as_of = self.now().date()
         klass = ident.get("industry_class") or "NON_FINANCIAL"
-        res = self.cache.cached(f"krfund3:{code}", TTL["kr_facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart)))
+        fm = fundamentals.fiscal_month_of(ident.get("fiscal_month"))
+        res = self.cache.cached(_kr_fund_key(code, fm), TTL["kr_facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart, fiscal_month=fm)))
 
         def fetch_list():
             bgn = (as_of - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")

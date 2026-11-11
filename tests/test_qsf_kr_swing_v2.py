@@ -36,7 +36,7 @@ def test_only_the_korean_swing_profile_changed():
     assert kr["domains"]["TECHNICAL"] == {} and kr["reference"]["TECHNICAL"] == us["domains"]["TECHNICAL"] and sum(us["domains"]["TECHNICAL"].values()) == 40
     assert {d: kr["domains"][d] for d in ("FUNDAMENTAL", "RISK", "EVENTS")} == {d: us["domains"][d] for d in ("FUNDAMENTAL", "RISK", "EVENTS")}
     assert all(not p["reference"] for k, p in config.PROFILES.items() if k != "KR_SWING_V2")
-    assert sum(sum(v.values()) for v in config.profile_for("KR", "LONG_TERM")["domains"].values()) == 100 and config.MODEL_VERSION == "QSF-1.2.0"
+    assert sum(sum(v.values()) for v in config.profile_for("KR", "LONG_TERM")["domains"].values()) == 100 and config.MODEL_VERSION == "QSF-1.2.1"
 
 
 def test_the_technical_value_cannot_move_the_korean_swing_score(monkeypatch):
