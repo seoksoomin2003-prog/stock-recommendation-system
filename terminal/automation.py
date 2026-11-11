@@ -33,7 +33,7 @@ SLEPT_NOTE_S = 120                                  # a step during which the Ma
 HOLDINGS_EVERY_DAYS, HOLDINGS_FRESH_DAYS = 7, 90     # KODEX holdings: retry cadence while missing, and refresh age
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
-FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger", "kr_swing_challenger", "kr_swing_prior", "kr_cap_universe", "kr_traded_universe")
+FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger", "kr_swing_challenger", "kr_swing_prior", "kr_cap_universe", "kr_traded_universe", "kr_method")
 KR_STEPS = ("QSF_KR", "NEWS_KR", "KR_FORWARD")     # Korea trades on some days the US does not, and these must not wait for a US session
 KST = timezone(timedelta(hours=9))
 BACKUP_STALE_DAYS = 4                              # a long weekend with a holiday is three days without a new session
@@ -41,7 +41,7 @@ OK, FAILED, SKIPPED, WAITING = "OK", "FAILED", "SKIPPED", "WAITING"
 STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "US_CHALLENGER": "미국 도전자 점수 기록", "BACKUP": "백업"}
 BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json", "data/terminal/alerts.json", "data/terminal/alerts_log.jsonl",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
-                "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl", "research_data/kr_swing_challenger/index.jsonl", "research_data/kr_swing_prior/index.jsonl", "research_data/kr_cap_universe/index.jsonl", "research_data/kr_traded_universe/index.jsonl", "data/qsf/top3/index.jsonl", "data/qsf/top3/*.json.gz",
+                "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl", "research_data/kr_swing_challenger/index.jsonl", "research_data/kr_swing_prior/index.jsonl", "research_data/kr_cap_universe/index.jsonl", "research_data/kr_traded_universe/index.jsonl", "research_data/kr_method/index.jsonl", "data/qsf/top3/index.jsonl", "data/qsf/top3/*.json.gz",
                 "data/qsf/price_archive/*.json.gz")
 
 

@@ -509,7 +509,8 @@ class QSF:
         own = config.STYLE_TO_STRATEGY.get((pos or {}).get("style"))
         cards = {s: self.card(ctx, s, pos if own in (None, s) else None) for s in strategies}
         risky = self._high_risk(market)
-        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None, "filing_events": self._filing_mark(self._filing_marks(market), ticker), "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
+        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None,
+                "risk_grade": self._risk_grade(ticker, market), "filing_events": self._filing_mark(self._filing_marks(market), ticker), "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
 
     def signal(self, ticker: str, weight_pct: Optional[float] = None, max_weight_pct: Optional[float] = None, market: str = "US") -> Dict[str, Any]:
         """Score and exit reading of one held position, under the profile of its own style only."""
@@ -784,6 +785,18 @@ class QSF:
             pass
 
     # ------------------------------------------------------------------ reports
+    def _risk_grade(self, ticker: str, market: str) -> Optional[Dict[str, Any]]:
+        """The stock's risk grade on the newest KR-M1 record, with the stored test's numbers.  Reference only: it feeds no score."""
+        if market != "KR":
+            return None
+        try:
+            from terminal.qsf import kr_method
+            view = kr_method.risk_view(self.base)
+        except Exception:
+            return None
+        row = (view.get("rows") or {}).get(ticker)
+        return None if view.get("status") != "REAL" or not row else {**row, "name": view["names"].get(row["grade"]), "session": view["session"], "test": view["test"]}
+
     def _high_risk(self, market: str) -> Dict[str, Any]:
         """Korean names only: that is where the pattern was seen.  Added when read, so no score or record contains it."""
         if market != "KR":

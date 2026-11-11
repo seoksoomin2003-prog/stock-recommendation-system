@@ -428,6 +428,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long",
                "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate",
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
+               "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
@@ -495,6 +496,12 @@ def cmd_qsf(args) -> int:
             res["traded_universe"] = kr_traded_universe.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
         except Exception as exc:
             res["traded_universe"] = {"status": "FAILED", "reason": type(exc).__name__}
+        try:                        # the own trading method (KR-M1) reads the ledger, the day's marks and the price files; it never fails the step either
+            from terminal.qsf import kr_method
+            res["method"] = kr_method.record(PROJECT_ROOT)
+            kr_method.write_status(PROJECT_ROOT)
+        except Exception as exc:
+            res["method"] = {"status": "FAILED", "reason": type(exc).__name__}
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3, "NO_KEY": 4}.get(res["status"], 1)
     if args.action in ("kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run"):     # reports/QSF_KR_LONG_EARLY_PROTOCOL.md
@@ -534,6 +541,24 @@ def cmd_qsf(args) -> int:
             res = tu.status(PROJECT_ROOT) if args.action.endswith("status") else {k: v for k, v in tu.evaluate_once(PROJECT_ROOT).items() if k != "former_long_reference"}
         print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
         return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
+    if args.action in ("kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240"):      # reports/QSF_KR_METHOD_PROTOCOL.md
+        from terminal.qsf import kr_method as km
+        if args.action.endswith("record"):
+            res = km.record(PROJECT_ROOT)
+            km.write_status(PROJECT_ROOT)
+        elif args.action.endswith("status"):
+            res = {k: v for k, v in km.status(PROJECT_ROOT).items() if k not in ("pool_codes", "names", "family")}
+        elif args.action.endswith("select"):
+            res = {k: v for k, v in km.select_once(PROJECT_ROOT).items() if k != "pools"}
+        else:
+            res = km.evaluate_once(PROJECT_ROOT, int(args.action.rsplit("-", 1)[-1]))
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+        return 0 if res.get("status") in (None, "OK", "REAL", "ALREADY_RUN") else 3 if res.get("status") in ("WAITING", "NOT_READY", "NO_RECORD") else 1
+    if args.action == "kr-risk-grade-run":            # one run (reports/QSF_KR_RISK_GRADE_PROTOCOL.md); a stored result is printed as it is
+        from terminal.qsf import kr_risk_grade
+        res = kr_risk_grade.run_once(PROJECT_ROOT)
+        print(json.dumps({k: res[k] for k in ("status", "verdict", "primary") if k in res}, ensure_ascii=False, indent=1, default=str))
+        return 0
     if args.action in ("kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate"):
         from terminal.qsf import kr_swing_prior as sp
         res = sp.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sp.status(PROJECT_ROOT) if args.action.endswith("status") else sp.record(PROJECT_ROOT)

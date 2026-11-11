@@ -526,6 +526,16 @@ and what would change the label.
   universe is still chosen by its own rule and scored every day as a separate record with one evaluation after 240 matured
   sessions (`terminal/qsf/kr_traded_universe.py`, `reports/QSF_KR_TRADED_UNIVERSE_PROTOCOL.md`), and the score tab shows its
   newest day read only (`terminal/qsf/kr_cap_view.py`, `/api/qsf/former-universe`).  `reports/QSF_KR_UNIVERSE_SWITCH_2026_11_11.md`.
+* Own trading method KR-M1 and the Korean risk grade (2026-11-11, user decision): a challenger kept apart from the live score.
+  Stocks with an avoid mark are dropped, the top fifth of the rest by the live swing score is the pool, and seven chart entries
+  plus two baselines are followed with one exit rule (stop 2 ATR, target 3 ATR, ten sessions, 0.53% round trip).  The one
+  selection run on 2019-2026 named no primary: after costs every entry and both baselines sat near or below zero
+  (`reports/QSF_KR_METHOD_SELECTION_RESULTS.md`).  All nine are still recorded every day from session 2026-11-11
+  (`terminal/qsf/kr_method.py`, `research_data/kr_method`, `reports/QSF_KR_METHOD_PROTOCOL.md`), shown under 추적·검증 as
+  "판정 전 참고", with figures reported once at 120 and at 240 matured signal days.  The risk grade answers a different question,
+  which stock swings and loses more over the next 20 sessions; its one test passed (rank correlation with realized volatility
+  +0.51 in the largest 300, `reports/QSF_KR_RISK_GRADE_RESULTS.md`, `terminal/qsf/kr_risk_grade.py`).  It is shown on the stock
+  detail as a reference and feeds no score, rank, limit or stop.
 * Statement keep-time (2026-11-11): extracted US annual statements are kept 20 hours, so a new 10-K is scored at the next
   morning's run instead of up to seven days later; a failed SEC read keeps the stored copy.  Korean statements keep seven days
   (`TTL["facts"]`, `TTL["kr_facts"]` in `terminal/qsf/service.py`, tests in `tests/test_qsf_statement_keep_time.py`).

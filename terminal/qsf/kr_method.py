@@ -518,7 +518,8 @@ def progress(base: Path) -> Dict[str, Any]:
         methods[m] = r
     out.update({"status": "REAL", "sessions": len(docs), "matured": len(matured(docs, dates)), "last": last["session"], "prices_to": dates[-1] if dates else None,
                 "universe": last["universe"], "pool": last["pool"], "pool_codes": [r["code"] for r in last["rows"] if r["pool"]], "methods": methods,
-                "note": "판정 전 참고입니다. 판정은 보유가 끝난 신호일 120개와 240개에서 한 번씩만 합니다."})
+                "note": "판정 전 참고입니다. 판정은 보유가 끝난 신호일 120개와 240개에서 한 번씩만 합니다." if out["primary"] else
+                        "판정 전 참고입니다. 선발에서 주력이 정해지지 않아 판정은 없고, 보유가 끝난 신호일 120개와 240개에서 수치만 한 번씩 보고합니다."})
     return out
 
 
@@ -538,6 +539,28 @@ def status(base: Path) -> Dict[str, Any]:
         return json.loads((Path(base) / STATUS).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {"status": "NO_RECORD", "protocol": PROTOCOL, "first": FIRST, "primary": primaries(base), "read_at": list(READ_AT), "names": NAMES, "family": FAMILY}
+
+
+def risk_view(base: Path) -> Dict[str, Any]:
+    """The risk grade of the newest recorded session with the stored test's numbers next to it.  ``top_fifth`` is the reading that
+    was tested: the riskiest fifth inside the day's universe."""
+    base = Path(base)
+    out: Dict[str, Any] = {"status": "UNAVAILABLE", "protocol": kr_risk_grade.PROTOCOL, "rows": {}}
+    if not kr_risk_grade.supported(base):
+        return out
+    index = kf.read_index(base, FOLDER)
+    if not index:
+        return {**out, "status": "NO_RECORD"}
+    doc = kf._read_day(base / FOLDER, index[-1]["session"])
+    got = [(r["code"], r["risk"]) for r in doc["rows"] if r.get("risk") and r["risk"].get("score") is not None]
+    if len(got) < 30:
+        return {**out, "status": "NO_RECORD"}
+    q = validate.rank(np.array([v["score"] for _, v in got], dtype=float)) / (len(got) - 1)
+    test = json.loads((base / kr_risk_grade.REPORT).read_text(encoding="utf-8"))["primary"]
+    return {"status": "REAL", "protocol": kr_risk_grade.PROTOCOL, "session": doc["session"], "names": kr_risk_grade.GRADE_NAMES,
+            "rows": {c: {**v, "top_fifth": bool(x >= 0.8)} for (c, v), x in zip(got, q)},
+            "test": {"pair_win": test["pair_win"], "loss_top": test["big_loss"]["top"], "loss_all": test["big_loss"]["all"],
+                     "drawdown_top": test["drawdown"]["top"], "drawdown_bottom": test["drawdown"]["bottom"], "first": test["first"], "last": test["last"]}}
 
 
 # ---------------------------------------------------------------------- the two readings of the record

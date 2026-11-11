@@ -384,3 +384,41 @@ def test_the_view_and_the_two_readings_come_from_the_record(tmp_path, monkeypatc
     (tmp_path / km.SELECTION).write_text(json.dumps({"primary": ["R1"]}), encoding="utf-8")
     km.forward_report(tmp_path, 10).unlink()
     assert km.evaluate_once(tmp_path, 10, log=lambda m: None)["verdict"]["R1"] in ("METHOD_SUPPORTED", "NOT_DISTINGUISHED") and km.primaries(tmp_path) == ["R1"]
+
+
+def test_the_risk_view_marks_the_riskiest_fifth_of_the_newest_record_and_needs_a_supported_test(tmp_path):
+    from terminal.qsf import kr_risk_grade as rg
+    assert km.risk_view(tmp_path)["status"] == "UNAVAILABLE"
+    report = tmp_path / rg.REPORT
+    report.parent.mkdir(parents=True)
+    primary = {"pair_win": 0.66, "big_loss": {"top": 0.14, "all": 0.075}, "drawdown": {"top": -0.12, "bottom": -0.065}, "first": "2011-01-03", "last": "2026-09-21"}
+    report.write_text(json.dumps({"verdict": "RISK_GRADE_SUPPORTED", "primary": primary}), encoding="utf-8")
+    assert km.risk_view(tmp_path)["status"] == "NO_RECORD"
+    rows = [{"code": f"{n:05d}0", "risk": {"score": float(n), "grade": "LOW" if n < 40 else "MEDIUM"}} for n in range(50)] + [{"code": "999990"}]
+    kf.write_record(tmp_path, "2026-11-11", km._utcnow(), False, store=km.FOLDER, scorer=lambda base, day: {"session": day, "rows": rows})
+    view = km.risk_view(tmp_path)
+    assert view["status"] == "REAL" and view["session"] == "2026-11-11" and len(view["rows"]) == 50 and "999990" not in view["rows"]
+    assert [c for c, r in view["rows"].items() if r["top_fifth"]] == [f"{n:05d}0" for n in range(40, 50)] and view["rows"]["000490"]["grade"] == "MEDIUM"
+    assert view["test"]["pair_win"] == 0.66 and view["test"]["loss_top"] == 0.14 and view["names"]["LOW"] == "낮음"
+    report.write_text(json.dumps({"verdict": "RISK_GRADE_NOT_SUPPORTED", "primary": primary}), encoding="utf-8")
+    assert km.risk_view(tmp_path)["rows"] == {}
+
+
+def test_the_plans_are_written_and_the_record_is_backed_up_wired_into_the_daily_step_and_shown():
+    from pathlib import Path
+    from terminal import automation
+    from terminal.qsf import kr_risk_grade as rg
+    root = Path(__file__).resolve().parents[1]
+    plan = (root / km.PROTOCOL).read_text(encoding="utf-8")
+    assert all(w in plan for w in ("NO_PRIMARY", "METHOD_SUPPORTED", "NOT_DISTINGUISHED", "0.53%", "2.45", "120개", "240개")) and all(m in plan for m in km.METHODS + km.BASELINES)
+    risk_plan = (root / rg.PROTOCOL).read_text(encoding="utf-8")
+    assert all(w in risk_plan for w in ("RISK_GRADE_SUPPORTED", "RISK_GRADE_NOT_SUPPORTED", "0.30", "−15%"))
+    assert "kr_method" in automation.FORWARD_STORES and any("kr_method/index.jsonl" in g for g in automation.BACKUP_GLOBS)
+    app = (root / "app.py").read_text(encoding="utf-8")
+    assert 'res["method"] = kr_method.record(PROJECT_ROOT)' in app and '"kr-method-evaluate-240"' in app and '"kr-risk-grade-run"' in app
+    assert app.index('res["traded_universe"] = kr_traded_universe.record') < app.index('res["method"] = kr_method.record')
+    assert '"/api/qsf/kr-method"' in (root / "terminal" / "server.py").read_text(encoding="utf-8")
+    js = (root / "terminal" / "static" / "qsf.js").read_text(encoding="utf-8")
+    assert "판정 전 참고" in js and "기준을 통과한 매매법이 없었습니다" in js and "위험 등급" in js and "점수와 순위에 반영되지 않습니다" in js
+    assert (km.HOLD, km.STOP_ATR, km.TARGET_ATR, km.SELECT_T, km.VERDICT_T, km.READ_AT, km.FIRST) == (10, 2.0, 3.0, 2.45, 2.0, (120, 240), "2026-11-11")
+    assert (rg.MIN_IC, rg.BIG_LOSS, rg.STEP, rg.H, [g[0] for g in rg.GRADES[:-1]]) == (0.30, -0.15, 21, 20, [40.0, 70.0, 90.0])

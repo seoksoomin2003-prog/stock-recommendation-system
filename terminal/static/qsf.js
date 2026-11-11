@@ -35,7 +35,7 @@ function qsfSetView(v) {
 const QSF_LOADERS = {
   rank: () => { qsfRank(); qsfCap(); qsfChanges(); },
   screen: () => ($("#qsfscreenform") ? qsfScreenRun(true) : qsfScreenBuild()),
-  track: () => { qsfTop3(); qsfValidation(); },
+  track: () => { qsfTop3(); qsfMethod(); qsfValidation(); },
 };
 function qsfLoadView(v) {
   if (qsfState.fresh[v]) return;
@@ -119,7 +119,7 @@ async function renderQsf() {
     </div>
     <div data-view="rank"><div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsfcap"></div><div id="qsfchanges"></div></div>
     <div data-view="screen"><div id="qsfscreen"></div></div>
-    <div data-view="track"><div id="qsftop3"></div><div id="qsfvalid"></div></div>`;
+    <div data-view="track"><div id="qsftop3"></div><div id="qsfmethod"></div><div id="qsfvalid"></div></div>`;
   $("#qsfview").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetView(b.dataset.v)));
   $("#qsfstratseg").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetStrategy(b.dataset.s)));
   qsfState.fresh = {};
@@ -158,11 +158,20 @@ function qsfAuditLine(a) {
   return `<div class="notice">시세 이력 점검(${esc(a.session)}): ${esc(a.text)}${ex ? ` 예: ${ex}.` : ""}${prov} ${QSF_AUDIT_NOTE} <span class="meta" style="margin:0">${esc(a.source)}</span></div>`;
 }
 const qsfAuditTag = (a) => (a && a.level !== "ok" ? ` <span class="badge risk-note" title="${esc(a.text)}">시세 이력 확인 필요</span>` : "");
+function qsfRiskGradeLine(g) {
+  if (!g) return "";
+  const pc = (v, n = 1) => (isNum(v) ? (v * 100).toFixed(n) + "%" : DASH), t = g.test || {};
+  return `<div class="meta"><b>위험 등급 ${esc(g.name || g.grade)}</b> (위험 점수 ${isNum(g.score) ? g.score.toFixed(0) : DASH} / 100)${g.top_fifth ? ' · <b>스캔 대상 안에서 위험 상위 20%</b>' : " · 스캔 대상 안에서 위험 상위 20% 아님"}. 기준일 ${esc(g.session)}.
+    수익이 아니라 앞으로 20거래일의 흔들림과 큰 손실을 가늠하는 참고값이며 점수와 순위에 반영되지 않습니다.
+    과거 시험(${esc((t.first || "").slice(0, 4))}~${esc((t.last || "").slice(0, 4))}, 시가총액 상위 300): 위험 점수가 높은 쪽이 실제로 더 흔들린 비율 ${pc(t.pair_win, 0)}, 20거래일 뒤 −15% 이하로 끝난 비율은 위험 상위 20%가 ${pc(t.loss_top)}(전체 ${pc(t.loss_all)}),
+    평균 최대 낙폭은 위험 상위 20%가 ${pc(t.drawdown_top)}(하위 20%는 ${pc(t.drawdown_bottom)}). 이미 본 구간의 시험입니다.</div>`;
+}
 function qsfDrawDetail(d) {
   const p = d.p6_reference;
   $("#qsfdetail").innerHTML = `<div class="panel"><h2>${esc(d.ticker)} ${esc(d.name || "")} <span class="badge">${d.market === "US" ? "미국" : "한국"}</span>${d.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(d.filing_events)}${qsfAuditTag(d.price_audit)}</h2>
     ${d.high_risk ? `<div class="meta">${QSF_RISK_NOTE} 기준일 ${esc(d.high_risk.session)}.</div>` : ""}
     ${d.filing_events ? `<div class="meta">${QSF_FILING_NOTE} 기준일 ${esc(d.filing_events.session)}.</div>` : ""}
+    ${qsfRiskGradeLine(d.risk_grade)}
     ${QSF_RANK_NOTE[d.rank_basis] ? `<div class="meta">${QSF_RANK_NOTE[d.rank_basis]}</div>` : ""}
     ${qsfAuditLine(d.price_audit)}
     ${p ? `<div class="meta">P6-11B 참고: ${p.status !== "REAL" ? "기록 없음" : p.in_top5 ? `최근 스캔 상위 5 (${p.rank}위)` : "최근 스캔 상위 5 아님"} · 별도 모델이며 점수에 합치지 않습니다.</div>` : ""}
@@ -486,6 +495,32 @@ function qsfVersionNote(cohorts) {
   const names = Object.keys(seen).sort();
   if (names.length < 2) return "";
   return `<div class="notice">이 집계에는 모델 버전 ${names.length}개의 기록이 섞여 있습니다(${names.map((v) => `${esc(v)} ${seen[v]}건`).join(", ")}). 결과는 한 수식의 성적이 아니라 그동안 쓴 수식들의 성적입니다.</div>`;
+}
+function qsfMethodHtml(d) {
+  const title = `<h2>독자 매매법 KR-M1 <span class="badge">판정 전 참고</span></h2>`;
+  const rules = `<div class="meta">회피 표시가 없는 종목 중 스윙 점수 상위 20%가 후보군입니다. 후보군 종목에 차트 신호가 뜨면 다음 거래일 시가에 들어가고, 손절 −2 ATR · 목표 +3 ATR · 10거래일 시간 청산으로 나옵니다. 왕복 비용 0.53%를 뺍니다. 기준선은 신호 없이 10거래일마다 사는 경우입니다.</div>
+    <div class="meta"><b>과거 선발 실행(2019~2026)에서는 기준을 통과한 매매법이 없었습니다.</b> 9개 모두 비용을 빼면 거래당 평균 수익이 0 근처이거나 음수였습니다. 그래서 주력이 없고, 앞으로의 기록에서도 판정 없이 수치만 보고합니다. 주문을 실행하지 않고 투자 자문이 아닙니다. 규칙: ${esc(d.protocol)} · 선발 결과: reports/QSF_KR_METHOD_SELECTION_RESULTS.md</div>`;
+  if (d.status !== "REAL") return `<div class="panel">${title}<div class="meta">아직 기록이 없습니다. ${esc(d.first)} 거래일부터 매일 기록합니다.</div>${rules}</div>`;
+  const pc = (v, n = 2) => (isNum(v) ? qsfPct(v) : DASH);
+  const order = ["R1", "R2", "R3", "T1", "T2", "T3", "T4", "B0", "B00"];
+  const rows = order.filter((m) => d.methods[m]).map((m) => { const r = d.methods[m], base = m[0] === "B";
+    return `<tr><td class="l"><b>${esc(m)}</b> ${esc(d.names[m] || "")}${d.primary.includes(m) ? ' <span class="badge">주력</span>' : ""}${d.family[m] ? `<div class="meta" style="margin:0">${esc(d.family[m])} 계열</div>` : ""}</td>
+      <td class="num">${base ? DASH : (r.today || []).length}</td><td class="num">${base ? DASH : r.signals_recorded}</td><td class="num">${r.trades || 0}</td><td class="num">${r.open_count || 0}</td>
+      <td class="num">${r.trades ? pc(r.mean_net) : DASH}</td><td class="num">${r.trades ? (r.win_rate * 100).toFixed(0) + "%" : DASH}</td><td class="num">${isNum(r.payoff) ? r.payoff.toFixed(2) : DASH}</td>
+      <td class="num">${isNum(r.mean_net_minus_b0) ? pc(r.mean_net_minus_b0) : DASH}</td></tr>`; }).join("");
+  return `<div class="panel">${title}
+    <div class="meta">기록 ${d.sessions}거래일(최근 ${esc(d.last)}), 보유가 끝난 신호일 ${d.matured}개. 대상 ${d.universe}종목 중 후보군 ${d.pool}종목. 가격은 ${esc(d.prices_to || "")}까지.</div>
+    <div class="tbl-wrap"><table><thead><tr><th class="l">매매법</th><th title="최근 기록일에 후보군에서 신호가 뜬 종목 수">최근 신호</th><th>누적 신호</th><th title="청산까지 끝난 거래">끝난 거래</th><th>열린 거래</th>
+      <th title="끝난 거래의 평균, 왕복 비용 0.53% 차감">거래당 순수익</th><th>승률</th><th title="평균 이익 ÷ 평균 손실">손익비</th><th title="같은 기간 기준선 B0의 거래당 평균 순수익과의 차이">기준선 대비</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="meta">${esc(d.note || "")} 거래 수가 적은 동안의 수치는 우연에 크게 흔들립니다.</div>${rules}</div>`;
+}
+async function qsfMethod() {
+  const box = $("#qsfmethod"); if (!box) return;
+  if (!isKR()) { box.innerHTML = ""; return; }
+  const mk = state.market;
+  const d = await api("/api/qsf/kr-method").catch(() => null);
+  if (mk !== state.market) return;
+  box.innerHTML = d ? qsfMethodHtml(d) : "";
 }
 async function qsfValidation() {
   const box = $("#qsfvalid"); if (!box) return;
