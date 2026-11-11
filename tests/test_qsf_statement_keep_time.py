@@ -92,4 +92,4 @@ def test_korean_statements_keep_seven_days_and_us_one(tmp_path, monkeypatch):
         q._kr_fund_events("005930", {"industry_class": "NON_FINANCIAL", "yahoo_symbol": "005930.KS"}, [{"date": "2026-11-10", "close": 100.0}], "2026-11-10")
     with pytest.raises(Stop):
         q._us_fund("AAA", [{"date": "2026-11-10", "close": 10.0}], "2026-11-10")
-    assert seen == {"krfund3": 7 * 24 * HOUR, "annual3": 20 * HOUR}
+    assert seen == {"krfund3": 7 * 24 * HOUR, "annual4": 20 * HOUR}

@@ -5,7 +5,10 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.2.0"     # 1.2.0: the Korean swing score no longer counts the technical domain (profile KR_SWING_V2, user decision
+MODEL_VERSION = "QSF-1.2.1"     # 1.2.1: inputs the 2026-11-11 audit left (US debt read from its parts and never from total liabilities, annual figures
+#                                  STALE once a newer report is overdue, no cash-flow ratio for financial companies, business years of
+#                                  non-December Korean companies) and the Korean credit factor read from Bank of Korea yields; formulas and
+#                                  weights unchanged.  1.2.0: the Korean swing score no longer counts the technical domain (profile KR_SWING_V2, user decision
 #                                  2026-11-11 after reports/QSF_KR_TECH_EARLY_RESULTS.md); its factors are still computed and stored as reference,
 #                                  and chart position stays in the entry assessment (holding.entry_status).  US and Korean long-term: unchanged.
 #                                  1.1.9: fundamental inputs after the 2026-11-11 audit (one fiscal year per figure, share bases, Korean account ids,
