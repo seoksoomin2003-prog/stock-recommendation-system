@@ -428,7 +428,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long",
                "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate",
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
-               "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
+               "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
 
@@ -489,6 +489,12 @@ def cmd_qsf(args) -> int:
             res["cap_universe"] = kr_cap_universe.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
         except Exception as exc:
             res["cap_universe"] = {"status": "FAILED", "reason": type(exc).__name__}
+        try:                        # the former live universe (the 300 most traded), scored the same way; it never fails the step either
+            from terminal.qsf import kr_traded_universe
+            from terminal.qsf.service import QSF
+            res["traded_universe"] = kr_traded_universe.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
+        except Exception as exc:
+            res["traded_universe"] = {"status": "FAILED", "reason": type(exc).__name__}
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3, "NO_KEY": 4}.get(res["status"], 1)
     if args.action in ("kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run"):     # reports/QSF_KR_LONG_EARLY_PROTOCOL.md
@@ -517,6 +523,15 @@ def cmd_qsf(args) -> int:
     if args.action in ("kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate"):
         from terminal.qsf import kr_swing_challenger as sc
         res = sc.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sc.status(PROJECT_ROOT) if args.action.endswith("status") else sc.record(PROJECT_ROOT)
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+        return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
+    if args.action in ("kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate"):
+        from terminal.qsf import kr_traded_universe as tu
+        if args.action.endswith("record"):
+            from terminal.qsf.service import QSF
+            res = tu.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
+        else:
+            res = tu.status(PROJECT_ROOT) if args.action.endswith("status") else {k: v for k, v in tu.evaluate_once(PROJECT_ROOT).items() if k != "former_long_reference"}
         print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
         return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
     if args.action in ("kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate"):

@@ -513,9 +513,13 @@ and what would change the label.
   ratio; Korean companies whose year does not end in December are read up to their newest business year.  The Korean
   `credit_liquidity` factor reads the 3-year AA- corporate spread over the treasury yield from the Bank of Korea (ECOS 817Y002).
   Extracted US series moved to the cache key `annual4` (`tests/test_qsf_inputs_2.py`, `reports/QSF_INPUTS_2_2026_11_11.md`).
-* Second Korean list (2026-11-11, user request): the score tab shows the newest day of the market-value top-300 record next to
-  the live ranking, read only (`terminal/qsf/kr_cap_view.py`, `/api/qsf/cap-universe`).  The live ranking, the top 3 and alerts
-  still use the traded-value top 300; the record and its one evaluation are untouched.
+* Korean universe (QSF-1.3.0, 2026-11-11, user decision): the live Korean scan scores the 300 largest companies by market value
+  on the newest KRX day on file (`config.KR_UNIVERSE`, `QSF.kr_market_cap_universe`), instead of the 300 most traded.  The former
+  universe lagged the market by 15 to 24 points a year in two separate past windows; the market-value figures come from one
+  exploratory test and the score's rank evidence is weaker there, which the notice and the past-record table now say.  The former
+  universe is still chosen by its own rule and scored every day as a separate record with one evaluation after 240 matured
+  sessions (`terminal/qsf/kr_traded_universe.py`, `reports/QSF_KR_TRADED_UNIVERSE_PROTOCOL.md`), and the score tab shows its
+  newest day read only (`terminal/qsf/kr_cap_view.py`, `/api/qsf/former-universe`).  `reports/QSF_KR_UNIVERSE_SWITCH_2026_11_11.md`.
 * Statement keep-time (2026-11-11): extracted US annual statements are kept 20 hours, so a new 10-K is scored at the next
   morning's run instead of up to seven days later; a failed SEC read keeps the stored copy.  Korean statements keep seven days
   (`TTL["facts"]`, `TTL["kr_facts"]` in `terminal/qsf/service.py`, tests in `tests/test_qsf_statement_keep_time.py`).

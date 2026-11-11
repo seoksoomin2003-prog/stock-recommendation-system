@@ -157,7 +157,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
         ("GET", "/api/qsf/changes"): lambda q, b: qsf_changes.report(t.qsf.latest(_market(q.get("market", "US"))), t.qsf.ledger, _market(q.get("market", "US")), _strategy(q.get("strategy", "SWING"))),
         ("GET", "/api/qsf/validation"): lambda q, b: t.qsf.validation(),
         ("GET", "/api/qsf/track-record"): lambda q, b: qsf_track_record.summary(t.base, _market(q.get("market", "US"))),
-        ("GET", "/api/qsf/cap-universe"): lambda q, b: qsf_cap_view.view(t.base, _strategy(q.get("strategy", "SWING")), name_of=_kr_name(t)),
+        ("GET", "/api/qsf/former-universe"): lambda q, b: qsf_cap_view.view(t.base, _strategy(q.get("strategy", "SWING")), name_of=_kr_name(t)),
         ("GET", "/api/qsf/top3"): lambda q, b: t.qsf.top3(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/peers"): lambda q, b: t.qsf.peers(clean_ticker(q.get("t", "")), _market(q.get("market", "US"))),
         ("GET", "/api/qsf/sector-picks"): lambda q, b: t.sector_picks(_market(q.get("market", "US")), q.get("fund", "")),

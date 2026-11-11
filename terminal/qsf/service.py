@@ -601,7 +601,8 @@ class QSF:
             rec = self.ledger.append(session, market, cards)
         summary = {"status": "REAL" if cards else "UNAVAILABLE", "market": market, "session": session, "model_version": config.MODEL_VERSION, "tickers": len(tickers), "scored": len(cards), "errors": errors,
                    "elapsed_seconds": round(time.time() - started, 1), "ledger": rec, "generated_at": self.now().isoformat(),
-                   **({"price_source": self._kr_bars_info} if market == "KR" and getattr(self, "_kr_bars_info", None) else {}), "rows": sorted(rows, key=lambda r: -(r["score"] or -1))}
+                   **({"price_source": self._kr_bars_info} if market == "KR" and getattr(self, "_kr_bars_info", None) else {}),
+                   **({"universe": self._kr_universe_info} if market == "KR" and getattr(self, "_kr_universe_info", None) else {}), "rows": sorted(rows, key=lambda r: -(r["score"] or -1))}
         if not record:
             return summary                  # a dry run leaves the published ranking alone
         self.dir.mkdir(parents=True, exist_ok=True)
@@ -644,14 +645,17 @@ class QSF:
             raise RuntimeError("KOSPI index bars unavailable")
         sessions = pd.DatetimeIndex(idx["KOSPI"].index)
         latest = pd.Timestamp(self.regime("KR")["session"])
+        self._kr_universe_info = None
         if tickers:
             members = master[master["canonical_ticker"].isin(tickers)]
+        elif config.KR_UNIVERSE == "MARKET_CAP":
+            self._refresh_krx_days(latest.strftime("%Y-%m-%d"))
+            codes, self._kr_universe_info = self.kr_market_cap_universe(latest.strftime("%Y-%m-%d"))
+            known = set(master["canonical_ticker"])
+            members = master.set_index("canonical_ticker").loc[[c for c in codes if c in known]].reset_index()
         else:
-            elig = master[master["eligible"].astype(bool)]
-            s, e = acquisition.window(now, 60)
-            ub = acquisition.bars(prov, elig, s, e, now, cache_dir, "universe", fresh_at=latest)
-            uni = universe.build(elig, ub["bars"], sessions[sessions >= pd.Timestamp(s)], latest)
-            members = master.set_index("canonical_ticker").loc[uni["members"]["ticker"]].reset_index()
+            members = self.kr_traded_value_universe(master, sessions, latest, now)
+            self._kr_universe_info = {"rule": "TRADED_VALUE", "members": int(len(members))}
         hs, he = acquisition.window(now, 800)
         hb = acquisition.bars(YahooKRProvider(), members, hs, he, now, cache_dir, "history", fresh_at=latest)["bars"]
         bars: Dict[str, List[Dict]] = {}
@@ -664,7 +668,8 @@ class QSF:
         above = [b[-1]["close"] > np.mean([x["close"] for x in b[-200:]]) for b in bars.values() if len(b) >= 200 and b[-1]["date"] == session]
         if len(above) >= 50 and side_files:
             self.dir.mkdir(parents=True, exist_ok=True)
-            (self.dir / "breadth_KR.json").write_text(json.dumps({"status": "REAL", "value": float(np.mean(above)), "n": len(above), "date": session, "source": "한국 유동성 상위 유니버스 (Yahoo)"}), encoding="utf-8")
+            source = "한국 시가총액 상위 300 (스캔 대상)" if (self._kr_universe_info or {}).get("rule") == "MARKET_CAP" else "한국 유동성 상위 유니버스 (Yahoo)"
+            (self.dir / "breadth_KR.json").write_text(json.dumps({"status": "REAL", "value": float(np.mean(above)), "n": len(above), "date": session, "source": source}), encoding="utf-8")
             self._regime.pop("KR", None)
         if side_files:
             with gzip.open(self.dir / "bars_KR.json.gz", "wt", encoding="utf-8") as fh:
@@ -677,6 +682,65 @@ class QSF:
             ident = master[master["canonical_ticker"] == c].iloc[0]
             pre[c]["bench"] = bench.get("^KQ11" if ident["market"] == "KOSDAQ" else "^KS11") or []
         return codes, pre
+
+    # ------------------------------------------------------------------ Korean universes
+    def kr_traded_value_universe(self, master, sessions, latest, now):
+        """The 300 most traded stocks over 20 sessions: the live universe until QSF-1.2.1, kept for the record that still scores it."""
+        import pandas as pd
+        from markets.kr import acquisition, universe
+        from markets.kr.market_data import YahooKRProvider
+        elig = master[master["eligible"].astype(bool)]
+        s, e = acquisition.window(now, 60)
+        ub = acquisition.bars(YahooKRProvider(), elig, s, e, now, self.base / "data" / "kr" / "cache", "universe", fresh_at=latest)
+        uni = universe.build(elig, ub["bars"], sessions[sessions >= pd.Timestamp(s)], latest)
+        return master.set_index("canonical_ticker").loc[uni["members"]["ticker"]].reset_index()
+
+    def kr_former_universe_codes(self) -> List[str]:
+        """Codes of the former live universe for the current Korean session (reports/QSF_KR_TRADED_UNIVERSE_PROTOCOL.md)."""
+        import pandas as pd
+        from markets.kr import acquisition, security_master
+        from markets.kr.market_data import YahooKRProvider
+        now = self.now()
+        master = security_master.load_master(self.base / "data" / "kr", now=now)["master"]
+        idx = acquisition.index_bars(YahooKRProvider(), *acquisition.window(now, 800), now)
+        if idx["KOSPI"].empty:
+            raise RuntimeError("KOSPI index bars unavailable")
+        latest = pd.Timestamp(self.regime("KR")["session"])
+        return list(self.kr_traded_value_universe(master, pd.DatetimeIndex(idx["KOSPI"].index), latest, now)["canonical_ticker"])
+
+    def kr_market_cap_universe(self, session: str) -> Tuple[List[str], Dict[str, Any]]:
+        """The 300 largest eligible companies by market value on the newest KRX day on file up to ``session``, by the rule of the
+        market-value record (``kr_cap_universe.members``).  No KRX day within KR_UNIVERSE_MAX_AGE_DAYS: no universe, and the scan
+        is not run on something else instead."""
+        from terminal.qsf import kr_cap_universe as cu, research_kr_live
+        root = self.base / cu.KRX
+        days = sorted((p.name[:10] for p in (root / "KOSPI").glob("*.json.gz") if p.name[:10] <= session), reverse=True)
+        day = next((d for d in days[:15] if cu.day_rows(root, d)), None)
+        if day is None or (date.fromisoformat(session) - date.fromisoformat(day)).days > config.KR_UNIVERSE_MAX_AGE_DAYS:
+            raise RuntimeError("KRX daily data unavailable for the market-value universe")
+        extra_file = self.base / research_kr_live.DATA / "industry.json"
+        try:
+            extra = json.loads(extra_file.read_text(encoding="utf-8")) if extra_file.exists() else {}
+        except (OSError, ValueError):
+            extra = {}
+        klass_of = {**{c: v["class"] for c, v in extra.items()}, **research_kr_live._klass_from_master(self.base)}
+        mem = cu.members(root, day, klass_of)
+        return [m["code"] for m in mem], {"rule": "MARKET_CAP", "krx_day": day, "members": len(mem), "size": cu.SIZE, "same_day": day == session}
+
+    def _refresh_krx_days(self, session: str) -> None:
+        """Best effort, live source only: the session's own KRX day is usually published hours before the morning scan and not yet
+        on file.  With it the universe and the last bar come from the exchange.  Any failure leaves what is on file."""
+        key = os.environ.get("KRX_API_KEY")
+        if self.src is not default_sources or not key:
+            return
+        try:
+            import requests
+            from terminal.qsf import kr_cap_universe as cu, krx_history as kh
+            day = date.fromisoformat(session)
+            kh.download(self.base / cu.KRX, key, requests.get, (day - timedelta(days=7)).isoformat(), session, log=lambda *_: None,
+                        keep_empty_before=(day - timedelta(days=7)).isoformat())
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------ reports
     def _high_risk(self, market: str) -> Dict[str, Any]:

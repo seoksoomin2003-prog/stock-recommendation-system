@@ -5,7 +5,8 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.2.1"     # 1.2.1: inputs the 2026-11-11 audit left (US debt read from its parts and never from total liabilities, annual figures
+MODEL_VERSION = "QSF-1.3.0"     # 1.3.0: the live Korean scan covers the 300 largest companies by market value instead of the 300 most traded
+#                                  (KR_UNIVERSE, user decision 2026-11-11); the score itself is unchanged.  1.2.1: inputs the 2026-11-11 audit left (US debt read from its parts and never from total liabilities, annual figures
 #                                  STALE once a newer report is overdue, no cash-flow ratio for financial companies, business years of
 #                                  non-December Korean companies) and the Korean credit factor read from Bank of Korea yields; formulas and
 #                                  weights unchanged.  1.2.0: the Korean swing score no longer counts the technical domain (profile KR_SWING_V2, user decision
@@ -14,9 +15,15 @@ MODEL_VERSION = "QSF-1.2.1"     # 1.2.1: inputs the 2026-11-11 audit left (US de
 #                                  1.1.9: fundamental inputs after the 2026-11-11 audit (one fiscal year per figure, share bases, Korean account ids,
 #                                  currency, who is scored as financial); factor formulas and weights unchanged.  1.1.8: Korean daily bars from KRX
 VALIDATION_NOTICE = ("미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. "
-                     "한국 장기 점수는 한 구간(2019~2026)에서는 종목 순위를 설명했고 다른 구간(2016~2019)에서는 확인되지 않았으며, 두 구간 모두 상위 종목이 시장을 이기지 못했습니다. "
+                     "한국 스캔 대상은 2026-11-11부터 시가총액 상위 300종목입니다. 이 대상 안에서 점수는 과거 시험(2019~2026)의 기준에 못 미쳤고(장기 점수는 순위와 약한 양의 관계, 상위 종목은 시장 수준), "
+                     "이전 대상(거래대금 상위 300)에서는 장기 점수가 한 구간에서만 순위를 설명했으며 그 대상 자체가 시장보다 크게 부진했습니다. "
                      "한국 스윙 점수는 2026-11-11에 차트 항목을 뺀 새 구성이라 과거 성적이 없습니다. 참고용으로만 쓰세요.")
 STYLE_TO_STRATEGY = {"LONG": "LONG_TERM", "SWING": "SWING"}
+# Which Korean stocks the live scan scores.  MARKET_CAP: the 300 largest by market value on the newest KRX day on file, by the rule of
+# reports/QSF_KR_CAP_UNIVERSE_PROTOCOL.md.  TRADED_VALUE: the 300 most traded over 20 sessions, the live rule until QSF-1.2.1; it is
+# still scored every day as a separate record (reports/QSF_KR_TRADED_UNIVERSE_PROTOCOL.md).  Setting TRADED_VALUE here goes back.
+KR_UNIVERSE = "MARKET_CAP"
+KR_UNIVERSE_MAX_AGE_DAYS = 10      # the newest KRX day on file may be this many calendar days before the session; older is no universe
 SPEC_VERSION = "QSF_1_1_MASTER_SPECIFICATION"
 
 MARKETS = ("US", "KR")

@@ -56,7 +56,7 @@ function qsfRecordHtml(d) {
   if (!d || d.status !== "REAL") return "";
   const p1 = (v) => (isNum(v) ? pct(v * 100, 1) : DASH);
   const span = (r) => (r.first && r.last ? `${r.first.slice(0, 7)} ~ ${r.last.slice(0, 7)}` : "");
-  const rows = d.rows.map((r) => `<tr><td class="l">${QSF_STRATEGY_NAME[r.strategy] || esc(r.strategy)} · ${r.horizon}거래일${r.superseded ? " (이전 구성)" : ""}<div class="meta" style="margin:0">${esc(span(r))}</div></td>
+  const rows = d.rows.map((r) => `<tr><td class="l">${QSF_STRATEGY_NAME[r.strategy] || esc(r.strategy)} · ${r.horizon}거래일${r.superseded ? " (이전 구성)" : ""}<div class="meta" style="margin:0">${esc([r.universe, span(r)].filter(Boolean).join(" · "))}</div></td>
     <td>${isNum(r.pair_win) ? (r.pair_win * 100).toFixed(1) + "%" : DASH}</td><td>${p1(r.top_fifth_excess)}</td><td>${p1(r.bottom_fifth_excess)}</td>
     <td>${p1(r.buy_excess)}</td><td>${isNum(r.universe_return) && isNum(r.market_return) ? `${p1(r.universe_return)} / ${p1(r.market_return)}` : DASH}</td>
     <td class="l">${esc(r.reading_label)}${r.beats_market === false ? " · 시장은 못 이김" : ""}</td></tr>`).join("");
@@ -79,7 +79,7 @@ async function qsfLoadRecord() {
 async function renderQsf() {
   const el = $("#tab-qsf");
   el.innerHTML = `<div class="panel"><h2>종목 점수 (QSF 1.1)</h2>
-    <div class="notice"><b>미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. 한국 장기 점수는 한 구간(2019~2026)에서는 종목 순위를 설명했고 다른 구간(2016~2019)에서는 확인되지 않았으며, 두 구간 모두 상위 종목이 시장을 이기지 못했습니다. 한국 스윙 점수는 2026-11-11에 차트 항목을 뺀 새 구성이라 과거 성적이 없습니다. 참고용으로만 쓰세요.</b><br>모델 탭의 기준 모델(미국 종목에 순위를 매겨 상위 5개와 진입·손절 계획을 내는, 규칙이 고정된 모델)과 별개인 규칙 기반 점수이며, 두 결과를 합치지 않습니다. 가중치와 구간은 사전에 정한 연구 기본값입니다. 주문을 실행하지 않고, 투자 자문이 아닙니다.</div>
+    <div class="notice"><b>미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. 한국 스캔 대상은 2026-11-11부터 시가총액 상위 300종목입니다. 이 대상 안에서 점수는 과거 시험(2019~2026)의 기준에 못 미쳤고(장기 점수는 순위와 약한 양의 관계, 상위 종목은 시장 수준), 이전 대상(거래대금 상위 300)에서는 장기 점수가 한 구간에서만 순위를 설명했으며 그 대상 자체가 시장보다 크게 부진했습니다. 한국 스윙 점수는 2026-11-11에 차트 항목을 뺀 새 구성이라 과거 성적이 없습니다. 참고용으로만 쓰세요.</b><br>모델 탭의 기준 모델(미국 종목에 순위를 매겨 상위 5개와 진입·손절 계획을 내는, 규칙이 고정된 모델)과 별개인 규칙 기반 점수이며, 두 결과를 합치지 않습니다. 가중치와 구간은 사전에 정한 연구 기본값입니다. 주문을 실행하지 않고, 투자 자문이 아닙니다.</div>
     <div id="qsfrecord"></div>
     <form id="qsfform" class="qsf-form">
       <input id="qsfticker" placeholder="${isKR() ? "종목코드 (예: 005930)" : "티커 (예: AAPL)"}" autocomplete="off" aria-label="종목">
@@ -278,22 +278,22 @@ function qsfChangeTable(title, rows, note) {
   if (!rows.length) return `<h3 class="qc-title">${title} <span class="meta" style="margin:0">없음</span></h3>`;
   return `<h3 class="qc-title">${title} <span class="meta" style="margin:0">${rows.length}개${note ? " · " + note : ""}</span></h3><div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">종목</th><th>이전</th><th>현재</th><th>변화</th><th class="l">가장 크게 움직인 영역</th></tr></thead><tbody>${rows.map(qsfChangeRow).join("")}</tbody></table></div>`;
 }
-// Korea only: the same scores on the market-value top 300, from the separate daily record.  A second list, never the live ranking.
+// Korea only: the same scores on the former live universe (the 300 most traded), from the separate daily record.  Never the live ranking.
 const QSF_ACT = { ACTIONABLE: "", BLOCKED: "차단", INSUFFICIENT_DATA: "자료 부족" };
 function qsfCapHtml(d) {
   const rows = d.rows.map((r) => `<tr><td class="num">${r.rank}</td><td class="l"><a href="#stock/${esc(r.ticker)}">${esc(r.name || r.ticker)}</a> <span class="meta" style="margin:0">${esc(r.ticker)}</span></td>
-    <td class="num">${qsfNum(r.score)}</td><td class="num">${r.cap_rank}</td><td class="l">${r.in_live ? "라이브 대상에도 있음" : "<b>시가총액 대상에만</b>"}</td><td class="l">${esc(QSF_ACT[r.actionability] ?? r.actionability ?? "")}</td></tr>`).join("");
-  return `<div class="panel"><h2>시가총액 상위 ${d.size} 대상으로 본 순위 <small class="meta" style="margin:0">비교용 · ${QSF_STRAT[d.strategy]} · 기준 ${esc(d.session)} · ${esc(d.model_version || "")}</small></h2>
+    <td class="num">${qsfNum(r.score)}</td><td class="num">${r.traded_rank}</td><td class="l">${r.in_live ? "라이브 대상에도 있음" : "<b>이전 대상에만</b>"}</td><td class="l">${esc(QSF_ACT[r.actionability] ?? r.actionability ?? "")}</td></tr>`).join("");
+  return `<div class="panel"><h2>이전 대상(거래대금 상위 ${d.size})으로 본 순위 <small class="meta" style="margin:0">비교용 · ${QSF_STRAT[d.strategy]} · 기준 ${esc(d.session)} · ${esc(d.model_version || "")}</small></h2>
     <div class="notice">${d.notes.map(esc).join("<br>")}</div>
-    <div class="meta">점수가 나온 ${d.scored}종목 중 상위 ${d.rows.length}개 · 두 대상에 모두 있는 종목 ${d.in_both}개 · 시가총액 대상에만 ${d.cap_only}개 · 라이브 대상에만 ${d.live_only}개 · 70점 이상 ${d.buy_band}개 · 쌓인 기록 ${d.records}일</div>
-    <div class="tbl-wrap"><table class="qs-table"><thead><tr><th>순위</th><th class="l">종목</th><th>점수</th><th title="그날 KRX 시가총액 순위">시가총액 순위</th><th class="l">라이브 대상</th><th class="l">상태</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="meta">점수가 나온 ${d.scored}종목 중 상위 ${d.rows.length}개 · 두 대상에 모두 있는 종목 ${d.in_both}개 · 이전 대상에만 ${d.former_only}개 · 라이브 대상에만 ${d.live_only}개 · 70점 이상 ${d.buy_band}개 · 쌓인 기록 ${d.records}일</div>
+    <div class="tbl-wrap"><table class="qs-table"><thead><tr><th>순위</th><th class="l">종목</th><th>점수</th><th title="20거래일 평균 거래대금 순위">거래대금 순위</th><th class="l">라이브 대상</th><th class="l">상태</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="meta">점수는 그날 기록에 적힌 값입니다(다시 계산하지 않음). 규칙: ${esc(d.protocol)}</div></div>`;
 }
 async function qsfCap() {
   const box = $("#qsfcap"); if (!box) return;
   if (!isKR()) { box.innerHTML = ""; return; }
   const mk = state.market, st = qsfState.strategy;
-  const d = await api(`/api/qsf/cap-universe?strategy=${st}`).catch(() => null);
+  const d = await api(`/api/qsf/former-universe?strategy=${st}`).catch(() => null);
   if (mk !== state.market || st !== qsfState.strategy) return;
   box.innerHTML = d && d.status === "REAL" ? qsfCapHtml(d) : "";
 }

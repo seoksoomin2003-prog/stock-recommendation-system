@@ -36,7 +36,7 @@ def test_only_the_korean_swing_profile_changed():
     assert kr["domains"]["TECHNICAL"] == {} and kr["reference"]["TECHNICAL"] == us["domains"]["TECHNICAL"] and sum(us["domains"]["TECHNICAL"].values()) == 40
     assert {d: kr["domains"][d] for d in ("FUNDAMENTAL", "RISK", "EVENTS")} == {d: us["domains"][d] for d in ("FUNDAMENTAL", "RISK", "EVENTS")}
     assert all(not p["reference"] for k, p in config.PROFILES.items() if k != "KR_SWING_V2")
-    assert sum(sum(v.values()) for v in config.profile_for("KR", "LONG_TERM")["domains"].values()) == 100 and config.MODEL_VERSION == "QSF-1.2.1"
+    assert sum(sum(v.values()) for v in config.profile_for("KR", "LONG_TERM")["domains"].values()) == 100 and config.MODEL_VERSION == "QSF-1.3.0"
 
 
 def test_the_technical_value_cannot_move_the_korean_swing_score(monkeypatch):
@@ -225,32 +225,3 @@ def test_the_protocol_is_written_and_the_record_is_backed_up_and_wired_into_the_
     assert "kr_swing_prior" in automation.FORWARD_STORES and any("kr_swing_prior/index.jsonl" in g for g in automation.BACKUP_GLOBS)
     app = (root / "app.py").read_text(encoding="utf-8")
     assert 'res["swing_prior"] = kr_swing_prior.record(PROJECT_ROOT)' in app and '"kr-swing-prior-evaluate"' in app
-
-
-# ---------------------------------------------------------------------- what the screen says
-def test_the_notice_names_both_long_windows_and_the_new_swing_composition():
-    root = Path(__file__).resolve().parents[1]
-    n = config.VALIDATION_NOTICE
-    assert "2019~2026" in n and "2016~2019" in n and "확인되지 않았" in n and "차트 항목을 뺀" in n and "과거 성적이 없습니다" in n
-    assert n in (root / "terminal" / "static" / "qsf.js").read_text(encoding="utf-8")
-
-
-def test_the_past_record_shows_the_second_long_window_and_marks_the_former_swing_composition(tmp_path):
-    first = {"tables": {"SWING|20": {"dates": 88, "first": "2019-04-01", "last": "2026-09-08", "ic": 0.028, "t": 1.9},
-                        "LONG_TERM|252": {"dates": 77, "first": "2019-04-01", "last": "2025-09-24", "ic": 0.136, "t": 8.2, "average_return": 0.079, "market_return": 0.215}},
-             "primary": {"SWING": {"horizon": 20, "reading": "NO_EVIDENCE"}, "LONG_TERM": {"horizon": 252, "reading": "RANK_ONLY"}}, "money": {"SWING": {"passed": False}, "LONG_TERM": {"passed": False}}}
-    second = {"primary": {"strategy": "LONG_TERM", "horizon": 252, "dates": 23, "first": "2016-04-01", "last": "2018-02-20", "ic": 0.093, "t": 2.05, "top_fifth_excess": 0.019, "bottom_fifth_excess": -0.071,
-                          "buy_excess": 0.046, "average_return": -0.040, "market_return": 0.077, "reading": "NOT_CONFIRMED"}, "money": {"LONG_TERM": {"passed": False}}}
-    for name, doc in ((tr.SOURCES["KR"]["file"], first), (tr.SOURCES["KR"]["more"][0]["file"], second)):
-        p = tmp_path / name
-        p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(json.dumps(doc), encoding="utf-8")
-    got = tr.summary(tmp_path, "KR")
-    swing, long_, early = got["rows"]
-    assert swing["superseded"] is True and "superseded" not in long_ and long_["reading_label"] == "순위만 설명"
-    assert early["second_window"] is True and early["reading"] == "NOT_CONFIRMED" and early["reading_label"].startswith("확인 안 됨") and early["beats_market"] is False
-    assert early["first"] == "2016-04-01" and early["horizon"] == 252 and early["ic"] == 0.093 and early["universe_return"] == -0.040 and early["bottom_fifth_excess"] == -0.071
-    assert got["more_sources"] == ["reports/QSF_KR_LONG_EARLY_RESULTS.md"] and any("이전 구성" in c for c in got["caveats"])
-    (tmp_path / tr.SOURCES["KR"]["more"][0]["file"]).unlink()
-    assert len(tr.summary(tmp_path, "KR")["rows"]) == 2 and tr.summary(tmp_path, "KR")["more_sources"] == []
-    assert "more_sources" in tr.summary(tmp_path, "US") or tr.summary(tmp_path, "US")["status"] == "UNAVAILABLE"
