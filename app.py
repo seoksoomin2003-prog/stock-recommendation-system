@@ -427,6 +427,7 @@ QSF_ONE_SHOT = {
 QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-report", "price-archive", "kr-etf-holdings", "kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund",
                "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long",
                "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate",
+               "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
@@ -477,6 +478,11 @@ def cmd_qsf(args) -> int:
             res["swing_challenger"] = kr_swing_challenger.record(PROJECT_ROOT)
         except Exception as exc:
             res["swing_challenger"] = {"status": "FAILED", "reason": type(exc).__name__}
+        try:                        # the former swing formula next to the live score, from the ledger only; it never fails the step either
+            from terminal.qsf import kr_swing_prior
+            res["swing_prior"] = kr_swing_prior.record(PROJECT_ROOT)
+        except Exception as exc:
+            res["swing_prior"] = {"status": "FAILED", "reason": type(exc).__name__}
         try:                        # the market-value universe record scores with a scan that writes no live file; it never fails the step either
             from terminal.qsf import kr_cap_universe
             from terminal.qsf.service import QSF
@@ -511,6 +517,11 @@ def cmd_qsf(args) -> int:
     if args.action in ("kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate"):
         from terminal.qsf import kr_swing_challenger as sc
         res = sc.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sc.status(PROJECT_ROOT) if args.action.endswith("status") else sc.record(PROJECT_ROOT)
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+        return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
+    if args.action in ("kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate"):
+        from terminal.qsf import kr_swing_prior as sp
+        res = sp.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sp.status(PROJECT_ROOT) if args.action.endswith("status") else sp.record(PROJECT_ROOT)
         print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
         return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
     if args.action == "stability":                   # read only: how much the live score moves between sessions of one model version

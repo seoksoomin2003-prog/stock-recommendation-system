@@ -448,7 +448,7 @@ and the history stays append-only. The portfolio tab shows a table for each, and
 ### QSF 1.1 stock score (experimental)
 
 The 점수 tab and `qsf` commands score a chosen stock from 0 to 100 under four separate profiles: `US_SWING_V1`, `US_LONG_TERM_V1`,
-`KR_SWING_V1`, `KR_LONG_TERM_V1`. Each result shows the factors, coverage and confidence, hard gates, a holding plan, exit conditions
+`KR_SWING_V2`, `KR_LONG_TERM_V1`. Each result shows the factors, coverage and confidence, hard gates, a holding plan, exit conditions
 and what would change the label.
 
 ```bash
@@ -500,6 +500,13 @@ and what would change the label.
   against the won price; holding companies of industrial groups and US exchanges, health plans, insurance brokers and real
   estate firms are scored as non-financial.  Extracted series moved to the cache keys `annual3` and `krfund3`
   (`terminal/qsf/fundamentals.py`, tests in `tests/test_qsf_fund_inputs.py`).
+* Korean swing composition (QSF-1.2.0, 2026-11-11, user decision): the technical domain no longer counts in the Korean swing score.
+  It ranked stocks the wrong way round in three past windows (`reports/QSF_KR_TECH_EARLY_RESULTS.md`).  Its five factors are still
+  computed, shown and stored as reference rows (`scored: false`, `reference_weight`), and chart position stays in the entry
+  assessment (`holding.entry_status`).  The new composite itself was never scored on a past window: the former formula is recorded
+  next to it every session (`terminal/qsf/kr_swing_prior.py`, `reports/QSF_KR_SWING_PRIOR_PROTOCOL.md`, one evaluation at twelve
+  separate 20-session samples).  US scores and the Korean long-term score are unchanged.  The on-screen notice and the past-record
+  table now carry the second Korean long-term window (2016-2019, not confirmed) next to the first.  `reports/QSF_KR_SWING_V2_2026_11_11.md`.
 * Statement keep-time (2026-11-11): extracted US annual statements are kept 20 hours, so a new 10-K is scored at the next
   morning's run instead of up to seven days later; a failed SEC read keeps the stored copy.  Korean statements keep seven days
   (`TTL["facts"]`, `TTL["kr_facts"]` in `terminal/qsf/service.py`, tests in `tests/test_qsf_statement_keep_time.py`).

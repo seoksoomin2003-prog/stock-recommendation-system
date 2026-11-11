@@ -79,3 +79,6 @@
 
 ## 실행
 `python app.py --market US qsf live-forward-status` (쌓인 날짜 수만 보여 줌), `live-forward-evaluate-swing`, `live-forward-evaluate-long`. 결과: `reports/qsf/QSF_LIVE_FORWARD_{시장}_{전략}.json`.
+
+## 버전 공개 (2026-11-11, 규칙은 바꾸지 않음)
+한국 스윙 점수에서 기술 영역을 뺀 QSF-1.2.0이 2026-11-11에 라이브가 됐습니다(사용자 결정, `reports/QSF_KR_SWING_V2_2026_11_11.md`). 2026-11-11 거래일 기록부터 적용됩니다. 미국 점수와 한국 장기 점수는 바뀌지 않았습니다. 이 계획의 규칙대로 "화면에 보인 라이브 점수"로 함께 세고 버전별 수치를 참고로 적습니다. 한국 스윙 판정은 사실상 새 구성(기술 영역 제외)의 판정이 됩니다(이전 구성의 기록은 2026-11-09, 11-10 두 거래일).

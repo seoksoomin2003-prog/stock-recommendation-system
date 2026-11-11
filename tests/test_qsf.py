@@ -56,17 +56,20 @@ def ctx(**over):
 @pytest.mark.parametrize("pid", list(config.PROFILES))
 def test_every_profile_totals_100_and_every_factor_has_a_calculator(pid):
     p = config.PROFILES[pid]
-    assert sum(sum(d.values()) for d in p["domains"].values()) == 100
-    assert all(f in factors.CALC for d in p["domains"].values() for f in d)
+    assert sum(sum(d.values()) for d in p["domains"].values()) + sum(sum(d.values()) for d in p["reference"].values()) == 100      # counted and reference points together
+    assert all(f in factors.CALC for part in (p["domains"], p["reference"]) for d in part.values() for f in d)
 
 
 def test_domain_weights_match_the_specification():
     def tot(pid):
         return {d: sum(v.values()) for d, v in config.PROFILES[pid]["domains"].items()}
-    assert tot("US_SWING_V1") == tot("KR_SWING_V1") == {"TECHNICAL": 40, "FUNDAMENTAL": 10, "REGIME": 20, "RISK": 20, "EVENTS": 10}
+    assert tot("US_SWING_V1") == {"TECHNICAL": 40, "FUNDAMENTAL": 10, "REGIME": 20, "RISK": 20, "EVENTS": 10}
+    # QSF-1.2.0: the Korean swing score keeps the technical domain's 40 points as reference only (user decision 2026-11-11)
+    assert tot("KR_SWING_V2") == {"TECHNICAL": 0, "FUNDAMENTAL": 10, "REGIME": 20, "RISK": 20, "EVENTS": 10} and "KR_SWING_V1" not in config.PROFILES
+    assert config.PROFILES["KR_SWING_V2"]["reference"] == {"TECHNICAL": config.PROFILES["US_SWING_V1"]["domains"]["TECHNICAL"]}
     assert tot("US_LONG_TERM_V1") == tot("KR_LONG_TERM_V1") == {"TECHNICAL": 10, "FUNDAMENTAL": 50, "REGIME": 10, "RISK": 20, "EVENTS": 10}
     assert config.PROFILES["US_SWING_V1"]["domains"]["REGIME"] == {"vix_regime": 5, "vix_term": 4, "credit_spread": 4, "index_trend_breadth": 7}
-    assert config.PROFILES["KR_SWING_V1"]["domains"]["REGIME"] == {"vkospi_regime": 5, "index_trend": 5, "breadth": 4, "usdkrw_regime": 3, "credit_liquidity": 3}
+    assert config.PROFILES["KR_SWING_V2"]["domains"]["REGIME"] == {"vkospi_regime": 5, "index_trend": 5, "breadth": 4, "usdkrw_regime": 3, "credit_liquidity": 3}
 
 
 def test_contributions_reconcile_to_composite_and_are_deterministic():

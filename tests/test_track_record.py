@@ -23,7 +23,7 @@ def test_the_korean_rows_carry_the_reports_numbers_and_words(tmp_path):
     write(tmp_path, "KR", KR_DOC)
     got = tr.summary(tmp_path, "KR")
     swing, long_ = got["rows"]
-    assert got["status"] == "REAL" and got["source"].endswith("QSF_KR_LIVE_REPLAY_RESULTS.md") and len(got["caveats"]) == 3
+    assert got["status"] == "REAL" and got["source"].endswith("QSF_KR_LIVE_REPLAY_RESULTS.md") and len(got["caveats"]) == 4
     assert swing["horizon"] == 20 and swing["reading_label"] == "근거 부족" and swing["pair_win"] == pytest.approx(0.5 + 0.028 / 3.14159265, abs=1e-6)
     assert long_["horizon"] == 252 and long_["reading_label"] == "순위만 설명" and long_["beats_market"] is False and long_["bottom_fifth_excess"] == -0.043
     assert long_["universe_return"] == 0.079 and long_["market_return"] == 0.215

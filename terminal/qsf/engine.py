@@ -3,6 +3,7 @@
 composite = 100 * sum(weight * normalized) / sum(weight of factors with data).  A missing factor leaves both sums
 (it is never zero) and lowers coverage instead.  Not-applicable factors also leave the coverage denominator.
 Confidence is reported separately and never multiplies the score.  Gates override actionability, not the score.
+A profile's reference domains are computed and kept on the card with ``scored: False`` and weight 0: they enter neither sum.
 """
 from typing import Any, Dict, List, Optional
 
@@ -68,10 +69,42 @@ def hard_gates(ctx: Dict[str, Any], strategy: str) -> List[Dict[str, str]]:
     return out
 
 
+def _reference_row(fid: str, domain: str, weight: float, ctx: Dict[str, Any]) -> Dict[str, Any]:
+    """A factor the profile shows and stores but does not count: its value is kept, its weight in the score is zero."""
+    try:
+        o = factors.CALC[fid](ctx)
+    except (KeyError, TypeError, ValueError, ZeroDivisionError) as exc:
+        o = factors.missing(f"계산 오류 ({type(exc).__name__})")
+    row = {"factor": fid, "domain": domain, "weight": 0, "reference_weight": weight, "scored": False, "direction": "HIGHER_IS_BETTER", **o, "contribution": None}
+    if o["status"] not in _QUALITY:
+        row["normalized"] = None
+    return row
+
+
+def _reference_domain(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """The domain's own 0-100 reading from its former weights, for display and for the record of the former formula."""
+    have = [r for r in rows if r["normalized"] is not None]
+    w = sum(r["reference_weight"] for r in have)
+    app = sum(r["reference_weight"] for r in rows if r["status"] != "NOT_APPLICABLE")
+    eff = sum(r["reference_weight"] * _QUALITY[r["status"]] for r in have)
+    return {"score_100": 100 * sum(r["reference_weight"] * r["normalized"] for r in have) / w if w else None, "coverage": eff / app if app else None}
+
+
+def prior_formula_score(rows: List[Dict[str, Any]]) -> Optional[float]:
+    """The composite as it was when the reference factors still counted, from a card's or a ledger snapshot's factor rows."""
+    w = c = 0.0
+    for r in rows:
+        if r.get("status") not in _QUALITY or r.get("normalized") is None:
+            continue
+        weight = float(r["reference_weight"] if r.get("scored") is False else r["weight"])
+        w, c = w + weight, c + weight * float(r["normalized"])
+    return 100 * c / w if w else None
+
+
 def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, Any]:
     """``ctx``: market, bars, tech (optional), fund, regime, events, earnings, rs_rank, bench_name, price_fresh."""
     market = ctx["market"]
-    profile = config.PROFILES[f"{market}_{strategy}_V1"]
+    profile = config.profile_for(market, strategy)
     ctx = dict(ctx)
     if "tech" not in ctx:
         ctx["tech"] = technicals.compute(ctx["bars"], ctx.get("bench"))
@@ -108,10 +141,15 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
                            "score_100": 100 * c_sum / w_av if w_av else None,
                            "coverage": eff / app if app else None}
         tot_w, tot_c, tot_app, tot_eff = tot_w + w_av, tot_c + c_sum, tot_app + app, tot_eff + eff
+        ref = (profile.get("reference") or {}).get(domain)
+        if ref:
+            ref_rows = [_reference_row(fid, domain, weight, ctx) for fid, weight in ref.items()]
+            rows += ref_rows
+            domains[domain] = {**domains[domain], **_reference_domain(ref_rows), "reference": True}
     composite = 100 * tot_c / tot_w if tot_w else None
     coverage = tot_eff / tot_app if tot_app else 0.0
 
-    short = [d for d, m in config.MIN_DOMAIN_COVERAGE[strategy].items() if (domains[d]["coverage"] or 0) < m]
+    short = [d for d, m in config.MIN_DOMAIN_COVERAGE[strategy].items() if profile["domains"][d] and (domains[d]["coverage"] or 0) < m]
     sufficient = coverage >= config.MIN_TOTAL_COVERAGE and not short
     confidence = "INSUFFICIENT"
     if sufficient:

@@ -5,10 +5,14 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.1.9"     # 1.1.9: fundamental inputs after the 2026-11-11 audit (one fiscal year per figure, share bases, Korean account ids,
+MODEL_VERSION = "QSF-1.2.0"     # 1.2.0: the Korean swing score no longer counts the technical domain (profile KR_SWING_V2, user decision
+#                                  2026-11-11 after reports/QSF_KR_TECH_EARLY_RESULTS.md); its factors are still computed and stored as reference,
+#                                  and chart position stays in the entry assessment (holding.entry_status).  US and Korean long-term: unchanged.
+#                                  1.1.9: fundamental inputs after the 2026-11-11 audit (one fiscal year per figure, share bases, Korean account ids,
 #                                  currency, who is scored as financial); factor formulas and weights unchanged.  1.1.8: Korean daily bars from KRX
 VALIDATION_NOTICE = ("미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. "
-                     "한국 과거 재현(2019~2026)에서 장기 점수는 종목 순위를 설명했지만 상위 종목이 시장을 이기지는 못했고, 스윙 점수는 근거가 부족했습니다. 참고용으로만 쓰세요.")
+                     "한국 장기 점수는 한 구간(2019~2026)에서는 종목 순위를 설명했고 다른 구간(2016~2019)에서는 확인되지 않았으며, 두 구간 모두 상위 종목이 시장을 이기지 못했습니다. "
+                     "한국 스윙 점수는 2026-11-11에 차트 항목을 뺀 새 구성이라 과거 성적이 없습니다. 참고용으로만 쓰세요.")
 STYLE_TO_STRATEGY = {"LONG": "LONG_TERM", "SWING": "SWING"}
 SPEC_VERSION = "QSF_1_1_MASTER_SPECIFICATION"
 
@@ -41,9 +45,18 @@ _US_REGIME_LONG = {"vix_regime": 2, "vix_term": 2, "credit_spread": 3, "index_tr
 _KR_REGIME_LONG = {"vkospi_regime": 2, "index_trend": 3, "breadth": 2, "usdkrw_regime": 2, "credit_liquidity": 1}
 
 
+# Domains a profile computes and stores but does not count in the score.  Korea, swing: the technical domain ranked stocks the
+# wrong way round in three past windows (2012-2019, 2016-2019, 2019-2026), so its 40 points left the score on 2026-11-11.
+_REFERENCE_ONLY = {("KR", "SWING"): ("TECHNICAL",)}
+_VERSION = {("KR", "SWING"): "V2"}
+
+
 def _profile(market: str, strategy: str, common: Dict, regime: Dict) -> Dict:
-    return {"id": f"{market}_{strategy}_V1", "market": market, "strategy": strategy,
-            "domains": {**{k: dict(v) for k, v in common.items()}, "REGIME": dict(regime)}}
+    ref = _REFERENCE_ONLY.get((market, strategy), ())
+    domains = {**{k: dict(v) for k, v in common.items()}, "REGIME": dict(regime)}
+    return {"id": f"{market}_{strategy}_{_VERSION.get((market, strategy), 'V1')}", "market": market, "strategy": strategy,
+            "domains": {k: ({} if k in ref else v) for k, v in domains.items()},
+            "reference": {k: domains[k] for k in ref}}
 
 
 PROFILES: Dict[str, Dict] = {p["id"]: p for p in (
@@ -52,8 +65,13 @@ PROFILES: Dict[str, Dict] = {p["id"]: p for p in (
     _profile("KR", "SWING", _SWING_COMMON, _KR_REGIME_SWING),
     _profile("KR", "LONG_TERM", _LONG_COMMON, _KR_REGIME_LONG),
 )}
+_LIVE = {(p["market"], p["strategy"]): p for p in PROFILES.values()}
 
-# Minimum coverage per critical domain (spec 8); total is 70%.
+
+def profile_for(market: str, strategy: str) -> Dict:
+    return _LIVE[(market, strategy)]
+
+# Minimum coverage per critical domain (spec 8); total is 70%.  A domain the profile does not count is not asked for.
 MIN_TOTAL_COVERAGE = 0.70
 MIN_DOMAIN_COVERAGE = {"SWING": {"TECHNICAL": 0.70, "RISK": 0.50},
                        "LONG_TERM": {"FUNDAMENTAL": 0.60, "RISK": 0.40}}

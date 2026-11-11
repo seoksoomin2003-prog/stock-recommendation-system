@@ -370,4 +370,4 @@ def test_extracted_series_have_new_cache_keys_and_the_version_moved():
     from terminal.qsf import config
     code = (Path(__file__).resolve().parents[1] / "terminal" / "qsf" / "service.py").read_text(encoding="utf-8")
     assert code.count('f"annual3:') == 1 and code.count('f"krfund3:') == 2 and "annual2:" not in code and "krfund2:" not in code
-    assert config.MODEL_VERSION == "QSF-1.1.9"
+    assert config.MODEL_VERSION == "QSF-1.2.0"          # 1.1.9 moved the keys; 1.2.0 changed only the Korean swing composition
