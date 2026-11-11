@@ -507,6 +507,12 @@ and what would change the label.
   next to it every session (`terminal/qsf/kr_swing_prior.py`, `reports/QSF_KR_SWING_PRIOR_PROTOCOL.md`, one evaluation at twelve
   separate 20-session samples).  US scores and the Korean long-term score are unchanged.  The on-screen notice and the past-record
   table now carry the second Korean long-term window (2016-2019, not confirmed) next to the first.  `reports/QSF_KR_SWING_V2_2026_11_11.md`.
+* Inputs, second pass (QSF-1.2.1, after the same audit): US debt is long-term debt, its current part and short-term borrowings,
+  added by what each SEC tag already holds, and a US company without a debt figure has none instead of total liabilities; annual
+  figures are STALE once a newer report is overdue (12 months + 90 days + 14); financial companies have no cash-flow-to-profit
+  ratio; Korean companies whose year does not end in December are read up to their newest business year.  The Korean
+  `credit_liquidity` factor reads the 3-year AA- corporate spread over the treasury yield from the Bank of Korea (ECOS 817Y002).
+  Extracted US series moved to the cache key `annual4` (`tests/test_qsf_inputs_2.py`, `reports/QSF_INPUTS_2_2026_11_11.md`).
 * Second Korean list (2026-11-11, user request): the score tab shows the newest day of the market-value top-300 record next to
   the live ranking, read only (`terminal/qsf/kr_cap_view.py`, `/api/qsf/cap-universe`).  The live ranking, the top 3 and alerts
   still use the traded-value top 300; the record and its one evaluation are untouched.

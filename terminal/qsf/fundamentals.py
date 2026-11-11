@@ -31,17 +31,17 @@ US_INSTANT = {
     "equity": ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"], "assets": ["Assets"], "liabilities": ["Liabilities"],
     "current_assets": ["AssetsCurrent"], "current_liabilities": ["LiabilitiesCurrent"],
     "cash": ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
-    # Debt is three parts: long-term debt, the part of it due within a year, and short-term borrowings.  Filers tag them differently,
-    # and some tags already hold another part (see LONG_HOLDS_CURRENT and the sets after it), so the alias decides what is added.
-    "debt_long": ["LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations", "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities",
-                  "DebtLongtermAndShorttermCombinedAmount", "DebtAndCapitalLeaseObligations"],
+    # Debt: the company's own total when it tags one, otherwise three parts: long-term debt, the part of it due within a year, and
+    # short-term borrowings.  Filers tag the parts differently and some tags already hold another part (LONG_HOLDS_CURRENT,
+    # SHORT_HOLDS_BORROWINGS), so the alias decides what is added.
+    "debt_total": ["DebtLongtermAndShorttermCombinedAmount", "DebtAndCapitalLeaseObligations"],
+    "debt_long": ["LongTermDebtNoncurrent", "LongTermDebt", "LongTermDebtAndCapitalLeaseObligations", "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities"],
     "debt_short": ["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent", "DebtCurrent"],
     "debt_borrow": ["ShortTermBorrowings", "CommercialPaper"],
 }
 # Checked on the newest 10-K of every scanned company (2026-11-11): LongTermDebt equals its noncurrent and current parts together in 119
 # of 136 companies that tag all three, so the current part is not added to it again.
 LONG_HOLDS_CURRENT = {"LongTermDebt", "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities"}
-LONG_HOLDS_ALL = {"DebtLongtermAndShorttermCombinedAmount", "DebtAndCapitalLeaseObligations"}      # every borrowing, short-term too
 SHORT_HOLDS_BORROWINGS = {"DebtCurrent"}                                                          # all debt due within a year
 
 
@@ -358,9 +358,10 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     by_end = {r["end"]: r["val"] for r in series.get("capex") or []} if fcf is not None else {}
     fcfs = [r["val"] - by_end[r["end"]] > 0 for r in recent("ocf") if r["end"] in by_end]
     nis = [r["val"] > 0 for r in recent("net_income")]
-    # Debt is the parts of the latest year.  Filers leave a zero untagged, so a part that was exactly 0 a year earlier and is not
-    # in the latest report is still 0.  Long-term debt that stopped at an amount leaves no figure from the parts (the others alone
-    # would understate it); short-term debt that stopped leaves long-term debt.
+    # Debt is the company's own total, or the parts of the latest year.  Filers leave a zero untagged, so a part that was exactly 0 a
+    # year earlier and is not in the latest report is still 0.  Without a long-term figure there is no figure from the parts: the
+    # current part or commercial paper alone would understate it (two REITs showed commercial paper and nothing else).  Short-term
+    # debt that stopped leaves long-term debt.
     def debt_part(k):
         v = at(k)
         return 0.0 if v is None and at(k, year_back(k)) == 0 else v
@@ -369,18 +370,22 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         return next((r.get("alias") for r in reversed(series.get(k) or []) if r["end"] == latest), None)
 
     debt, debt_long, debt_short, debt_borrow = None, debt_part("debt_long"), debt_part("debt_short"), debt_part("debt_borrow")
-    long_alias = alias_at("debt_long")
-    if long_alias in LONG_HOLDS_CURRENT | LONG_HOLDS_ALL:
+    if alias_at("debt_long") in LONG_HOLDS_CURRENT:
         debt_short = None                                   # already inside the long-term figure
-    if long_alias in LONG_HOLDS_ALL or (debt_short is not None and alias_at("debt_short") in SHORT_HOLDS_BORROWINGS):
-        debt_borrow = None                                  # already inside the figure that is counted
-    long_stopped = bool(series.get("debt_long")) and debt_long is None
+    if debt_short is not None and alias_at("debt_short") in SHORT_HOLDS_BORROWINGS:
+        debt_borrow = None                                  # already inside the current figure
+    parts = None if debt_long is None else debt_long + (debt_short or 0.0) + (debt_borrow or 0.0)
+    own_total = at("debt_total")
     # A source that tags borrowings (SEC) and shows none has no debt figure: total liabilities would put that company on another
     # scale than its peers (36 US companies were).  Korean statements here carry no borrowings account at all, so every Korean
     # company is read on total liabilities, the same for all of them.
-    tags_borrowings = "debt_long" in series
-    if not long_stopped and any(x is not None for x in (debt_long, debt_short, debt_borrow)):
-        debt = (debt_long or 0.0) + (debt_short or 0.0) + (debt_borrow or 0.0)
+    tags_borrowings = any(k.startswith("debt_") for k in series)
+    # The total tag is misused by a few filers (a credit line's balance, or zero, next to billions of notes): a total below its own
+    # long-term part is not a total, and a zero stands only when the parts say zero too.
+    if own_total is not None and own_total >= (debt_long or 0.0) * (1 - RESTATED) and (own_total > 0 or parts == 0):
+        debt = own_total
+    elif parts is not None:
+        debt = parts
     elif not tags_borrowings and at("liabilities") is not None:
         debt = at("liabilities")
     sec_shares, eps_reported = at("shares_avg"), at("eps")

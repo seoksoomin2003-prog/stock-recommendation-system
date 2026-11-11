@@ -73,9 +73,9 @@ def test_a_zero_the_filer_stopped_tagging_is_still_zero():
     repaid = metrics({**d, "debt_long": rows([10.0, 10.0, 0.0, None]), "debt_short": rows([2.0, 2.0, 2.0, 0.0])})
     assert repaid["debt_equity"] == 0.0 and repaid["cash_debt"] is None
     never = metrics({**d, "debt_short": rows([0.0, 0.0, 0.0, None])})
-    assert never["debt_equity"] == 0.0
+    assert never["debt_equity"] is None                                    # QSF-1.2.1: without a long-term figure the short part alone is no debt figure
     older = metrics({**d, "debt_short": rows([0.0, 0.0, None, None])})      # two years without the tag: no longer known
-    assert older["debt_equity"] == pytest.approx(30.0 / 60.0)
+    assert older["debt_equity"] is None                                    # QSF-1.2.1: and total liabilities do not stand in for it
 
 
 def test_capital_return_is_unknown_when_both_tags_stopped():

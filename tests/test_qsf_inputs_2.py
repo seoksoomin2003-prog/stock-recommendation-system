@@ -42,8 +42,19 @@ def test_a_long_term_figure_that_holds_the_current_part_is_not_given_it_again():
 def test_all_current_debt_already_holds_the_borrowings_and_a_total_holds_everything():
     cur = m(us(debt_long=rows([20.0] * 4, alias="LongTermDebtNoncurrent"), debt_short=rows([5.0] * 4, alias="DebtCurrent"), debt_borrow=rows([3.0] * 4, alias="ShortTermBorrowings")))
     assert cur["debt_equity"] == pytest.approx(25.0 / 60.0)
-    total = m(us(debt_long=rows([30.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount"), debt_short=rows([2.0] * 4, alias="LongTermDebtCurrent"), debt_borrow=rows([3.0] * 4, alias="CommercialPaper")))
-    assert total["debt_equity"] == pytest.approx(30.0 / 60.0)
+    own = {"debt_long": rows([20.0] * 4, alias="LongTermDebtNoncurrent"), "debt_short": rows([2.0] * 4, alias="LongTermDebtCurrent"), "debt_borrow": rows([3.0] * 4, alias="CommercialPaper")}
+    total = m(us(debt_total=rows([30.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount"), **own))
+    assert total["debt_equity"] == pytest.approx(30.0 / 60.0)             # the company's own total stands before the parts
+    assert m(us(debt_total=rows([30.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount")))["debt_equity"] == pytest.approx(0.5)
+    zero = m(us(debt_total=rows([0.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount"), **own))
+    assert zero["debt_equity"] == pytest.approx(25.0 / 60.0)              # a zero total next to positive parts is not a total
+    small = m(us(debt_total=rows([0.5] * 4, alias="DebtLongtermAndShorttermCombinedAmount"), **own))
+    assert small["debt_equity"] == pytest.approx(25.0 / 60.0)             # nor is a total below its own long-term part
+    assert m(us(debt_total=rows([0.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount")))["debt_equity"] is None       # a lone zero is not trusted
+    none = {"debt_long": rows([0.0] * 4, alias="LongTermDebtNoncurrent")}
+    assert m(us(debt_total=rows([0.0] * 4, alias="DebtLongtermAndShorttermCombinedAmount"), **none))["debt_equity"] == 0.0  # the parts say zero too
+    old_total = m(us(debt_total=rows([30.0, 30.0, None, None], alias="DebtLongtermAndShorttermCombinedAmount"), **own))
+    assert old_total["debt_equity"] == pytest.approx(25.0 / 60.0)         # a total of an older year is not this year's
 
 
 def test_a_us_company_without_a_debt_tag_has_no_debt_figure_rather_than_total_liabilities():
@@ -51,6 +62,8 @@ def test_a_us_company_without_a_debt_tag_has_no_debt_figure_rather_than_total_li
     assert got["debt_equity"] is None and got["cash_debt"] is None and got["equity_assets"] == pytest.approx(0.6)
     stopped = m(us(debt_long=rows([20.0, 20.0, None, None], alias="LongTermDebt"), debt_borrow=rows([3.0] * 4, alias="ShortTermBorrowings")))
     assert stopped["debt_equity"] is None                               # long-term debt stopped at an amount: the borrowings alone would understate it
+    paper_only = m(us(debt_borrow=rows([3.0] * 4, alias="CommercialPaper"), debt_short=rows([1.0] * 4, alias="LongTermDebtCurrent")))
+    assert paper_only["debt_equity"] is None                            # no long-term figure at all: commercial paper is not the company's debt
 
 
 def test_statements_without_any_borrowings_account_are_still_read_on_total_liabilities():
@@ -69,9 +82,10 @@ def test_extraction_reads_the_three_parts_and_the_total_tags():
     out = f.extract_us({"facts": {"us-gaap": {"LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities": fact(50.0), "ShortTermBorrowings": fact(4.0), "CommercialPaper": fact(9.0),
                                               "LongTermDebtAndCapitalLeaseObligationsCurrent": fact(6.0), "DebtCurrent": fact(10.0)}}})
     assert out["debt_long"][0]["alias"] == "LongTermDebtAndCapitalLeaseObligationsIncludingCurrentMaturities" and out["debt_borrow"][0] == {"end": "2025-12-31", "val": 4.0, "filed": "2026-02-15", "alias": "ShortTermBorrowings"}
+    assert out["debt_total"] == [] and f.extract_us({"facts": {"us-gaap": {"DebtLongtermAndShorttermCombinedAmount": fact(7.0)}}})["debt_total"][0]["val"] == 7.0
     assert out["debt_short"][0]["alias"] == "LongTermDebtAndCapitalLeaseObligationsCurrent"
-    gone = f.drop_stale_series({"revenue": rows([1.0] * 4), "debt_long": rows([5.0, 5.0, None, None]), "debt_short": rows([1.0] * 4), "debt_borrow": rows([1.0] * 4)})
-    assert gone["debt_long"] == [] and gone["debt_short"] == [] and gone["debt_borrow"] == []
+    gone = f.drop_stale_series({"revenue": rows([1.0] * 4), "debt_long": rows([5.0, 5.0, None, None]), "debt_short": rows([1.0] * 4), "debt_borrow": rows([1.0] * 4), "debt_total": rows([9.0] * 4)})
+    assert gone["debt_long"] == [] and gone["debt_short"] == [] and gone["debt_borrow"] == [] and len(gone["debt_total"]) == 4
 
 
 # ---------------------------------------------------------------------- stale figures, financial cash flow
