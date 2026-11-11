@@ -500,6 +500,9 @@ and what would change the label.
   against the won price; holding companies of industrial groups and US exchanges, health plans, insurance brokers and real
   estate firms are scored as non-financial.  Extracted series moved to the cache keys `annual3` and `krfund3`
   (`terminal/qsf/fundamentals.py`, tests in `tests/test_qsf_fund_inputs.py`).
+* Statement keep-time (2026-11-11): extracted US annual statements are kept 20 hours, so a new 10-K is scored at the next
+  morning's run instead of up to seven days later; a failed SEC read keeps the stored copy.  Korean statements keep seven days
+  (`TTL["facts"]`, `TTL["kr_facts"]` in `terminal/qsf/service.py`, tests in `tests/test_qsf_statement_keep_time.py`).
 * Korean daily bars (QSF-1.1.8): built from the KRX daily snapshots in `research_data/krx` by chaining each day's official change
   rate, which already allows for splits; Yahoo is used only for days KRX has not published yet and for its dividend ratio
   (`terminal/qsf/kr_bars.py`, cache `data/qsf/krx_panel.npz`). `qsf price-audit` checks the bars the scores read

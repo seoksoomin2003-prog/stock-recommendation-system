@@ -21,7 +21,9 @@ from terminal.qsf import config, engine, events, fundamentals, holding, ledger, 
 from utils import nyse_calendar
 
 KR_MIN_UNIVERSE = 200       # a whole-market Korean scan with fewer stocks than this is a partial day, not a day (the universe is 300)
-TTL = {"bars": 1800, "regime": 3600, "facts": 7 * 86400, "subm": 20 * 3600, "info": 7 * 86400, "earn": 3 * 86400, "form4": 3650 * 86400}
+# "facts": US annual statements are read again at each day's first run, so a new 10-K is scored the next morning (it waited up to 7 days).
+# 20 hours, not 24: a copy stored at 07:15 must be old enough for the next day's 07:10 run.  Korean statements keep 7 days ("kr_facts").
+TTL = {"bars": 1800, "regime": 3600, "facts": 20 * 3600, "kr_facts": 7 * 86400, "subm": 20 * 3600, "info": 7 * 86400, "earn": 3 * 86400, "form4": 3650 * 86400}
 REGIME_FRESH_DAYS = 5
 UNAVAILABLE_KR = {"vkospi": "VKOSPI는 합법적인 무료 공개 출처에서 안정적으로 받을 수 없어 사용하지 않습니다.",
                   "kr_credit": "한국 신용·유동성 지표의 검증된 무료 출처를 아직 연결하지 않았습니다."}
@@ -291,7 +293,7 @@ class QSF:
         if not corp:
             return {"fund": {"status": "UNAVAILABLE", "reason": "DART 고유번호 없음"}, "events": {"status": "UNAVAILABLE", "reason": "DART 고유번호 없음"}}
         klass = ident.get("industry_class") or "NON_FINANCIAL"
-        res = self.cache.cached(f"krfund3:{code}", TTL["facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, date.fromisoformat(as_of), self.dart)))
+        res = self.cache.cached(f"krfund3:{code}", TTL["kr_facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, date.fromisoformat(as_of), self.dart)))
         info = self.cache.cached(f"info:{ident.get('yahoo_symbol')}", TTL["info"], lambda: self.src.yahoo_info(ident["yahoo_symbol"]))["data"] or {}
         fund = {"status": "UNAVAILABLE", "reason": f"DART 재무 조회 실패 ({res.get('error')})"}
         if res["data"]:
@@ -321,7 +323,7 @@ class QSF:
             return out
         as_of = self.now().date()
         klass = ident.get("industry_class") or "NON_FINANCIAL"
-        res = self.cache.cached(f"krfund3:{code}", TTL["facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart)))
+        res = self.cache.cached(f"krfund3:{code}", TTL["kr_facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart)))
 
         def fetch_list():
             bgn = (as_of - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")
