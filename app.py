@@ -429,7 +429,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate",
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
-               "regime-weights-run", "regime-weights-record", "regime-weights-status",
+               "regime-weights-run", "regime-weights-record", "regime-weights-status", "lookahead-audit",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
@@ -519,6 +519,12 @@ def cmd_qsf(args) -> int:
             res["regime_weights"] = _regime_weights_record("KR")
         except Exception as exc:
             res["regime_weights"] = {"status": "FAILED", "reason": type(exc).__name__}
+        try:                        # the look-ahead audit reads prices and record indexes and writes one view file; it never fails the step
+            from terminal.qsf import lookahead
+            audit = lookahead.run(PROJECT_ROOT)
+            res["lookahead"] = {"status": audit["status"], "problems": audit["problems"]}
+        except Exception as exc:
+            res["lookahead"] = {"status": "FAILED", "reason": type(exc).__name__}
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3, "NO_KEY": 4}.get(res["status"], 1)
     if args.action in ("kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run"):     # reports/QSF_KR_LONG_EARLY_PROTOCOL.md
@@ -590,6 +596,11 @@ def cmd_qsf(args) -> int:
         res = earnings_gap.count(PROJECT_ROOT)
         print(json.dumps(res if res else {"status": "NO_US_SESSION"}, ensure_ascii=False))
         return 0 if res else 3
+    if args.action == "lookahead-audit":              # read-only on records; writes data/qsf/lookahead_audit.json
+        from terminal.qsf import lookahead
+        res = lookahead.run(PROJECT_ROOT)
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+        return 0 if res["status"] == "OK" else 3 if res["status"] == "NO_PRICES" else 1
     if args.action in ("regime-weights-run", "regime-weights-record", "regime-weights-status"):      # reports/QSF_REGIME_WEIGHTS_PROTOCOL.md
         from terminal.qsf import regime_weights as rw
         if args.action.endswith("run"):              # one run; a stored result is printed as it is
