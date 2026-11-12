@@ -1,0 +1,335 @@
+{
+ "status": "REAL",
+ "protocol": "reports/QSF_REGIME_WEIGHTS_PROTOCOL.md",
+ "run_at": "2026-11-12T01:53:03.787874+00:00",
+ "horizon": 20,
+ "strategy": "SWING",
+ "domains": [
+  "TECHNICAL",
+  "FUNDAMENTAL",
+  "RISK"
+ ],
+ "states": [
+  "UP_CALM",
+  "UP_ROUGH",
+  "DOWN"
+ ],
+ "settings": {
+  "trend_n": 200,
+  "vol_n": 20,
+  "vol_ref_n": 400,
+  "min_train": 24,
+  "min_state": 12,
+  "shrink": 0.5,
+  "min_t": 2.24
+ },
+ "markets": {
+  "KR": {
+   "market": "KR",
+   "days": 88,
+   "first": "2019-04-01",
+   "last": "2026-09-08",
+   "cost_round_trip": 0.0053,
+   "static": {
+    "TECHNICAL": 0.0,
+    "FUNDAMENTAL": 0.3333333333333333,
+    "RISK": 0.6666666666666666
+   },
+   "leak_free": true,
+   "folds": 64,
+   "first_train": 24,
+   "final_table": {
+    "UP_CALM": {
+     "how": "FITTED",
+     "weights": {
+      "TECHNICAL": 0.003985054442540229,
+      "FUNDAMENTAL": 0.29148863281929893,
+      "RISK": 0.7045263127381609
+     },
+     "days": 22
+    },
+    "UP_ROUGH": {
+     "how": "FITTED",
+     "weights": {
+      "TECHNICAL": 0.1626461594298329,
+      "FUNDAMENTAL": 0.298756275957346,
+      "RISK": 0.538597564612821
+     },
+     "days": 31
+    },
+    "DOWN": {
+     "how": "FITTED",
+     "weights": {
+      "TECHNICAL": 0.0,
+      "FUNDAMENTAL": 0.2625680652090906,
+      "RISK": 0.7374319347909094
+     },
+     "days": 35
+    }
+   },
+   "status": "REAL",
+   "tested": 64,
+   "test_first": "2021-04-14",
+   "test_last": "2026-09-08",
+   "split": "2024-01-04",
+   "ic": {
+    "static": 0.05253971769870651,
+    "dynamic": 0.050023260725963185,
+    "control": 0.05156966681997474
+   },
+   "ic_diff": -0.0025164569727433184,
+   "ic_diff_t": -0.49370074874144815,
+   "ic_diff_positive_share": 0.421875,
+   "ic_over_control": -0.0015464060940115483,
+   "spread_net": {
+    "static": -0.00622196272523575,
+    "dynamic": -0.0011836279415593325,
+    "control": -0.0049713289338699385
+   },
+   "fitted_share": 0.8125,
+   "by_state": {
+    "UP_CALM": {
+     "days": 19,
+     "fitted_share": 0.5263157894736842,
+     "ic": {
+      "static": 0.06120819851406998,
+      "dynamic": 0.05669976215967282,
+      "control": 0.062300876631791145
+     },
+     "mean_weights": {
+      "TECHNICAL": 0.02611883947232999,
+      "FUNDAMENTAL": 0.31406616952300725,
+      "RISK": 0.6598149910046629
+     }
+    },
+    "UP_ROUGH": {
+     "days": 20,
+     "fitted_share": 0.95,
+     "ic": {
+      "static": 0.03789686589358822,
+      "dynamic": 0.03746831415203644,
+      "control": 0.03661018746591592
+     },
+     "mean_weights": {
+      "TECHNICAL": 0.20220833798825016,
+      "FUNDAMENTAL": 0.2667288915039322,
+      "RISK": 0.5310627705078176
+     }
+    },
+    "DOWN": {
+     "days": 25,
+     "fitted_share": 0.92,
+     "ic": {
+      "static": 0.05766595372312488,
+      "dynamic": 0.054993076895485264,
+      "control": 0.05538153084624131
+     },
+     "mean_weights": {
+      "TECHNICAL": 0.0,
+      "FUNDAMENTAL": 0.29541455068012257,
+      "RISK": 0.7045854493198774
+     }
+    }
+   },
+   "conditions": [
+    {
+     "id": "DIFF_T",
+     "label": "국면 가중치의 순위 상관이 고정 가중치보다 높음",
+     "need": "평균 차이 > 0, t ≥ 2.24",
+     "value": {
+      "diff": -0.0025164569727433184,
+      "t": -0.49370074874144815
+     },
+     "passed": false
+    },
+    {
+     "id": "BOTH_HALVES",
+     "label": "전반·후반 모두 높음",
+     "need": "두 구간 모두 차이 > 0",
+     "value": {
+      "early": -0.0054392203802113796,
+      "late": 0.00040630643472474356
+     },
+     "passed": false
+    },
+    {
+     "id": "OVER_CONTROL",
+     "label": "국면을 나누지 않은 다시 가중보다 높음",
+     "need": "평균 차이 > 0",
+     "value": {
+      "diff": -0.0015464060940115483
+     },
+     "passed": false
+    },
+    {
+     "id": "SPREAD",
+     "label": "상위 20% − 하위 20% 순수익이 고정 가중치 이상",
+     "need": "국면 ≥ 고정",
+     "value": {
+      "dynamic": -0.0011836279415593325,
+      "static": -0.00622196272523575
+     },
+     "passed": true
+    }
+   ],
+   "verdict": "NOT_SUPPORTED"
+  },
+  "US": {
+   "market": "US",
+   "days": 152,
+   "first": "2014-01-02",
+   "last": "2026-08-13",
+   "cost_round_trip": 0.0040206,
+   "static": {
+    "TECHNICAL": 0.5714285714285714,
+    "FUNDAMENTAL": 0.14285714285714285,
+    "RISK": 0.2857142857142857
+   },
+   "leak_free": true,
+   "folds": 128,
+   "first_train": 24,
+   "final_table": {
+    "UP_CALM": {
+     "how": "FITTED",
+     "weights": {
+      "TECHNICAL": 0.718169178468908,
+      "FUNDAMENTAL": 0.07142857142857142,
+      "RISK": 0.21040225010252056
+     },
+     "days": 79
+    },
+    "UP_ROUGH": {
+     "how": "FITTED",
+     "weights": {
+      "TECHNICAL": 0.5425006399429191,
+      "FUNDAMENTAL": 0.08612700974500422,
+      "RISK": 0.3713723503120767
+     },
+     "days": 51
+    },
+    "DOWN": {
+     "how": "FITTED",
+     "weights": {
+      "TECHNICAL": 0.2857142857142857,
+      "FUNDAMENTAL": 0.5714285714285714,
+      "RISK": 0.14285714285714285
+     },
+     "days": 22
+    }
+   },
+   "status": "REAL",
+   "tested": 128,
+   "test_first": "2016-01-04",
+   "test_last": "2026-08-13",
+   "split": "2021-05-06",
+   "ic": {
+    "static": -0.006151397166027438,
+    "dynamic": -0.007122710363002174,
+    "control": -0.011167935395295637
+   },
+   "ic_diff": -0.000971313196974732,
+   "ic_diff_t": -0.25797329580725387,
+   "ic_diff_positive_share": 0.375,
+   "ic_over_control": 0.004045225032293464,
+   "spread_net": {
+    "static": -0.006822059544457956,
+    "dynamic": -0.006345284510096078,
+    "control": -0.007843062573359816
+   },
+   "fitted_share": 0.890625,
+   "by_state": {
+    "UP_CALM": {
+     "days": 69,
+     "fitted_share": 0.9420289855072463,
+     "ic": {
+      "static": 0.006658632963167622,
+      "dynamic": 0.0027820480907095155,
+      "control": 0.001985993170496812
+     },
+     "mean_weights": {
+      "TECHNICAL": 0.5635280834978923,
+      "FUNDAMENTAL": 0.12530387812959018,
+      "RISK": 0.3111680383725178
+     }
+    },
+    "UP_ROUGH": {
+     "days": 39,
+     "fitted_share": 1.0,
+     "ic": {
+      "static": 0.009613686232369476,
+      "dynamic": 0.006841105510504833,
+      "control": 0.0033100490905430178
+     },
+     "mean_weights": {
+      "TECHNICAL": 0.4867642834190021,
+      "FUNDAMENTAL": 0.3030776956777457,
+      "RISK": 0.21015802090325222
+     }
+    },
+    "DOWN": {
+     "days": 20,
+     "fitted_share": 0.5,
+     "ic": {
+      "static": -0.08108791373862442,
+      "dynamic": -0.06852356798164619,
+      "control": -0.08478105869466498
+     },
+     "mean_weights": {
+      "TECHNICAL": 0.4285714285714285,
+      "FUNDAMENTAL": 0.3516813214301878,
+      "RISK": 0.21974724999838352
+     }
+    }
+   },
+   "conditions": [
+    {
+     "id": "DIFF_T",
+     "label": "국면 가중치의 순위 상관이 고정 가중치보다 높음",
+     "need": "평균 차이 > 0, t ≥ 2.24",
+     "value": {
+      "diff": -0.000971313196974732,
+      "t": -0.25797329580725387
+     },
+     "passed": false
+    },
+    {
+     "id": "BOTH_HALVES",
+     "label": "전반·후반 모두 높음",
+     "need": "두 구간 모두 차이 > 0",
+     "value": {
+      "early": -0.0018845780276900233,
+      "late": -5.8048366259442694e-05
+     },
+     "passed": false
+    },
+    {
+     "id": "OVER_CONTROL",
+     "label": "국면을 나누지 않은 다시 가중보다 높음",
+     "need": "평균 차이 > 0",
+     "value": {
+      "diff": 0.004045225032293464
+     },
+     "passed": true
+    },
+    {
+     "id": "SPREAD",
+     "label": "상위 20% − 하위 20% 순수익이 고정 가중치 이상",
+     "need": "국면 ≥ 고정",
+     "value": {
+      "dynamic": -0.006345284510096078,
+      "static": -0.006822059544457956
+     },
+     "passed": true
+    }
+   ],
+   "verdict": "NOT_SUPPORTED"
+  }
+ },
+ "limits": [
+  "과거 점수에는 시장 국면 영역과 이벤트·지배구조 영역이 없습니다. 세 영역(기술·재무·위험)만으로 비교했습니다.",
+  "이미 여러 번 쓴 구간입니다. 영역별 과거 성적(예: 한국 기술 영역 음수)을 아는 상태에서 설계했으므로 독립된 새 증거가 아닙니다.",
+  "미국 표본은 지수에서 빠진 종목 일부가 없어 결과가 부풀려질 수 있습니다.",
+  "한국의 과거 국면은 KRX 자료로 만든 코스피 시가총액 지수로, 매일 기록의 국면은 야후의 코스피 지수로 정합니다.",
+  "평가일이 21거래일 간격이라 한국은 약 60개, 미국은 약 120개의 시험일뿐입니다. 작은 효과는 잡지 못합니다."
+ ]
+}
