@@ -429,9 +429,22 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate",
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
+               "regime-weights-run", "regime-weights-record", "regime-weights-status",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
+
+
+def _regime_weights_record(market: str):
+    """One market's regime-weight record.  The index is the scan's own SPY for the US and Yahoo's KOSPI for Korea."""
+    from terminal.qsf import regime_weights
+    from terminal.qsf.service import QSF
+    q = QSF(PROJECT_ROOT)
+    if market == "US":
+        bars = lambda: q._loader("US")("SPY")                                                   # noqa: E731
+    else:
+        bars = lambda: (q._history(["^KS11"], "2y")["data"] or {}).get("^KS11") or []           # noqa: E731
+    return regime_weights.record(PROJECT_ROOT, market, bars)
 
 
 def cmd_qsf(args) -> int:
@@ -502,6 +515,10 @@ def cmd_qsf(args) -> int:
             kr_method.write_status(PROJECT_ROOT)
         except Exception as exc:
             res["method"] = {"status": "FAILED", "reason": type(exc).__name__}
+        try:                        # the regime-weight challenger reads the ledger and the index; it never fails the step either
+            res["regime_weights"] = _regime_weights_record("KR")
+        except Exception as exc:
+            res["regime_weights"] = {"status": "FAILED", "reason": type(exc).__name__}
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3, "NO_KEY": 4}.get(res["status"], 1)
     if args.action in ("kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run"):     # reports/QSF_KR_LONG_EARLY_PROTOCOL.md
@@ -573,9 +590,24 @@ def cmd_qsf(args) -> int:
         res = earnings_gap.count(PROJECT_ROOT)
         print(json.dumps(res if res else {"status": "NO_US_SESSION"}, ensure_ascii=False))
         return 0 if res else 3
+    if args.action in ("regime-weights-run", "regime-weights-record", "regime-weights-status"):      # reports/QSF_REGIME_WEIGHTS_PROTOCOL.md
+        from terminal.qsf import regime_weights as rw
+        if args.action.endswith("run"):              # one run; a stored result is printed as it is
+            doc = rw.run_once(PROJECT_ROOT)
+            res = {"status": doc["status"], "markets": {m: {k: v.get(k) for k in ("verdict", "tested", "ic", "ic_diff", "ic_diff_t", "ic_over_control", "spread_net", "final_table")} for m, v in doc["markets"].items()}}
+        elif args.action.endswith("record"):
+            res = _regime_weights_record(args.market)
+        else:
+            res = rw.status(PROJECT_ROOT)
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+        return 0 if res.get("status") in ("OK", "REAL", "ALREADY_RUN") else 3 if res.get("status") in ("WAITING", "NO_TABLE", "NO_RECORD") else 1
     if args.action == "us-challenger-record":
         from terminal.qsf import us_challenger
         res = us_challenger.record(PROJECT_ROOT)
+        try:                        # the regime-weight challenger reads the ledger and the index; it never fails the step
+            res["regime_weights"] = _regime_weights_record("US")
+        except Exception as exc:
+            res["regime_weights"] = {"status": "FAILED", "reason": type(exc).__name__}
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3}.get(res["status"], 1)
     from terminal.qsf.service import QSF
