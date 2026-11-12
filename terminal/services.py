@@ -983,8 +983,17 @@ class Terminal:
 
     def health(self) -> Dict[str, Any]:
         from utils.runtime_config import sec_user_agent_status
-        return {"version": TERMINAL_VERSION, "time_utc": self.now().isoformat(),
+        return {"version": TERMINAL_VERSION, "time_utc": self.now().isoformat(), "screen": screen_stamp(),
                 "sec": sec_user_agent_status()["status"], "ecos": sources.ecos_status()}       # status words only, never values
+
+
+def screen_stamp() -> str:
+    """A short mark of the screen files as they are on disk now.  A page that was loaded before an update holds an older mark,
+    which is how it learns that it should be loaded again."""
+    import hashlib
+    root = Path(__file__).resolve().parent / "static"
+    parts = sorted((p.name, p.stat().st_size, int(p.stat().st_mtime)) for p in root.iterdir() if p.is_file() and p.suffix in (".html", ".js", ".css"))
+    return hashlib.sha256(repr(parts).encode()).hexdigest()[:12]
 
 
 def _minus_year(d: str) -> str:

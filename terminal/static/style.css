@@ -46,10 +46,14 @@ button:disabled { opacity: .55; cursor: default; }
 .collectbar button { padding: 2px 8px; font-size: 12px; }
 .netbar { flex-basis: 100%; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--bad); font-weight: 600; }
 .netbar[hidden] { display: none; }
+.verbar { flex-basis: 100%; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--accent); font-weight: 600; }
+.verbar[hidden] { display: none; }
+.verbar span { flex: 1; min-width: 0; }
+.verbar button { padding: 2px 8px; font-size: 12px; }
 .netbar span { flex: 1; min-width: 0; }
 .netbar button { padding: 2px 8px; font-size: 12px; }
 .tabs { display: flex; gap: 2px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--line);
-        overflow-x: auto; scrollbar-width: none; }
+        flex-wrap: wrap; }      /* 탭이 창보다 길면 다음 줄로 넘깁니다: 가로로 밀려 안 보이는 탭이 없게 */
 .tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 10px 12px;
                background: none; color: var(--muted); white-space: nowrap; }
 .tabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }

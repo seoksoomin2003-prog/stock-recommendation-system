@@ -9,6 +9,7 @@ const marketOf = (t) => (KR_RE.test(String(t).toUpperCase()) ? "KR" : "US");
 const isKR = () => state.market === "KR";
 const mq = (path) => `${path}${path.includes("?") ? "&" : "?"}market=${state.market}`;
 
+let screenStamp = null, healthAt = 0;      // 화면 파일 표식과 마지막 확인 시각 (아래 loadHealth)
 // ------------------------------------------------------------------ helpers
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const isNum = (v) => typeof v === "number" && isFinite(v);
@@ -49,7 +50,7 @@ function netDown(down) {
     const was = !bar.hidden;
     bar.hidden = true;
     if (netTimer) { clearInterval(netTimer); netTimer = null; }
-    if (was) { state.loaded = {}; show(state.tab, false); }      // 서버가 돌아왔다: 지금 탭을 다시 읽는다
+    if (was) { state.loaded = {}; show(state.tab, false); loadHealth(); }      // 서버가 돌아왔다: 지금 탭을 다시 읽고, 화면이 업데이트됐는지도 본다
     return;
   }
   if (!bar.hidden) return;
@@ -94,6 +95,7 @@ function spark(cv, vals) {
 // ------------------------------------------------------------------ tabs & routing
 function show(tab, push = true) {
   state.tab = tab;
+  if (healthAt && Date.now() - healthAt > 30000) loadHealth();      // 탭을 옮길 때도 화면이 업데이트됐는지 확인합니다
   document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
   document.querySelectorAll(".tab").forEach((s) => s.classList.toggle("on", s.id === "tab-" + tab));
   if (push) location.hash = tab === "stock" && state.ticker ? `stock/${state.ticker}` : tab;
@@ -508,8 +510,18 @@ const RENDER = { overview: renderOverview, macro: renderMacro, watch: renderWatc
 // ------------------------------------------------------------------ boot
 applyTheme(theme);
 paintMarket();
+// 열어 둔 화면은 서버가 업데이트돼도 옛 파일 그대로입니다. 서버가 알려 주는 화면 파일 표식이 처음 받은 것과 달라지면 알립니다.
+function screenChanged() {
+  const bar = $("#verbar");
+  if (!bar || !bar.hidden) return;
+  bar.hidden = false;
+  bar.innerHTML = `<span>프로그램 화면이 업데이트되었습니다. 새로고침해야 새 탭과 기능이 보입니다.</span><button type="button" id="verreload">새로고침</button>`;
+  $("#verreload").onclick = () => location.reload();
+}
 function loadHealth() {
+  healthAt = Date.now();
   api("/api/health").then((h) => {
+    if (h.screen) { if (screenStamp === null) screenStamp = h.screen; else if (h.screen !== screenStamp) screenChanged(); }
     const e = h.server_errors || {}, el = $("#health");
     el.textContent = `· ${h.version} · SEC ${h.sec === "CONFIGURED" ? "연결 설정됨" : "미설정"} · ECOS ${h.ecos === "CONFIGURED" ? "연결 설정됨" : "미설정"}` +
       (e.count ? ` · 서버 오류 ${e.count}건` : "");
@@ -518,6 +530,7 @@ function loadHealth() {
 }
 loadHealth();
 setInterval(loadHealth, 5 * 60 * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - healthAt > 30000) loadHealth(); });
 let booted = false;
 function fromHash() {
   const [tab, tk] = location.hash.replace(/^#/, "").split("/");
