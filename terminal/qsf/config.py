@@ -5,7 +5,9 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.3.1"     # 1.3.1: a missing next earnings date is estimated from the company's own past dates (earnings_estimate), labelled
+MODEL_VERSION = "QSF-1.3.2"     # 1.3.2: US costs are the broker's published fees (Toss Securities: 0.1% each way, SEC fee on sells) instead of an assumed
+#                                  zero commission, so the US swing risk/reward factor reads a 0.40% round trip (user decision 2026-11-12); Korea already matched.
+#                                  1.3.1: a missing next earnings date is estimated from the company's own past dates (earnings_estimate), labelled
 #                                  as an estimate and read with a wider window; user decision 2026-11-11.  1.3.0: the live Korean scan covers the 300 largest companies by market value instead of the 300 most traded
 #                                  (KR_UNIVERSE, user decision 2026-11-11); the score itself is unchanged.  1.2.1: inputs the 2026-11-11 audit left (US debt read from its parts and never from total liabilities, annual figures
 #                                  STALE once a newer report is overdue, no cash-flow ratio for financial companies, business years of
@@ -105,17 +107,29 @@ EXTREME_MOVE = 0.60        # |1-day move| above this on the last 5 bars is a dat
 EARNINGS_BLOCK_SESSIONS = 2
 EARNINGS_BLOCK_SESSIONS_ESTIMATE = 5     # an estimated date: five weekdays either side held 96% of the actual Korean dates (2026-11-11 check)
 
-# Costs, one way.  KR tax: 0.20% on sells from 2026-01-01 (Securities Transaction Tax Act revision, verified
-# 2026-11-05).  Commission and spread depend on the broker and are ASSUMPTIONS shown wherever a net figure appears.
-COSTS = {"US": {"commission_bps": 0.0, "spread_slippage_bps": 10.0, "sell_tax_bps": 0.0,
-                "basis": "수수료 0 가정, 스프레드·슬리피지 10bps 가정 (실제 값 아님)"},
-         "KR": {"commission_bps": 1.5, "spread_slippage_bps": 15.0, "sell_tax_bps": 20.0,
-                "basis": "매도 증권거래세 0.20%(2026년 세율) + 수수료 1.5bps·스프레드 15bps 가정"}}
+# Costs, one way.  Commission and exchange fee: Toss Securities' published schedule, read 2026-11-12 at
+# corp.tossinvest.com/ko/business?tab=commission (user decision 2026-11-12: the user's broker).  Korea 0.015% each way (KRX; NXT is
+# 0.014%) and 0.20% tax on sells (KOSPI 0.05% + 0.15% rural tax, KOSDAQ 0.20%).  US 0.1% each way and the SEC fee of 0.00206% on
+# sells.  Currency exchange (0.05% in Korean banking hours, 0.5% outside) is NOT in the per-trade cost: the dollar account is kept
+# apart and converted on its own schedule; FX_BPS carries it for the screens that show it.  Spread and slippage stay ASSUMPTIONS
+# and are shown as such wherever a net figure appears; the order plan estimates them per stock (terminal/qsf/order_plan.py).
+COSTS = {"US": {"commission_bps": 10.0, "spread_slippage_bps": 10.0, "sell_tax_bps": 0.0, "sell_fee_bps": 0.206,
+                "basis": "토스증권 수수료 편도 0.1% + 매도 SEC 수수료 0.00206%(2026-11-12 확인) + 스프레드·슬리피지 10bps 가정. 환전 수수료 제외"},
+         "KR": {"commission_bps": 1.5, "spread_slippage_bps": 15.0, "sell_tax_bps": 20.0, "sell_fee_bps": 0.0,
+                "basis": "토스증권 수수료 편도 0.015%(2026-11-12 확인) + 매도 증권거래세 0.20%(2026년 세율) + 스프레드·슬리피지 15bps 가정"}}
+COSTS_CHECKED = "2026-11-12"
+FX_BPS = {"regular": 5.0, "off_hours": 50.0}      # Toss currency exchange, one way: Korean business days 09:00-15:30 / any other time
 
 
 def round_trip_cost(market: str) -> float:
     c = COSTS[market]
-    return (2 * (c["commission_bps"] + c["spread_slippage_bps"]) + c["sell_tax_bps"]) / 1e4
+    return (2 * (c["commission_bps"] + c["spread_slippage_bps"]) + c["sell_tax_bps"] + c.get("sell_fee_bps", 0.0)) / 1e4
+
+
+def fees_only(market: str) -> float:
+    """The published part of a round trip (commission, tax, exchange fee): no spread or slippage assumption in it."""
+    c = COSTS[market]
+    return (2 * c["commission_bps"] + c["sell_tax_bps"] + c.get("sell_fee_bps", 0.0)) / 1e4
 
 
 BENCHMARK = {"US": "SPY", "KR_KOSPI": "^KS11", "KR_KOSDAQ": "^KQ11"}

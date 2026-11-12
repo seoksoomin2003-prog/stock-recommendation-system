@@ -41,7 +41,7 @@ def no_master(monkeypatch):
 
 
 def test_the_live_rule_is_market_value_and_the_former_rule_is_still_there():
-    assert config.KR_UNIVERSE == "MARKET_CAP" and config.MODEL_VERSION == "QSF-1.3.1"
+    assert config.KR_UNIVERSE == "MARKET_CAP" and config.MODEL_VERSION == "QSF-1.3.2"
     src = (Path(__file__).resolve().parents[1] / "terminal" / "qsf" / "service.py").read_text(encoding="utf-8")
     assert 'elif config.KR_UNIVERSE == "MARKET_CAP":' in src and "self.kr_traded_value_universe(master, sessions, latest, now)" in src
     assert "universe.build(elig, ub[\"bars\"]" in src                 # the former rule's own code, unchanged

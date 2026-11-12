@@ -385,6 +385,17 @@ def test_costs_lower_reward_risk_and_kr_tax_is_included():
     assert config.round_trip_cost("KR") == pytest.approx((2 * 16.5 + 20) / 1e4)
 
 
+def test_costs_are_the_brokers_published_fees_and_the_assumed_part_is_kept_apart():
+    """QSF-1.3.2: Toss Securities' schedule (read 2026-11-12).  Spread and slippage stay labelled assumptions; currency exchange stays out."""
+    us, kr = config.COSTS["US"], config.COSTS["KR"]
+    assert us["commission_bps"] == 10.0 and us["sell_fee_bps"] == pytest.approx(0.206) and us["sell_tax_bps"] == 0.0
+    assert kr["commission_bps"] == 1.5 and kr["sell_tax_bps"] == 20.0 and kr["sell_fee_bps"] == 0.0
+    assert config.round_trip_cost("US") == pytest.approx((2 * (10 + 10) + 0.206) / 1e4) and config.fees_only("US") == pytest.approx(20.206 / 1e4)
+    assert config.fees_only("KR") == pytest.approx(23 / 1e4) and config.round_trip_cost("KR") - config.fees_only("KR") == pytest.approx(30 / 1e4)
+    assert all("가정" in c["basis"] and "토스증권" in c["basis"] for c in (us, kr)) and "환전" in us["basis"]
+    assert config.FX_BPS == {"regular": 5.0, "off_hours": 50.0} and config.MODEL_VERSION == "QSF-1.3.2"
+
+
 # ---------------------------------------------------------------------- ledger
 def card(ticker="AAA", strategy="SWING", score_ctx=None, market="US"):
     c = engine.score(score_ctx or ctx(), strategy)
