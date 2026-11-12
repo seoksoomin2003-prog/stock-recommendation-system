@@ -731,6 +731,15 @@ class Terminal:
             raise ValueError("자본금은 0보다 큰 숫자로 입력하세요.") from None
         return self.capital(market)
 
+    def model_scan_start(self, raw: Dict[str, Any]) -> Dict[str, Any]:
+        """Start the Korean model scan from the screen.  The US scan belongs to the daily job; a scan without saved capital is refused."""
+        from terminal import model_scan
+        if (raw or {}).get("market", "KR") != "KR":
+            raise ValueError("미국 스캔은 일일 작업이 실행합니다. 이 버튼은 한국 스캔만 실행합니다.")
+        if self.capital("KR")["amount"] is None:
+            return {"status": "NO_CAPITAL"}
+        return model_scan.start(self.base)
+
     def _today_et(self):
         return self.now().astimezone(ZoneInfo("America/New_York")).date()
 

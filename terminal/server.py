@@ -21,7 +21,7 @@ from urllib.parse import parse_qs, urlparse
 from terminal.services import Terminal, clean_ticker
 
 STATIC = Path(__file__).resolve().parent / "static"
-from terminal import automation, record_status, server_agent, today  # noqa: E402
+from terminal import automation, model_scan, record_status, server_agent, today  # noqa: E402
 from terminal.qsf import changes as qsf_changes, kr_cap_view as qsf_cap_view, kr_method as qsf_kr_method, lookahead as qsf_lookahead, paper_book as qsf_paper_book, regime_weights as qsf_regime_weights, screen as qsf_screen, track_record as qsf_track_record  # noqa: E402
 
 HOST = "127.0.0.1"
@@ -142,6 +142,8 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
         ("POST", "/api/journal/void"): lambda q, b: t.journal_void(b.get("ref", "")),
         ("GET", "/api/capital"): lambda q, b: t.capital(_market(q.get("market", "US"))),
         ("POST", "/api/capital"): lambda q, b: t.capital_set(b),
+        ("GET", "/api/model/scan"): lambda q, b: model_scan.status(t.base),
+        ("POST", "/api/model/scan"): lambda q, b: t.model_scan_start(b),
         ("GET", "/api/settings"): lambda q, b: t.settings(),
         ("POST", "/api/settings"): lambda q, b: t.settings_set(b),
         ("GET", "/api/sizing"): lambda q, b: t.sizing(q.get("t", ""), q.get("entry"), q.get("stop"), q.get("equity"), q.get("style"), _market(q.get("market", "US"))),

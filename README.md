@@ -230,6 +230,7 @@ python app.py dashboard --open                          # US and KR side by side
   * `tracking/kr/`, KRW only, cohort `EXPERIMENTAL_PROSPECTIVE`;
   * never pooled with US observations.
 * A full KR scan downloads about 2,500 symbols from Yahoo the first time each day (roughly 40 minutes on a slow link). Later runs on the same day reuse `data/kr/cache/`.
+* The KR model scan is not a step of the daily job: it was built as a hand-run command for paper observation, and the daily job's scan step runs the US model only. The 모델 tab (한국) has a **스캔 실행** button next to the capital box that starts this same command with the saved capital, one at a time, and shows whether it is running and how it ended (`terminal/model_scan.py`, `/api/model/scan`).
 
 ### Personal terminal (TERMINAL-1)
 

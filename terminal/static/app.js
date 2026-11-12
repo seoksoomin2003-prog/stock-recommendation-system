@@ -421,7 +421,7 @@ function wireCapital(el, cap, b, mk) {
   let saved = isNum(cap.amount) ? cap.amount : null;
   const money = (v) => mk === "KR" ? `${Math.round(v).toLocaleString("ko-KR")}원` : `$${Math.round(v).toLocaleString("en-US")}`;
   const parse = () => { const t = input.value.replace(/[,_$\s]/g, ""); if (!t) return null; const v = Number(t); return Number.isFinite(v) && v > 0 ? v : NaN; };
-  const nextScan = mk === "KR" ? "한국 스캔은 일일 작업에 없으니 <code>python app.py --market KR scan</code>으로 실행하세요." : "다음 일일 작업의 스캔부터 이 금액을 씁니다.";
+  const nextScan = mk === "KR" ? "한국 모델 스캔은 일일 작업에 없습니다. 옆의 '스캔 실행'을 누르면 이 금액으로 실행합니다." : "다음 일일 작업의 스캔부터 이 금액을 씁니다.";
   const refresh = (msg) => {
     const typed = parse(), base = typed === null ? (isNum(b.capital) ? b.capital : null) : typed;
     el.querySelectorAll("[data-cap-amount]").forEach((c) => { const w = parseFloat(c.dataset.w); c.innerHTML = base && !isNaN(base) && !isNaN(w) ? money(w * base) : DASH; });
@@ -430,7 +430,7 @@ function wireCapital(el, cap, b, mk) {
     if (msg) parts.push(msg);
     if (Number.isNaN(typed)) parts.push("0보다 큰 숫자로 입력하세요.");
     else if (typed !== saved) parts.push("저장 전 미리보기입니다.");
-    else if (saved === null) parts.push(cap.invalid ? "저장된 값을 읽을 수 없습니다. 다시 입력하세요." : "자본금이 없어 P6-11B 스캔을 건너뜁니다.");
+    else if (saved === null) parts.push(cap.invalid ? "저장된 값을 읽을 수 없습니다. 다시 입력하세요." : mk === "KR" ? "저장된 자본금이 없어 스캔을 실행할 수 없습니다." : "자본금이 없어 P6-11B 스캔을 건너뜁니다.");
     if (!Number.isNaN(typed) && base && isNum(b.capital) && base !== b.capital) parts.push(`금액과 주수만 환산했습니다. 추천 종목은 스캔 당시 자본 ${money(b.capital)} 기준이라 다음 스캔에서 달라질 수 있습니다.`);
     note.innerHTML = parts.join(" ");
   };
@@ -444,6 +444,39 @@ function wireCapital(el, cap, b, mk) {
     } catch (e) { refresh(esc(ERR_KO[e.message] || e.message)); }
   };
   refresh();
+  // The Korean model scan is a hand-run command, not a step of the daily job; this button starts that same command.
+  const runBtn = $("#capRun"), runNote = $("#capRunNote");
+  if (!runBtn) return;
+  const hhmm = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", hour12: false }); };
+  let timer = null, wasRunning = false;
+  const show = (s, fresh) => {
+    clearTimeout(timer);
+    if (!runBtn.isConnected) return;                    // the tab was drawn again: that drawing has its own watcher
+    runBtn.disabled = s.status === "RUNNING";
+    if (s.status === "RUNNING") {
+      runNote.innerHTML = `한국 스캔을 실행하는 중입니다 (시작 ${hhmm(s.started_at)}). 그날 첫 실행은 약 2,500종목의 시세를 받아 40분쯤 걸릴 수 있습니다. 이 화면을 닫아도 계속 실행됩니다.`;
+      timer = setTimeout(poll, 10000);
+    } else if (s.status === "DONE") {
+      runNote.innerHTML = `마지막 스캔 실행: ${hhmm(s.started_at)} 시작, 완료 (${esc(REC_KO[s.run.recommendation_status] || s.run.recommendation_status || "")}, 기준 거래일 ${esc(s.run.latest_session || "")}).`;
+      if (fresh) renderModel();
+    } else if (s.status === "FAILED") {
+      runNote.innerHTML = `마지막 스캔 실행(${hhmm(s.started_at)} 시작)이 결과를 남기지 못하고 끝났습니다. 실행 기록: <code>${esc(s.log)}</code>`;
+    } else runNote.innerHTML = "";
+  };
+  const poll = async () => {
+    try { const s = await api("/api/model/scan"); const fresh = wasRunning && s.status === "DONE"; wasRunning = s.status === "RUNNING"; show(s, fresh); }
+    catch (e) { if (runBtn.isConnected) timer = setTimeout(poll, 10000); }
+  };
+  runBtn.onclick = async () => {
+    if (saved === null || parse() !== saved) { refresh("먼저 금액을 저장하세요. 스캔은 저장된 금액으로 실행합니다."); return; }
+    try {
+      const r = await api("/api/model/scan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ market: "KR" }) });
+      if (r.status === "NO_CAPITAL") { refresh("먼저 금액을 저장하세요. 스캔은 저장된 금액으로 실행합니다."); return; }
+      wasRunning = true;
+      show({ status: "RUNNING", started_at: r.started_at }, false);
+    } catch (e) { runNote.innerHTML = esc(ERR_KO[e.message] || e.message); }
+  };
+  poll();
 }
 async function renderModel() {
   const el = $("#tab-model"), mk = state.market; el.innerHTML = loading;
@@ -451,7 +484,7 @@ async function renderModel() {
     const [d, cap] = await Promise.all([api(mq("/api/model")), api(mq("/api/capital"))]); if (mk !== state.market) return; state.loaded.model = true;
     const b = d.baseline, t = d.tracking;
     el.innerHTML = `<div class="panel"><h2>${esc(b.name)} ${badge(b.status || "FROZEN")} <span class="meta" style="margin:0">${esc(b.role)}</span></h2>
-      <div class="form" style="margin:8px 0 12px"><label>투자 자본금 (${esc(cap.currency)})<input id="capInput" inputmode="decimal" autocomplete="off" value="${isNum(cap.amount) ? cap.amount : ""}" placeholder="금액 입력"></label><button id="capSave">저장</button><div class="wide meta" id="capNote" style="margin:0"></div></div>
+      <div class="form" style="margin:8px 0 12px"><label>투자 자본금 (${esc(cap.currency)})<input id="capInput" inputmode="decimal" autocomplete="off" value="${isNum(cap.amount) ? cap.amount : ""}" placeholder="금액 입력"></label><button id="capSave">저장</button>${mk === "KR" ? '<button id="capRun" type="button" title="저장된 금액으로 한국 모델 스캔을 실행합니다 (python app.py --market KR scan과 같습니다)">스캔 실행</button>' : ""}<div class="wide meta" id="capNote" style="margin:0"></div><div class="wide meta" id="capRunNote" style="margin:0"></div></div>
       ${b.run_id ? `<div class="kv"><div><span>최근 전체 스캔</span><b>${when(b.executed_at)}</b></div><div><span>결과</span><b>${esc(REC_KO[b.recommendation_status] || b.recommendation_status)}</b></div>
         <div><span>시장 국면</span><b>${esc(REGIME_KO[b.regime] || b.regime || "—")}</b></div><div><span>기준 자본</span><b class="num">${isNum(b.capital) ? b.capital.toLocaleString("ko-KR") + " " + esc(b.currency || "") : DASH}</b></div></div>
       <h3>추천 상위 종목</h3><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th class="l">섹터</th><th>기준가</th><th>${mk === "KR" ? "점수" : "알파"}</th><th>목표 비중</th><th>목표 금액</th><th>주수</th><th>손절가</th><th>보유 기간</th></tr></thead>
