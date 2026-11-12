@@ -429,22 +429,33 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate",
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
-               "regime-weights-run", "regime-weights-record", "regime-weights-status", "lookahead-audit",
+               "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "paper-book-record", "paper-book-status",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
 
 
 def _regime_weights_record(market: str):
-    """One market's regime-weight record.  The index is the scan's own SPY for the US and Yahoo's KOSPI for Korea."""
+    """One market's regime-weight record.  The index is the scan's own SPY for the US and, for Korea, the KOSPI index built from
+    the KRX price files (the past test's construction; Yahoo's index is a day behind at the time of the morning run)."""
     from terminal.qsf import regime_weights
-    from terminal.qsf.service import QSF
-    q = QSF(PROJECT_ROOT)
     if market == "US":
+        from terminal.qsf.service import QSF
+        q = QSF(PROJECT_ROOT)
         bars = lambda: q._loader("US")("SPY")                                                   # noqa: E731
     else:
-        bars = lambda: (q._history(["^KS11"], "2y")["data"] or {}).get("^KS11") or []           # noqa: E731
+        bars = lambda: regime_weights.kr_index_bars(PROJECT_ROOT)                               # noqa: E731
     return regime_weights.record(PROJECT_ROOT, market, bars)
+
+
+def _paper_book_record(market: str):
+    """One market's paper book up to the newest ledger session.  Prices are the scan's own; nothing is asked of a broker."""
+    from terminal.qsf import paper_book
+    from terminal.qsf.service import QSF
+    q = QSF(PROJECT_ROOT)
+    info = lambda: {r["ticker"]: {"name": r.get("name"), "sector": r.get("sector")} for r in q.screen_rows(market).get("rows") or []}        # noqa: E731
+    bench = (lambda: (q._history(["^KS11"], "2y")["data"] or {}).get("^KS11") or []) if market == "KR" else None                                # noqa: E731
+    return paper_book.record(PROJECT_ROOT, market, q._loader(market), info=info, bench=bench)
 
 
 def cmd_qsf(args) -> int:
@@ -519,6 +530,10 @@ def cmd_qsf(args) -> int:
             res["regime_weights"] = _regime_weights_record("KR")
         except Exception as exc:
             res["regime_weights"] = {"status": "FAILED", "reason": type(exc).__name__}
+        try:                        # the paper book follows the day's plan on the scan's prices; it never fails the step either
+            res["paper_book"] = {k: v for k, v in _paper_book_record("KR").items() if k != "market"}
+        except Exception as exc:
+            res["paper_book"] = {"status": "FAILED", "reason": type(exc).__name__}
         try:                        # the look-ahead audit reads prices and record indexes and writes one view file; it never fails the step
             from terminal.qsf import lookahead
             audit = lookahead.run(PROJECT_ROOT)
@@ -596,11 +611,32 @@ def cmd_qsf(args) -> int:
         res = earnings_gap.count(PROJECT_ROOT)
         print(json.dumps(res if res else {"status": "NO_US_SESSION"}, ensure_ascii=False))
         return 0 if res else 3
+    if args.action in ("paper-book-record", "paper-book-status"):      # reports/PAPER_BOOK_RULES.md
+        from terminal.qsf import paper_book
+        if args.action.endswith("record"):
+            res = _paper_book_record(args.market)
+        else:
+            res = {k: v for k, v in paper_book.status(PROJECT_ROOT, args.market).items() if k not in ("curve", "exit_labels", "unfilled_labels", "binding_labels", "skip_labels")}
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+        return 0 if res.get("status") in ("OK", "REAL") else 3 if res.get("status") in ("WAITING", "NO_RECORD") else 1
     if args.action == "lookahead-audit":              # read-only on records; writes data/qsf/lookahead_audit.json
         from terminal.qsf import lookahead
         res = lookahead.run(PROJECT_ROOT)
         print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
         return 0 if res["status"] == "OK" else 3 if res["status"] == "NO_PRICES" else 1
+    if args.action == "regime-weights-evaluate":      # the one forward reading at 240 matured sessions; refused before that and after a report exists
+        from terminal.qsf import regime_weights as rw
+        if args.market == "KR":
+            from terminal.qsf import research_kr_live
+            px = research_kr_live.ensure_panel(PROJECT_ROOT, print)
+        else:
+            from terminal.qsf import us_challenger
+            from terminal.qsf.service import QSF
+            docs = [rw.kf._read_day(PROJECT_ROOT / rw.FOLDERS["US"], r["session"]) for r in rw.kf.read_index(PROJECT_ROOT, rw.FOLDERS["US"])]
+            px = us_challenger.build_panel(sorted({r["ticker"] for d in docs for r in d["rows"]}), QSF(PROJECT_ROOT)._loader("US"), {})
+        res = rw.evaluate_forward_once(PROJECT_ROOT, args.market, px)
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+        return 0
     if args.action in ("regime-weights-run", "regime-weights-record", "regime-weights-status"):      # reports/QSF_REGIME_WEIGHTS_PROTOCOL.md
         from terminal.qsf import regime_weights as rw
         if args.action.endswith("run"):              # one run; a stored result is printed as it is
@@ -619,6 +655,10 @@ def cmd_qsf(args) -> int:
             res["regime_weights"] = _regime_weights_record("US")
         except Exception as exc:
             res["regime_weights"] = {"status": "FAILED", "reason": type(exc).__name__}
+        try:                        # the paper book follows the day's plan on the scan's prices; it never fails the step
+            res["paper_book"] = {k: v for k, v in _paper_book_record("US").items() if k != "market"}
+        except Exception as exc:
+            res["paper_book"] = {"status": "FAILED", "reason": type(exc).__name__}
         print(json.dumps(res, ensure_ascii=False, default=str))
         return {"OK": 0, "WAITING": 3}.get(res["status"], 1)
     from terminal.qsf.service import QSF

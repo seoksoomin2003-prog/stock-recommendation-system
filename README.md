@@ -526,6 +526,25 @@ and what would change the label.
   universe is still chosen by its own rule and scored every day as a separate record with one evaluation after 240 matured
   sessions (`terminal/qsf/kr_traded_universe.py`, `reports/QSF_KR_TRADED_UNIVERSE_PROTOCOL.md`), and the score tab shows its
   newest day read only (`terminal/qsf/kr_cap_view.py`, `/api/qsf/former-universe`).  `reports/QSF_KR_UNIVERSE_SWITCH_2026_11_11.md`.
+* Three reliability layers (2026-11-12, user decisions).  **Look-ahead audit and walk-forward order:** every day each function that
+  turns past prices into a recorded or shown value is run on the prices as they are and on copies whose later rows are wiped or
+  multiplied; any difference is a read of the future, and an outcome function is run as a control that must be caught
+  (`terminal/qsf/lookahead.py`, `qsf lookahead-audit`, `/api/qsf/lookahead`).  The audit also reads every forward store's hash
+  chain.  `terminal/qsf/walkforward.py` holds the order in which anything fitted may learn: only from days whose outcome had ended.
+  **Regime weights (challenger):** three market states from the index alone, domain weights leaning toward what ranked well in
+  that state before.  The one walk-forward run was NOT_SUPPORTED in both markets (Korea difference -0.0025, t -0.49; US -0.0010,
+  t -0.26), so the live score is unchanged; the frozen table is recorded every day from session 2026-11-12 and read once at 240
+  matured sessions, figures only (`terminal/qsf/regime_weights.py`, `reports/QSF_REGIME_WEIGHTS_PROTOCOL.md`,
+  `reports/QSF_REGIME_WEIGHTS_RESULTS.md`).  **Order plan and paper book:** no order is sent anywhere.  The plan takes the stocks
+  the program reads as enterable now in score order and sizes each by the tightest of risk per trade, position weight, style
+  sleeve, sector weight, cash and 1% of the stock's traded value; a held or already planned stock gets no second order
+  (`terminal/qsf/order_plan.py`, `/api/qsf/order-plan` for the recorded account).  The paper book follows that plan mechanically
+  on made-up accounts of 10,000,000 won and 10,000 dollars: fills at the next open unless the open is above the limit, exits by
+  stop, target, 30 sessions (swing) or a long score under 40, each session written once and chained, one writer at a time
+  (`terminal/qsf/paper_book.py`, `research_data/paper_book_kr|us`, `reports/PAPER_BOOK_RULES.md`).  It is a reference before any
+  verdict, never evidence about the score.  **Costs** are Toss Securities' published fees (QSF-1.3.2): US 0.1% each way plus the
+  SEC fee on sells, Korea 0.015% plus the 0.20% sell tax; slippage is an estimate (assumed spread plus a square-root impact by
+  order size) and is labelled as one.
 * Own trading method KR-M1 and the Korean risk grade (2026-11-11, user decision): a challenger kept apart from the live score.
   Stocks with an avoid mark are dropped, the top fifth of the rest by the live swing score is the pool, and seven chart entries
   plus two baselines are followed with one exit rule (stop 2 ATR, target 3 ATR, ten sessions, 0.53% round trip).  The one

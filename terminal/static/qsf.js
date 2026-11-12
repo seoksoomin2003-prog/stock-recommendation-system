@@ -22,7 +22,7 @@ function qsfBar(v) {
 }
 
 // The score tab shows one part at a time; the choice is remembered on this browser only.
-const QSF_VIEWS = { rank: "오늘 순위", screen: "스크리너", track: "추적·검증" };
+const QSF_VIEWS = { rank: "오늘 순위", screen: "스크리너", exec: "주문 계획·모의 장부", track: "추적·검증" };
 function qsfSetView(v) {
   if (!QSF_VIEWS[v]) v = "rank";
   qsfState.view = v;
@@ -35,7 +35,8 @@ function qsfSetView(v) {
 const QSF_LOADERS = {
   rank: () => { qsfRank(); qsfCap(); qsfChanges(); },
   screen: () => ($("#qsfscreenform") ? qsfScreenRun(true) : qsfScreenBuild()),
-  track: () => { qsfTop3(); qsfMethod(); qsfValidation(); },
+  exec: () => { qsfPlan(); qsfPaper(); },
+  track: () => { qsfTop3(); qsfMethod(); qsfRegime(); qsfLookahead(); qsfValidation(); },
 };
 function qsfLoadView(v) {
   if (qsfState.fresh[v]) return;
@@ -119,7 +120,8 @@ async function renderQsf() {
     </div>
     <div data-view="rank"><div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsfcap"></div><div id="qsfchanges"></div></div>
     <div data-view="screen"><div id="qsfscreen"></div></div>
-    <div data-view="track"><div id="qsftop3"></div><div id="qsfmethod"></div><div id="qsfvalid"></div></div>`;
+    <div data-view="exec"><div id="qsfplan"></div><div id="qsfpaper"></div></div>
+    <div data-view="track"><div id="qsftop3"></div><div id="qsfmethod"></div><div id="qsfregime"></div><div id="qsflook"></div><div id="qsfvalid"></div></div>`;
   $("#qsfview").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetView(b.dataset.v)));
   $("#qsfstratseg").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetStrategy(b.dataset.s)));
   qsfState.fresh = {};
@@ -523,6 +525,155 @@ async function qsfMethod() {
   const d = await api("/api/qsf/kr-method").catch(() => null);
   if (mk !== state.market) return;
   box.innerHTML = d ? qsfMethodHtml(d) : "";
+}
+// ------------------------------------------------------------------ regime weights (challenger) and the look-ahead audit
+const QSF_DOMAIN_KO = { TECHNICAL: "기술", FUNDAMENTAL: "재무", RISK: "위험" };
+function qsfRegimeValue(c) {
+  const v = c.value || {}, n = (x, d = 4) => (isNum(x) ? (x > 0 ? "+" : "") + x.toFixed(d) : "없음");
+  if (c.id === "DIFF_T") return `차이 ${n(v.diff)}, t ${isNum(v.t) ? v.t.toFixed(2) : "없음"}`;
+  if (c.id === "BOTH_HALVES") return `전반 ${n(v.early)}, 후반 ${n(v.late)}`;
+  if (c.id === "OVER_CONTROL") return `차이 ${n(v.diff)}`;
+  return `국면 ${isNum(v.dynamic) ? (v.dynamic * 100).toFixed(2) + "%" : "없음"}, 고정 ${isNum(v.static) ? (v.static * 100).toFixed(2) + "%" : "없음"}`;
+}
+function qsfRegimeHtml(d, mk) {
+  const title = (badge) => `<h2>시장 국면에 따른 영역 가중치 <span class="badge">도전자</span> ${badge || ""}</h2>`;
+  if (!d || d.status !== "REAL" || !d.markets[mk]) return `<div class="panel">${title()}<div class="meta">과거 검증 결과가 아직 없습니다. 규칙: reports/QSF_REGIME_WEIGHTS_PROTOCOL.md</div></div>`;
+  const m = d.markets[mk], conds = m.conditions || [], passed = conds.filter((c) => c.passed).length;
+  const ok = m.verdict === "REGIME_WEIGHTS_SUPPORTED";
+  const badge = `<span class="badge ${ok ? "REAL" : "STALE"}">${ok ? "기준 충족" : m.verdict === "NOT_TESTED" ? "시험일 부족" : `기준 미달 (조건 ${passed}/${conds.length} 충족)`}</span>`;
+  const f4 = (x) => (isNum(x) ? (x > 0 ? "+" : "") + x.toFixed(4) : "없음");
+  const head = m.status === "REAL"
+    ? `<div class="meta"><b>과거 걸어가기 검증</b>(시험일 ${m.tested}개, ${esc(m.test_first)} ~ ${esc(m.test_last)}, 스윙 ${d.horizon}거래일): 순위 상관은 고정 가중치 ${f4(m.ic.static)}, 국면 가중치 ${f4(m.ic.dynamic)}, 국면을 나누지 않은 다시 가중 ${f4(m.ic.control)}였습니다.
+        국면 − 고정 차이는 ${f4(m.ic_diff)}(t ${isNum(m.ic_diff_t) ? m.ic_diff_t.toFixed(2) : "없음"}, 기준 ${d.settings.min_t} 이상)이고, 국면 쪽이 높았던 시험일은 ${(m.ic_diff_positive_share * 100).toFixed(0)}%입니다.
+        ${ok ? "기준을 충족했지만 라이브 점수 반영은 사용자 결정 사항입니다." : "<b>고정 가중치보다 낫다는 근거가 없어 라이브 점수에는 쓰지 않습니다.</b>"}</div>`
+    : `<div class="meta">시험일이 ${m.tested || 0}개뿐이라 판정하지 않았습니다.</div>`;
+  const crow = conds.map((c) => `<tr><td class="l">${esc(c.label)}</td><td class="l">${esc(c.need)}</td><td class="l">${qsfRegimeValue(c)}</td><td>${c.passed ? '<span class="up">충족</span>' : '<span class="down">미달</span>'}</td></tr>`).join("");
+  const w = (x) => (isNum(x) ? (x * 100).toFixed(0) + "%" : DASH);
+  const today = (m.record.today || {}).state;
+  const trow = [`<tr><td class="l">고정 가중치(라이브 배점)</td>${d.domains.map((k) => `<td class="num">${w(m.static[k])}</td>`).join("")}<td class="num">${DASH}</td></tr>`]
+    .concat(Object.entries(m.final_table || {}).map(([s, v]) => `<tr><td class="l">${esc(d.state_labels[s] || s)}${today === s ? ' <span class="badge">최근 기록일의 상태</span>' : ""}${v.how !== "FITTED" ? ' <span class="meta">(과거 날이 적어 고정 가중치)</span>' : ""}</td>${d.domains.map((k) => `<td class="num">${w(v.weights[k])}</td>`).join("")}<td class="num">${v.days}</td></tr>`)).join("");
+  const rec = m.record.sessions
+    ? `매일 기록 ${m.record.sessions}거래일(${esc(m.record.first)} ~ ${esc(m.record.last)}).`
+    : `매일 기록은 ${esc(m.record.start)} 거래일부터 시작합니다.`;
+  return `<div class="panel">${title(badge)}${head}
+    ${crow ? `<div class="tbl-wrap"><table><thead><tr><th class="l">조건</th><th class="l">기준</th><th class="l">결과</th><th>판정</th></tr></thead><tbody>${crow}</tbody></table></div>` : ""}
+    <div class="meta" style="margin-top:8px">상태는 지수만으로 정합니다: 지수가 200거래일 평균 아래면 <b>하락</b>, 위이고 최근 20거래일 변동성이 지난 변동성의 중앙값 이하면 <b>상승·안정</b>, 그보다 크면 <b>상승·불안</b>. 아래 표는 과거 평가일 전체로 정해 고정한 가중치이고, 매일 기록에만 씁니다.</div>
+    <div class="tbl-wrap"><table><thead><tr><th class="l">상태</th>${d.domains.map((k) => `<th>${QSF_DOMAIN_KO[k] || k}</th>`).join("")}<th title="그 상태였던 과거 평가일 수">과거 평가일</th></tr></thead><tbody>${trow}</tbody></table></div>
+    <div class="meta">${rec} 보유가 끝난 기록일이 ${d.read_at}개가 되면 수치를 한 번 보고합니다. 한 번만 실행했고 설정값이나 조건을 바꿔 다시 시험하지 않습니다.</div>
+    <details><summary class="meta">한계 ${d.limits.length}가지</summary>${d.limits.map((x) => `<div class="meta">· ${esc(x)}</div>`).join("")}<div class="meta">규칙: ${esc(d.protocol)} · 결과: reports/QSF_REGIME_WEIGHTS_RESULTS.md</div></details></div>`;
+}
+async function qsfRegime() {
+  const box = $("#qsfregime"); if (!box) return;
+  const mk = state.market;
+  const d = await api("/api/qsf/regime-weights").catch(() => null);
+  if (mk !== state.market) return;
+  box.innerHTML = qsfRegimeHtml(d, mk);
+}
+const QSF_STORE_KO = { krx_forward: "한국 가격 점수", krx_forward_fund: "한국 재무 점수", krx_forward_events: "한국 공시 이벤트", us_challenger: "미국 도전자 점수", kr_swing_challenger: "한국 스윙 도전자",
+  kr_swing_prior: "이전 스윙 공식", kr_cap_universe: "시가총액 대상", kr_traded_universe: "거래대금 대상", kr_method: "독자 매매법", regime_weights_kr: "국면 가중치(한국)", regime_weights_us: "국면 가중치(미국)",
+  paper_book_kr: "모의 장부(한국)", paper_book_us: "모의 장부(미국)" };
+function qsfLookHtml(d) {
+  const title = (badge) => `<h2>미래 자료 차단 점검 ${badge || ""}</h2>`;
+  const how = `<div class="meta">어떤 날의 값을 계산할 때 그날 이후의 가격을 읽었는지 매일 확인합니다. 같은 함수를 원래 가격과, 그날 뒤의 가격을 모두 지우거나 바꾼 가격에서 한 번씩 더 돌려 결과가 같은지 봅니다. 하나라도 다르면 미래 자료를 읽은 것입니다.</div>`;
+  if (!d || d.status === "NO_RECORD") return `<div class="panel">${title()}${how}<div class="meta">아직 점검 기록이 없습니다. 다음 자동 실행에서 처음 점검합니다.</div></div>`;
+  const ok = d.status === "OK";
+  const badge = `<span class="badge ${ok ? "REAL" : "UNAVAILABLE"}">${ok ? "이상 없음" : d.status === "NO_PRICES" ? "가격 자료 없음" : `문제 ${d.problems.length}건`}</span>`;
+  const frow = (d.functions || []).map((f) => `<tr><td class="l">${esc(f.label)}</td><td class="num">${f.days}</td><td class="num">${f.moved}</td><td>${f.ok ? '<span class="up">미래 자료 없음</span>' : f.filled ? '<span class="down">미래 자료를 읽음</span>' : '<span class="down">값이 없어 점검 불가</span>'}</td></tr>`).join("");
+  const c = d.control;
+  const crow = c ? `<tr><td class="l">${esc(c.label)}</td><td class="num">${c.days}</td><td class="num">${c.moved}</td><td>${c.ok ? '<span class="up">점검이 잡아냄</span>' : '<span class="down">점검이 못 잡음: 점검 자체가 고장</span>'}</td></tr>` : "";
+  const rrow = (d.records || []).map((r) => `<tr><td class="l">${esc(QSF_STORE_KO[r.store] || r.store)}</td><td class="num">${r.sessions}</td><td>${r.chain === "OK" ? '<span class="up">정상</span>' : '<span class="down">깨짐</span>'}</td>
+    <td class="num">${r.before_next_open} / ${r.sessions}</td><td class="num">${r.late}</td><td class="l">${esc(r.first)} ~ ${esc(r.last)}</td></tr>`).join("");
+  const wf = d.walk_forward ? Object.entries(d.walk_forward).map(([m, v]) => `${m === "KR" ? "한국" : "미국"} ${v.folds}회 ${v.leak_free ? "모두 통과" : "위반 있음"}`).join(", ") : null;
+  return `<div class="panel">${title(badge)}${how}
+    <div class="meta">점검 시각 ${esc((d.checked_at || "").slice(0, 16).replace("T", " "))} UTC · 가격 ${esc(d.prices_to || "")}까지 · 표본 ${d.sampled_days}거래일</div>
+    <div class="tbl-wrap"><table><thead><tr><th class="l">계산</th><th>점검한 날</th><th title="그날 뒤의 가격을 바꿨을 때 결과가 달라진 날 수">결과가 달라진 날</th><th>판정</th></tr></thead><tbody>${frow}${crow}</tbody></table></div>
+    ${rrow ? `<div class="meta" style="margin-top:8px"><b>기록 저장소</b>: 한 번 적은 기록이 바뀌지 않았는지(해시 연결)와, 다음 장이 열리기 전에 적었는지를 봅니다. 장이 열린 뒤에 적힌 날은 숨기지 않고 셉니다.</div>
+    <div class="tbl-wrap"><table><thead><tr><th class="l">기록</th><th>기록일 수</th><th>해시 연결</th><th title="다음 거래일 09:00(한국 시각) 전에 적은 날">다음 장 전 기록</th><th title="제때 못 적고 나중에 채운 날">나중에 채운 날</th><th class="l">기간</th></tr></thead><tbody>${rrow}</tbody></table></div>` : ""}
+    ${wf ? `<div class="meta">걸어가기 검증의 순서 점검(가중치를 정할 때 결과가 끝나지 않은 날을 쓰지 않았는지): ${wf}.</div>` : ""}
+    <div class="meta">${esc(d.note || "")}</div></div>`;
+}
+async function qsfLookahead() {
+  const box = $("#qsflook"); if (!box) return;
+  const d = await api("/api/qsf/lookahead").catch(() => null);
+  box.innerHTML = qsfLookHtml(d);
+}
+
+// ------------------------------------------------------------------ order plan (real account) and the paper book
+function qsfOrderRows(orders, binding) {
+  return orders.map((o) => `<tr><td class="l"><b>${esc(o.name || o.ticker)}</b> <span class="meta">${esc(o.ticker)}</span></td><td>${o.style === "LONG" ? "장기" : "스윙"}</td><td class="num">${o.score.toFixed(1)}</td>
+    <td class="num">${fmt(o.shares, 0)}</td><td class="num">${money(o.ref_close)}</td><td class="num">${money(o.limit)}</td><td class="num">${money(o.stop)}</td><td class="num">${isNum(o.target) ? money(o.target) : DASH}</td>
+    <td class="num">${money(o.notional, 0)} <span class="meta">(${o.weight_pct.toFixed(1)}%)</span></td><td class="num">${o.risk_pct.toFixed(2)}%</td><td class="l">${esc((binding || {})[o.binding] || o.binding_label || o.binding)}</td>
+    <td class="num" title="스프레드 가정 ${o.slippage_bps.spread}bp + 주문 크기 충격 ${isNum(o.slippage_bps.impact) ? o.slippage_bps.impact.toFixed(1) : "?"}bp">${o.slippage_bps.total.toFixed(1)}bp</td>
+    <td class="num">${money(o.fee_buy)} / ${money(o.fee_sell)}</td><td class="num">${o.est_round_trip_pct.toFixed(2)}%</td></tr>`).join("");
+}
+const QSF_ORDER_HEAD = `<thead><tr><th class="l">종목</th><th>스타일</th><th>점수</th><th>수량</th><th title="계획을 만든 날의 종가">기준 종가</th><th title="다음 시가가 이 가격보다 높으면 따라가지 않습니다">지정가 상한</th><th>손절</th><th>목표</th><th>금액 (비중)</th>
+  <th title="손절에 닿았을 때 계좌 대비 손실">위험</th><th class="l" title="수량을 정한 한도">묶인 한도</th><th title="편도 슬리피지 추정">슬리피지 추정</th><th title="토스증권 공시 수수료와 매도 세금">수수료 매수 / 매도</th><th title="수수료·세금 + 슬리피지 추정의 왕복 합계">왕복 예상 비용</th></tr></thead>`;
+function qsfSkipLine(counts, labels) {
+  const parts = Object.entries(counts || {}).map(([k, n]) => `${esc((labels || {})[k] || k)} ${n}종목`);
+  return parts.length ? `<div class="meta">계획에서 빠진 후보: ${parts.join(", ")}.</div>` : "";
+}
+function qsfPlanHtml(d) {
+  const title = `<h2>오늘 진입 후보의 주문 계획 <span class="badge">내 계좌 기준</span> <span class="badge risk-note">주문을 보내지 않습니다</span></h2>`;
+  const how = `<div class="meta">프로그램이 '지금 진입 가능'으로 읽은 종목을 점수 높은 순으로 놓고, 설정해 두신 한도(거래당 위험, 종목 비중, 장기·스윙 비중, 섹터 비중)와 현금 안에서 수량을 정합니다. 이미 보유한 종목과 같은 날 이미 계획된 종목에는 주문을 또 만들지 않습니다.</div>`;
+  if (!d) return "";
+  if (d.status === "NO_SCAN") return `<div class="panel">${title}${how}<div class="empty">기록된 스캔이 없습니다.</div></div>`;
+  if (d.status === "NO_ACCOUNT") return `<div class="panel">${title}${how}<div class="empty">${esc(d.reason)} 오늘 진입 후보는 ${d.candidates}종목입니다.</div></div>`;
+  const a = d.assumptions;
+  const body = d.orders.length
+    ? `<div class="tbl-wrap"><table>${QSF_ORDER_HEAD}<tbody>${qsfOrderRows(d.orders)}</tbody></table></div>`
+    : `<div class="empty">한도 안에서 새로 살 수 있는 후보가 없습니다 (후보 ${d.candidates}종목).</div>`;
+  return `<div class="panel">${title}${how}
+    <div class="meta">기준 거래일 ${esc(d.session)} · 계좌 평가액 ${money(d.equity, 0)} · 현금 ${money(d.cash, 0)} · 진입 후보 ${d.candidates}종목 중 ${d.orders.length}종목 계획 · 계획 후 남는 현금 ${money(d.cash_after, 0)}</div>
+    ${body}${qsfSkipLine(d.skipped_counts, Object.fromEntries((d.skipped || []).map((s) => [s.code, s.reason])))}
+    <div class="meta">비용: ${esc(a.cost_basis)}. ${esc(a.slippage_note)} 주문은 종목의 20일 평균 거래대금의 ${a.max_participation_pct}%를 넘지 않게 줄이고, 계좌의 ${a.min_weight_pct}% 미만인 주문은 만들지 않습니다. 지정가 상한은 기준 종가 + ${a.limit_atr} ATR입니다.</div>
+    <div class="meta">${esc(d.note)}</div></div>`;
+}
+async function qsfPlan() {
+  const box = $("#qsfplan"); if (!box) return;
+  const mk = state.market;
+  box.innerHTML = `<div class="panel"><div class="meta">주문 계획을 계산하는 중입니다…</div></div>`;
+  let failed = null;
+  const d = await api(`/api/qsf/order-plan?market=${mk}`).catch((e) => { failed = e; return null; });
+  if (mk !== state.market) return;
+  box.innerHTML = failed ? `<div class="panel"><h2>오늘 진입 후보의 주문 계획</h2><div class="empty">불러오지 못했습니다: ${esc(ERR_KO[failed.message] || failed.message)}</div></div>` : qsfPlanHtml(d);
+}
+function qsfPaperHtml(d) {
+  const title = `<h2>모의 체결 장부 <span class="badge">판정 전 참고</span> <span class="badge risk-note">가상의 금액 · 주문을 보내지 않습니다</span></h2>`;
+  const rules = `<div class="meta"><b>규칙</b>: 시작 금액 ${money(d.start_cash, 0)}. 매일 위와 같은 방식의 주문 계획을 만들고, 다음 거래일 시가에 체결된 것으로 봅니다(시가가 지정가 상한보다 높거나 손절가 이하면 체결하지 않음).
+    스윙은 종가가 손절·목표에 닿으면 다음 시가에, ${d.swing_time_stop}거래일이 지나면 그날 종가에 팝니다. 장기는 종가가 손절(5 ATR)에 닿거나 장기 점수가 ${d.long_exit_score}점 미만이 되면 다음 시가에 팝니다.
+    체결마다 수수료·세금과 슬리피지 추정을 뺍니다. ${esc(d.cost_basis)}. 자세한 규칙: ${esc(d.rules)}</div><div class="meta">${esc(d.note)}</div>`;
+  if (d.status !== "REAL") return `<div class="panel">${title}<div class="empty">아직 기록이 없습니다. ${esc(d.first)} 거래일의 점수로 첫 계획을 만들고, 그다음 거래일 시가부터 체결합니다.</div>${rules}</div>`;
+  const pc = (v) => (isNum(v) ? `<span class="${v > 0 ? "up" : v < 0 ? "down" : ""}">${v > 0 ? "+" : ""}${v.toFixed(2)}%</span>` : DASH);
+  const cell = (k, v, t) => `<div${t ? ` title="${esc(t)}"` : ""}><div class="meta" style="margin:0">${k}</div><div class="num" style="font-size:16px;font-weight:600">${v}</div></div>`;
+  const tiles = `<div class="grid" style="margin:8px 0">${cell("평가액", money(d.equity, 0))}${cell("시작 이후 수익률", pc(d.return_pct))}${cell(`${esc(d.benchmark)} 같은 기간`, pc(d.benchmark_return_pct), "첫 기록일 종가부터 최근 기록일 종가까지")}
+    ${cell("최대 낙폭", pc(d.max_drawdown_pct))}${cell("현금", money(d.cash, 0))}${cell("끝난 거래 / 이긴 거래", `${d.closed} / ${d.wins}`)}${cell("거래당 평균 순수익", pc(d.mean_net_pct), "끝난 거래의 평균, 비용 차감")}
+    ${cell("낸 수수료·세금", money(d.fees, 0))}${cell("슬리피지 추정 합계", money(d.slippage, 0))}</div>`;
+  const prow = d.positions.map((p) => `<tr><td class="l"><b>${esc(p.name || p.ticker)}</b> <span class="meta">${esc(p.ticker)}</span>${p.pending_exit ? ` <span class="badge risk-note">다음 시가 매도: ${esc(d.exit_labels[p.pending_exit] || p.pending_exit)}</span>` : ""}</td>
+    <td>${p.style === "LONG" ? "장기" : "스윙"}</td><td class="num">${fmt(p.qty, 0)}</td><td class="num">${money(p.entry)}</td><td class="num">${money(p.last_close)}</td><td class="num">${pc(p.unrealized_pct)}</td>
+    <td class="num">${isNum(p.weight_pct) ? p.weight_pct.toFixed(1) + "%" : DASH}</td><td class="num">${money(p.stop)}</td><td class="num">${isNum(p.target) ? money(p.target) : DASH}</td><td class="num">${p.sessions}</td><td class="l">${esc(p.entry_session)}</td></tr>`).join("");
+  const plan = d.plan || {};
+  const planHtml = !plan.scored ? `<div class="meta">최근 기록일(${esc(d.last)})에는 점수 기록이 없어 새 계획이 없습니다.</div>`
+    : (plan.orders || []).length ? `<div class="tbl-wrap"><table>${QSF_ORDER_HEAD}<tbody>${qsfOrderRows(plan.orders, d.binding_labels)}</tbody></table></div>` : `<div class="meta">한도 안에서 새로 살 후보가 없습니다 (후보 ${plan.candidates}종목).</div>`;
+  const erow = d.recent.exits.map((e) => `<tr><td class="l">${esc(e.session)}</td><td class="l"><b>${esc(e.name || e.ticker)}</b> <span class="meta">${esc(e.ticker)}</span></td><td>${e.style === "LONG" ? "장기" : "스윙"}</td><td class="l">${esc(e.label)}</td>
+    <td class="num">${money(e.entry)}</td><td class="num">${money(e.exit)}</td><td class="num">${e.sessions}</td><td class="num">${pc(e.net_pct)}</td><td class="num">${money(e.pnl, 0)}</td></tr>`).join("");
+  const frow = d.recent.fills.map((f) => `<tr><td class="l">${esc(f.session)}</td><td class="l"><b>${esc(f.name || f.ticker)}</b> <span class="meta">${esc(f.ticker)}</span></td><td>${f.style === "LONG" ? "장기" : "스윙"}</td><td class="num">${fmt(f.qty, 0)}</td>
+    <td class="num">${money(f.open)}</td><td class="num">${money(f.price)}</td><td class="num">${f.slippage_bps.toFixed(1)}bp</td><td class="num">${money(f.fee)}</td></tr>`).join("");
+  const un = Object.entries(d.unfilled_counts || {}).map(([k, n]) => `${esc(d.unfilled_labels[k] || k)} ${n}건`).join(", ");
+  return `<div class="panel">${title}
+    <div class="meta">기록 ${d.sessions}거래일(${esc(d.started)} ~ ${esc(d.last)}) · 기록 연결 ${d.integrity === "OK" ? "정상" : "깨짐"} · 체결 ${d.fills}건${un ? ` · 미체결: ${un}` : ""}</div>${tiles}
+    <h3>보유 ${d.positions.length}종목</h3>
+    ${prow ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>스타일</th><th>수량</th><th title="슬리피지를 넣은 체결가">매수가</th><th>최근 종가</th><th title="수수료를 넣은 매수 금액 대비">평가 손익</th><th>비중</th><th>손절</th><th>목표</th><th>보유 거래일</th><th class="l">매수일</th></tr></thead><tbody>${prow}</tbody></table></div>` : `<div class="meta">보유 종목이 없습니다.</div>`}
+    <h3>다음 거래일 시가의 주문 계획 <span class="meta">(${esc(d.last)} 종가 기준)</span></h3>${planHtml}${qsfSkipLine(plan.skipped_counts, d.skip_labels)}
+    ${erow ? `<h3>최근 매도</h3><div class="tbl-wrap"><table><thead><tr><th class="l">매도일</th><th class="l">종목</th><th>스타일</th><th class="l">이유</th><th>매수가</th><th>매도가</th><th>보유 거래일</th><th title="수수료·세금·슬리피지 추정 차감">순수익률</th><th>손익</th></tr></thead><tbody>${erow}</tbody></table></div>` : ""}
+    ${frow ? `<h3>최근 체결</h3><div class="tbl-wrap"><table><thead><tr><th class="l">체결일</th><th class="l">종목</th><th>스타일</th><th>수량</th><th>시가</th><th title="시가에 슬리피지 추정을 더한 값">체결가</th><th>슬리피지 추정</th><th>수수료</th></tr></thead><tbody>${frow}</tbody></table></div>` : ""}
+    ${rules}</div>`;
+}
+async function qsfPaper() {
+  const box = $("#qsfpaper"); if (!box) return;
+  const mk = state.market;
+  const d = await api(`/api/qsf/paper-book?market=${mk}`).catch(() => null);
+  if (mk !== state.market) return;
+  box.innerHTML = d ? qsfPaperHtml(d) : "";
 }
 async function qsfValidation() {
   const box = $("#qsfvalid"); if (!box) return;

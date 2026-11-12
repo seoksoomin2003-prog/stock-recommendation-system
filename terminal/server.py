@@ -22,7 +22,7 @@ from terminal.services import Terminal, clean_ticker
 
 STATIC = Path(__file__).resolve().parent / "static"
 from terminal import automation, record_status, server_agent, today  # noqa: E402
-from terminal.qsf import changes as qsf_changes, kr_cap_view as qsf_cap_view, kr_method as qsf_kr_method, lookahead as qsf_lookahead, regime_weights as qsf_regime_weights, screen as qsf_screen, track_record as qsf_track_record  # noqa: E402
+from terminal.qsf import changes as qsf_changes, kr_cap_view as qsf_cap_view, kr_method as qsf_kr_method, lookahead as qsf_lookahead, paper_book as qsf_paper_book, regime_weights as qsf_regime_weights, screen as qsf_screen, track_record as qsf_track_record  # noqa: E402
 
 HOST = "127.0.0.1"
 log = logging.getLogger("terminal")
@@ -161,6 +161,8 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
         ("GET", "/api/qsf/kr-method"): lambda q, b: qsf_kr_method.status(t.base),
         ("GET", "/api/qsf/regime-weights"): lambda q, b: qsf_regime_weights.status(t.base),
         ("GET", "/api/qsf/lookahead"): lambda q, b: qsf_lookahead.status(t.base),
+        ("GET", "/api/qsf/paper-book"): lambda q, b: qsf_paper_book.status(t.base, _market(q.get("market", "US"))),
+        ("GET", "/api/qsf/order-plan"): lambda q, b: t.order_plan(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/top3"): lambda q, b: t.qsf.top3(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/peers"): lambda q, b: t.qsf.peers(clean_ticker(q.get("t", "")), _market(q.get("market", "US"))),
         ("GET", "/api/qsf/sector-picks"): lambda q, b: t.sector_picks(_market(q.get("market", "US")), q.get("fund", "")),

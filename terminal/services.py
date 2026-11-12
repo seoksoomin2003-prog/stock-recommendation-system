@@ -890,6 +890,27 @@ class Terminal:
         out["stop_source"] = "입력값" if stop not in (None, "") else f"{atr_n:g} ATR(14일) 제안값"
         return out
 
+    def order_plan(self, market: str = "US") -> Dict[str, Any]:
+        """The newest scan's entry candidates fitted to the recorded account by its own limits.  Read only: no order is sent
+        and nothing is written to the journal."""
+        from terminal.qsf import order_plan as op
+        note = "주문을 보내지 않습니다. 참고용 계획이고 투자 자문이 아닙니다. 지정가 상한은 '이 가격 위로는 따라가지 않는다'는 기준입니다."
+        latest = self.qsf.screen_rows(market)
+        session = latest.get("session")
+        if latest.get("status") != "REAL" or not session:
+            return {"status": "NO_SCAN", "market": market, "note": note}
+        info = {r["ticker"]: {"name": r.get("name"), "sector": r.get("sector")} for r in latest.get("rows") or []}
+        st = self.settings()
+        cands = op.candidates(op.session_snaps(self.qsf.ledger, market, session), session, info, st)
+        _, integ, state, val, _, _ = self._valued(market)
+        equity = val["summary"]["equity"]
+        if not equity or equity <= 0:
+            return {"status": "NO_ACCOUNT", "market": market, "session": session, "candidates": len(cands), "note": note,
+                    "reason": "계좌 평가액이 없습니다. 포트폴리오 탭에 입금·거래를 기록하면 그 계좌 기준으로 계획을 보여 줍니다."}
+        account = {"equity": equity, "cash": state["cash"],
+                   "positions": {h["ticker"]: {"style": h.get("style"), "value": h.get("value") or 0.0, "sector": h.get("sector")} for h in val["holdings"]}}
+        return {"status": "REAL", "session": session, "equity": equity, "cash": state["cash"], "integrity": integ["status"], "note": note, **op.build(cands, account, market, st)}
+
     def model_plan(self) -> Dict[str, Any]:
         latest = self._latest_scan()
         if not latest:

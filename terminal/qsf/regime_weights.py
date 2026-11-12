@@ -20,7 +20,7 @@ from terminal.qsf.ledger import Ledger
 PROTOCOL = "reports/QSF_REGIME_WEIGHTS_PROTOCOL.md"
 REPORT = Path("reports") / "qsf" / "QSF_REGIME_WEIGHTS.json"
 FOLDERS = {"KR": Path("research_data") / "regime_weights_kr", "US": Path("research_data") / "regime_weights_us"}
-FORWARD_REPORT = Path("reports") / "qsf" / "QSF_REGIME_WEIGHTS_FORWARD.json"
+FORWARD_REPORTS = {m: Path("reports") / "qsf" / f"QSF_REGIME_WEIGHTS_FORWARD_{m}.json" for m in ("KR", "US")}
 FIRST = "2026-11-12"            # the first session written down; the table is frozen before its outcome exists
 STATES = ("UP_CALM", "UP_ROUGH", "DOWN")
 STATE_LABELS = {"UP_CALM": "상승·안정", "UP_ROUGH": "상승·불안", "DOWN": "하락"}
@@ -41,7 +41,7 @@ COUNTED = ("REAL", "STALE")
 LIMITS = ["과거 점수에는 시장 국면 영역과 이벤트·지배구조 영역이 없습니다. 세 영역(기술·재무·위험)만으로 비교했습니다.",
           "이미 여러 번 쓴 구간입니다. 영역별 과거 성적(예: 한국 기술 영역 음수)을 아는 상태에서 설계했으므로 독립된 새 증거가 아닙니다.",
           "미국 표본은 지수에서 빠진 종목 일부가 없어 결과가 부풀려질 수 있습니다.",
-          "한국의 과거 국면은 KRX 자료로 만든 코스피 시가총액 지수로, 매일 기록의 국면은 야후의 코스피 지수로 정합니다.",
+          "한국의 국면은 과거 시험과 매일 기록 모두 KRX 자료로 만든 코스피 시가총액 지수로 정합니다(공식 코스피 지수와 조금 다를 수 있습니다).",
           "평가일이 21거래일 간격이라 한국은 약 60개, 미국은 약 120개의 시험일뿐입니다. 작은 효과는 잡지 못합니다."]
 
 
@@ -259,6 +259,33 @@ def index_state(bars: Sequence[Dict[str, Any]], session: str) -> str:
     return s
 
 
+KR_INDEX_WEEKDAYS = 460         # weekdays of KRX files read back for the Korean index: the trend and volatility windows with room for holidays
+
+
+def kospi_index(z: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """A capitalisation-weighted KOSPI index on the previous day's weights, from KRX price arrays: the construction the past test
+    used (``research_kr_live.add_index``).  One bar per day on file."""
+    a, cap, member = z["adj_close"].astype(float), z["cap"].astype(float), np.asarray(z["kospi"], dtype=bool)
+    level, out = 1000.0, []
+    for i, day in enumerate(z["dates"]):
+        if i:
+            prev, cur, w = a[i - 1], a[i], cap[i - 1]
+            ok = member & np.isfinite(prev) & np.isfinite(cur) & np.isfinite(w) & (w > 0) & (prev > 0)
+            if ok.any():
+                level *= 1 + float(np.sum(w[ok] * (cur[ok] / prev[ok] - 1)) / np.sum(w[ok]))
+        out.append({"date": str(day), "close": level})
+    return out
+
+
+def kr_index_bars(base: Path, now: Callable[[], datetime] = _utcnow) -> List[Dict[str, Any]]:
+    """The Korean index bars up to the newest KRX day on file.  A session KRX has not published is simply not in them yet."""
+    from datetime import timedelta
+    from terminal.qsf import kr_method
+    last = (now() + timedelta(hours=9)).date()
+    first = last - timedelta(days=int(KR_INDEX_WEEKDAYS * 7 / 5) + 10)
+    return kospi_index(kr_method._prices(Path(base), first.isoformat(), last.isoformat()))
+
+
 def _snapshot_scores(s: Dict[str, Any]) -> np.ndarray:
     d = s.get("domains") or {}
     return np.array([float(d[k]["score_100"]) if d.get(k) and d[k].get("score_100") is not None and (d[k].get("coverage") or 0) > 0 else np.nan for k in DOMAINS])
@@ -313,6 +340,56 @@ def record(base: Path, market: str, index_bars: Callable[[], Sequence[Dict[str, 
                 break
     return {"status": "WAITING" if waiting and waiting["session"] == sessions[-1] else "OK", "market": market, "written": wrote, "waiting": waiting,
             "last": max(done | set(wrote), default=None), "sessions": len(done) + len(wrote)}
+
+
+# ---------------------------------------------------------------------- the single forward reading
+def measure_forward(docs: List[Dict[str, Any]], px: Any) -> List[Dict[str, Any]]:
+    """One row per recorded session whose 20-session outcome has ended: the rank correlation of the three scores written that day."""
+    out = []
+    for doc in docs:
+        entries = {r["entry_session"] for r in doc["rows"] if r.get("entry_session")}
+        if len(entries) != 1 or next(iter(entries)) not in px.dates:
+            continue
+        i = px.dates.index(next(iter(entries))) - 1          # forward() enters at the open of day i + 1
+        if i < 0 or i + H >= len(px.dates):
+            continue
+        fwd = px.forward(i, H)
+        ret = np.array([fwd[px.col[r["ticker"]]] if r["ticker"] in px.col else np.nan for r in doc["rows"]], dtype=float)
+        col = lambda key: np.array([np.nan if r.get(key) is None else r[key] for r in doc["rows"]], dtype=float)      # noqa: E731
+        dyn, fixed, live = _ic(col("score"), ret), _ic(col("static"), ret), _ic(col("live"), ret)
+        if dyn is None or fixed is None:
+            continue
+        out.append({"session": doc["session"], "state": doc["state"], "ic_dynamic": dyn, "ic_static": fixed, "ic_live": live, "late": bool(doc.get("late"))})
+    return out
+
+
+def evaluate_forward_once(base: Path, market: str, px: Any, log=print) -> Dict[str, Any]:
+    """The protocol's one reading of the daily record, at ``READ_AT`` matured sessions.  Figures only: the past test did not
+    support the rule, so no verdict is attached.  Refused before the count is reached and after a report exists."""
+    base = Path(base)
+    target = base / FORWARD_REPORTS[market]
+    if target.exists():
+        raise RuntimeError("이미 읽었습니다. 규칙상 다시 읽지 않습니다.")
+    if kf.verify(base, FOLDERS[market])["status"] != "OK":
+        raise RuntimeError("기록 검증에 실패해 읽지 않습니다.")
+    docs = [kf._read_day(base / FOLDERS[market], r["session"]) for r in kf.read_index(base, FOLDERS[market])]
+    days = measure_forward(docs, px)
+    if len(days) < READ_AT:
+        raise RuntimeError(f"보유가 끝난 기록일이 {len(days)}개입니다. {READ_AT}개가 되기 전에는 읽지 않습니다.")
+    days = days[:READ_AT]
+    diff = [d["ic_dynamic"] - d["ic_static"] for d in days]
+    mid = len(days) // 2
+    past = ((json.loads((base / REPORT).read_text(encoding="utf-8")).get("markets") or {}).get(market) or {}).get("verdict") if (base / REPORT).exists() else None
+    res = {"status": "REAL", "protocol": PROTOCOL, "market": market, "horizon": H, "records": len(docs), "days": len(days), "first": days[0]["session"], "last": days[-1]["session"],
+           "ic": {"dynamic": float(np.mean([d["ic_dynamic"] for d in days])), "static": float(np.mean([d["ic_static"] for d in days])),
+                  "live": _mean([d["ic_live"] for d in days])},
+           "ic_diff": float(np.mean(diff)), "ic_diff_t": validate.newey_west_t(diff, H), "early": float(np.mean(diff[:mid])), "late": float(np.mean(diff[mid:])),
+           "by_state": {s: {"days": sum(1 for d in days if d["state"] == s), "ic_diff": _mean([x for x, d in zip(diff, days) if d["state"] == s])} for s in STATES},
+           "late_share": float(np.mean([d["late"] for d in days])), "past_verdict": past, "reading": "FIGURES_ONLY",
+           "note": "과거 걸어가기 검증이 기준에 못 미쳤으므로 판정 없이 수치만 적습니다. 240거래일의 겹치는 표본으로는 작은 차이를 가릴 수 없습니다."}
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    return res
 
 
 def status(base: Path) -> Dict[str, Any]:

@@ -242,3 +242,52 @@ def test_the_two_stores_are_backed_up_with_the_other_forward_records():
     from terminal import automation
     assert {"regime_weights_kr", "regime_weights_us"} <= set(automation.FORWARD_STORES)
     assert sum("regime_weights_" in g for g in automation.BACKUP_GLOBS) == 2
+
+
+def test_the_korean_index_is_the_kospi_members_weighted_by_the_previous_days_value():
+    z = {"dates": np.array(["2026-11-09", "2026-11-10", "2026-11-11"]), "kospi": np.array([True, True, False, True]),
+         "adj_close": np.array([[100.0, 50.0, 10.0, np.nan], [110.0, 50.0, 30.0, 20.0], [110.0, 45.0, 30.0, 22.0]]),
+         "cap": np.array([[300.0, 100.0, 999.0, np.nan], [330.0, 100.0, 999.0, 50.0], [330.0, 90.0, 999.0, 55.0]])}
+    bars = rw.kospi_index(z)
+    assert [b["date"] for b in bars] == ["2026-11-09", "2026-11-10", "2026-11-11"] and bars[0]["close"] == 1000.0
+    assert bars[1]["close"] == pytest.approx(1000.0 * (1 + (300 * 0.10 + 100 * 0.0) / 400))                 # the KOSDAQ stock and the one without a previous price are left out
+    assert bars[2]["close"] == pytest.approx(bars[1]["close"] * (1 + (330 * 0.0 + 100 * -0.10 + 50 * 0.10) / 480))
+
+
+class FakePanel:
+    """Sessions by index; a stock's 20-session outcome is its number plus the day's shift."""
+
+    def __init__(self, days, tickers, slope):
+        self.dates, self.col, self.slope = days, {t: j for j, t in enumerate(tickers)}, slope
+
+    def forward(self, i, h, cost=0.0):
+        return self.slope * np.arange(len(self.col), dtype=float) / 1000 + 0.001 * i
+
+
+def test_the_forward_reading_waits_for_240_matured_sessions_runs_once_and_gives_figures_only(tmp_path, monkeypatch):
+    days = []
+    d = date(2026, 11, 12)
+    while len(days) < 280:
+        if d.weekday() < 5:
+            days.append(d.isoformat())
+        d += timedelta(days=1)
+    tickers = [f"T{k:03d}" for k in range(60)]
+    at = datetime(2028, 1, 1, tzinfo=timezone.utc)
+    rw.run_once(tmp_path, log=lambda m: None, loaders={"US": lambda base: planted(days=70)})
+
+    def write(upto):
+        for n, day in enumerate(days[:upto]):
+            rows = [{"ticker": t, "score": float(k), "static": float(-k if n % 2 else k), "live": float(k), "entry_session": days[n + 1]} for k, t in enumerate(tickers)]
+            kf.write_record(tmp_path, day, at, False, store=rw.FOLDERS["US"], scorer=lambda b, x, rows=rows: {"session": x, "state": rw.STATES[n % 3], "rows": rows})
+    write(200)
+    px = FakePanel(days, tickers, slope=1.0)
+    assert len(rw.measure_forward([kf._read_day(tmp_path / rw.FOLDERS["US"], x) for x in days[:200]], px)) == 200
+    with pytest.raises(RuntimeError, match="200개"):
+        rw.evaluate_forward_once(tmp_path, "US", px)
+    write(259)
+    got = rw.evaluate_forward_once(tmp_path, "US", px)
+    assert got["days"] == rw.READ_AT == 240 and got["reading"] == "FIGURES_ONLY" and got["records"] == 259 and got["first"] == days[0] and got["last"] == days[239]
+    assert got["ic"]["dynamic"] == pytest.approx(1.0) and got["ic"]["static"] == pytest.approx(0.0) and got["ic_diff"] == pytest.approx(1.0) and got["past_verdict"] in ("REGIME_WEIGHTS_SUPPORTED", "NOT_SUPPORTED")
+    assert sum(v["days"] for v in got["by_state"].values()) == 240 and got["late_share"] == 0.0
+    with pytest.raises(RuntimeError, match="이미 읽었습니다"):
+        rw.evaluate_forward_once(tmp_path, "US", px)
