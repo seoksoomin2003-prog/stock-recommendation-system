@@ -27,6 +27,7 @@ LABEL = "com.quantengine.daily"
 # within the hour it is awake again, and a finished day ends in seconds.  Before 07:10 the US session is not complete.
 SCHEDULE = tuple((h, 10) for h in range(7, 24))
 STEP_TIMEOUT = 45 * 60
+STEP_TIMEOUTS = {"SCAN_KR": 90 * 60}                # the Korean model scan downloads about 2,500 symbols on its first run of a day
 RUNNING_FILE = "running.json"                       # the run in progress: pid, step, steps done
 CAFFEINATE = "/usr/bin/caffeinate"
 SLEPT_NOTE_S = 120                                  # a step during which the Mac slept this long says so
@@ -34,12 +35,14 @@ HOLDINGS_EVERY_DAYS, HOLDINGS_FRESH_DAYS = 7, 90     # KODEX holdings: retry cad
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
 FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger", "kr_swing_challenger", "kr_swing_prior", "kr_cap_universe", "kr_traded_universe", "kr_method", "regime_weights_kr", "regime_weights_us", "paper_book_kr", "paper_book_us")
-KR_STEPS = ("QSF_KR", "NEWS_KR", "KR_FORWARD")     # Korea trades on some days the US does not, and these must not wait for a US session
+KR_STEPS = ("QSF_KR", "NEWS_KR", "KR_FORWARD", "SCAN_KR")     # Korea trades on some days the US does not, and these must not wait for a US session
 KST = timezone(timedelta(hours=9))
 BACKUP_STALE_DAYS = 4                              # a long weekend with a holiday is three days without a new session
 OK, FAILED, SKIPPED, WAITING = "OK", "FAILED", "SKIPPED", "WAITING"
-STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "US_CHALLENGER": "미국 도전자 점수 기록", "BACKUP": "백업"}
-BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json", "data/terminal/alerts.json", "data/terminal/alerts_log.jsonl",
+STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "US_CHALLENGER": "미국 도전자 점수 기록",
+              "SCAN_KR": "한국 모델 스캔(KR-EXP)",      # after every record of the morning, so its long download never delays one (user decision 2026-11-12)
+              "BACKUP": "백업"}
+BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/paper_journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json", "data/terminal/alerts.json", "data/terminal/alerts_log.jsonl",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
                 "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl", "research_data/kr_swing_challenger/index.jsonl", "research_data/kr_swing_prior/index.jsonl", "research_data/kr_cap_universe/index.jsonl", "research_data/kr_traded_universe/index.jsonl", "research_data/kr_method/index.jsonl", "research_data/regime_weights_kr/index.jsonl", "research_data/regime_weights_us/index.jsonl", "research_data/paper_book_kr/index.jsonl", "research_data/paper_book_us/index.jsonl", "data/qsf/top3/index.jsonl", "data/qsf/top3/*.json.gz",
                 "data/qsf/price_archive/*.json.gz")
@@ -213,7 +216,7 @@ class Daily:
             fh.flush()
             try:
                 return subprocess.run([sys.executable, str(self.base / "app.py"), *argv], cwd=self.base, stdout=fh,
-                                      stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, timeout=STEP_TIMEOUT).returncode
+                                      stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, timeout=STEP_TIMEOUTS.get(name, STEP_TIMEOUT)).returncode
             except subprocess.TimeoutExpired:
                 fh.write("timeout\n")
                 return 124
@@ -265,6 +268,18 @@ class Daily:
             if name == "US_CHALLENGER":                             # waiting is not a failure: the ledger may not have the session yet
                 rc = self.runner(name, ["qsf", "us-challenger-record"])
                 return {"status": OK if rc == 0 else WAITING if rc == 3 else FAILED, "at": at, "detail": None if rc in (0, 3) else f"코드 {rc}"}
+            if name == "SCAN_KR":                                   # the experimental Korean model, then its paper outcomes
+                if not os.getenv("QPP_CAPITAL_KRW", "").strip():
+                    return {"status": SKIPPED, "at": at, "detail": "QPP_CAPITAL_KRW 미설정"}
+                from terminal import model_scan
+                if model_scan.started_here(self.base):
+                    return {"status": WAITING, "at": at, "detail": "화면에서 시작한 스캔 실행 중"}
+                rc = self.runner(name, ["--market", "KR", "scan"])
+                if rc != 0 and model_scan.run_since(self.base, at) is None:      # exit 1 is also "no valid recommendation", which did write a run
+                    return {"status": FAILED, "at": at, "detail": f"코드 {rc}"}
+                run = model_scan.run_since(self.base, at) or {}
+                track = self.runner("TRACK_KR", ["--market", "KR", "tracking", "update"])
+                return {"status": OK, "at": at, "detail": " · ".join(x for x in (run.get("recommendation_status"), None if track == 0 else f"추적 갱신 실패(코드 {track})") if x) or None}
             res = backup(self.base, session, self.backup_dir)
             return {"status": OK, "at": at, "detail": f"{res['files']}개 파일"}
         except Exception as exc:                                    # one failed step never stops the others
@@ -420,6 +435,8 @@ class Daily:
             lines.append("⚠️ " + low_disk)
         if (steps.get("SCAN") or {}).get("status") == SKIPPED:
             lines.append("P6-11B는 오늘 기록이 없습니다. 모델 탭에서 자본금을 입력하면 매일 스캔합니다.")
+        if (steps.get("SCAN_KR") or {}).get("status") == SKIPPED:
+            lines.append("한국 모델 스캔은 자본금이 없어 건너뛰었습니다. 모델 탭(한국)에서 자본금을 입력하면 매일 스캔합니다.")
         lines += ["", "[포트폴리오 경고]"]
         if alerts["status"] == "INTEGRITY":
             lines.append("🚨 거래 기록 무결성 오류: 터미널에서 확인이 필요합니다.")
@@ -491,6 +508,8 @@ class Daily:
             pending.insert(0, "LAB")                # a voided or missing record is retried even if it once reported OK
         if (steps.get("SCAN") or {}).get("status") == SKIPPED and os.getenv("QPP_CAPITAL", "").strip():
             pending.append("SCAN")                  # a skipped scan runs as soon as capital is configured
+        if (steps.get("SCAN_KR") or {}).get("status") == SKIPPED and os.getenv("QPP_CAPITAL_KRW", "").strip():
+            pending.append("SCAN_KR")               # the same for the Korean model scan
         kr_day = _previous_weekday(self.now().astimezone(KST).date()).isoformat()
         if st.get("kr_day") != kr_day:              # once for each weekday, whether or not the US traded on it
             pending += [n for n in KR_STEPS if n not in pending]

@@ -101,6 +101,7 @@ class Terminal:
         self.now = now or (lambda: datetime.now(timezone.utc))
         self.watchlist_file = self.base / "data" / "terminal" / "watchlist.json"
         self.journal = pf.Journal(self.base / "data" / "terminal" / "journal.jsonl")
+        self.paper = pf.Journal(self.base / "data" / "terminal" / "paper_journal.jsonl")      # paper trades kept by hand; never the real account
         self.settings_file = self.base / "data" / "terminal" / "settings.json"
         from terminal.lab.service import Lab
         self.lab = Lab(self.base, now=self.now)
@@ -751,6 +752,36 @@ class Terminal:
         market = pf.market_of(str(raw.get("ticker") or "").strip().upper()) if raw.get("ticker") else str(raw.get("market") or "US").upper()
         entry = pf.normalize(raw, self._today(market), clean_ticker)
         return {"entry": self.journal.append(entry, self.now())}
+
+    # ---------------------------------------------------------------- paper trades kept by hand (terminal/paper_trade.py)
+    def paper_trades(self, market: str = "US") -> Dict[str, Any]:
+        from terminal import paper_trade
+        recs, integ = self.paper.read()
+
+        def quote(held: List[str]) -> Dict[str, Dict[str, Any]]:
+            sym = {t: self._sym(t) for t in held}
+            q = self._quotes(list(sym.values()), "paper:" + ",".join(sym.values()), market)
+            return {t: q["items"][sym[t]] for t in held}
+        return paper_trade.view(recs, integ, market, quote, self._kr_name, self._today(market))
+
+    def paper_add(self, raw: Dict[str, Any]) -> Dict[str, Any]:
+        from terminal import paper_trade
+        raw = raw or {}
+        market = pf.market_of(str(raw.get("ticker") or "").strip().upper()) if raw.get("ticker") else str(raw.get("market") or "US").upper()
+        return {"entry": self.paper.append(paper_trade.prepare(raw, self._today(market if market in pf.MARKETS else "US"), clean_ticker), self.now())}
+
+    def paper_void(self, ref: str) -> Dict[str, Any]:
+        return {"entry": self.paper.append({"kind": "VOID", "ref": str(ref or "")}, self.now())}
+
+    def paper_fee(self, q: Dict[str, Any]) -> Dict[str, Any]:
+        """The fee a buy or sell of this size would get, for the form's preview.  Nothing is recorded."""
+        from terminal import paper_trade
+        side = str(q.get("side") or "BUY").upper()
+        market = str(q.get("market") or "US").upper()
+        if side not in ("BUY", "SELL") or market not in pf.MARKETS:
+            raise ValueError("매수 또는 매도, 시장은 US 또는 KR이어야 합니다.")
+        value = pf._pos(q.get("qty"), "수량") * pf._pos(q.get("price"), "가격")
+        return {"market": market, "side": side, "value": value, **paper_trade.toss_fee(market, value, side)}
 
     def portfolio_signals(self, market: str = "US") -> Dict[str, Any]:
         """QSF reading of each holding, kept apart from /api/portfolio because the first run reads filings."""

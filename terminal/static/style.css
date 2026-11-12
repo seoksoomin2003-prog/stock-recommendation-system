@@ -264,3 +264,7 @@ table.sp-ret td { padding: 4px 8px; }
 .qsf-record tr.qsf-why summary { cursor: pointer; color: var(--muted); }
 .qsf-record tr.qsf-why ul { margin: 6px 0; padding-left: 18px; }
 .qsf-record tr.qsf-why table { margin: 4px 0 8px; width: auto; }
+/* 모의 매매: 요약 값 안의 손익 색과 괄호 수익률은 한 줄에 둡니다 (.kv의 라벨 규칙이 값 안의 span까지 줄바꿈하지 않게) */
+#tab-paper .kv div b span { display: inline; font-size: inherit; color: inherit; }
+#tab-paper .kv div b span.up { color: var(--up); } #tab-paper .kv div b span.down { color: var(--down); }
+#tab-paper .kv div b span.meta, #tab-paper .kv div b span.missing { color: var(--muted); font-weight: 400; font-size: 12px; }

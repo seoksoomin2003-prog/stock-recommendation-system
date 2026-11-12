@@ -1,8 +1,9 @@
 """The Korean model scan started from the screen.  It is the documented command, ``python app.py --market KR scan``, and nothing else.
 
-The scan (experimental model KR-EXP-0.1) was never part of the daily job: it was built as a hand-run command, and its first run of
-a day downloads about 2,500 symbols.  The button starts that same command detached from the server, one at a time, and the
-screen reads how it ended from the run folder the scan itself writes.  No argument comes from the request.
+The scan (experimental model KR-EXP-0.1) was built as a hand-run command; since 2026-11-12 the daily job also runs it as its
+last step before the backup (user decision).  The button starts that same command detached from the server, one at a time and
+never beside the daily job's own run, and the screen reads how it ended from the run folder the scan itself writes.  No argument
+comes from the request.
 """
 import json
 import os
@@ -47,7 +48,7 @@ def _alive(pid: Any) -> bool:
         return False
 
 
-def _run_since(base: Path, started_at: str) -> Optional[Dict[str, Any]]:
+def run_since(base: Path, started_at: str) -> Optional[Dict[str, Any]]:
     """The newest scan run that began at or after ``started_at`` and wrote its result; None when there is none."""
     root = Path(base) / RUNS
     for d in sorted((p for p in root.iterdir() if p.is_dir()), reverse=True) if root.exists() else []:
@@ -61,14 +62,31 @@ def _run_since(base: Path, started_at: str) -> Optional[Dict[str, Any]]:
     return None
 
 
+def started_here(base: Path) -> bool:
+    """A scan started from the screen is still running."""
+    m = _marker(base)
+    return bool(m and _alive(m.get("pid")))
+
+
+def _daily_job(base: Path) -> Optional[Dict[str, Any]]:
+    """The daily job, when it is at its Korean model scan step right now."""
+    from terminal import automation
+    r = automation.running(Path(base))
+    return r if r and r.get("step") == "SCAN_KR" else None
+
+
 def status(base: Path) -> Dict[str, Any]:
-    """RUNNING while the started process lives.  Afterwards DONE with the run it wrote, or FAILED when it wrote none."""
+    """RUNNING while the started process lives, or while the daily job runs the same scan.  Afterwards DONE with the run it
+    wrote, or FAILED when it wrote none."""
+    job = _daily_job(base)
+    if job:
+        return {"status": "RUNNING", "started_at": job.get("started_at"), "by": "DAILY_JOB"}
     m = _marker(base)
     if not m:
         return {"status": "IDLE"}
     if _alive(m.get("pid")):
         return {"status": "RUNNING", "started_at": m.get("started_at")}
-    run = _run_since(Path(base), str(m.get("started_at") or ""))
+    run = run_since(Path(base), str(m.get("started_at") or ""))
     if run:
         return {"status": "DONE", "started_at": m.get("started_at"), "run": run}
     return {"status": "FAILED", "started_at": m.get("started_at"), "log": str(LOG)}
@@ -77,6 +95,9 @@ def status(base: Path) -> Dict[str, Any]:
 def start(base: Path, popen: Callable = subprocess.Popen, now: Callable[[], datetime] = lambda: datetime.now(timezone.utc)) -> Dict[str, Any]:
     """Start the scan unless one started here is still running.  Held awake against idle sleep while it runs."""
     base = Path(base)
+    job = _daily_job(base)
+    if job:
+        return {"status": "ALREADY_RUNNING", "started_at": job.get("started_at"), "by": "DAILY_JOB"}
     m = _marker(base)
     if m and _alive(m.get("pid")):
         return {"status": "ALREADY_RUNNING", "started_at": m.get("started_at")}

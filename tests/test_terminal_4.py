@@ -58,7 +58,7 @@ def make(tmp_path, now=TUE_NIGHT, rc=None, terminal=None, tg="SENT", record=True
 
 @pytest.fixture(autouse=True)
 def clean_env(monkeypatch):
-    for k in ("QPP_CAPITAL", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "QPP_BACKUP_DIR"):
+    for k in ("QPP_CAPITAL", "QPP_CAPITAL_KRW", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "QPP_BACKUP_DIR"):
         monkeypatch.delenv(k, raising=False)
 
 
@@ -425,8 +425,8 @@ def test_a_run_leaves_its_marker_only_while_it_runs_and_its_outcome_after(tmp_pa
     d.runner = runner
     assert automation.status(tmp_path)["running"] is None
     assert d.run()["status"] == "DONE"
-    assert seen[0]["step"] == "LAB" and seen[0]["done"] == 0 and seen[0]["total"] == 10           # nine processes and the backup
-    assert seen[-1]["step"] == "WRAP_UP" and seen[-1]["done"] == 10                                # the weekly holdings fetch runs after the steps
+    assert seen[0]["step"] == "LAB" and seen[0]["done"] == 0 and seen[0]["total"] == 11           # nine processes, the Korean model scan (skipped without capital) and the backup
+    assert seen[-1]["step"] == "WRAP_UP" and seen[-1]["done"] == 11                                # the weekly holdings fetch runs after the steps
     assert [s["step"] for s in seen[:3]] == ["LAB", "SCAN", "TRACK"] and seen[2]["done"] == 2
     st = automation.status(tmp_path)
     assert st["running"] is None and st["last_attempt"]["status"] == "DONE" and st["last_attempt"]["session"] == "2026-11-03"

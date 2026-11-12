@@ -421,7 +421,7 @@ function wireCapital(el, cap, b, mk) {
   let saved = isNum(cap.amount) ? cap.amount : null;
   const money = (v) => mk === "KR" ? `${Math.round(v).toLocaleString("ko-KR")}원` : `$${Math.round(v).toLocaleString("en-US")}`;
   const parse = () => { const t = input.value.replace(/[,_$\s]/g, ""); if (!t) return null; const v = Number(t); return Number.isFinite(v) && v > 0 ? v : NaN; };
-  const nextScan = mk === "KR" ? "한국 모델 스캔은 일일 작업에 없습니다. 옆의 '스캔 실행'을 누르면 이 금액으로 실행합니다." : "다음 일일 작업의 스캔부터 이 금액을 씁니다.";
+  const nextScan = mk === "KR" ? "다음 일일 작업의 스캔부터 이 금액을 씁니다. 지금 바로 돌리려면 옆의 '스캔 실행'을 누르세요." : "다음 일일 작업의 스캔부터 이 금액을 씁니다.";
   const refresh = (msg) => {
     const typed = parse(), base = typed === null ? (isNum(b.capital) ? b.capital : null) : typed;
     el.querySelectorAll("[data-cap-amount]").forEach((c) => { const w = parseFloat(c.dataset.w); c.innerHTML = base && !isNaN(base) && !isNaN(w) ? money(w * base) : DASH; });
@@ -430,7 +430,7 @@ function wireCapital(el, cap, b, mk) {
     if (msg) parts.push(msg);
     if (Number.isNaN(typed)) parts.push("0보다 큰 숫자로 입력하세요.");
     else if (typed !== saved) parts.push("저장 전 미리보기입니다.");
-    else if (saved === null) parts.push(cap.invalid ? "저장된 값을 읽을 수 없습니다. 다시 입력하세요." : mk === "KR" ? "저장된 자본금이 없어 스캔을 실행할 수 없습니다." : "자본금이 없어 P6-11B 스캔을 건너뜁니다.");
+    else if (saved === null) parts.push(cap.invalid ? "저장된 값을 읽을 수 없습니다. 다시 입력하세요." : mk === "KR" ? "저장된 자본금이 없어 한국 모델 스캔을 건너뜁니다." : "자본금이 없어 P6-11B 스캔을 건너뜁니다.");
     if (!Number.isNaN(typed) && base && isNum(b.capital) && base !== b.capital) parts.push(`금액과 주수만 환산했습니다. 추천 종목은 스캔 당시 자본 ${money(b.capital)} 기준이라 다음 스캔에서 달라질 수 있습니다.`);
     note.innerHTML = parts.join(" ");
   };
@@ -454,11 +454,11 @@ function wireCapital(el, cap, b, mk) {
     if (!runBtn.isConnected) return;                    // the tab was drawn again: that drawing has its own watcher
     runBtn.disabled = s.status === "RUNNING";
     if (s.status === "RUNNING") {
-      runNote.innerHTML = `한국 스캔을 실행하는 중입니다 (시작 ${hhmm(s.started_at)}). 그날 첫 실행은 약 2,500종목의 시세를 받아 40분쯤 걸릴 수 있습니다. 이 화면을 닫아도 계속 실행됩니다.`;
+      runNote.innerHTML = `${s.by === "DAILY_JOB" ? "일일 작업이 한국 스캔을 실행하는 중입니다" : "한국 스캔을 실행하는 중입니다"} (시작 ${hhmm(s.started_at)}). 그날 첫 실행은 약 2,500종목의 시세를 받아 40분쯤 걸릴 수 있습니다. 이 화면을 닫아도 계속 실행됩니다.`;
       timer = setTimeout(poll, 10000);
     } else if (s.status === "DONE") {
       runNote.innerHTML = `마지막 스캔 실행: ${hhmm(s.started_at)} 시작, 완료 (${esc(REC_KO[s.run.recommendation_status] || s.run.recommendation_status || "")}, 기준 거래일 ${esc(s.run.latest_session || "")}).`;
-      if (fresh) renderModel();
+      if (fresh) RENDER.model();
     } else if (s.status === "FAILED") {
       runNote.innerHTML = `마지막 스캔 실행(${hhmm(s.started_at)} 시작)이 결과를 남기지 못하고 끝났습니다. 실행 기록: <code>${esc(s.log)}</code>`;
     } else runNote.innerHTML = "";
@@ -473,7 +473,7 @@ function wireCapital(el, cap, b, mk) {
       const r = await api("/api/model/scan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ market: "KR" }) });
       if (r.status === "NO_CAPITAL") { refresh("먼저 금액을 저장하세요. 스캔은 저장된 금액으로 실행합니다."); return; }
       wasRunning = true;
-      show({ status: "RUNNING", started_at: r.started_at }, false);
+      show({ status: "RUNNING", started_at: r.started_at, by: r.by }, false);
     } catch (e) { runNote.innerHTML = esc(ERR_KO[e.message] || e.message); }
   };
   poll();
@@ -502,7 +502,7 @@ async function renderModel() {
   } catch (e) { el.innerHTML = errBox(e); }
 }
 
-const ALWAYS_FRESH = new Set(["watch", "portfolio", "assist", "model"]);
+const ALWAYS_FRESH = new Set(["watch", "portfolio", "assist", "paper", "model"]);
 const RENDER = { overview: renderOverview, macro: renderMacro, watch: renderWatch, model: renderModel, stock: renderStock };
 
 // ------------------------------------------------------------------ boot
