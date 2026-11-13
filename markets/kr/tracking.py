@@ -100,11 +100,29 @@ def build_records(run_dir: Path) -> List[Dict]:
     return out
 
 
+def recorded_sessions(tracking_dir=None) -> Dict[str, str]:
+    """The scored session of every recorded run -> the first run recorded for it."""
+    out: Dict[str, str] = {}
+    for r in read_jsonl(_dir(tracking_dir) / "ledger" / "observations.jsonl"):
+        s = (r.get("universe") or {}).get("latest_session") if r.get("record_type") == "RUN" else None
+        if s:
+            out.setdefault(s, r["run_id"])
+    return out
+
+
 def record_run(run_dir, tracking_dir=None) -> Dict:
+    """One set of observations per scored session.  A second scan of a session already recorded (a rerun the same day, a run on a
+    holiday, a morning run whose index data still ends a day earlier) picks the same stocks from the same data, so recording it
+    would count one signal twice; when it comes a day later it would also enter a session later on data that is by then two
+    sessions old (2026-11-13).  The first run of a session stays; later ones are not recorded."""
     run_dir = Path(run_dir)
     e = eligibility(run_dir)
     if not e["eligible"]:
         return {"recorded_observations": 0, **e}
+    v = _load(run_dir, "validation_result.json")
+    first = recorded_sessions(tracking_dir).get(v.get("latest_session"))
+    if first and first != v.get("run_id"):
+        return {"recorded_observations": 0, "eligible": False, "reasons": ["SESSION_ALREADY_RECORDED"], "recorded_run": first}
     recs = build_records(run_dir)
     n = append_records(_dir(tracking_dir) / "ledger" / "observations.jsonl", recs, key="key")
     return {"recorded_observations": (len(recs) - 1) if n else 0, "eligible": True, "already_recorded": n == 0}

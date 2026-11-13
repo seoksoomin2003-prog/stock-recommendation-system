@@ -54,7 +54,7 @@ def _prepare(ctx: KRContext, rec: RunRecorder, size: int, limit: Optional[int]) 
     if limit:
         elig = elig.head(limit)
     s, e = acquisition.window(ctx.now, UNIVERSE_CALENDAR_DAYS)
-    ub = acquisition.bars(prov, elig, s, e, ctx.now, ctx.data_dir / "cache", "universe")
+    ub = acquisition.bars(prov, elig, s, e, ctx.now, ctx.data_dir / "cache", "universe", fresh_at=latest)    # a file stored before the day was out is fetched again
     rec.checkpoint("UNIVERSE_MARKET_DATA_COMPLETED", requested=len(elig), rows=len(ub["bars"]),
                    cache_hit=ub["cache_hit"], provider=select_provider())
     uni = universe.build(master[master["canonical_ticker"].isin(elig["canonical_ticker"])], ub["bars"],
@@ -64,7 +64,7 @@ def _prepare(ctx: KRContext, rec: RunRecorder, size: int, limit: Optional[int]) 
     rec.checkpoint("UNIVERSE_COMPLETED", **{k: v for k, v in uni["summary"].items() if k != "exclusions"})
     members = master.set_index("canonical_ticker").loc[uni["members"]["ticker"]].reset_index()
     hs, he = acquisition.window(ctx.now, HISTORY_CALENDAR_DAYS)
-    hb = acquisition.bars(ctx.provider_factory(), members, hs, he, ctx.now, ctx.data_dir / "cache", "history")
+    hb = acquisition.bars(ctx.provider_factory(), members, hs, he, ctx.now, ctx.data_dir / "cache", "history", fresh_at=latest)
     rec.checkpoint("HISTORY_COMPLETED", requested=len(members), rows=len(hb["bars"]), cache_hit=hb["cache_hit"])
     return {"master": master, "master_meta": m["meta"], "idx": idx, "sessions": sessions, "latest": latest,
             "universe": uni, "members": members, "history": hb["bars"], "windows": {"universe": [s, e],

@@ -35,12 +35,13 @@ HOLDINGS_EVERY_DAYS, HOLDINGS_FRESH_DAYS = 7, 90     # KODEX holdings: retry cad
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
 FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger", "kr_swing_challenger", "kr_swing_prior", "kr_cap_universe", "kr_traded_universe", "kr_method", "regime_weights_kr", "regime_weights_us", "paper_book_kr", "paper_book_us")
-KR_STEPS = ("QSF_KR", "NEWS_KR", "KR_FORWARD", "SCAN_KR")     # Korea trades on some days the US does not, and these must not wait for a US session
+KR_STEPS = ("QSF_KR", "NEWS_KR", "KR_FORWARD")     # Korea trades on some days the US does not, and these must not wait for a US session
+SCAN_KR_FROM_HOUR = 18                             # the Korean model scan runs in the evening slots, Seoul time: in the morning its index data still ends a day earlier
 KST = timezone(timedelta(hours=9))
 BACKUP_STALE_DAYS = 4                              # a long weekend with a holiday is three days without a new session
 OK, FAILED, SKIPPED, WAITING = "OK", "FAILED", "SKIPPED", "WAITING"
 STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-20 추적 갱신", "QSF": "QSF 점수 기록(미국)", "QSF_KR": "QSF 점수 기록(한국)", "NEWS": "뉴스 기록(미국)", "NEWS_KR": "뉴스 기록(한국)", "KR_FORWARD": "한국 결합 점수 기록", "US_CHALLENGER": "미국 도전자 점수 기록",
-              "SCAN_KR": "한국 모델 스캔(KR-EXP)",      # after every record of the morning, so its long download never delays one (user decision 2026-11-12)
+              "SCAN_KR": "한국 모델 스캔(KR-EXP)",      # evening slots only, once per Korean weekday (user decision 2026-11-12; moved from the morning 2026-11-13)
               "BACKUP": "백업"}
 BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/paper_journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json", "data/terminal/alerts.json", "data/terminal/alerts_log.jsonl",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
@@ -274,16 +275,31 @@ class Daily:
                 from terminal import model_scan
                 if model_scan.started_here(self.base):
                     return {"status": WAITING, "at": at, "detail": "화면에서 시작한 스캔 실행 중"}
-                rc = self.runner(name, ["--market", "KR", "scan"])
-                if rc != 0 and model_scan.run_since(self.base, at) is None:      # exit 1 is also "no valid recommendation", which did write a run
-                    return {"status": FAILED, "at": at, "detail": f"코드 {rc}"}
-                run = model_scan.run_since(self.base, at) or {}
+                day = self._scan_kr_day()
+                done = model_scan.scanned_session(self.base, day) if day else None
+                if done:                                            # the button already scanned today's session: not scanned twice
+                    run = done
+                else:
+                    rc = self.runner(name, ["--market", "KR", "scan"])
+                    run = model_scan.run_since(self.base, at)
+                    if run is None:                                 # exit 1 is also "no valid recommendation", which did write a run
+                        return {"status": FAILED, "at": at, "detail": f"코드 {rc}"}
                 track = self.runner("TRACK_KR", ["--market", "KR", "tracking", "update"])
-                return {"status": OK, "at": at, "detail": " · ".join(x for x in (run.get("recommendation_status"), None if track == 0 else f"추적 갱신 실패(코드 {track})") if x) or None}
+                notes = [run.get("recommendation_status"), "화면에서 이미 스캔함" if done else None,
+                         f"기준 거래일 {run.get('latest_session')}(오늘 자료 아님: 휴장일이거나 자료가 늦음)" if day and run.get("latest_session") != day else None,
+                         None if track == 0 else f"추적 갱신 실패(코드 {track})"]
+                return {"status": OK, "at": at, "detail": " · ".join(x for x in notes if x) or None}
             res = backup(self.base, session, self.backup_dir)
             return {"status": OK, "at": at, "detail": f"{res['files']}개 파일"}
         except Exception as exc:                                    # one failed step never stops the others
             return {"status": FAILED, "at": at, "detail": type(exc).__name__}
+
+    def _scan_kr_day(self) -> Optional[str]:
+        """The Korean weekday whose close the model scan may score now: today, from 18:00 Seoul time.  None at any other time.
+        In the morning the scan's index data still ends a day earlier and its price files are from before the close, so a
+        morning run scored the day before the last one (2026-11-13)."""
+        k = self.now().astimezone(KST)
+        return k.date().isoformat() if k.weekday() < 5 and k.hour >= SCAN_KR_FROM_HOUR else None
 
     def _kr_holdings(self, st: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """KODEX holdings for the sector picks (``terminal.kr_etf_holdings``): tried at most once a week while the stored snapshot
@@ -426,7 +442,7 @@ class Daily:
         lines = [f"📊 퀀트 터미널 일일 요약 (기준 거래일 {session})", "", "[작업]"]
         for name, label in STEP_NAMES.items():
             s = steps.get(name) or {}
-            if name in ("KR_FORWARD", "US_CHALLENGER") and s.get("status") != FAILED:      # no daily message over a record that is on track
+            if name in ("KR_FORWARD", "US_CHALLENGER", "SCAN_KR") and s.get("status") != FAILED:      # no daily message over a record that is on track
                 continue
             lines.append(f"{icon.get(s.get('status'), '·')} {label}" + (f": {s['detail']}" if s.get("detail") else ""))
         if any((steps.get(n) or {}).get("status") == FAILED for n in STEP_NAMES):
@@ -435,8 +451,6 @@ class Daily:
             lines.append("⚠️ " + low_disk)
         if (steps.get("SCAN") or {}).get("status") == SKIPPED:
             lines.append("P6-11B는 오늘 기록이 없습니다. 모델 탭에서 자본금을 입력하면 매일 스캔합니다.")
-        if (steps.get("SCAN_KR") or {}).get("status") == SKIPPED:
-            lines.append("한국 모델 스캔은 자본금이 없어 건너뛰었습니다. 모델 탭(한국)에서 자본금을 입력하면 매일 스캔합니다.")
         lines += ["", "[포트폴리오 경고]"]
         if alerts["status"] == "INTEGRITY":
             lines.append("🚨 거래 기록 무결성 오류: 터미널에서 확인이 필요합니다.")
@@ -503,13 +517,14 @@ class Daily:
         session = nyse_calendar.latest_completed_session(self.now()).isoformat()
         st = self.state()
         steps = st["sessions"].setdefault(session, {})
-        pending = [n for n in STEP_NAMES if (steps.get(n) or {}).get("status") not in (OK, SKIPPED)]
+        pending = [n for n in STEP_NAMES if n != "SCAN_KR" and (steps.get(n) or {}).get("status") not in (OK, SKIPPED)]
         if "LAB" not in pending and not self._lab_recorded(session):
             pending.insert(0, "LAB")                # a voided or missing record is retried even if it once reported OK
         if (steps.get("SCAN") or {}).get("status") == SKIPPED and os.getenv("QPP_CAPITAL", "").strip():
             pending.append("SCAN")                  # a skipped scan runs as soon as capital is configured
-        if (steps.get("SCAN_KR") or {}).get("status") == SKIPPED and os.getenv("QPP_CAPITAL_KRW", "").strip():
-            pending.append("SCAN_KR")               # the same for the Korean model scan
+        scan_day = self._scan_kr_day()
+        if scan_day and (st.get("scan_kr") or {}).get("day") != scan_day:
+            pending.append("SCAN_KR")               # once per Korean weekday, in the evening slots; a failed or waiting scan is asked again
         kr_day = _previous_weekday(self.now().astimezone(KST).date()).isoformat()
         if st.get("kr_day") != kr_day:              # once for each weekday, whether or not the US traded on it
             pending += [n for n in KR_STEPS if n not in pending]
@@ -523,6 +538,8 @@ class Daily:
         for k, name in enumerate(todo):
             self._mark(name, k, len(todo))
             steps[name] = self._timed_step(name, session)
+            if name == "SCAN_KR" and steps[name].get("status") in (OK, SKIPPED):
+                st["scan_kr"] = {"day": scan_day, "status": steps[name]["status"], "detail": steps[name].get("detail"), "at": steps[name].get("at")}
             self._save(st)
         self._mark("WRAP_UP", len(todo), len(todo))
         st["kr_day"] = kr_day
