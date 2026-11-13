@@ -39,6 +39,9 @@ class KRContext:
         self.tracking_dir = tracking_dir("KR", base_dir)
 
 
+CALENDAR_ANCHOR = "005930.KS"       # Samsung Electronics: trades on every KRX session
+
+
 def _prepare(ctx: KRContext, rec: RunRecorder, size: int, limit: Optional[int]) -> Dict:
     m = security_master.load_master(ctx.data_dir, fetch=ctx.fetch_kind, now=ctx.now)
     master = m["master"]
@@ -49,7 +52,14 @@ def _prepare(ctx: KRContext, rec: RunRecorder, size: int, limit: Optional[int]) 
     if idx["KOSPI"].empty:
         raise RuntimeError("KOSPI index bars unavailable: cannot establish the KRX session calendar")
     sessions = pd.DatetimeIndex(idx["KOSPI"].index)
-    latest = krcal.latest_completed_session(idx["KOSPI"], ctx.now)
+    try:        # Yahoo's index series can end a session behind the stocks in the morning (2026-11-13: the scan scored the day before
+        #         the last one), so a large constituent also marks the calendar, as the score scan does.  Without it: the index alone.
+        anchor = prov.fetch_index(CALENDAR_ANCHOR, *acquisition.window(ctx.now, HISTORY_CALENDAR_DAYS))
+        if not anchor.empty:
+            sessions = sessions.union(pd.DatetimeIndex(krcal.drop_incomplete(anchor.dropna(subset=["Close"]), ctx.now).index))
+    except Exception:
+        pass
+    latest = pd.Timestamp(sessions.max()).normalize()
     elig = master[master["eligible"].astype(bool)]
     if limit:
         elig = elig.head(limit)

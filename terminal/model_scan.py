@@ -1,7 +1,7 @@
 """The Korean model scan started from the screen.  It is the documented command, ``python app.py --market KR scan``, and nothing else.
 
-The scan (experimental model KR-EXP-0.1) was built as a hand-run command; since 2026-11-12 the daily job also runs it, in its
-evening slots (user decision; in the morning the scan's index data still ends a day earlier).  The button starts that same command detached from the server, one at a time and
+The scan (experimental model KR-EXP-0.1) was built as a hand-run command; since 2026-11-12 the daily job also runs it as its
+last step before the backup (user decision).  The button starts that same command detached from the server, one at a time and
 never beside the daily job's own run, and the screen reads how it ended from the run folder the scan itself writes.  No argument
 comes from the request.
 """

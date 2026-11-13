@@ -645,17 +645,24 @@ class Terminal:
 
     def _model_kr(self) -> Dict[str, Any]:
         base = {"name": "KR-EXP-0.1", "status": "EXPERIMENTAL", "role": "한국 실험 모델, 예측력 미검증"}
-        root, latest = self.base / "runs" / "KR", None
+        root, latest, empty = self.base / "runs" / "KR", None, None
         for d in sorted((p for p in root.iterdir() if p.is_dir()), reverse=True) if root.exists() else []:
             try:
                 x = json.loads((d / "validation_result.json").read_text(encoding="utf-8"))
             except (OSError, ValueError):
                 continue
-            if x.get("validation_scope") == "full":
-                latest = x
-                break
+            if x.get("validation_scope") != "full":
+                continue
+            if x.get("recommendation_status") == "NO VALID RECOMMENDATION" and not x.get("recommendations"):
+                empty = empty or x            # a newer scan that scored nothing does not replace the last list; it is named beside it
+                continue
+            latest = x
+            break
+        latest, newer_empty = (latest or empty), (empty if latest and empty else None)
         if latest:
-            base.update(run_id=latest.get("run_id"), executed_at=latest.get("executed_at"), recommendation_status=latest.get("recommendation_status"),
+            if newer_empty:
+                base["newer_empty_scan"] = {"executed_at": newer_empty.get("executed_at"), "latest_session": newer_empty.get("latest_session")}
+            base.update(run_id=latest.get("run_id"), executed_at=latest.get("executed_at"), recommendation_status=latest.get("recommendation_status"), latest_session=latest.get("latest_session"),
                         capital=latest.get("capital_krw"), currency=latest.get("currency"),
                         top5=[{"recommendation_rank": r.get("rank"), "ticker": r.get("ticker"), "name": r.get("company_name"), "sector": r.get("industry"), "close": r.get("reference_close_krw"),
                                "alpha": r.get("score"), "target_weight": r.get("target_weight")} for r in latest.get("recommendations") or []])

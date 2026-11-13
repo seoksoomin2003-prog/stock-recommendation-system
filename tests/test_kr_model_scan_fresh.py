@@ -48,3 +48,31 @@ def test_a_second_scan_of_a_session_already_recorded_adds_no_observations(tmp_pa
     synced = kt.sync_runs(rd, td)
     assert synced["recorded"] == [] and synced["skipped"][second["run_id"]] == ["SESSION_ALREADY_RECORDED"] and len(kt.observations(td)) == 10
     assert kt.record_run(rd / first["run_id"], td)["already_recorded"] is True               # the recorded run itself still reads as recorded
+
+
+def test_the_calendar_also_follows_a_large_stock_when_the_index_series_ends_a_session_behind(tmp_path):
+    """Yahoo's KOSPI index can lack the newest session in the morning while every stock has it: the scan must score that session."""
+    whole = run_kr_scan(10_000_000, ctx=ctx(tmp_path / "whole"))
+    behind = F.FakeDownload(mutate={"^KS11": lambda df: df.iloc[:-1], "^KQ11": lambda df: df.iloc[:-1]})
+    lagging = KRContext(fetch_kind=F.fake_kind(), provider_factory=F.provider_factory(behind), now=F.NOW, base_dir=tmp_path / "lag")
+    got = run_kr_scan(10_000_000, ctx=lagging)
+    assert got["latest_session"] == whole["latest_session"] and got["scored"] == whole["scored"] and got["recommendation_status"] == "REAL RECOMMENDATION"
+    assert [r["ticker"] for r in got["recommendations"]] == [r["ticker"] for r in whole["recommendations"]]
+    no_anchor = F.FakeDownload(drop={"005930.KS"}, mutate={"^KS11": lambda df: df.iloc[:-1], "^KQ11": lambda df: df.iloc[:-1]})
+    alone = run_kr_scan(10_000_000, ctx=KRContext(fetch_kind=F.fake_kind(), provider_factory=F.provider_factory(no_anchor), now=F.NOW, base_dir=tmp_path / "alone"))
+    assert alone["latest_session"] < whole["latest_session"]            # without the stock the index alone decides, as before
+
+
+def test_the_model_tab_keeps_the_last_list_when_a_newer_scan_scored_nothing(tmp_path):
+    import json
+    from terminal.services import Terminal
+    from tests.test_terminal_1 import AFTER, fake_src
+    root = tmp_path / "runs" / "KR"
+    for name, status, session, recs in (("20261112T000000Z_kr_market_scan_good", "REAL RECOMMENDATION", "2026-11-11", [{"rank": 1, "ticker": "001820", "company_name": "삼화콘덴서공업"}]),
+                                        ("20261113T000000Z_kr_market_scan_empty", "NO VALID RECOMMENDATION", "2026-11-13", [])):
+        (root / name).mkdir(parents=True)
+        (root / name / "validation_result.json").write_text(json.dumps({"run_id": name, "validation_scope": "full", "recommendation_status": status, "latest_session": session,
+                                                                         "executed_at": name[:8], "recommendations": recs}), encoding="utf-8")
+    b = Terminal(tmp_path, src=fake_src(), now=lambda: AFTER).model("KR")["baseline"]
+    assert b["run_id"].endswith("_good") and b["latest_session"] == "2026-11-11" and [r["ticker"] for r in b["top5"]] == ["001820"]
+    assert b["newer_empty_scan"] == {"executed_at": "20261113", "latest_session": "2026-11-13"}
