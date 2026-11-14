@@ -259,14 +259,31 @@ def summarize(obs: List[Dict], outs: Dict[str, Dict], run_recs: List[Dict]) -> D
             "industry_exposure_counts": dict(sorted(exposure.items(), key=lambda kv: -kv[1])[:15])}
 
 
+def whole_index(df: pd.DataFrame):
+    """The index bars the tracker may use, and the dates it holds back.  A bar counts when it has both an open and a close.  The
+    source's newest index bar can arrive with an open and no close (2026-11-14 09:01 KST: the bar of session 2026-11-13), and the
+    index dates are the tracker's session calendar: taking such a bar made the day a session, marked the stocks on it and left the
+    comparison with the index as not-a-number.  The series ends before its first such bar, so a stock and its index are always
+    measured over the same sessions and a day is never skipped; the day joins at the next update that has its close."""
+    if df.empty:
+        return df, []
+    ok = np.isfinite(pd.to_numeric(df["Open"], errors="coerce")) & np.isfinite(pd.to_numeric(df["Close"], errors="coerce"))
+    if bool(ok.all()):
+        return df, []
+    cut = int(np.argmin(ok.to_numpy()))
+    return df.iloc[:cut], [str(pd.Timestamp(d).date()) for d in df.index[cut:]]
+
+
 def _fetch_bars(obs: List[Dict], start: str, end: str, now, provider) -> Dict:
     sec = pd.DataFrame([{"canonical_ticker": o["ticker"], "market": o["exchange"],
                          "yahoo_symbol": o["ticker"] + (".KS" if o["exchange"] == "KOSPI" else ".KQ")}
                         for o in {o["ticker"]: o for o in obs}.values()])
     b = provider.fetch(sec, start, end)
     b = krcal.drop_incomplete(b, now, date_col="date") if not b.empty else b
-    idx = {m: krcal.drop_incomplete(provider.fetch_index(s, start, end), now) for m, s in BENCHMARKS.items()}
-    return {"bars": b, "index": idx}
+    idx, held = {}, {}
+    for m, s in BENCHMARKS.items():
+        idx[m], held[m] = whole_index(krcal.drop_incomplete(provider.fetch_index(s, start, end), now))
+    return {"bars": b, "index": idx, "index_held_back": {m: d for m, d in held.items() if d}}
 
 
 def update(tracking_dir=None, provider=None, now=None, offline_snapshot: Optional[str] = None) -> Dict:
@@ -279,11 +296,13 @@ def update(tracking_dir=None, provider=None, now=None, offline_snapshot: Optiona
     start = (pd.Timestamp(min(o["entry_not_before"] for o in obs)) - pd.Timedelta(days=7)).strftime("%Y-%m-%d")
     end = (krcal.to_kst(now) + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
     (d / "prices").mkdir(parents=True, exist_ok=True)
+    held: Dict[str, List[str]] = {}
     if offline_snapshot:
         snap = d / "prices" / offline_snapshot
         allb = pd.read_csv(snap, dtype={"ticker": str}, parse_dates=["date"])
     else:
         got = _fetch_bars(obs, start, end, now, provider or YahooKRProvider())
+        held = got.get("index_held_back") or {}
         rows = [got["bars"]]
         for m, df in got["index"].items():
             if not df.empty:
@@ -300,14 +319,15 @@ def update(tracking_dir=None, provider=None, now=None, offline_snapshot: Optiona
     ports = paper_portfolios(obs, outs)
     (d / "outcomes").mkdir(parents=True, exist_ok=True)
     payload = {"update_id": uid, "computed_at": now.isoformat(), "snapshot": snap.name, "snapshot_sha256": _sha(snap),
-               "outcomes": outs, "paper_portfolios": ports, "summary": summary}
+               "index_bars_held_back": held, "outcomes": outs, "paper_portfolios": ports, "summary": summary}
     out_path = d / "outcomes" / f"{uid}.json"
     out_path.write_text(json.dumps(payload, indent=1, ensure_ascii=False, default=str), encoding="utf-8")
     append_records(d / "updates.jsonl", [{"key": uid, "update_id": uid, "computed_at": now.isoformat(),
                                           "snapshot": snap.name, "snapshot_sha256": payload["snapshot_sha256"],
                                           "outcomes_file": out_path.name, "outcomes_sha256": _sha(out_path),
                                           "states": summary["outcome_states"]}], key="key")
-    return {"update_id": uid, "status": "COMPLETE", "states": summary["outcome_states"], "outcomes_file": str(out_path)}
+    return {"update_id": uid, "status": "COMPLETE", "states": summary["outcome_states"], "outcomes_file": str(out_path),
+            **({"index_bars_held_back": held} if held else {})}
 
 
 def compute(obs: List[Dict], allb: pd.DataFrame) -> Dict[str, Dict]:
@@ -363,7 +383,7 @@ def verify(tracking_dir=None, runs_dir=None) -> Dict:
 
 
 def _pct(x, nd=2):
-    return "-" if x is None else f"{x * 100:.{nd}f}%"
+    return "-" if x is None or not math.isfinite(x) else f"{x * 100:.{nd}f}%"
 
 
 def write_report(tracking_dir=None) -> Path:
@@ -384,7 +404,11 @@ def write_report(tracking_dir=None) -> Path:
               f"({s['completed']} completed of {s['observations']} observations, {s['runs']} runs). No significance "
               f"test and no annualised figure are reported; results stay preliminary below {MIN_SAMPLE} completed "
               "observations from many independent scan dates.", "",
-              f"Outcome states: {s['outcome_states']} · By model/data spec: {s['by_model_and_data_spec']}", "",
+              f"Outcome states: {s['outcome_states']} · By model/data spec: {s['by_model_and_data_spec']}", ""]
+        if p.get("index_bars_held_back"):
+            L += [f"Index bars held back at this update (open without a close at the source): {p['index_bars_held_back']}. "
+                  "Those days are not sessions yet; marks and comparisons end the session before and catch up at the next update.", ""]
+        L += [
               "| Metric | n | Mean | Median | Win rate |", "|---|---|---|---|---|"]
         for k in ("price_return", "excess_vs_benchmark", "mfe_close", "mae_close"):
             st = s[k]

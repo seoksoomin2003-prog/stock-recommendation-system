@@ -126,3 +126,51 @@ def test_ineligible_runs_not_recorded(tmp_path):
     e = kt.eligibility(rd)
     assert not e["eligible"] and "NOT_A_KR_RUN" in e["reasons"]
     assert kt.record_run(rd, tmp_path / "t")["recorded_observations"] == 0
+
+
+# ----------------------------------------------------------------------------- an index bar without a close (2026-11-14)
+def _half_last_bar(df):
+    df = df.copy()
+    df.loc[df.index[-1], ["High", "Low", "Close"]] = float("nan")
+    return df
+
+
+def test_whole_index_ends_before_the_first_bar_without_a_close():
+    days = pd.bdate_range("2026-11-02", periods=5)
+    df = pd.DataFrame({"Open": 1.0, "High": 1.0, "Low": 1.0, "Close": [1.0, 1.0, float("nan"), 1.0, 1.0]}, index=days)
+    kept, held = kt.whole_index(df)
+    assert list(kept.index) == list(days[:2])                       # the day is not skipped: the series stops before it
+    assert held == ["2026-11-04", "2026-11-05", "2026-11-06"]
+    whole = df.assign(Close=1.0)
+    assert kt.whole_index(whole)[1] == [] and len(kt.whole_index(whole)[0]) == 5
+    assert kt.whole_index(pd.DataFrame())[1] == []
+
+
+def test_index_bar_without_close_is_not_a_session_and_leaves_no_nan(scanned):
+    """The morning of 2026-11-14 the source's KOSPI bar of the last session had an open and no close: stocks were marked on that
+    day and every comparison with the index became not-a-number.  Such a day waits for its close."""
+    now = datetime(2026, 11, 20, 10, tzinfo=timezone.utc)           # 19:00 KST Friday: the day's bar counts as complete
+    half = F.provider_factory(F.FakeDownload(mutate={"^KS11": _half_last_bar, "^KQ11": _half_last_bar}))()
+    r = kt.update(scanned["td"], provider=half, now=now)
+    assert r["index_bars_held_back"] == {"KOSPI": ["2026-11-20"], "KOSDAQ": ["2026-11-20"]}
+    text = open(r["outcomes_file"]).read()
+    assert "NaN" not in text
+    out = json.loads(text)
+    assert out["index_bars_held_back"]["KOSPI"] == ["2026-11-20"]
+    marked = [x for x in out["outcomes"].values() if x.get("returns")]
+    assert marked and all(x["mark"]["session"] == "2026-11-19" for x in marked)
+    assert all(isinstance(x["returns"]["benchmark_price_return"], float) and isinstance(x["returns"]["excess_vs_benchmark"], float) for x in marked)
+    snap = pd.read_csv(scanned["td"] / "prices" / f"{r['update_id']}.csv.gz", parse_dates=["date"])
+    assert snap[snap["ticker"].isin(["^KS11", "^KQ11"])]["date"].max() == pd.Timestamp("2026-11-19")
+    assert kt.replay(r["update_id"], scanned["td"])["match"]
+    rep = kt.write_report(scanned["td"]).read_text(encoding="utf-8")
+    assert "nan" not in rep.lower() and "held back" in rep
+
+    later = kt.update(scanned["td"], provider=_prov(), now=datetime(2026, 11, 20, 12, tzinfo=timezone.utc))
+    assert "index_bars_held_back" not in later
+    out2 = json.loads(open(later["outcomes_file"]).read())
+    assert all(x["mark"]["session"] == "2026-11-20" for x in out2["outcomes"].values() if x.get("returns"))
+
+
+def test_report_reads_an_old_update_with_nan_as_empty():
+    assert kt._pct(float("nan")) == "-" and kt._pct(None) == "-" and kt._pct(0.0123) == "1.23%"
