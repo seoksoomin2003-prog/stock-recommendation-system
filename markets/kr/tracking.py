@@ -19,6 +19,7 @@ from typing import Callable, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
+from markets import session_data
 from markets.kr import calendar as krcal
 from markets.kr.acquisition import BENCHMARKS
 from markets.kr.market_data import YahooKRProvider
@@ -259,19 +260,11 @@ def summarize(obs: List[Dict], outs: Dict[str, Dict], run_recs: List[Dict]) -> D
             "industry_exposure_counts": dict(sorted(exposure.items(), key=lambda kv: -kv[1])[:15])}
 
 
-def whole_index(df: pd.DataFrame):
-    """The index bars the tracker may use, and the dates it holds back.  A bar counts when it has both an open and a close.  The
-    source's newest index bar can arrive with an open and no close (2026-11-14 09:01 KST: the bar of session 2026-11-13), and the
-    index dates are the tracker's session calendar: taking such a bar made the day a session, marked the stocks on it and left the
-    comparison with the index as not-a-number.  The series ends before its first such bar, so a stock and its index are always
-    measured over the same sessions and a day is never skipped; the day joins at the next update that has its close."""
-    if df.empty:
-        return df, []
-    ok = np.isfinite(pd.to_numeric(df["Open"], errors="coerce")) & np.isfinite(pd.to_numeric(df["Close"], errors="coerce"))
-    if bool(ok.all()):
-        return df, []
-    cut = int(np.argmin(ok.to_numpy()))
-    return df.iloc[:cut], [str(pd.Timestamp(d).date()) for d in df.index[cut:]]
+# The index bars the tracker may use, and the dates it holds back (rule in markets/session_data.py).  The index dates are the
+# tracker's session calendar and the index values its yardstick: on 2026-11-14 09:01 KST the source's bar of session 2026-11-13
+# had an open and no close, the day became a session, the stocks were marked on it and every comparison was stored as
+# not-a-number.  The series ends before its first such bar, so a stock and its index are always measured over the same sessions.
+whole_index = session_data.whole_index
 
 
 def _fetch_bars(obs: List[Dict], start: str, end: str, now, provider) -> Dict:

@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 
+from markets import session_data
 from terminal import sources as default_sources
 from terminal.cache import FileCache
 from terminal.qsf import config, earnings_estimate, engine, events, fundamentals, holding, ledger, technicals
@@ -83,9 +84,7 @@ class QSF:
     def _session(self, market: str, index_rows: Optional[List[Dict]] = None) -> str:
         if market == "US":
             return nyse_calendar.latest_completed_session(self.now()).isoformat()
-        from markets.kr import calendar as krcal
-        days = [r["date"] for r in index_rows or [] if krcal.bar_is_complete(r["date"], self.now())]
-        return days[-1] if days else (self.now().date() - timedelta(days=1)).isoformat()
+        return session_data.latest_complete_date(index_rows or [], self.now()) or (self.now().date() - timedelta(days=1)).isoformat()
 
     def _entry_date(self, market: str, session: str) -> date:
         if market == "US":
@@ -100,7 +99,7 @@ class QSF:
         key = "scanbars:" + session + ":" + hashlib.sha256(",".join(chunk).encode()).hexdigest()[:16]
 
         def ready(data):
-            return sum(1 for rows in (data or {}).values() if rows and _clean(rows, session) and _clean(rows, session)[-1]["date"] == session) >= 0.9 * len(chunk)
+            return session_data.enough(session_data.count_at((data or {}).values(), session), len(chunk))
         old = self.cache.read(key)
         if old is not None and ready(old["data"]):
             return old["data"]
@@ -609,17 +608,18 @@ class QSF:
         else:
             tickers, pre = self._kr_scan_input(tickers, progress, side_files)
         day = self._session("US") if market == "US" else self.regime("KR").get("session")
-        at_session = sum(1 for x in pre.values() if (lambda r: r and r[-1]["date"] == day)(_clean(x["bars"], day)))
+        at_session = session_data.count_at((x["bars"] for x in pre.values()), day)
         # US needs its benchmark at the session.  KR's index can skip a day: its relative return is then missing, not faked.
-        bench_ok = market != "US" or all((lambda r: r and r[-1]["date"] == day)(_clean(x["bench"], day)) for x in list(pre.values())[:1])
+        bench_ok = market != "US" or all(session_data.rows_at(x["bench"], day) for x in list(pre.values())[:1])
         behind = market == "KR" and day < self._last_weekday_done()
         # The Korean universe is built from the day's bars.  From a partial download it comes out with a handful of stocks, all of
         # them at the session, so the share check below passes: on 2026-11-11 a scan of two stocks was recorded as the day.
         small = market == "KR" and whole_universe and len(tickers) < KR_MIN_UNIVERSE
-        if record and (not bench_ok or behind or small or at_session < 0.9 * max(len(tickers), 1)):
+        verdict = session_data.record_verdict(len(tickers), at_session, self._download_failures, bench_ok, behind, small)
+        if record and not verdict["ready"]:
             # Recording now would permanently store a day of blocked or partial snapshots.  Retried at the next slot.
             return {"status": "DATA_NOT_READY", "market": market, "session": day, "at_session": at_session, "tickers": len(tickers), "rows": [], "errors": {},
-                    **self._not_ready_reason(pre, day, bench_ok, behind, at_session < 0.9 * max(len(tickers), 1), small)}
+                    **self._not_ready_reason(pre, day, verdict)}
         rows, cards, errors = [], [], {}
         for k, t in enumerate(tickers, 1):
             try:
@@ -654,15 +654,13 @@ class QSF:
         os.replace(tmp, self.dir / f"latest_{market}.json")
         return summary
 
-    def _not_ready_reason(self, pre: Dict[str, Dict], day: str, bench_ok: bool, behind: bool, few: bool, small: bool = False) -> Dict[str, Any]:
-        """Why a scan was not recorded.  DOWNLOAD_FAILED: some price requests failed outright (no connection, empty reply), so the
-        day may well be published; NOT_PUBLISHED: the replies came back without the session for too many stocks; UNIVERSE_TOO_SMALL:
-        the Korean universe came out far below its size, which a partial day of bars does; KR_BEHIND and BENCHMARK_NOT_READY name
-        the other check that failed."""
+    def _not_ready_reason(self, pre: Dict[str, Dict], day: str, verdict: Dict[str, Any]) -> Dict[str, Any]:
+        """Why a scan was not recorded, with what a person needs to tell the cases apart.  The reason itself is
+        ``session_data.record_verdict``'s: DOWNLOAD_FAILED (requests failed outright, the day may well be published), KR_BEHIND,
+        UNIVERSE_TOO_SMALL, NOT_PUBLISHED (replies came back without the session for too many stocks) or BENCHMARK_NOT_READY."""
         failed = list(getattr(self, "_download_failures", []) or [])
         last = Counter(_clean(x["bars"], day)[-1]["date"] for x in pre.values() if _clean(x["bars"], day))
-        reason = "DOWNLOAD_FAILED" if failed else "KR_BEHIND" if behind else "UNIVERSE_TOO_SMALL" if small else "NOT_PUBLISHED" if few else "BENCHMARK_NOT_READY"
-        return {"reason": reason, "download": {"chunks": getattr(self, "_download_chunks", None), "failed": len(failed), "kinds": dict(Counter(failed))},
+        return {"reason": verdict["reason"], "download": {"chunks": getattr(self, "_download_chunks", None), "failed": len(failed), "kinds": dict(Counter(failed))},
                 "last_dates": dict(last.most_common(3)), "no_bars": sum(1 for x in pre.values() if not _clean(x["bars"], day))}
 
     def _last_weekday_done(self) -> str:

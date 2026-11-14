@@ -12,6 +12,7 @@ import pandas as pd
 
 from markets.kr import (KR_ACCOUNT_MAPPING_VERSION, KR_DATA_SPEC_VERSION, KR_MODEL_STATUS, KR_MODEL_VERSION,
                         acquisition, model, security_master, universe)
+from markets import session_data
 from markets.kr import calendar as krcal
 from markets.kr.market_data import YahooKRProvider, select_provider, series_checks
 from markets.storage import data_dir, runs_dir, tracking_dir
@@ -39,7 +40,7 @@ class KRContext:
         self.tracking_dir = tracking_dir("KR", base_dir)
 
 
-CALENDAR_ANCHOR = "005930.KS"       # Samsung Electronics: trades on every KRX session
+CALENDAR_ANCHOR = session_data.KR_ANCHOR       # Samsung Electronics: trades on every KRX session
 
 
 def _prepare(ctx: KRContext, rec: RunRecorder, size: int, limit: Optional[int]) -> Dict:
@@ -51,22 +52,20 @@ def _prepare(ctx: KRContext, rec: RunRecorder, size: int, limit: Optional[int]) 
     idx = acquisition.index_bars(prov, *acquisition.window(ctx.now, HISTORY_CALENDAR_DAYS), ctx.now)
     if idx["KOSPI"].empty:
         raise RuntimeError("KOSPI index bars unavailable: cannot establish the KRX session calendar")
-    sessions = pd.DatetimeIndex(idx["KOSPI"].index)
     try:        # Yahoo's index series can end a session behind the stocks in the morning (2026-11-13: the scan scored the day before
         #         the last one), so a large constituent also marks the calendar, as the score scan does.  Without it: the index alone.
         anchor = prov.fetch_index(CALENDAR_ANCHOR, *acquisition.window(ctx.now, HISTORY_CALENDAR_DAYS))
-        if not anchor.empty:
-            sessions = sessions.union(pd.DatetimeIndex(krcal.drop_incomplete(anchor.dropna(subset=["Close"]), ctx.now).index))
     except Exception:
-        pass
-    latest = pd.Timestamp(sessions.max()).normalize()
+        anchor = None
+    cal = session_data.kr_calendar(idx["KOSPI"], anchor, ctx.now)
+    sessions, latest = cal.sessions, cal.latest
     elig = master[master["eligible"].astype(bool)]
     if limit:
         elig = elig.head(limit)
     s, e = acquisition.window(ctx.now, UNIVERSE_CALENDAR_DAYS)
     ub = acquisition.bars(prov, elig, s, e, ctx.now, ctx.data_dir / "cache", "universe", fresh_at=latest)    # a file stored before the day was out is fetched again
     rec.checkpoint("UNIVERSE_MARKET_DATA_COMPLETED", requested=len(elig), rows=len(ub["bars"]),
-                   cache_hit=ub["cache_hit"], provider=select_provider())
+                   cache_hit=ub["cache_hit"], provider=select_provider(), calendar=cal.summary())
     uni = universe.build(master[master["canonical_ticker"].isin(elig["canonical_ticker"])], ub["bars"],
                          sessions[sessions >= pd.Timestamp(s)], latest, size=size)
     snap = ctx.data_dir / "universe"

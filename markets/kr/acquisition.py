@@ -8,6 +8,7 @@ from typing import Callable, Dict, Optional
 
 import pandas as pd
 
+from markets import session_data
 from markets.kr import calendar as krcal
 from markets.kr.market_data import YahooKRProvider, validate_rows
 
@@ -27,17 +28,8 @@ def index_bars(provider: YahooKRProvider, start: str, end: str, now) -> Dict[str
     return out
 
 
-STALE_CACHE_SHARE = 0.8      # a stored download where fewer symbols than this reach the session asked for was taken too early
-
-
-def _reaches(df: pd.DataFrame, session) -> bool:
-    """True when most symbols in a stored download have a bar on ``session`` or later.  A complete download has it for every symbol
-    (measured on six stored files: 100%); one taken while the provider was still publishing the day has it for a part (28% on
-    2026-11-11 02:27 KST), and reusing that file for the rest of the day left the scan with two stocks."""
-    if df.empty:
-        return False
-    last = df.groupby("ticker")["date"].max()
-    return float((last >= pd.Timestamp(session)).mean()) >= STALE_CACHE_SHARE
+STALE_CACHE_SHARE = session_data.STORE_REUSE_SHARE      # the rule and its measurements live in markets/session_data.py
+_reaches = session_data.store_reaches
 
 
 def bars(provider: YahooKRProvider, securities: pd.DataFrame, start: str, end: str, now, cache_dir: Path,
