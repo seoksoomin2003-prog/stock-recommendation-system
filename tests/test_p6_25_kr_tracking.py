@@ -241,7 +241,7 @@ def test_verify_reports_an_exclusion_that_names_a_run_it_may_not_exclude(scanned
     assert v["exclusions_not_allowed"] == [first] and not v["ok"]
     assert list(kt.excluded_runs(td)) == [second]                                  # and the figures ignore it
     lines = (td / "ledger" / kt.EVENTS_FILE).read_text().splitlines()
-    (td / "ledger" / kt.EVENTS_FILE).write_text(lines[0].replace(second, second[:-1] + "0") + "\n")
+    (td / "ledger" / kt.EVENTS_FILE).write_text(lines[0].replace(second, second[:-1] + ("1" if second[-1] == "0" else "0")) + "\n")      # a run id ending in 0 must change too
     assert not kt.verify(td, scanned["rd"])["chains"][2]["ok"]                     # an edited event breaks its chain
 
 

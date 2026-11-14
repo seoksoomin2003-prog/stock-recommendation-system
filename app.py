@@ -430,6 +430,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
                "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "paper-book-record", "paper-book-status",
+               "forecast-test", "forecast-record", "forecast-status",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-sue-prepare", "kr-sue-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
@@ -456,6 +457,19 @@ def _paper_book_record(market: str):
     info = lambda: {r["ticker"]: {"name": r.get("name"), "sector": r.get("sector")} for r in q.screen_rows(market).get("rows") or []}        # noqa: E731
     bench = (lambda: (q._history(["^KS11"], "2y")["data"] or {}).get("^KS11") or []) if market == "KR" else None                                # noqa: E731
     return paper_book.record(PROJECT_ROOT, market, q._loader(market), info=info, bench=bench)
+
+
+def _forecast_record(market: str):
+    """One market's forecast record (FC-1) up to the newest ledger session, on the scan's own prices, then the view file."""
+    from terminal.qsf import forecast
+    from terminal.qsf.service import QSF
+    q = QSF(PROJECT_ROOT)
+    res = forecast.record(PROJECT_ROOT, market, q._loader(market))
+    try:                        # the view reads both stores; a failure here never fails the record
+        forecast.write_status(PROJECT_ROOT, {m: q._loader(m) for m in forecast.FOLDERS})
+    except Exception as exc:
+        res["view"] = type(exc).__name__
+    return res
 
 
 # ----------------------------------------------------------------------------- qsf actions, one function each
@@ -545,6 +559,10 @@ def _qsf_kr_forward(args) -> int:
         res["paper_book"] = {k: v for k, v in _paper_book_record("KR").items() if k != "market"}
     except Exception as exc:
         res["paper_book"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the forecast layer reads the ledger and the scan's prices; it never fails the step either
+        res["forecast"] = {k: v for k, v in _forecast_record("KR").items() if k != "market"}
+    except Exception as exc:
+        res["forecast"] = {"status": "FAILED", "reason": type(exc).__name__}
     try:                        # the look-ahead audit reads prices and record indexes and writes one view file; it never fails the step
         from terminal.qsf import lookahead
         audit = lookahead.run(PROJECT_ROOT)
@@ -654,6 +672,20 @@ def _qsf_paper_book(args) -> int:      # reports/PAPER_BOOK_RULES.md
     return 0 if res.get("status") in ("OK", "REAL") else 3 if res.get("status") in ("WAITING", "NO_RECORD") else 1
 
 
+def _qsf_forecast(args) -> int:      # reports/QSF_FORECAST_PROTOCOL.md
+    from terminal.qsf import forecast
+    if args.action.endswith("test"):             # one run; a stored result is printed as it is
+        doc = forecast.run_once(PROJECT_ROOT)
+        res = {"status": doc["status"], "markets": {m: {"verdict": v["verdict"], "days": v["days"], "first": v["first"], "last": v["last"], "failed": v["failed"],
+                                                        "cover": {h: {"80": x["cover80"], "50": x["cover50"]} for h, x in v["horizons"].items()}} for m, v in doc["markets"].items()}}
+    elif args.action.endswith("record"):
+        res = _forecast_record(args.market)
+    else:
+        res = {k: v for k, v in forecast.status(PROJECT_ROOT).items() if k != "limits"}
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in ("OK", "REAL", "ALREADY_RUN") else 3 if res.get("status") in ("WAITING", "NO_RECORD") else 1
+
+
 def _qsf_lookahead_audit(args) -> int:      # read-only on records; writes data/qsf/lookahead_audit.json
     from terminal.qsf import lookahead
     res = lookahead.run(PROJECT_ROOT)
@@ -700,6 +732,10 @@ def _qsf_us_challenger_record(args) -> int:
         res["paper_book"] = {k: v for k, v in _paper_book_record("US").items() if k != "market"}
     except Exception as exc:
         res["paper_book"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the forecast layer reads the ledger and the scan's prices; it never fails the step
+        res["forecast"] = {k: v for k, v in _forecast_record("US").items() if k != "market"}
+    except Exception as exc:
+        res["forecast"] = {"status": "FAILED", "reason": type(exc).__name__}
     print(json.dumps(res, ensure_ascii=False, default=str))
     return {"OK": 0, "WAITING": 3}.get(res["status"], 1)
 
@@ -837,6 +873,9 @@ QSF_HANDLERS = {
     "paper-book-record": _qsf_paper_book,
     "paper-book-status": _qsf_paper_book,
     "lookahead-audit": _qsf_lookahead_audit,
+    "forecast-test": _qsf_forecast,
+    "forecast-record": _qsf_forecast,
+    "forecast-status": _qsf_forecast,
     "regime-weights-evaluate": _qsf_regime_weights_evaluate,
     "regime-weights-run": _qsf_regime_weights,
     "regime-weights-record": _qsf_regime_weights,
