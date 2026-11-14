@@ -54,7 +54,7 @@ def _kr_tracking() -> Dict:
         from markets.kr import tracking as kt
         from pipeline.prospective_ledger import read_jsonl
         log = read_jsonl(tracking_dir("KR") / "updates.jsonl")
-        return {"runs": len(kt.runs()), "observations": len(kt.observations()),
+        return {**kt.counts(),
                 "states": log[-1]["states"] if log else None,
                 "latest_update": log[-1]["update_id"] if log else None}
     except Exception as exc:
@@ -112,6 +112,8 @@ def _panel(m: str, d: Dict) -> str:
         trk = ("<table><tr><th>항목</th><th>값</th></tr>"
                f"<tr><td>기록된 실행 수</td><td>{t.get('runs')}</td></tr>"
                f"<tr><td>관측 수</td><td>{t.get('observations')}</td></tr>"
+               + (f"<tr><td>집계에서 제외 (같은 거래일을 두 번 스캔)</td><td>실행 {t.get('excluded_runs')}개, "
+                  f"관측 {t.get('excluded_observations')}건</td></tr>" if t.get("excluded_runs") else "") +
                f"<tr><td>상태별 건수</td><td>{e(_states_ko(t.get('states')))}</td></tr>"
                f"<tr><td>최신 업데이트</td><td><code>{e(str(t.get('latest_update') or '없음'))}</code></td></tr></table>")
     note = ("<p class='warn'>실험 단계 모델입니다. 검증되지 않았으며 예측력 근거가 없습니다. "

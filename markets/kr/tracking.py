@@ -2,7 +2,8 @@
 
 Storage: tracking/kr/ledger/observations.jsonl (hash-chained, append-only; shared ledger primitives),
 tracking/kr/prices/<update_id>.csv.gz (snapshots), tracking/kr/outcomes/<update_id>.json,
-tracking/kr/updates.jsonl, tracking/kr/reports/latest.{md,html}.  Currency: KRW only.
+tracking/kr/updates.jsonl, tracking/kr/reports/latest.{md,html}, tracking/kr/ledger/events.jsonl (runs left out of
+the figures; append-only).  Currency: KRW only.
 
 Cohorts: every KR-EXP-* observation is EXPERIMENTAL_PROSPECTIVE (kept apart from any future approved
 model).  Outcome states: PENDING_ENTRY, PENDING_OUTCOME (open; marked), COMPLETED_OUTCOME, INCOMPLETE.
@@ -31,6 +32,8 @@ SCHEMA = "kr-1"
 COST_BPS = (0.0, 10.0, 25.0, 50.0)       # per side, HYPOTHETICAL (KRX sell-side transaction tax not modelled)
 MIN_SAMPLE = 30
 TOP_N = 10
+EVENTS_FILE = "events.jsonl"             # tracking/kr/ledger/events.jsonl: hash-chained, append-only
+DUPLICATE_SESSION = "DUPLICATE_SESSION"  # the one reason a run can be left out of the figures
 
 
 def _dir(tracking_dir=None) -> Path:
@@ -148,6 +151,67 @@ def observations(tracking_dir=None) -> List[Dict]:
 def runs(tracking_dir=None) -> List[Dict]:
     return [r for r in read_jsonl(_dir(tracking_dir) / "ledger" / "observations.jsonl")
             if r.get("record_type") == "RUN"]
+
+
+# ----------------------------------------------------------------------------- runs left out of the figures
+# Before 2026-11-14 a second scan of an already recorded session was recorded again (2026-11-04 twice, 2026-11-11 twice).  The
+# two scans pick the same stocks from the same data, so the figures counted one signal twice.  ``record_run`` refuses such a
+# run now; the two already in the ledger stay there, and an appended event takes them out of the figures (user decision,
+# 2026-11-15).  A run can be left out for this reason only: never for its result, and never the first scan of a session.
+def duplicate_runs(tracking_dir=None) -> Dict[str, Dict]:
+    """Recorded runs whose scored session an earlier recorded run already holds: run_id -> {session, kept_run}."""
+    first: Dict[str, str] = {}
+    out: Dict[str, Dict] = {}
+    for r in runs(tracking_dir):
+        s = (r.get("universe") or {}).get("latest_session")
+        if not s:
+            continue
+        if s in first and first[s] != r["run_id"]:
+            out[r["run_id"]] = {"session": s, "kept_run": first[s]}
+        first.setdefault(s, r["run_id"])
+    return out
+
+
+def exclusion_events(tracking_dir=None) -> List[Dict]:
+    return [e for e in read_jsonl(_dir(tracking_dir) / "ledger" / EVENTS_FILE) if e.get("kind") == "EXCLUSION"]
+
+
+def excluded_runs(tracking_dir=None) -> Dict[str, Dict]:
+    """run_id -> its exclusion.  An event counts only while its run is a later scan of a session already recorded; an event
+    naming any other run is ignored here and reported by ``verify``."""
+    dup = duplicate_runs(tracking_dir)
+    out: Dict[str, Dict] = {}
+    for e in exclusion_events(tracking_dir):
+        rid = (e.get("target") or {}).get("run_id")
+        if e.get("category") == DUPLICATE_SESSION and rid in dup:
+            out.setdefault(rid, {"category": DUPLICATE_SESSION, **dup[rid], "at": e.get("at"), "source": e.get("source")})
+    return out
+
+
+def exclude_run(run_id: str, tracking_dir=None, source: str = "user", now=None) -> Dict:
+    """Append the event that leaves ``run_id`` out of the figures.  Refused unless the run is a later scan of a session an
+    earlier run recorded.  Nothing in the ledger is edited or removed; calling it twice writes once."""
+    dup = duplicate_runs(tracking_dir)
+    if run_id not in dup:
+        known = any(r["run_id"] == run_id for r in runs(tracking_dir))
+        return {"excluded": False, "reason": "NOT_A_DUPLICATE_SESSION" if known else "UNKNOWN_RUN", "run_id": run_id}
+    info = dup[run_id]
+    rec = {"record_type": "EVENT", "schema": SCHEMA, "event_id": f"EXCLUSION:KR:{run_id}", "kind": "EXCLUSION",
+           "category": DUPLICATE_SESSION, "target": {"run_id": run_id}, "session": info["session"],
+           "kept_run": info["kept_run"],
+           "reason": f"second scan of session {info['session']}; run {info['kept_run']} already records it",
+           "source": source, "at": (now or datetime.now(timezone.utc)).isoformat()}
+    n = append_records(_dir(tracking_dir) / "ledger" / EVENTS_FILE, [rec], key="event_id")
+    return {"excluded": True, "already_excluded": n == 0, "run_id": run_id, **info}
+
+
+def counts(tracking_dir=None) -> Dict:
+    """What is on record and what the figures count."""
+    obs, ex = observations(tracking_dir), excluded_runs(tracking_dir)
+    rr = runs(tracking_dir)
+    left = sum(1 for o in obs if o["run_id"] in ex)
+    return {"runs": len(rr), "observations": len(obs), "excluded_runs": len(ex), "excluded_observations": left,
+            "counted_runs": len(rr) - len(ex), "counted_observations": len(obs) - left}
 
 
 # ----------------------------------------------------------------------------- outcomes
@@ -306,13 +370,20 @@ def update(tracking_dir=None, provider=None, now=None, offline_snapshot: Optiona
         allb = pd.concat(rows, ignore_index=True)
         snap = d / "prices" / f"{uid}.csv.gz"
         allb.to_csv(snap, index=False, compression="gzip")
-    outs = compute(obs, allb)
-    rr = runs(d)
-    summary = summarize(obs, outs, rr)
+    outs = compute(obs, allb)                    # every recorded observation keeps its outcome, counted or not
+    excl = excluded_runs(d)
+    rr = [r for r in runs(d) if r["run_id"] not in excl]
+    summary = summarize([o for o in obs if o["run_id"] not in excl], outs, rr)
+    summary["excluded_runs"] = len(excl)
+    summary["excluded_observations"] = sum(1 for o in obs if o["run_id"] in excl)
     ports = paper_portfolios(obs, outs)
+    for q in ports:
+        if q["run_id"] in excl:
+            q["excluded"] = excl[q["run_id"]]["category"]
     (d / "outcomes").mkdir(parents=True, exist_ok=True)
     payload = {"update_id": uid, "computed_at": now.isoformat(), "snapshot": snap.name, "snapshot_sha256": _sha(snap),
-               "index_bars_held_back": held, "outcomes": outs, "paper_portfolios": ports, "summary": summary}
+               "index_bars_held_back": held, "excluded_runs": excl, "outcomes": outs, "paper_portfolios": ports,
+               "summary": summary}
     out_path = d / "outcomes" / f"{uid}.json"
     out_path.write_text(json.dumps(payload, indent=1, ensure_ascii=False, default=str), encoding="utf-8")
     append_records(d / "updates.jsonl", [{"key": uid, "update_id": uid, "computed_at": now.isoformat(),
@@ -366,10 +437,17 @@ def verify(tracking_dir=None, runs_dir=None) -> Dict:
         rec_ok = all(canonical_json(strip(rebuilt[k])) == canonical_json(strip(stored[k])) for k in stored if k in rebuilt)
         res["runs"].append({"run_id": r["run_id"], "artifacts": "UNCHANGED" if same else "CHANGED",
                             "reconstruction": "MATCH" if rec_ok else "MISMATCH"})
+    events = d / "ledger" / EVENTS_FILE
+    if events.exists():
+        res["chains"].append(verify_chain(events))
+        dup = duplicate_runs(d)
+        res["exclusions_not_allowed"] = sorted(
+            str((e.get("target") or {}).get("run_id")) for e in exclusion_events(d)
+            if e.get("category") != DUPLICATE_SESSION or (e.get("target") or {}).get("run_id") not in dup)
     log = read_jsonl(d / "updates.jsonl")
     if log:
         res["latest_replay"] = replay(log[-1]["update_id"], d)
-    res["ok"] = all(c["ok"] for c in res["chains"]) and all(
+    res["ok"] = not res.get("exclusions_not_allowed") and all(c["ok"] for c in res["chains"]) and all(
         r.get("artifacts") == "UNCHANGED" and r.get("reconstruction") == "MATCH" for r in res["runs"]) and \
         res.get("latest_replay", {"match": True})["match"]
     return res
@@ -398,6 +476,17 @@ def write_report(tracking_dir=None) -> Path:
               f"test and no annualised figure are reported; results stay preliminary below {MIN_SAMPLE} completed "
               "observations from many independent scan dates.", "",
               f"Outcome states: {s['outcome_states']} · By model/data spec: {s['by_model_and_data_spec']}", ""]
+        ex = p.get("excluded_runs") or {}
+        if ex:
+            L += ["Left out of every figure in this report: " + "; ".join(
+                f"run `{rid}` (second scan of session {x.get('session')}; run `{x.get('kept_run')}` counts)"
+                for rid, x in sorted(ex.items())) + ". A second scan of a session picks the same stocks from the same data, "
+                "so counting it would count one signal twice. Their records and outcomes stay in the ledger and in the "
+                "tables below, marked `excluded`.", ""]
+        waiting = sorted(set(excluded_runs(d)) - set(ex))
+        if waiting:
+            L += [f"Marked for exclusion after this update was computed: {waiting}. The figures below still count them; "
+                  "the next update leaves them out.", ""]
         if p.get("index_bars_held_back"):
             L += [f"Index bars held back at this update (open without a close at the source): {p['index_bars_held_back']}. "
                   "Those days are not sessions yet; marks and comparisons end the session before and catch up at the next update.", ""]
@@ -412,7 +501,8 @@ def write_report(tracking_dir=None) -> Path:
               "## Paper portfolios (KRW)", "", "| Run | Status | Invested | Return | Benchmark | Excess |",
               "|---|---|---|---|---|---|"]
         for q in p["paper_portfolios"]:
-            L.append(f"| `{q['run_id']}` | {q['status']} | {q.get('invested_krw', 0):,.0f} | "
+            L.append(f"| `{q['run_id']}` | {q['status']}{' · excluded' if q.get('excluded') else ''} | "
+                     f"{q.get('invested_krw', 0):,.0f} | "
                      f"{_pct(q.get('portfolio_price_return'))} | {_pct(q.get('benchmark_return_weighted'))} | "
                      f"{_pct(q.get('excess_vs_benchmark'))} |")
         L += ["", "## Observations", "", "| Run | Ticker | Company | Rank | State | Entry | Exit/mark | Return | Bench | Excess |",
@@ -422,7 +512,8 @@ def write_report(tracking_dir=None) -> Path:
             o, r = names.get(oid, {}), x.get("returns") or {}
             e, m = x.get("entry") or {}, x.get("exit") or x.get("mark") or {}
             L.append(f"| `{o.get('run_id', '')[:16]}` | {x['ticker']} | {o.get('company_name', '')} | {o.get('rank')} | "
-                     f"{x['outcome_state']} | {e.get('session', x.get('reason', '-'))} | {m.get('session', '-')} | "
+                     f"{x['outcome_state']}{' · excluded' if o.get('run_id') in ex else ''} | "
+                     f"{e.get('session', x.get('reason', '-'))} | {m.get('session', '-')} | "
                      f"{_pct(r.get('price_return'))} | {_pct(r.get('benchmark_price_return'))} | "
                      f"{_pct(r.get('excess_vs_benchmark'))} |")
     L += ["", "Method: entry at the open of the first KRX session on/after the recommendation date rule; exit at "

@@ -103,7 +103,23 @@ def cmd_tracking(args) -> int:
             print(f"  latest update replay: {'MATCH' if r['latest_replay']['match'] else 'MISMATCH'}")
         print("Verify:", "OK" if r["ok"] else "PROBLEMS FOUND")
         return 0 if r["ok"] else 1
-    print(f"tracking action '{action}' is not available for KR (US-only: exclusions, replay)")
+    if action == "exclusions":
+        # A KR run can be left out of the figures for one reason only: it is a later scan of a session an earlier run already
+        # recorded.  ``--add`` appends that event (nothing is deleted); any other run is refused.
+        add = getattr(args, "add", None)
+        if add:
+            r = kt.exclude_run(add, source="user (app.py --market KR tracking exclusions --add)")
+            print(json.dumps(r, ensure_ascii=False))
+            if not r["excluded"]:
+                return 2
+        ex, dup = kt.excluded_runs(), kt.duplicate_runs()
+        for rid, x in sorted(dup.items()):
+            print(f"  {rid}: second scan of session {x['session']} (run {x['kept_run']} counts): "
+                  f"{'EXCLUDED from the figures' if rid in ex else 'still counted'}")
+        if not dup:
+            print("No session was recorded twice; nothing can be excluded.")
+        return 0
+    print(f"tracking action '{action}' is not available for KR (US-only: replay)")
     return 2
 
 

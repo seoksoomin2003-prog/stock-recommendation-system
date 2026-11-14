@@ -70,7 +70,7 @@ class ModelViews:
         try:
             from markets.kr import tracking as krt
             d = self.base / "tracking" / "kr"
-            trk = {"status": "REAL", "runs": len(krt.runs(d)), "observations": len(krt.observations(d))}
+            trk = {"status": "REAL", **krt.counts(d)}
         except Exception as exc:
             trk = {"status": "UNAVAILABLE", "error": type(exc).__name__}
         return {"market": "KR", "baseline": base, "tracking": trk, "challengers": [], "challenger_note": "도전자 모델과 연구실은 아직 미국 전용입니다."}

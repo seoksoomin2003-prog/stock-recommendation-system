@@ -174,3 +174,85 @@ def test_index_bar_without_close_is_not_a_session_and_leaves_no_nan(scanned):
 
 def test_report_reads_an_old_update_with_nan_as_empty():
     assert kt._pct(float("nan")) == "-" and kt._pct(None) == "-" and kt._pct(0.0123) == "1.23%"
+
+
+# ----------------------------------------------------------------------------- a session recorded twice (before 2026-11-14)
+def _recorded_twice(scanned):
+    """The ledger as it was before ``record_run`` refused a second scan of a session: both scans recorded."""
+    from pipeline.prospective_ledger import append_records
+    ctx = KRContext(fetch_kind=F.fake_kind(), provider_factory=F.provider_factory(F.FakeDownload()), now=F.NOW,
+                    base_dir=scanned["base"])
+    second = run_kr_scan(10_000_000, ctx=ctx)
+    assert second["tracking"]["reasons"] == ["SESSION_ALREADY_RECORDED"]
+    append_records(scanned["td"] / "ledger" / "observations.jsonl", kt.build_records(scanned["rd"] / second["run_id"]), key="key")
+    return scanned["v"]["run_id"], second["run_id"]
+
+
+def test_a_later_scan_of_a_recorded_session_is_the_duplicate_and_only_it_can_be_excluded(scanned):
+    first, second = _recorded_twice(scanned)
+    td = scanned["td"]
+    assert kt.duplicate_runs(td) == {second: {"session": scanned["v"]["latest_session"], "kept_run": first}}
+    assert kt.exclude_run(first, td) == {"excluded": False, "reason": "NOT_A_DUPLICATE_SESSION", "run_id": first}
+    assert kt.exclude_run("no_such_run", td)["reason"] == "UNKNOWN_RUN"
+    assert not (td / "ledger" / kt.EVENTS_FILE).exists() and kt.excluded_runs(td) == {}
+    before = (td / "ledger" / "observations.jsonl").read_bytes()
+    r = kt.exclude_run(second, td)
+    assert r["excluded"] and not r["already_excluded"] and r["kept_run"] == first
+    assert kt.exclude_run(second, td)["already_excluded"] and len(read_jsonl(td / "ledger" / kt.EVENTS_FILE)) == 1
+    assert (td / "ledger" / "observations.jsonl").read_bytes() == before          # the records themselves are untouched
+    assert kt.counts(td) == {"runs": 2, "observations": 20, "excluded_runs": 1, "excluded_observations": 10,
+                             "counted_runs": 1, "counted_observations": 10}
+
+
+def test_figures_leave_the_excluded_run_out_and_its_outcomes_stay(scanned):
+    first, second = _recorded_twice(scanned)
+    td = scanned["td"]
+    now = datetime(2026, 12, 20, 10, tzinfo=timezone.utc)
+    both = json.loads(open(kt.update(td, provider=_prov(), now=now)["outcomes_file"], encoding="utf-8").read())
+    assert both["summary"]["observations"] == 20 and both["summary"]["runs"] == 2 and both["summary"]["excluded_runs"] == 0
+    assert both["summary"]["turnover_between_consecutive_runs"] == [0.0]          # the same ten stocks counted twice
+    kt.exclude_run(second, td)
+    waiting = kt.write_report(td).read_text(encoding="utf-8")                      # the stored update still counts both
+    assert "Marked for exclusion after this update was computed" in waiting and second in waiting
+    r = kt.update(td, provider=_prov(), now=now.replace(hour=11))
+    one = json.loads(open(r["outcomes_file"], encoding="utf-8").read())
+    s = one["summary"]
+    assert s["observations"] == 10 and s["runs"] == 1 and s["excluded_runs"] == 1 and s["excluded_observations"] == 10
+    assert s["turnover_between_consecutive_runs"] == [] and sum(s["outcome_states"].values()) == 10
+    assert s["price_return"]["n"] == both["summary"]["price_return"]["n"] // 2
+    assert len(one["outcomes"]) == 20 and one["outcomes"] == both["outcomes"]      # every observation keeps its outcome
+    assert {q["run_id"]: q.get("excluded") for q in one["paper_portfolios"]} == {first: None, second: kt.DUPLICATE_SESSION}
+    assert read_jsonl(td / "updates.jsonl")[-1]["states"] == s["outcome_states"]
+    rep = kt.write_report(td).read_text(encoding="utf-8")
+    assert f"run `{second}` (second scan of session" in rep and "· excluded" in rep and "Marked for exclusion after" not in rep
+    assert rep.count("· excluded |") == 11                                         # ten observation rows and one portfolio row
+    assert kt.replay(r["update_id"], td)["match"] and kt.verify(td, scanned["rd"])["ok"]
+
+
+def test_verify_reports_an_exclusion_that_names_a_run_it_may_not_exclude(scanned):
+    from pipeline.prospective_ledger import append_records
+    first, second = _recorded_twice(scanned)
+    td = scanned["td"]
+    kt.exclude_run(second, td)
+    assert kt.verify(td, scanned["rd"])["ok"] and len(kt.verify(td, scanned["rd"])["chains"]) == 3
+    append_records(td / "ledger" / kt.EVENTS_FILE, [{"record_type": "EVENT", "event_id": "x", "kind": "EXCLUSION",
+                                                     "category": kt.DUPLICATE_SESSION, "target": {"run_id": first}}], key="event_id")
+    v = kt.verify(td, scanned["rd"])
+    assert v["exclusions_not_allowed"] == [first] and not v["ok"]
+    assert list(kt.excluded_runs(td)) == [second]                                  # and the figures ignore it
+    lines = (td / "ledger" / kt.EVENTS_FILE).read_text().splitlines()
+    (td / "ledger" / kt.EVENTS_FILE).write_text(lines[0].replace(second, second[:-1] + "0") + "\n")
+    assert not kt.verify(td, scanned["rd"])["chains"][2]["ok"]                     # an edited event breaks its chain
+
+
+def test_kr_exclusions_command_refuses_a_run_that_is_not_a_duplicate(scanned, monkeypatch, capsys):
+    from types import SimpleNamespace
+    from markets.kr import cli
+    first, second = _recorded_twice(scanned)
+    monkeypatch.setattr(kt, "_tracking_dir", lambda market="KR", base=None: scanned["td"])
+    assert cli.cmd_tracking(SimpleNamespace(action="exclusions", add=first)) == 2
+    assert kt.excluded_runs(scanned["td"]) == {}
+    assert cli.cmd_tracking(SimpleNamespace(action="exclusions", add=second)) == 0
+    assert cli.cmd_tracking(SimpleNamespace(action="exclusions", add=None)) == 0
+    out = capsys.readouterr().out
+    assert "NOT_A_DUPLICATE_SESSION" in out and "EXCLUDED from the figures" in out and list(kt.excluded_runs(scanned["td"])) == [second]

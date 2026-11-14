@@ -193,6 +193,7 @@ python app.py --market KR scan --capital 10000000 --limit 60   # 범위를 줄�
 python app.py --market KR evaluate 005930 035720       # 상위 300 기준으로 직접 평가
 python app.py --market KR tracking update               # 한국 모의 결과 (원화, ^KS11/^KQ11)
 python app.py --market KR tracking verify
+python app.py --market KR tracking exclusions          # 같은 거래일을 두 번 스캔한 실행 보기; --add RUN_ID로 집계에서만 제외(지우지 않음)
 python app.py dashboard --open                          # 미국과 한국을 나란히 (읽기 전용)
 ```
 
