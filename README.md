@@ -414,7 +414,9 @@ python app.py terminal-agent uninstall # 멈추고 launchd 작업 제거
 | `data/kr/` | KRX KIND 종목 목록 스냅샷(원본 sha256 포함)과 한국 시세 캐시 |
 | `tracking/STORAGE_SCHEMA.json` | 저장 구조 버전 2(덧붙이기 방식, 백업은 `~/Developer/qse-backups/`) |
 | `tracking/dashboard.html` | 통합 읽기 전용 대시보드(`python app.py dashboard`) |
-| `terminal/` | 개인 터미널: `services.py` 화면 데이터, `sources.py` Yahoo/SEC/FRED 접근, `server.py` 로컬 서버, `static/` 한국어 화면 |
+| `terminal/` | 개인 터미널: `services.py` 화면 데이터(모델 탭 부분은 `services_model.py`), `sources.py` Yahoo/SEC/FRED 접근, `server.py` 로컬 서버, `static/` 한국어 화면 |
+| `terminal/qsf/` | QSF 점수: `service.py` 채점과 스캔, `views.py` 화면용 조회(동종 비교, 열지도, 실적 일정 등), `engine.py`·`factors.py` 계산, `research_*.py` 한 번씩 돌린 과거 시험 |
+| `markets/session_data.py` | 거래일 자료가 다 왔는지 판단하는 규칙 한곳 |
 | `data/lab/` | 연구실 시세 묶음, 도전자 장부, 구성 종목 캐시, 연구 캐시(로컬, git 무시) |
 | `data/terminal/` | 터미널 캐시, 관심 목록, 매매 기록 `journal.jsonl`, 모의 매매 기록 `paper_journal.jsonl`, 위험 설정(로컬, 개인, git 무시) |
 | `reports/` | 단계별 보고서, 로드맵, 시험 결과, 사용자 결정 목록 `DECISIONS_FOR_USER.md` |

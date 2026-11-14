@@ -458,6 +458,409 @@ def _paper_book_record(market: str):
     return paper_book.record(PROJECT_ROOT, market, q._loader(market), info=info, bench=bench)
 
 
+# ----------------------------------------------------------------------------- qsf actions, one function each
+# Each was a branch of one 300-line function until 2026-11-14; the bodies are unchanged.
+def _qsf_kr_sue(args) -> int:
+    from terminal.qsf import research_kr_sue as sue
+    res = {"kr-sue-prepare": sue.prepare, "kr-sue-run": sue.run_once}[args.action](PROJECT_ROOT)
+    if args.action == "kr-sue-run":
+        res = {"status": res["status"], "reading": res["reading"], "conditions": res["conditions"], "partial": res["partial"],
+               "primary": {k: res["scores"]["SUE"][sue.PRIMARY].get(k) for k in ("ic", "t", "top_excess", "spread_net", "verdict", "dates", "mean_stocks")}}
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0
+
+
+def _qsf_kr_holder(args) -> int:
+    from terminal.qsf import research_kr_holder as rh
+    if args.action == "kr-holder-download":
+        res = rh.download(PROJECT_ROOT, rh.plan(PROJECT_ROOT))
+    else:
+        res = {"kr-holder-prepare": rh.prepare, "kr-holder-run": rh.run_once}[args.action](PROJECT_ROOT)
+    print(json.dumps(res, ensure_ascii=False, default=str))
+    return 0 if res.get("status") in ("DONE", "PAUSED", "PREPARED", "TESTED") else 1
+
+
+def _qsf_backup_check(args) -> int:
+    from terminal import automation
+    res = automation.check_backup()
+    print(json.dumps({**automation.backup_status(), **res}, ensure_ascii=False, default=str))
+    return 0 if res["status"] == "OK" else 1
+
+
+def _qsf_price_audit(args) -> int:
+    from terminal.qsf import price_audit
+    from utils import nyse_calendar
+    res = price_audit.run(PROJECT_ROOT, nyse_calendar.sessions_between)
+    print(json.dumps(res, ensure_ascii=False, indent=1))
+    return 0
+
+
+def _qsf_cache(args) -> int:
+    from terminal import storage
+    res = storage.prune_cache(PROJECT_ROOT, apply=args.action == "cache-prune" and args.apply)
+    print(json.dumps({"disk": storage.disk(PROJECT_ROOT), **res}, ensure_ascii=False))
+    return 0
+
+
+def _qsf_kr_forward(args) -> int:
+    from terminal.qsf import kr_forward
+    if args.action in ("kr-forward-evaluate", "kr-forward-evaluate-fund"):
+        res = kr_forward.evaluate_once(PROJECT_ROOT, store=kr_forward.FUND_FOLDER if args.action.endswith("fund") else kr_forward.FOLDER)
+        print(json.dumps({k: v for k, v in res.items() if k != "buckets"}, ensure_ascii=False, default=str))
+        return 0
+    res = kr_forward.record(PROJECT_ROOT)
+    try:                        # the swing challenger reads the ledger only; a failure here never fails the forward step
+        from terminal.qsf import kr_swing_challenger
+        res["swing_challenger"] = kr_swing_challenger.record(PROJECT_ROOT)
+    except Exception as exc:
+        res["swing_challenger"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the former swing formula next to the live score, from the ledger only; it never fails the step either
+        from terminal.qsf import kr_swing_prior
+        res["swing_prior"] = kr_swing_prior.record(PROJECT_ROOT)
+    except Exception as exc:
+        res["swing_prior"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the market-value universe record scores with a scan that writes no live file; it never fails the step either
+        from terminal.qsf import kr_cap_universe
+        from terminal.qsf.service import QSF
+        res["cap_universe"] = kr_cap_universe.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
+    except Exception as exc:
+        res["cap_universe"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the former live universe (the 300 most traded), scored the same way; it never fails the step either
+        from terminal.qsf import kr_traded_universe
+        from terminal.qsf.service import QSF
+        res["traded_universe"] = kr_traded_universe.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
+    except Exception as exc:
+        res["traded_universe"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the own trading method (KR-M1) reads the ledger, the day's marks and the price files; it never fails the step either
+        from terminal.qsf import kr_method
+        res["method"] = kr_method.record(PROJECT_ROOT)
+        kr_method.write_status(PROJECT_ROOT)
+    except Exception as exc:
+        res["method"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the regime-weight challenger reads the ledger and the index; it never fails the step either
+        res["regime_weights"] = _regime_weights_record("KR")
+    except Exception as exc:
+        res["regime_weights"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the paper book follows the day's plan on the scan's prices; it never fails the step either
+        res["paper_book"] = {k: v for k, v in _paper_book_record("KR").items() if k != "market"}
+    except Exception as exc:
+        res["paper_book"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the look-ahead audit reads prices and record indexes and writes one view file; it never fails the step
+        from terminal.qsf import lookahead
+        audit = lookahead.run(PROJECT_ROOT)
+        res["lookahead"] = {"status": audit["status"], "problems": audit["problems"]}
+    except Exception as exc:
+        res["lookahead"] = {"status": "FAILED", "reason": type(exc).__name__}
+    print(json.dumps(res, ensure_ascii=False, default=str))
+    return {"OK": 0, "WAITING": 3, "NO_KEY": 4}.get(res["status"], 1)
+
+
+def _qsf_kr_long_early(args) -> int:      # reports/QSF_KR_LONG_EARLY_PROTOCOL.md
+    from terminal.qsf import research_kr_long_early as le
+    res = le.download(PROJECT_ROOT) if args.action.endswith("download") else le.prepare(PROJECT_ROOT) if args.action.endswith("prepare") else le.run_once(PROJECT_ROOT)
+    if args.action.endswith("run"):
+        p = res["primary"]
+        res = {"status": res["status"], "days": res["days"], "reading": p["reading"], "dates": p.get("dates"), "ic": p.get("ic"), "t": p.get("t"), "condition_a": p["condition_a"], "condition_b": p["condition_b"]}
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in ("REAL", "OK", "DONE") else 3
+
+
+def _qsf_kr_tech_early(args) -> int:      # one confirmation run (reports/QSF_KR_TECH_EARLY_PROTOCOL.md)
+    from terminal.qsf import research_kr_tech as rt
+    res = rt.prepare(PROJECT_ROOT) if args.action.endswith("prepare") else rt.run_once(PROJECT_ROOT)
+    keep = ("status", "days", "first", "last", "records", "mean_universe", "technical_scored_share", "fund_present", "technical", "risk_minus_composite")
+    print(json.dumps({k: res[k] for k in keep if k in res}, ensure_ascii=False, indent=1, default=str))
+    return 0
+
+
+def _qsf_kr_cap_universe(args) -> int:
+    from terminal.qsf import kr_cap_universe as cu
+    if args.action.endswith("record"):
+        from terminal.qsf.service import QSF
+        res = cu.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
+    else:
+        res = cu.status(PROJECT_ROOT) if args.action.endswith("status") else {k: v for k, v in cu.evaluate_once(PROJECT_ROOT).items() if k != "long_reference"}
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
+
+
+def _qsf_kr_swing_challenger(args) -> int:
+    from terminal.qsf import kr_swing_challenger as sc
+    res = sc.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sc.status(PROJECT_ROOT) if args.action.endswith("status") else sc.record(PROJECT_ROOT)
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
+
+
+def _qsf_kr_traded_universe(args) -> int:
+    from terminal.qsf import kr_traded_universe as tu
+    if args.action.endswith("record"):
+        from terminal.qsf.service import QSF
+        res = tu.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
+    else:
+        res = tu.status(PROJECT_ROOT) if args.action.endswith("status") else {k: v for k, v in tu.evaluate_once(PROJECT_ROOT).items() if k != "former_long_reference"}
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
+
+
+def _qsf_kr_method(args) -> int:      # reports/QSF_KR_METHOD_PROTOCOL.md
+    from terminal.qsf import kr_method as km
+    if args.action.endswith("record"):
+        res = km.record(PROJECT_ROOT)
+        km.write_status(PROJECT_ROOT)
+    elif args.action.endswith("status"):
+        res = {k: v for k, v in km.status(PROJECT_ROOT).items() if k not in ("pool_codes", "names", "family")}
+    elif args.action.endswith("select"):
+        res = {k: v for k, v in km.select_once(PROJECT_ROOT).items() if k != "pools"}
+    else:
+        res = km.evaluate_once(PROJECT_ROOT, int(args.action.rsplit("-", 1)[-1]))
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in (None, "OK", "REAL", "ALREADY_RUN") else 3 if res.get("status") in ("WAITING", "NOT_READY", "NO_RECORD") else 1
+
+
+def _qsf_kr_risk_grade_run(args) -> int:      # one run (reports/QSF_KR_RISK_GRADE_PROTOCOL.md); a stored result is printed as it is
+    from terminal.qsf import kr_risk_grade
+    res = kr_risk_grade.run_once(PROJECT_ROOT)
+    print(json.dumps({k: res[k] for k in ("status", "verdict", "primary") if k in res}, ensure_ascii=False, indent=1, default=str))
+    return 0
+
+
+def _qsf_kr_swing_prior(args) -> int:
+    from terminal.qsf import kr_swing_prior as sp
+    res = sp.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sp.status(PROJECT_ROOT) if args.action.endswith("status") else sp.record(PROJECT_ROOT)
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
+
+
+def _qsf_stability(args) -> int:      # read only: how much the live score moves between sessions of one model version
+    from terminal.qsf import stability
+    print(json.dumps(stability.report(PROJECT_ROOT), ensure_ascii=False, indent=1))
+    return 0
+
+
+def _qsf_us_earnings_gap(args) -> int:      # read only: the count the daily job takes once on or after earnings_gap.DUE
+    from terminal.qsf import earnings_gap
+    res = earnings_gap.count(PROJECT_ROOT)
+    print(json.dumps(res if res else {"status": "NO_US_SESSION"}, ensure_ascii=False))
+    return 0 if res else 3
+
+
+def _qsf_paper_book(args) -> int:      # reports/PAPER_BOOK_RULES.md
+    from terminal.qsf import paper_book
+    if args.action.endswith("record"):
+        res = _paper_book_record(args.market)
+    else:
+        res = {k: v for k, v in paper_book.status(PROJECT_ROOT, args.market).items() if k not in ("curve", "exit_labels", "unfilled_labels", "binding_labels", "skip_labels")}
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in ("OK", "REAL") else 3 if res.get("status") in ("WAITING", "NO_RECORD") else 1
+
+
+def _qsf_lookahead_audit(args) -> int:      # read-only on records; writes data/qsf/lookahead_audit.json
+    from terminal.qsf import lookahead
+    res = lookahead.run(PROJECT_ROOT)
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res["status"] == "OK" else 3 if res["status"] == "NO_PRICES" else 1
+
+
+def _qsf_regime_weights_evaluate(args) -> int:      # the one forward reading at 240 matured sessions; refused before that and after a report exists
+    from terminal.qsf import regime_weights as rw
+    if args.market == "KR":
+        from terminal.qsf import research_kr_live
+        px = research_kr_live.ensure_panel(PROJECT_ROOT, print)
+    else:
+        from terminal.qsf import us_challenger
+        from terminal.qsf.service import QSF
+        docs = [rw.kf._read_day(PROJECT_ROOT / rw.FOLDERS["US"], r["session"]) for r in rw.kf.read_index(PROJECT_ROOT, rw.FOLDERS["US"])]
+        px = us_challenger.build_panel(sorted({r["ticker"] for d in docs for r in d["rows"]}), QSF(PROJECT_ROOT)._loader("US"), {})
+    res = rw.evaluate_forward_once(PROJECT_ROOT, args.market, px)
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0
+
+
+def _qsf_regime_weights(args) -> int:      # reports/QSF_REGIME_WEIGHTS_PROTOCOL.md
+    from terminal.qsf import regime_weights as rw
+    if args.action.endswith("run"):              # one run; a stored result is printed as it is
+        doc = rw.run_once(PROJECT_ROOT)
+        res = {"status": doc["status"], "markets": {m: {k: v.get(k) for k in ("verdict", "tested", "ic", "ic_diff", "ic_diff_t", "ic_over_control", "spread_net", "final_table")} for m, v in doc["markets"].items()}}
+    elif args.action.endswith("record"):
+        res = _regime_weights_record(args.market)
+    else:
+        res = rw.status(PROJECT_ROOT)
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in ("OK", "REAL", "ALREADY_RUN") else 3 if res.get("status") in ("WAITING", "NO_TABLE", "NO_RECORD") else 1
+
+
+def _qsf_us_challenger_record(args) -> int:
+    from terminal.qsf import us_challenger
+    res = us_challenger.record(PROJECT_ROOT)
+    try:                        # the regime-weight challenger reads the ledger and the index; it never fails the step
+        res["regime_weights"] = _regime_weights_record("US")
+    except Exception as exc:
+        res["regime_weights"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the paper book follows the day's plan on the scan's prices; it never fails the step
+        res["paper_book"] = {k: v for k, v in _paper_book_record("US").items() if k != "market"}
+    except Exception as exc:
+        res["paper_book"] = {"status": "FAILED", "reason": type(exc).__name__}
+    print(json.dumps(res, ensure_ascii=False, default=str))
+    return {"OK": 0, "WAITING": 3}.get(res["status"], 1)
+
+
+def _qsf_scan(args, q, market) -> int:
+    res = q.scan(market, tickers=args.tickers or None, record=not args.dry_run, progress=lambda st, d, t: print(f"  {st} {d}/{t}", flush=True))
+    print(json.dumps({k: v for k, v in res.items() if k != "rows"} | {"errors": len(res["errors"])}, ensure_ascii=False, indent=1, default=str))
+    if res["status"] == "REAL" and not args.dry_run and not args.tickers:
+        try:                    # the top three are frozen right after a full scan; a failure here never fails the scan
+            from terminal.qsf import top_picks
+            print("top3:", json.dumps(top_picks.freeze(PROJECT_ROOT, market), ensure_ascii=False, default=str))
+        except Exception as exc:
+            print("top3: FAILED", type(exc).__name__)
+        try:                    # prices of recorded stocks, kept after they leave the scan; never fails the scan either
+            print("prices:", json.dumps({k: v for k, v in q.archive_prices(market).items() if k != "not_in_scan"}, ensure_ascii=False))
+        except Exception as exc:
+            print("prices: FAILED", type(exc).__name__)
+    if res["status"] == "DATA_NOT_READY":           # 4: price requests failed outright (no connection, the Mac asleep); 3: the day is not out yet
+        return 4 if res.get("reason") == "DOWNLOAD_FAILED" else 3
+    return 0 if res["status"] == "REAL" else 2
+
+
+def _qsf_kr_etf_holdings(args, q, market) -> int:
+    from terminal import kr_etf_holdings
+    res = kr_etf_holdings.refresh(PROJECT_ROOT)
+    print(json.dumps(res, ensure_ascii=False, default=str))
+    return 0 if res["status"] == "OK" else 2
+
+
+def _qsf_price_archive(args, q, market) -> int:
+    res = q.archive_prices(market)
+    from terminal.qsf import price_archive
+    print(json.dumps({**res, "now": price_archive.status(PROJECT_ROOT, market)}, ensure_ascii=False, default=str))
+    return 0
+
+
+def _qsf_top3_freeze(args, q, market) -> int:
+    from terminal.qsf import top_picks
+    res = top_picks.freeze(PROJECT_ROOT, market)
+    print(json.dumps(res, ensure_ascii=False, default=str))
+    return {"OK": 0, "WAITING": 3}.get(res["status"], 1)
+
+
+def _qsf_top3_report(args, q, market) -> int:
+    res = q.top3(market)
+    for st, part in (res.get("strategies") or {}).items():
+        for d in part["days"][:5]:
+            print(st, d["session"], "→", d["entry_session"], [(p["ticker"], round(p["score"], 1), None if not p["so_far"] else round(p["so_far"]["relative_net"] * 100, 2) if p["so_far"]["relative_net"] is not None else None) for p in d["top"]])
+        print(st, json.dumps(part["summary"], ensure_ascii=False, default=str))
+    if res["status"] != "REAL":
+        print(json.dumps(res, ensure_ascii=False, default=str))
+    return 0
+
+
+def _qsf_us_challenger_evaluate(args, q, market) -> int:
+    from datetime import date
+    from terminal.qsf import us_challenger
+    from utils import nyse_calendar
+    index = us_challenger.kf.read_index(PROJECT_ROOT, us_challenger.FOLDER)
+    first = date.fromisoformat(index[0]["session"]) if index else date.fromisoformat(us_challenger.FIRST)
+    calendar = [d.isoformat() for d in nyse_calendar.sessions_between(first, nyse_calendar.latest_completed_session())]
+    res = us_challenger.evaluate_once(PROJECT_ROOT, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader("US"), calendar)
+    print(json.dumps({k: res[k] for k in ("status", "strategy", "horizon", "dates", "supports_challenger", "paired_ic")}, ensure_ascii=False, default=str))
+    return 0
+
+
+def _qsf_live_forward(args, q, market) -> int:
+    # the one forward verdict of the live score (reports/QSF_LIVE_FORWARD_PROTOCOL.md); the status only counts sessions
+    from terminal.qsf import live_forward
+
+    def bench_of(m):
+        return q._loader("US")("SPY") if m == "US" else (q._history(["^KS11"])["data"] or {}).get("^KS11") or []
+    if args.action == "live-forward-status":
+        res = live_forward.status(PROJECT_ROOT, {m: sorted(b["date"] for b in bench_of(m)) for m in ("US", "KR")})
+    elif args.action == "kr-avoid-marks-evaluate":          # read once at the Korean swing verdict's sample (reports/QSF_KR_AVOID_MARKS_PROTOCOL.md)
+        from terminal.qsf import kr_avoid_marks
+        res = kr_avoid_marks.evaluate_once(PROJECT_ROOT, q._loader("KR"), bench_of("KR"))
+        res = {k: res.get(k) for k in ("status", "sessions_used", "days", "verdict", "reading_1", "reading_2", "buy_band_filter")}
+    else:
+        res = live_forward.evaluate_once(PROJECT_ROOT, market, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader(market), bench_of(market))
+        res = {k: res.get(k) for k in ("status", "market", "strategy", "horizon", "sessions_used", "verdict", "condition_a", "condition_b", "pooled")}
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0
+
+
+def _qsf_validate(args, q, market) -> int:
+    print(json.dumps(q.validation(), ensure_ascii=False, indent=1, default=str))
+    return 0
+
+
+def _qsf_verify(args, q, market) -> int:
+    res = q.ledger.verify()
+    print(json.dumps(res, ensure_ascii=False, indent=1))
+    return 0 if res["status"] == "OK" else 2
+
+
+QSF_HANDLERS = {
+    "kr-sue-prepare": _qsf_kr_sue,
+    "kr-sue-run": _qsf_kr_sue,
+    "kr-holder-download": _qsf_kr_holder,
+    "kr-holder-prepare": _qsf_kr_holder,
+    "kr-holder-run": _qsf_kr_holder,
+    "backup-check": _qsf_backup_check,
+    "price-audit": _qsf_price_audit,
+    "cache-report": _qsf_cache,
+    "cache-prune": _qsf_cache,
+    "kr-forward-record": _qsf_kr_forward,
+    "kr-forward-evaluate": _qsf_kr_forward,
+    "kr-forward-evaluate-fund": _qsf_kr_forward,
+    "kr-long-early-download": _qsf_kr_long_early,
+    "kr-long-early-prepare": _qsf_kr_long_early,
+    "kr-long-early-run": _qsf_kr_long_early,
+    "kr-tech-early-prepare": _qsf_kr_tech_early,
+    "kr-tech-early-run": _qsf_kr_tech_early,
+    "kr-cap-universe-record": _qsf_kr_cap_universe,
+    "kr-cap-universe-status": _qsf_kr_cap_universe,
+    "kr-cap-universe-evaluate": _qsf_kr_cap_universe,
+    "kr-swing-challenger-record": _qsf_kr_swing_challenger,
+    "kr-swing-challenger-status": _qsf_kr_swing_challenger,
+    "kr-swing-challenger-evaluate": _qsf_kr_swing_challenger,
+    "kr-traded-universe-record": _qsf_kr_traded_universe,
+    "kr-traded-universe-status": _qsf_kr_traded_universe,
+    "kr-traded-universe-evaluate": _qsf_kr_traded_universe,
+    "kr-method-record": _qsf_kr_method,
+    "kr-method-status": _qsf_kr_method,
+    "kr-method-select": _qsf_kr_method,
+    "kr-method-evaluate-120": _qsf_kr_method,
+    "kr-method-evaluate-240": _qsf_kr_method,
+    "kr-risk-grade-run": _qsf_kr_risk_grade_run,
+    "kr-swing-prior-record": _qsf_kr_swing_prior,
+    "kr-swing-prior-status": _qsf_kr_swing_prior,
+    "kr-swing-prior-evaluate": _qsf_kr_swing_prior,
+    "stability": _qsf_stability,
+    "us-earnings-gap": _qsf_us_earnings_gap,
+    "paper-book-record": _qsf_paper_book,
+    "paper-book-status": _qsf_paper_book,
+    "lookahead-audit": _qsf_lookahead_audit,
+    "regime-weights-evaluate": _qsf_regime_weights_evaluate,
+    "regime-weights-run": _qsf_regime_weights,
+    "regime-weights-record": _qsf_regime_weights,
+    "regime-weights-status": _qsf_regime_weights,
+    "us-challenger-record": _qsf_us_challenger_record,
+}
+
+QSF_LIVE_HANDLERS = {
+    "scan": _qsf_scan,
+    "kr-etf-holdings": _qsf_kr_etf_holdings,
+    "price-archive": _qsf_price_archive,
+    "top3-freeze": _qsf_top3_freeze,
+    "top3-report": _qsf_top3_report,
+    "us-challenger-evaluate-swing": _qsf_us_challenger_evaluate,
+    "us-challenger-evaluate-long": _qsf_us_challenger_evaluate,
+    "live-forward-status": _qsf_live_forward,
+    "live-forward-evaluate-swing": _qsf_live_forward,
+    "live-forward-evaluate-long": _qsf_live_forward,
+    "kr-avoid-marks-evaluate": _qsf_live_forward,
+    "validate": _qsf_validate,
+    "verify": _qsf_verify,
+}
+
+
 def cmd_qsf(args) -> int:
     """QSF 1.1 scoring (separate from the frozen P6-11B model; no orders are ever placed)."""
     spec = QSF_ONE_SHOT.get(args.action)
@@ -467,285 +870,15 @@ def cmd_qsf(args) -> int:
         mod = importlib.import_module(f"terminal.qsf.{module}")
         print(json.dumps(view(getattr(mod, func)(PROJECT_ROOT), mod), ensure_ascii=False, indent=indent, default=str))
         return 0
-    if args.action in ("kr-sue-prepare", "kr-sue-run"):
-        from terminal.qsf import research_kr_sue as sue
-        res = {"kr-sue-prepare": sue.prepare, "kr-sue-run": sue.run_once}[args.action](PROJECT_ROOT)
-        if args.action == "kr-sue-run":
-            res = {"status": res["status"], "reading": res["reading"], "conditions": res["conditions"], "partial": res["partial"],
-                   "primary": {k: res["scores"]["SUE"][sue.PRIMARY].get(k) for k in ("ic", "t", "top_excess", "spread_net", "verdict", "dates", "mean_stocks")}}
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0
-    if args.action in ("kr-holder-download", "kr-holder-prepare", "kr-holder-run"):
-        from terminal.qsf import research_kr_holder as rh
-        if args.action == "kr-holder-download":
-            res = rh.download(PROJECT_ROOT, rh.plan(PROJECT_ROOT))
-        else:
-            res = {"kr-holder-prepare": rh.prepare, "kr-holder-run": rh.run_once}[args.action](PROJECT_ROOT)
-        print(json.dumps(res, ensure_ascii=False, default=str))
-        return 0 if res.get("status") in ("DONE", "PAUSED", "PREPARED", "TESTED") else 1
-    if args.action == "backup-check":
-        from terminal import automation
-        res = automation.check_backup()
-        print(json.dumps({**automation.backup_status(), **res}, ensure_ascii=False, default=str))
-        return 0 if res["status"] == "OK" else 1
-    if args.action == "price-audit":
-        from terminal.qsf import price_audit
-        from utils import nyse_calendar
-        res = price_audit.run(PROJECT_ROOT, nyse_calendar.sessions_between)
-        print(json.dumps(res, ensure_ascii=False, indent=1))
-        return 0
-    if args.action in ("cache-report", "cache-prune"):
-        from terminal import storage
-        res = storage.prune_cache(PROJECT_ROOT, apply=args.action == "cache-prune" and args.apply)
-        print(json.dumps({"disk": storage.disk(PROJECT_ROOT), **res}, ensure_ascii=False))
-        return 0
-    if args.action in ("kr-forward-record", "kr-forward-evaluate", "kr-forward-evaluate-fund"):
-        from terminal.qsf import kr_forward
-        if args.action in ("kr-forward-evaluate", "kr-forward-evaluate-fund"):
-            res = kr_forward.evaluate_once(PROJECT_ROOT, store=kr_forward.FUND_FOLDER if args.action.endswith("fund") else kr_forward.FOLDER)
-            print(json.dumps({k: v for k, v in res.items() if k != "buckets"}, ensure_ascii=False, default=str))
-            return 0
-        res = kr_forward.record(PROJECT_ROOT)
-        try:                        # the swing challenger reads the ledger only; a failure here never fails the forward step
-            from terminal.qsf import kr_swing_challenger
-            res["swing_challenger"] = kr_swing_challenger.record(PROJECT_ROOT)
-        except Exception as exc:
-            res["swing_challenger"] = {"status": "FAILED", "reason": type(exc).__name__}
-        try:                        # the former swing formula next to the live score, from the ledger only; it never fails the step either
-            from terminal.qsf import kr_swing_prior
-            res["swing_prior"] = kr_swing_prior.record(PROJECT_ROOT)
-        except Exception as exc:
-            res["swing_prior"] = {"status": "FAILED", "reason": type(exc).__name__}
-        try:                        # the market-value universe record scores with a scan that writes no live file; it never fails the step either
-            from terminal.qsf import kr_cap_universe
-            from terminal.qsf.service import QSF
-            res["cap_universe"] = kr_cap_universe.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
-        except Exception as exc:
-            res["cap_universe"] = {"status": "FAILED", "reason": type(exc).__name__}
-        try:                        # the former live universe (the 300 most traded), scored the same way; it never fails the step either
-            from terminal.qsf import kr_traded_universe
-            from terminal.qsf.service import QSF
-            res["traded_universe"] = kr_traded_universe.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
-        except Exception as exc:
-            res["traded_universe"] = {"status": "FAILED", "reason": type(exc).__name__}
-        try:                        # the own trading method (KR-M1) reads the ledger, the day's marks and the price files; it never fails the step either
-            from terminal.qsf import kr_method
-            res["method"] = kr_method.record(PROJECT_ROOT)
-            kr_method.write_status(PROJECT_ROOT)
-        except Exception as exc:
-            res["method"] = {"status": "FAILED", "reason": type(exc).__name__}
-        try:                        # the regime-weight challenger reads the ledger and the index; it never fails the step either
-            res["regime_weights"] = _regime_weights_record("KR")
-        except Exception as exc:
-            res["regime_weights"] = {"status": "FAILED", "reason": type(exc).__name__}
-        try:                        # the paper book follows the day's plan on the scan's prices; it never fails the step either
-            res["paper_book"] = {k: v for k, v in _paper_book_record("KR").items() if k != "market"}
-        except Exception as exc:
-            res["paper_book"] = {"status": "FAILED", "reason": type(exc).__name__}
-        try:                        # the look-ahead audit reads prices and record indexes and writes one view file; it never fails the step
-            from terminal.qsf import lookahead
-            audit = lookahead.run(PROJECT_ROOT)
-            res["lookahead"] = {"status": audit["status"], "problems": audit["problems"]}
-        except Exception as exc:
-            res["lookahead"] = {"status": "FAILED", "reason": type(exc).__name__}
-        print(json.dumps(res, ensure_ascii=False, default=str))
-        return {"OK": 0, "WAITING": 3, "NO_KEY": 4}.get(res["status"], 1)
-    if args.action in ("kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run"):     # reports/QSF_KR_LONG_EARLY_PROTOCOL.md
-        from terminal.qsf import research_kr_long_early as le
-        res = le.download(PROJECT_ROOT) if args.action.endswith("download") else le.prepare(PROJECT_ROOT) if args.action.endswith("prepare") else le.run_once(PROJECT_ROOT)
-        if args.action.endswith("run"):
-            p = res["primary"]
-            res = {"status": res["status"], "days": res["days"], "reading": p["reading"], "dates": p.get("dates"), "ic": p.get("ic"), "t": p.get("t"), "condition_a": p["condition_a"], "condition_b": p["condition_b"]}
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0 if res.get("status") in ("REAL", "OK", "DONE") else 3
-    if args.action in ("kr-tech-early-prepare", "kr-tech-early-run"):          # one confirmation run (reports/QSF_KR_TECH_EARLY_PROTOCOL.md)
-        from terminal.qsf import research_kr_tech as rt
-        res = rt.prepare(PROJECT_ROOT) if args.action.endswith("prepare") else rt.run_once(PROJECT_ROOT)
-        keep = ("status", "days", "first", "last", "records", "mean_universe", "technical_scored_share", "fund_present", "technical", "risk_minus_composite")
-        print(json.dumps({k: res[k] for k in keep if k in res}, ensure_ascii=False, indent=1, default=str))
-        return 0
-    if args.action in ("kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate"):
-        from terminal.qsf import kr_cap_universe as cu
-        if args.action.endswith("record"):
-            from terminal.qsf.service import QSF
-            res = cu.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
-        else:
-            res = cu.status(PROJECT_ROOT) if args.action.endswith("status") else {k: v for k, v in cu.evaluate_once(PROJECT_ROOT).items() if k != "long_reference"}
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
-    if args.action in ("kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate"):
-        from terminal.qsf import kr_swing_challenger as sc
-        res = sc.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sc.status(PROJECT_ROOT) if args.action.endswith("status") else sc.record(PROJECT_ROOT)
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
-    if args.action in ("kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate"):
-        from terminal.qsf import kr_traded_universe as tu
-        if args.action.endswith("record"):
-            from terminal.qsf.service import QSF
-            res = tu.record(PROJECT_ROOT, QSF(PROJECT_ROOT))
-        else:
-            res = tu.status(PROJECT_ROOT) if args.action.endswith("status") else {k: v for k, v in tu.evaluate_once(PROJECT_ROOT).items() if k != "former_long_reference"}
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
-    if args.action in ("kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240"):      # reports/QSF_KR_METHOD_PROTOCOL.md
-        from terminal.qsf import kr_method as km
-        if args.action.endswith("record"):
-            res = km.record(PROJECT_ROOT)
-            km.write_status(PROJECT_ROOT)
-        elif args.action.endswith("status"):
-            res = {k: v for k, v in km.status(PROJECT_ROOT).items() if k not in ("pool_codes", "names", "family")}
-        elif args.action.endswith("select"):
-            res = {k: v for k, v in km.select_once(PROJECT_ROOT).items() if k != "pools"}
-        else:
-            res = km.evaluate_once(PROJECT_ROOT, int(args.action.rsplit("-", 1)[-1]))
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0 if res.get("status") in (None, "OK", "REAL", "ALREADY_RUN") else 3 if res.get("status") in ("WAITING", "NOT_READY", "NO_RECORD") else 1
-    if args.action == "kr-risk-grade-run":            # one run (reports/QSF_KR_RISK_GRADE_PROTOCOL.md); a stored result is printed as it is
-        from terminal.qsf import kr_risk_grade
-        res = kr_risk_grade.run_once(PROJECT_ROOT)
-        print(json.dumps({k: res[k] for k in ("status", "verdict", "primary") if k in res}, ensure_ascii=False, indent=1, default=str))
-        return 0
-    if args.action in ("kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate"):
-        from terminal.qsf import kr_swing_prior as sp
-        res = sp.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sp.status(PROJECT_ROOT) if args.action.endswith("status") else sp.record(PROJECT_ROOT)
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
-    if args.action == "stability":                   # read only: how much the live score moves between sessions of one model version
-        from terminal.qsf import stability
-        print(json.dumps(stability.report(PROJECT_ROOT), ensure_ascii=False, indent=1))
-        return 0
-    if args.action == "us-earnings-gap":             # read only: the count the daily job takes once on or after earnings_gap.DUE
-        from terminal.qsf import earnings_gap
-        res = earnings_gap.count(PROJECT_ROOT)
-        print(json.dumps(res if res else {"status": "NO_US_SESSION"}, ensure_ascii=False))
-        return 0 if res else 3
-    if args.action in ("paper-book-record", "paper-book-status"):      # reports/PAPER_BOOK_RULES.md
-        from terminal.qsf import paper_book
-        if args.action.endswith("record"):
-            res = _paper_book_record(args.market)
-        else:
-            res = {k: v for k, v in paper_book.status(PROJECT_ROOT, args.market).items() if k not in ("curve", "exit_labels", "unfilled_labels", "binding_labels", "skip_labels")}
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0 if res.get("status") in ("OK", "REAL") else 3 if res.get("status") in ("WAITING", "NO_RECORD") else 1
-    if args.action == "lookahead-audit":              # read-only on records; writes data/qsf/lookahead_audit.json
-        from terminal.qsf import lookahead
-        res = lookahead.run(PROJECT_ROOT)
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0 if res["status"] == "OK" else 3 if res["status"] == "NO_PRICES" else 1
-    if args.action == "regime-weights-evaluate":      # the one forward reading at 240 matured sessions; refused before that and after a report exists
-        from terminal.qsf import regime_weights as rw
-        if args.market == "KR":
-            from terminal.qsf import research_kr_live
-            px = research_kr_live.ensure_panel(PROJECT_ROOT, print)
-        else:
-            from terminal.qsf import us_challenger
-            from terminal.qsf.service import QSF
-            docs = [rw.kf._read_day(PROJECT_ROOT / rw.FOLDERS["US"], r["session"]) for r in rw.kf.read_index(PROJECT_ROOT, rw.FOLDERS["US"])]
-            px = us_challenger.build_panel(sorted({r["ticker"] for d in docs for r in d["rows"]}), QSF(PROJECT_ROOT)._loader("US"), {})
-        res = rw.evaluate_forward_once(PROJECT_ROOT, args.market, px)
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0
-    if args.action in ("regime-weights-run", "regime-weights-record", "regime-weights-status"):      # reports/QSF_REGIME_WEIGHTS_PROTOCOL.md
-        from terminal.qsf import regime_weights as rw
-        if args.action.endswith("run"):              # one run; a stored result is printed as it is
-            doc = rw.run_once(PROJECT_ROOT)
-            res = {"status": doc["status"], "markets": {m: {k: v.get(k) for k in ("verdict", "tested", "ic", "ic_diff", "ic_diff_t", "ic_over_control", "spread_net", "final_table")} for m, v in doc["markets"].items()}}
-        elif args.action.endswith("record"):
-            res = _regime_weights_record(args.market)
-        else:
-            res = rw.status(PROJECT_ROOT)
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0 if res.get("status") in ("OK", "REAL", "ALREADY_RUN") else 3 if res.get("status") in ("WAITING", "NO_TABLE", "NO_RECORD") else 1
-    if args.action == "us-challenger-record":
-        from terminal.qsf import us_challenger
-        res = us_challenger.record(PROJECT_ROOT)
-        try:                        # the regime-weight challenger reads the ledger and the index; it never fails the step
-            res["regime_weights"] = _regime_weights_record("US")
-        except Exception as exc:
-            res["regime_weights"] = {"status": "FAILED", "reason": type(exc).__name__}
-        try:                        # the paper book follows the day's plan on the scan's prices; it never fails the step
-            res["paper_book"] = {k: v for k, v in _paper_book_record("US").items() if k != "market"}
-        except Exception as exc:
-            res["paper_book"] = {"status": "FAILED", "reason": type(exc).__name__}
-        print(json.dumps(res, ensure_ascii=False, default=str))
-        return {"OK": 0, "WAITING": 3}.get(res["status"], 1)
+    handler = QSF_HANDLERS.get(args.action)         # actions that need no scorer
+    if handler:
+        return handler(args)
     from terminal.qsf.service import QSF
     q = QSF(PROJECT_ROOT)
     market = args.market
-    if args.action == "scan":
-        res = q.scan(market, tickers=args.tickers or None, record=not args.dry_run, progress=lambda st, d, t: print(f"  {st} {d}/{t}", flush=True))
-        print(json.dumps({k: v for k, v in res.items() if k != "rows"} | {"errors": len(res["errors"])}, ensure_ascii=False, indent=1, default=str))
-        if res["status"] == "REAL" and not args.dry_run and not args.tickers:
-            try:                    # the top three are frozen right after a full scan; a failure here never fails the scan
-                from terminal.qsf import top_picks
-                print("top3:", json.dumps(top_picks.freeze(PROJECT_ROOT, market), ensure_ascii=False, default=str))
-            except Exception as exc:
-                print("top3: FAILED", type(exc).__name__)
-            try:                    # prices of recorded stocks, kept after they leave the scan; never fails the scan either
-                print("prices:", json.dumps({k: v for k, v in q.archive_prices(market).items() if k != "not_in_scan"}, ensure_ascii=False))
-            except Exception as exc:
-                print("prices: FAILED", type(exc).__name__)
-        if res["status"] == "DATA_NOT_READY":           # 4: price requests failed outright (no connection, the Mac asleep); 3: the day is not out yet
-            return 4 if res.get("reason") == "DOWNLOAD_FAILED" else 3
-        return 0 if res["status"] == "REAL" else 2
-    if args.action == "kr-etf-holdings":
-        from terminal import kr_etf_holdings
-        res = kr_etf_holdings.refresh(PROJECT_ROOT)
-        print(json.dumps(res, ensure_ascii=False, default=str))
-        return 0 if res["status"] == "OK" else 2
-    if args.action == "price-archive":
-        res = q.archive_prices(market)
-        from terminal.qsf import price_archive
-        print(json.dumps({**res, "now": price_archive.status(PROJECT_ROOT, market)}, ensure_ascii=False, default=str))
-        return 0
-    if args.action == "top3-freeze":
-        from terminal.qsf import top_picks
-        res = top_picks.freeze(PROJECT_ROOT, market)
-        print(json.dumps(res, ensure_ascii=False, default=str))
-        return {"OK": 0, "WAITING": 3}.get(res["status"], 1)
-    if args.action == "top3-report":
-        res = q.top3(market)
-        for st, part in (res.get("strategies") or {}).items():
-            for d in part["days"][:5]:
-                print(st, d["session"], "→", d["entry_session"], [(p["ticker"], round(p["score"], 1), None if not p["so_far"] else round(p["so_far"]["relative_net"] * 100, 2) if p["so_far"]["relative_net"] is not None else None) for p in d["top"]])
-            print(st, json.dumps(part["summary"], ensure_ascii=False, default=str))
-        if res["status"] != "REAL":
-            print(json.dumps(res, ensure_ascii=False, default=str))
-        return 0
-    if args.action in ("us-challenger-evaluate-swing", "us-challenger-evaluate-long"):
-        from datetime import date
-        from terminal.qsf import us_challenger
-        from utils import nyse_calendar
-        index = us_challenger.kf.read_index(PROJECT_ROOT, us_challenger.FOLDER)
-        first = date.fromisoformat(index[0]["session"]) if index else date.fromisoformat(us_challenger.FIRST)
-        calendar = [d.isoformat() for d in nyse_calendar.sessions_between(first, nyse_calendar.latest_completed_session())]
-        res = us_challenger.evaluate_once(PROJECT_ROOT, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader("US"), calendar)
-        print(json.dumps({k: res[k] for k in ("status", "strategy", "horizon", "dates", "supports_challenger", "paired_ic")}, ensure_ascii=False, default=str))
-        return 0
-    if args.action in ("live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate"):
-        # the one forward verdict of the live score (reports/QSF_LIVE_FORWARD_PROTOCOL.md); the status only counts sessions
-        from terminal.qsf import live_forward
-
-        def bench_of(m):
-            return q._loader("US")("SPY") if m == "US" else (q._history(["^KS11"])["data"] or {}).get("^KS11") or []
-        if args.action == "live-forward-status":
-            res = live_forward.status(PROJECT_ROOT, {m: sorted(b["date"] for b in bench_of(m)) for m in ("US", "KR")})
-        elif args.action == "kr-avoid-marks-evaluate":          # read once at the Korean swing verdict's sample (reports/QSF_KR_AVOID_MARKS_PROTOCOL.md)
-            from terminal.qsf import kr_avoid_marks
-            res = kr_avoid_marks.evaluate_once(PROJECT_ROOT, q._loader("KR"), bench_of("KR"))
-            res = {k: res.get(k) for k in ("status", "sessions_used", "days", "verdict", "reading_1", "reading_2", "buy_band_filter")}
-        else:
-            res = live_forward.evaluate_once(PROJECT_ROOT, market, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader(market), bench_of(market))
-            res = {k: res.get(k) for k in ("status", "market", "strategy", "horizon", "sessions_used", "verdict", "condition_a", "condition_b", "pooled")}
-        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-        return 0
-    if args.action == "validate":
-        print(json.dumps(q.validation(), ensure_ascii=False, indent=1, default=str))
-        return 0
-    if args.action == "verify":
-        res = q.ledger.verify()
-        print(json.dumps(res, ensure_ascii=False, indent=1))
-        return 0 if res["status"] == "OK" else 2
+    handler = QSF_LIVE_HANDLERS.get(args.action)    # actions that read the live scorer
+    if handler:
+        return handler(args, q, market)
     if not args.tickers:
         print("종목을 지정하세요: python app.py qsf evaluate AAPL")
         return 2
