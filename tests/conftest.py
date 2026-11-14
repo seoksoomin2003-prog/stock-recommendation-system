@@ -7,11 +7,18 @@
    modifies a protected file FAILS and the file is restored from the session
    snapshot, so one bad test can never destroy user data or historical
    evidence.
+3. Only the tests' own writes are undone.  The daily job, a scan or the
+   terminal server may write to the same folders while the suite runs; until
+   2026-11-14 the guard took any new file for a test's and deleted it, and put
+   back the old copy of any file that had changed.  The suite now notes every
+   path this process opens for writing, renames or removes, and a change it did
+   not make is left alone and listed at the end of the run.
 """
 import ctypes
 import os
 import shutil
 import socket
+import sys
 import tempfile
 from pathlib import Path
 
@@ -114,30 +121,123 @@ def _protected_snapshot():
     shutil.rmtree(snap_dir, ignore_errors=True)
 
 
+# ----------------------------------------------------------------------------- whose write was it
+_WRITING = os.O_WRONLY | os.O_RDWR | os.O_CREAT | os.O_TRUNC | os.O_APPEND
+_ONE_PATH = {"os.remove", "os.rmdir", "os.mkdir", "os.truncate", "os.utime", "os.chmod", "shutil.rmtree", "sqlite3.connect"}
+_TWO_PATHS = {"os.rename", "os.link", "os.symlink", "shutil.copyfile", "shutil.move", "shutil.copytree", "shutil.copymode", "shutil.copystat"}
+_CHILDREN = {"subprocess.Popen", "os.system", "os.posix_spawn", "os.fork", "os.exec", "os.spawn", "os.startfile"}
+_OWN = {"touched": set(), "children": 0}
+_OUTSIDE = []          # protected paths another process changed during the run; left alone, listed at the end
+
+
+def _protected_rel(path, root=None):
+    """The path relative to the project when it is a file or folder under a protected directory, else None.  Symbolic links are
+    followed first: the sandbox links the source folders, so ``tests/../data`` is the real ``data``."""
+    if isinstance(path, bytes):
+        path = os.fsdecode(path)
+    if not isinstance(path, (str, os.PathLike)):
+        return None                                   # a file descriptor: its path was noted when it was opened
+    try:
+        rel = os.path.relpath(os.path.realpath(os.fspath(path)), os.path.realpath(root or ROOT))
+    except (OSError, ValueError):
+        return None
+    return rel if rel.split(os.sep, 1)[0] in PROTECTED_DIRS else None
+
+
+def _note(path):
+    rel = _protected_rel(path)
+    if rel:
+        _OWN["touched"].add(rel)
+
+
+def _audit(event, args):
+    """Every write this process makes under a protected directory, by any Python route (open, os, shutil, sqlite3)."""
+    try:
+        if event == "open":
+            path, mode, flags = (tuple(args) + (None, None))[:3]
+            if (isinstance(flags, int) and flags & _WRITING) or (isinstance(mode, str) and any(c in mode for c in "wax+")):
+                _note(path)
+        elif event in _ONE_PATH:
+            _note(args[0])
+        elif event in _TWO_PATHS:
+            _note(args[0])
+            _note(args[1])
+        elif event in _CHILDREN:
+            _OWN["children"] += 1                     # a child's writes are not seen here
+    except Exception:                                 # an audit hook must never break the code it watches
+        pass
+
+
+sys.addaudithook(_audit)
+
+
+def _is_own(rel, touched):
+    return any(rel == t or rel.startswith(t + os.sep) or rel in (t + "-journal", t + "-wal", t + "-shm") for t in touched)
+
+
+def _settle(root, snap, changed, created, deleted, touched, children):
+    """Undo what the test wrote; leave what something else wrote.  Returns (own, outside, unsure): ``own`` were restored or removed
+    and fail the test; ``outside`` were not touched by this process and are left as they are, with the snapshot brought up to
+    date so a later restore cannot bring back an older copy; ``unsure`` are changes this process did not make while the test had
+    started a child process, which could have: they fail the test and are left on disk, because deleting a file that may be the
+    daily job's is worse than leaving one that may be a test's."""
+    root, snap = Path(root), Path(snap)
+    every = changed + created + deleted
+    own = [r for r in every if _is_own(r, touched)]
+    rest = [r for r in every if r not in own]
+    unsure, outside = (rest, []) if children else ([], rest)
+    for rel in own:
+        src = snap / rel
+        if rel in created:
+            try:
+                (root / rel).unlink()
+            except OSError:
+                pass
+        elif src.exists():
+            (root / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(src, root / rel)
+    for rel in outside:
+        dst = snap / rel
+        try:
+            if dst.exists():
+                dst.unlink()
+            if (root / rel).exists():
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                _clone(root / rel, dst)
+        except OSError:
+            pass
+    return own, outside, unsure
+
+
 @pytest.fixture(autouse=True)
 def _guard_protected_files(request, _protected_snapshot):
     before = _protected_snapshot["stats"]
+    _OWN["touched"], _OWN["children"] = set(), 0
     yield
+    touched, children = set(_OWN["touched"]), _OWN["children"]
     after = _stat_map()
-    changed = sorted(k for k in after if before.get(k) != after[k])
+    changed = sorted(k for k in after if k in before and before[k] != after[k])
     created = sorted(k for k in after if k not in before)
     deleted = sorted(k for k in before if k not in after)
     if not (changed or created or deleted):
         return
-    snap = _protected_snapshot["dir"]
-    for rel in changed + deleted:
-        src = snap / rel
-        if src.exists():
-            (ROOT / rel).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, ROOT / rel)
-    for rel in created:
-        try:
-            (ROOT / rel).unlink()
-        except OSError:
-            pass
+    own, outside, unsure = _settle(ROOT, _protected_snapshot["dir"], changed, created, deleted, touched, children)
+    _OUTSIDE.extend(outside)
     _protected_snapshot["stats"] = _stat_map()
-    pytest.fail(f"Test wrote to protected user data / historical artifacts (restored): "
-                f"changed={changed[:5]} created={created[:5]} deleted={deleted[:5]}", pytrace=False)
+    if own:
+        pytest.fail(f"Test wrote to protected user data / historical artifacts (restored): "
+                    f"changed={[r for r in own if r in changed][:5]} created={[r for r in own if r in created][:5]} "
+                    f"deleted={[r for r in own if r in deleted][:5]}", pytrace=False)
+    if unsure:
+        pytest.fail(f"Protected files changed while this test ran a child process; they were NOT restored or removed, because "
+                    f"another program (the daily job, a scan) may have written them. Look before deleting: {unsure[:5]}", pytrace=False)
+
+
+def pytest_terminal_summary(terminalreporter):
+    if _OUTSIDE:
+        seen = sorted(set(_OUTSIDE))
+        terminalreporter.write_line(f"protected files changed by another process during the run, left alone: {len(seen)} "
+                                    f"(first: {seen[:5]})", yellow=True)
 
 
 @pytest.fixture(autouse=True)
