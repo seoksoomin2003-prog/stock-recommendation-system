@@ -430,7 +430,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
                "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "paper-book-record", "paper-book-status",
-               "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run",
+               "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-sue-prepare", "kr-sue-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
 
@@ -466,6 +466,14 @@ def cmd_qsf(args) -> int:
         module, func, view, indent = spec
         mod = importlib.import_module(f"terminal.qsf.{module}")
         print(json.dumps(view(getattr(mod, func)(PROJECT_ROOT), mod), ensure_ascii=False, indent=indent, default=str))
+        return 0
+    if args.action in ("kr-sue-prepare", "kr-sue-run"):
+        from terminal.qsf import research_kr_sue as sue
+        res = {"kr-sue-prepare": sue.prepare, "kr-sue-run": sue.run_once}[args.action](PROJECT_ROOT)
+        if args.action == "kr-sue-run":
+            res = {"status": res["status"], "reading": res["reading"], "conditions": res["conditions"], "partial": res["partial"],
+                   "primary": {k: res["scores"]["SUE"][sue.PRIMARY].get(k) for k in ("ic", "t", "top_excess", "spread_net", "verdict", "dates", "mean_stocks")}}
+        print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
         return 0
     if args.action in ("kr-holder-download", "kr-holder-prepare", "kr-holder-run"):
         from terminal.qsf import research_kr_holder as rh
