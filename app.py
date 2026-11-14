@@ -220,7 +220,7 @@ def project_location_warning() -> str:
         try:
             PROJECT_ROOT.resolve().relative_to(synced.resolve())
             return (f"inside {synced} (iCloud-synced on many Macs). Move the project to ~/Developer "
-                    "(see README 'Project location').")
+                    "(see README 1절 '프로젝트 위치').")
         except ValueError:
             continue
     return ""
