@@ -371,3 +371,14 @@ def test_extracted_series_have_new_cache_keys_and_the_version_moved():
     code = (Path(__file__).resolve().parents[1] / "terminal" / "qsf" / "service.py").read_text(encoding="utf-8")
     assert code.count('f"annual4:') == 1 and code.count('f"krfund3:') == 2 and "annual2:" not in code and "annual3:" not in code and "krfund2:" not in code
     assert config.MODEL_VERSION == "QSF-1.3.2"          # 1.1.9 moved the keys; 1.2.1 moved the US key again for the debt parts
+
+
+@pytest.mark.parametrize("long_name,short_name,sec_name,want", [
+    ("AvalonBay Communities, Inc.", "Vivmark Residential", "VIVMARK RESIDENTIAL", "Vivmark Residential"),      # the long name is another company's
+    ("SLB N.V.", "SLB N.V.", "SCHLUMBERGER LIMITED/NV", "SLB N.V."),                                          # SEC keeps an older wording: Yahoo agrees with itself
+    ("PG&E Corporation", "Pacific Gas & Electric Co.", "PG&E Corp", "PG&E Corporation"),                      # the short name is the odd one
+    ("Alphabet Inc.", "Alphabet Inc.", "Alphabet Inc.", "Alphabet Inc."),
+    ("Alpha Co", "Beta Co", "GAMMA CORP", "Alpha Co"),                                                         # three names, no two agree: nothing to go on
+    ("Alpha Co", None, "BETA CORP", "Alpha Co"), (None, "Alpha", "ALPHA CORP", "ALPHA CORP"), (None, None, None, None)])
+def test_a_long_name_of_another_company_gives_way_to_the_two_that_agree(long_name, short_name, sec_name, want):
+    assert f.us_display_name(long_name, short_name, sec_name) == want

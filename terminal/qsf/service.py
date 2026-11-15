@@ -233,7 +233,7 @@ class QSF(ScreenViews):
         info = self.cache.cached(f"info:{ticker}", TTL["info"], lambda: self.src.yahoo_info(ticker))["data"] or {}
         fin = fundamentals.is_financial_sic((subm or {}).get("sic"))
         m = fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=fin, shares=fundamentals.us_total_shares(info, bars[-1]["close"], res["data"]), insider_pct=info.get("heldPercentInsiders"))
-        return {**m, "cik": cik, "name": info.get("longName") or (subm or {}).get("name"), "sector": info.get("sector")}
+        return {**m, "cik": cik, "name": fundamentals.us_display_name(info.get("longName"), info.get("shortName"), (subm or {}).get("name")), "sector": info.get("sector")}
 
     def _annual(self, ticker: str, cik: str) -> Dict[str, Any]:
         return fundamentals.drop_stale_series(fundamentals.extract_us(default_sources.facts_with_predecessors(ticker, cik, self.src.sec_companyfacts)))

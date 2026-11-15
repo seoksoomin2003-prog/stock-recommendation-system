@@ -4,6 +4,7 @@ US: SEC companyfacts 10-K.  KR: OpenDART annual statements, one basis only (cons
 years use different bases is flagged and growth is not computed across them).  Only the small extracted series is cached,
 never the multi-megabyte source file.  This is display and scoring input for QSF; P6-11B keeps its own P6-20-A inputs.
 """
+import re
 from datetime import date, datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional
 
@@ -442,6 +443,22 @@ def blank_mixed_cash_flow(m: Dict[str, Any], code: str) -> Dict[str, Any]:
     if not note or m.get("status") == "UNAVAILABLE":
         return m
     return {**m, "fcf": None, "fcf_yield": None, "fcf_margin": None, "fcf_years_positive": None, "ocf_to_ni": None, "cash_flow_note": note}
+
+
+_NAME_FILLER = {"INC", "CORP", "CORPORATION", "COMPANY", "CO", "THE", "AND", "HOLDINGS", "GROUP", "PLC", "LTD", "LIMITED", "INCORPORATED", "CLASS", "COMMON", "STOCK", "NEW"}
+
+
+def _name_words(name: Optional[str]) -> set:
+    return {w for w in re.sub(r"[^A-Za-z0-9 ]", " ", name or "").upper().split() if len(w) > 1 and w not in _NAME_FILLER}
+
+
+def us_display_name(long_name: Optional[str], short_name: Optional[str], sec_name: Optional[str]) -> Optional[str]:
+    """Yahoo's long name, unless it names another company: when it shares no word with either Yahoo's short name or the name SEC
+    holds for the CIK the statements come from, and those two agree with each other, the short name is shown instead."""
+    long_w, short_w, sec_w = _name_words(long_name), _name_words(short_name), _name_words(sec_name)
+    if long_name and short_w and sec_w and (short_w & sec_w) and not (long_w & short_w) and not (long_w & sec_w):
+        return short_name
+    return long_name or sec_name
 
 
 def us_total_shares(info: Dict[str, Any], close: Optional[float], annual: Optional[Dict[str, Any]] = None) -> Optional[float]:
