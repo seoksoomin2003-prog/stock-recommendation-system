@@ -432,7 +432,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
                "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "paper-book-record", "paper-book-status",
-               "forecast-test", "forecast-record", "forecast-status",
+               "forecast-test", "forecast-record", "forecast-status", "forecast-touch-test",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-sue-prepare", "kr-sue-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
@@ -688,6 +688,14 @@ def _qsf_forecast(args) -> int:      # reports/QSF_FORECAST_PROTOCOL.md
     return 0 if res.get("status") in ("OK", "REAL", "ALREADY_RUN") else 3 if res.get("status") in ("WAITING", "NO_RECORD") else 1
 
 
+def _qsf_forecast_touch(args) -> int:      # reports/QSF_FORECAST_TOUCH_PROTOCOL.md; one run, a stored result is printed as it is
+    from terminal.qsf import forecast_touch
+    doc = forecast_touch.run_once(PROJECT_ROOT)
+    res = {"status": doc["status"], "markets": {m: {"verdict": v["verdict"], "days": v["days"], "first": v["first"], "last": v["last"], "failed": v["failed"]} for m, v in doc["markets"].items()}}
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in ("REAL", "ALREADY_RUN") else 1
+
+
 def _qsf_lookahead_audit(args) -> int:      # read-only on records; writes data/qsf/lookahead_audit.json
     from terminal.qsf import lookahead
     res = lookahead.run(PROJECT_ROOT)
@@ -878,6 +886,7 @@ QSF_HANDLERS = {
     "forecast-test": _qsf_forecast,
     "forecast-record": _qsf_forecast,
     "forecast-status": _qsf_forecast,
+    "forecast-touch-test": _qsf_forecast_touch,
     "regime-weights-evaluate": _qsf_regime_weights_evaluate,
     "regime-weights-run": _qsf_regime_weights,
     "regime-weights-record": _qsf_regime_weights,

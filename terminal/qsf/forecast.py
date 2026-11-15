@@ -357,6 +357,8 @@ def build_doc(session: str, market: str, snaps: List[Dict[str, Any]], loader: Ca
         raise NotReady("PRICES_NOT_AT_SESSION")
     i, cols = len(dates) - 1, np.arange(len(tickers))
     f = day_forecast(adj, i, cols)
+    from terminal.qsf import forecast_touch          # FC-2 reads this module's volatility, so it is imported here and not at the top
+    touch = {"touch": forecast_touch.table_doc(forecast_touch.day_touch(adj, i, cols))} if session >= forecast_touch.FIRST else {}
     by = {(s["ticker"], s["strategy"]): s for s in fresh}
     side: Dict[str, Dict[str, np.ndarray]] = {}
     for strategy, h in DIRECTION_H.items():
@@ -381,7 +383,7 @@ def build_doc(session: str, market: str, snaps: List[Dict[str, Any]], loader: Ca
             "model_versions": sorted({str(s.get("model_version")) for s in fresh}),
             "k": {str(h): {"k80": round(f["k"][h][80], 6), "k50": round(f["k"][h][50], 6), "pool": f["k"][h]["pool"], "source": f["k"][h]["source"]} for h in HORIZONS},
             "ic_evidence": {s: IC_EVIDENCE[(market, s)] for s in DIRECTION_H}, "ic_assumed": IC_ASSUMED, "direction_horizons": dict(DIRECTION_H),
-            "forecast": int(sum(r["vol"][str(HORIZONS[-1])] is not None for r in rows)), "rows": rows}
+            "forecast": int(sum(r["vol"][str(HORIZONS[-1])] is not None for r in rows)), **touch, "rows": rows}
 
 
 def record(base: Path, market: str, loader: Callable[[str], List[Dict[str, Any]]], now: Callable[[], datetime] = _utcnow, first: str = FIRST) -> Dict[str, Any]:
@@ -415,8 +417,10 @@ def _docs(base: Path, market: str) -> List[Dict[str, Any]]:
 
 def follow(docs: List[Dict[str, Any]], adj: np.ndarray, dates: Sequence[str], col: Dict[str, int]) -> Dict[str, Any]:
     """Coverage of every recorded day whose horizon has ended, and the direction figures.  ``adj`` holds prices after the records."""
+    from terminal.qsf import forecast_touch
     row_of = {d: n for n, d in enumerate(dates)}
     ranges: Dict[int, List[Dict[str, Any]]] = {h: [] for h in HORIZONS}
+    touches: Dict[int, List[Dict[str, Any]]] = {h: [] for h in HORIZONS}
     sides: Dict[str, List[Dict[str, Any]]] = {s: [] for s in DIRECTION_H}
     for doc in docs:
         i = row_of.get(doc["session"])
@@ -433,6 +437,9 @@ def follow(docs: List[Dict[str, Any]], adj: np.ndarray, dates: Sequence[str], co
             if c80:
                 ranges[h].append({"session": doc["session"], "n": c80["n"], "cover80": c80["inside"], "cover50": c50["inside"], "above80": c80["above"], "below80": c80["below"],
                                   "uncounted": int((np.isfinite(vol) & ~np.isfinite(move)).sum())})
+            touched = forecast_touch.follow_day(doc, adj, i, cols, rows, h)
+            if touched:
+                touches[h].append(touched)
         for strategy, key in (("SWING", "swing"), ("LONG_TERM", "long")):
             h = DIRECTION_H[strategy]
             if not len(rows) or i + h >= len(dates):
@@ -448,7 +455,7 @@ def follow(docs: List[Dict[str, Any]], adj: np.ndarray, dates: Sequence[str], co
             share = lambda m: None if not m.any() else float(beat[m].mean())      # noqa: E731
             sides[strategy].append({"session": doc["session"], "n": int(ok.sum()), "high": share(zz >= 1), "middle": share(np.abs(zz) < 1), "low": share(zz <= -1),
                                     "brier_assumed": float(np.mean((p[ok] - beat) ** 2)), "brier_half": float(np.mean((0.5 - beat) ** 2))})
-    out: Dict[str, Any] = {"ranges": {}, "direction": {}}
+    out: Dict[str, Any] = {"ranges": {}, "direction": {}, "touch": {str(h): forecast_touch.read(touches[h]) for h in HORIZONS}}
     for h in HORIZONS:
         days = ranges[h]
         fixed = days[:READ_AT] if len(days) >= READ_AT else None
@@ -500,19 +507,23 @@ def stock_range(row: Dict[str, Any], doc: Dict[str, Any]) -> Dict[str, Any]:
 
 def write_status(base: Path, loaders: Dict[str, Callable[[str], List[Dict[str, Any]]]]) -> Dict[str, Any]:
     """The view file: the historical check as stored, each market's record and the figures of the days that have ended."""
+    from terminal.qsf import forecast_touch
     base = Path(base)
-    test = check_result(base)
+    test, touch_test = check_result(base), forecast_touch.check_result(base)
     out: Dict[str, Any] = {"status": "REAL", "version": VERSION, "protocol": PROTOCOL, "written_at": _utcnow().isoformat(), "first": FIRST, "horizons": list(HORIZONS),
-                           "bands": {str(k): list(v) for k, v in BANDS.items()}, "ic_assumed": IC_ASSUMED, "limits": LIMITS, "markets": {}}
+                           "bands": {str(k): list(v) for k, v in BANDS.items()}, "ic_assumed": IC_ASSUMED, "limits": LIMITS, "markets": {},
+                           "touch": {"version": forecast_touch.VERSION, "protocol": forecast_touch.PROTOCOL, "first": forecast_touch.FIRST, "grid": list(forecast_touch.GRID),
+                                     "tolerance": {str(k): v for k, v in forecast_touch.TOLERANCE.items()}, "basis": "close", "limits": forecast_touch.LIMITS}}
     for market, loader in loaders.items():
         docs = _docs(base, market)
         m: Dict[str, Any] = {"record": {"sessions": len(docs), "first": docs[0]["session"] if docs else None, "last": docs[-1]["session"] if docs else None},
                              "ic_evidence": {s: IC_EVIDENCE[(market, s)] for s in DIRECTION_H},
-                             "test": None if not test or market not in test.get("markets", {}) else {k: test["markets"][market].get(k) for k in ("verdict", "days", "first", "last", "mean_stocks", "horizons", "failed")}}
+                             "test": None if not test or market not in test.get("markets", {}) else {k: test["markets"][market].get(k) for k in ("verdict", "days", "first", "last", "mean_stocks", "horizons", "failed")},
+                             "touch_test": None if not touch_test or market not in touch_test.get("markets", {}) else {k: touch_test["markets"][market].get(k) for k in ("verdict", "days", "first", "last", "mean_stocks", "horizons", "failed")}}
         if docs:
             tickers = sorted({r["ticker"] for d in docs for r in d["rows"]})
             adj, dates = matrix(tickers, loader, first=docs[0]["session"])
-            m["today"] = today(docs[-1])
+            m["today"] = {**today(docs[-1]), "touch": docs[-1].get("touch")}
             m["followed"] = follow(docs, adj, dates, {t: j for j, t in enumerate(tickers)})
         out["markets"][market] = m
     path = base / VIEW

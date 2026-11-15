@@ -527,6 +527,11 @@ python app.py terminal-agent uninstall # 멈추고 launchd 작업 제거
   시험했습니다(`terminal/qsf/research_kr_sue.py`, `qsf kr-sue-prepare|run`). 20거래일 순위는 설명하지만(IC +0.034), 기존 주제
   9개를 빼면 남는 것이 미리 정한 기준에 못 미쳐(IC +0.015, 기준 0.02) `A_NOT_INDEPENDENT`입니다. 점수에 넣지 않았습니다
   (`reports/QSF_KR_SUE_PROTOCOL.md`, `reports/QSF_KR_SUE_RESULTS.md`).
+* **예측 층 FC-2, 기준에 닿을 가능성(2026-11-15):** FC-1의 범위는 N거래일 뒤의 종가에 대한 것이라, 그 사이에 손절·목표 기준에 닿을
+  가능성을 따로 냅니다(`terminal/qsf/forecast_touch.py`, `qsf forecast-touch-test`). 종가 기준이며(프로그램의 손절·목표 규칙이 종가를
+  봅니다), 거리는 FC-1의 지평 변동성 단위이고, 가능성은 그날 종목들의 과거 경로에서 읽습니다. 2026-11-16 거래일부터 FC-1 기록에
+  그날의 표를 함께 싣고 끝난 날마다 채점합니다. 점수·한도·주문 계획은 읽지도 바꾸지도 않습니다
+  (`reports/QSF_FORECAST_TOUCH_PROTOCOL.md`).
 * **미국 13F 보유 기관 수 변화(2026-11-15):** 분기마다 13F를 내는 기관 가운데 종목을 보유한 기관 수의 변화를 한 번 시험했습니다
   (`terminal/qsf/research_us_13f.py`, `qsf us-13f-reduce|prepare|run`). 마감일(기준일 + 45일)까지 접수된 공시만 쓰고, 종목은 가격만으로
   잇습니다. 20거래일 IC +0.006, 63거래일 IC +0.017로 두 지평 모두 `NO_EVIDENCE`입니다. 점수에 넣지 않았습니다. SEC 자료 파일(3GB)과
