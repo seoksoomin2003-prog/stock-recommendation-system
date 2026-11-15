@@ -105,7 +105,7 @@ def test_a_stored_table_is_read_between_grid_points_and_not_beyond_them():
     assert doc["version"] == "FC-2" and doc["basis"] == "close" and doc["grid"] == list(ft.GRID) and set(doc["horizons"]) == {"5", "20"}
     p = doc["horizons"]["20"]["down"]
     assert ft.at_distance(doc, 20, "down", 1.0) == pytest.approx(p[3]) and ft.at_distance(doc, 20, "down", 1.25) == pytest.approx((p[3] + p[4]) / 2)
-    assert ft.at_distance(doc, 20, "down", 0.1) is None and ft.at_distance(doc, 20, "up", 2.5) is None and ft.at_distance(doc, 20, "up", float("nan")) is None
+    assert ft.at_distance(doc, 20, "down", 0.1) is None and ft.at_distance(doc, 20, "up", 2.5) is None and ft.at_distance(doc, 20, "up", float("nan")) is None and ft.at_distance(doc, 20, "up", None) is None
 
 
 def test_a_recorded_day_is_scored_from_its_own_table_and_read_once_at_the_fixed_count(monkeypatch):
@@ -157,3 +157,40 @@ def test_the_fixed_numbers_are_the_protocol_s():
     assert ft.FIRST == "2026-11-16" and ft.CROWDED == 2.0 and str(ft.REPORT) == "reports/qsf/QSF_FORECAST_TOUCH_TEST.json"
     for words in ("0.25, 0.5, 0.75, 1.0, 1.5, 2.0", "| ±5 | ±5 | ±5 | ±5 | ±3 | ±2 |", "2026-11-16", "20,000개 미만", "종가 기준", "240개", "QSF_FORECAST_TOUCH_TEST.json", "예측의 2배"):
         assert words in text, words
+
+
+def test_the_screen_gets_the_stored_table_the_stocks_volatility_and_the_stored_check(tmp_path, monkeypatch):
+    from terminal.qsf import kr_forward as kf
+    from tests.test_forecast import recorded
+    recorded(tmp_path, monkeypatch)
+    doc = kf._read_day(tmp_path / fc.FOLDERS["US"], "2026-11-16")
+    row = next(r for r in doc["rows"] if r["ticker"] == "T010")
+    got = fc.stock(tmp_path, "US", "T010")
+    assert got["ranges"]["20"]["vol"] == row["vol"]["20"] and got["ranges"]["5"]["vol"] == row["vol"]["5"]
+    t = got["touch"]
+    assert t["version"] == "FC-2" and t["basis"] == "close" and t["first"] == "2026-11-16" and t["grid"] == list(ft.GRID) and t["table"] == doc["touch"]
+    assert t["test"] is None and "종가 기준" in t["note"] and t["limits"] == ft.LIMITS and t["tolerance"]["1.5"] == 0.03
+    adj = walk(days=560, seed=2)
+    ft.run_once(tmp_path, log=lambda *_: None, loaders=lambda base: {"US": (adj, [f"d{n:04d}" for n in range(560)], lambda i: np.arange(60))})
+    cells = fc.stock(tmp_path, "US", "T010")["touch"]["test"]["horizons"]["20"]["down"]
+    assert [c["distance"] for c in cells] == list(ft.GRID) and set(cells[0]) == {"distance", "forecast", "real", "gap", "tolerance", "pass", "by_vol", "crowded_share", "worst_year"}
+    assert len(cells[0]["by_vol"]) == 3 and fc.stock(tmp_path, "KR", "005930")["status"] == "NO_RECORD"
+
+
+def test_a_day_recorded_before_the_table_shows_no_probability_rather_than_a_made_up_one(tmp_path, monkeypatch):
+    from tests.test_forecast import recorded
+    bars = recorded(tmp_path, monkeypatch, days_in=("2026-11-13",))
+    got = fc.stock(tmp_path, "US", "T010")
+    assert got["status"] == "REAL" and got["session"] == "2026-11-13" and got["touch"]["table"] is None and got["touch"]["first"] == "2026-11-16"
+    fc.write_status(tmp_path, {"US": lambda t: bars.get(t) or []})
+    view = fc.view(tmp_path, "US")
+    assert view["touch"]["table"] is None and view["touch"]["grid"] == list(ft.GRID) and view["followed"]["touch"]["20"]["matured"] == 0
+
+
+def test_the_screen_says_what_the_number_is_and_is_not():
+    from pathlib import Path
+    js = (Path(__file__).resolve().parents[1] / "terminal" / "static" / "forecast.js").read_text(encoding="utf-8")
+    for text in ("fcTouchLines(d, levels)", "가까워서 대부분 닿음", "멀어서 표 밖", "이미 기준을 지남", "비워 둔 것이며 0이 아닙니다", "어느 쪽에 먼저 닿는지는 계산하지 않습니다",
+                 "점수와 무관합니다", "주문 계획은 이 숫자로 바뀌지 않습니다", "과거 점검 미달", "예측 → 실제", "esc(t.note)"):
+        assert text in js, text
+    assert "종가 기준" in ft.NOTE and "오를지 내릴지는 말하지 않습니다" in ft.NOTE and "장중" in ft.NOTE

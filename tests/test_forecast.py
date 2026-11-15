@@ -357,4 +357,4 @@ def test_the_screen_reads_the_two_routes_and_says_what_the_range_is_not():
     assert "/api/qsf/forecast-stock?t=" in js and "/api/qsf/forecast?market=" in js
     for text in ("오를지 내릴지는 말하지 않습니다", "가정이며 예측이 아닙니다", "점수·순위·한도·주문 계획에 쓰이지 않습니다", "비워 둔 것이며 0이 아닙니다", "판정이 아니며", "d.path_note"):
         assert text in js
-    assert "닿을" in fc.PATH_NOTE and "계산하지 않습니다" in fc.PATH_NOTE
+    assert "닿을" in fc.PATH_NOTE and "FC-2" in fc.PATH_NOTE

@@ -56,7 +56,7 @@ IC_REASON = {("US", "SWING"): "과거 검증(2014~2026)에서 점수가 높을�
              ("US", "LONG_TERM"): "과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다(NO_EVIDENCE).",
              ("KR", "SWING"): "2026-11-11에 구성을 바꿔 과거 성적이 없습니다. 이전 구성은 IC +0.028, t 1.90으로 기준(t 2.24)에 못 미쳤습니다.",
              ("KR", "LONG_TERM"): "지금 대상(시가총액 상위 300) 안에서 과거 기준에 못 미쳤습니다(IC +0.052, t 2.46이지만 전반 구간의 비용 차감 스프레드가 음수)."}
-PATH_NOTE = "범위는 그 거래일 수 뒤의 종가에 대한 것입니다. 그 사이에 한 번이라도 어떤 가격에 닿을 가능성은 이보다 높고, 이 판에서는 계산하지 않습니다."
+PATH_NOTE = "범위는 그 거래일 수 뒤의 종가에 대한 것입니다. 그 사이에 한 번이라도 어떤 가격에 닿을 가능성은 이보다 높고, '기준에 닿을 가능성'(FC-2)에 따로 적습니다."
 LIMITS = ["범위 예측은 오를지 내릴지를 말하지 않습니다. 움직임의 크기만 말합니다.",
           "한국 2010~2026, 미국 2011~2026 가격은 수익 시험에 이미 여러 번 쓴 구간입니다. 범위의 폭을 점검한 것은 이번이 처음입니다.",
           "폭을 과거 결과에 맞추는 방식이라 평균 포함률은 목표 근처가 되기 쉽습니다. 시장이 급변한 날에는 여러 종목이 한꺼번에 범위를 벗어납니다.",
@@ -584,6 +584,7 @@ def stock(base: Path, market: str, ticker: str) -> Dict[str, Any]:
     if market not in FOLDERS:
         raise ValueError("INVALID_MARKET")
     head = {"version": VERSION, "protocol": PROTOCOL, "market": market, "ticker": ticker}
+    from terminal.qsf import forecast_touch
     doc, state = _newest(base, market)
     if doc is None:
         return {**head, "status": state}
@@ -591,7 +592,8 @@ def stock(base: Path, market: str, ticker: str) -> Dict[str, Any]:
     if row is None:
         return {**head, "status": "NOT_IN_RECORD", "session": doc["session"], "universe": len(doc["rows"])}
     out = {**head, "status": "REAL", "session": doc["session"], "recorded_at": doc.get("recorded_at"), "universe": len(doc["rows"]), "close": row["close"],
-           "ranges": {}, "test": _test_brief(base, market), "bands": {str(k): list(v) for k, v in BANDS.items()}, "ic_assumed": doc.get("ic_assumed", IC_ASSUMED), "path_note": PATH_NOTE, "direction": {}}
+           "ranges": {}, "test": _test_brief(base, market), "bands": {str(k): list(v) for k, v in BANDS.items()}, "ic_assumed": doc.get("ic_assumed", IC_ASSUMED), "path_note": PATH_NOTE, "direction": {},
+           "touch": forecast_touch.screen(doc, base, market)}
     priced = stock_range(row, doc)["ranges"]
     for h in HORIZONS:
         vol, k, r = row["vol"][str(h)], doc["k"][str(h)], priced[str(h)]
@@ -600,7 +602,7 @@ def stock(base: Path, market: str, ticker: str) -> Dict[str, Any]:
             continue
         vols = sorted(x["vol"][str(h)] for x in doc["rows"] if x["vol"][str(h)] is not None)
         below = sum(1 for v in vols if v < vol)
-        out["ranges"][str(h)] = {**r, "half_width50": math.exp(k["k50"] * vol) - 1, "log_half80": k["k80"] * vol, "log_half50": k["k50"] * vol,
+        out["ranges"][str(h)] = {**r, "vol": vol, "half_width50": math.exp(k["k50"] * vol) - 1, "log_half80": k["k80"] * vol, "log_half50": k["k50"] * vol,
                                  "source": k["source"], "vol_third": min(2, below * 3 // len(vols)), "forecast": len(vols)}
     for strategy, key in (("SWING", "swing"), ("LONG_TERM", "long")):
         side = row.get(key)
@@ -619,5 +621,6 @@ def view(base: Path, market: str) -> Dict[str, Any]:
            "direction_horizons": dict(DIRECTION_H), "ic_reason": {s_: IC_REASON[(market, s_)] for s_ in DIRECTION_H}}
     if not m:
         return {**out, "status": "NO_RECORD"}
+    from terminal.qsf import forecast_touch
     check = kf.verify(base, FOLDERS[market])
-    return {**out, "written_at": s.get("written_at"), "integrity": check["status"], **m}
+    return {**out, "written_at": s.get("written_at"), "integrity": check["status"], **m, "touch": forecast_touch.screen(_newest(base, market)[0], base, market)}

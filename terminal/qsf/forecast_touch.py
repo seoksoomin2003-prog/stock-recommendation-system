@@ -30,6 +30,9 @@ LIMITS = ["닿을 가능성은 종가 기준입니다. 장중에 잠깐 닿았�
           "미국 과거 자료에는 인수·파산으로 사라진 종목 일부가 없습니다."]
 
 
+NOTE = "종가 기준입니다. 그 기간 안의 어느 날 종가가 기준에 이르거나 넘을 가능성이며, 장중에 잠깐 닿는 것은 세지 않습니다. 오를지 내릴지는 말하지 않습니다."
+
+
 def normal_touch(d: float) -> float:
     """A driftless random walk watched all the time reaches a level ``d`` volatilities away with this probability (reflection)."""
     return 2 * (1 - fc.phi(d))
@@ -203,7 +206,7 @@ def at_distance(table: Dict[str, Any], h: int, side: str, distance: float) -> Op
     """The stored probability at ``distance`` volatilities, read between the two grid points around it.  Nearer than the first
     grid point or further than the last has no stored value."""
     grid, p = table["grid"], table["horizons"][str(h)][side]
-    if not np.isfinite(distance) or distance < grid[0] or distance > grid[-1]:
+    if distance is None or not np.isfinite(distance) or distance < grid[0] or distance > grid[-1]:
         return None
     return float(np.interp(distance, grid, p))
 
@@ -241,3 +244,22 @@ def read(days: List[Dict[str, Any]]) -> Dict[str, Any]:
                    "verdict": "TOUCH_CALIBRATED" if all(c["pass"] for side in SIDES for c in table[side]) else "TOUCH_NOT_CALIBRATED"}
     return {"matured": len(days), "first": days[0]["session"] if days else None, "last": days[-1]["session"] if days else None,
             **({side: cells(days, side) for side in SIDES} if days else {}), "read_at": fc.READ_AT, "reading": reading}
+
+
+# ---------------------------------------------------------------------- the screen: reads stored records only, computes no forecast
+def brief(base: Path, market: str) -> Optional[Dict[str, Any]]:
+    """The stored historical check of one market in the few figures a reader needs; None when it has not been run."""
+    m = (check_result(base) or {}).get("markets", {}).get(market)
+    if not m:
+        return None
+    cells = lambda rows: [{"distance": c["distance"], "forecast": c["forecast"]["all"], "real": c["real"]["all"], "gap": c["gap"], "tolerance": c["tolerance"],      # noqa: E731
+                           "pass": c["pass"], "by_vol": c["by_vol"], "crowded_share": c["crowded_share"], "worst_year": c["worst_year"]} for c in rows]
+    return {"verdict": m.get("verdict"), "days": m.get("days"), "first": m.get("first"), "last": m.get("last"), "failed": m.get("failed") or [],
+            "horizons": {h: {side: cells(v[side]) for side in SIDES} for h, v in (m.get("horizons") or {}).items()}}
+
+
+def screen(doc: Optional[Dict[str, Any]], base: Path, market: str) -> Dict[str, Any]:
+    """What the screen shows of FC-2 beside one recorded day: that day's stored table (None for a day recorded before FIRST), the rule
+    and the stored check.  The screen reads a level's distance off the table; nothing is forecast here."""
+    return {"version": VERSION, "protocol": PROTOCOL, "basis": "close", "first": FIRST, "grid": list(GRID), "tolerance": {str(k): v for k, v in TOLERANCE.items()},
+            "table": (doc or {}).get("touch"), "test": brief(base, market), "note": NOTE, "limits": LIMITS}

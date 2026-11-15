@@ -528,6 +528,8 @@ def evaluate(score: np.ndarray, px: Any, rows: Sequence[int], picks: Sequence[in
     for d in used:
         per_quarter.setdefault(d["quarter"], []).append(d["ic"])
     qm = np.array([np.mean(v) for _, v in sorted(per_quarter.items())])
+    # Note 2026-11-15, after the run: `t_usual_lag` is validate.summarize's own t, whose lag is ceil(h / 21) = 1, 3 and 12.  It is not the
+    # research rule's lag (ceil(h / 5) = 4, 13, 51) the name suggests.  The verdict reads `t` at NW_LAG and is not affected.  Left as run.
     out.update(t_usual_lag=out["t"], t=validate.newey_west_t(ics, NW_LAG), lag=NW_LAG, top_excess=float(np.mean([d["top_excess"] for d in daily])),
                mean_stocks=float(np.mean([d["n"] for d in daily])),
                quarters={"n": int(len(qm)), "mean_ic": float(qm.mean()), "t_simple": float(qm.mean() / (qm.std(ddof=1) / np.sqrt(len(qm)))) if len(qm) > 2 and qm.std(ddof=1) > 0 else None},

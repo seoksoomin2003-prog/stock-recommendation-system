@@ -1,5 +1,6 @@
-// Forecast layer FC-1 on screen.  It shows stored records only: no range is computed here, every figure is about one stock,
-// and none of them enters a score, a rank, a limit or an order plan.  Rules: reports/QSF_FORECAST_PROTOCOL.md.
+// Forecast layer FC-1 and FC-2 on screen.  It shows stored records only: no range and no probability is computed here, every
+// figure is about one stock, and none of them enters a score, a rank, a limit or an order plan.
+// Rules: reports/QSF_FORECAST_PROTOCOL.md, reports/QSF_FORECAST_TOUCH_PROTOCOL.md.
 const FC_HORIZONS = ["5", "20"];
 const FC_THIRD = ["낮은", "중간", "높은"];
 const FC_WHERE = ["50% 범위 폭 안쪽", "50% 범위 밖 · 80% 범위 안", "80% 범위 밖"];
@@ -19,6 +20,54 @@ function fcTestReason(t, bands) {
   const span = `${esc((t.first || "").slice(0, 4))}~${esc((t.last || "").slice(0, 4))}, 평가일 ${t.days}개`;
   if (!t.failed.length) return `과거 점검(${span}): 80% 범위는 ${fcBand(bands["80"])}, 50% 범위는 ${fcBand(bands["50"])} 띠 안에 전체·전반·후반이 모두 들었습니다(12개 조건 충족).`;
   return `과거 점검(${span}) 미달 항목: ` + t.failed.map((x) => `${x.horizon}거래일 ${x.level}% 범위 ${FC_PART[x.part] || esc(x.part)} ${fcPct(x.value)}(띠 ${fcBand(x.band)})`).join(", ") + ".";
+}
+
+// ------------------------------------------------------------------ FC-2: how likely a close reaches a level on the way
+const FC_SIDE = { down: "아래", up: "위" };
+function fcTouchBadge(t) {
+  if (!t) return '<span class="badge STALE">과거 점검 없음</span>';
+  return t.verdict === "TOUCH_CALIBRATED" ? '<span class="badge REAL">과거 점검 통과</span>' : '<span class="badge UNAVAILABLE">과거 점검 미달</span>';
+}
+function fcTouchReason(t) {
+  if (!t) return "과거 점검 결과 파일이 없습니다. 닿을 가능성이 맞는지 확인되지 않은 상태입니다.";
+  const span = `${esc((t.first || "").slice(0, 4))}~${esc((t.last || "").slice(0, 4))}, 평가일 ${t.days}개`;
+  if (!t.failed.length) return `과거 점검(${span}): 지평 2개 × 아래·위 × 거리 6개 = 24칸 모두에서 예측과 실제로 닿은 비율의 차이가 허용 차이 안이었습니다(전체·전반·후반).`;
+  return `과거 점검(${span}) 미달 칸: ` + t.failed.map((x) => `${x.horizon}거래일 ${FC_SIDE[x.side] || esc(x.side)}쪽 거리 ${x.distance} ${FC_PART[x.part] || esc(x.part)} 차이 ${fcSigned(x.gap)}p(허용 ±${(x.tolerance * 100).toFixed(0)}p)`).join(", ") + ".";
+}
+// A value read between the two grid points around ``dist``; outside the grid there is no stored value.
+function fcAt(grid, values, dist) {
+  if (!grid || !values || !isNum(dist) || dist < grid[0] || dist > grid[grid.length - 1]) return null;
+  for (let k = 1; k < grid.length; k++) if (dist <= grid[k]) return values[k - 1] + (values[k] - values[k - 1]) * (dist - grid[k - 1]) / (grid[k] - grid[k - 1]);
+  return null;
+}
+// One level against one horizon: the distance in that stock's horizon volatility and the stored probability at it.
+function fcTouchCell(d, l, h) {
+  const r = d.ranges[h], tb = d.touch && d.touch.table, side = l.cls === "fc-stop" ? "down" : "up";
+  if ((side === "down" && l.log >= 0) || (side === "up" && l.log <= 0)) return { text: "이미 기준을 지남" };
+  if (!r || !isNum(r.vol) || r.vol <= 0) return { text: DASH };
+  const dist = Math.abs(l.log) / r.vol, grid = d.touch.grid;
+  if (!tb) return { dist, text: DASH };
+  if (dist < grid[0]) return { dist, text: "가까워서 대부분 닿음" };
+  if (dist > grid[grid.length - 1]) return { dist, text: "멀어서 표 밖" };
+  const p = fcAt(grid, tb.horizons[h][side], dist), cells = d.touch.test && d.touch.test.horizons[h] && d.touch.test.horizons[h][side];
+  const past = cells ? fcAt(grid, cells.map((c) => c.by_vol[r.vol_third]), dist) : null;
+  return { dist, p, past, side, text: `약 ${fcPct(p, 0)}` };
+}
+function fcTouchLines(d, levels) {
+  const hs = FC_HORIZONS.filter((h) => d.ranges[h]), t = d.touch;
+  if (!t || !levels.length || !hs.length) return "";
+  const head = `<h3>기준에 닿을 가능성 <span class="meta" style="margin:0">예측 층 FC-2 · 종가 기준</span> ${fcTouchBadge(t.test)}</h3>`;
+  if (!t.table) return `${head}<div class="meta">닿을 가능성은 ${esc(t.first)} 거래일 기록부터 보입니다. 지금 보이는 기록(${esc(d.session)})은 그 전에 쓴 것이라 표가 없습니다. 비워 둔 것이며 0이 아닙니다.</div>`;
+  const rows = levels.map((l) => { const cs = hs.map((h) => fcTouchCell(d, l, h)), far = cs[cs.length - 1];
+    return `<tr><td class="l"><b>스윙 ${l.name}</b></td><td class="num">${qsfPrice(l.v, d.market)}</td>
+      <td class="num" title="${hs[hs.length - 1]}거래일 변동성의 몇 배 거리인가">${isNum(far.dist) ? far.dist.toFixed(2) + "배" : DASH}</td>
+      ${cs.map((c) => `<td class="num">${isNum(c.p) ? `<b>${c.text}</b>` : c.text}</td>`).join("")}
+      <td class="num">${isNum(far.past) ? fcPct(far.past, 0) : DASH}</td></tr>`; }).join("");
+  const src = hs.map((h) => t.table.horizons[h].source === "EMPIRICAL" ? null : `${h}거래일은 과거 경로가 모자라 공식 값`).filter(Boolean).join(", ");
+  return `${head}<div class="tbl-wrap"><table class="fc-table"><thead><tr><th class="l">스윙 카드의 기준</th><th>가격</th><th title="가장 긴 지평의 변동성 대비 거리">변동성 대비 거리</th>
+      ${hs.map((h) => `<th title="앞으로 ${h}거래일 안의 어느 날 종가가 이 기준에 이르거나 넘을 가능성">${h}거래일 안에</th>`).join("")}
+      <th title="과거 점검에서 이 종목과 같은 변동성 묶음이 같은 거리에 실제로 닿은 비율(가장 긴 지평)">같은 묶음의 과거 실제</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="meta">${esc(t.note)} ${fcTouchReason(t.test)}${src ? ` ${src}.` : ""} 손절은 종가가 기준 이하로, 목표는 기준 이상으로 마감하는 경우입니다. 같은 거리라면 모든 종목에 같은 값이며 점수와 무관합니다. 하락장에서는 손절에 닿는 비율이 이보다 높았고, 손절과 목표 중 어느 쪽에 먼저 닿는지는 계산하지 않습니다. 손절·목표 기준과 주문 계획은 이 숫자로 바뀌지 않습니다.</div>`;
 }
 
 // ------------------------------------------------------------------ one stock: its ranges as prices
@@ -82,7 +131,7 @@ function fcStockHtml(d, cards) {
   return `${head}${fcStrip(d, levels)}
     <div class="tbl-wrap"><table class="fc-table"><thead><tr><th class="l">지평</th><th class="l">50% 범위 (종가 대비)</th><th class="l">80% 범위 (종가 대비)</th><th title="과거 점검에서 50% 범위가 실제로 담은 비율">과거 실제 (50%)</th><th title="과거 점검에서 80% 범위가 실제로 담은 비율">과거 실제 (80%)</th></tr></thead><tbody>${body}</tbody></table></div>
     <div class="meta">${fcTestReason(t, d.bands)} 이 종목은 기록일 ${r0.forecast}종목 중 변동성 <b>${FC_THIRD[third]}</b> 3분의 1입니다. ${bias}${t ? ` 시장이 급변한 평가일(${hs.map((h) => fcPct(t.horizons[h].stress_share)).join(", ")})에는 80% 범위가 종목 절반도 담지 못했습니다.` : ""}</div>
-    ${fcLevelLines(d, levels)}${fcDirection(d)}`;
+    ${fcLevelLines(d, levels)}${fcTouchLines(d, levels)}${fcDirection(d)}`;
 }
 async function fcStock(box, t, market, cards) {
   if (!box) return;
@@ -107,6 +156,19 @@ function fcTrackHtml(d, market) {
     return `<tr><td class="l">${QSF_STRAT[s]} (${h}거래일)</td><td class="num">${d.ic_evidence[s]}</td><td class="l" style="white-space:normal">${esc(d.ic_reason[s])}</td><td class="num">${x.matured || 0}</td>
       <td class="num">${x.matured ? [x.high, x.middle, x.low].map((v) => fcPct(v, 0)).join(" / ") : '<span class="missing">아직 없음</span>'}</td>
       <td class="num">${x.matured ? `${qsfNum(x.brier_assumed, 4)} / ${qsfNum(x.brier_half, 4)}` : '<span class="missing">아직 없음</span>'}</td></tr>`; }).join("");
+  const tt = d.touch, tq = tt && tt.test, tf = f.touch || {}, tab = tt && tt.table;
+  const tcell = (h, side, k) => { const c = tq && tq.horizons[h] && tq.horizons[h][side][k]; return c ? `${fcPct(c.forecast)} → ${fcPct(c.real)}` : DASH; };
+  const touchRows = tt ? tt.grid.map((g, k) => `<tr><td class="l">${g}배</td>${FC_HORIZONS.map((h) => ["down", "up"].map((sd) => `<td class="num">${tcell(h, sd, k)}</td>`).join("")).join("")}
+    <td class="num">${tab ? ["down", "up"].map((sd) => fcPct(tab.horizons["20"][sd][k])).join(" / ") : '<span class="missing">아직 없음</span>'}</td></tr>`).join("") : "";
+  const touchRecord = FC_HORIZONS.map((h) => { const x = tf[h] || {}, at1 = (sd) => (x[sd] && x[sd][3] ? `${fcPct(x[sd][3].forecast)} → ${fcPct(x[sd][3].real)}` : DASH), rd = x.reading;
+    return `<tr><td class="l">${h}거래일</td><td class="num">${x.matured || 0} / ${d.read_at}</td><td class="num">${x.matured ? at1("down") : '<span class="missing">아직 없음</span>'}</td><td class="num">${x.matured ? at1("up") : '<span class="missing">아직 없음</span>'}</td>
+      <td class="l">${rd ? (rd.verdict === "TOUCH_CALIBRATED" ? "허용 차이 안" : "허용 차이 밖") : `끝난 기록일 ${d.read_at}개에서 한 번 읽음`}</td></tr>`; }).join("");
+  const touchHtml = !tt ? "" : `<h3>기준에 닿을 가능성 FC-2 (${name}) ${fcTouchBadge(tq)}</h3>
+    <div class="meta">${esc(tt.note)} 손절·목표 기준이 그 종목 변동성의 몇 배 거리인지에 따라 읽습니다. ${fcTouchReason(tq)}</div>
+    <div class="tbl-wrap"><table><thead><tr><th class="l" title="그 지평의 변동성 대비 거리">거리</th><th title="과거 점검: 예측 → 실제">5거래일 아래</th><th>5거래일 위</th><th>20거래일 아래</th><th>20거래일 위</th><th title="가장 최근 기록일의 표: 아래 / 위">최근 기록 (20거래일)</th></tr></thead><tbody>${touchRows}</tbody></table></div>
+    <div class="meta">과거 점검 칸은 '예측 → 실제'입니다. 평균은 맞았지만 해마다 달랐고(하락장에서는 아래쪽이 예측보다 많이 닿음), 여러 종목이 한꺼번에 닿은 날이 있었으며, 변동성이 낮은 종목은 같은 거리에 더 자주 닿았습니다. 이 판에서는 고치지 않았습니다.</div>
+    <div class="tbl-wrap"><table><thead><tr><th class="l">지평</th><th>끝난 기록일</th><th title="거리 1배, 예측 → 실제">아래쪽 1배: 예측 → 실제</th><th>위쪽 1배: 예측 → 실제</th><th class="l">판정</th></tr></thead><tbody>${touchRecord}</tbody></table></div>
+    <div class="meta">표는 ${esc(tt.first)} 거래일 기록부터 싣습니다. 규칙: <code>${esc(tt.protocol)}</code></div>`;
   return `<div class="panel">${title(fcTestBadge(t))}${how}
     ${d.integrity !== "OK" ? '<div class="notice">기록 검사(해시 연결)에 실패했습니다. 아래 기록 수치를 믿지 마세요.</div>' : ""}
     <h3>과거 점검 (${name}, 한 번 실행)</h3>
@@ -120,6 +182,7 @@ function fcTrackHtml(d, market) {
     <h3>방향 쪽 숫자 <span class="meta" style="margin:0">기록만 하고 판정하지 않음</span></h3>
     <div class="tbl-wrap"><table><thead><tr><th class="l">점수</th><th title="과거 시험이 기준을 통과했을 때만 0이 아닙니다">근거 기준 설명력</th><th class="l">0인 이유</th><th>끝난 기록일</th><th title="표준화 점수가 +1 이상, 사이, −1 이하인 종목이 대상 절반을 이긴 비율">점수 높음 / 중간 / 낮음이 이긴 비율</th><th title="낮을수록 좋습니다. 늘 50%라고 말하면 0.25입니다">확률 오차: 가정 / 50%</th></tr></thead><tbody>${drow}</tbody></table></div>
     <div class="meta">설명력이 0이면 기대 초과 수익은 0, 대상 절반을 이길 확률은 50%입니다. 함께 적는 가정 값(설명력 ${d.ic_assumed})은 "약한 설명력이 있다면"의 숫자이며 예측이 아닙니다. 이 표는 라이브 전향 평가가 기준을 통과했을 때만 바뀝니다.</div>
+    ${touchHtml}
     <details class="fc-fold"><summary>알려진 한계 ${d.limits.length}가지</summary><ul class="qsf-list">${d.limits.map((x) => `<li>${esc(x)}</li>`).join("")}<li>${esc(d.path_note)}</li></ul></details>
     <div class="meta">규칙: <code>${esc(d.protocol)}</code></div></div>`;
 }
