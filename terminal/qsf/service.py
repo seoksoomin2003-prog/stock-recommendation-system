@@ -691,10 +691,12 @@ class QSF(ScreenViews):
         # The Korean universe is built from the day's bars.  From a partial download it comes out with a handful of stocks, all of
         # them at the session, so the share check below passes: on 2026-11-11 a scan of two stocks was recorded as the day.
         small = market == "KR" and whole_universe and len(tickers) < KR_MIN_UNIVERSE
-        verdict = session_data.record_verdict(len(tickers), at_session, self._download_failures, bench_ok, behind, small)
+        # Korea, whole universe: the share is taken of the stocks asked for, not of those that came back.
+        asked = max(len(tickers), getattr(self, "_kr_target", None) or 0) if market == "KR" and whole_universe else len(tickers)
+        verdict = session_data.record_verdict(asked, at_session, self._download_failures, bench_ok, behind, small)
         if record and not verdict["ready"]:
             # Recording now would permanently store a day of blocked or partial snapshots.  Retried at the next slot.
-            return {"status": "DATA_NOT_READY", "market": market, "session": day, "at_session": at_session, "tickers": len(tickers), "rows": [], "errors": {},
+            return {"status": "DATA_NOT_READY", "market": market, "session": day, "at_session": at_session, "tickers": len(tickers), "asked": asked, "rows": [], "errors": {},
                     "recorded_before": self.ledger.has_session(day, market), **self._not_ready_reason(pre, day, verdict)}
         rows, cards, errors = [], [], {}
         for k, t in enumerate(tickers, 1):
@@ -775,7 +777,13 @@ class QSF(ScreenViews):
             members = self.kr_traded_value_universe(master, sessions, latest, now)
             self._kr_universe_info = {"rule": "TRADED_VALUE", "members": int(len(members))}
         hs, he = acquisition.window(now, 800)
-        hb = acquisition.bars(YahooKRProvider(), members, hs, he, now, cache_dir, "history", fresh_at=latest)["bars"]
+        got = acquisition.bars(YahooKRProvider(), members, hs, he, now, cache_dir, "history", fresh_at=latest, whole=not tickers)
+        hb = got["bars"]
+        # The stocks asked for, and the requests that failed outright.  The scan used to count only the stocks it received: with
+        # one request of fifty lost it scored 250 of 300, found all 250 at the session and recorded the day (user decision 2026-11-15).
+        self._kr_target = None if tickers else int(len(members))
+        self._download_chunks = (len(members) + 49) // 50
+        self._download_failures += [str(e.get("error") or "EMPTY_REPLY") for e in got.get("events") or [] if e.get("kind") == "chunk_failed"]
         bars: Dict[str, List[Dict]] = {}
         for code, g in hb.groupby("ticker"):
             rows = g.sort_values("date")

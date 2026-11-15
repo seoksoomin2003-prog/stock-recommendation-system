@@ -31,6 +31,11 @@ class LabError(ValueError):
     pass
 
 
+# A download that brought fewer symbols than this share is a broken download, not the day (user decision 2026-11-15).  The check
+# of a day's row counts only the symbols received, so half a universe used to pass it, replace the panel and be recorded.
+MIN_RECEIVED_SHARE = 0.95
+
+
 class Lab:
     def __init__(self, base_dir: Path, now: Callable[[], datetime] = None, fetch: Callable = None,
                  universe_file: Optional[Path] = None):
@@ -82,6 +87,9 @@ class Lab:
         frames = panel_mod.download(u["tickers"] + [BENCH], "6y", self.fetch, progress)
         if not frames or BENCH not in frames:
             raise LabError("Yahoo에서 가격을 받지 못했습니다 (네트워크 또는 제공자 오류).")
+        asked = len(u["tickers"]) + 1
+        if len(frames) < MIN_RECEIVED_SHARE * asked:        # the panel on file stays, nothing is recorded, and the next run asks again
+            raise LabError(f"Yahoo에서 가격을 일부만 받았습니다 ({len(frames)}/{asked}종목). 이전 가격 묶음을 그대로 두고 오늘 기록은 쓰지 않습니다. 다음 실행에서 다시 받습니다.")
         p = Panel.from_frames(frames, {"universe_sha256": u["sha256"], "fetched_at": self.now().isoformat(),
                                        "requested": len(u["tickers"]) + 1, "received": len(frames),
                                        "source": "Yahoo Finance 일봉 (지연, auto_adjust=False)"})

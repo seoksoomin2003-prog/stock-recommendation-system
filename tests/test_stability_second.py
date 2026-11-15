@@ -288,3 +288,78 @@ def test_a_krx_page_that_is_not_json_is_a_failed_call_and_the_download_goes_on(t
     assert any("unreadable reply (ValueError)" in x for x in logs) and len(list(tmp_path.rglob("*.json.gz"))) == 3
     always = krx_history.download(tmp_path / "b", "k", lambda *a, **k: Html(), "2026-10-01", "2026-11-10", sleep=lambda s: None, log=lambda *_: None)
     assert json.dumps(always).count("TOO_MANY_FAILURES") == 1 and not list((tmp_path / "b").rglob("*.json.gz"))
+
+
+# ---------------------------------------------------------------------- A3: a panel download that brought a part of the universe
+def test_a_partial_panel_download_keeps_the_panel_on_file_and_records_nothing(tmp_path):
+    from terminal.lab import service as lab_service
+    from tests.test_terminal_3 import AFTER_CLOSE, _fetch_from, make_lab, synth
+    universe = tuple(f"S{k:02d}" for k in range(40))
+    names = list(universe) + ["SPY"]
+    full = synth(tickers=names, drift={t: 0.0005 for t in names})
+    lab = make_lab(tmp_path, AFTER_CLOSE, universe=universe)
+    lab.fetch = _fetch_from(synth(tickers=names[:20] + ["SPY"], drift={t: 0.0005 for t in names}))       # half of the stocks came back
+    with pytest.raises(lab_service.LabError, match="일부만 받았습니다 \\(21/41종목\\)"):
+        lab.update()
+    assert not lab.panel_file.exists() and lab.read_ledger()[0] == []                 # no panel swapped in, no challenger record
+    lab.fetch = _fetch_from(synth(tickers=names[:39] + ["SPY"], drift={t: 0.0005 for t in names}))       # one stock missing: 40 of 41 is the day
+    assert lab.refresh_panel()["status"] == "DOWNLOADED" and lab_service.MIN_RECEIVED_SHARE == 0.95
+    kept = lab.panel_file.read_bytes()
+    later = make_lab(tmp_path, WED_NIGHT, universe=universe)
+    later.fetch = _fetch_from(synth(end="2026-11-04", n=321, tickers=names[:10] + ["SPY"], drift={t: 0.0005 for t in names}))
+    with pytest.raises(lab_service.LabError):
+        later.update()
+    assert later.panel_file.read_bytes() == kept and later.panel().last == "2026-11-03" and full.last == "2026-11-03"     # the older panel stays, dated as it is
+
+
+# ---------------------------------------------------------------------- B2: the Korean scan counts the stocks it asked for
+def test_the_korean_scan_takes_its_share_of_the_stocks_asked_for(tmp_path):
+    from tests.test_kr_stale_cache import DAY, kr_scan
+
+    def scan(folder, received, target, failures=()):
+        from terminal.qsf.service import QSF
+        from tests.test_kr_stale_cache import NOW as KR_NOW
+        q = QSF(folder, now=lambda: KR_NOW)
+        codes = [f"{k:06d}" for k in range(received)]
+        pre = {c: {"bars": [{"date": DAY, "close": 1.0}], "bench": []} for c in codes}
+
+        def scan_input(tickers, progress, side_files):
+            q._kr_target, q._download_failures = target, list(failures)
+            return list(tickers or codes), pre
+        q._kr_scan_input = scan_input
+        q.regime = lambda market: {"session": DAY}
+        q._last_weekday_done = lambda: DAY
+        q.context = lambda t, market, prefetched=None: {"error": "NOT_SCORED_IN_THIS_TEST"}
+        q._write_ranks = lambda market, day, pre: None
+        return q.scan("KR")
+    lost = scan(tmp_path / "a", 250, 300, ["ConnectionError"])            # one request of fifty failed: 250 came back, all at the session
+    assert lost["status"] == "DATA_NOT_READY" and lost["reason"] == "DOWNLOAD_FAILED" and lost["tickers"] == 250 and lost["asked"] == 300 and lost["at_session"] == 250
+    quiet = scan(tmp_path / "b", 250, 300)                                # the same without a failed request on record
+    assert quiet["status"] == "DATA_NOT_READY" and quiet["reason"] == "NOT_PUBLISHED"
+    assert scan(tmp_path / "c", 270, 300)["status"] != "DATA_NOT_READY"   # 90% of the stocks asked for is the day
+    assert scan(tmp_path / "d", 269, 300)["status"] == "DATA_NOT_READY"
+    assert kr_scan(tmp_path / "e", 250)[1]["status"] != "DATA_NOT_READY"  # no target known (a scan input that does not say): as before
+
+
+def test_a_download_with_a_lost_request_is_not_kept_when_every_stock_is_needed(tmp_path):
+    import pandas as pd
+    from markets.kr import acquisition
+
+    class Provider:
+        def __init__(self, events):
+            self.events, self.calls = events, 0
+
+        def fetch(self, securities, start, end):
+            self.calls += 1
+            return pd.DataFrame({"ticker": ["005930"], "date": pd.to_datetime(["2026-11-12"]), "close": [1.0], "quality_flags": [""], "quality_status": ["OK"]})
+    secs, now = pd.DataFrame({"yahoo_symbol": ["005930.KS", "000660.KS"]}), pd.Timestamp("2026-11-13T00:30:00Z")
+    lost = Provider([{"kind": "chunk_failed", "symbols": 1, "error": "ConnectionError"}])
+    res = acquisition.bars(lost, secs, "2026-09-01", "2026-11-13", now, tmp_path / "a", "history", whole=True)
+    assert len(res["bars"]) == 1 and res["file"] is None and not list((tmp_path / "a").iterdir())         # returned, not stored
+    acquisition.bars(lost, secs, "2026-09-01", "2026-11-13", now, tmp_path / "a", "history", whole=True)
+    assert lost.calls == 2                                                                                # so the next run asks again
+    other = Provider([{"kind": "chunk_failed", "symbols": 1, "error": "ConnectionError"}])
+    acquisition.bars(other, secs, "2026-09-01", "2026-11-13", now, tmp_path / "b", "universe")           # other callers keep what they got, as before
+    assert len(list((tmp_path / "b").iterdir())) == 1
+    src = open(qsf_service.__file__, encoding="utf-8").read()
+    assert "whole=not tickers" in src and 'self._kr_target = None if tickers else int(len(members))' in src
