@@ -51,17 +51,22 @@ def _f(x: Any) -> float:
 
 
 def build_panel(root: Path, days: List[str]) -> Dict[str, np.ndarray]:
-    rows: Dict[str, Dict[int, List[float]]] = {}
-    for n, day in enumerate(days):
+    """One day is read into a small array and the day's lists are dropped before the next.  Holding every day's rows as Python
+    lists took about 500 MB for 570 days (1.7 million lists of six numbers), in whichever process met a new day first."""
+    per_day: List[Tuple[List[str], np.ndarray]] = []
+    for day in days:
+        rows: Dict[str, List[float]] = {}
         for b in BOARDS:
             with gzip.open(root / b / f"{day}.json.gz", "rt", encoding="utf-8") as fh:
                 for r in json.load(fh):
-                    rows.setdefault(str(r[0]), {})[n] = [_f(r[COLS[k]]) for k in range(6)]
-    codes = sorted(rows)
+                    rows[str(r[0])] = [_f(r[COLS[k]]) for k in range(6)]
+        per_day.append((list(rows), np.array(list(rows.values()), dtype=np.float64).reshape(len(rows), 6)))
+    codes = sorted({c for cs, _ in per_day for c in cs})
+    col = {c: j for j, c in enumerate(codes)}
     data = np.full((6, len(days), len(codes)), np.nan, dtype=np.float64)
-    for j, c in enumerate(codes):
-        for n, vals in rows[c].items():
-            data[:, n, j] = vals
+    for n, (cs, vals) in enumerate(per_day):
+        if cs:
+            data[:, n, [col[c] for c in cs]] = vals.T
     return {"dates": np.array(days), "codes": np.array(codes), "data": data}
 
 

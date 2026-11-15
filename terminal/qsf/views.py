@@ -137,10 +137,13 @@ class ScreenViews:
 
     def _ratios(self, market: str) -> Dict[str, Any]:
         def build():
-            snaps = [s for s in self.ledger.snapshots(market) if s.get("strategy") == "LONG_TERM" and s.get("model_version") == config.MODEL_VERSION]
-            if not snaps:
+            mine = lambda s: s.get("strategy") == "LONG_TERM" and s.get("model_version") == config.MODEL_VERSION      # noqa: E731
+            days = self.ledger.snapshots(market, keep=lambda s: s["data_date"] if mine(s) else None)
+            if not days:
                 return {"session": None, "rows": {}}
-            session = max(s["data_date"] for s in snaps)
+            session = max(days)
+            # only the newest day's snapshots are kept whole; the ledger is read twice instead of held in memory
+            snaps = self.ledger.snapshots(market, keep=lambda s: s if mine(s) and s["data_date"] == session else None)
             rows = {}
             for s in snaps:
                 if s["data_date"] != session:
@@ -384,7 +387,7 @@ class ScreenViews:
     def _validation(self) -> Dict[str, Any]:
         out = {"integrity": self.ledger.verify(), "cohorts": {}, "correlations": {}}
         for market in config.MARKETS:
-            snaps = self.ledger.snapshots(market=market)
+            snaps = self.ledger.snapshots(market=market, keep=ledger.light)       # the report reads a few fields of each snapshot
             loader = self._loader(market)
             bench = loader("SPY") if market == "US" else (self._history(["^KS11"])["data"] or {}).get("^KS11") or []
             for s in config.STRATEGIES:

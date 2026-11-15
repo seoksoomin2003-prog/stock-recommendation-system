@@ -96,8 +96,17 @@ def download(root: Path, key: str, get: Callable[..., Any], start: str, end: str
                     break
                 sleep(5)
                 continue
+            try:                    # a page that is not the data (a login or error page sent with status 200) is a failed call, not a crash
+                rows = slim(r.json().get("OutBlock_1") or [])
+            except (ValueError, AttributeError, TypeError) as exc:
+                fails += 1
+                log(f"{day} {board} unreadable reply ({type(exc).__name__})")
+                if fails >= 10:
+                    stopped = "TOO_MANY_FAILURES"
+                    break
+                sleep(5)
+                continue
             fails = 0
-            rows = slim(r.json().get("OutBlock_1") or [])
             if not rows and keep_empty_before and day >= keep_empty_before:
                 sleep(pause)
                 continue

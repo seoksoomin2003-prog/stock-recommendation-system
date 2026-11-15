@@ -5,11 +5,15 @@ Each function returns JSON-serialisable data or raises; the cache layer turns fa
 STALE / UNAVAILABLE.  Missing values are ``None`` (never 0).
 """
 import csv
+import fcntl
 import io
+import json
 import math
 import os
+import tempfile
 import threading
 import time
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import requests
@@ -23,6 +27,69 @@ GENERIC_UA = "QuantStockEngine-Terminal/1.0 (local personal research tool)"
 _sec_lock = threading.Lock()
 _sec_last = [0.0]
 SEC_MIN_INTERVAL = 0.15          # < 10 requests/second (SEC fair access)
+SEC_REFUSED = (403, 429)         # how SEC answers a caller over its limit (or one it does not accept)
+SEC_PAUSE_S = 10 * 60            # SEC lifts a rate block after about ten quiet minutes; asking on only renews it
+# One file for every process of this program on the machine.  The limit above used to be kept per process, so the morning scan
+# and the screen together could reach 13 requests a second.  The file holds the time of the last request and, after a refusal,
+# the time until which nothing is asked.  It holds no identity and no address.
+SEC_PACE_FILE = Path(tempfile.gettempdir()) / f"quantengine_sec_pace_{os.getuid()}.json"
+
+
+class SecPaused(RuntimeError):
+    pass
+
+
+def _sec_turn(pace_file: Optional[Path]) -> None:
+    """Waits until this request may go.  With a pace file the wait counts every process's requests and a pause set after a refusal
+    is honoured; without one (a stand-in ``http`` in tests) or when the file cannot be used, the limit is kept in this process."""
+    with _sec_lock:
+        if pace_file is not None:
+            try:
+                with open(pace_file, "a+", encoding="utf-8") as fh:
+                    fcntl.flock(fh, fcntl.LOCK_EX)
+                    fh.seek(0)
+                    try:
+                        rec = json.loads(fh.read() or "{}")
+                    except ValueError:
+                        rec = {}
+                    now = time.time()
+                    if float(rec.get("paused_until") or 0) > now:
+                        raise SecPaused("SEC PAUSED")              # a refusal a moment ago: no request is sent
+                    wait = SEC_MIN_INTERVAL - (now - float(rec.get("last") or 0))
+                    if 0 < wait <= SEC_MIN_INTERVAL:               # a clock set back would give a long wait: not trusted
+                        time.sleep(wait)
+                    fh.seek(0)
+                    fh.truncate()
+                    fh.write(json.dumps({"last": time.time()}))
+                    _sec_last[0] = time.time()
+                return
+            except OSError:
+                pass
+        wait = SEC_MIN_INTERVAL - (time.time() - _sec_last[0])
+        if wait > 0:
+            time.sleep(wait)
+        _sec_last[0] = time.time()
+
+
+def _sec_refused(pace_file: Optional[Path]) -> None:
+    if pace_file is None:
+        return
+    try:
+        with open(pace_file, "a+", encoding="utf-8") as fh:
+            fcntl.flock(fh, fcntl.LOCK_EX)
+            fh.seek(0)
+            fh.truncate()
+            fh.write(json.dumps({"last": time.time(), "paused_until": time.time() + SEC_PAUSE_S}))
+    except OSError:
+        pass
+
+
+def sec_pause_left() -> float:
+    """Seconds until SEC is asked again; 0 when no pause is in effect."""
+    try:
+        return max(0.0, float(json.loads(SEC_PACE_FILE.read_text(encoding="utf-8")).get("paused_until") or 0) - time.time())
+    except (OSError, ValueError, TypeError, AttributeError):
+        return 0.0
 
 
 class SecNotConfigured(RuntimeError):
@@ -107,12 +174,11 @@ def sec_user_agent() -> str:
 
 def _sec_get(url: str, http=requests):
     headers = {"User-Agent": sec_user_agent(), "Accept-Encoding": "gzip, deflate"}
-    with _sec_lock:
-        wait = SEC_MIN_INTERVAL - (time.time() - _sec_last[0])
-        if wait > 0:
-            time.sleep(wait)
-        _sec_last[0] = time.time()
+    pace = SEC_PACE_FILE if http is requests else None      # only real requests share the machine-wide pace and pause
+    _sec_turn(pace)
     r = http.get(url, headers=headers, timeout=30)
+    if r.status_code in SEC_REFUSED:
+        _sec_refused(pace)
     if r.status_code != 200:
         raise RuntimeError(f"SEC HTTP_{r.status_code}")        # never includes the identity
     return r.json()
@@ -121,12 +187,11 @@ def _sec_get(url: str, http=requests):
 def sec_text(url: str, http=requests) -> str:
     """Raw text of an EDGAR document (paced and identified like every SEC request)."""
     headers = {"User-Agent": sec_user_agent(), "Accept-Encoding": "gzip, deflate"}
-    with _sec_lock:
-        wait = SEC_MIN_INTERVAL - (time.time() - _sec_last[0])
-        if wait > 0:
-            time.sleep(wait)
-        _sec_last[0] = time.time()
+    pace = SEC_PACE_FILE if http is requests else None
+    _sec_turn(pace)
     r = http.get(url, headers=headers, timeout=30)
+    if r.status_code in SEC_REFUSED:
+        _sec_refused(pace)
     if r.status_code != 200:
         raise RuntimeError(f"SEC HTTP_{r.status_code}")
     return r.text

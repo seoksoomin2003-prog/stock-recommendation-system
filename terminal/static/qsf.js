@@ -203,6 +203,15 @@ async function qsfHistory(box, t, market) {
 }
 
 // planOpen: the holding plan starts open on a stock the user looked up, folded in the ranking where three cards stack.
+// 새로 받지 못해 저장해 둔 자료로 채점한 입력: 무엇을, 며칠 전 자료로, 왜 못 받았는지
+function qsfStaleNote(c) {
+  const old = (c.provenance && c.provenance.stale) || [];
+  if (!old.length) return "";
+  const why = { SecPaused: "SEC가 요청을 거절해 10분 동안 묻지 않는 중", EMPTY_RESPONSE: "빈 응답", ConnectionError: "연결 실패", Timeout: "응답 시간 초과", ReadTimeout: "응답 시간 초과" };
+  const one = (x) => `${esc(x.what)}${x.age_days === null || x.age_days === undefined ? "" : ` ${x.age_days < 1 ? "하루 안 된" : Math.round(x.age_days) + "일 전"} 자료`}${x.error ? ` (받지 못한 이유: ${esc(why[x.error] || x.error)})` : ""}`;
+  return `<div class="notice"><b>오래된 자료로 채점</b>: 새 자료를 받지 못해 저장해 둔 자료를 썼습니다. ${old.map(one).join(" · ")}. 다시 받아지면 점수가 달라질 수 있습니다.</div>`;
+}
+
 function qsfCard(c, planOpen = false) {
   const h = c.holding, m = c.market, e = c.entry;
   // Only the card of a holding's own style carries c.position.
@@ -224,6 +233,7 @@ function qsfCard(c, planOpen = false) {
       <div>${qsfLabel(c)}<div class="meta" style="margin:4px 0 0">구간: ${esc(c.band_label)}${c.diagnostic_only ? " · 진단용 점수" : ""}</div></div></header>
     <div class="qsf-meta"><span>신뢰도 <b>${QSF_CONF[c.confidence]}</b></span><span>데이터 반영률 <b>${(c.coverage * 100).toFixed(0)}%</b></span><span>시세 <b>${esc(c.data_date)}</b> ${qsfPrice(c.price, m)}</span><span>${esc(c.model_version)}</span></div>
     <p>${esc(c.why_summary)}</p>
+    ${qsfStaleNote(c)}
     ${c.gates.length ? `<div class="notice"><b>위험 게이트 ${c.gates.length}건</b>: ${c.gates.map((g) => esc(g.text)).join(" ")} 점수는 진단용으로 남기지만 실행 대상이 아닙니다.</div>` : ""}
     <h3>영역별 점수</h3><div class="qsf-domains">${Object.values(c.domains).map((v) => `<div><span>${esc(v.label)} <small class="meta" style="margin:0">${v.reference ? "참고 · 점수 미반영" : v.max_points + "점"}</small></span>${qsfBar(v.score_100)}</div>`).join("")}</div>
     <h3>진입</h3><p><b>${QSF_ENTRY[e.status]}</b>: ${esc(e.reason)}${e.zone ? ` 기준 구간 ${qsfPrice(e.zone.low, m)}~${qsfPrice(e.zone.high, m)}.` : ""}</p>
@@ -292,7 +302,7 @@ async function qsfRank() {
     ${top.map((r) => `<section class="qsf-top"><h3><span class="qr-rank num">${r.rank}위</span> ${esc(r.ticker)} <span class="meta" style="margin:0">${esc(r.name || "")}</span>${r.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(r.filing_events)}</h3><div class="qsf-top-body" data-top="${esc(r.ticker)}"></div></section>`).join("") || '<div class="empty">상위에 올릴 종목이 없습니다.</div>'}
     <h3 style="margin-top:18px">나머지 순위 <span class="meta" style="margin:0">눌러서 자세히</span></h3>
     <div class="qsf-rows">${rest.map(qsfRowHtml).join("")}</div>
-    <div class="meta">${d.tickers}종목 평가 · 생성 ${esc((d.generated_at || "").slice(0, 16))} UTC</div></div>`;
+    <div class="meta">${d.tickers}종목 평가 · 생성 ${esc((d.generated_at || "").slice(0, 16))} UTC${d.stale_inputs ? ` · <b>${d.stale_inputs.stocks}종목은 새 재무·공시 자료를 받지 못해 저장해 둔 자료로 채점했습니다 (가장 오래된 것 ${Math.round(d.stale_inputs.oldest_days)}일 전)</b>` : ""}</div></div>`;
   box.querySelectorAll(".qsf-row").forEach((btn) => {
     btn.onclick = () => {
       const panel = btn.nextElementSibling, open = btn.getAttribute("aria-expanded") === "true";

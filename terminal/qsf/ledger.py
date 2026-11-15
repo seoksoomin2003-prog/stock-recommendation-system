@@ -11,6 +11,8 @@ import hashlib
 import json
 import os
 import statistics
+import sys
+from array import array
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -31,6 +33,24 @@ def snapshot(card: Dict[str, Any]) -> Dict[str, Any]:
                        **({"scored": False, "reference_weight": f.get("reference_weight")} if f.get("scored") is False else {})} for f in card["factors"]]
     rec["target"], rec["stop"] = card["levels"].get("target"), card["levels"].get("stop")
     return rec
+
+
+LIGHT = ("market", "ticker", "strategy", "model_version", "score", "actionability", "data_date", "entry_session")
+
+
+def light(s: Dict[str, Any]) -> Dict[str, Any]:
+    """What the validation report reads of a snapshot: the fields ``validate`` uses and the factors' normalized values, packed.
+    A full snapshot takes about 34 KB in memory (measured 2026-11-15: 8,050 US snapshots, 270 MB); the report read every one
+    of every session at once, which grows by about 35 MB a US session.  This is under 1 KB."""
+    fs = [f for f in s.get("factors") or [] if f.get("normalized") is not None]
+    return {**{k: s.get(k) for k in LIGHT}, "norm": (tuple(sys.intern(str(f["factor"])) for f in fs), array("d", [f["normalized"] for f in fs]))}
+
+
+def _norm_of(s: Dict[str, Any]):
+    if "norm" in s:
+        return s["norm"]
+    fs = [f for f in s["factors"] if f.get("normalized") is not None]
+    return [f["factor"] for f in fs], [f["normalized"] for f in fs]
 
 
 class Ledger:
@@ -87,16 +107,27 @@ class Ledger:
                 fh.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
             return {"voided": name}
 
+    def has_session(self, session: str, market: str) -> bool:
+        """Whether a shard in effect holds ``session`` of ``market``.  Reads the index only."""
+        try:
+            return any(r.get("session") == session and r.get("market") == market for r in self._live_rows())
+        except Exception:
+            return False
+
     def _load(self, row: Dict[str, Any]) -> List[Dict[str, Any]]:
         with gzip.open(self.dir / row["file"], "rt", encoding="utf-8") as fh:
             return [json.loads(x) for x in fh]
 
-    def snapshots(self, market: Optional[str] = None, strategy: Optional[str] = None, ticker: Optional[str] = None) -> List[Dict[str, Any]]:
+    def snapshots(self, market: Optional[str] = None, strategy: Optional[str] = None, ticker: Optional[str] = None,
+                  keep: Optional[Callable[[Dict[str, Any]], Any]] = None) -> List[Any]:
+        """``keep``: applied to each snapshot as its shard is read, so only what the caller needs stays in memory; a snapshot it
+        maps to None is left out."""
         out = []
         for r in self._live_rows():
             if market and r["market"] != market:
                 continue
-            out += [s for s in self._load(r) if (not strategy or s["strategy"] == strategy) and (not ticker or s["ticker"] == ticker)]
+            got = (s for s in self._load(r) if (not strategy or s["strategy"] == strategy) and (not ticker or s["ticker"] == ticker))
+            out += list(got) if keep is None else [k for k in map(keep, got) if k is not None]
         return out
 
     def append(self, session: str, market: str, cards: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -173,20 +204,26 @@ def stability(prev: Optional[Dict[str, Any]], cur: Dict[str, Any], big: float = 
 
 def factor_correlations(snaps: List[Dict[str, Any]], min_obs: int = 30, flag: float = 0.7) -> Dict[str, Any]:
     """Diagnostics from stored past snapshots only, per cohort.  Never feeds back into a score."""
-    rows = [{f["factor"]: f["normalized"] for f in s["factors"] if f.get("normalized") is not None} for s in snaps]
-    names = sorted({k for r in rows for k in r})
+    rows = [_norm_of(s) for s in snaps]             # (factor names, values) of each snapshot, full or ``light``
+    names = sorted({k for keys, _ in rows for k in keys})
+    col = {k: j for j, k in enumerate(names)}
+    vals, have = np.zeros((len(rows), len(names))), np.zeros((len(rows), len(names)), dtype=bool)
+    for n, (keys, values) in enumerate(rows):
+        for k, v in zip(keys, values):
+            vals[n, col[k]], have[n, col[k]] = v, True
     pairs = []
     for i, a in enumerate(names):
-        for b in names[i + 1:]:
-            x = [(r[a], r[b]) for r in rows if a in r and b in r]
-            if len(x) < min_obs:
+        for j in range(i + 1, len(names)):
+            both = have[:, i] & have[:, j]
+            count = int(both.sum())
+            if count < min_obs:
                 continue
-            arr = np.array(x)
+            arr = np.column_stack((vals[both, i], vals[both, j]))      # the same two columns, in snapshot order, that a list of pairs gave
             if arr[:, 0].std() == 0 or arr[:, 1].std() == 0:
                 continue
             c = float(np.corrcoef(arr[:, 0], arr[:, 1])[0, 1])
             if abs(c) >= flag:
-                pairs.append({"a": a, "b": b, "corr": c, "n": len(x)})
+                pairs.append({"a": a, "b": names[j], "corr": c, "n": count})
     return {"status": "REAL" if rows and len(rows) >= min_obs else "INSUFFICIENT", "observations": len(rows), "high_pairs": sorted(pairs, key=lambda p: -abs(p["corr"]))}
 
 

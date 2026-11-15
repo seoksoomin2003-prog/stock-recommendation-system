@@ -67,7 +67,10 @@ def test_a_failed_read_keeps_the_stored_us_statement(tmp_path, monkeypatch):
     first = q._us_fund("AAA", bars, "2026-11-10")
     clock[0] += 30 * HOUR
     again = q._us_fund("AAA", bars, "2026-11-10")
-    assert len(calls) == 2 and again == first and again.get("status") != "UNAVAILABLE"
+    # the same figures as before, now with a mark saying that a stored copy stood in for the failed read (2026-11-15)
+    mark = again.pop("stale_inputs")
+    assert len(calls) == 2 and again == first and again.get("status") != "UNAVAILABLE" and "stale_inputs" not in first
+    assert [(x["what"], x["error"], x["age_days"]) for x in mark] == [("SEC 재무제표", "RuntimeError", 1.2)]
 
 
 def test_korean_statements_keep_seven_days_and_us_one(tmp_path, monkeypatch):

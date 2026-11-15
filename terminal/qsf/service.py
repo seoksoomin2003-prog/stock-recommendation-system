@@ -29,6 +29,18 @@ KR_MIN_UNIVERSE = 200       # a whole-market Korean scan with fewer stocks than 
 REGIME_MEMO_SECONDS = 30 * 60        # how long the process reuses a computed regime; its inputs have their own cache times below
 TTL = {"bars": 1800, "regime": 3600, "facts": 20 * 3600, "kr_facts": 7 * 86400, "subm": 20 * 3600, "info": 7 * 86400, "earn": 3 * 86400, "form4": 3650 * 86400}
 REGIME_FRESH_DAYS = 5
+EARN_NONE_TTL = 6 * 3600           # "the provider lists no date" is kept this long: each morning's scan still asks, a lookup or a retry an hour later does not
+EARN_PAUSE_S = 15 * 60             # after the provider refuses for too many requests, earnings dates are not asked for this long
+RATE_LIMITED = ("YFRateLimitError",)
+
+
+def _stale(what: str, res: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """One entry when a stored copy stood in for a failed request (``FileCache`` status STALE): what it is, when it was fetched,
+    how old it is and why the new request failed.  The score still reads the copy; the card and the record say that it did."""
+    if (res or {}).get("status") != "STALE":
+        return []
+    age = res.get("age_s")
+    return [{"what": what, "fetched_at": res.get("fetched_at"), "age_days": None if age is None else round(age / 86400, 1), "error": res.get("error")}]
 
 
 def _kr_fund_key(code: str, fiscal_month: int) -> str:
@@ -251,29 +263,37 @@ class QSF(ScreenViews):
         if not cik:
             return {"status": "UNAVAILABLE", "reason": "SEC CIK 없음 (ETF·지수이거나 미국 상장 기업이 아님)", "no_cik": True}
         res = self.cache.cached(f"annual4:{default_sources.facts_key(ticker, cik)}", TTL["facts"], lambda: self._annual(ticker, cik))
-        subm = self._us_subm(cik)
+        sres = self._us_subm_res(cik)
+        subm = sres["data"]
         if res["data"] is None:
             return {"status": "UNAVAILABLE", "reason": f"SEC 재무 조회 실패 ({res.get('error')})", "cik": cik}
         info = self.cache.cached(f"info:{ticker}", TTL["info"], lambda: self.src.yahoo_info(ticker))["data"] or {}
         fin = fundamentals.is_financial_sic((subm or {}).get("sic"))
         m = fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=fin, shares=fundamentals.us_total_shares(info, bars[-1]["close"], res["data"]), insider_pct=info.get("heldPercentInsiders"))
-        return {**m, "cik": cik, "name": fundamentals.us_display_name(info.get("longName"), info.get("shortName"), (subm or {}).get("name")), "sector": info.get("sector")}
+        old = _stale("SEC 재무제표", res)
+        return {**m, "cik": cik, "name": fundamentals.us_display_name(info.get("longName"), info.get("shortName"), (subm or {}).get("name")), "sector": info.get("sector"),
+                **({"stale_inputs": old} if old else {})}
 
     def _annual(self, ticker: str, cik: str) -> Dict[str, Any]:
         return fundamentals.drop_stale_series(fundamentals.extract_us(default_sources.facts_with_predecessors(ticker, cik, self.src.sec_companyfacts)))
 
     def _us_subm(self, cik: str) -> Optional[Dict[str, Any]]:
+        return self._us_subm_res(cik)["data"]
+
+    def _us_subm_res(self, cik: str) -> Dict[str, Any]:
+        """The stored SEC filing list with its cache status, so a list that could not be refreshed is named as such."""
         def fetch():
             s = self.src.sec_submissions(cik)
             rows = events.recent_filings(s)
             # Banks file thousands of prospectuses, so the list is filtered by form rather than cut by position.
             return {"name": s.get("name"), "sic": s.get("sic"), "oldest": rows[-1]["date"] if rows else None, "truncated": bool((s.get("filings") or {}).get("files")), "filings": [r for r in rows if r["form"] in events.KEPT_FORMS]}
-        return self.cache.cached(f"submforms:{cik}", TTL["subm"], fetch)["data"]
+        return self.cache.cached(f"submforms:{cik}", TTL["subm"], fetch)
 
     def _us_events(self, cik: Optional[str], as_of: str) -> Dict[str, Any]:
         if not cik:
             return {"status": "UNAVAILABLE", "reason": "SEC CIK 없음"}
-        subm = self._us_subm(cik)
+        sres = self._us_subm_res(cik)
+        subm = sres["data"]
         if not subm:
             return {"status": "UNAVAILABLE", "reason": "SEC 공시 조회 실패"}
         start = (date.fromisoformat(as_of) - timedelta(days=events.WINDOW)).isoformat()
@@ -292,13 +312,35 @@ class QSF(ScreenViews):
             r = self.cache.cached(f"form4:{f['accession']}", TTL["form4"], lambda u=url: events.parse_form4(self.src.sec_text(u)))
             parsed.append(r["data"])
         ev["insider"] = events.insider_summary(parsed)
+        old = _stale("SEC 공시 목록", sres)
+        if old:
+            ev["stale_inputs"] = old
         return ev
 
     def _earnings(self, ticker: str, market: str, as_of: str, code: Optional[str] = None, cik: Optional[str] = None) -> Dict[str, Any]:
         """Yahoo's calendar date when it has one ahead; otherwise an estimate from the company's own past dates, marked as such."""
+        key = f"earn:{ticker}"
+
         def fetch():
-            return self.src.yahoo_earnings_dates(ticker)
-        days = self.cache.cached(f"earn:{ticker}", TTL["earn"], fetch)["data"]
+            got = self.src.yahoo_earnings_dates(ticker)
+            if got:
+                return got
+            # No date listed.  An empty answer is not stored by the cache, so about 200 Korean and 260 US stocks were asked again
+            # at every scan and lookup.  It is stored as a marker instead, unless a date still ahead is on file: that case keeps
+            # its old path (the stored date stays in use and the provider is asked again next time).
+            kept = (self.cache.read(key) or {}).get("data")
+            return [] if isinstance(kept, list) and any(d > as_of for d in kept) else {"none": True}
+        kept = self.cache.read(key)
+        none_on_file = bool(kept) and isinstance(kept.get("data"), dict)
+        if getattr(self, "_earn_pause", 0.0) > time.time():        # the provider refused a moment ago: what is on file, no request
+            days = (kept or {}).get("data")
+        else:
+            res = self.cache.cached(key, EARN_NONE_TTL if none_on_file else TTL["earn"], fetch)
+            days = res["data"]
+            if res.get("error") in RATE_LIMITED:
+                self._earn_pause = time.time() + EARN_PAUSE_S
+        if isinstance(days, dict):                         # the marker: asked, none listed
+            days = []
         step = holding.stepper(market)
 
         def sessions_to(target: str) -> int:
@@ -398,6 +440,11 @@ class QSF(ScreenViews):
             return r.get("list") or []
         rep = self.cache.cached(f"krlist:{corp}", TTL["subm"], fetch_list)
         ev = events.classify_kr(rep["data"], as_of) if rep["data"] is not None else {"status": "UNAVAILABLE", "reason": "DART 공시 조회 실패"}
+        old_fund, old_list = _stale("DART 재무제표", res) if res["data"] else [], _stale("DART 공시 목록", rep)
+        if old_fund:
+            fund["stale_inputs"] = old_fund
+        if old_list and rep["data"] is not None:
+            ev["stale_inputs"] = old_list
         return {"fund": fund, "events": ev}
 
     def kr_company(self, code: str) -> Dict[str, Any]:
@@ -517,6 +564,9 @@ class QSF(ScreenViews):
                "provenance": {"price": "Yahoo Finance 일봉", "price_date": res["data_date"], "fund": (ctx.get("fund") or {}).get("source"), "fund_filed": (ctx.get("fund") or {}).get("filed"),
                               "events": (ctx.get("events") or {}).get("source"), "regime": {k: (v or {}).get("date") for k, v in (ctx.get("regime") or {}).items() if isinstance(v, dict)}},
                "not_advice": "규칙에 따른 계산 결과입니다. 주문을 실행하지 않으며 투자 자문이 아닙니다."}
+        old = list((ctx.get("fund") or {}).get("stale_inputs") or []) + list((ctx.get("events") or {}).get("stale_inputs") or [])
+        if old:                 # scored from stored copies because the new request failed: said on the card and in the record
+            out["provenance"]["stale"] = old
         out["why_summary"] = _why(out)
         if position:
             out["position"] = position
@@ -645,7 +695,7 @@ class QSF(ScreenViews):
         if record and not verdict["ready"]:
             # Recording now would permanently store a day of blocked or partial snapshots.  Retried at the next slot.
             return {"status": "DATA_NOT_READY", "market": market, "session": day, "at_session": at_session, "tickers": len(tickers), "rows": [], "errors": {},
-                    **self._not_ready_reason(pre, day, verdict)}
+                    "recorded_before": self.ledger.has_session(day, market), **self._not_ready_reason(pre, day, verdict)}
         rows, cards, errors = [], [], {}
         for k, t in enumerate(tickers, 1):
             try:
@@ -667,7 +717,9 @@ class QSF(ScreenViews):
         rec = None
         if record and cards:
             rec = self.ledger.append(session, market, cards)
+        aged = {c["ticker"]: max((x.get("age_days") or 0) for x in c["provenance"]["stale"]) for c in cards if c["provenance"].get("stale")}
         summary = {"status": "REAL" if cards else "UNAVAILABLE", "market": market, "session": session, "model_version": config.MODEL_VERSION, "tickers": len(tickers), "scored": len(cards), "errors": errors,
+                   **({"stale_inputs": {"stocks": len(aged), "oldest_days": max(aged.values()), "tickers": sorted(aged)[:20]}} if aged else {}),
                    "elapsed_seconds": round(time.time() - started, 1), "ledger": rec, "generated_at": self.now().isoformat(),
                    **({"price_source": self._kr_bars_info} if market == "KR" and getattr(self, "_kr_bars_info", None) else {}),
                    **({"universe": self._kr_universe_info} if market == "KR" and getattr(self, "_kr_universe_info", None) else {}), "rows": sorted(rows, key=lambda r: -(r["score"] or -1))}

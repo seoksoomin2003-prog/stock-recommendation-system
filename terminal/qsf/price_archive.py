@@ -42,7 +42,7 @@ def read(base: Path, market: str) -> Dict[str, Dict[str, Any]]:
 
 def recorded(base: Path, market: str) -> List[str]:
     """Every ticker the ledger holds for the market, from all live shards."""
-    return sorted({s["ticker"] for s in Ledger(base).snapshots(market) if s.get("ticker")})
+    return sorted(set(Ledger(base).snapshots(market, keep=lambda s: s.get("ticker") or None)))
 
 
 def _slim(bars: Optional[Bars]) -> Bars:

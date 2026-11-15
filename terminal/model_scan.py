@@ -88,6 +88,20 @@ def scanned_session(base: Path, session: str) -> Optional[Dict[str, Any]]:
     return None
 
 
+def scan_of(base: Path, session: str) -> Optional[Dict[str, Any]]:
+    """The newest full scan that scored ``session``, whatever it recommended; None when there is none.  The daily job asks this
+    before it scans a session that is not the one it expected, so a holiday does not get the day before scanned again."""
+    root = Path(base) / RUNS
+    for d in sorted((p for p in root.iterdir() if p.is_dir()), reverse=True) if root.exists() else []:
+        try:
+            v = json.loads((d / "validation_result.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if v.get("mode") == "kr_market_scan" and v.get("validation_scope") == "full" and v.get("latest_session") == session:
+            return {"run_id": v.get("run_id"), "executed_at": v.get("executed_at"), "recommendation_status": v.get("recommendation_status"), "latest_session": v.get("latest_session")}
+    return None
+
+
 def status(base: Path) -> Dict[str, Any]:
     """RUNNING while the started process lives, or while the daily job runs the same scan.  Afterwards DONE with the run it
     wrote, or FAILED when it wrote none."""

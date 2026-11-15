@@ -249,6 +249,16 @@ def _no_user_credentials(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _own_sec_pace_file(monkeypatch, tmp_path_factory):
+    """Tests never read or set the machine-wide SEC pace file (``terminal.sources.SEC_PACE_FILE``): a refusal faked in a test
+    would otherwise stop the real server's SEC requests for ten minutes."""
+    from terminal import sources
+    path = tmp_path_factory.getbasetemp() / "sec_pace.json"
+    path.unlink(missing_ok=True)
+    monkeypatch.setattr(sources, "SEC_PACE_FILE", path)
+
+
+@pytest.fixture(autouse=True)
 def _no_network(monkeypatch):
     if LIVE:
         yield

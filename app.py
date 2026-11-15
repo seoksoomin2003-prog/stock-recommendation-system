@@ -764,6 +764,8 @@ def _qsf_scan(args, q, market) -> int:
         except Exception as exc:
             print("prices: FAILED", type(exc).__name__)
     if res["status"] == "DATA_NOT_READY":           # 4: price requests failed outright (no connection, the Mac asleep); 3: the day is not out yet
+        if res.get("reason") == "KR_BEHIND" and res.get("recorded_before"):
+            return 5                                # no session newer than the one already in the ledger (the day after a Korean holiday)
         return 4 if res.get("reason") == "DOWNLOAD_FAILED" else 3
     return 0 if res["status"] == "REAL" else 2
 

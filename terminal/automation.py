@@ -182,7 +182,8 @@ def _online() -> bool:
 class Daily:
     def __init__(self, base: Path, now: Callable[[], datetime] = None, runner: Callable = None,
                  telegram: Callable = None, macos: Callable = None, terminal: Any = None, backup_dir: Path = None,
-                 clocks: Any = None, online: Callable[[], bool] = None, sleep: Callable[[float], None] = None):
+                 clocks: Any = None, online: Callable[[], bool] = None, sleep: Callable[[float], None] = None,
+                 kr_newest: Callable[[], Optional[str]] = None):
         self.base = Path(base)
         self.dir = self.base / "data" / "automation"
         self.state_file = self.dir / "state.json"
@@ -197,6 +198,8 @@ class Daily:
         # with a stand-in runner (tests) nothing goes out, so nothing waits for the network
         self.online = online or (_online if runner is None else (lambda: True))
         self.sleep = sleep or time.sleep
+        # the newest Korean session the provider has, asked before the long model scan; a stand-in runner asks nothing
+        self.kr_newest = kr_newest or (self._kr_newest_session if runner is None else (lambda: None))
 
     # ------------------------------------------------------------------ state
     def state(self) -> Dict[str, Any]:
@@ -277,6 +280,8 @@ class Daily:
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else "다운로드 끊김" if rc == 4 else f"코드 {rc}"}
             if name == "QSF_KR":
                 rc = self.runner(name, ["--market", "KR", "qsf", "scan"])
+                if rc == 5:             # the morning after a Korean holiday: no new session, and the last one is in the ledger.  Not a failure
+                    return {"status": WAITING, "at": at, "detail": "새 거래일 자료 없음(휴장일이거나 자료가 늦음) · 직전 거래일은 기록되어 있음"}
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else "다운로드 끊김" if rc == 4 else f"코드 {rc}"}
             if name in ("NEWS", "NEWS_KR"):
                 rc = self.runner(name, ["news", "record"] if name == "NEWS" else ["--market", "KR", "news", "record"])
@@ -295,22 +300,52 @@ class Daily:
                     return {"status": WAITING, "at": at, "detail": "화면에서 시작한 스캔 실행 중"}
                 day = _previous_weekday(self.now().astimezone(KST).date()).isoformat()      # the session a morning scan should score
                 done = model_scan.scanned_session(self.base, day)
+                again = None
                 if done:                                            # the button already scanned today's session: not scanned twice
                     run = done
                 else:
-                    rc = self.runner(name, ["--market", "KR", "scan"])
-                    run = model_scan.run_since(self.base, at)
-                    if run is None:                                 # exit 1 is also "no valid recommendation", which did write a run
-                        return {"status": FAILED, "at": at, "detail": f"코드 {rc}"}
+                    # A holiday, or a day the provider has not published: the scan would score the session before once more, and a
+                    # waiting step would do so every hour.  So the newest session is asked first (two small requests), and a session
+                    # already scanned is not scanned again.
+                    newest = self.kr_newest()
+                    again = model_scan.scan_of(self.base, newest) if newest and newest != day else None
+                    run = again
+                    if run is None:
+                        rc = self.runner(name, ["--market", "KR", "scan"])
+                        run = model_scan.run_since(self.base, at)
+                        if run is None:                             # exit 1 is also "no valid recommendation", which did write a run
+                            return {"status": FAILED, "at": at, "detail": f"코드 {rc}"}
                 track = self.runner("TRACK_KR", ["--market", "KR", "tracking", "update"])
-                notes = [run.get("recommendation_status"), "화면에서 이미 스캔함" if done else None,
-                         f"기준 거래일 {run.get('latest_session')}({day} 자료 아님: 휴장일이거나 자료가 늦음)" if run.get("latest_session") != day else None,
+                behind = run.get("latest_session") != day
+                mine = bool(done) and done.get("run_id") == (((self.state().get("sessions") or {}).get(session) or {}).get("SCAN_KR") or {}).get("scan_run")
+                notes = [run.get("recommendation_status"), "앞서 스캔함(추적 갱신만 다시)" if mine else "화면에서 이미 스캔함" if done else "이미 스캔한 거래일이라 다시 스캔하지 않음" if again else None,
+                         f"기준 거래일 {run.get('latest_session')}({day} 자료 아님: 휴장일이거나 자료가 늦음)" if behind else None,
                          None if track == 0 else f"추적 갱신 실패(코드 {track})"]
-                return {"status": OK, "at": at, "detail": " · ".join(x for x in notes if x) or None}
+                # A failed tracking update is a failure, and is tried again: the scan itself is found above and not repeated.
+                # A scan of an older session leaves the step waiting, so the day is scanned once its data is out.
+                return {"status": FAILED if track != 0 else WAITING if behind else OK, "at": at, "detail": " · ".join(x for x in notes if x) or None,
+                        "scan_run": run.get("run_id")}
             res = backup(self.base, session, self.backup_dir)
             return {"status": OK, "at": at, "detail": f"{res['files']}개 파일"}
         except Exception as exc:                                    # one failed step never stops the others
             return {"status": FAILED, "at": at, "detail": type(exc).__name__}
+
+    def _kr_newest_session(self) -> Optional[str]:
+        """The newest completed KRX session the provider shows, found the way the model scan finds it (index and anchor stock).
+        None when it cannot be told; the scan then runs as before."""
+        try:
+            from markets import session_data
+            from markets.kr import acquisition
+            from markets.kr.market_data import YahooKRProvider
+            prov, now = YahooKRProvider(), self.now()
+            idx = acquisition.index_bars(prov, *acquisition.window(now, 30), now)
+            try:
+                anchor = prov.fetch_index(session_data.KR_ANCHOR, *acquisition.window(now, 30))
+            except Exception:
+                anchor = None
+            return session_data.kr_calendar(idx["KOSPI"], anchor, now).latest.date().isoformat()
+        except Exception:
+            return None
 
     def _kr_holdings(self, st: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """KODEX holdings for the sector picks (``terminal.kr_etf_holdings``): tried at most once a week while the stored snapshot
@@ -550,7 +585,10 @@ class Daily:
         st["last_attempt"] = {"at": self.now().isoformat(), **res}
         self._save(st)
 
-    def _run(self, resend: bool) -> Dict[str, Any]:
+    def _session_moved(self, session: str) -> bool:
+        return nyse_calendar.latest_completed_session(self.now()).isoformat() != session
+
+    def _run(self, resend: bool, restarted: bool = False) -> Dict[str, Any]:
         session = nyse_calendar.latest_completed_session(self.now()).isoformat()
         st = self.state()
         steps = st["sessions"].setdefault(session, {})
@@ -573,6 +611,13 @@ class Daily:
         todo = sorted(set(pending), key=order.index)
         self._wait_for_network()
         for k, name in enumerate(todo):
+            # A run can outlast its session: the lid closes mid-run and opens the next day.  Each step finds its own session, so
+            # the steps left would record the new day while this run filed them, the backup and the message under the old one.
+            # The run starts over for the new session instead; the old session's unfinished steps are not run (no backfill).
+            if not restarted and self._session_moved(session):
+                st["last_cut"] = {"at": self.now().isoformat(), "session": session, "before": name, "detail": "실행 중 새 거래일이 완료되어 새 거래일로 다시 시작"}
+                self._save(st)
+                return self._run(resend, restarted=True)
             self._mark(name, k, len(todo))
             steps[name] = self._timed_step(name, session)
             self._save(st)
@@ -581,7 +626,8 @@ class Daily:
         # try at the end; "data not ready" is left alone, since the provider will not have it a minute later either.
         for k, name in enumerate(todo):
             first = steps[name]
-            if first.get("status") == FAILED and first.get("seconds", RETRY_QUICK_S) < RETRY_QUICK_S and first.get("detail") != "데이터 미준비":
+            if first.get("status") == FAILED and first.get("seconds", RETRY_QUICK_S) < RETRY_QUICK_S and first.get("detail") != "데이터 미준비" \
+                    and (restarted or not self._session_moved(session)):
                 self._mark(name, k, len(todo))
                 steps[name] = {**self._timed_step(name, session), "retried": True}
                 self._save(st)

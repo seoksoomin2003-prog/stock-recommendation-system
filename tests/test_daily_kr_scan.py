@@ -71,7 +71,8 @@ def test_a_session_already_scanned_is_not_scanned_twice(tmp_path, monkeypatch):
 def test_a_scan_whose_data_is_not_the_days_says_so(tmp_path, monkeypatch):
     d, calls, _ = scanning(tmp_path, monkeypatch, writes="2026-11-02")
     step = d.run()["steps"]["SCAN_KR"]
-    assert step["status"] == automation.OK and f"기준 거래일 2026-11-02({SESSION} 자료 아님" in step["detail"]
+    # a scan of the session before leaves the step waiting, so the day is scanned once its data is out (2026-11-15)
+    assert step["status"] == automation.WAITING and f"기준 거래일 2026-11-02({SESSION} 자료 아님" in step["detail"]
 
 
 def test_without_capital_the_scan_is_skipped_and_runs_once_capital_is_saved(tmp_path, monkeypatch):
@@ -100,10 +101,12 @@ def test_the_job_waits_for_a_scan_started_from_the_screen_and_the_button_waits_f
     assert ms.status(tmp_path)["status"] != "RUNNING"                               # another step of the job does not block the button
 
 
-def test_a_failed_outcome_update_does_not_undo_a_scan_that_was_written(tmp_path, monkeypatch):
+def test_a_failed_outcome_update_is_reported_and_the_scan_that_was_written_is_kept(tmp_path, monkeypatch):
     monkeypatch.setenv("QPP_CAPITAL_KRW", "10000000")
     d, calls, _ = make(tmp_path, rc={"TRACK_KR": 2})
     plain = d.runner
     d.runner = lambda name, argv: (write_run(tmp_path) if name == "SCAN_KR" else None, plain(name, argv))[1]
     step = d.run()["steps"]["SCAN_KR"]
-    assert step["status"] == automation.OK and step["detail"] == "REAL RECOMMENDATION · 추적 갱신 실패(코드 2)"
+    # the update failed twice (the run tries a quick failure once more); the scan ran once and is found again, not repeated (2026-11-15)
+    assert step["status"] == automation.FAILED and step["detail"] == "REAL RECOMMENDATION · 앞서 스캔함(추적 갱신만 다시) · 추적 갱신 실패(코드 2)"
+    assert calls.count("SCAN_KR") == 1 and calls.count("TRACK_KR") == 2
