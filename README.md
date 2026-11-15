@@ -527,6 +527,10 @@ python app.py terminal-agent uninstall # 멈추고 launchd 작업 제거
   시험했습니다(`terminal/qsf/research_kr_sue.py`, `qsf kr-sue-prepare|run`). 20거래일 순위는 설명하지만(IC +0.034), 기존 주제
   9개를 빼면 남는 것이 미리 정한 기준에 못 미쳐(IC +0.015, 기준 0.02) `A_NOT_INDEPENDENT`입니다. 점수에 넣지 않았습니다
   (`reports/QSF_KR_SUE_PROTOCOL.md`, `reports/QSF_KR_SUE_RESULTS.md`).
+* **미국 13F 보유 기관 수 변화(2026-11-15):** 분기마다 13F를 내는 기관 가운데 종목을 보유한 기관 수의 변화를 한 번 시험했습니다
+  (`terminal/qsf/research_us_13f.py`, `qsf us-13f-reduce|prepare|run`). 마감일(기준일 + 45일)까지 접수된 공시만 쓰고, 종목은 가격만으로
+  잇습니다. 20거래일 IC +0.006, 63거래일 IC +0.017로 두 지평 모두 `NO_EVIDENCE`입니다. 점수에 넣지 않았습니다. SEC 자료 파일(3GB)과
+  종목 번호는 저장소에 없습니다(`reports/QSF_US_13F_PROTOCOL.md`, `reports/QSF_US_13F_RESULTS.md`).
 * **날마다의 안정성:** `qsf stability`는 장부에서 같은 모델 버전의 연속된 거래일을 비교합니다(순위 상관, 구간 변화, 매수 구간
   교체율). 가격은 읽지 않습니다(`terminal/qsf/stability.py`).
 

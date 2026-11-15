@@ -1,0 +1,1049 @@
+{
+ "status": "TESTED",
+ "protocol": "reports/QSF_US_13F_PROTOCOL.md",
+ "cost": 0.0040206,
+ "lag": 13,
+ "tolerance_used": 0.005,
+ "fill": {
+  "overall": 0.9926792091965164,
+  "by_year": {
+   "2013": 0.9781735896077858,
+   "2014": 0.9818505286894745,
+   "2015": 0.9854605543432401,
+   "2016": 0.9856697568606557,
+   "2017": 0.9880517678891704,
+   "2018": 0.9882111204343144,
+   "2019": 0.9897798370843056,
+   "2020": 0.9949068139014815,
+   "2021": 0.9974828255034314,
+   "2022": 0.9997419354838709,
+   "2023": 1.0,
+   "2024": 0.9990067206177349,
+   "2025": 0.9997539293596455,
+   "2026": 0.9990568385007219
+  },
+  "days": 641,
+  "days_without_a_sample": 11,
+  "mean_sample": 465.02028081123245,
+  "mean_with_value": 461.65522620904835,
+  "passes": true
+ },
+ "scores": {
+  "BREADTH": {
+   "SWING_20": {
+    "horizon": 20,
+    "dates": 641,
+    "first": "2013-11-21",
+    "last": "2026-08-17",
+    "split": "2020-04-02",
+    "lag": 13,
+    "mean_n": 461.1170046801872,
+    "ic": 0.006308756829388441,
+    "t": 0.6261793814634874,
+    "ic_positive_share": 0.53198127925117,
+    "ic_sector_neutral": 0.010048537841861677,
+    "spread_net": -0.0019168102527662343,
+    "buy_excess": 0.0007823039616515052,
+    "buy_dates": 641,
+    "buy_trades": 88878,
+    "early": {
+     "ic": 0.01692933606829482,
+     "spread_net": 0.0002877744786656391,
+     "dates": 320
+    },
+    "late": {
+     "ic": -0.004278736492885831,
+     "spread_net": -0.004114527118991155,
+     "dates": 321
+    },
+    "t_usual_lag": 0.8295496188832404,
+    "top_excess": 0.0016641782283633945,
+    "mean_stocks": 461.1170046801872,
+    "quarters": {
+     "n": 52,
+     "mean_ic": 0.00489057677199425,
+     "t_simple": 0.4755376528923012
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.003643097820705676,
+     "dates": 539
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.02039493531644739,
+     "dates": 102
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": false,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   },
+   "QUARTER_63": {
+    "horizon": 63,
+    "dates": 639,
+    "first": "2013-11-21",
+    "last": "2026-08-03",
+    "split": "2020-03-26",
+    "lag": 13,
+    "mean_n": 459.9264475743349,
+    "ic": 0.017353904452666085,
+    "t": 1.1157314173525386,
+    "ic_positive_share": 0.5790297339593115,
+    "ic_sector_neutral": 0.015452821692440603,
+    "spread_net": 0.005334786648189944,
+    "buy_excess": 0.00447316230827912,
+    "buy_dates": 639,
+    "buy_trades": 88420,
+    "early": {
+     "ic": 0.029048716110112352,
+     "spread_net": 0.007699452783951981,
+     "dates": 319
+    },
+    "late": {
+     "ic": 0.005695639081649345,
+     "spread_net": 0.0029775100941021636,
+     "dates": 320
+    },
+    "t_usual_lag": 1.6963658748014485,
+    "top_excess": 0.008066559195863524,
+    "mean_stocks": 459.9264475743349,
+    "quarters": {
+     "n": 51,
+     "mean_ic": 0.017869304590556995,
+     "t_simple": 1.1272603512204789
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.01440907496497758,
+     "dates": 537
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.03285756557902616,
+     "dates": 102
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": true,
+     "spread_both_halves": true,
+     "buy_band": true
+    }
+   },
+   "LONG_252": {
+    "horizon": 252,
+    "dates": 602,
+    "first": "2013-11-21",
+    "last": "2025-11-04",
+    "split": "2019-11-14",
+    "lag": 13,
+    "mean_n": 452.0215946843854,
+    "ic": 0.013534338799920527,
+    "t": 0.7512289392722351,
+    "ic_positive_share": 0.5415282392026578,
+    "ic_sector_neutral": 0.019152424458029754,
+    "spread_net": 0.003894436682115544,
+    "buy_excess": 0.007013099124530631,
+    "buy_dates": 602,
+    "buy_trades": 81944,
+    "early": {
+     "ic": 0.03486716964899817,
+     "spread_net": 0.02323735403861438,
+     "dates": 301
+    },
+    "late": {
+     "ic": -0.007798492049157124,
+     "spread_net": -0.015448480674383295,
+     "dates": 301
+    },
+    "t_usual_lag": 0.771686915379752,
+    "top_excess": 0.01508508679758432,
+    "mean_stocks": 452.0215946843854,
+    "quarters": {
+     "n": 48,
+     "mean_ic": 0.014285704726522483,
+     "t_simple": 0.751490160747255
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.02399106633593177,
+     "dates": 502
+    },
+    "ic_spy_below_200d": {
+     "ic": -0.03895843343085594,
+     "dates": 100
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": false,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   }
+  },
+  "BREADTH_RESIDUAL": {
+   "SWING_20": {
+    "horizon": 20,
+    "dates": 641,
+    "first": "2013-11-21",
+    "last": "2026-08-17",
+    "split": "2020-04-02",
+    "lag": 13,
+    "mean_n": 461.1170046801872,
+    "ic": 0.006210809507951486,
+    "t": 1.1873054807666275,
+    "ic_positive_share": 0.5226209048361935,
+    "ic_sector_neutral": 0.007955038388461424,
+    "spread_net": -0.0023520784122646934,
+    "buy_excess": null,
+    "buy_dates": 0,
+    "buy_trades": 0,
+    "early": {
+     "ic": 0.010835535400634533,
+     "spread_net": -0.001567523696307227,
+     "dates": 320
+    },
+    "late": {
+     "ic": 0.0016004908610400361,
+     "spread_net": -0.0031341890325338184,
+     "dates": 321
+    },
+    "t_usual_lag": 1.5096509058284904,
+    "top_excess": 0.0015136289736573558,
+    "mean_stocks": 461.1170046801872,
+    "quarters": {
+     "n": 52,
+     "mean_ic": 0.0033950792578341313,
+     "t_simple": 0.5639452880340269
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.0026447378630958017,
+     "dates": 539
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.025055050846943767,
+     "dates": 102
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": true,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   },
+   "QUARTER_63": {
+    "horizon": 63,
+    "dates": 639,
+    "first": "2013-11-21",
+    "last": "2026-08-03",
+    "split": "2020-03-26",
+    "lag": 13,
+    "mean_n": 459.9264475743349,
+    "ic": 0.019884933968909394,
+    "t": 2.7376362143420248,
+    "ic_positive_share": 0.5805946791862285,
+    "ic_sector_neutral": 0.015442926184550345,
+    "spread_net": 0.0026214552375573344,
+    "buy_excess": null,
+    "buy_dates": 0,
+    "buy_trades": 0,
+    "early": {
+     "ic": 0.024239071684395264,
+     "spread_net": 0.0030572975184003713,
+     "dates": 319
+    },
+    "late": {
+     "ic": 0.01554440293378442,
+     "spread_net": 0.0021869749638419324,
+     "dates": 320
+    },
+    "t_usual_lag": 3.651873470123149,
+    "top_excess": 0.004559068541279344,
+    "mean_stocks": 459.9264475743349,
+    "quarters": {
+     "n": 51,
+     "mean_ic": 0.019885317211064096,
+     "t_simple": 2.320036452863313
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.01614754626690825,
+     "dates": 537
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.03956118098826837,
+     "dates": 102
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": true,
+     "ic_both_halves": true,
+     "spread_both_halves": true,
+     "buy_band": true
+    }
+   },
+   "LONG_252": {
+    "horizon": 252,
+    "dates": 602,
+    "first": "2013-11-21",
+    "last": "2025-11-04",
+    "split": "2019-11-14",
+    "lag": 13,
+    "mean_n": 452.0215946843854,
+    "ic": 0.011542880457876143,
+    "t": 1.3385957938690787,
+    "ic_positive_share": 0.5299003322259136,
+    "ic_sector_neutral": 0.009730869205875275,
+    "spread_net": 0.00044223923611437136,
+    "buy_excess": null,
+    "buy_dates": 0,
+    "buy_trades": 0,
+    "early": {
+     "ic": 0.01798053704664197,
+     "spread_net": 0.005566116186441307,
+     "dates": 301
+    },
+    "late": {
+     "ic": 0.005105223869110317,
+     "spread_net": -0.004681637714212565,
+     "dates": 301
+    },
+    "t_usual_lag": 1.3514513114078308,
+    "top_excess": 0.0030616944450623943,
+    "mean_stocks": 452.0215946843854,
+    "quarters": {
+     "n": 48,
+     "mean_ic": 0.011893635491002119,
+     "t_simple": 1.1028254058377875
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.012234785839041308,
+     "dates": 502
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.008069515444427014,
+     "dates": 100
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": true,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   }
+  },
+  "BREADTH_REL": {
+   "SWING_20": {
+    "horizon": 20,
+    "dates": 641,
+    "first": "2013-11-21",
+    "last": "2026-08-17",
+    "split": "2020-04-02",
+    "lag": 13,
+    "mean_n": 461.1170046801872,
+    "ic": 0.004390811148855766,
+    "t": 0.451926815028812,
+    "ic_positive_share": 0.5304212168486739,
+    "ic_sector_neutral": 0.008050057391337273,
+    "spread_net": -0.002490830585660645,
+    "buy_excess": 0.0007467505210928717,
+    "buy_dates": 641,
+    "buy_trades": 88859,
+    "early": {
+     "ic": 0.015481905491046555,
+     "spread_net": -0.00022967841305824698,
+     "dates": 320
+    },
+    "late": {
+     "ic": -0.006665731497564957,
+     "spread_net": -0.004744938670497926,
+     "dates": 321
+    },
+    "t_usual_lag": 0.5845086037599367,
+    "top_excess": 0.0008664474697530109,
+    "mean_stocks": 461.1170046801872,
+    "quarters": {
+     "n": 52,
+     "mean_ic": 0.002815997140619044,
+     "t_simple": 0.2833437147617985
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.001516187799396145,
+     "dates": 539
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.01958122277001986,
+     "dates": 102
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": false,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   },
+   "QUARTER_63": {
+    "horizon": 63,
+    "dates": 639,
+    "first": "2013-11-21",
+    "last": "2026-08-03",
+    "split": "2020-03-26",
+    "lag": 13,
+    "mean_n": 459.9264475743349,
+    "ic": 0.014071023596592375,
+    "t": 0.9508500419245929,
+    "ic_positive_share": 0.568075117370892,
+    "ic_sector_neutral": 0.011966599721380882,
+    "spread_net": 0.002979713444032603,
+    "buy_excess": 0.004143673503137155,
+    "buy_dates": 639,
+    "buy_trades": 88347,
+    "early": {
+     "ic": 0.026780659028055785,
+     "spread_net": 0.006452148016835262,
+     "dates": 319
+    },
+    "late": {
+     "ic": 0.001401105775852285,
+     "spread_net": -0.0004818697707300479,
+     "dates": 320
+    },
+    "t_usual_lag": 1.4301120396230413,
+    "top_excess": 0.004647209438737272,
+    "mean_stocks": 459.9264475743349,
+    "quarters": {
+     "n": 51,
+     "mean_ic": 0.014610321065541937,
+     "t_simple": 0.9701026610772219
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.011790310910247357,
+     "dates": 537
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.026078305092349957,
+     "dates": 102
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": true,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   },
+   "LONG_252": {
+    "horizon": 252,
+    "dates": 602,
+    "first": "2013-11-21",
+    "last": "2025-11-04",
+    "split": "2019-11-14",
+    "lag": 13,
+    "mean_n": 452.0215946843854,
+    "ic": 0.007841352019319316,
+    "t": 0.43590073900377846,
+    "ic_positive_share": 0.5199335548172758,
+    "ic_sector_neutral": 0.013700399237812196,
+    "spread_net": -0.0024335461398772443,
+    "buy_excess": 0.003828646525806765,
+    "buy_dates": 602,
+    "buy_trades": 81701,
+    "early": {
+     "ic": 0.031079094434546158,
+     "spread_net": 0.017907392457955293,
+     "dates": 301
+    },
+    "late": {
+     "ic": -0.015396390395907516,
+     "spread_net": -0.022774484737709776,
+     "dates": 301
+    },
+    "t_usual_lag": 0.4470681541166434,
+    "top_excess": 0.003942775906039353,
+    "mean_stocks": 452.0215946843854,
+    "quarters": {
+     "n": 48,
+     "mean_ic": 0.008447824802385775,
+     "t_simple": 0.43657544830912254
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.016818997084000753,
+     "dates": 502
+    },
+    "ic_spy_below_200d": {
+     "ic": -0.03722642620538148,
+     "dates": 100
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": false,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   }
+  },
+  "BREADTH_LEVEL": {
+   "SWING_20": {
+    "horizon": 20,
+    "dates": 641,
+    "first": "2013-11-21",
+    "last": "2026-08-17",
+    "split": "2020-04-02",
+    "lag": 13,
+    "mean_n": 461.1170046801872,
+    "ic": 0.010695093380739349,
+    "t": 1.7107318956020412,
+    "ic_positive_share": 0.5397815912636506,
+    "ic_sector_neutral": 0.012626252288269992,
+    "spread_net": -0.0025108200763772777,
+    "buy_excess": 0.0007318968676238865,
+    "buy_dates": 641,
+    "buy_trades": 88913,
+    "early": {
+     "ic": 0.010945432047863113,
+     "spread_net": -0.001250360115981082,
+     "dates": 320
+    },
+    "late": {
+     "ic": 0.01044553458485273,
+     "spread_net": -0.003767353370230183,
+     "dates": 321
+    },
+    "t_usual_lag": 2.1219655357380933,
+    "top_excess": 0.0008818184205594108,
+    "mean_stocks": 461.1170046801872,
+    "quarters": {
+     "n": 52,
+     "mean_ic": 0.011495719848923048,
+     "t_simple": 1.9140538690588509
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.01151363444754474,
+     "dates": 539
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.006369665586542239,
+     "dates": 102
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": true,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   },
+   "QUARTER_63": {
+    "horizon": 63,
+    "dates": 639,
+    "first": "2013-11-21",
+    "last": "2026-08-03",
+    "split": "2020-03-26",
+    "lag": 13,
+    "mean_n": 459.9264475743349,
+    "ic": 0.018082054902205977,
+    "t": 1.7708051243106855,
+    "ic_positive_share": 0.621283255086072,
+    "ic_sector_neutral": 0.019475720630413845,
+    "spread_net": 0.0015689121941378386,
+    "buy_excess": 0.0027041855904807307,
+    "buy_dates": 639,
+    "buy_trades": 88521,
+    "early": {
+     "ic": 0.022745802259012803,
+     "spread_net": 0.0046424819578136985,
+     "dates": 319
+    },
+    "late": {
+     "ic": 0.01343288175588917,
+     "spread_net": -0.0014950526640265347,
+     "dates": 320
+    },
+    "t_usual_lag": 2.6228713023219266,
+    "top_excess": 0.0033557699482449086,
+    "mean_stocks": 459.9264475743349,
+    "quarters": {
+     "n": 51,
+     "mean_ic": 0.018307441098181332,
+     "t_simple": 1.8057159280937605
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.020045181042568503,
+     "dates": 537
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.007746773163238569,
+     "dates": 102
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": true,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   },
+   "LONG_252": {
+    "horizon": 252,
+    "dates": 602,
+    "first": "2013-11-21",
+    "last": "2025-11-04",
+    "split": "2019-11-14",
+    "lag": 13,
+    "mean_n": 452.0215946843854,
+    "ic": 0.03972954182885056,
+    "t": 3.2869909035565197,
+    "ic_positive_share": 0.7774086378737541,
+    "ic_sector_neutral": 0.03994800752392943,
+    "spread_net": 0.017519538551257364,
+    "buy_excess": 0.012048651708807073,
+    "buy_dates": 602,
+    "buy_trades": 82563,
+    "early": {
+     "ic": 0.03920616210753686,
+     "spread_net": 0.025858355946367467,
+     "dates": 301
+    },
+    "late": {
+     "ic": 0.04025292155016426,
+     "spread_net": 0.009180721156147252,
+     "dates": 301
+    },
+    "t_usual_lag": 3.391080943753056,
+    "top_excess": 0.01291694561923861,
+    "mean_stocks": 452.0215946843854,
+    "quarters": {
+     "n": 48,
+     "mean_ic": 0.03980823414349443,
+     "t_simple": 3.3975070880532976
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.0399971995236806,
+     "dates": 502
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.0383859002008037,
+     "dates": 100
+    },
+    "verdict": "WEAK_POSITIVE_EVIDENCE",
+    "checks": {
+     "ic": true,
+     "t": true,
+     "ic_both_halves": true,
+     "spread_both_halves": true,
+     "buy_band": true
+    }
+   }
+  },
+  "BREADTH_FRESH": {
+   "SWING_20": {
+    "horizon": 20,
+    "dates": 205,
+    "first": "2013-11-21",
+    "last": "2026-08-17",
+    "split": "2020-03-05",
+    "lag": 13,
+    "mean_n": 460.94146341463414,
+    "ic": -0.0015062707815009305,
+    "t": -0.10506535615551489,
+    "ic_positive_share": 0.5073170731707317,
+    "ic_sector_neutral": -0.0003425598800051384,
+    "spread_net": -0.0012851753748801952,
+    "buy_excess": 0.00040277427348982096,
+    "buy_dates": 205,
+    "buy_trades": 28459,
+    "early": {
+     "ic": 0.00337625840250514,
+     "spread_net": -0.001841036304084969,
+     "dates": 102
+    },
+    "late": {
+     "ic": -0.006341396769545776,
+     "spread_net": -0.0007347111537259531,
+     "dates": 103
+    },
+    "t_usual_lag": -0.12208841521085338,
+    "top_excess": 0.0011559509100607874,
+    "mean_stocks": 460.94146341463414,
+    "quarters": {
+     "n": 52,
+     "mean_ic": -0.002893939943651045,
+     "t_simple": -0.18111627923895268
+    },
+    "ic_spy_above_200d": {
+     "ic": -0.003448050444808628,
+     "dates": 175
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.009820777254460651,
+     "dates": 30
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": false,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   },
+   "QUARTER_63": {
+    "horizon": 63,
+    "dates": 204,
+    "first": "2013-11-21",
+    "last": "2026-06-11",
+    "split": "2020-03-05",
+    "lag": 13,
+    "mean_n": 459.9362745098039,
+    "ic": 0.011964212567754073,
+    "t": 0.6054442414806745,
+    "ic_positive_share": 0.5882352941176471,
+    "ic_sector_neutral": 0.015606653592268512,
+    "spread_net": 0.00466698947429305,
+    "buy_excess": 0.003413004374254102,
+    "buy_dates": 204,
+    "buy_trades": 28276,
+    "early": {
+     "ic": 0.04059190893230486,
+     "spread_net": 0.011907604933609815,
+     "dates": 102
+    },
+    "late": {
+     "ic": -0.016663483796796722,
+     "spread_net": -0.002573625985023719,
+     "dates": 102
+    },
+    "t_usual_lag": 0.722671457320369,
+    "top_excess": 0.006355883065878919,
+    "mean_stocks": 459.9362745098039,
+    "quarters": {
+     "n": 51,
+     "mean_ic": 0.011964212567754068,
+     "t_simple": 0.5981639915436154
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.011788306542122512,
+     "dates": 174
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.012984467516417094,
+     "dates": 30
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": false,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   },
+   "LONG_252": {
+    "horizon": 252,
+    "dates": 192,
+    "first": "2013-11-21",
+    "last": "2025-09-09",
+    "split": "2019-11-21",
+    "lag": 13,
+    "mean_n": 452.1510416666667,
+    "ic": 0.01734219886341441,
+    "t": 0.7096693556525902,
+    "ic_positive_share": 0.546875,
+    "ic_sector_neutral": 0.022166583158880985,
+    "spread_net": 0.009447561936508668,
+    "buy_excess": 0.008869153031685674,
+    "buy_dates": 192,
+    "buy_trades": 26201,
+    "early": {
+     "ic": 0.040271532718746166,
+     "spread_net": 0.027082181163210848,
+     "dates": 96
+    },
+    "late": {
+     "ic": -0.005587134991917345,
+     "spread_net": -0.008187057290193513,
+     "dates": 96
+    },
+    "t_usual_lag": 0.7167329941764347,
+    "top_excess": 0.017894409590010818,
+    "mean_stocks": 452.1510416666667,
+    "quarters": {
+     "n": 48,
+     "mean_ic": 0.017342198863414402,
+     "t_simple": 0.8725775828573915
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.027746613991713933,
+     "dates": 162
+    },
+    "ic_spy_below_200d": {
+     "ic": -0.03884164282940303,
+     "dates": 30
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": false,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   }
+  },
+  "BREADTH_OLDER": {
+   "SWING_20": {
+    "horizon": 20,
+    "dates": 436,
+    "first": "2013-12-20",
+    "last": "2026-08-10",
+    "split": "2020-04-17",
+    "lag": 13,
+    "mean_n": 461.19954128440367,
+    "ic": 0.009983253756526799,
+    "t": 0.7948619375050275,
+    "ic_positive_share": 0.5435779816513762,
+    "ic_sector_neutral": 0.014934260394574288,
+    "spread_net": -0.0022137945416805427,
+    "buy_excess": 0.000960752553562389,
+    "buy_dates": 436,
+    "buy_trades": 60419,
+    "early": {
+     "ic": 0.024090385074213988,
+     "spread_net": 0.0013054773270381763,
+     "dates": 218
+    },
+    "late": {
+     "ic": -0.004123877561160389,
+     "spread_net": -0.005733066410399262,
+     "dates": 218
+    },
+    "t_usual_lag": 1.1011619360776241,
+    "top_excess": 0.0019031383206845741,
+    "mean_stocks": 461.19954128440367,
+    "quarters": {
+     "n": 51,
+     "mean_ic": 0.011184701874143844,
+     "t_simple": 0.8837812469445797
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.007052303717587552,
+     "dates": 364
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.024800834508941865,
+     "dates": 72
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": false,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   },
+   "QUARTER_63": {
+    "horizon": 63,
+    "dates": 435,
+    "first": "2013-12-20",
+    "last": "2026-08-03",
+    "split": "2020-04-09",
+    "lag": 13,
+    "mean_n": 459.9218390804598,
+    "ic": 0.01988148409524551,
+    "t": 1.165951411034016,
+    "ic_positive_share": 0.5747126436781609,
+    "ic_sector_neutral": 0.01538067983596959,
+    "spread_net": 0.0056479604952588336,
+    "buy_excess": 0.004970339822166716,
+    "buy_dates": 435,
+    "buy_trades": 60144,
+    "early": {
+     "ic": 0.023326833492369244,
+     "spread_net": 0.005506374658950114,
+     "dates": 217
+    },
+    "late": {
+     "ic": 0.016451939053154462,
+     "spread_net": 0.00578889685525421,
+     "dates": 218
+    },
+    "t_usual_lag": 1.6834700093523116,
+    "top_excess": 0.008868807311994234,
+    "mean_stocks": 459.9218390804598,
+    "quarters": {
+     "n": 51,
+     "mean_ic": 0.020718053797444597,
+     "t_simple": 1.2673862633227793
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.015665311068494885,
+     "dates": 363
+    },
+    "ic_spy_below_200d": {
+     "ic": 0.041138023105113254,
+     "dates": 72
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": true,
+     "spread_both_halves": true,
+     "buy_band": true
+    }
+   },
+   "LONG_252": {
+    "horizon": 252,
+    "dates": 410,
+    "first": "2013-12-20",
+    "last": "2025-11-04",
+    "split": "2019-11-14",
+    "lag": 13,
+    "mean_n": 451.9609756097561,
+    "ic": 0.01175114579457705,
+    "t": 0.5714185464129063,
+    "ic_positive_share": 0.5390243902439025,
+    "ic_sector_neutral": 0.017740915993240878,
+    "spread_net": 0.0012939487581070518,
+    "buy_excess": 0.006143922660692172,
+    "buy_dates": 410,
+    "buy_trades": 55743,
+    "early": {
+     "ic": 0.03233634596755522,
+     "spread_net": 0.021436849629047253,
+     "dates": 205
+    },
+    "late": {
+     "ic": -0.008834054378401122,
+     "spread_net": -0.018848952112833144,
+     "dates": 205
+    },
+    "t_usual_lag": 0.5858913249883488,
+    "top_excess": 0.013769501489911419,
+    "mean_stocks": 451.9609756097561,
+    "quarters": {
+     "n": 48,
+     "mean_ic": 0.01281103585931935,
+     "t_simple": 0.6728926385570144
+    },
+    "ic_spy_above_200d": {
+     "ic": 0.022201658335235564,
+     "dates": 340
+    },
+    "ic_spy_below_200d": {
+     "ic": -0.039008486545764345,
+     "dates": 70
+    },
+    "verdict": "NO_EVIDENCE",
+    "checks": {
+     "ic": false,
+     "t": false,
+     "ic_both_halves": false,
+     "spread_both_halves": false,
+     "buy_band": true
+    }
+   }
+  }
+ },
+ "money_20d": {
+  "2013_2019": {
+   "periods": 77,
+   "first": "2013-11-21",
+   "last": "2019-12-06",
+   "all_equal": {
+    "annual_net": 0.08992118853263542,
+    "mean_holdings": 449.7012987012987
+   },
+   "no_bottom": {
+    "annual_net": 0.09071068744183752,
+    "mean_holdings": 359.2857142857143
+   },
+   "bottom": {
+    "annual_net": 0.06043010368121249,
+    "mean_holdings": 90.41558441558442
+   },
+   "top": {
+    "annual_net": 0.09738629911835295,
+    "mean_holdings": 90.2987012987013
+   },
+   "spy": {
+    "annual": 0.10031445246762938
+   }
+  },
+  "2020_on": {
+   "periods": 84,
+   "first": "2020-01-07",
+   "last": "2026-08-17",
+   "all_equal": {
+    "annual_net": 0.11652910449712328,
+    "mean_holdings": 472.9404761904762
+   },
+   "no_bottom": {
+    "annual_net": 0.11697317408629226,
+    "mean_holdings": 378.07142857142856
+   },
+   "bottom": {
+    "annual_net": 0.0865864129515932,
+    "mean_holdings": 94.86904761904762
+   },
+   "top": {
+    "annual_net": 0.13177745122832785,
+    "mean_holdings": 95.02380952380952
+   },
+   "spy": {
+    "annual": 0.14318319834832982
+   }
+  }
+ },
+ "conditions": {
+  "b1_top_beats_market": false,
+  "b2_avoiding_bottom_helps": true
+ },
+ "controls": [
+  "value",
+  "profitability",
+  "profit_growth",
+  "accruals",
+  "investment",
+  "issuance",
+  "low_risk",
+  "momentum",
+  "reversal",
+  "size"
+ ],
+ "readings": {
+  "SWING_20": "NO_EVIDENCE",
+  "QUARTER_63": "NO_EVIDENCE"
+ },
+ "partial": {
+  "SWING_20": {
+   "ic": 0.006210809507951486,
+   "t": 1.1873054807666275,
+   "dates": 641,
+   "mean_stocks": 461.1170046801872,
+   "c_independent": false
+  },
+  "QUARTER_63": {
+   "ic": 0.019884933968909394,
+   "t": 2.7376362143420248,
+   "dates": 639,
+   "mean_stocks": 459.9264475743349,
+   "c_independent": false
+  }
+ }
+}
