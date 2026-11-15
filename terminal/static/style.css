@@ -272,3 +272,26 @@ table.sp-ret td { padding: 4px 8px; }
 #tab-paper .kv div b span { display: inline; font-size: inherit; color: inherit; }
 #tab-paper .kv div b span.up { color: var(--up); } #tab-paper .kv div b span.down { color: var(--down); }
 #tab-paper .kv div b span.meta, #tab-paper .kv div b span.missing { color: var(--muted); font-weight: 400; font-size: 12px; }
+
+/* Forecast layer FC-1: one stock's price ranges on a shared scale.  Bands are tints of one hue; stop and target are labelled lines. */
+.fc-strip { margin: 10px 0 12px; max-width: 760px; }
+.fc-row { display: grid; grid-template-columns: 78px 1fr; gap: 10px; align-items: center; margin: 4px 0; }
+.fc-lab { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.fc-track { position: relative; height: 16px; border-radius: 4px; background: var(--chip); }
+.fc-track i { position: absolute; top: 0; bottom: 0; display: block; }
+.fc-b80 { background: color-mix(in srgb, var(--accent) 28%, transparent); border-radius: 4px; }
+.fc-b50 { background: color-mix(in srgb, var(--accent) 70%, transparent); border-radius: 4px; }
+.fc-mid { left: 50%; width: 2px; margin-left: -1px; background: var(--ink); }
+.fc-mark { width: 2px; margin-left: -1px; top: -3px !important; bottom: -3px !important; }
+.fc-stop { background: var(--down); } .fc-target { background: var(--up); }
+.fc-tags { position: relative; height: 15px; }
+.fc-tag { position: absolute; transform: translateX(-50%); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.fc-axis { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+.fc-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); margin: 6px 0 0 88px; }
+.fc-key { display: inline-block; width: 14px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.fc-key.fc-line { width: 2px; height: 12px; margin: 0 11px 0 6px; vertical-align: -2px; }
+.fc-table td { white-space: normal; }
+.fc-levels { margin: 8px 0 4px; } .fc-levels li { margin: 3px 0; }
+.fc-fold { margin: 8px 0; font-size: 13px; } .fc-fold summary { cursor: pointer; } .fc-fold li { margin: 4px 0; }
+@media (max-width: 560px) { .fc-row { grid-template-columns: 62px 1fr; gap: 6px; } .fc-legend { margin-left: 0; } }
+.fc-table td:first-child, .fc-table th:first-child { white-space: nowrap; }

@@ -599,6 +599,10 @@ python app.py terminal-agent uninstall # 멈추고 launchd 작업 제거
   * 한 번 쓰면 고치지 않는 기록(`research_data/forecast_kr|us`)이며, 지평이 끝난 날부터 범위 포함률을 계산합니다.
     라이브 점수, 한도, 주문 계획은 읽지도 바꾸지도 않습니다(`terminal/qsf/forecast.py`, `reports/QSF_FORECAST_PROTOCOL.md`,
     `qsf forecast-test|forecast-record|forecast-status`).
+  * **화면(2026-11-15, 사용자 결정):** 점수 탭의 종목 상세에 가격 범위 블록(범위 그림과 가격, 스윙 손절·목표 기준이 범위의
+    어디에 있는지, 과거 점검 수치)이, 추적·검증 탭에 과거 점검과 앞으로의 포함률 카드가 있습니다. 저장된 기록만 읽고
+    (`/api/qsf/forecast`, `/api/qsf/forecast-stock`, `static/forecast.js`), 해시 연결이 깨진 기록은 보이지 않습니다.
+    범위는 그 거래일 수 뒤의 종가에 대한 것이며, 그 사이에 손절가에 닿을 확률은 계산하지 않습니다.
 * **독자 매매법 KR-M1과 한국 위험 등급(2026-11-11, 사용자 결정):** 현재 점수와 떨어뜨려 둔 도전자입니다.
   * 피할 표시가 있는 종목을 빼고, 나머지 중 현재 스윙 점수 상위 5분위를 후보로 삼아, 차트 진입 일곱 가지와 기준선 두 가지를
     하나의 청산 규칙(손절 2 ATR, 목표 3 ATR, 10거래일, 왕복 0.53%)으로 따라갑니다.

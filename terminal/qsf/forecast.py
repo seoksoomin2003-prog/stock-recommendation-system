@@ -51,6 +51,12 @@ IC_ASSUMED = 0.03               # an assumption, never called a forecast
 # Zero unless a past test of that score passed condition A inside today's scan universe.  Only the live-forward evaluation changes a
 # value, as a new version with a date.
 IC_EVIDENCE = {("US", "SWING"): 0.0, ("US", "LONG_TERM"): 0.0, ("KR", "SWING"): 0.0, ("KR", "LONG_TERM"): 0.0}
+# Why each evidence IC is zero, in the words of the protocol's table.  Shown beside every 0 and 50% so the number never stands alone.
+IC_REASON = {("US", "SWING"): "과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다(NO_EVIDENCE).",
+             ("US", "LONG_TERM"): "과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다(NO_EVIDENCE).",
+             ("KR", "SWING"): "2026-11-11에 구성을 바꿔 과거 성적이 없습니다. 이전 구성은 IC +0.028, t 1.90으로 기준(t 2.24)에 못 미쳤습니다.",
+             ("KR", "LONG_TERM"): "지금 대상(시가총액 상위 300) 안에서 과거 기준에 못 미쳤습니다(IC +0.052, t 2.46이지만 전반 구간의 비용 차감 스프레드가 음수)."}
+PATH_NOTE = "범위는 그 거래일 수 뒤의 종가에 대한 것입니다. 그 사이에 한 번이라도 어떤 가격에 닿을 가능성은 이보다 높고, 이 판에서는 계산하지 않습니다."
 LIMITS = ["범위 예측은 오를지 내릴지를 말하지 않습니다. 움직임의 크기만 말합니다.",
           "한국 2010~2026, 미국 2011~2026 가격은 수익 시험에 이미 여러 번 쓴 구간입니다. 범위의 폭을 점검한 것은 이번이 처음입니다.",
           "폭을 과거 결과에 맞추는 방식이라 평균 포함률은 목표 근처가 되기 쉽습니다. 시장이 급변한 날에는 여러 종목이 한꺼번에 범위를 벗어납니다.",
@@ -522,3 +528,85 @@ def status(base: Path) -> Dict[str, Any]:
         return json.loads((Path(base) / VIEW).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {"status": "NO_RECORD", "version": VERSION, "protocol": PROTOCOL}
+
+
+# ---------------------------------------------------------------------- the screen: reads stored records only, computes no forecast
+_NEWEST: Dict[str, Tuple[Tuple[int, int], Optional[Dict[str, Any]], str]] = {}
+
+
+def _newest(base: Path, market: str) -> Tuple[Optional[Dict[str, Any]], str]:
+    """The newest recorded day.  A store whose hash chain does not verify is not shown.  Kept until the index file changes."""
+    index = Path(base) / FOLDERS[market] / "index.jsonl"
+    try:
+        st = index.stat()
+    except OSError:
+        return None, "NO_RECORD"
+    key, slot = (st.st_mtime_ns, st.st_size), f"{Path(base).resolve()}|{market}"
+    hit = _NEWEST.get(slot)
+    if hit and hit[0] == key:
+        return hit[1], hit[2]
+    rows = kf.read_index(base, FOLDERS[market])
+    if not rows:
+        doc, state = None, "NO_RECORD"
+    elif kf.verify(base, FOLDERS[market])["status"] != "OK":
+        doc, state = None, "BROKEN"
+    else:
+        doc, state = kf._read_day(Path(base) / FOLDERS[market], rows[-1]["session"]), "REAL"
+    _NEWEST[slot] = (key, doc, state)
+    return doc, state
+
+
+def _test_brief(base: Path, market: str) -> Optional[Dict[str, Any]]:
+    """The stored historical check of one market in the few figures a reader needs; None when it has not been run."""
+    test = check_result(base)
+    m = (test or {}).get("markets", {}).get(market)
+    if not m:
+        return None
+    return {"verdict": m.get("verdict"), "days": m.get("days"), "first": m.get("first"), "last": m.get("last"), "failed": m.get("failed") or [],
+            "horizons": {h: {k: v.get(k) for k in ("cover80", "cover50", "by_vol", "stress_share", "half_width")} for h, v in (m.get("horizons") or {}).items()}}
+
+
+def stock(base: Path, market: str, ticker: str) -> Dict[str, Any]:
+    """One stock on the newest recorded day: its ranges as prices, where it sits by volatility and what the direction side recorded.
+
+    Nothing is computed from prices here; a stock the record does not hold gets no range rather than an estimate."""
+    if market not in FOLDERS:
+        raise ValueError("INVALID_MARKET")
+    head = {"version": VERSION, "protocol": PROTOCOL, "market": market, "ticker": ticker}
+    doc, state = _newest(base, market)
+    if doc is None:
+        return {**head, "status": state}
+    row = next((r for r in doc["rows"] if r["ticker"] == ticker), None)
+    if row is None:
+        return {**head, "status": "NOT_IN_RECORD", "session": doc["session"], "universe": len(doc["rows"])}
+    out = {**head, "status": "REAL", "session": doc["session"], "recorded_at": doc.get("recorded_at"), "universe": len(doc["rows"]), "close": row["close"],
+           "ranges": {}, "test": _test_brief(base, market), "bands": {str(k): list(v) for k, v in BANDS.items()}, "ic_assumed": doc.get("ic_assumed", IC_ASSUMED), "path_note": PATH_NOTE, "direction": {}}
+    priced = stock_range(row, doc)["ranges"]
+    for h in HORIZONS:
+        vol, k, r = row["vol"][str(h)], doc["k"][str(h)], priced[str(h)]
+        if r is None:
+            out["ranges"][str(h)] = None                      # too little price history: no range, never a filled-in one
+            continue
+        vols = sorted(x["vol"][str(h)] for x in doc["rows"] if x["vol"][str(h)] is not None)
+        below = sum(1 for v in vols if v < vol)
+        out["ranges"][str(h)] = {**r, "half_width50": math.exp(k["k50"] * vol) - 1, "log_half80": k["k80"] * vol, "log_half50": k["k50"] * vol,
+                                 "source": k["source"], "vol_third": min(2, below * 3 // len(vols)), "forecast": len(vols)}
+    for strategy, key in (("SWING", "swing"), ("LONG_TERM", "long")):
+        side = row.get(key)
+        out["direction"][strategy] = None if not side else {**side, "horizon": DIRECTION_H[strategy], "ic": IC_EVIDENCE[(market, strategy)], "reason": IC_REASON[(market, strategy)]}
+    return out
+
+
+def view(base: Path, market: str) -> Dict[str, Any]:
+    """The tracking card of one market: the stored historical check, the record so far and why each direction figure is zero."""
+    if market not in FOLDERS:
+        raise ValueError("INVALID_MARKET")
+    s = status(base)
+    m = (s.get("markets") or {}).get(market)
+    out = {"status": s.get("status"), "version": VERSION, "protocol": PROTOCOL, "market": market, "first": FIRST, "read_at": READ_AT,
+           "bands": {str(k): list(v) for k, v in BANDS.items()}, "ic_assumed": IC_ASSUMED, "limits": LIMITS, "path_note": PATH_NOTE,
+           "direction_horizons": dict(DIRECTION_H), "ic_reason": {s_: IC_REASON[(market, s_)] for s_ in DIRECTION_H}}
+    if not m:
+        return {**out, "status": "NO_RECORD"}
+    check = kf.verify(base, FOLDERS[market])
+    return {**out, "written_at": s.get("written_at"), "integrity": check["status"], **m}

@@ -36,7 +36,7 @@ const QSF_LOADERS = {
   rank: () => { qsfRank(); qsfCap(); qsfChanges(); },
   screen: () => ($("#qsfscreenform") ? qsfScreenRun(true) : qsfScreenBuild()),
   exec: () => { qsfPlan(); qsfPaper(); },
-  track: () => { qsfTop3(); qsfMethod(); qsfRegime(); qsfLookahead(); qsfValidation(); },
+  track: () => { qsfTop3(); fcTrack(); qsfMethod(); qsfRegime(); qsfLookahead(); qsfValidation(); },
 };
 function qsfLoadView(v) {
   if (qsfState.fresh[v]) return;
@@ -121,7 +121,7 @@ async function renderQsf() {
     <div data-view="rank"><div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsfcap"></div><div id="qsfchanges"></div></div>
     <div data-view="screen"><div id="qsfscreen"></div></div>
     <div data-view="exec"><div id="qsfplan"></div><div id="qsfpaper"></div></div>
-    <div data-view="track"><div id="qsftop3"></div><div id="qsfmethod"></div><div id="qsfregime"></div><div id="qsflook"></div><div id="qsfvalid"></div></div>`;
+    <div data-view="track"><div id="qsftop3"></div><div id="qsffcast"></div><div id="qsfmethod"></div><div id="qsfregime"></div><div id="qsflook"></div><div id="qsfvalid"></div></div>`;
   $("#qsfview").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetView(b.dataset.v)));
   $("#qsfstratseg").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetStrategy(b.dataset.s)));
   qsfState.fresh = {};
@@ -178,9 +178,11 @@ function qsfDrawDetail(d) {
     ${qsfAuditLine(d.price_audit)}
     ${p ? `<div class="meta">P6-11B 참고: ${p.status !== "REAL" ? "기록 없음" : p.in_top5 ? `최근 스캔 상위 5 (${p.rank}위)` : "최근 스캔 상위 5 아님"} · 별도 모델이며 점수에 합치지 않습니다.</div>` : ""}
     <h3>당일 점검 <span class="meta" style="margin:0">점수에 포함되지 않음</span></h3><div id="qsftoday"></div>
+    <h3>가격 범위 · 예측 층 FC-1 <span class="meta" style="margin:0">점수에 포함되지 않음</span></h3><div id="qsffc"><div class="meta">불러오는 중…</div></div>
     <div class="qsf-cards">${Object.values(d.cards).map((c) => qsfCard(c, true)).join("")}</div>
     <div id="qsfhistory"></div></div>`;
   qsfToday($("#qsftoday"), d.ticker, d.market);
+  fcStock($("#qsffc"), d.ticker, d.market, d.cards);
   qsfHistory($("#qsfhistory"), d.ticker, d.market);
 }
 

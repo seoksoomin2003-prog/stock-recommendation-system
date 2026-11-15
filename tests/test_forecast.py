@@ -272,3 +272,89 @@ def test_the_layer_is_recorded_in_both_daily_steps_backed_up_and_changes_no_scor
     protocol = (ROOT / fc.PROTOCOL).read_text(encoding="utf-8")
     for text in ("480거래일", "0.94", "0.97", "20,000개", "1.2816", "0.6745", "75% 이상 85% 이하", "45% 이상 55% 이하", "2026-11-13", "0.03", "240개"):
         assert text in protocol
+
+
+# ---------------------------------------------------------------------- the screen
+def recorded(tmp_path, monkeypatch, days_in=("2026-11-13", "2026-11-16")):
+    monkeypatch.setattr(fc, "Ledger", FakeLedger)
+    days, adj, bars = world(last="2026-11-19")
+    bars["T005"] = bars["T005"][-70:]
+    FakeLedger.days = list(days_in)
+    fc.record(tmp_path, "US", lambda t: bars.get(t) or [], now=lambda: datetime(2026, 11, 19, tzinfo=timezone.utc))
+    return bars
+
+
+def test_a_stock_is_shown_from_the_newest_record_with_prices_its_volatility_third_and_the_reason_for_zero(tmp_path, monkeypatch):
+    bars = recorded(tmp_path, monkeypatch)
+    doc = kf._read_day(tmp_path / fc.FOLDERS["US"], "2026-11-16")
+    row = next(r for r in doc["rows"] if r["ticker"] == "T010")
+    got = fc.stock(tmp_path, "US", "T010")
+    assert got["status"] == "REAL" and got["session"] == "2026-11-16" and got["close"] == row["close"] and got["universe"] == 240 and got["test"] is None
+    r5, r20 = got["ranges"]["5"], got["ranges"]["20"]
+    assert r20["p80"] == fc.stock_range(row, doc)["ranges"]["20"]["p80"] and r5["p80"][0] < r5["p50"][0] < got["close"] < r5["p50"][1] < r5["p80"][1]
+    assert r20["log_half80"] == pytest.approx(doc["k"]["20"]["k80"] * row["vol"]["20"]) and r20["log_half80"] > r5["log_half80"] > r5["log_half50"] > 0
+    assert math.log(r5["p80"][1] / got["close"]) == pytest.approx(r5["log_half80"]) and r5["half_width50"] == pytest.approx(math.exp(r5["log_half50"]) - 1)
+    assert r5["vol_third"] in (0, 1, 2) and r5["forecast"] == 239 and got["bands"] == {"80": [0.75, 0.85], "50": [0.45, 0.55]}
+    thirds = [fc.stock(tmp_path, "US", f"T{k:03d}")["ranges"]["20"] for k in range(240)]
+    counts = [sum(1 for x in thirds if x and x["vol_third"] == t) for t in range(3)]
+    assert sum(counts) == 239 and max(counts) - min(counts) <= 1                       # the day's stocks split into equal thirds
+    swing = got["direction"]["SWING"]
+    assert swing["alpha"] == 0.0 and swing["p"] == 0.5 and swing["ic"] == 0.0 and swing["horizon"] == 20 and "NO_EVIDENCE" in swing["reason"] and swing["p_assumed"] != 0.5
+    assert got["direction"]["LONG_TERM"]["horizon"] == 63 and fc.stock(tmp_path, "US", "T001")["direction"]["LONG_TERM"] is None
+    short = fc.stock(tmp_path, "US", "T005")                                            # too little history: no range, not a zero
+    assert short["status"] == "REAL" and short["ranges"] == {"5": None, "20": None}
+    assert fc.stock(tmp_path, "US", "ZZZZ") == {"version": "FC-1", "protocol": fc.PROTOCOL, "market": "US", "ticker": "ZZZZ", "status": "NOT_IN_RECORD", "session": "2026-11-16", "universe": 240}
+    assert fc.stock(tmp_path, "KR", "005930")["status"] == "NO_RECORD"
+    with pytest.raises(ValueError, match="INVALID_MARKET"):
+        fc.stock(tmp_path, "JP", "T010")
+    for key in fc.DIRECTION_H:                                                          # the reasons are the protocol's own table
+        assert ("KR", key) in fc.IC_REASON and ("US", key) in fc.IC_REASON
+    protocol = (ROOT / fc.PROTOCOL).read_text(encoding="utf-8")
+    assert "IC +0.028, t 1.90" in protocol and "IC +0.028, t 1.90" in fc.IC_REASON[("KR", "SWING")] and "IC +0.052, t 2.46" in protocol and "IC +0.052, t 2.46" in fc.IC_REASON[("KR", "LONG_TERM")]
+
+
+def test_a_new_recorded_day_replaces_the_shown_one_and_a_broken_chain_is_not_shown(tmp_path, monkeypatch):
+    bars = recorded(tmp_path, monkeypatch, days_in=("2026-11-13",))
+    assert fc.stock(tmp_path, "US", "T010")["session"] == "2026-11-13"
+    FakeLedger.days = ["2026-11-13", "2026-11-16"]
+    fc.record(tmp_path, "US", lambda t: bars.get(t) or [], now=lambda: datetime(2026, 11, 19, tzinfo=timezone.utc))
+    assert fc.stock(tmp_path, "US", "T010")["session"] == "2026-11-16"
+    index = tmp_path / fc.FOLDERS["US"] / "index.jsonl"
+    lines = index.read_text(encoding="utf-8").splitlines()
+    first = json.loads(lines[0])
+    first["sha256"] = first["sha256"][:-1] + ("1" if first["sha256"][-1] == "0" else "0")
+    index.write_text("\n".join([json.dumps(first)] + lines[1:]) + "\n", encoding="utf-8")
+    assert fc.stock(tmp_path, "US", "T010")["status"] == "BROKEN" and "ranges" not in fc.stock(tmp_path, "US", "T010")
+
+
+def test_the_tracking_card_carries_the_stored_check_the_record_and_the_reasons(tmp_path, monkeypatch):
+    bars = recorded(tmp_path, monkeypatch)
+    assert fc.view(tmp_path, "US")["status"] == "NO_RECORD"                             # no view file yet
+    loader = lambda t: bars.get(t) or []        # noqa: E731
+    fc.write_status(tmp_path, {"US": loader, "KR": loader})
+    got = fc.view(tmp_path, "US")
+    assert got["status"] == "REAL" and got["integrity"] == "OK" and got["record"]["sessions"] == 2 and got["test"] is None and got["read_at"] == 240
+    assert got["today"]["session"] == "2026-11-16" and got["followed"]["ranges"]["5"]["matured"] == 0 and got["ic_evidence"] == {"SWING": 0.0, "LONG_TERM": 0.0}
+    assert set(got["ic_reason"]) == {"SWING", "LONG_TERM"} and got["direction_horizons"] == {"SWING": 20, "LONG_TERM": 63} and got["limits"] == fc.LIMITS and got["path_note"] == fc.PATH_NOTE
+    kr = fc.view(tmp_path, "KR")
+    assert kr["status"] == "REAL" and kr["record"]["sessions"] == 0 and "today" not in kr
+    with pytest.raises(ValueError, match="INVALID_MARKET"):
+        fc.view(tmp_path, "JP")
+
+
+def test_the_screen_reads_the_two_routes_and_says_what_the_range_is_not():
+    from terminal import server
+    src = (ROOT / "terminal" / "server.py").read_text(encoding="utf-8")
+    assert '("GET", "/api/qsf/forecast")' in src and '("GET", "/api/qsf/forecast-stock")' in src
+    assert server._code("005930", "KR") == "005930" and server._code(" aapl ", "US") == "AAPL"
+    for bad, market in (("5930", "KR"), ("../x", "US"), ("", "US")):
+        with pytest.raises(ValueError, match="INVALID_TICKER"):
+            server._code(bad, market)
+    static = ROOT / "terminal" / "static"
+    html, qsf, js = [(static / n).read_text(encoding="utf-8") for n in ("index.html", "qsf.js", "forecast.js")]
+    assert html.index('src="qsf.js"') < html.index('src="forecast.js"')
+    assert 'id="qsffc"' in qsf and "fcStock($(\"#qsffc\"), d.ticker, d.market, d.cards)" in qsf and 'id="qsffcast"' in qsf and "fcTrack();" in qsf
+    assert "/api/qsf/forecast-stock?t=" in js and "/api/qsf/forecast?market=" in js
+    for text in ("오를지 내릴지는 말하지 않습니다", "가정이며 예측이 아닙니다", "점수·순위·한도·주문 계획에 쓰이지 않습니다", "비워 둔 것이며 0이 아닙니다", "판정이 아니며", "d.path_note"):
+        assert text in js
+    assert "닿을" in fc.PATH_NOTE and "계산하지 않습니다" in fc.PATH_NOTE
