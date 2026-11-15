@@ -1,4 +1,5 @@
 """Korean market-value universe challenger: the membership rule, the write-once record, the refusals and the evaluation's readings.  All offline."""
+from types import SimpleNamespace
 import gzip
 import json
 from datetime import date, datetime, timedelta, timezone
@@ -133,7 +134,7 @@ def test_it_waits_instead_of_writing_a_partial_or_wrong_day(world, monkeypatch):
 
 def test_a_recorded_scan_cannot_skip_its_side_files(tmp_path):
     with pytest.raises(ValueError):
-        QSF.scan(object(), "KR", record=True, side_files=False)
+        QSF.scan(SimpleNamespace(_regime={}, _regime_at={}, _regime_hold=False), "KR", record=True, side_files=False)      # a scan holds one regime (2026-11-15)
 
 
 class FakePanel:

@@ -9,6 +9,7 @@ import fcntl
 import gzip
 import hashlib
 import json
+import os
 import statistics
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -44,7 +45,11 @@ class Ledger:
         except OSError:
             return {"rows": [], "status": "OK"}
         for line in lines:
-            r = json.loads(line)
+            try:
+                r = json.loads(line)
+            except ValueError:                      # a line cut short by a full disk or a power loss: the rows before it stay readable,
+                status = "BROKEN"                   # and BROKEN stops every append until it is repaired
+                break
             body = {k: v for k, v in r.items() if k != "hash"}
             if r["prev_hash"] != prev or _hash(body) != r["hash"]:
                 status = "BROKEN"
@@ -121,6 +126,8 @@ class Ledger:
             row["hash"] = _hash(row)
             with open(self.index, "a", encoding="utf-8") as fh:
                 fh.write(json.dumps(row, sort_keys=True) + "\n")
+                fh.flush()
+                os.fsync(fh.fileno())               # the line is on the disk before the shard counts as recorded
             return {"recorded": len(new), "already": len(done), "file": name}
 
     def session_before(self, market: str, session: str) -> Optional[str]:

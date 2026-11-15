@@ -3,6 +3,7 @@
 Markets stay isolated: the US path never reads Korean data and the reverse (no VIX or SPY in a Korean score).
 P6-11B is read as a separate reference from its run artifacts and is never merged into a QSF score.
 """
+import functools
 import gzip
 import hashlib
 import json
@@ -25,6 +26,7 @@ from utils import nyse_calendar
 KR_MIN_UNIVERSE = 200       # a whole-market Korean scan with fewer stocks than this is a partial day, not a day (the universe is 300)
 # "facts": US annual statements are read again at each day's first run, so a new 10-K is scored the next morning (it waited up to 7 days).
 # 20 hours, not 24: a copy stored at 07:15 must be old enough for the next day's 07:10 run.  Korean statements keep 7 days ("kr_facts").
+REGIME_MEMO_SECONDS = 30 * 60        # how long the process reuses a computed regime; its inputs have their own cache times below
 TTL = {"bars": 1800, "regime": 3600, "facts": 20 * 3600, "kr_facts": 7 * 86400, "subm": 20 * 3600, "info": 7 * 86400, "earn": 3 * 86400, "form4": 3650 * 86400}
 REGIME_FRESH_DAYS = 5
 
@@ -57,6 +59,21 @@ def _rank_in(ordered: List[float], value: float) -> float:
 MIN_RANK_NAMES = 20
 
 
+def _one_regime(scan):
+    """A scan starts from a fresh regime and keeps it to the end, however long the scan runs: every stock of one recorded day is
+    scored against the same market state."""
+    @functools.wraps(scan)
+    def run(self, *args, **kwargs):
+        held, self._regime_hold = self._regime_hold, True
+        self._regime.clear()
+        self._regime_at.clear()
+        try:
+            return scan(self, *args, **kwargs)
+        finally:
+            self._regime_hold = held
+    return run
+
+
 class QSF(ScreenViews):
     def __init__(self, base: Path, src=default_sources, now: Callable[[], datetime] = None, terminal: Any = None, dart: Any = None, kr_master: Any = None):
         self.base = Path(base)
@@ -72,6 +89,8 @@ class QSF(ScreenViews):
         self._dart = dart
         self._kr_master = kr_master
         self._regime: Dict[str, Dict] = {}
+        self._regime_at: Dict[str, datetime] = {}
+        self._regime_hold = False
         self._krx_share_cache: Dict[str, Dict[str, float]] = {}
 
     # ------------------------------------------------------------------ helpers
@@ -133,9 +152,14 @@ class QSF(ScreenViews):
         return {**self._level(rows), "symbol": symbol, "close": float(c[-1]), "ma50": float(c[-50:].mean()), "ma200": float(c[-200:].mean()), "source": "Yahoo Finance"}
 
     def regime(self, market: str) -> Dict[str, Any]:
-        if market in self._regime:
-            return self._regime[market]
-        return self._regime.setdefault(market, self._regime_us() if market == "US" else self._regime_kr())
+        """Reused for ``REGIME_MEMO_SECONDS``, and for the whole of a scan.  It was once kept for the life of the process: a server
+        left running past a session went on scoring single stocks against the old regime and the old Korean session (2026-11-15)."""
+        hit, made = self._regime.get(market), self._regime_at.get(market)
+        if hit is not None and (self._regime_hold or made is None or (self.now() - made).total_seconds() < REGIME_MEMO_SECONDS):
+            return hit
+        value = self._regime_us() if market == "US" else self._regime_kr()
+        self._regime[market], self._regime_at[market] = value, self.now()
+        return value
 
     def _regime_us(self) -> Dict[str, Any]:
         out: Dict[str, Any] = {}
@@ -595,6 +619,7 @@ class QSF(ScreenViews):
         own = _six_month_return(bars)
         return (None, "SHORT_HISTORY") if own is None else (_rank_in(ordered, own), "OUTSIDE_UNIVERSE")
 
+    @_one_regime
     def scan(self, market: str = "US", tickers: Optional[List[str]] = None, record: bool = True, progress=None, side_files: bool = True) -> Dict[str, Any]:
         """``side_files=False`` (Korea): the scan leaves the live breadth and bar files alone, for a separate record that scores another
         set of stocks (``kr_cap_universe``).  It cannot be combined with ``record``."""
@@ -713,8 +738,10 @@ class QSF(ScreenViews):
             (self.dir / "breadth_KR.json").write_text(json.dumps({"status": "REAL", "value": float(np.mean(above)), "n": len(above), "date": session, "source": source}), encoding="utf-8")
             self._regime.pop("KR", None)
         if side_files:
-            with gzip.open(self.dir / "bars_KR.json.gz", "wt", encoding="utf-8") as fh:
+            tmp = self.dir / f"bars_KR.json.gz.{os.getpid()}.tmp"      # written whole, then swapped in: a run killed here leaves the old file
+            with gzip.open(tmp, "wt", encoding="utf-8") as fh:
                 json.dump(bars, fh)
+            os.replace(tmp, self.dir / "bars_KR.json.gz")
         codes = [c for c in members["canonical_ticker"] if c in bars]
         bench = self._history(["^KS11", "^KQ11"])["data"] or {}
         all_rows = {**bars, **{k: v for k, v in bench.items()}}

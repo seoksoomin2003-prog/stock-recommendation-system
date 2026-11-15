@@ -17,8 +17,10 @@ and each day's raw open, high, low and close are scaled by P / raw close; volume
 
 The snapshot panel is cached in ``data/qsf/krx_panel.npz`` and rebuilt when a new snapshot day appears.
 """
+import fcntl
 import gzip
 import json
+import os
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -63,6 +65,17 @@ def build_panel(root: Path, days: List[str]) -> Dict[str, np.ndarray]:
     return {"dates": np.array(days), "codes": np.array(codes), "data": data}
 
 
+def _kept(path: Path, days: List[str]) -> Optional[Dict[str, Any]]:
+    """The stored panel when it covers exactly ``days``."""
+    try:
+        with np.load(path, allow_pickle=False) as z:
+            if list(z["dates"]) == days:
+                return {"dates": [str(x) for x in z["dates"]], "codes": {str(c): j for j, c in enumerate(z["codes"])}, "data": z["data"]}
+    except (OSError, ValueError, KeyError, EOFError):
+        pass
+    return None
+
+
 def panel(base: Path, today: Optional[date] = None) -> Optional[Dict[str, Any]]:
     """The cached snapshot panel, rebuilt when the days on file changed.  None without any snapshot."""
     root = Path(base) / KRX
@@ -71,17 +84,21 @@ def panel(base: Path, today: Optional[date] = None) -> Optional[Dict[str, Any]]:
     if not days:
         return None
     path = Path(base) / CACHE
-    try:
-        with np.load(path, allow_pickle=False) as z:
-            if list(z["dates"]) == days:
-                return {"dates": [str(x) for x in z["dates"]], "codes": {str(c): j for j, c in enumerate(z["codes"])}, "data": z["data"]}
-    except (OSError, ValueError, KeyError):
-        pass
-    built = build_panel(root, days)
+    kept = _kept(path, days)
+    if kept:
+        return kept
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(path.name + ".tmp.npz")
-    np.savez_compressed(tmp, **built)
-    tmp.replace(path)
+    # The server and the daily job can both find the panel out of date.  They once shared one temp file: the slower one lost it,
+    # failed, and its caller fell back to Yahoo bars without a word.  Now one builds while the other waits and then reads the result.
+    with open(path.with_name(path.name + ".lock"), "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        kept = _kept(path, days)
+        if kept:
+            return kept
+        built = build_panel(root, days)
+        tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp.npz")
+        np.savez_compressed(tmp, **built)
+        tmp.replace(path)
     return {"dates": list(days), "codes": {str(c): j for j, c in enumerate(built["codes"])}, "data": built["data"]}
 
 

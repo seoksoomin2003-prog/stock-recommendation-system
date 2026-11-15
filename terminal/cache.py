@@ -55,7 +55,10 @@ class FileCache:
         except Exception as exc:  # provider failure -> fall back, never fabricate
             data, err = None, type(exc).__name__
         if data not in (None, {}, []):
-            return _result("REAL", self.write(key, data), now)
+            try:
+                return _result("REAL", self.write(key, data), now)
+            except OSError:                 # a full disk must not throw away what was just fetched: it is returned, only not kept
+                return _result("REAL", {"stored_at": now, "data": data}, now, "NOT_STORED")
         if old is not None:
             return _result("STALE", old, now, err or "EMPTY_RESPONSE")
         return {"status": "UNAVAILABLE", "data": None, "fetched_at": None, "age_s": None,

@@ -2,6 +2,7 @@
 long frames of a few hundred thousand rows; downloads in chunks of 50 with pacing)."""
 import hashlib
 import json
+import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Dict, Optional
@@ -44,15 +45,21 @@ def bars(provider: YahooKRProvider, securities: pd.DataFrame, start: str, end: s
     path = _cache_file(cache_dir, tag, securities["yahoo_symbol"].tolist(), start, end)
     stale = False
     if path.exists():
-        df = pd.read_csv(path, dtype={"ticker": str, "quality_flags": str, "quality_status": str}, parse_dates=["date"])
-        df["quality_flags"] = df["quality_flags"].fillna("")
-        if fresh_at is None or _reaches(df, fresh_at):
-            return {"bars": df, "cache_hit": True, "file": str(path), "events": []}
+        try:
+            df = pd.read_csv(path, dtype={"ticker": str, "quality_flags": str, "quality_status": str}, parse_dates=["date"])
+        except (OSError, EOFError, ValueError):      # a file cut short by a killed run: fetched again, as if it were not there
+            df = None
+        if df is not None:
+            df["quality_flags"] = df["quality_flags"].fillna("")
+            if fresh_at is None or _reaches(df, fresh_at):
+                return {"bars": df, "cache_hit": True, "file": str(path), "events": []}
         stale = True
     df = provider.fetch(securities, start, end)
     if not df.empty:
         df = krcal.drop_incomplete(df, now, date_col="date")
-        df.to_csv(path, index=False, compression="gzip")
+        tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp")
+        df.to_csv(tmp, index=False, compression="gzip")
+        os.replace(tmp, path)
     return {"bars": df, "cache_hit": False, "stale_cache_found": stale, "file": str(path) if not df.empty else None,
             "events": list(provider.events)}
 

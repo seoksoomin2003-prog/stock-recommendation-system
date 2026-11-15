@@ -7,6 +7,7 @@ import fcntl
 import gzip
 import hashlib
 import json
+import os
 import statistics
 from datetime import datetime, time as clock, timezone
 from pathlib import Path
@@ -69,7 +70,11 @@ def _index(folder: Path) -> Tuple[List[Dict[str, Any]], str]:
     except OSError:
         return [], "OK"
     for line in lines:
-        r = json.loads(line)
+        try:
+            r = json.loads(line)
+        except ValueError:                          # a cut last line: the rows before it stay readable, and BROKEN stops new writes
+            status = "BROKEN"
+            break
         if r.get("prev_hash") != prev or _h({k: v for k, v in r.items() if k != "hash"}) != r.get("hash"):
             status = "BROKEN"
         prev = r.get("hash")
@@ -102,6 +107,8 @@ def write(base: Path, doc: Dict[str, Any]) -> bool:
         row["hash"] = _h(row)
         with open(folder / "index.jsonl", "a", encoding="utf-8") as fh:
             fh.write(json.dumps(row, sort_keys=True) + "\n")
+            fh.flush()
+            os.fsync(fh.fileno())
         return True
 
 

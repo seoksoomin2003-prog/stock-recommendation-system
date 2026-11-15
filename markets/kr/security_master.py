@@ -121,6 +121,14 @@ def build_master(raw_by_market: Dict[str, bytes], verified_at: Optional[str] = N
     return out.sort_values(["market", "canonical_ticker"]).reset_index(drop=True)
 
 
+MAX_STALE_HOURS = 7 * 24            # a snapshot older than this is not used in place of a failed download
+MIN_SHARE_OF_KEPT = 0.8             # a new table under this share of the last one's rows is read as a broken download
+
+
+def _read_snapshot(path: Path) -> pd.DataFrame:
+    return pd.read_csv(path, dtype={"canonical_ticker": str, "dart_corp_code": str})
+
+
 def load_master(data_dir: Path, fetch: Callable[[str], bytes] = fetch_kind, max_age_hours: float = 20.0,
                 now: Optional[datetime] = None) -> Dict:
     """Fetch (or reuse a fresh snapshot of) the master; every fetch is snapshotted with its source hash."""
@@ -128,14 +136,26 @@ def load_master(data_dir: Path, fetch: Callable[[str], bytes] = fetch_kind, max_
     sdir = Path(data_dir) / "security_master"
     sdir.mkdir(parents=True, exist_ok=True)
     meta_path = sdir / "LATEST.json"
+    kept = None                                     # the newest snapshot on disk and its age in hours
     if meta_path.exists():
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
         age = (now - datetime.fromisoformat(meta["retrieved_at"])).total_seconds() / 3600
-        if age <= max_age_hours and (sdir / meta["file"]).exists():
-            df = pd.read_csv(sdir / meta["file"], dtype={"canonical_ticker": str, "dart_corp_code": str})
-            return {"master": df, "meta": {**meta, "cache_hit": True, "status": "CACHED"}}
-    raws = {m: fetch(m) for m in KIND_MARKETS}
-    df = build_master(raws, verified_at=now.isoformat())
+        if (sdir / meta["file"]).exists():
+            kept = (meta, age)
+            if age <= max_age_hours:
+                return {"master": _read_snapshot(sdir / meta["file"]), "meta": {**meta, "cache_hit": True, "status": "CACHED"}}
+    try:
+        raws = {m: fetch(m) for m in KIND_MARKETS}
+        df = build_master(raws, verified_at=now.isoformat())
+        if kept and len(df) < MIN_SHARE_OF_KEPT * kept[0].get("rows", 0):
+            raise ValueError("KIND master far smaller than the last snapshot")
+    except Exception as exc:
+        # KIND down or its page changed: the list of listed companies moves slowly, so the last snapshot is used and says it is
+        # old, instead of stopping every Korean scan and screen.  Without a snapshot, or with a very old one, the failure stands.
+        if kept and kept[1] <= MAX_STALE_HOURS:
+            return {"master": _read_snapshot(sdir / kept[0]["file"]),
+                    "meta": {**kept[0], "cache_hit": True, "status": "STALE", "stale_hours": round(kept[1], 1), "error": type(exc).__name__}}
+        raise
     fname = f"master_{now:%Y%m%dT%H%M%SZ}.csv.gz"
     df.to_csv(sdir / fname, index=False, compression="gzip")
     meta = {"file": fname, "retrieved_at": now.isoformat(), "source": "KRX KIND corpList",

@@ -49,7 +49,9 @@ def test_the_scan_runs_after_every_record_and_before_the_backup_then_updates_its
 def test_no_run_written_is_a_failure_and_is_tried_again_while_no_valid_recommendation_is_a_result(tmp_path, monkeypatch):
     d, calls, sent = scanning(tmp_path, monkeypatch, rc=1, writes=None)
     res = d.run()
-    assert res["steps"]["SCAN_KR"] == {"status": automation.FAILED, "at": TUE_NIGHT.isoformat(), "detail": "코드 1"} and "TRACK_KR" not in calls
+    # it failed at once, so the run tried it once more before giving up (2026-11-15)
+    assert res["steps"]["SCAN_KR"] == {"status": automation.FAILED, "at": TUE_NIGHT.isoformat(), "detail": "코드 1", "seconds": 0, "retried": True} and "TRACK_KR" not in calls
+    assert calls.count("SCAN_KR") == 2
     assert "❌ 한국 모델 스캔(KR-EXP): 코드 1" in sent[0]
     d2, calls2, _ = scanning(tmp_path, monkeypatch, rc=1, status="NO VALID RECOMMENDATION")
     res2 = d2.run()

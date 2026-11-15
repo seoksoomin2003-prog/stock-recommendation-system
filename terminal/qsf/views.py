@@ -329,7 +329,7 @@ class ScreenViews:
         try:
             with gzip.open(self.dir / "bars_KR.json.gz", "rt", encoding="utf-8") as fh:
                 data = json.load(fh)
-        except (OSError, ValueError):
+        except (OSError, ValueError, EOFError):          # EOFError: a gzip cut short
             data = {}
         return lambda t: data.get(t) or []
 

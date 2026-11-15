@@ -4,13 +4,14 @@ A record is written once and chained by hash, so a later edit shows.  No return 
 dates only, and the single evaluation is refused until enough sessions have matured.  Nothing here reads or changes the live score,
 the QSF ledger or P6-11B.
 """
+import fcntl
 import gzip
 import hashlib
 import json
 import os
 from datetime import date, datetime, time as clock, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -156,11 +157,29 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def read_index(base: Path, folder: Path = FOLDER) -> List[Dict[str, Any]]:
-    p = Path(base) / folder / "index.jsonl"
+def _index_rows(p: Path) -> Tuple[List[Dict[str, Any]], bool]:
+    """(rows, torn).  A last line that cannot be parsed is an append cut short (full disk, power loss): it is left out, so the
+    rows before it stay readable, and the caller is told.  An unreadable line anywhere else is not hidden."""
     if not p.exists():
-        return []
-    return [json.loads(x) for x in p.read_text(encoding="utf-8").splitlines() if x.strip()]
+        return [], False
+    lines = [x for x in p.read_text(encoding="utf-8").splitlines() if x.strip()]
+    rows = []
+    for n, line in enumerate(lines):
+        try:
+            rows.append(json.loads(line))
+        except ValueError:
+            if n == len(lines) - 1:
+                return rows, True
+            raise
+    return rows, False
+
+
+def read_index(base: Path, folder: Path = FOLDER) -> List[Dict[str, Any]]:
+    return _index_rows(Path(base) / folder / "index.jsonl")[0]
+
+
+def index_torn(base: Path, folder: Path = FOLDER) -> bool:
+    return _index_rows(Path(base) / folder / "index.jsonl")[1]
 
 
 def _append_index(folder: Path, day: str, recorded_at: str, late: bool, before_open: bool, stocks: int) -> None:
@@ -169,6 +188,8 @@ def _append_index(folder: Path, day: str, recorded_at: str, late: bool, before_o
     chain = hashlib.sha256(((rows[-1]["chain"] if rows else "") + sha).encode()).hexdigest()
     with open(folder / "index.jsonl", "a", encoding="utf-8") as fh:
         fh.write(json.dumps({"session": day, "recorded_at": recorded_at, "late": late, "before_next_open": before_open, "stocks": stocks, "sha256": sha, "chain": chain}) + "\n")
+        fh.flush()
+        os.fsync(fh.fileno())                       # the line is on the disk before the record counts as written
 
 
 def _read_day(folder: Path, day: str) -> Dict[str, Any]:
@@ -180,19 +201,26 @@ def write_record(base: Path, day: str, at: datetime, late: bool, store: Path = F
     """Write-once.  A file left without its index line by a crash gets the line it was written with."""
     folder = Path(base) / store
     folder.mkdir(parents=True, exist_ok=True)
-    if day in {r["session"] for r in read_index(base, store)}:
-        return False
-    p = folder / f"{day}.json.gz"
-    if not p.exists():
-        scored = scorer(base, day) if scorer else score_fund_day(base, day) if store == FUND_FOLDER else score_day(Path(base) / kr.DATA, day)
-        doc = {**scored, "recorded_at": at.isoformat(), "late": late, "before_next_open": at < next_open(day)}
-        tmp = p.with_suffix(".tmp")
-        with gzip.open(tmp, "wt", encoding="utf-8") as fh:
-            json.dump(doc, fh, ensure_ascii=False)
-        tmp.replace(p)
-    doc = _read_day(folder, day)
-    _append_index(folder, day, doc["recorded_at"], doc["late"], doc["before_next_open"], len(doc["rows"]))
-    return True
+    # One writer at a time: a record command run by hand beside the daily job once could pass the "not written yet" check twice,
+    # write the day twice and break the chain.
+    with open(folder / "write.lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        rows, torn = _index_rows(folder / "index.jsonl")
+        if torn:                                    # appending after a cut line would weld two lines into one for good
+            raise RuntimeError(f"INDEX_TORN: {store}/index.jsonl ends in a cut line; it must be repaired before any new record")
+        if day in {r["session"] for r in rows}:
+            return False
+        p = folder / f"{day}.json.gz"
+        if not p.exists():
+            scored = scorer(base, day) if scorer else score_fund_day(base, day) if store == FUND_FOLDER else score_day(Path(base) / kr.DATA, day)
+            doc = {**scored, "recorded_at": at.isoformat(), "late": late, "before_next_open": at < next_open(day)}
+            tmp = p.with_suffix(".tmp")
+            with gzip.open(tmp, "wt", encoding="utf-8") as fh:
+                json.dump(doc, fh, ensure_ascii=False)
+            tmp.replace(p)
+        doc = _read_day(folder, day)
+        _append_index(folder, day, doc["recorded_at"], doc["late"], doc["before_next_open"], len(doc["rows"]))
+        return True
 
 
 def _record_fund(base: Path, have: List[str], at: datetime, key: Optional[str], get: Callable[..., Any], first: str, log, sleep) -> Dict[str, Any]:
@@ -296,13 +324,13 @@ def last_check(base: Path) -> Optional[Dict[str, Any]]:
 
 def verify(base: Path, store: Path = FOLDER) -> Dict[str, Any]:
     folder, chain, bad = Path(base) / store, "", []
-    rows = read_index(base, store)
+    rows, torn = _index_rows(folder / "index.jsonl")
     for r in rows:
         p = folder / f"{r['session']}.json.gz"
         chain = hashlib.sha256((chain + r["sha256"]).encode()).hexdigest()
         if not p.exists() or _sha(p) != r["sha256"] or chain != r["chain"]:
             bad.append(r["session"])
-    return {"status": "OK" if not bad else "BROKEN", "sessions": len(rows), "bad": bad}
+    return {"status": "OK" if not bad and not torn else "BROKEN", "sessions": len(rows), "bad": bad, **({"torn_index": True} if torn else {})}
 
 
 def status(base: Path, calendar: Optional[Sequence[str]], store: Path = FOLDER) -> Dict[str, Any]:

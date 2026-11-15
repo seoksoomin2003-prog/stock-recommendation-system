@@ -194,6 +194,10 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
     }
 
 
+GONE = (BrokenPipeError, ConnectionResetError, ConnectionAbortedError)      # the client closed the connection
+STORED_UNREADABLE = (json.JSONDecodeError, UnicodeError)                    # ValueErrors that are never about the request's own values
+
+
 def make_handler(t: Terminal, errors: Optional[ErrorTally] = None):
     errors = errors or ErrorTally()
     table = routes(t, errors)
@@ -218,6 +222,14 @@ def make_handler(t: Terminal, errors: Optional[ErrorTally] = None):
         def _json(self, code: int, obj):
             self._send(code, json.dumps(obj, ensure_ascii=False, default=str, allow_nan=False).encode("utf-8"),
                        "application/json; charset=utf-8")
+
+        def _internal(self, method: str, path: str, exc: BaseException):
+            errors.note(path, exc)
+            log.error("api error on %s %s: %s\n%s", method, path, type(exc).__name__, traceback.format_exc())
+            try:
+                return self._json(500, {"error": "INTERNAL_ERROR", "type": type(exc).__name__})
+            except GONE:
+                return None
 
         def _dispatch(self, method: str):
             u = urlparse(self.path)
@@ -250,12 +262,16 @@ def make_handler(t: Terminal, errors: Optional[ErrorTally] = None):
                     else:
                         out = fn(q, body)
                     return self._json(200, _finite(out))
+                except GONE:                             # the browser left before the answer was written: nothing failed here
+                    log.debug("client left during %s %s", method, u.path)
+                    return None
                 except ValueError as exc:
+                    if isinstance(exc, STORED_UNREADABLE):      # a stored file that cannot be parsed is this program's fault, not the request's
+                        return self._internal(method, u.path, exc)
+                    log.info("rejected %s %s: %s", method, u.path, str(exc)[:160])
                     return self._json(400, {"error": str(exc)})
                 except Exception as exc:                 # never leak internals or credentials to the page
-                    errors.note(u.path, exc)
-                    log.error("api error on %s %s: %s\n%s", method, u.path, type(exc).__name__, traceback.format_exc())
-                    return self._json(500, {"error": "INTERNAL_ERROR", "type": type(exc).__name__})
+                    return self._internal(method, u.path, exc)
             if method != "GET":
                 return self._json(405, {"error": "METHOD_NOT_ALLOWED"})
             rel = "index.html" if u.path in ("", "/") else u.path.lstrip("/")

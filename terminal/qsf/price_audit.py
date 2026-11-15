@@ -178,7 +178,7 @@ def audit_kr(base: Path, now: Optional[datetime] = None) -> Dict[str, Any]:
     try:
         with gzip.open(Path(base) / FOLDER / "bars_KR.json.gz", "rt", encoding="utf-8") as fh:
             bars = json.load(fh)
-    except (OSError, ValueError):
+    except (OSError, ValueError, EOFError):              # EOFError: a gzip cut short
         return {"status": "UNAVAILABLE", "market": "KR", "reason": "한국 스캔 시세가 없습니다."}
     first = min((v[0]["date"] for v in bars.values() if v), default=None)
     krx = krx_days(Path(base) / KRX, first) if first else {}

@@ -6,6 +6,7 @@ it removes cache files only, matched by name, never records or backups.
 """
 import re
 import shutil
+import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -15,6 +16,12 @@ BAD_FREE = 2 * GB
 CACHE = Path("data") / "qsf" / "cache"
 SCANBARS = re.compile(r"^scanbars_(\d{4}-\d{2}-\d{2})_[0-9a-f]+_[0-9a-f]+\.json$")
 KEEP_SESSIONS = 5
+KR_CACHE = Path("data") / "kr" / "cache"
+KR_BARS = re.compile(r"^(?:universe|history|evaluate)_\d{4}-\d{2}-\d{2}_(\d{4}-\d{2}-\d{2})_[0-9a-f]{12}\.csv\.gz$")
+# what an atomic write leaves when the process is killed between writing and swapping: (folder, name pattern)
+TEMPS = ((Path("data") / "qsf", re.compile(r"^(?:bars_KR\.json\.gz\.\d+\.tmp|krx_panel\.npz\.\d+\.tmp\.npz)$")), (KR_CACHE, re.compile(r"^.+\.csv\.gz\.\d+\.tmp$")))
+TEMP_AGE_S = 86400
+KEEP_KR_WINDOWS = 3                 # window ends kept: today's, and two earlier ones in case a day is looked at again
 # cache entries no program code reads any more: (file pattern, why).  QSF-1.1.9 moved the extracted annual series to the keys
 # annual3 and krfund3; the annual2 and krfund2 files are deliberately not listed here yet, so a return to 1.1.8 needs no download.
 # QSF-1.2.1 moved the US series on to annual4; the annual3 files are not listed either, for the same reason.
@@ -75,9 +82,57 @@ def superseded_report(base: Path) -> Dict[str, Any]:
     return {"groups": groups, "files": sum(g["files"] for g in groups), "mb": round(sum(g["mb"] for g in groups), 1)}
 
 
+def kr_bars_report(base: Path, keep: int = KEEP_KR_WINDOWS) -> Dict[str, Any]:
+    """The Korean model scan's bar files (``markets/kr/acquisition.py``).  A file's name carries the end of its window, the day after
+    the session it was fetched for; a later day never reads it, and no run artifact points at it (runs keep their own snapshots)."""
+    ends: Dict[str, List[Path]] = {}
+    root = Path(base) / KR_CACHE
+    if root.exists():
+        for f in root.iterdir():
+            m = KR_BARS.match(f.name)
+            if m and f.is_file():
+                ends.setdefault(m.group(1), []).append(f)
+    order = sorted(ends)
+    old = order[:-keep] if keep > 0 else order
+    size = lambda names: sum(f.stat().st_size for e in names for f in ends[e])      # noqa: E731
+    return {"windows": len(order), "files": sum(len(v) for v in ends.values()), "total_mb": round(size(order) / 1024 ** 2, 1), "keep": keep,
+            "old_windows": old, "old_files": sum(len(ends[e]) for e in old), "old_mb": round(size(old) / 1024 ** 2, 1), "_paths": [f for e in old for f in ends[e]]}
+
+
+def prune_kr_bars(base: Path, keep: int = KEEP_KR_WINDOWS, apply: bool = False) -> Dict[str, Any]:
+    """Lists by default.  With ``apply`` removes only files whose names match the Korean bar cache pattern, older than the newest ``keep`` windows."""
+    if keep < 1:
+        raise ValueError("KEEP_AT_LEAST_ONE")
+    rep = kr_bars_report(base, keep)
+    paths = rep.pop("_paths")
+    removed = 0
+    if apply:
+        for f in paths:
+            f.unlink()
+            removed += 1
+    return {**rep, "applied": bool(apply), "removed": removed}
+
+
+def prune_temps(base: Path, apply: bool = False, clock=time.time) -> Dict[str, Any]:
+    """Temp files a killed write left behind (``TEMPS``).  A live writer's file is minutes old at most, so only ones older than
+    ``TEMP_AGE_S`` are listed; ``apply`` removes them."""
+    old = [f for folder, pattern in TEMPS for f in ((Path(base) / folder).iterdir() if (Path(base) / folder).exists() else [])
+           if f.is_file() and pattern.match(f.name) and clock() - f.stat().st_mtime > TEMP_AGE_S]
+    mb = round(sum(f.stat().st_size for f in old) / 1024 ** 2, 1)
+    removed = 0
+    if apply:
+        for f in old:
+            f.unlink()
+            removed += 1
+    return {"files": len(old), "mb": mb, "applied": bool(apply), "removed": removed}
+
+
 def prune_cache(base: Path, keep: int = KEEP_SESSIONS, apply: bool = False) -> Dict[str, Any]:
-    """Old scan sessions plus superseded entries.  Lists by default; ``apply`` removes exactly the listed files."""
+    """Old scan sessions, old Korean bar windows, leftover temp files and superseded entries.  Lists by default; ``apply`` removes
+    exactly the listed files."""
     scan = prune_scanbars(base, keep, apply)
+    kr = prune_kr_bars(base, apply=apply)
+    temps = prune_temps(base, apply=apply)
     old = superseded_report(base)
     removed = 0
     for g in old["groups"]:
@@ -85,4 +140,4 @@ def prune_cache(base: Path, keep: int = KEEP_SESSIONS, apply: bool = False) -> D
             if apply:
                 f.unlink()
                 removed += 1
-    return {"scanbars": scan, "superseded": {**old, "removed": removed}, "applied": bool(apply)}
+    return {"scanbars": scan, "kr_bars": kr, "temps": temps, "superseded": {**old, "removed": removed}, "applied": bool(apply)}

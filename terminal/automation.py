@@ -11,6 +11,7 @@ import os
 import plistlib
 import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -27,7 +28,11 @@ LABEL = "com.quantengine.daily"
 # within the hour it is awake again, and a finished day ends in seconds.  Before 07:10 the US session is not complete.
 SCHEDULE = tuple((h, 10) for h in range(7, 24))
 STEP_TIMEOUT = 45 * 60
-STEP_TIMEOUTS = {"SCAN_KR": 90 * 60}                # the Korean model scan downloads about 2,500 symbols on its first run of a day
+STEP_TIMEOUTS = {"SCAN_KR": 90 * 60,                # the Korean model scan downloads about 2,500 symbols on its first run of a day
+                 "KR_FORWARD": 90 * 60}             # ten records in one process: 33 to 37 minutes on 2026-11-11..13, too near the 45
+NETWORK_WAIT_S, NETWORK_POLL_S = 90, 5              # how long a run waits for the network before its first step
+NETWORK_PROBE = "query1.finance.yahoo.com"          # the first host every chain needs; only its name is looked up
+RETRY_QUICK_S = 300                                 # a step that failed sooner than this gets one more try at the end of the run
 RUNNING_FILE = "running.json"                       # the run in progress: pid, step, steps done
 CAFFEINATE = "/usr/bin/caffeinate"
 SLEPT_NOTE_S = 120                                  # a step during which the Mac slept this long says so
@@ -166,10 +171,18 @@ def _is_date_name(name: str) -> bool:
         return False
 
 
+def _online() -> bool:
+    try:
+        socket.getaddrinfo(NETWORK_PROBE, 443)
+        return True
+    except OSError:
+        return False
+
+
 class Daily:
     def __init__(self, base: Path, now: Callable[[], datetime] = None, runner: Callable = None,
                  telegram: Callable = None, macos: Callable = None, terminal: Any = None, backup_dir: Path = None,
-                 clocks: Any = None):
+                 clocks: Any = None, online: Callable[[], bool] = None, sleep: Callable[[float], None] = None):
         self.base = Path(base)
         self.dir = self.base / "data" / "automation"
         self.state_file = self.dir / "state.json"
@@ -181,6 +194,9 @@ class Daily:
         self.backup_dir = backup_dir
         # wall time keeps running while the Mac sleeps, mach_absolute_time (time.monotonic) does not: the gap is time asleep
         self.clocks = clocks or (time.time, time.monotonic)
+        # with a stand-in runner (tests) nothing goes out, so nothing waits for the network
+        self.online = online or (_online if runner is None else (lambda: True))
+        self.sleep = sleep or time.sleep
 
     # ------------------------------------------------------------------ state
     def state(self) -> Dict[str, Any]:
@@ -232,7 +248,9 @@ class Daily:
         hours and its downloads get cut (2026-11-10).  A failure says so, so it is not read as a data or code problem."""
         wall, mono = (c() for c in self.clocks)
         res = self._step(name, session)
-        slept = (self.clocks[0]() - wall) - (self.clocks[1]() - mono)
+        wall_end, mono_end = (c() for c in self.clocks)
+        res["seconds"] = round(mono_end - mono)                     # time awake; the retry in _run reads it
+        slept = (wall_end - wall) - (mono_end - mono)
         if slept >= SLEPT_NOTE_S:
             res["slept_minutes"] = round(slept / 60)
             if res.get("status") == FAILED:
@@ -320,8 +338,9 @@ class Daily:
             return None
         try:
             res = storage.prune_cache(self.base, apply=True)
-            st["cache_prune"] = {"session": session, "at": self.now().isoformat(), "removed": res["scanbars"]["removed"] + res["superseded"]["removed"],
-                                 "mb": round(res["scanbars"]["old_mb"] + res["superseded"]["mb"], 1)}
+            st["cache_prune"] = {"session": session, "at": self.now().isoformat(),
+                                 "removed": res["scanbars"]["removed"] + res["kr_bars"]["removed"] + res["temps"]["removed"] + res["superseded"]["removed"],
+                                 "mb": round(res["scanbars"]["old_mb"] + res["kr_bars"]["old_mb"] + res["temps"]["mb"] + res["superseded"]["mb"], 1)}
         except Exception as exc:                                    # never stops the run
             st["cache_prune"] = {"session": session, "at": self.now().isoformat(), "error": type(exc).__name__}
         return st["cache_prune"]
@@ -483,12 +502,37 @@ class Daily:
             try:
                 out = self._run(resend)
             except Exception as exc:
+                self._crash_notice(exc)
                 self._attempt({"status": "ERROR", "type": type(exc).__name__})
                 raise
             finally:
                 (self.dir / RUNNING_FILE).unlink(missing_ok=True)
             self._attempt({"status": out["status"], "session": out.get("session")})
             return out
+
+    def _wait_for_network(self) -> bool:
+        """Up to NETWORK_WAIT_S for a name lookup to work.  launchd starts the job the moment the lid opens, before Wi-Fi is back."""
+        waited = 0.0
+        while not self.online():
+            if waited >= NETWORK_WAIT_S:
+                return False
+            self.sleep(NETWORK_POLL_S)
+            waited += NETWORK_POLL_S
+        return True
+
+    def _crash_notice(self, exc: BaseException) -> None:
+        """One line when a run dies outside its steps; without it the job could stop every hour unseen.  Sent once per kind of
+        failure a day, and never in the way of the failure itself."""
+        try:
+            kind, today = type(exc).__name__, self.now().astimezone(KST).date().isoformat()
+            last = (self.state().get("last_attempt") or {})
+            if last.get("status") == "ERROR" and last.get("type") == kind and str(last.get("at", ""))[:10] == self.now().date().isoformat():
+                return
+            text = f"퀀트 터미널 일일 작업이 단계 밖에서 멈췄습니다 ({today}, {kind}). 기록 화면의 '지금 수집'으로 다시 실행해 보세요."
+            self.telegram(text)
+            self.macos("퀀트 터미널 일일 작업 중단", kind)
+        except Exception:
+            pass
 
     def _mark(self, step: Optional[str], done: int, total: int) -> None:
         """What the run is doing now, for the screen.  A separate small file: the lock is not probed, so a status poll can never
@@ -527,10 +571,20 @@ class Daily:
             pending.append("BACKUP")
         order = list(STEP_NAMES)
         todo = sorted(set(pending), key=order.index)
+        self._wait_for_network()
         for k, name in enumerate(todo):
             self._mark(name, k, len(todo))
             steps[name] = self._timed_step(name, session)
             self._save(st)
+        # A step that failed within minutes most likely met a network that was not up yet (lid just opened).  Waiting for the next
+        # hourly firing can lose the day: the chain runs for about two hours and launchd drops the firings in between.  One more
+        # try at the end; "data not ready" is left alone, since the provider will not have it a minute later either.
+        for k, name in enumerate(todo):
+            first = steps[name]
+            if first.get("status") == FAILED and first.get("seconds", RETRY_QUICK_S) < RETRY_QUICK_S and first.get("detail") != "데이터 미준비":
+                self._mark(name, k, len(todo))
+                steps[name] = {**self._timed_step(name, session), "retried": True}
+                self._save(st)
         self._mark("WRAP_UP", len(todo), len(todo))
         st["kr_day"] = kr_day
         self._kr_holdings(st)
