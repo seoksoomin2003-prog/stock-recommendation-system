@@ -94,4 +94,4 @@ def test_factors_are_missing_with_the_reason_never_zero():
 
 
 def test_version():
-    assert config.MODEL_VERSION == "QSF-1.3.2"
+    assert config.MODEL_VERSION == "QSF-1.4.0"

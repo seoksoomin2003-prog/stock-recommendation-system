@@ -5,7 +5,7 @@ composite = 100 * sum(weight * normalized) / sum(weight of factors with data).  
 Confidence is reported separately and never multiplies the score.  Gates override actionability, not the score.
 A profile's reference domains are computed and kept on the card with ``scored: False`` and weight 0: they enter neither sum.
 """
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 from terminal.qsf import config, factors, technicals
 
@@ -95,15 +95,47 @@ def _reference_domain(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     return {"score_100": 100 * sum(r["reference_weight"] * r["normalized"] for r in have) / w if w else None, "coverage": eff / app if app else None}
 
 
-def prior_formula_score(rows: List[Dict[str, Any]]) -> Optional[float]:
-    """The composite as it was when the reference factors still counted, from a card's or a ledger snapshot's factor rows."""
+def formula_score(rows: List[Dict[str, Any]], counted: Optional[Sequence[str]] = None) -> Optional[float]:
+    """The composite with the reference factors of the ``counted`` domains counting again (None: all of them), from a card's or a
+    ledger snapshot's factor rows.  A reference row of another domain stays out."""
     w = c = 0.0
     for r in rows:
         if r.get("status") not in _QUALITY or r.get("normalized") is None:
             continue
+        if r.get("scored") is False and counted is not None and r.get("domain") not in counted:
+            continue
         weight = float(r["reference_weight"] if r.get("scored") is False else r["weight"])
         w, c = w + weight, c + weight * float(r["normalized"])
     return 100 * c / w if w else None
+
+
+def prior_formula_score(rows: List[Dict[str, Any]]) -> Optional[float]:
+    """The composite as it was when every reference factor still counted."""
+    return formula_score(rows)
+
+
+def market_state(rows: List[Dict[str, Any]], market: str) -> Dict[str, Any]:
+    """The market state of a card or a ledger snapshot: its regime factors under the swing weights, so a swing card and a long card
+    of one day read the same value.  It is in no score.  A missing factor leaves both sums, as in the score."""
+    have = {r["factor"]: r for r in rows if r.get("domain") == "REGIME"}
+    w = c = app = eff = 0.0
+    parts = []
+    for fid, weight in config.MARKET_STATE_WEIGHTS[market].items():
+        r = have.get(fid)
+        if r is None:
+            continue
+        if r.get("status") != "NOT_APPLICABLE":
+            app += weight
+        ok = r.get("status") in _QUALITY and r.get("normalized") is not None
+        if ok:
+            w, c, eff = w + weight, c + weight * float(r["normalized"]), eff + weight * _QUALITY[r["status"]]
+        parts.append({"factor": fid, "weight": weight, "status": r.get("status"), "normalized": float(r["normalized"]) if ok else None, "raw": r.get("raw"),
+                      "explanation": r.get("explanation"), "reason": r.get("reason"), "as_of": r.get("as_of")})
+    value = 100 * c / w if w else None
+    state = None if value is None else "ADVERSE" if value < config.MARKET_STATE_MID else "FAVOURABLE"
+    factor = config.ADVERSE_SIZE_FACTOR.get(market, 1.0) if state == "ADVERSE" else 1.0
+    return {"market": market, "score_100": value, "coverage": eff / app if app else None, "state": state, "label": config.MARKET_STATE_LABELS.get(state, "자료 없음"),
+            "mid": config.MARKET_STATE_MID, "size_factor": factor, "note": config.MARKET_STATE_NOTES[market], "factors": parts}
 
 
 def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, Any]:
@@ -175,7 +207,7 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
             "market": market, "strategy": strategy, "held": held, "score": composite,
             "diagnostic_only": not sufficient, **classify(composite), "action": display, "raw_action": action,
             "action_label": config.ACTION_LABELS[display], "color": _color(display, composite), "actionability": actionability,
-            "coverage": coverage, "confidence": confidence, "domains": domains, "factors": rows, "gates": gates,
+            "coverage": coverage, "confidence": confidence, "domains": domains, "market_state": market_state(rows, market), "factors": rows, "gates": gates,
             "short_domains": short, "missing": missing_names, "stale": stale_names,
             "top_positive": [{"factor": r["factor"], "text": r["explanation"]} for r in pos],
             "top_negative": [{"factor": r["factor"], "text": r["explanation"]} for r in neg],

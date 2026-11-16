@@ -12,7 +12,7 @@ import math
 from typing import Any, Dict, Iterable, List, Optional
 
 from terminal import portfolio as pf
-from terminal.qsf import config
+from terminal.qsf import config, engine
 
 ENTRY_READY = "ENTRY_NOW"
 LIMIT_ATR = 0.5                 # a buy is not chased beyond the reference close plus this many ATR
@@ -66,6 +66,17 @@ def session_snaps(led: Any, market: str, session: str) -> List[Dict[str, Any]]:
     return out
 
 
+def market_state(snaps: Iterable[Dict[str, Any]], market: str, session: str) -> Optional[Dict[str, Any]]:
+    """The session's market state, read from its ledger snapshots: one scan scores every stock against one regime, so the first
+    snapshot of the session that carries the regime factors has it.  None: no snapshot of the session carries them."""
+    rows = [s for s in snaps if s.get("data_date") == session]
+    for want in ("SWING", "LONG_TERM"):
+        for s in rows:
+            if s.get("strategy") == want and any(f.get("domain") == "REGIME" for f in s.get("factors") or []):
+                return {**engine.market_state(s["factors"], market), "session": session}
+    return None
+
+
 def candidates(snaps: Iterable[Dict[str, Any]], session: str, info: Optional[Dict[str, Dict[str, Any]]] = None, settings: Optional[Dict[str, float]] = None) -> List[Dict[str, Any]]:
     """Ledger snapshots of ``session`` the program itself reads as enterable now: actionable, and entry status ENTRY_NOW.
     The long stop is the user's five ATR; the swing stop and target are the snapshot's own."""
@@ -85,10 +96,13 @@ def candidates(snaps: Iterable[Dict[str, Any]], session: str, info: Optional[Dic
     return sorted(out, key=lambda c: (-c["score"], c["ticker"], c["style"]))
 
 
-def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, settings: Optional[Dict[str, float]] = None) -> Dict[str, Any]:
+def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, settings: Optional[Dict[str, float]] = None, state: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """``account``: ``equity``, ``cash``, ``positions`` {ticker: {style, value, sector}}.  Candidates are taken in score order; each
-    order reserves cash at its limit price with the buy commission, so a fill at or under the limit never overdraws the account."""
+    order reserves cash at its limit price with the buy commission, so a fill at or under the limit never overdraws the account.
+    ``state``: the session's market state.  On an adverse day in a market with a size factor (``config.ADVERSE_SIZE_FACTOR``) the risk
+    per trade and the weight limit of every new order are multiplied by it; nothing else reads the state."""
     st = settings or pf.DEFAULT_SETTINGS
+    factor = float((state or {}).get("size_factor") or 1.0)
     equity, cash = float(account.get("equity") or 0.0), float(account.get("cash") or 0.0)
     held = dict(account.get("positions") or {})
     kr = "_kr" if market == "KR" else ""
@@ -120,7 +134,10 @@ def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, set
             continue
         limit = close + LIMIT_ATR * c["atr"]
         unit = limit * (1 + commission)                     # cash one share reserves
-        size = pf.position_size(equity, cash, close, c["stop"], pf.limits_for(style, st, market)) if equity > 0 else None
+        lim = pf.limits_for(style, st, market)
+        if factor != 1.0:
+            lim = {**lim, "risk_per_trade_pct": lim["risk_per_trade_pct"] * factor, "max_position_pct": lim["max_position_pct"] * factor}
+        size = pf.position_size(equity, cash, close, c["stop"], lim) if equity > 0 else None
         caps = dict(size["limits"]) if size else {"RISK": 0, "WEIGHT": 0, "CASH": 0}
         caps["CASH"] = math.floor(max(cash, 0.0) / unit + pf.EPS)
         caps["SLEEVE"] = math.floor(max(sleeve_cap[style] - sleeve[style], 0.0) / close + pf.EPS)
@@ -148,7 +165,8 @@ def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, set
     by_code: Dict[str, int] = {}
     for s in skipped:
         by_code[s["code"]] = by_code.get(s["code"], 0) + 1
-    return {"market": market, "orders": orders, "skipped": skipped, "skipped_counts": by_code, "candidates": len(cands), "cash_after": cash,
+    shown = None if state is None else {k: state.get(k) for k in ("score_100", "state", "label", "mid", "size_factor", "note", "session", "coverage")}
+    return {"market": market, "orders": orders, "skipped": skipped, "skipped_counts": by_code, "candidates": len(cands), "cash_after": cash, "market_state": shown, "size_factor": factor,
             "sleeve": {s: {"value": sleeve[s], "cap": sleeve_cap[s]} for s in sleeve},
             "assumptions": {"limit_atr": LIMIT_ATR, "min_weight_pct": MIN_WEIGHT_PCT, "max_participation_pct": MAX_PARTICIPATION * 100, "commission_bps": config.COSTS[market]["commission_bps"],
                             "sell_bps": config.COSTS[market]["sell_tax_bps"] + config.COSTS[market].get("sell_fee_bps", 0.0), "spread_bps": config.COSTS[market]["spread_slippage_bps"],

@@ -816,15 +816,32 @@ class Terminal(ModelViews):
             return {"status": "NO_SCAN", "market": market, "note": note}
         info = {r["ticker"]: {"name": r.get("name"), "sector": r.get("sector")} for r in latest.get("rows") or []}
         st = self.settings()
-        cands = op.candidates(op.session_snaps(self.qsf.ledger, market, session), session, info, st)
+        snaps = op.session_snaps(self.qsf.ledger, market, session)
+        cands, mstate = op.candidates(snaps, session, info, st), op.market_state(snaps, market, session)
         _, integ, state, val, _, _ = self._valued(market)
         equity = val["summary"]["equity"]
         if not equity or equity <= 0:
-            return {"status": "NO_ACCOUNT", "market": market, "session": session, "candidates": len(cands), "note": note,
+            return {"status": "NO_ACCOUNT", "market": market, "session": session, "candidates": len(cands), "note": note, "market_state": mstate,
                     "reason": "계좌 평가액이 없습니다. 포트폴리오 탭에 입금·거래를 기록하면 그 계좌 기준으로 계획을 보여 줍니다."}
         account = {"equity": equity, "cash": state["cash"],
                    "positions": {h["ticker"]: {"style": h.get("style"), "value": h.get("value") or 0.0, "sector": h.get("sector")} for h in val["holdings"]}}
-        return {"status": "REAL", "session": session, "equity": equity, "cash": state["cash"], "integrity": integ["status"], "note": note, **op.build(cands, account, market, st)}
+        return {"status": "REAL", "session": session, "equity": equity, "cash": state["cash"], "integrity": integ["status"], "note": note, **op.build(cands, account, market, st, mstate)}
+
+    def market_state(self, market: str = "US") -> Dict[str, Any]:
+        """The market state of the newest recorded scan: the regime factors, apart from every score.  Read only."""
+        from terminal.qsf import order_plan as op
+        session = self.qsf.latest(market).get("session")
+        if not session:
+            return {"status": "NO_SCAN", "market": market}
+        memo = getattr(self, "_market_state_memo", None)
+        if memo is None:
+            memo = self._market_state_memo = {}
+        key = (market, session, self.qsf.ledger._index_stamp())
+        if key not in memo:
+            memo.clear() if len(memo) > 8 else None
+            memo[key] = op.market_state(op.session_snaps(self.qsf.ledger, market, session), market, session)
+        got = memo[key]
+        return {"status": "REAL", **got} if got else {"status": "NO_RECORD", "market": market, "session": session}
 
     def model_plan(self) -> Dict[str, Any]:
         latest = self._latest_scan()

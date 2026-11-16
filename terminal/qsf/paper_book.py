@@ -17,7 +17,7 @@ from terminal.qsf import config, kr_forward as kf, order_plan
 from terminal.qsf.ledger import Ledger
 
 RULES = "reports/PAPER_BOOK_RULES.md"
-VERSION = "PB-1"
+VERSION = "PB-2"            # PB-2 (2026-11-16): the plan reads the market state; on an adverse US day a new order is at most half its usual size
 FOLDERS = {"KR": Path("research_data") / "paper_book_kr", "US": Path("research_data") / "paper_book_us"}
 START_CASH = {"KR": 10_000_000.0, "US": 10_000.0}       # made-up amounts chosen by the user on 2026-11-12; not the real account
 CURRENCY = {"KR": "원", "US": "달러"}
@@ -175,8 +175,8 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
     if len({s["ticker"] for s in scored}) >= MIN_ROWS:
         cands = order_plan.candidates(scored, day, info)
         account = {"equity": equity, "cash": st["cash"], "positions": {t: {"style": p["style"], "value": p["qty"] * p["last_close"], "sector": p.get("sector")} for t, p in pos.items()}}
-        built = order_plan.build(cands, account, market)
-        plan = {"orders": built["orders"], "skipped_counts": built["skipped_counts"], "candidates": built["candidates"], "scored": True, "sleeve": built["sleeve"],
+        built = order_plan.build(cands, account, market, state=order_plan.market_state(scored, market, day))
+        plan = {"market_state": built["market_state"], "size_factor": built["size_factor"], "orders": built["orders"], "skipped_counts": built["skipped_counts"], "candidates": built["candidates"], "scored": True, "sleeve": built["sleeve"],
                 "skipped_first": built["skipped"][:20]}
         st["plan"] = built["orders"]
     bench = bars.at(REFERENCE[market], day) if market == "US" else None

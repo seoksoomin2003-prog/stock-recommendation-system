@@ -5,7 +5,10 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.3.2"     # 1.3.2: US costs are the broker's published fees (Toss Securities: 0.1% each way, SEC fee on sells) instead of an assumed
+MODEL_VERSION = "QSF-1.4.0"     # 1.4.0: the regime domain no longer counts in any of the four scores; it is shown apart as the market state
+#                                  (MARKET_STATE_*), and on a US day under its middle the order plan halves the risk per trade.  User decision
+#                                  2026-11-16 after reports/QSF_MARKET_STATE_RESULTS.md; the former formula is written down every session
+#                                  (reports/QSF_SCORE_SPLIT_PROTOCOL.md).  1.3.2: US costs are the broker's published fees (Toss Securities: 0.1% each way, SEC fee on sells) instead of an assumed
 #                                  zero commission, so the US swing risk/reward factor reads a 0.40% round trip (user decision 2026-11-12); Korea already matched.
 #                                  1.3.1: a missing next earnings date is estimated from the company's own past dates (earnings_estimate), labelled
 #                                  as an estimate and read with a wider window; user decision 2026-11-11.  1.3.0: the live Korean scan covers the 300 largest companies by market value instead of the 300 most traded
@@ -20,7 +23,8 @@ MODEL_VERSION = "QSF-1.3.2"     # 1.3.2: US costs are the broker's published fee
 VALIDATION_NOTICE = ("미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. "
                      "한국 스캔 대상은 2026-11-11부터 시가총액 상위 300종목입니다. 이 대상 안에서 점수는 과거 시험(2019~2026)의 기준에 못 미쳤고(장기 점수는 순위와 약한 양의 관계, 상위 종목은 시장 수준), "
                      "이전 대상(거래대금 상위 300)에서는 장기 점수가 한 구간에서만 순위를 설명했으며 그 대상 자체가 시장보다 크게 부진했습니다. "
-                     "한국 스윙 점수는 2026-11-11에 차트 항목을 뺀 새 구성이라 과거 성적이 없습니다. 참고용으로만 쓰세요.")
+                     "한국 스윙 점수는 2026-11-11에 차트 항목을 뺀 새 구성이라 과거 성적이 없습니다. "
+                     "2026-11-16부터 네 점수 모두 시장 국면을 빼고 '시장 상태'로 따로 보여 줍니다(종목 순위는 거의 그대로이고 매수 후보 수가 달라집니다). 참고용으로만 쓰세요.")
 STYLE_TO_STRATEGY = {"LONG": "LONG_TERM", "SWING": "SWING"}
 # Which Korean stocks the live scan scores.  MARKET_CAP: the 300 largest by market value on the newest KRX day on file, by the rule of
 # reports/QSF_KR_CAP_UNIVERSE_PROTOCOL.md.  TRADED_VALUE: the 300 most traded over 20 sessions, the live rule until QSF-1.2.1; it is
@@ -60,8 +64,11 @@ _KR_REGIME_LONG = {"vkospi_regime": 2, "index_trend": 3, "breadth": 2, "usdkrw_r
 
 # Domains a profile computes and stores but does not count in the score.  Korea, swing: the technical domain ranked stocks the
 # wrong way round in three past windows (2012-2019, 2016-2019, 2019-2026), so its 40 points left the score on 2026-11-11.
-_REFERENCE_ONLY = {("KR", "SWING"): ("TECHNICAL",)}
-_VERSION = {("KR", "SWING"): "V2"}
+# Every profile: the regime domain is one value for every stock of a day, so it cannot move a rank; it moved all scores together.  In the
+# index test of 2026-11-16 (MKT-1) a low value was not followed by a worse market (US: by a better one, at about 1.9 times the
+# volatility), so it left the score on 2026-11-16 and is shown apart as the market state, a risk reading.
+_REFERENCE_ONLY = {("US", "SWING"): ("REGIME",), ("US", "LONG_TERM"): ("REGIME",), ("KR", "SWING"): ("TECHNICAL", "REGIME"), ("KR", "LONG_TERM"): ("REGIME",)}
+_VERSION = {("US", "SWING"): "V2", ("US", "LONG_TERM"): "V2", ("KR", "SWING"): "V3", ("KR", "LONG_TERM"): "V2"}
 
 
 def _profile(market: str, strategy: str, common: Dict, regime: Dict) -> Dict:
@@ -83,6 +90,23 @@ _LIVE = {(p["market"], p["strategy"]): p for p in PROFILES.values()}
 
 def profile_for(market: str, strategy: str) -> Dict:
     return _LIVE[(market, strategy)]
+
+
+# The market state: the regime factors under the swing weights, one reading per market and day whichever card it is read from.
+# It is in no score.  Under the middle of its scale a day is ADVERSE.
+MARKET_STATE_WEIGHTS = {"US": dict(_US_REGIME_SWING), "KR": dict(_KR_REGIME_SWING)}
+MARKET_STATE_MID = 50.0
+MARKET_STATE_LABELS = {"FAVOURABLE": "좋음", "ADVERSE": "나쁨"}
+# What an adverse day does to the order plan: the risk per trade and the weight limit of a new order are both multiplied by this, so
+# the order is at most half its usual size whichever limit binds (with a 1% risk and a 10% weight limit the weight usually binds,
+# and halving the risk alone would change almost nothing).  US only (user decision 2026-11-16, "미국만 크기 절반"): the index test
+# found about 1.9 times the volatility after such days in the US and no difference in Korea.
+ADVERSE_SIZE_FACTOR = {"US": 0.5}
+MARKET_STATE_NOTES = {
+    "US": "종목 점수에 들어가지 않는 위험 표시입니다. 과거 시험(2009~2026, 지수 기준)에서 이 값이 50 미만인 날 뒤 20거래일은 변동성이 약 1.9배였고, 지수 수익은 낮지 않았습니다. "
+          "50 미만인 날에는 주문 계획이 새 주문의 거래당 위험 한도와 종목 비중 한도를 절반으로 계산합니다.",
+    "KR": "종목 점수에 들어가지 않는 참고 표시입니다. 과거 시험(2010~2026, 지수 기준)에서 한국은 이 값으로 이후 수익도 변동성도 구분되지 않았습니다. "
+          "VKOSPI는 받을 수 없어 들어 있지 않습니다. 주문 계획의 크기는 바꾸지 않습니다."}
 
 # Minimum coverage per critical domain (spec 8); total is 70%.  A domain the profile does not count is not asked for.
 MIN_TOTAL_COVERAGE = 0.70

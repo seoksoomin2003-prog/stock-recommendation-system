@@ -18,7 +18,8 @@ WED = "2026-11-11"
 
 
 def all_factors(strategy):
-    return [n for d in config.PROFILES[f"US_{strategy}_V1"]["domains"].values() for n in d]
+    p = config.PROFILES[f"US_{strategy}_V2"]                 # QSF-1.4.0: the regime factors are reference rows, still on every card
+    return [n for part in (p["domains"], p["reference"]) for d in part.values() for n in d]
 
 
 def snap(ticker, strategy, session, seed, version="QSF-1.1.6", score=60.0, drop=()):
@@ -58,7 +59,7 @@ def test_bundles_are_live_signals_and_leave_out_the_measured_ones():
         names = [n for b in bundles for n in b]
         assert len(names) == len(set(names))
         assert set(names) <= set(all_factors(strategy))
-        regime = set(config.PROFILES[f"US_{strategy}_V1"]["domains"]["REGIME"])
+        regime = set(config.PROFILES[f"US_{strategy}_V2"]["reference"]["REGIME"])
         assert not set(names) & regime
     assert "earnings_calendar" not in sum(uc.BUNDLES["SWING"], []) and "material_disclosures" not in sum(uc.BUNDLES["SWING"], [])
     assert not {"governance", "material_events"} & set(sum(uc.BUNDLES["LONG_TERM"], []))

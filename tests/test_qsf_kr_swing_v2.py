@@ -31,12 +31,13 @@ def fixed_tech(monkeypatch, value):
 
 def test_only_the_korean_swing_profile_changed():
     ids = {(p["market"], p["strategy"]): p["id"] for p in config.PROFILES.values()}
-    assert ids == {("US", "SWING"): "US_SWING_V1", ("US", "LONG_TERM"): "US_LONG_TERM_V1", ("KR", "SWING"): "KR_SWING_V2", ("KR", "LONG_TERM"): "KR_LONG_TERM_V1"}
+    assert ids == {("US", "SWING"): "US_SWING_V2", ("US", "LONG_TERM"): "US_LONG_TERM_V2", ("KR", "SWING"): "KR_SWING_V3", ("KR", "LONG_TERM"): "KR_LONG_TERM_V2"}
     kr, us = config.profile_for("KR", "SWING"), config.profile_for("US", "SWING")
     assert kr["domains"]["TECHNICAL"] == {} and kr["reference"]["TECHNICAL"] == us["domains"]["TECHNICAL"] and sum(us["domains"]["TECHNICAL"].values()) == 40
     assert {d: kr["domains"][d] for d in ("FUNDAMENTAL", "RISK", "EVENTS")} == {d: us["domains"][d] for d in ("FUNDAMENTAL", "RISK", "EVENTS")}
-    assert all(not p["reference"] for k, p in config.PROFILES.items() if k != "KR_SWING_V2")
-    assert sum(sum(v.values()) for v in config.profile_for("KR", "LONG_TERM")["domains"].values()) == 100 and config.MODEL_VERSION == "QSF-1.3.2"
+    # QSF-1.4.0 (2026-11-16): the regime domain is reference only everywhere; the technical domain only in the Korean swing profile
+    assert {k: sorted(p["reference"]) for k, p in config.PROFILES.items()} == {"US_SWING_V2": ["REGIME"], "US_LONG_TERM_V2": ["REGIME"], "KR_SWING_V3": ["REGIME", "TECHNICAL"], "KR_LONG_TERM_V2": ["REGIME"]}
+    assert sum(sum(v.values()) for v in config.profile_for("KR", "LONG_TERM")["domains"].values()) == 90 and config.MODEL_VERSION == "QSF-1.4.0"
 
 
 def test_the_technical_value_cannot_move_the_korean_swing_score(monkeypatch):
@@ -44,7 +45,7 @@ def test_the_technical_value_cannot_move_the_korean_swing_score(monkeypatch):
     high = engine.score(ctx(), "SWING")
     fixed_tech(monkeypatch, 0.0)
     low = engine.score(ctx(), "SWING")
-    assert high["profile"] == "KR_SWING_V2" and high["score"] is not None and high["score"] == low["score"] and high["coverage"] == low["coverage"]
+    assert high["profile"] == "KR_SWING_V3" and high["score"] is not None and high["score"] == low["score"] and high["coverage"] == low["coverage"]
     scored = [r for r in high["factors"] if r.get("scored") is not False and r["contribution"] is not None]
     assert high["score"] == pytest.approx(100 * sum(r["contribution"] for r in scored) / sum(r["weight"] for r in scored)) and all(r["domain"] != "TECHNICAL" for r in scored)
     fixed_tech(monkeypatch, 1.0)
@@ -87,7 +88,7 @@ def test_the_former_formula_is_recovered_from_the_rows(monkeypatch):
     new = engine.score(ctx(), "SWING")
     us = config.profile_for("US", "SWING")
     former = {"id": "KR_SWING_V1", "market": "KR", "strategy": "SWING", "reference": {},
-              "domains": {**{d: dict(v) for d, v in config.profile_for("KR", "SWING")["domains"].items()}, "TECHNICAL": dict(us["domains"]["TECHNICAL"])}}
+              "domains": {**{d: dict(v) for d, v in config.profile_for("KR", "SWING")["domains"].items()}, **{d: dict(v) for d, v in config.profile_for("KR", "SWING")["reference"].items()}}}
     monkeypatch.setitem(config._LIVE, ("KR", "SWING"), former)
     old = engine.score(ctx(), "SWING")
     assert old["profile"] == "KR_SWING_V1" and old["score"] != new["score"]
@@ -100,12 +101,13 @@ def test_the_ledger_keeps_the_reference_mark_and_the_challenger_equals_the_live_
     res = engine.score(ctx(), "SWING")
     snap = ledger.snapshot({**res, "ticker": "000001"})
     ref = [f for f in snap["factors"] if f["domain"] == "TECHNICAL"]
-    assert all(f["scored"] is False and f["reference_weight"] > 0 and f["weight"] == 0 for f in ref) and all("scored" not in f for f in snap["factors"] if f["domain"] != "TECHNICAL")
-    assert snap["domains"]["TECHNICAL"]["reference"] is True and "reference" not in snap["domains"]["RISK"] and snap["profile"] == "KR_SWING_V2"
+    assert all(f["scored"] is False and f["reference_weight"] > 0 and f["weight"] == 0 for f in ref) and all("scored" not in f for f in snap["factors"] if f["domain"] not in ("TECHNICAL", "REGIME"))
+    assert snap["domains"]["TECHNICAL"]["reference"] is True and "reference" not in snap["domains"]["RISK"] and snap["profile"] == "KR_SWING_V3"
     assert sc.challenger_score(snap["factors"]) == pytest.approx(res["score"])       # the former challenger is now the live score
     assert engine.prior_formula_score(snap["factors"]) == pytest.approx(engine.prior_formula_score(res["factors"]))
     us = ledger.snapshot({**engine.score(ctx("US"), "SWING"), "ticker": "AAA"})
-    assert all("scored" not in f and "reference_weight" not in f for f in us["factors"]) and all("reference" not in v for v in us["domains"].values())
+    assert all("scored" not in f and "reference_weight" not in f for f in us["factors"] if f["domain"] != "REGIME") and all("reference" not in v for d, v in us["domains"].items() if d != "REGIME")
+    assert all(f["scored"] is False and f["weight"] == 0 for f in us["factors"] if f["domain"] == "REGIME") and us["domains"]["REGIME"]["reference"] is True
 
 
 # ---------------------------------------------------------------------- the record of the former formula

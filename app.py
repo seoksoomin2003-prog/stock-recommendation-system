@@ -432,7 +432,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
                "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "paper-book-record", "paper-book-status",
-               "forecast-test", "forecast-record", "forecast-status", "forecast-touch-test",
+               "forecast-test", "forecast-record", "forecast-status", "forecast-touch-test", "score-split-record", "score-split-status", "score-split-evaluate",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-sue-prepare", "kr-sue-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
@@ -561,6 +561,11 @@ def _qsf_kr_forward(args) -> int:
         res["paper_book"] = {k: v for k, v in _paper_book_record("KR").items() if k != "market"}
     except Exception as exc:
         res["paper_book"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the former formula beside the split score (QSF-1.4.0), from the ledger only; it never fails the step either
+        from terminal.qsf import score_split
+        res["score_split"] = {k: v for k, v in score_split.record(PROJECT_ROOT, "KR").items() if k != "market"}
+    except Exception as exc:
+        res["score_split"] = {"status": "FAILED", "reason": type(exc).__name__}
     try:                        # the forecast layer reads the ledger and the scan's prices; it never fails the step either
         res["forecast"] = {k: v for k, v in _forecast_record("KR").items() if k != "market"}
     except Exception as exc:
@@ -718,6 +723,26 @@ def _qsf_regime_weights_evaluate(args) -> int:      # the one forward reading at
     return 0
 
 
+def _qsf_score_split(args) -> int:      # reports/QSF_SCORE_SPLIT_PROTOCOL.md
+    from terminal.qsf import score_split as ss
+    if args.action.endswith("record"):
+        res = ss.record(PROJECT_ROOT, args.market)
+    elif args.action.endswith("status"):
+        res = {"status": "OK", **ss.status(PROJECT_ROOT)}
+    else:                                    # the one reading at 240 matured sessions; refused before that and after a report exists
+        if args.market == "KR":
+            from terminal.qsf import research_kr_live
+            px = research_kr_live.ensure_panel(PROJECT_ROOT, print)
+        else:
+            from terminal.qsf import us_challenger
+            from terminal.qsf.service import QSF
+            docs = [ss.kf._read_day(PROJECT_ROOT / ss.FOLDERS["US"], r["session"]) for r in ss.kf.read_index(PROJECT_ROOT, ss.FOLDERS["US"])]
+            px = us_challenger.build_panel(sorted({r["ticker"] for d in docs for r in d["rows"]}), QSF(PROJECT_ROOT)._loader("US"), {})
+        res = ss.evaluate_once(PROJECT_ROOT, args.market, px)
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in ("OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
+
+
 def _qsf_regime_weights(args) -> int:      # reports/QSF_REGIME_WEIGHTS_PROTOCOL.md
     from terminal.qsf import regime_weights as rw
     if args.action.endswith("run"):              # one run; a stored result is printed as it is
@@ -742,6 +767,11 @@ def _qsf_us_challenger_record(args) -> int:
         res["paper_book"] = {k: v for k, v in _paper_book_record("US").items() if k != "market"}
     except Exception as exc:
         res["paper_book"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the former formula beside the split score (QSF-1.4.0), from the ledger only; it never fails the step
+        from terminal.qsf import score_split
+        res["score_split"] = {k: v for k, v in score_split.record(PROJECT_ROOT, "US").items() if k != "market"}
+    except Exception as exc:
+        res["score_split"] = {"status": "FAILED", "reason": type(exc).__name__}
     try:                        # the forecast layer reads the ledger and the scan's prices; it never fails the step
         res["forecast"] = {k: v for k, v in _forecast_record("US").items() if k != "market"}
     except Exception as exc:
@@ -894,6 +924,9 @@ QSF_HANDLERS = {
     "regime-weights-run": _qsf_regime_weights,
     "regime-weights-record": _qsf_regime_weights,
     "regime-weights-status": _qsf_regime_weights,
+    "score-split-record": _qsf_score_split,
+    "score-split-status": _qsf_score_split,
+    "score-split-evaluate": _qsf_score_split,
     "us-challenger-record": _qsf_us_challenger_record,
 }
 

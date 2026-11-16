@@ -63,13 +63,17 @@ def test_every_profile_totals_100_and_every_factor_has_a_calculator(pid):
 def test_domain_weights_match_the_specification():
     def tot(pid):
         return {d: sum(v.values()) for d, v in config.PROFILES[pid]["domains"].items()}
-    assert tot("US_SWING_V1") == {"TECHNICAL": 40, "FUNDAMENTAL": 10, "REGIME": 20, "RISK": 20, "EVENTS": 10}
+    def ref(pid):
+        return {d: sum(v.values()) for d, v in config.PROFILES[pid]["reference"].items()}
+    # QSF-1.4.0: the regime domain is reference only in every profile (user decision 2026-11-16); it is shown apart as the market state
+    assert tot("US_SWING_V2") == {"TECHNICAL": 40, "FUNDAMENTAL": 10, "REGIME": 0, "RISK": 20, "EVENTS": 10} and ref("US_SWING_V2") == {"REGIME": 20}
     # QSF-1.2.0: the Korean swing score keeps the technical domain's 40 points as reference only (user decision 2026-11-11)
-    assert tot("KR_SWING_V2") == {"TECHNICAL": 0, "FUNDAMENTAL": 10, "REGIME": 20, "RISK": 20, "EVENTS": 10} and "KR_SWING_V1" not in config.PROFILES
-    assert config.PROFILES["KR_SWING_V2"]["reference"] == {"TECHNICAL": config.PROFILES["US_SWING_V1"]["domains"]["TECHNICAL"]}
-    assert tot("US_LONG_TERM_V1") == tot("KR_LONG_TERM_V1") == {"TECHNICAL": 10, "FUNDAMENTAL": 50, "REGIME": 10, "RISK": 20, "EVENTS": 10}
-    assert config.PROFILES["US_SWING_V1"]["domains"]["REGIME"] == {"vix_regime": 5, "vix_term": 4, "credit_spread": 4, "index_trend_breadth": 7}
-    assert config.PROFILES["KR_SWING_V2"]["domains"]["REGIME"] == {"vkospi_regime": 5, "index_trend": 5, "breadth": 4, "usdkrw_regime": 3, "credit_liquidity": 3}
+    assert tot("KR_SWING_V3") == {"TECHNICAL": 0, "FUNDAMENTAL": 10, "REGIME": 0, "RISK": 20, "EVENTS": 10} and ref("KR_SWING_V3") == {"TECHNICAL": 40, "REGIME": 20}
+    assert not {"KR_SWING_V1", "KR_SWING_V2", "US_SWING_V1", "US_LONG_TERM_V1", "KR_LONG_TERM_V1"} & set(config.PROFILES)
+    assert config.PROFILES["KR_SWING_V3"]["reference"]["TECHNICAL"] == config.PROFILES["US_SWING_V2"]["domains"]["TECHNICAL"]
+    assert tot("US_LONG_TERM_V2") == tot("KR_LONG_TERM_V2") == {"TECHNICAL": 10, "FUNDAMENTAL": 50, "REGIME": 0, "RISK": 20, "EVENTS": 10} and ref("US_LONG_TERM_V2") == ref("KR_LONG_TERM_V2") == {"REGIME": 10}
+    assert config.PROFILES["US_SWING_V2"]["reference"]["REGIME"] == config.MARKET_STATE_WEIGHTS["US"] == {"vix_regime": 5, "vix_term": 4, "credit_spread": 4, "index_trend_breadth": 7}
+    assert config.PROFILES["KR_SWING_V3"]["reference"]["REGIME"] == config.MARKET_STATE_WEIGHTS["KR"] == {"vkospi_regime": 5, "index_trend": 5, "breadth": 4, "usdkrw_regime": 3, "credit_liquidity": 3}
 
 
 def test_contributions_reconcile_to_composite_and_are_deterministic():
@@ -103,8 +107,8 @@ def test_confidence_never_changes_the_score():
 
 
 def test_rsi_and_macd_share_one_factor():
-    assert "momentum" in config.PROFILES["US_SWING_V1"]["domains"]["TECHNICAL"]
-    names = set(config.PROFILES["US_SWING_V1"]["domains"]["TECHNICAL"])
+    assert "momentum" in config.PROFILES["US_SWING_V2"]["domains"]["TECHNICAL"]
+    names = set(config.PROFILES["US_SWING_V2"]["domains"]["TECHNICAL"])
     assert not names & {"rsi", "macd"}
 
 
@@ -393,7 +397,7 @@ def test_costs_are_the_brokers_published_fees_and_the_assumed_part_is_kept_apart
     assert config.round_trip_cost("US") == pytest.approx((2 * (10 + 10) + 0.206) / 1e4) and config.fees_only("US") == pytest.approx(20.206 / 1e4)
     assert config.fees_only("KR") == pytest.approx(23 / 1e4) and config.round_trip_cost("KR") - config.fees_only("KR") == pytest.approx(30 / 1e4)
     assert all("가정" in c["basis"] and "토스증권" in c["basis"] for c in (us, kr)) and "환전" in us["basis"]
-    assert config.FX_BPS == {"regular": 5.0, "off_hours": 50.0} and config.MODEL_VERSION == "QSF-1.3.2"
+    assert config.FX_BPS == {"regular": 5.0, "off_hours": 50.0} and config.MODEL_VERSION == "QSF-1.4.0"
 
 
 # ---------------------------------------------------------------------- ledger
@@ -557,7 +561,7 @@ def test_evaluate_end_to_end_with_p6_kept_separate(tmp_path):
     d = service(tmp_path).evaluate("TOP")
     assert d["status"] == "REAL" and set(d["cards"]) == {"SWING", "LONG_TERM"}
     c = d["cards"]["SWING"]
-    assert c["profile"] == "US_SWING_V1" and c["price"] > 0 and c["holding"]["entry_date"] == "2026-11-05" and c["why_summary"]
+    assert c["profile"] == "US_SWING_V2" and c["price"] > 0 and c["holding"]["entry_date"] == "2026-11-05" and c["why_summary"]
     assert d["p6_reference"]["in_top5"] and d["p6_reference"]["rank"] == 1
     assert "alpha" not in json.dumps([f["factor"] for f in c["factors"]])
     assert c["data_date"] == SESSION and "STALE_PRICE" not in [g["code"] for g in c["gates"]]
@@ -623,7 +627,7 @@ def test_kr_uses_no_us_indicators_and_missing_key_is_not_zero(tmp_path):
     used = {s for call in FakeSrc.calls for s in call}
     assert not used & {"^VIX", "^VIX3M", "SPY"} and d["p6_reference"] is None
     c = d["cards"]["LONG_TERM"]
-    assert c["actionability"] == "INSUFFICIENT_DATA" and c["profile"] == "KR_LONG_TERM_V1"
+    assert c["actionability"] == "INSUFFICIENT_DATA" and c["profile"] == "KR_LONG_TERM_V2"
     regime = {f["factor"]: f for f in d["cards"]["SWING"]["factors"] if f["domain"] == "REGIME"}
     assert regime["vkospi_regime"]["status"] == "MISSING" and "VKOSPI" in regime["vkospi_regime"]["reason"]
     assert regime["credit_liquidity"]["status"] == "MISSING" and regime["index_trend"]["status"] == "REAL"
