@@ -110,8 +110,10 @@ class Terminal(ModelViews):
     @property
     def qsf(self):
         if self._qsf is None:
-            from terminal.qsf.service import QSF
-            self._qsf = QSF(self.base, src=self.src, now=self.now, terminal=self)
+            from terminal.qsf.service import QSF, _LAZY
+            with _LAZY:                     # the first requests after a start arrive together; one scorer, with one set of memos
+                if self._qsf is None:
+                    self._qsf = QSF(self.base, src=self.src, now=self.now, terminal=self)
         return self._qsf
 
     def qsf_evaluate(self, ticker: str, market: str = "US") -> Dict[str, Any]:

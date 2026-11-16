@@ -7,12 +7,16 @@ screen.  They use the scorer's own state (``self.base``, ``self.cache``, ``self.
 """
 import gzip
 import json
+import threading
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 
 from terminal.qsf import config, ledger
+
+
+_MEMO_GUARD = threading.Lock()         # guards the table of per-report locks, never a computation
 
 
 def _n(v) -> Optional[float]:
@@ -138,12 +142,16 @@ class ScreenViews:
     def _ratios(self, market: str) -> Dict[str, Any]:
         def build():
             mine = lambda s: s.get("strategy") == "LONG_TERM" and s.get("model_version") == config.MODEL_VERSION      # noqa: E731
-            days = self.ledger.snapshots(market, keep=lambda s: s["data_date"] if mine(s) else None)
+            # Which day is the newest comes from the shards' side files (a few fields per snapshot); only the shards holding that
+            # day are then read whole.  Both passes used to parse every shard of the market: 1.4 s with 8 sessions, growing daily.
+            shards = [r for r in self.ledger._live_rows() if r["market"] == market]
+            dates_of = [[v["LONG_TERM"]["data_date"] for v in self.ledger.side(r).values()
+                         if "LONG_TERM" in v and v["LONG_TERM"].get("model_version") == config.MODEL_VERSION] for r in shards]
+            days = [d for ds in dates_of for d in ds]
             if not days:
                 return {"session": None, "rows": {}}
             session = max(days)
-            # only the newest day's snapshots are kept whole; the ledger is read twice instead of held in memory
-            snaps = self.ledger.snapshots(market, keep=lambda s: s if mine(s) and s["data_date"] == session else None)
+            snaps = [s for r, ds in zip(shards, dates_of) if session in ds for s in self.ledger._load(r) if mine(s) and s["data_date"] == session]
             rows = {}
             for s in snaps:
                 if s["data_date"] != session:
@@ -158,7 +166,7 @@ class ScreenViews:
         return self._memo(f"ratios:{market}", self._stamp([]), build)
 
     def _peers(self, ticker: str, market: str) -> Dict[str, Any]:
-        heat = {st: {i["ticker"]: i for i in self.heatmap(market, st).get("items") or []} for st in config.STRATEGIES}
+        heat = {"SWING": {i["ticker"]: i for i in self.heatmap(market, "SWING").get("items") or []}}     # market value and change do not depend on the strategy
         out = self.screen_rows(market)
         rows = {(r["ticker"], r["strategy"]): r for r in out.get("rows") or []}
         if (ticker, "SWING") not in rows and (ticker, "LONG_TERM") not in rows:
@@ -201,6 +209,7 @@ class ScreenViews:
                 "basis_note": "같은 업종 스캔 종목 안에서의 상대 위치입니다(A 상위 20%, F 하위 20%). 미래 수익으로 검증된 등급이 아닙니다."}
 
     HEAT_SPANS = {"1d": 1, "5d": 5, "1m": 21}
+    HEAT_TAIL = 64                    # rows read per stock for the map: three times the longest span, so gaps rarely force a full read
 
     def heatmap(self, market: str = "US", strategy: str = "SWING") -> Dict[str, Any]:
         """Every scanned stock with its sector, market value, price change and score, for the market map.  Read only, from what is
@@ -215,6 +224,7 @@ class ScreenViews:
         if out.get("status") != "REAL":
             return {"status": out.get("status") or "UNAVAILABLE", "market": market, "items": [], "reason": out.get("reason")}
         session, load = out.get("session"), self._scan_loader(market)
+        tail = (lambda t: load.tail(t, self.HEAT_TAIL)) if hasattr(load, "tail") else load     # only the US loader builds rows; Korea's is a lookup
         shares: Dict[str, float] = {}
         if market == "KR":
             try:
@@ -226,7 +236,9 @@ class ScreenViews:
             if r.get("strategy") != strategy:
                 continue
             t = r["ticker"]
-            bars = [b for b in load(t) or [] if _n(b.get("close"))]
+            bars = [b for b in tail(t) or [] if _n(b.get("close"))]
+            if len(bars) <= max(self.HEAT_SPANS.values()):         # too few valid closes in the tail: the whole series, as before
+                bars = [b for b in load(t) or [] if _n(b.get("close"))]
             fresh = bool(bars) and bars[-1]["date"] == session
             change = {k: (bars[-1]["close"] / bars[-1 - n]["close"] - 1 if fresh and len(bars) > n else None) for k, n in self.HEAT_SPANS.items()}
             cap = shares.get(t) * bars[-1]["close"] if market == "KR" and fresh and shares.get(t) else None
@@ -320,14 +332,20 @@ class ScreenViews:
         return price_archive.update(self.base, market, self._scan_loader(market), lambda syms: self.src.yahoo_history(syms, "1y"), symbol_of, self.now)
 
     def _scan_loader(self, market: str) -> Callable[[str], List[Dict]]:
+        """The US loader also has ``tail(ticker, n)``: the newest ``n`` rows only.  A reader of a few recent closes need not build
+        six years of rows for each of 500 stocks."""
         if market == "US":
             p = self.terminal.lab.panel()
 
-            def load(t):
+            def rows(t, first):
                 if p is None or t not in p.col:
                     return []
                 o, c, a = p.series("open", t), p.series("close", t), p.series("adj_close", t)
-                return [{"date": d, "open": _n(o[i]), "close": _n(c[i]), "adj_close": _n(a[i])} for i, d in enumerate(p.dates)]
+                return [{"date": p.dates[i], "open": _n(o[i]), "close": _n(c[i]), "adj_close": _n(a[i])} for i in range(first, len(p.dates))]
+
+            def load(t):
+                return rows(t, 0)
+            load.tail = lambda t, n: rows(t, max(0, len(p.dates) - n)) if p is not None else []
             return load
         try:
             with gzip.open(self.dir / "bars_KR.json.gz", "rt", encoding="utf-8") as fh:
@@ -351,13 +369,21 @@ class ScreenViews:
         return tuple(m(f) for f in files) + tuple(m(self.cache._path(k)) for k in cache_keys) + (self.now().date().isoformat(),)
 
     def _memo(self, name: str, stamp: tuple, compute: Callable[[], Dict[str, Any]]) -> Dict[str, Any]:
+        """One computation per report at a time: a second request for a report that is being computed waits for it and takes its
+        result, instead of reading the whole ledger again beside the first."""
         memos = self.__dict__.setdefault("_memos", {})
         hit = memos.get(name)
         if hit is not None and hit[0] == stamp:
             return hit[1]
-        out = compute()
-        memos[name] = (stamp, out)
-        return out
+        with _MEMO_GUARD:
+            lock = self.__dict__.setdefault("_memo_locks", {}).setdefault(name, threading.RLock())
+        with lock:
+            hit = memos.get(name)
+            if hit is not None and hit[0] == stamp:
+                return hit[1]
+            out = compute()
+            memos[name] = (stamp, out)
+            return out
 
     def top3(self, market: str = "US") -> Dict[str, Any]:
         """The frozen top three of each session and how they did since.  Read only; reused until an input changes."""

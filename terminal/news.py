@@ -78,6 +78,16 @@ def fetch(ticker: str, market: str, name: Optional[str] = None, http=requests) -
     return {"items": parse_rss(r.content, provider), "provider": provider}
 
 
+def _one_connection():
+    """A session that keeps the connection open between requests and nothing else: no cookie is stored or sent, so each request
+    is what a separate ``requests.get`` would have sent.  The recorder made about 800 requests to two hosts with a new TLS
+    handshake for each."""
+    from http.cookiejar import DefaultCookiePolicy
+    s = requests.Session()
+    s.cookies.set_policy(DefaultCookiePolicy(allowed_domains=[]))
+    return s
+
+
 def universe(base: Path, market: str) -> List[Dict[str, Any]]:
     try:
         rows = json.loads((Path(base) / "data" / "qsf" / f"latest_{market}.json").read_text(encoding="utf-8")).get("rows") or []
@@ -100,11 +110,12 @@ def record(base: Path, market: str, http=requests, now: Optional[Callable[[], da
     except (OSError, ValueError):
         seen = {}
     day, fresh, ok, failed, streak, stop = at.date().isoformat(), [], 0, 0, 0, None
+    client = _one_connection() if http is requests else http       # the pause between requests is unchanged
     for i, row in enumerate(names):
         if i:
             sleep(pause)
         try:
-            items = fetch(row["ticker"], market, row.get("name"), http)["items"]
+            items = fetch(row["ticker"], market, row.get("name"), client)["items"]
         except FeedRefused as exc:
             failed, stop = failed + 1, f"REFUSED_{exc}"
             break
@@ -120,6 +131,8 @@ def record(base: Path, market: str, http=requests, now: Optional[Callable[[], da
             if key not in seen:
                 seen[key] = day
                 fresh.append({"first_seen_at": at.isoformat(), "market": market, "ticker": row["ticker"], **it})
+    if client is not http:
+        client.close()
     if fresh:
         with gzip.open(folder / f"{day}.jsonl.gz", "at", encoding="utf-8") as fh:
             fh.writelines(json.dumps(r, ensure_ascii=False) + "\n" for r in fresh)

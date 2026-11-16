@@ -49,6 +49,7 @@ class Lab:
         self.fetch = fetch or panel_mod._yf
         self.membership_fetch = membership._http_get
         self._lock = threading.Lock()
+        self._panel_lock = threading.Lock()
         self._panel: Optional[Panel] = None
         self._panel_mtime = None
         self.job = {"state": "IDLE"}
@@ -70,7 +71,11 @@ class Lab:
         except OSError:
             return None
         if self._panel is None or m != self._panel_mtime:
-            self._panel, self._panel_mtime = Panel.load(self.panel_file), m
+            # One load at a time.  After the morning's write every request that needs prices saw the new file at once, and each
+            # load holds about 230 MB for a moment.  A lock of its own: ``record`` calls this while holding ``_lock``.
+            with self._panel_lock:
+                if self._panel is None or m != self._panel_mtime:
+                    self._panel, self._panel_mtime = Panel.load(self.panel_file), m
         return self._panel
 
     def signal_session(self) -> str:

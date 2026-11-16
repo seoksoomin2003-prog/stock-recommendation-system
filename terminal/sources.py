@@ -198,14 +198,27 @@ def sec_text(url: str, http=requests) -> str:
 
 
 _ticker_map = []
+_ticker_map_at: List[float] = []        # when this process loaded the table itself; empty for a table put there by a caller
+_ticker_map_lock = threading.Lock()
+TICKER_MAP_SECONDS = 24 * 3600          # the server lives for days: a table loaded at its start never learned a new listing
+TICKER_MAP_RETRY_SECONDS = 3600         # after a failed reload the old table stays in use this long before the next try
 
 
 def sec_cik(ticker: str) -> Optional[str]:
-    """CIK via SEC company_tickers.json; loaded once per process (live when configured, else the cache)."""
+    """CIK via SEC company_tickers.json; loaded once and read again a day later (live when configured, else the cache)."""
     from core.universe_provider import SecTickerMap
-    if not _ticker_map:
-        _ticker_map.append(SecTickerMap().load())
-    c = _ticker_map[0].cik(ticker.upper().replace(".", "-"))
+    with _ticker_map_lock:
+        if not _ticker_map:
+            _ticker_map.append(SecTickerMap().load())
+            _ticker_map_at[:] = [time.time()]
+        elif _ticker_map_at and time.time() - _ticker_map_at[0] > TICKER_MAP_SECONDS:
+            try:
+                _ticker_map[:] = [SecTickerMap().load()]
+                _ticker_map_at[:] = [time.time()]
+            except Exception:                           # the table in hand keeps answering
+                _ticker_map_at[:] = [time.time() - TICKER_MAP_SECONDS + TICKER_MAP_RETRY_SECONDS]
+        table = _ticker_map[0]
+    c = table.cik(ticker.upper().replace(".", "-"))
     return str(c).zfill(10) if c else None
 
 

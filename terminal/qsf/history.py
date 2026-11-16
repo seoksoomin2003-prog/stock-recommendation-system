@@ -18,15 +18,14 @@ def _row(session: str, s: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def history(ledger: Any, market: str, ticker: str) -> Dict[str, Any]:
-    if ledger.verify()["status"] != "OK":
+    if ledger.verified()["status"] != "OK":
         return {"status": "UNAVAILABLE", "reason": "점수 원장 검사에 실패해 이력을 보여 주지 않습니다.", "strategies": {}}
     found: Dict[str, Dict[str, Dict[str, Any]]] = {}
     for r in ledger._live_rows():
         if r["market"] != market:
             continue
-        for s in ledger._load(r):
-            if s.get("ticker") == ticker:
-                found.setdefault(s["strategy"], {}).setdefault(r["session"], _row(r["session"], s))   # the first record of a session stands, as in the ledger
+        for strategy, s in (ledger.side(r).get(ticker) or {}).items():      # the shard's small side file, not the shard itself
+            found.setdefault(strategy, {}).setdefault(r["session"], _row(r["session"], s))   # the first record of a session stands, as in the ledger
     out = {}
     for strategy, by_session in found.items():
         rows = [by_session[k] for k in sorted(by_session)]

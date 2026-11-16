@@ -11,15 +11,28 @@ import json
 import os
 import threading
 import time
+import weakref
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
+
+
+KEY_WAIT_S = 120            # how long a request waits for another request's fetch of the same key before fetching itself
+
+
+class _KeyLock:
+    __slots__ = ("lock", "__weakref__")
+
+    def __init__(self):
+        self.lock = threading.RLock()
 
 
 class FileCache:
     def __init__(self, root: Path, clock: Callable[[], float] = time.time):
         self.root = Path(root)
         self.clock = clock
+        self._key_locks: "weakref.WeakValueDictionary[str, _KeyLock]" = weakref.WeakValueDictionary()   # a lock lives while a request uses it
+        self._key_guard = threading.Lock()
 
     def _path(self, key: str) -> Path:
         safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in key)[:80]
@@ -45,6 +58,25 @@ class FileCache:
         return rec
 
     def cached(self, key: str, ttl_s: float, fetch: Callable[[], Any]) -> Dict[str, Any]:
+        now = self.clock()
+        old = self.read(key)
+        if old is not None and now - old["stored_at"] <= ttl_s:
+            return _result("REAL", old, now)
+        # One fetch per key at a time.  Two requests that missed the same key each fetched it (a Korean stock tab started the same
+        # eight statement requests twice).  The second now waits and reads what the first stored; if the first failed, or the wait
+        # runs out, it fetches as before.
+        with self._key_guard:
+            holder = self._key_locks.get(key)
+            if holder is None:
+                holder = self._key_locks[key] = _KeyLock()
+        got = holder.lock.acquire(timeout=KEY_WAIT_S)
+        try:
+            return self._fetch_and_store(key, ttl_s, fetch)
+        finally:
+            if got:
+                holder.lock.release()
+
+    def _fetch_and_store(self, key: str, ttl_s: float, fetch: Callable[[], Any]) -> Dict[str, Any]:
         now = self.clock()
         old = self.read(key)
         if old is not None and now - old["stored_at"] <= ttl_s:

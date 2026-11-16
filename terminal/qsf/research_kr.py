@@ -71,8 +71,38 @@ def next_level(level: Optional[float], close: float, chg: Optional[float], cap: 
     return level * (1 + chg / 100) if chg is not None else level
 
 
+_LAST_BUILD: Dict[str, Any] = {}        # the newest result for a given list of days, and what the day files looked like then
+
+
 def build_prices(root: Path, log=print, days: Optional[Sequence[str]] = None) -> Dict[str, Any]:
-    """Arrays by day and stock.  Each adjusted price is built only from changes up to that day.  ``days`` limits which days are read."""
+    """Arrays by day and stock.  Each adjusted price is built only from changes up to that day.  ``days`` limits which days are read.
+
+    One result is kept per process and handed out again, as copies, while the same days are asked for and none of their files has
+    changed (size and write time).  The morning's Korean record step built the same arrays several times over, each build reading
+    every day file and holding about 800 MB while it ran.  Without ``days`` nothing is kept."""
+    if days is None:
+        return _build_prices(root, log, None)
+    wanted = sorted(days)
+    files = []
+    for day in wanted:
+        for board in kh.BOARDS:
+            try:
+                st = kh.path_of(root, board, day).stat()
+                files.append((st.st_mtime_ns, st.st_size))
+            except OSError:
+                files.append(None)
+    key = (str(Path(root).resolve()), tuple(wanted), tuple(files))
+    if _LAST_BUILD.get("key") != key:
+        _LAST_BUILD.clear()                               # the old arrays go before the new ones are built
+        built = _build_prices(root, log, wanted)
+        _LAST_BUILD.update(key=key, value=built)
+    else:
+        built = _LAST_BUILD["value"]
+        log(f"days {len(built['dates'])} stocks {len(built['symbols'])}")
+    return {k: v.copy() for k, v in built.items()}
+
+
+def _build_prices(root: Path, log=print, days: Optional[Sequence[str]] = None) -> Dict[str, Any]:
     days = sorted(days) if days is not None else sorted({p.name[:10] for b in kh.BOARDS for p in (root / b).glob("*.json.gz")})
     snap: List[Dict[str, List[Any]]] = []
     kept, boards = [], {}

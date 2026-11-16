@@ -28,7 +28,8 @@ LABEL = "com.quantengine.daily"
 # within the hour it is awake again, and a finished day ends in seconds.  Before 07:10 the US session is not complete.
 SCHEDULE = tuple((h, 10) for h in range(7, 24))
 STEP_TIMEOUT = 45 * 60
-STEP_TIMEOUTS = {"SCAN_KR": 90 * 60,                # the Korean model scan downloads about 2,500 symbols on its first run of a day
+STEP_TIMEOUTS = {"QSF": 90 * 60,                    # 21 to 26 minutes; 26 on a morning when a week's company data expired together (2026-11-13)
+                 "SCAN_KR": 90 * 60,                # the Korean model scan downloads about 2,500 symbols on its first run of a day
                  "KR_FORWARD": 90 * 60}             # ten records in one process: 33 to 37 minutes on 2026-11-11..13, too near the 45
 NETWORK_WAIT_S, NETWORK_POLL_S = 90, 5              # how long a run waits for the network before its first step
 NETWORK_PROBE = "query1.finance.yahoo.com"          # the first host every chain needs; only its name is looked up
@@ -710,8 +711,16 @@ def plist_bytes(base: Path) -> bytes:
         "ProcessType": "Background"})
 
 
+LAUNCHCTL_PRINT_TIMEOUT_S = 5
+
+
 def _launchctl(*args: str):
-    return subprocess.run(["launchctl", *args], capture_output=True, text=True)
+    """A status question (``print``) gives up after five seconds and then reads as "not loaded".  The status screen asks every
+    three seconds while a job runs, and a ``launchctl`` that never answered held its request for good."""
+    try:
+        return subprocess.run(["launchctl", *args], capture_output=True, text=True, timeout=LAUNCHCTL_PRINT_TIMEOUT_S if args[:1] == ("print",) else None)
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(["launchctl", *args], 124, "", "TIMEOUT")
 
 
 def install(base: Path) -> Dict[str, Any]:

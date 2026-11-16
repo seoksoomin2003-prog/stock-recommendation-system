@@ -12,6 +12,7 @@ import json
 import os
 import statistics
 import sys
+import threading
 from array import array
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -53,10 +54,34 @@ def _norm_of(s: Dict[str, Any]):
     return [f["factor"] for f in fs], [f["normalized"] for f in fs]
 
 
+SIDE_VERSION = 1
+SIDE_FIELDS = ("model_version", "score", "band", "action", "actionability", "confidence", "entry_status", "price", "data_date")
+PREV_KEPT = 2                       # shards whose "previous" view stays in memory: the newest prior one of each market
+
+
+def _side_row(s: Dict[str, Any]) -> Dict[str, Any]:
+    return {**{k: s.get(k) for k in SIDE_FIELDS}, "domains": {d: {"score_100": (v or {}).get("score_100")} for d, v in (s.get("domains") or {}).items()}}
+
+
+def _prev_view(s: Dict[str, Any]) -> Dict[str, Any]:
+    """What ``stability`` reads of an earlier snapshot, and nothing else."""
+    it = sys.intern
+    return {"score": s.get("score"), "model_version": s.get("model_version"), "data_date": s.get("data_date"),
+            "factors": [{"factor": it(str(f["factor"])), "status": it(str(f["status"])) if isinstance(f.get("status"), str) else f.get("status"),
+                         "source": it(f["source"]) if isinstance(f.get("source"), str) else f.get("source"), "contribution": f.get("contribution")}
+                        for f in s.get("factors") or []]}
+
+
 class Ledger:
     def __init__(self, root: Path):
         self.dir = Path(root) / "data" / "qsf" / "ledger"
         self.index = self.dir / "index.jsonl"
+        self.side_dir = self.dir.parent / "ledger_side"
+        self._guard = threading.Lock()
+        self._rows_memo: Optional[Tuple[Any, List[Dict[str, Any]]]] = None
+        self._members_memo: Dict[str, Tuple[Any, Dict[Tuple[str, str], List[int]]]] = {}
+        self._prev_memo: Dict[str, Dict[Tuple[str, str], Dict[str, Any]]] = {}
+        self._verify_memo: Optional[Tuple[Any, Dict[str, Any]]] = None
 
     def read_index(self) -> Dict[str, Any]:
         rows, prev, status = [], GENESIS, "OK"
@@ -118,6 +143,96 @@ class Ledger:
         with gzip.open(self.dir / row["file"], "rt", encoding="utf-8") as fh:
             return [json.loads(x) for x in fh]
 
+    # ------------------------------------------------------------------ cheap readings of immutable shards
+    # A shard never changes once written, so what is derived from it can be kept: in a small file beside the ledger, named by the
+    # shard's own hash, and in memory.  Before, one stock's history parsed every shard of its market in full on every view (0.7 s
+    # with 8 US sessions, and one more shard each trading day), and each card of a scan parsed the previous session's shard again.
+    def _index_stamp(self):
+        try:
+            st = self.index.stat()
+            return st.st_mtime_ns, st.st_size
+        except OSError:
+            return None
+
+    def _rows(self) -> List[Dict[str, Any]]:
+        """``_live_rows`` kept until the index file changes.  For readers only: ``append`` and ``void_shard`` read the file itself."""
+        stamp = self._index_stamp()
+        memo = self._rows_memo
+        if memo is None or memo[0] != stamp or stamp is None:
+            memo = self._rows_memo = (stamp, self._live_rows())
+        return memo[1]
+
+    def side(self, row: Dict[str, Any]) -> Dict[str, Dict[str, Dict[str, Any]]]:
+        """ticker -> strategy -> the few scalar fields of that snapshot (``SIDE_FIELDS`` and each domain's score).  Read from the
+        side file when it exists; otherwise built from the shard, and stored only when the shard still has the hash the index
+        recorded, so a damaged shard can never leave a side file behind."""
+        p = self.side_dir / f"{row['file']}.{str(row.get('sha256'))[:16]}.v{SIDE_VERSION}.json.gz"
+        try:
+            with gzip.open(p, "rt", encoding="utf-8") as fh:
+                d = json.load(fh)
+            if d.get("v") == SIDE_VERSION and isinstance(d.get("rows"), dict):
+                return d["rows"]
+        except (OSError, ValueError, EOFError, AttributeError):
+            pass
+        raw = (self.dir / row["file"]).read_bytes()
+        rows: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        for line in gzip.decompress(raw).decode("utf-8").splitlines():
+            s = json.loads(line)
+            rows.setdefault(s["ticker"], {}).setdefault(s["strategy"], _side_row(s))       # the first record stands, as everywhere
+        if hashlib.sha256(raw).hexdigest() == row.get("sha256"):
+            try:
+                self.side_dir.mkdir(parents=True, exist_ok=True)
+                tmp = p.with_name(f"{p.name}.{os.getpid()}.{threading.get_ident()}.tmp")
+                with open(tmp, "wb") as out, gzip.GzipFile(fileobj=out, mode="wb", mtime=0) as gz:
+                    gz.write(json.dumps({"v": SIDE_VERSION, "file": row["file"], "rows": rows}, ensure_ascii=False).encode("utf-8"))
+                os.replace(tmp, p)
+            except OSError:                             # a full or read-only disk: the reading still succeeds, it is only not kept
+                pass
+        return rows
+
+    def _members(self, market: str, rows: List[Dict[str, Any]]) -> Dict[Tuple[str, str], List[int]]:
+        """(ticker, strategy) -> positions in ``rows`` of the shards that hold it, in index order."""
+        stamp = self._index_stamp()
+        memo = self._members_memo.get(market)
+        if memo is None or memo[0] != stamp or stamp is None:
+            where: Dict[Tuple[str, str], List[int]] = {}
+            for i, r in enumerate(rows):
+                if r["market"] == market:
+                    for t, by in self.side(r).items():
+                        for s in by:
+                            where.setdefault((t, s), []).append(i)
+            memo = self._members_memo[market] = (stamp, where)
+        return memo[1]
+
+    def _previous_of(self, row: Dict[str, Any]) -> Dict[Tuple[str, str], Dict[str, Any]]:
+        got = self._prev_memo.get(row["file"])
+        if got is None:
+            got = {}
+            for s in self._load(row):
+                got.setdefault((s["ticker"], s["strategy"]), _prev_view(s))
+            while len(self._prev_memo) >= PREV_KEPT:
+                self._prev_memo.pop(next(iter(self._prev_memo)))
+            self._prev_memo[row["file"]] = got
+        return got
+
+    def verified(self) -> Dict[str, Any]:
+        """``verify`` reused while the index and every shard keep their size and write time.  A file that is rewritten, cut short or
+        removed changes one of them and is hashed again; the daily check and ``qsf verify`` always hash everything."""
+        rows = self.read_index()["rows"]
+        stamp = [self._index_stamp()]
+        for r in rows:
+            if r.get("type") == "VOID":
+                continue
+            try:
+                st = (self.dir / r["file"]).stat()
+                stamp.append((r["file"], st.st_mtime_ns, st.st_size))
+            except OSError:
+                stamp.append((r["file"], None, None))
+        memo, key = self._verify_memo, tuple(stamp)
+        if memo is None or memo[0] != key or key[0] is None:
+            memo = self._verify_memo = (key, self.verify())
+        return memo[1]
+
     def snapshots(self, market: Optional[str] = None, strategy: Optional[str] = None, ticker: Optional[str] = None,
                   keep: Optional[Callable[[Dict[str, Any]], Any]] = None) -> List[Any]:
         """``keep``: applied to each snapshot as its shard is read, so only what the caller needs stays in memory; a snapshot it
@@ -169,11 +284,14 @@ class Ledger:
         return [s for r in self._live_rows() if r["market"] == market and r["session"] == session for s in self._load(r) if s["strategy"] == strategy]
 
     def previous(self, market: str, ticker: str, strategy: str, before: str) -> Optional[Dict[str, Any]]:
-        for r in reversed(self._live_rows()):
-            if r["market"] == market and r["session"] < before:
-                hit = next((s for s in self._load(r) if s["ticker"] == ticker and s["strategy"] == strategy), None)
-                if hit:
-                    return hit
+        """The stock's newest snapshot of an earlier session, reduced to what ``stability`` reads (score, version, data date and
+        each factor's status, source and contribution).  The shard is the same one the full walk found: the newest in index order
+        that holds the stock under this strategy.  A stock the ledger never held costs no shard reading at all."""
+        with self._guard:
+            rows = self._rows()
+            for i in reversed(self._members(market, rows).get((ticker, strategy), ())):
+                if rows[i]["session"] < before:
+                    return self._previous_of(rows[i]).get((ticker, strategy))
         return None
 
 

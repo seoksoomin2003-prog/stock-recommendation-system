@@ -8,6 +8,7 @@ import gzip
 import hashlib
 import json
 import os
+import threading
 import time
 from collections import Counter
 from datetime import date, datetime, timedelta, timezone
@@ -23,6 +24,8 @@ from terminal.qsf import config, earnings_estimate, engine, events, fundamentals
 from terminal.qsf.views import ScreenViews, _n
 from utils import nyse_calendar
 
+_LAZY = threading.Lock()    # one thread at a time builds a thing the whole process then shares (the Korean stock list)
+KRX_SHARE_DAYS_KEPT = 3     # listed-share tables kept in memory, newest first asked; the server once kept one per day for its whole life
 KR_MIN_UNIVERSE = 200       # a whole-market Korean scan with fewer stocks than this is a partial day, not a day (the universe is 300)
 # "facts": US annual statements are read again at each day's first run, so a new 10-K is scored the next morning (it waited up to 7 days).
 # 20 hours, not 24: a copy stored at 07:15 must be old enough for the next day's 07:10 run.  Korean statements keep 7 days ("kr_facts").
@@ -398,10 +401,22 @@ class QSF(ScreenViews):
             self._dart = OpenDartClient()
         return self._dart
 
+    def _kr_master_file_time(self) -> Optional[int]:
+        try:
+            return (self.base / "data" / "kr" / "security_master" / "LATEST.json").stat().st_mtime_ns
+        except OSError:
+            return None
+
     def _kr_identity(self, code: str) -> Optional[Dict[str, Any]]:
-        if self._kr_master is None:
-            from markets.kr import security_master
-            self._kr_master = security_master.load_master(self.base / "data" / "kr", now=self.now())["master"]
+        """The list is read once and shared.  A list this object read from disk is read again when a newer snapshot has been stored
+        since (the morning scan stores one): the server kept its first list until it was restarted, so a newly listed stock stayed
+        unknown.  A list handed in by the caller is never replaced."""
+        with _LAZY:
+            mine, on_file = getattr(self, "_kr_master_time", None), self._kr_master_file_time()
+            if self._kr_master is None or (mine is not None and on_file is not None and on_file != mine):
+                from markets.kr import security_master
+                self._kr_master = security_master.load_master(self.base / "data" / "kr", now=self.now())["master"]
+                self._kr_master_time = self._kr_master_file_time()        # after the load: loading can itself store a newer snapshot
         hit = self._kr_master[self._kr_master["canonical_ticker"] == code]
         return None if hit.empty else hit.iloc[0].to_dict()
 
@@ -414,10 +429,14 @@ class QSF(ScreenViews):
 
     def _krx_shares(self, as_of: str) -> Dict[str, float]:
         """Listed shares from the newest KRX snapshot up to ``as_of``.  Empty without one, and the caller then keeps Yahoo's count."""
-        if as_of not in self._krx_share_cache:
+        got = self._krx_share_cache.get(as_of)
+        if got is None:
             from terminal.qsf import krx_history
-            self._krx_share_cache[as_of] = krx_history.listed_shares(self.base / "research_data" / "krx", as_of)
-        return self._krx_share_cache[as_of]
+            got = krx_history.listed_shares(self.base / "research_data" / "krx", as_of)
+            while len(self._krx_share_cache) >= KRX_SHARE_DAYS_KEPT:
+                self._krx_share_cache.pop(next(iter(self._krx_share_cache)), None)
+            self._krx_share_cache[as_of] = got
+        return got
 
     def _kr_fund_events(self, code: str, ident: Dict, bars: List[Dict], as_of: str) -> Dict[str, Any]:
         if not self.dart.configured:
@@ -670,9 +689,13 @@ class QSF(ScreenViews):
         return (None, "SHORT_HISTORY") if own is None else (_rank_in(ordered, own), "OUTSIDE_UNIVERSE")
 
     @_one_regime
-    def scan(self, market: str = "US", tickers: Optional[List[str]] = None, record: bool = True, progress=None, side_files: bool = True) -> Dict[str, Any]:
+    def scan(self, market: str = "US", tickers: Optional[List[str]] = None, record: bool = True, progress=None, side_files: bool = True,
+             publish: bool = True) -> Dict[str, Any]:
         """``side_files=False`` (Korea): the scan leaves the live breadth and bar files alone, for a separate record that scores another
-        set of stocks (``kr_cap_universe``).  It cannot be combined with ``record``."""
+        set of stocks (``kr_cap_universe``).  It cannot be combined with ``record``.
+
+        ``publish=False``: the scan is scored and recorded but the newest-scan file and its ranks stay as they are.  The command
+        line passes it for a scan of named stocks, which would otherwise become "the scan" every screen and the news record read."""
         if record and not side_files:
             raise ValueError("a recorded scan writes its side files")
         started = time.time()
@@ -725,7 +748,7 @@ class QSF(ScreenViews):
                    "elapsed_seconds": round(time.time() - started, 1), "ledger": rec, "generated_at": self.now().isoformat(),
                    **({"price_source": self._kr_bars_info} if market == "KR" and getattr(self, "_kr_bars_info", None) else {}),
                    **({"universe": self._kr_universe_info} if market == "KR" and getattr(self, "_kr_universe_info", None) else {}), "rows": sorted(rows, key=lambda r: -(r["score"] or -1))}
-        if not record:
+        if not record or not publish:
             return summary                  # a dry run leaves the published ranking alone
         self.dir.mkdir(parents=True, exist_ok=True)
         self._write_ranks(market, day, pre)
@@ -758,6 +781,7 @@ class QSF(ScreenViews):
         now = self.now()
         master = security_master.load_master(self.base / "data" / "kr", now=now)["master"]
         self._kr_master = master
+        self._kr_master_time = self._kr_master_file_time()
         prov = YahooKRProvider()
         cache_dir = self.base / "data" / "kr" / "cache"
         idx = acquisition.index_bars(prov, *acquisition.window(now, 800), now)
@@ -792,12 +816,14 @@ class QSF(ScreenViews):
         session = latest.strftime("%Y-%m-%d")
         bars, self._kr_bars_info = self._krx_bars(bars)          # QSF-1.1.8: KRX official daily data, Yahoo only for days KRX has not published
         above = [b[-1]["close"] > np.mean([x["close"] for x in b[-200:]]) for b in bars.values() if len(b) >= 200 and b[-1]["date"] == session]
-        if len(above) >= 50 and side_files:
+        # Breadth and the bar store describe the whole universe.  A scan of named stocks used to replace both: on 2026-11-15 a
+        # two-stock comparison run left the Korean bar store with two stocks, and the map drew two of 300 until the next full scan.
+        if len(above) >= 50 and side_files and not tickers:
             self.dir.mkdir(parents=True, exist_ok=True)
             source = "한국 시가총액 상위 300 (스캔 대상)" if (self._kr_universe_info or {}).get("rule") == "MARKET_CAP" else "한국 유동성 상위 유니버스 (Yahoo)"
             (self.dir / "breadth_KR.json").write_text(json.dumps({"status": "REAL", "value": float(np.mean(above)), "n": len(above), "date": session, "source": source}), encoding="utf-8")
             self._regime.pop("KR", None)
-        if side_files:
+        if side_files and not tickers:
             tmp = self.dir / f"bars_KR.json.gz.{os.getpid()}.tmp"      # written whole, then swapped in: a run killed here leaves the old file
             with gzip.open(tmp, "wt", encoding="utf-8") as fh:
                 json.dump(bars, fh)

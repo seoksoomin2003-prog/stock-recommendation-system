@@ -15,7 +15,8 @@ and each day's raw open, high, low and close are scaled by P / raw close; volume
 * Dividends: Yahoo's ``adj_close / close`` ratio for each date is kept, so total-return figures stay as before.
 * A stock KRX does not list in the window (or no snapshot at all) keeps its Yahoo bars; ``source`` says which was used.
 
-The snapshot panel is cached in ``data/qsf/krx_panel.npz`` and rebuilt when a new snapshot day appears.
+The snapshot panel is cached in ``data/qsf/krx_panel.npz``.  A new snapshot day is added to it; days that have left the window
+are cut off when it is read.  It is built from nothing only when it cannot be continued (no file, an old layout, a day missing).
 """
 import fcntl
 import gzip
@@ -64,21 +65,76 @@ def build_panel(root: Path, days: List[str]) -> Dict[str, np.ndarray]:
     codes = sorted({c for cs, _ in per_day for c in cs})
     col = {c: j for j, c in enumerate(codes)}
     data = np.full((6, len(days), len(codes)), np.nan, dtype=np.float64)
+    seen = np.zeros((len(days), len(codes)), dtype=bool)        # the stock is in that day's file, whatever its values
     for n, (cs, vals) in enumerate(per_day):
         if cs:
-            data[:, n, [col[c] for c in cs]] = vals.T
-    return {"dates": np.array(days), "codes": np.array(codes), "data": data}
+            at = [col[c] for c in cs]
+            data[:, n, at] = vals.T
+            seen[n, at] = True
+    return {"dates": np.array(days), "codes": np.array(codes), "data": data, "seen": seen}
+
+
+def _stored(path: Path) -> Optional[Dict[str, Any]]:
+    """The panel on file with its day-by-stock presence table; None for no file, a damaged one or the layout without that table."""
+    try:
+        with np.load(path, allow_pickle=False) as z:
+            if "seen" not in z.files:
+                return None
+            got = {"dates": [str(x) for x in z["dates"]], "codes": [str(c) for c in z["codes"]], "data": z["data"], "seen": z["seen"]}
+    except (OSError, ValueError, KeyError, EOFError):
+        return None
+    ok = got["data"].ndim == 3 and got["data"].shape == (6, len(got["dates"]), len(got["codes"])) and got["seen"].shape == got["data"].shape[1:]
+    return got if ok else None
+
+
+def _tail(st: Dict[str, Any], days: List[str]) -> Optional[Dict[str, np.ndarray]]:
+    """The stored panel cut to ``days`` when they are its last days exactly: the same arrays a fresh build of ``days`` gives.
+    The window's first day moves forward with the calendar, so on most days the stored panel has a few days too many at its
+    start and nothing else differs.  A stock that was only in the days cut off is dropped, as a fresh build would not know it."""
+    dates = st["dates"]
+    if not days or len(days) > len(dates) or dates[len(dates) - len(days):] != days:
+        return None
+    k = len(dates) - len(days)
+    if k == 0:
+        return {"dates": np.array(dates), "codes": np.array(st["codes"]), "data": st["data"], "seen": st["seen"]}
+    keep = st["seen"][k:].any(axis=0)
+    if keep.all():                                          # the usual case: no stock dropped, so no copy of the arrays
+        return {"dates": np.array(days), "codes": np.array(st["codes"]), "data": st["data"][:, k:, :], "seen": st["seen"][k:]}
+    return {"dates": np.array(days), "codes": np.array(st["codes"])[keep], "data": st["data"][:, k:, :][:, :, keep], "seen": st["seen"][k:][:, keep]}
+
+
+def _extended(root: Path, st: Dict[str, Any], days: List[str]) -> Optional[Dict[str, np.ndarray]]:
+    """The stored panel continued to ``days`` by reading only the days it lacks, when those all come after its last day."""
+    have = set(st["dates"])
+    old = [d for d in days if d in have]
+    new = [d for d in days if d not in have]
+    if not old or not new or days != old + new or new[0] <= st["dates"][-1]:
+        return None
+    a = _tail(st, old)
+    if a is None:
+        return None
+    b = build_panel(root, new)
+    codes = sorted(set(map(str, a["codes"])) | set(map(str, b["codes"])))
+    col = {c: j for j, c in enumerate(codes)}
+    data = np.full((6, len(days), len(codes)), np.nan, dtype=np.float64)
+    seen = np.zeros((len(days), len(codes)), dtype=bool)
+    for part, start in ((a, 0), (b, len(old))):
+        at = [col[str(c)] for c in part["codes"]]
+        stop = start + len(part["dates"])
+        data[:, start:stop, at] = part["data"]
+        seen[start:stop, at] = part["seen"]
+    return {"dates": np.array(days), "codes": np.array(codes), "data": data, "seen": seen}
+
+
+def _view(p: Dict[str, np.ndarray]) -> Dict[str, Any]:
+    return {"dates": [str(x) for x in p["dates"]], "codes": {str(c): j for j, c in enumerate(p["codes"])}, "data": p["data"]}
 
 
 def _kept(path: Path, days: List[str]) -> Optional[Dict[str, Any]]:
-    """The stored panel when it covers exactly ``days``."""
-    try:
-        with np.load(path, allow_pickle=False) as z:
-            if list(z["dates"]) == days:
-                return {"dates": [str(x) for x in z["dates"]], "codes": {str(c): j for j, c in enumerate(z["codes"])}, "data": z["data"]}
-    except (OSError, ValueError, KeyError, EOFError):
-        pass
-    return None
+    """The stored panel when ``days`` are its last days (all of it, or all but days that left the window)."""
+    st = _stored(path)
+    cut = _tail(st, days) if st else None
+    return _view(cut) if cut else None
 
 
 def panel(base: Path, today: Optional[date] = None) -> Optional[Dict[str, Any]]:
@@ -97,14 +153,15 @@ def panel(base: Path, today: Optional[date] = None) -> Optional[Dict[str, Any]]:
     # failed, and its caller fell back to Yahoo bars without a word.  Now one builds while the other waits and then reads the result.
     with open(path.with_name(path.name + ".lock"), "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        kept = _kept(path, days)
-        if kept:
-            return kept
-        built = build_panel(root, days)
+        st = _stored(path)
+        cut = _tail(st, days) if st else None
+        if cut:
+            return _view(cut)
+        built = (_extended(root, st, days) if st else None) or build_panel(root, days)      # new days only, when it can be continued
         tmp = path.with_name(f"{path.name}.{os.getpid()}.tmp.npz")
         np.savez_compressed(tmp, **built)
         tmp.replace(path)
-    return {"dates": list(days), "codes": {str(c): j for j, c in enumerate(built["codes"])}, "data": built["data"]}
+    return _view(built)
 
 
 def rebuild(code: str, yahoo: List[Dict[str, Any]], pan: Optional[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:

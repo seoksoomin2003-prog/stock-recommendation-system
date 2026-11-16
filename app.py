@@ -751,7 +751,8 @@ def _qsf_us_challenger_record(args) -> int:
 
 
 def _qsf_scan(args, q, market) -> int:
-    res = q.scan(market, tickers=args.tickers or None, record=not args.dry_run, progress=lambda st, d, t: print(f"  {st} {d}/{t}", flush=True))
+    res = q.scan(market, tickers=args.tickers or None, record=not args.dry_run, progress=lambda st, d, t: print(f"  {st} {d}/{t}", flush=True),
+                 publish=not args.tickers)          # named stocks are scored (and recorded) without replacing the whole-universe scan on file
     print(json.dumps({k: v for k, v in res.items() if k != "rows"} | {"errors": len(res["errors"])}, ensure_ascii=False, indent=1, default=str))
     if res["status"] == "REAL" and not args.dry_run and not args.tickers:
         try:                    # the top three are frozen right after a full scan; a failure here never fails the scan

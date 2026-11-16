@@ -292,6 +292,13 @@ async function qsfRank() {
   if (token !== qsfState.rankToken || mk !== state.market) return;
   if (failed) { box.innerHTML = `<div class="panel"><h2>순위</h2><div class="empty">순위를 불러오지 못했습니다: ${esc(ERR_KO[failed.message] || failed.message)} 스캔 기록이 없다는 뜻이 아닙니다.</div></div>`; return; }
   if (!d || d.status !== "REAL") { box.innerHTML = `<div class="panel"><h2>순위</h2><div class="empty">아직 스캔 기록이 없습니다. <code>python app.py qsf scan</code> 또는 매일 자동 실행 후 표시됩니다.</div></div>`; return; }
+  // 카드는 페이지가 열려 있는 동안 기억된다. 스캔이 새로 기록되면 그 시장의 카드를 버려, 새 순위 아래에 이전 스캔의 카드가 나오지 않게 한다.
+  const scanMark = `${d.session}|${d.generated_at}`;
+  qsfState.scanMark = qsfState.scanMark || {};
+  if (qsfState.scanMark[mk] !== scanMark) {
+    if (qsfState.scanMark[mk] !== undefined) Object.keys(qsfState.evals).forEach((k) => { if (k.startsWith(`${mk}|`)) delete qsfState.evals[k]; });
+    qsfState.scanMark[mk] = scanMark;
+  }
   const all = d.rows.filter((r) => r.strategy === qsfState.strategy).slice(0, 50).map((r, i) => ({ ...r, rank: i + 1 }));
   const top = all.filter((r) => r.actionability === "ACTIONABLE").slice(0, QSF_TOP);
   const rest = all.filter((r) => !top.includes(r));
