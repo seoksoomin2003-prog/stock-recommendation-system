@@ -513,9 +513,15 @@ class QSF(ScreenViews):
             return None
         plan = state["plans"].get(ticker) or {}
         # A position that became a swing later counts its time limit from that change.
-        from terminal.qsf import turnover_book
+        from terminal.qsf import rank_book, turnover_book
         return {"avg_cost": p["avg"], "opened": p.get("style_since") or p["opened"], "qty": p["qty"], "stop": plan.get("stop"), "target": plan.get("target"), "style": p.get("style"),
-                "hold_rules": turnover_book.active_rules(self.base, market)}
+                "hold_rules": turnover_book.active_rules(self.base, market), "rank_rules": rank_book.active_rules(self.base, market)}
+
+    def _ahead_share(self, market: str, strategy: str, score: Optional[float]) -> Optional[float]:
+        """The share of the newest scan's scored stocks of ``strategy`` with a higher score than ``score`` (the rank rules' reading of
+        a held stock).  None without a score or a scan: an unknown rank is not a low rank."""
+        scores = [r["score"] for r in self.screen_rows(market).get("rows") or [] if r.get("strategy") == strategy and r.get("score") is not None]
+        return sum(1 for v in scores if v > score) / len(scores) if scores and score is not None else None
 
     def _krx_bars(self, bars: Dict[str, List[Dict]]) -> Tuple[Dict[str, List[Dict]], Dict[str, Any]]:
         """Korean bars rebuilt from the KRX daily snapshots (``kr_bars``).  Without any snapshot the Yahoo bars stay, and the summary says so."""
@@ -590,6 +596,8 @@ class QSF(ScreenViews):
             out["provenance"]["stale"] = old
         out["why_summary"] = _why(out)
         if position:
+            if position.get("rank_rules") and strategy == "LONG_TERM":
+                position = {**position, "ahead_share": self._ahead_share(market, strategy, res["score"])}
             out["position"] = position
             out["exit"] = holding.evaluate_exit(res, ctx, position, self.now().date())
         prev = self.ledger.previous(market, ctx["ticker"], strategy, session)

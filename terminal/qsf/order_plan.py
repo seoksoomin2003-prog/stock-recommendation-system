@@ -9,6 +9,7 @@ Pure functions: the same plan serves the paper book (``paper_book``) and the scr
 reports/PAPER_BOOK_RULES.md.
 """
 import math
+from bisect import bisect_right
 from typing import Any, Dict, Iterable, List, Optional
 
 from terminal import portfolio as pf
@@ -20,7 +21,8 @@ MAX_PARTICIPATION = 0.01        # an order takes at most this share of the stock
 MIN_WEIGHT_PCT = 1.0            # an order worth less than this share of the account is not placed: its fees and effort outweigh it
 IMPACT_Y = 1.0                  # square-root impact: daily range share x sqrt(order value / traded value) x this
 STYLE_OF = {"SWING": "SWING", "LONG_TERM": "LONG"}
-REASONS = {"REENTRY_WAIT": "손절 뒤 재진입 대기", "ALREADY_HELD": "이미 보유 중", "ALREADY_PLANNED": "같은 날 이미 계획됨", "NO_STOP": "손절 기준(ATR) 없음", "NO_LIQUIDITY": "거래대금 자료 없음",
+STRATEGY_OF = {v: k for k, v in STYLE_OF.items()}
+REASONS = {"RANK_OUT": "그날 점수 순위가 진입 기준 밖", "REENTRY_WAIT": "손절 뒤 재진입 대기", "ALREADY_HELD": "이미 보유 중", "ALREADY_PLANNED": "같은 날 이미 계획됨", "NO_STOP": "손절 기준(ATR) 없음", "NO_LIQUIDITY": "거래대금 자료 없음",
            "SLEEVE_FULL": "스타일 비중 한도 도달", "SECTOR_FULL": "섹터 한도 도달", "NO_CASH": "현금 부족", "TOO_SMALL": "주문이 계좌의 1% 미만이거나 한 주도 안 됨"}
 BINDING = {"RISK": "거래당 위험 한도", "WEIGHT": "종목 비중 한도", "CASH": "현금", "SLEEVE": "스타일 비중 한도", "SECTOR": "섹터 한도", "LIQUIDITY": "거래대금 대비 주문 크기 한도"}
 
@@ -77,6 +79,24 @@ def market_state(snaps: Iterable[Dict[str, Any]], market: str, session: str) -> 
     return None
 
 
+def ahead_share(snaps: Iterable[Dict[str, Any]], session: str) -> Dict[Any, float]:
+    """{(ticker, strategy): the share of the session's scored stocks of that strategy with a HIGHER score}.  0.0 is the top stock;
+    under 0.2 is 'inside the top 20%'.  Ties share a rank.  A stock without a score that session is absent, never last."""
+    out: Dict[Any, float] = {}
+    rows = [s for s in snaps if s.get("data_date") == session and s.get("score") is not None]
+    for strategy in STYLE_OF:
+        mine = [(s["ticker"], float(s["score"])) for s in rows if s.get("strategy") == strategy]
+        scores = sorted(v for _, v in mine)
+        for t, v in mine:
+            out[(t, strategy)] = (len(scores) - bisect_right(scores, v)) / len(scores)
+    return out
+
+
+def outside_top(cands: Iterable[Dict[str, Any]], ahead: Dict[Any, float], top: float) -> set:
+    """(ticker, style) of the candidates that are not inside the top ``top`` share of their own strategy's scores that session."""
+    return {(c["ticker"], c["style"]) for c in cands if ahead.get((c["ticker"], STRATEGY_OF[c["style"]]), 1.0) >= top}
+
+
 def candidates(snaps: Iterable[Dict[str, Any]], session: str, info: Optional[Dict[str, Dict[str, Any]]] = None, settings: Optional[Dict[str, float]] = None) -> List[Dict[str, Any]]:
     """Ledger snapshots of ``session`` the program itself reads as enterable now: actionable, and entry status ENTRY_NOW.
     The long stop is the user's five ATR; the swing stop and target are the snapshot's own."""
@@ -97,12 +117,13 @@ def candidates(snaps: Iterable[Dict[str, Any]], session: str, info: Optional[Dic
 
 
 def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, settings: Optional[Dict[str, float]] = None, state: Optional[Dict[str, Any]] = None,
-          blocked: Optional[Any] = None) -> Dict[str, Any]:
+          blocked: Optional[Any] = None, outside: Optional[set] = None) -> Dict[str, Any]:
     """``account``: ``equity``, ``cash``, ``positions`` {ticker: {style, value, sector}}.  Candidates are taken in score order; each
     order reserves cash at its limit price with the buy commission, so a fill at or under the limit never overdraws the account.
     ``state``: the session's market state.  On an adverse day in a market with a size factor (``config.ADVERSE_SIZE_FACTOR``) the risk
     per trade and the weight limit of every new order are multiplied by it; nothing else reads the state.
-    ``blocked``: tickers that get no new order (the turnover rules' wait after a stop); None when the rules are not in force."""
+    ``blocked``: tickers that get no new order (the turnover rules' wait after a stop); None when the rules are not in force.
+    ``outside``: (ticker, style) pairs outside the rank rules' entry share (``outside_top``); None when those rules are not in force."""
     st = settings or pf.DEFAULT_SETTINGS
     factor = float((state or {}).get("size_factor") or 1.0)
     equity, cash = float(account.get("equity") or 0.0), float(account.get("cash") or 0.0)
@@ -122,14 +143,17 @@ def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, set
         skipped.append({"ticker": c["ticker"], "name": c.get("name"), "style": c["style"], "score": c["score"], "code": code, "reason": REASONS[code]})
     for c in cands:
         t, style, close = c["ticker"], c["style"], c["close"]
-        if blocked and t in blocked:
-            skip(c, "REENTRY_WAIT")
-            continue
         if t in held:
             skip(c, "ALREADY_HELD")
             continue
         if t in planned:
             skip(c, "ALREADY_PLANNED")
+            continue
+        if outside and (t, style) in outside:       # the rule sets come after: a stock already held is not counted as one they kept out
+            skip(c, "RANK_OUT")
+            continue
+        if blocked and t in blocked:
+            skip(c, "REENTRY_WAIT")
             continue
         if not c.get("stop") or not c.get("atr"):
             skip(c, "NO_STOP")

@@ -319,7 +319,7 @@ def test_the_comparison_is_recorded_backed_up_shown_and_read_without_a_person():
     from terminal import automation
     app = (ROOT / "app.py").read_text(encoding="utf-8")
     assert app.count("_turnover_book_record(market, q, info, bench)") == 1 and app.index("res = paper_book.record(") < app.index('res["turnover_book"] = _turnover_book_record(')
-    assert "turnover_book.active_rules(PROJECT_ROOT, market)" in app and '"turnover-book-status": _qsf_turnover_book' in app
+    assert "rank_book.paper_rules(PROJECT_ROOT, market)" in app and '"turnover-book-status": _qsf_turnover_book' in app
     assert {"turnover_book_kr", "turnover_book_us"} <= set(automation.FORWARD_STORES)
     assert sum("turnover_book_" in g for g in automation.BACKUP_GLOBS) == 2 and "reports/qsf/QSF_TURNOVER_*.json" in automation.BACKUP_GLOBS
     job = (ROOT / "terminal" / "automation.py").read_text(encoding="utf-8")

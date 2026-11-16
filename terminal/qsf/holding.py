@@ -234,6 +234,9 @@ def evaluate_exit(res: Dict, ctx: Dict, position: Dict[str, Any], today: date) -
         # Price alone is not a long-term exit rule.  This one exists because the user requires a stop and chose this reading of it.
         if stop and close <= stop:
             hit("STOP_BREACH", "EXIT", f"종가 {px(close)}{ga} 직접 정한 손절가 {px(stop)} 이하입니다.")
+        rr, share = position.get("rank_rules"), position.get("ahead_share")      # the rank rules when they are in force (rank_book.active_rules)
+        if rr and share is not None and share >= rr["long_exit_top"]:
+            hit("RANK_OUT", "REDUCE", f"장기 점수 순위가 그날 평가한 종목의 상위 {share * 100:.0f}% 지점으로, 보유 기준(상위 {rr['long_exit_top'] * 100:.0f}%) 밖입니다(순위 규칙).")
         f = ctx.get("fund") or {}
         if f.get("roe") is not None and f.get("roe_prev") is not None and f["roe"] < f["roe_prev"] - 0.05 and f["roe"] < 0.08:
             hit("PROFITABILITY_DOWN", "THESIS_INVALIDATED", f"ROE가 {f['roe_prev'] * 100:.1f}%에서 {f['roe'] * 100:.1f}%로 하락했습니다.")

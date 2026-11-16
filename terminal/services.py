@@ -825,11 +825,13 @@ class Terminal(ModelViews):
                     "reason": "계좌 평가액이 없습니다. 포트폴리오 탭에 입금·거래를 기록하면 그 계좌 기준으로 계획을 보여 줍니다."}
         account = {"equity": equity, "cash": state["cash"],
                    "positions": {h["ticker"]: {"style": h.get("style"), "value": h.get("value") or 0.0, "sector": h.get("sector")} for h in val["holdings"]}}
-        from terminal.qsf import holding, turnover_book
+        from terminal.qsf import holding, rank_book, turnover_book
         rules = turnover_book.active_rules(self.base, market)       # in force only after the reading said ADOPT, or by the user's .env switch
         blocked = turnover_book.loss_sales(state.get("closed") or [], market, session, holding.stepper(market), rules["reentry_wait"]) if rules else None
+        rank = rank_book.active_rules(self.base, market)             # the same for the rank rules: an entry only inside the day's top share
+        outside = op.outside_top(cands, op.ahead_share(snaps, session), rank["entry_top"]) if rank else None
         return {"status": "REAL", "session": session, "equity": equity, "cash": state["cash"], "integrity": integ["status"], "note": note, "turnover_rules": bool(rules),
-                "reentry_wait": blocked or {}, **op.build(cands, account, market, st, mstate, blocked=blocked)}
+                "rank_rules": bool(rank), "reentry_wait": blocked or {}, **op.build(cands, account, market, st, mstate, blocked=blocked, outside=outside)}
 
     def market_state(self, market: str = "US") -> Dict[str, Any]:
         """The market state of the newest recorded scan: the regime factors, apart from every score.  Read only."""

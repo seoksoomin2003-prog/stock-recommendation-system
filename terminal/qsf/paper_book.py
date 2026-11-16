@@ -28,7 +28,7 @@ LONG_EXIT_SCORE = 40.0          # a long position leaves when its long-term scor
 HALT_SESSIONS = 10              # sessions without a price after which a position is closed at its last close
 RESTATED = 0.005                # a stored close this far from the price file's close for the same day means the file was restated
 MIN_ROWS = 200                  # fewer scored stocks than this is a partial day: no plan is made from it
-EXIT_LABELS = {"STOP": "손절", "TARGET": "목표 도달", "TIME": "시간 청산(30거래일)", "SCORE": "장기 점수 40점 미만", "NO_PRICE": "가격 없음(거래정지·상장폐지)"}
+EXIT_LABELS = {"STOP": "손절", "TARGET": "목표 도달", "TIME": "시간 청산(30거래일)", "SCORE": "장기 점수 40점 미만", "RANK": "장기 점수 순위가 보유 기준 밖", "NO_PRICE": "가격 없음(거래정지·상장폐지)"}
 UNFILLED_LABELS = {"NO_OPEN": "시가 없음", "ABOVE_LIMIT": "시가가 지정가보다 높음", "BELOW_STOP": "시가가 손절가 이하", "NO_CASH": "현금 부족"}
 
 
@@ -98,12 +98,18 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
     of ``day`` (None or too few: no new plan, exits by price still run).  Reads no price after ``day``.
     ``rules``: the turnover rules (reports/QSF_TURNOVER_RULES_PROTOCOL.md) when they are in force: ``reentry_wait`` sessions without a
     new order after a stop, and a swing position past the time stop staying while its score is ``hold_score`` or more, up to
-    ``hold_cap`` sessions.  None: the book as it always was, with not one key more in its record."""
+    ``hold_cap`` sessions.  The rank rules (reports/QSF_RANK_RULES_PROTOCOL.md) are two more keys: ``entry_top``, the share of the
+    day's scores an entry candidate must be inside, and ``long_exit_top``, the looser share a long position must stay inside (it
+    replaces the under-40 rule).  Each rule acts only when its keys are there.  None: the book as it always was, with not one key
+    more in its record."""
+    rules = rules or None
+    waits, holds = bool(rules and rules.get("reentry_wait")), bool(rules and rules.get("hold_score") is not None)
+    entry_top, exit_top = (rules or {}).get("entry_top"), (rules or {}).get("long_exit_top")
     st = copy.deepcopy(prev) if prev else new_state(market)
     pos: Dict[str, Dict[str, Any]] = st["positions"]
     exits, fills, unfilled, adjusted = [], [], [], []
     events: List[Dict[str, Any]] = []
-    wait: Dict[str, int] = dict(st.get("cooldown") or {}) if rules else {}       # ticker -> closes left without a new order
+    wait: Dict[str, int] = dict(st.get("cooldown") or {}) if waits else {}       # ticker -> closes left without a new order
     # 1. a restated price file: the stored levels move with it, so a split is never read as a fall
     for t, p in pos.items():
         then = bars.at(t, p["last_bar"]) if p.get("last_bar") else None
@@ -125,7 +131,7 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
             continue
         exits.append(_sell(market, p, float(b["open"]), day, e["reason"], st))
         del pos[e["ticker"]]
-        if rules and e["reason"] == "STOP":
+        if waits and e["reason"] == "STOP":
             wait[e["ticker"]] = int(rules["reentry_wait"])
     st["pending_exits"] = waiting
     commission = config.COSTS[market]["commission_bps"] / 1e4
@@ -165,6 +171,7 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
     # 3. the close: marks, then the exits this close decides
     long_score = {s["ticker"]: s["score"] for s in (snaps or []) if s.get("strategy") == "LONG_TERM" and s.get("data_date") == day and s.get("score") is not None}
     swing_snap = {s["ticker"]: s for s in (snaps or []) if s.get("strategy") == "SWING" and s.get("data_date") == day and s.get("score") is not None}
+    ahead = order_plan.ahead_share(snaps or [], day) if entry_top is not None or exit_top is not None else {}
     decisions = []
     for t in sorted(pos):
         p, b = pos[t], bars.at(t, day)
@@ -181,12 +188,17 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
         elif p["style"] == "SWING" and p.get("target") and close >= p["target"]:
             decisions.append({"ticker": t, "reason": "TARGET"})
         elif p["style"] == "SWING" and p["sessions"] >= SWING_TIME_STOP:
-            kept = _stays(p, swing_snap.get(t), rules) if rules else None
+            kept = _stays(p, swing_snap.get(t), rules) if holds else None
             if kept:
                 events.append({"rule": kept, "ticker": t, "sessions": p["sessions"], "score": (swing_snap.get(t) or {}).get("score")})
             else:
                 exits.append(_sell(market, p, close, day, "TIME", st))
                 del pos[t]
+        elif p["style"] == "LONG" and exit_top is not None:           # the rank rule replaces the under-40 rule; no long score today: not judged
+            share = ahead.get((t, "LONG_TERM"))
+            if share is not None and share >= exit_top:
+                decisions.append({"ticker": t, "reason": "RANK"})
+                events.append({"rule": "RANK_EXIT", "ticker": t, "ahead_pct": round(share * 100, 1), "score": long_score.get(t)})
         elif p["style"] == "LONG" and t in long_score and long_score[t] < LONG_EXIT_SCORE:
             decisions.append({"ticker": t, "reason": "SCORE"})
     st["pending_exits"] += [d for d in decisions if d["ticker"] not in {e["ticker"] for e in st["pending_exits"]}]
@@ -198,12 +210,14 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
     if len({s["ticker"] for s in scored}) >= MIN_ROWS:
         cands = order_plan.candidates(scored, day, info)
         account = {"equity": equity, "cash": st["cash"], "positions": {t: {"style": p["style"], "value": p["qty"] * p["last_close"], "sector": p.get("sector")} for t, p in pos.items()}}
-        built = order_plan.build(cands, account, market, state=order_plan.market_state(scored, market, day), blocked=wait if rules else None)
+        built = order_plan.build(cands, account, market, state=order_plan.market_state(scored, market, day), blocked=wait if waits else None,
+                                 outside=order_plan.outside_top(cands, ahead, entry_top) if entry_top is not None else None)
+        events += [{"rule": "RANK_ENTRY", "ticker": s["ticker"], "style": s["style"], "score": s["score"]} for s in built["skipped"] if s["code"] == "RANK_OUT"]
         events += [{"rule": "REENTRY_WAIT", "ticker": s["ticker"], "style": s["style"], "left": wait[s["ticker"]]} for s in built["skipped"] if s["code"] == "REENTRY_WAIT"]
         plan = {"market_state": built["market_state"], "size_factor": built["size_factor"], "orders": built["orders"], "skipped_counts": built["skipped_counts"], "candidates": built["candidates"], "scored": True, "sleeve": built["sleeve"],
                 "skipped_first": built["skipped"][:20]}
         st["plan"] = built["orders"]
-    if rules:                   # a wait set at this open has now covered one close
+    if waits:                   # a wait set at this open has now covered one close
         st["cooldown"] = {t: n - 1 for t, n in wait.items() if n > 1}
     bench = bars.at(REFERENCE[market], day) if market == "US" else None
     return {"session": day, "market": market, "rules": version or VERSION, "exits": exits, "fills": fills, "unfilled": unfilled, "adjusted": adjusted, "decisions": decisions, "plan": plan,
