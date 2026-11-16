@@ -307,10 +307,11 @@ class ScreenViews:
             r["sector"], r["industry"] = got.get("sector"), got.get("industry")
         return out
 
-    def _loader(self, market: str) -> Callable[[str], List[Dict]]:
-        """The scan's prices, with the archived prices of recorded stocks that have left the scan (``price_archive``)."""
+    def _loader(self, market: str, longest: bool = False) -> Callable[[str], List[Dict]]:
+        """The scan's prices, with the archived prices of recorded stocks that have left the scan (``price_archive``).
+        ``longest``: a verdict that reads further back than the scan keeps asks for the archive's longer series."""
         from terminal.qsf import price_archive
-        return price_archive.loader(self.base, market, self._scan_loader(market))
+        return price_archive.loader(self.base, market, self._scan_loader(market), longest=longest)
 
     def archive_prices(self, market: str) -> Dict[str, Any]:
         """Keep the prices of every recorded stock, including those the scan no longer carries.  Writes only the price archive."""

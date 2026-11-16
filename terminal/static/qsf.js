@@ -712,7 +712,7 @@ function qsfRankBookHtml(rb) {
       구간 ${esc(d.first)} ~ ${esc(d.last)}</div><ul class="meta">${(d.why || []).map((w) => `<li>${esc(w)}</li>`).join("")}</ul><div class="meta">${esc(d.consequence || "")} ${esc(d.note || "")}</div>`;
   } else if (rb.status === "RECORDING") {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 기록 ${rb.records} / ${rb.read_at}거래일 (${esc(rb.started)} ~ ${esc(rb.last)}) · 판정까지 ${rb.left}거래일.
-      규칙이 한 일: 순위 밖이라 뺀 후보 ${c.RANK_ENTRY || 0}건(종목·날), 순위로 정한 장기 매도 ${c.RANK_EXIT || 0}건. ${esc(rb.note)}</div>`;
+      규칙이 한 일: 순위 규칙 때문에 빠진 주문 ${c.RANK_ENTRY || 0}건(종목·날), 순위로 정한 장기 매도 ${c.RANK_EXIT || 0}건. ${esc(rb.note)}</div>`;
   } else {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 장부의 첫 기록은 ${esc(rb.first)} 거래일입니다. ${esc(rb.note)}</div>`;
   }

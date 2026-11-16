@@ -210,3 +210,15 @@ def test_the_rank_comparison_is_recorded_backed_up_shown_and_read_without_a_pers
     for words in ("상위 20% 안", "상위 50% 밖", "240개", "t가 2.0 이상", "`ADOPT`", "`KEEP`", "PB-4", "PB-5", "QSF_RANK_RULES", "2026-11-16 거래일"):
         assert words in plan
     assert rk.RULES == {"entry_top": 0.2, "long_exit_top": 0.5} and rk.READ_AT == 240 and rk.LAG == 20 and rk.MIN_T == 2.0 and rk.FIRST == "2026-11-16"
+
+
+def test_a_rank_entry_event_is_an_order_the_plan_would_have_made_not_every_candidate_passed_over():
+    days = calendar(1)
+    names = [f"C{k}" for k in range(8)]
+    bars = pb.Bars(loader_of({t: [(days[0], 10_000, 10_000)] for t in names}))
+    cands = [snap(t, price=10_000.0, atr=200.0, session=days[0], adv=1e11, score=60.0 - k) for k, t in enumerate(names)]     # eight candidates, none inside the top fifth
+    plain = pb.step(None, days[0], "KR", bars, filler(days[0]) + crowd(days[0], 80) + cands)
+    ruled = pb.step(None, days[0], "KR", bars, filler(days[0]) + crowd(days[0], 80) + cands, rules=RULES)
+    ordered = [o["ticker"] for o in plain["plan"]["orders"]]
+    assert 0 < len(ordered) < len(names) and ruled["plan"]["orders"] == [] and ruled["plan"]["skipped_counts"]["RANK_OUT"] == 8
+    assert [e["ticker"] for e in ruled["rule_events"]] == ordered and {e["rule"] for e in ruled["rule_events"]} == {"RANK_ENTRY"}

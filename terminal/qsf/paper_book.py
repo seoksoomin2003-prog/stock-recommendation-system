@@ -210,9 +210,11 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
     if len({s["ticker"] for s in scored}) >= MIN_ROWS:
         cands = order_plan.candidates(scored, day, info)
         account = {"equity": equity, "cash": st["cash"], "positions": {t: {"style": p["style"], "value": p["qty"] * p["last_close"], "sector": p.get("sector")} for t, p in pos.items()}}
-        built = order_plan.build(cands, account, market, state=order_plan.market_state(scored, market, day), blocked=wait if waits else None,
-                                 outside=order_plan.outside_top(cands, ahead, entry_top) if entry_top is not None else None)
-        events += [{"rule": "RANK_ENTRY", "ticker": s["ticker"], "style": s["style"], "score": s["score"]} for s in built["skipped"] if s["code"] == "RANK_OUT"]
+        mstate, outside = order_plan.market_state(scored, market, day), order_plan.outside_top(cands, ahead, entry_top) if entry_top is not None else None
+        built = order_plan.build(cands, account, market, state=mstate, blocked=wait if waits else None, outside=outside)
+        if outside:             # what the rank rule cost today: orders the plan would have made without it (not every candidate it passed over)
+            plain = order_plan.build(cands, account, market, state=mstate, blocked=wait if waits else None)
+            events += [{"rule": "RANK_ENTRY", "ticker": o["ticker"], "style": o["style"], "score": o["score"]} for o in plain["orders"] if (o["ticker"], o["style"]) in outside]
         events += [{"rule": "REENTRY_WAIT", "ticker": s["ticker"], "style": s["style"], "left": wait[s["ticker"]]} for s in built["skipped"] if s["code"] == "REENTRY_WAIT"]
         plan = {"market_state": built["market_state"], "size_factor": built["size_factor"], "orders": built["orders"], "skipped_counts": built["skipped_counts"], "candidates": built["candidates"], "scored": True, "sleeve": built["sleeve"],
                 "skipped_first": built["skipped"][:20]}

@@ -122,13 +122,18 @@ def update(base: Path, market: str, source: Callable[[str], Bars], fetch: Callab
     return {"status": "OK", "market": market, "recorded": len(tickers), **counts, "not_in_scan": left[:30]}
 
 
-def loader(base: Path, market: str, source: Callable[[str], Bars]) -> Callable[[str], Bars]:
-    """The scan's bars when they reach at least as far as the archive's; otherwise the archive's.  Never a mix of the two."""
+def loader(base: Path, market: str, source: Callable[[str], Bars], longest: bool = False) -> Callable[[str], Bars]:
+    """The scan's bars when they reach at least as far as the archive's; otherwise the archive's.  Never a mix of the two.
+    ``longest``: for a reading that looks back further than the scan keeps.  The Korean scan keeps about two years of bars and the
+    long verdict reads over three; the archive holds every day since ``START``.  With it, the archive's bars are given when they
+    are as fresh as the scan's and start earlier (found by the drill of 2026-11-16)."""
     arch = read(base, market)
 
     def load(t: str) -> Bars:
         own = source(t) or []
         kept = (arch.get(t) or {}).get("bars") or []
+        if longest and own and kept and _last(kept) >= _last(own) and kept[0]["date"] < own[0]["date"]:
+            return kept
         return own if _last(own) >= _last(kept) else kept
     return load
 

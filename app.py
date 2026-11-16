@@ -883,15 +883,16 @@ def _qsf_live_forward(args, q, market) -> int:
     from terminal.qsf import live_forward
 
     def bench_of(m):
-        return q._loader("US")("SPY") if m == "US" else (q._history(["^KS11"])["data"] or {}).get("^KS11") or []
+        # five years of the index: the long verdict counts 819 sessions back, and the default two years would never reach them
+        return q._loader("US")("SPY") if m == "US" else (q._history(["^KS11"], "5y")["data"] or {}).get("^KS11") or []
     if args.action == "live-forward-status":
         res = live_forward.status(PROJECT_ROOT, {m: sorted(b["date"] for b in bench_of(m)) for m in ("US", "KR")})
     elif args.action == "kr-avoid-marks-evaluate":          # read once at the Korean swing verdict's sample (reports/QSF_KR_AVOID_MARKS_PROTOCOL.md)
         from terminal.qsf import kr_avoid_marks
-        res = kr_avoid_marks.evaluate_once(PROJECT_ROOT, q._loader("KR"), bench_of("KR"))
+        res = kr_avoid_marks.evaluate_once(PROJECT_ROOT, q._loader("KR", longest=True), bench_of("KR"))
         res = {k: res.get(k) for k in ("status", "sessions_used", "days", "verdict", "reading_1", "reading_2", "buy_band_filter")}
     else:
-        res = live_forward.evaluate_once(PROJECT_ROOT, market, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader(market), bench_of(market))
+        res = live_forward.evaluate_once(PROJECT_ROOT, market, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader(market, longest=True), bench_of(market))
         res = {k: res.get(k) for k in ("status", "market", "strategy", "horizon", "sessions_used", "verdict", "condition_a", "condition_b", "pooled")}
     print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
     return 0

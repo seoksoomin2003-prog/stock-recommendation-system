@@ -28,7 +28,7 @@ MIN_T = 2.0
 ENV = "QSF_RANK_RULES"
 PAPER_VERSIONS = {(True, False): tb.ADOPTED_VERSION, (False, True): "PB-4", (True, True): "PB-5"}     # (turnover rules, rank rules) in force
 DECISION_KO = {"ADOPT": "적용", "KEEP": "유지"}
-RULE_KO = {"RANK_ENTRY": "순위 밖이라 뺀 후보(종목·날)", "RANK_EXIT": "순위로 정한 장기 매도"}
+RULE_KO = {"RANK_ENTRY": "순위 규칙 때문에 빠진 주문(종목·날)", "RANK_EXIT": "순위로 정한 장기 매도"}
 NotDue = tb.NotDue
 
 
