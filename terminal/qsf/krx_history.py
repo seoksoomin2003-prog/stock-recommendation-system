@@ -11,6 +11,8 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
+from utils import durable
+
 BASE = "https://data-dbg.krx.co.kr/svc/apis/sto/"
 BOARDS = {"KOSPI": "stk_bydd_trd", "KOSDAQ": "ksq_bydd_trd"}
 FIELDS = ("ISU_CD", "ISU_NM", "SECT_TP_NM", "TDD_OPNPRC", "TDD_HGPRC", "TDD_LWPRC", "TDD_CLSPRC", "FLUC_RT", "ACC_TRDVOL", "ACC_TRDVAL", "MKTCAP", "LIST_SHRS")
@@ -56,6 +58,32 @@ def listed_shares(root: Path, as_of: str, max_age_days: int = 10) -> Dict[str, f
     return {}
 
 
+RECENT_CHECK = 10       # the newest weekdays whose stored files are opened before a download (review of 2026-11-17)
+
+
+def set_aside_unreadable(root: Path, days: Iterable[str], log=print) -> int:
+    """A stored day file that cannot be read is renamed ``<day>.json.bad``, so the download below asks for the day again.
+    A file on the disk is never asked for twice, and its readers do not guard their reads: one file cut short by a power loss
+    stopped the Korean forward record for good and the live scan for weeks.  Only recent days are opened: that is where a cut
+    file can come from, and the provider still serves them."""
+    moved = 0
+    for day in days:
+        for board in BOARDS:
+            p = path_of(root, board, day)
+            if not p.exists():
+                continue
+            try:
+                with gzip.open(p, "rt", encoding="utf-8") as fh:
+                    ok = isinstance(json.load(fh), list)
+            except (OSError, ValueError, EOFError):
+                ok = False
+            if not ok:
+                p.replace(p.with_suffix(".bad"))
+                log(f"{day} {board} stored file unreadable: set aside, asked again")
+                moved += 1
+    return moved
+
+
 def slim(rows: List[Dict[str, Any]]) -> List[List[Any]]:
     return [[r.get(f) for f in FIELDS] for r in rows]
 
@@ -66,6 +94,7 @@ def download(root: Path, key: str, get: Callable[..., Any], start: str, end: str
     calls = stored = empty = 0
     stopped: Optional[str] = None
     fails = 0
+    set_aside_unreadable(root, list(weekdays(start, end))[-RECENT_CHECK:], log)
     for day in reversed(list(weekdays(start, end))):        # newest first: a cut-off run still leaves the recent years
         for board, api in BOARDS.items():
             p = path_of(root, board, day)
@@ -114,7 +143,7 @@ def download(root: Path, key: str, get: Callable[..., Any], start: str, end: str
             tmp = p.with_suffix(".tmp")
             with gzip.open(tmp, "wt", encoding="utf-8") as fh:
                 json.dump(rows, fh, ensure_ascii=False)
-            tmp.replace(p)
+            durable.replace(tmp, p)                 # readers trust a stored day file without a guard: it must be whole
             stored += 1 if rows else 0
             empty += 0 if rows else 1
             if calls % 200 == 0:

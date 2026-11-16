@@ -11,6 +11,7 @@ import numpy as np
 
 from terminal.qsf import config, kr_events_forward as kef, kr_forward as kf, live_forward as lf, validate
 from terminal.qsf.ledger import Ledger
+from utils import durable
 
 PROTOCOL = "reports/QSF_KR_AVOID_MARKS_PROTOCOL.md"
 REPORT = Path("reports") / "qsf" / "QSF_KR_AVOID_MARKS.json"
@@ -124,6 +125,6 @@ def evaluate_once(base: Path, loader: Callable[[str], List[Dict]], bench: List[D
                                "mean_removed": float(np.mean([r["buy_removed"] for r in rows]))},
            "marked_share": float(np.mean([r["marked_share"] for r in rows])), "unknown_share": float(np.mean([r["unknown_share"] for r in rows])), "note": lf.NOTE}
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
     log(f"avoid marks: {res['verdict']}")
     return res

@@ -20,6 +20,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import numpy as np
 
 from terminal.qsf import config
+from utils import durable
 
 GENESIS = "0" * 64
 FIELDS = ("market", "ticker", "strategy", "model_version", "spec_version", "profile", "score", "band", "action", "actionability", "coverage",
@@ -266,7 +267,7 @@ class Ledger:
             tmp = self.dir / (name + ".tmp")
             with open(tmp, "wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as gz:
                 gz.write(payload.encode("utf-8"))
-            tmp.replace(self.dir / name)
+            durable.replace(tmp, self.dir / name)       # on the disk before the index line that vouches for it
             row = {"seq": seq, "session": session, "market": market, "file": name, "sha256": hashlib.sha256((self.dir / name).read_bytes()).hexdigest(),
                    "records": len(new), "model_version": config.MODEL_VERSION, "prev_hash": idx["rows"][-1]["hash"] if idx["rows"] else GENESIS}
             row["hash"] = _hash(row)
@@ -373,7 +374,13 @@ def outcome(path: List[Dict[str, Any]], bench: List[Dict[str, Any]], signal_sess
     With ``calendar`` (the market's sessions, in order), a stock that stopped trading before its h-th bar exits at its last trade and
     is compared with the benchmark over the whole horizon; it carries ``stopped``.  Without it, such a stock stays None as before.
     None until matured, or when a price is missing: never zero.
+    None too when the series starts after the entry (review of 2026-11-17): the search below would land on the series' first bar
+    and report the return of some later window as this record's.  It could not happen while every price store reached back
+    past the first record (2026-11-03); the Korean scan keeps 800 days, so it would have from about 2029-01.
     ``dates`` (the bars' dates, in order) and ``bench_by_date`` only save repeating the same work across many snapshots; the answer is the same without them."""
+    first = dates[0] if dates else path[0]["date"] if path else None
+    if first is None or first > (entry_session or signal_session):
+        return None
     if dates is not None:
         idx = bisect.bisect_left(dates, entry_session) if entry_session else bisect.bisect_right(dates, signal_session)
     else:

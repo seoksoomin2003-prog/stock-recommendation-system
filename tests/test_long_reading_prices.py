@@ -13,7 +13,7 @@ def bars(first, n, close=100.0):
 def test_the_longest_loader_gives_the_archive_when_it_is_as_fresh_and_starts_earlier(monkeypatch):
     long_kept, short_own = bars("2026-10-01", 20, 1.0), bars("2026-10-11", 10, 2.0)
     arch = {"A": {"bars": long_kept}, "B": {"bars": bars("2026-10-01", 15, 1.0)}, "C": {"bars": long_kept}, "E": {"bars": []}}
-    monkeypatch.setattr(pa, "read", lambda base, market: arch)
+    monkeypatch.setattr(pa, "read", lambda base, market, strict=False: arch)
     own = {"A": short_own, "B": short_own, "C": bars("2026-10-01", 20, 2.0), "D": short_own, "E": short_own}
     plain, longest = pa.loader("x", "KR", lambda t: own.get(t)), pa.loader("x", "KR", lambda t: own.get(t), longest=True)
     assert plain("A") == short_own and longest("A") == long_kept           # as fresh, starts earlier: the archive

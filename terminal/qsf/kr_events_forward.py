@@ -13,6 +13,7 @@ import numpy as np
 
 from terminal.qsf import config, kr_forward as kf, krx_history as kh, research_ensemble as en, research_kr as kr, research_kr_events as ke, research_swing as rs
 from terminal.qsf.research_score import test_verdict
+from utils import durable
 
 PROTOCOL = "reports/QSF_KR_EVENTS_FORWARD_PROTOCOL.md"
 FOLDER = Path("research_data") / "krx_forward_events"
@@ -171,5 +172,5 @@ def evaluate_once(base: Path, log=print) -> Dict[str, Any]:
     out = {"status": "EVALUATED", "protocol": PROTOCOL, "horizon": HORIZON, "dates": len(rows), "first": chosen[0], "last": chosen[-1], "cost": cost, **test, **judged, "sets": sets, "low_tier": _low_tier(score, px, rows, picks), "reading": reading(judged["verdict"], sets),
            "one_day_later_entry_ic": float(np.mean(later_ic)) if later_ic else None, "late_share": late / len(index), "before_next_open_share": sum(1 for r in index if r["before_next_open"]) / len(index)}
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(out, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+    durable.write_text(target, json.dumps(out, ensure_ascii=False, indent=1, default=str))
     return out

@@ -18,15 +18,15 @@ def record(base, market, tickers, session="2026-11-06"):
 def test_merge_never_shortens_and_drops_days_before_the_start():
     old = bars("2026-11-05", "2026-11-06")
     assert pa.merge(old, bars("2026-11-05")) == old                                   # shorter answer: kept as stored
-    new = pa.merge(old, bars("2026-09-30", "2026-11-06", "2026-11-09", close=11.0))
-    assert [(b["date"], b["close"]) for b in new] == [("2026-11-05", 10.0), ("2026-11-06", 11.0), ("2026-11-09", 11.0)]   # 09-30 is before the start
+    new = pa.merge(old, bars("2026-09-30", "2026-11-06", "2026-11-09"))
+    assert [b["date"] for b in new] == ["2026-11-05", "2026-11-06", "2026-11-09"]      # 09-30 is before the start
     assert "volume" not in new[-1]
     assert pa.merge(old, []) == old
 
 
 def test_older_days_are_kept_when_the_new_series_starts_later():
-    out = pa.merge(pa._slim(bars("2026-10-01", "2026-10-02")), bars("2026-10-02", "2026-10-05", close=12.0))
-    assert [(b["date"], b["close"]) for b in out] == [("2026-10-01", 10.0), ("2026-10-02", 12.0), ("2026-10-05", 12.0)]
+    out = pa.merge(pa._slim(bars("2026-10-01", "2026-10-02")), bars("2026-10-02", "2026-10-05"))
+    assert [(b["date"], b["close"]) for b in out] == [("2026-10-01", 10.0), ("2026-10-02", 10.0), ("2026-10-05", 10.0)]
 
 
 def test_update_takes_the_scan_fetches_the_rest_and_keeps_what_yahoo_no_longer_serves(tmp_path):

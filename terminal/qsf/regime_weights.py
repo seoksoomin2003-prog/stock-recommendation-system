@@ -16,6 +16,7 @@ import numpy as np
 
 from terminal.qsf import config, kr_forward as kf, validate, walkforward
 from terminal.qsf.ledger import Ledger
+from utils import durable
 
 PROTOCOL = "reports/QSF_REGIME_WEIGHTS_PROTOCOL.md"
 REPORT = Path("reports") / "qsf" / "QSF_REGIME_WEIGHTS.json"
@@ -388,7 +389,7 @@ def evaluate_forward_once(base: Path, market: str, px: Any, log=print) -> Dict[s
            "late_share": float(np.mean([d["late"] for d in days])), "past_verdict": past, "reading": "FIGURES_ONLY",
            "note": "과거 걸어가기 검증이 기준에 못 미쳤으므로 판정 없이 수치만 적습니다. 240거래일의 겹치는 표본으로는 작은 차이를 가릴 수 없습니다."}
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    durable.write_text(target, json.dumps(res, ensure_ascii=False, indent=1))
     return res
 
 

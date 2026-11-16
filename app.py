@@ -461,6 +461,9 @@ def _paper_book_record(market: str):
     from terminal.qsf import rank_book
     rules, version = rank_book.paper_rules(PROJECT_ROOT, market)    # rule sets in force only after their reading said ADOPT, or by the user's .env switches
     res = paper_book.record(PROJECT_ROOT, market, q._loader(market), info=info, bench=bench, rules=rules, version=version)
+    if res.get("status") == "FAILED":           # the comparison books follow the paper book and never run past it (their protocols, section 4)
+        res["turnover_book"] = res["rank_book"] = {"status": "WAITING", "reason": f"PAPER_BOOK_{res.get('reason')}"}
+        return res
     res["turnover_book"] = _turnover_book_record(market, q, info, bench)      # the comparison book (TO-1), right after the paper book every time
     res["rank_book"] = _rank_book_record(market, q, info, bench)              # and the rank rules' comparison book (RK-1)
     return res

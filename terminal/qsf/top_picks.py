@@ -18,6 +18,7 @@ import numpy as np
 
 from terminal.qsf import config, ledger as lg
 from terminal.qsf.validate import rank
+from utils import durable
 
 PROTOCOL = "reports/QSF_TOP3_TRACKING_PROTOCOL.md"
 FOLDER = Path("data") / "qsf" / "top3"
@@ -98,7 +99,7 @@ def write(base: Path, doc: Dict[str, Any]) -> bool:
             tmp = p.with_suffix(".tmp")
             with open(tmp, "wb") as raw, gzip.GzipFile(fileobj=raw, mode="wb", mtime=0) as gz:
                 gz.write(json.dumps(doc, ensure_ascii=False, sort_keys=True).encode("utf-8"))
-            tmp.replace(p)
+            durable.replace(tmp, p)
         with gzip.open(p, "rt", encoding="utf-8") as fh:
             kept = json.load(fh)
         row = {"session": kept["session"], "market": kept["market"], "file": p.name, "sha256": hashlib.sha256(p.read_bytes()).hexdigest(),

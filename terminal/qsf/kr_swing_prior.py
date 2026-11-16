@@ -15,6 +15,7 @@ import numpy as np
 from terminal.qsf import config, engine, kr_forward as kf, validate
 from terminal.qsf.kr_swing_challenger import _fifths, _ic, _t
 from terminal.qsf.ledger import Ledger
+from utils import durable
 
 PROTOCOL = "reports/QSF_KR_SWING_PRIOR_PROTOCOL.md"
 FOLDER = Path("research_data") / "kr_swing_prior"
@@ -164,5 +165,5 @@ def evaluate_once(base: Path, log=print, panel: Any = None) -> Dict[str, Any]:
            "entry_reading": {"samples": len(gaps), "mean_gap": float(np.mean(gaps)) if gaps else None, "t": _t(gaps), "note": "서술일 뿐 판정이 아닙니다. 진입 판단은 검증된 적이 없습니다."},
            "late_share": float(np.mean([d["late"] for d in days])), "note": "NOT_DISTINGUISHED는 '차이 없음'이 아니라 '아직 모름'입니다. 12개 표본의 검정력은 낮습니다."}
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
     return res

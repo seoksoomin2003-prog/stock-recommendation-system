@@ -676,6 +676,11 @@ async function qsfPlan() {
   box.innerHTML = failed ? `<div class="panel"><h2>오늘 진입 후보의 주문 계획</h2><div class="empty">불러오지 못했습니다: ${esc(ERR_KO[failed.message] || failed.message)}</div></div>` : qsfPlanHtml(d);
 }
 // The turnover rules beside the paper book (TO-1).  Before the reading only counts are shown, never the comparison book's value or return.
+// A verdict file that cannot be read, or a switch value that is none of the words: said on the panel, never passed over.
+function qsfBookWarn(b, env) {
+  return (b.damaged ? `<div class="meta"><span class="badge UNAVAILABLE">결과 파일 손상</span> ${esc(b.damaged)}</div>` : "") +
+    (b.switch_unknown ? `<div class="meta"><span class="badge risk-note">.env의 ${env} 값 "${esc(b.switch_unknown)}"을 알아볼 수 없습니다</span> auto(판정을 따름)로 읽었습니다. auto, on, off 가운데 하나로 적으세요.</div>` : "");
+}
 function qsfTurnoverHtml(tb) {
   if (!tb) return "";
   const r = tb.rules || {}, pbk = tb.paper_book, c = tb.rule_counts || {};
@@ -693,10 +698,12 @@ function qsfTurnoverHtml(tb) {
   } else if (tb.status === "RECORDING") {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 기록 ${tb.records} / ${tb.read_at}거래일 (${esc(tb.started)} ~ ${esc(tb.last)}) · 판정까지 ${tb.left}거래일.
       규칙이 한 일: 손절 ${c.STOPS || 0}건, 재진입을 막은 후보 ${c.REENTRY_WAIT || 0}건(종목·날), 보유 연장 ${c.HOLD_EXTENDED || 0}건(종목·날). ${esc(tb.note)}</div>`;
+  } else if (tb.status === "DAMAGED") {
+    body = "";
   } else {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 장부의 첫 기록은 ${esc(tb.first)} 거래일입니다. ${esc(tb.note)}</div>`;
   }
-  return `<h3>회전율 규칙 비교 <span class="meta">(TO-1${tb.active ? ` · 규칙 적용 중, ${esc(tb.adopted_version)}` : ""})</span></h3>${body}${force}${own}${what}`;
+  return `<h3>회전율 규칙 비교 <span class="meta">(TO-1${tb.active ? ` · 규칙 적용 중, ${esc(tb.adopted_version)}` : ""})</span></h3>${body}${qsfBookWarn(tb, "QSF_TURNOVER_RULES")}${force}${own}${what}`;
 }
 // The rank rules beside the paper book (RK-1): the same reading of progress, counts only before the decision.
 function qsfRankBookHtml(rb) {
@@ -713,10 +720,12 @@ function qsfRankBookHtml(rb) {
   } else if (rb.status === "RECORDING") {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 기록 ${rb.records} / ${rb.read_at}거래일 (${esc(rb.started)} ~ ${esc(rb.last)}) · 판정까지 ${rb.left}거래일.
       규칙이 한 일: 순위 규칙 때문에 빠진 주문 ${c.RANK_ENTRY || 0}건(종목·날), 순위로 정한 장기 매도 ${c.RANK_EXIT || 0}건. ${esc(rb.note)}</div>`;
+  } else if (rb.status === "DAMAGED") {
+    body = "";
   } else {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 장부의 첫 기록은 ${esc(rb.first)} 거래일입니다. ${esc(rb.note)}</div>`;
   }
-  return `<h3>순위 규칙 비교 <span class="meta">(RK-1${rb.active ? " · 규칙 적용 중" : ""})</span></h3>${body}${force}${what}`;
+  return `<h3>순위 규칙 비교 <span class="meta">(RK-1${rb.active ? " · 규칙 적용 중" : ""})</span></h3>${body}${qsfBookWarn(rb, "QSF_RANK_RULES")}${force}${what}`;
 }
 function qsfPaperHtml(d, tb, rb) {
   const title = `<h2>모의 체결 장부 <span class="badge">판정 전 참고</span> <span class="badge risk-note">가상의 금액 · 주문을 보내지 않습니다</span></h2>`;

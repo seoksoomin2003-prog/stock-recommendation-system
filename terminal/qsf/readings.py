@@ -158,6 +158,11 @@ def stuck_text(e: Dict[str, Any], tries: int) -> str:
             f"이제 일주일에 한 번 다시 시도합니다. 안내: {GUIDE}")
 
 
+def damaged_text(e: Dict[str, Any]) -> str:
+    return (f"[판정 · {e['label']}] 결과 파일 reports/qsf/{e['report']} 이 있지만 읽을 수 없습니다(손상). 다시 읽지 않습니다. "
+            f"백업 폴더의 reports_qsf/ 안에 같은 이름의 파일이 있으면 그것으로 바꾸세요. 안내: {GUIDE}")
+
+
 def _eta(left: int, today: date) -> str:
     return (today + timedelta(days=round(left * 7 / 5))).isoformat()[:7]
 

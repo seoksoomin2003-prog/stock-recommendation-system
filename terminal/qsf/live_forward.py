@@ -14,6 +14,7 @@ import numpy as np
 
 from terminal.qsf import config, ledger as ledger_mod, validate
 from terminal.qsf.ledger import Ledger
+from utils import durable
 
 PROTOCOL = "reports/QSF_LIVE_FORWARD_PROTOCOL.md"
 FIRST = "2026-11-09"                                   # the first ledger session of QSF-1.1.8 in both markets
@@ -186,10 +187,10 @@ def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str]
            "cost_round_trip_pct": cost * 100, **reading(primary), "primary": primary, "other_horizons": extra,
            "by_version": {k: {"dates": len(v), "ic": float(np.mean(v))} for k, v in sorted(versions.items())}, "note": NOTE}
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
     pooled = _pooled(base, strategy)
     if pooled:
-        (base / REPORT_DIR / f"QSF_LIVE_FORWARD_POOLED_{strategy}.json").write_text(json.dumps(pooled, ensure_ascii=False, indent=1), encoding="utf-8")
+        durable.write_text(base / REPORT_DIR / f"QSF_LIVE_FORWARD_POOLED_{strategy}.json", json.dumps(pooled, ensure_ascii=False, indent=1))
         res["pooled"] = pooled
     log(f"{market} {strategy}: {res['verdict']}")
     return res

@@ -116,6 +116,10 @@ def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[
             out.append({"level": "warn", "text": f"미국 도전자 점수 기록이 {challenger['behind_sessions']}거래일 뒤처져 있습니다. 자동 실행을 확인하세요."})
         elif not challenger.get("sessions") and (challenger.get("due_sessions") or 0) >= BEHIND_ALERT:
             out.append({"level": "warn", "text": "미국 도전자 점수 기록이 시작되지 않았습니다. 자동 실행을 확인하세요."})
+    tg = (auto.get("last_run") or {}).get("telegram") or {}
+    if tg.get("status") == "FAILED":            # "connected" on the screen only means the two values look right; this is the last real send
+        out.append({"level": "bad", "text": f"텔레그램 전달 실패({tg.get('error')}). 하루 요약과 판정 알림이 오지 않고 있습니다. .env의 텔레그램 값 두 개와 봇 차단 여부를 확인하세요."})
+    out += [{"level": "warn", "text": n} for n in auto.get("notes") or []]
     failed = [STEP_LABELS.get(k, k) for k, v in (auto.get("steps") or {}).items() if isinstance(v, dict) and v.get("status") == automation.FAILED]
     if failed:
         out.append({"level": "bad", "text": f"최근 자동 실행에서 실패한 작업: {', '.join(failed)}"})

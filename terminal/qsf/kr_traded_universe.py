@@ -14,6 +14,7 @@ import numpy as np
 
 from terminal.qsf import kr_cap_universe as cu, kr_forward as kf, live_forward as lf, validate
 from terminal.qsf.ledger import Ledger
+from utils import durable
 
 PROTOCOL = "reports/QSF_KR_TRADED_UNIVERSE_PROTOCOL.md"
 FOLDER = Path("research_data") / "kr_traded_universe"
@@ -114,5 +115,5 @@ def evaluate_once(base: Path, log=print, panel: Any = None) -> Dict[str, Any]:
            "former_long_reference": lf.summarize(long_, HORIZON) if len(long_) > 2 * HORIZON else None,
            "mean_overlap": float(np.mean([d["overlap"] for d in swing])), "note": "NOT_DISTINGUISHED는 '차이 없음'이 아니라 '아직 모름'입니다. " + lf.NOTE}
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
     return res

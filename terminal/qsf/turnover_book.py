@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from terminal.qsf import kr_forward as kf, paper_book, validate
+from utils import durable
 
 PROTOCOL = "reports/QSF_TURNOVER_RULES_PROTOCOL.md"
 VERSION = "TO-1"
@@ -42,19 +43,39 @@ def _utcnow() -> datetime:
 
 
 # ---------------------------------------------------------------------- which rules are in force
+SWITCH_WORDS = {"": "auto", "auto": "auto", "on": "on", "off": "off", "1": "on", "true": "on", "yes": "on", "0": "off", "false": "off", "no": "off"}
+
+
+def switch_of(env: str) -> Dict[str, Any]:
+    """The .env switch as typed: {"mode": auto|on|off, "unknown": the text when it is none of the words}.  A value that is not
+    understood means auto, as before, but it is shown as not understood: someone who typed it meant something by it."""
+    raw = (os.getenv(env) or "").split("#")[0].strip().strip("'\"").lower()
+    return {"mode": SWITCH_WORDS.get(raw, "auto"), "unknown": None if raw in SWITCH_WORDS else raw}
+
+
 def mode() -> str:
-    got = (os.getenv(ENV) or "auto").strip().lower()
-    return got if got in ("auto", "on", "off") else "auto"
+    return switch_of(ENV)["mode"]
+
+
+def read_report(path: Path, market: str) -> Optional[Dict[str, Any]]:
+    """None when the reading has not been made.  A file that is there but is not a verdict (cut short, emptied, edited by hand)
+    is ``{"status": "DAMAGED", ...}``: it must not pass for "not read" (the reading would refuse, the file exists) nor for a
+    verdict.  The rules are not in force on a damaged file, and the user is told until it is restored from the backup."""
+    if not path.exists():
+        return None
+    try:
+        got = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        got = None
+    if isinstance(got, dict) and got.get("decision"):
+        return got
+    name = "/".join(path.parts[-3:])
+    return {"status": "DAMAGED", "market": market, "file": name,
+            "reason": f"결과 파일 {name} 을 읽을 수 없습니다. 백업 폴더의 같은 파일로 바꿔야 하며, 그때까지 이 규칙은 적용되지 않습니다."}
 
 
 def report(base: Path, market: str) -> Optional[Dict[str, Any]]:
-    p = Path(base) / REPORTS[market]
-    if not p.exists():
-        return None
-    try:
-        return json.loads(p.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
+    return read_report(Path(base) / REPORTS[market], market)
 
 
 def active_rules(base: Path, market: str) -> Optional[Dict[str, Any]]:
@@ -171,9 +192,7 @@ def evaluate_once(base: Path, market: str, now: Callable[[], datetime] = _utcnow
     res["consequence"] = ("이 뒤의 기록부터 기존 모의 장부(PB-3), 실제 계좌의 주문 계획, 보유 종목 판단이 두 규칙을 씁니다." if res["decision"] == "ADOPT"
                           else "아무것도 바뀌지 않습니다. 비교 장부는 더 적지 않습니다.")
     target.parent.mkdir(parents=True, exist_ok=True)
-    tmp = target.with_suffix(".tmp")
-    tmp.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
-    tmp.replace(target)
+    durable.write_text(target, json.dumps(res, ensure_ascii=False, indent=1))        # whole and on the disk: this file switches rules on
     return res
 
 
@@ -214,9 +233,12 @@ def status(base: Path, market: str) -> Dict[str, Any]:
     index = kf.read_index(base, FOLDERS[market])
     rep = report(base, market)
     head = {"market": market, "protocol": PROTOCOL, "version": VERSION, "rules": dict(RULES), "read_at": READ_AT, "first": FIRST, "mode": mode(),
+            "switch_unknown": switch_of(ENV)["unknown"], "damaged": rep.get("reason") if rep and rep.get("status") == "DAMAGED" else None,
             "active": active_rules(base, market) is not None, "adopted_version": ADOPTED_VERSION, "rule_labels": RULE_KO,
             "note": "판정 전에는 비교 장부의 평가액·수익률·비용을 보여 주지 않습니다. 240거래일이 되면 프로그램이 스스로 읽고 정합니다."}
-    out: Dict[str, Any] = {"status": "DECIDED" if rep else "RECORDING" if index else "NO_RECORD", **head, "records": len(index), "left": max(READ_AT - len(index), 0),
+    if head["damaged"]:
+        rep = None
+    out: Dict[str, Any] = {"status": "DAMAGED" if head["damaged"] else "DECIDED" if rep else "RECORDING" if index else "NO_RECORD", **head, "records": len(index), "left": max(READ_AT - len(index), 0),
                            "started": index[0]["session"] if index else None, "last": index[-1]["session"] if index else None}
     if index:
         out["rule_counts"] = rule_counts([kf._read_day(base / FOLDERS[market], r["session"]) for r in index])

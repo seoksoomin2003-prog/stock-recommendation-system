@@ -15,6 +15,7 @@ import numpy as np
 from terminal.qsf import config, kr_forward as kf, krx_history as kh, live_forward as lf, validate
 from terminal.qsf.ledger import Ledger
 from terminal.qsf.research_kr_live import KRX, NOT_OPERATING, eligible_stock
+from utils import durable
 
 PROTOCOL = "reports/QSF_KR_CAP_UNIVERSE_PROTOCOL.md"
 FOLDER = Path("research_data") / "kr_cap_universe"
@@ -228,5 +229,5 @@ def evaluate_once(base: Path, log=print, panel: Any = None) -> Dict[str, Any]:
            "long_reference": lf.summarize(long_, HORIZON) if len(long_) > 2 * HORIZON else None,
            "mean_overlap": float(np.mean([d["overlap"] for d in swing])), "note": lf.NOTE}
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
     return res

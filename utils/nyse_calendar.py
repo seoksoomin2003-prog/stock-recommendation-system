@@ -12,6 +12,7 @@ Unscheduled future closures cannot be known in advance; the tracking layer
 therefore never assumes a bar exists - it rolls forward to the first session
 whose bar is actually observed and records the delay.
 """
+import os
 from datetime import date, datetime, time, timedelta, timezone
 from functools import lru_cache
 from typing import Dict, Optional
@@ -32,6 +33,20 @@ SPECIAL_CLOSURES = {
 }
 
 
+def extra_closures() -> frozenset:
+    """Closures announced after this file was last edited (a day of mourning, a storm), given by the user as
+    ``NYSE_EXTRA_CLOSURES=2028-03-06,2029-01-02`` in ``.env`` (reports/RUNBOOK.md).  Without it such a day stays a session on
+    this calendar for good: the record screen and the daily message count it as a missing day every day after.  A value that is
+    not a date is ignored."""
+    out = set()
+    for part in os.getenv("NYSE_EXTRA_CLOSURES", "").replace(";", ",").split(","):
+        try:
+            out.add(date.fromisoformat(part.strip()))
+        except ValueError:
+            continue
+    return frozenset(out)
+
+
 def _new_year(year: int) -> Optional[date]:
     d = date(year, 1, 1)
     if d.weekday() == 5:          # Saturday: NYSE does not close on Friday Dec 31
@@ -41,8 +56,12 @@ def _new_year(year: int) -> Optional[date]:
     return d
 
 
-@lru_cache(maxsize=64)
 def holidays(year: int) -> frozenset:
+    return _holidays(year, extra_closures())
+
+
+@lru_cache(maxsize=256)
+def _holidays(year: int, extra: frozenset) -> frozenset:
     start, end = pd.Timestamp(year, 1, 1), pd.Timestamp(year, 12, 31)
     rules = [
         USMartinLutherKingJr,
@@ -61,7 +80,7 @@ def holidays(year: int) -> frozenset:
     ny = _new_year(year)
     if ny:
         out.add(ny)
-    out.update(d for d in SPECIAL_CLOSURES if d.year == year)
+    out.update(d for d in SPECIAL_CLOSURES | extra if d.year == year)
     return frozenset(out)
 
 

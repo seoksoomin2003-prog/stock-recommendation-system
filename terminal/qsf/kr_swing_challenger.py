@@ -15,6 +15,7 @@ import numpy as np
 
 from terminal.qsf import config, kr_forward as kf, validate
 from terminal.qsf.ledger import Ledger
+from utils import durable
 
 PROTOCOL = "reports/QSF_KR_SWING_CHALLENGER_PROTOCOL.md"
 FOLDER = Path("research_data") / "kr_swing_challenger"
@@ -167,5 +168,5 @@ def evaluate_once(base: Path, log=print, panel: Any = None) -> Dict[str, Any]:
            "fifths": {k: {x: float(np.mean([d[k][x] for d in separate if d[k]])) for x in ("top", "bottom")} for k in ("fifths_challenger", "fifths_live")},
            "late_share": float(np.mean([d["late"] for d in days])), "note": "NO_EVIDENCE는 '효과 없음'이 아니라 '아직 모름'입니다. 12개 표본의 검정력은 낮습니다."}
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
     return res

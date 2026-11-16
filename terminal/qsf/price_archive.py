@@ -9,21 +9,29 @@ Rules:
 - A stock still in the scan takes its bars from there.  One that left is fetched from Yahoo by its own symbol.  One Yahoo no longer
   serves keeps the bars already stored, ending at its last trade.  Nothing is ever filled in.
 - A newer series replaces an older one only when it reaches at least as far, so a shorter answer never erases stored days.
+- One price basis per stock (review of 2026-11-17).  Each download is on that day's split and dividend basis.  Days older than
+  the download's first day are kept from earlier downloads, so they are moved onto the new basis by the ratio of the two series
+  on the days both have.  Without it a split or dividend after a day left the download window would sit between that day and
+  the newer ones as a price jump.  No day had left a window before 2027-10-01, so nothing stored earlier needed repair.
+- A file that exists but cannot be read is never taken for an empty archive: the update refuses, so it is not written over.
 """
 import fcntl
 import gzip
 import json
-import os
+import statistics
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
 from terminal.qsf.ledger import Ledger
+from utils import durable
 
 FOLDER = Path("data") / "qsf" / "price_archive"
 START = "2026-10-01"            # a month before the first recorded session, 2026-11-04
 FIELDS = ("date", "open", "close", "adj_close")
 CHUNK = 50
+REBASE_DAYS = 5         # the ratio of new to stored prices is the median over this many shared days: one bad bar cannot set it
+REBASE_MIN = 1e-4       # a ratio this close to 1 is rounding, not a corporate action; the stored days are left as they are
 
 Bars = List[Dict[str, Any]]
 
@@ -32,11 +40,23 @@ def path_of(base: Path, market: str) -> Path:
     return Path(base) / FOLDER / f"{market}.json.gz"
 
 
-def read(base: Path, market: str) -> Dict[str, Dict[str, Any]]:
+class Unreadable(RuntimeError):
+    """The archive file is there and cannot be read (cut short or damaged).  It holds the only copy of the prices of stocks that
+    stopped trading, so nothing may be written over it; a dated copy is in the backup folder (reports/RUNBOOK.md)."""
+
+
+def read(base: Path, market: str, strict: bool = False) -> Dict[str, Dict[str, Any]]:
+    """{} when there is no file yet.  An unreadable file is {} for a screen and ``Unreadable`` with ``strict`` (an update, or a
+    reading that must not go ahead on fewer prices than were kept)."""
+    p = path_of(base, market)
+    if not p.exists():
+        return {}
     try:
-        with gzip.open(path_of(base, market), "rt", encoding="utf-8") as fh:
+        with gzip.open(p, "rt", encoding="utf-8") as fh:
             return json.load(fh).get("tickers") or {}
-    except (OSError, ValueError):
+    except (OSError, ValueError, EOFError) as exc:      # EOFError: a gzip file cut short
+        if strict:
+            raise Unreadable(f"PRICE_ARCHIVE_UNREADABLE: {p.name} ({type(exc).__name__})") from None
         return {}
 
 
@@ -53,14 +73,32 @@ def _slim(bars: Optional[Bars]) -> Bars:
     return out
 
 
+def basis_ratio(old: Bars, new: Bars) -> Dict[str, float]:
+    """{"close": r, "adj_close": r}: new price over stored price on the first days both series have.  1.0 exactly when they agree
+    to rounding or share no day (a gap between them: nothing to compare, the stored days stay as they are)."""
+    stored = {b["date"]: b for b in old if b["date"] >= new[0]["date"]} if new else {}
+    out = {}
+    for k in ("close", "adj_close"):
+        rs = [n[k] / stored[n["date"]][k] for n in new if n["date"] in stored and n.get(k) and stored[n["date"]].get(k)][:REBASE_DAYS]
+        r = statistics.median(rs) if rs else 1.0
+        out[k] = 1.0 if abs(r - 1.0) < REBASE_MIN else r
+    return out
+
+
 def merge(old: Bars, new: Bars) -> Bars:
-    """The new series wins where it overlaps, but only when it reaches at least as far as what is stored."""
+    """The new series wins where it overlaps, but only when it reaches at least as far as what is stored.  The stored days before
+    it are put on its price basis (``basis_ratio``): open and close by the close ratio, adj_close by its own."""
     new = _slim(new)
     if not new:
         return old
     if old and new[-1]["date"] < old[-1]["date"]:
         return old
-    return [b for b in old if b["date"] < new[0]["date"]] + new
+    kept = [b for b in old if b["date"] < new[0]["date"]]
+    r = basis_ratio(old, new) if kept else {"close": 1.0, "adj_close": 1.0}
+    if r["close"] != 1.0 or r["adj_close"] != 1.0:
+        by = {"open": r["close"], "close": r["close"], "adj_close": r["adj_close"]}
+        kept = [{k: (v * by[k] if k in by and v is not None else v) for k, v in b.items()} for b in kept]
+    return kept + new
 
 
 def _last(bars: Optional[Bars]) -> str:
@@ -76,7 +114,7 @@ def update(base: Path, market: str, source: Callable[[str], Bars], fetch: Callab
     target.parent.mkdir(parents=True, exist_ok=True)
     with open(target.with_suffix(".lock"), "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        arch = read(base, market)
+        arch = read(base, market, strict=True)         # an unreadable file stops here: it is not written over
         counts = {"source": 0, "fetched": 0, "kept": 0, "none": 0}
         missing: List[str] = []
         for t in tickers:
@@ -117,7 +155,7 @@ def update(base: Path, market: str, source: Callable[[str], Bars], fetch: Callab
         tmp = target.with_suffix(".tmp")
         with gzip.open(tmp, "wt", encoding="utf-8") as fh:
             json.dump(doc, fh)
-        os.replace(tmp, target)
+        durable.replace(tmp, target)
     left = sorted(t for t in tickers if (arch.get(t) or {}).get("via") != "SCAN")
     return {"status": "OK", "market": market, "recorded": len(tickers), **counts, "not_in_scan": left[:30]}
 
@@ -126,8 +164,9 @@ def loader(base: Path, market: str, source: Callable[[str], Bars], longest: bool
     """The scan's bars when they reach at least as far as the archive's; otherwise the archive's.  Never a mix of the two.
     ``longest``: for a reading that looks back further than the scan keeps.  The Korean scan keeps about two years of bars and the
     long verdict reads over three; the archive holds every day since ``START``.  With it, the archive's bars are given when they
-    are as fresh as the scan's and start earlier (found by the drill of 2026-11-16)."""
-    arch = read(base, market)
+    are as fresh as the scan's and start earlier (found by the drill of 2026-11-16).  Such a reading refuses on an unreadable
+    archive rather than go ahead on the scan's stocks alone."""
+    arch = read(base, market, strict=longest)
 
     def load(t: str) -> Bars:
         own = source(t) or []

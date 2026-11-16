@@ -75,7 +75,7 @@ class Panel:
         try:
             with gzip.open(path, "rb") as fh:
                 raw = json.loads(fh.read())
-        except (OSError, ValueError):
+        except (OSError, ValueError, EOFError):     # EOFError: a gzip file cut short (power lost mid-write); it is downloaded again
             return None
         n = len(raw["dates"])
         data = {}

@@ -9,12 +9,12 @@ At 240 recorded sessions the program reads once, by itself: ADOPT only when the 
 distinct (Newey-West t of 2.0 or more), KEEP otherwise.  ``QSF_RANK_RULES`` in ``.env`` (auto / on / off) lets the user overrule it.
 """
 import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from terminal.qsf import kr_forward as kf, paper_book, turnover_book as tb, validate
+from utils import durable
 
 PROTOCOL = "reports/QSF_RANK_RULES_PROTOCOL.md"
 VERSION = "RK-1"
@@ -38,18 +38,11 @@ def _utcnow() -> datetime:
 
 # ---------------------------------------------------------------------- which rules are in force
 def mode() -> str:
-    got = (os.getenv(ENV) or "auto").strip().lower()
-    return got if got in ("auto", "on", "off") else "auto"
+    return tb.switch_of(ENV)["mode"]
 
 
 def report(base: Path, market: str) -> Optional[Dict[str, Any]]:
-    p = Path(base) / REPORTS[market]
-    if not p.exists():
-        return None
-    try:
-        return json.loads(p.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
+    return tb.read_report(Path(base) / REPORTS[market], market)        # None, the verdict, or DAMAGED (never taken for either)
 
 
 def active_rules(base: Path, market: str) -> Optional[Dict[str, Any]]:
@@ -147,9 +140,7 @@ def evaluate_once(base: Path, market: str, now: Callable[[], datetime] = _utcnow
     res["consequence"] = ("이 뒤의 기록부터 기존 모의 장부, 실제 계좌의 주문 계획, 보유 종목 판단이 순위 규칙을 씁니다." if res["decision"] == "ADOPT"
                           else "아무것도 바뀌지 않습니다. 비교 장부는 더 적지 않습니다.")
     target.parent.mkdir(parents=True, exist_ok=True)
-    tmp = target.with_suffix(".tmp")
-    tmp.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
-    tmp.replace(target)
+    durable.write_text(target, json.dumps(res, ensure_ascii=False, indent=1))        # whole and on the disk: this file switches rules on
     return res
 
 
@@ -188,7 +179,10 @@ def status(base: Path, market: str) -> Dict[str, Any]:
     base = Path(base)
     index = kf.read_index(base, FOLDERS[market])
     rep = report(base, market)
-    out: Dict[str, Any] = {"status": "DECIDED" if rep else "RECORDING" if index else "NO_RECORD", "market": market, "protocol": PROTOCOL, "version": VERSION, "rules": dict(RULES),
+    damaged = rep.get("reason") if rep and rep.get("status") == "DAMAGED" else None
+    rep = None if damaged else rep
+    out: Dict[str, Any] = {"status": "DAMAGED" if damaged else "DECIDED" if rep else "RECORDING" if index else "NO_RECORD", "market": market, "protocol": PROTOCOL, "version": VERSION, "rules": dict(RULES),
+                           "switch_unknown": tb.switch_of(ENV)["unknown"], "damaged": damaged,
                            "read_at": READ_AT, "first": FIRST, "mode": mode(), "active": active_rules(base, market) is not None, "paper_version": paper_rules(base, market)[1],
                            "rule_labels": RULE_KO, "records": len(index), "left": max(READ_AT - len(index), 0),
                            "started": index[0]["session"] if index else None, "last": index[-1]["session"] if index else None,

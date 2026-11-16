@@ -16,7 +16,7 @@ import numpy as np
 from terminal.qsf import config, kr_forward as kf, research_ensemble as en, research_kr as kr, research_swing as rs, validate
 from terminal.qsf.ledger import Ledger
 from terminal.qsf.research_score import test_verdict
-from utils import nyse_calendar
+from utils import durable, nyse_calendar
 
 PROTOCOL = "reports/QSF_US_CHALLENGER_PROTOCOL.md"
 FOLDER = Path("research_data") / "us_challenger"
@@ -101,7 +101,7 @@ def write_record(base: Path, led: Ledger, day: str, at: datetime, late: bool) ->
         tmp = p.with_suffix(".tmp")
         with gzip.open(tmp, "wt", encoding="utf-8") as fh:
             json.dump(doc, fh, ensure_ascii=False)
-        tmp.replace(p)
+        durable.replace(tmp, p)
     doc = kf._read_day(folder, day)
     stocks = len(doc["strategies"]["SWING"])
     kf._append_index(folder, day, doc["recorded_at"], doc["late"], doc["before_next_open"], stocks)
@@ -263,5 +263,5 @@ def evaluate_once(base: Path, strategy: str, loader: Callable[[str], List[Dict]]
            "paired_ic": paired, "supports_challenger": verdict["verdict"] == "WEAK_POSITIVE_EVIDENCE" and paired["supports_challenger"],
            "one_day_later_entry_ic": float(np.mean(later)) if later else None, "late_share": sum(1 for r in index if r["late"]) / len(index)}
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(out, ensure_ascii=False, indent=1, default=str), encoding="utf-8")
+    durable.write_text(target, json.dumps(out, ensure_ascii=False, indent=1, default=str))
     return out

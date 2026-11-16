@@ -14,6 +14,7 @@ import numpy as np
 
 from terminal.qsf import config, engine, kr_forward as kf, validate
 from terminal.qsf.ledger import Ledger
+from utils import durable
 
 PROTOCOL = "reports/QSF_SCORE_SPLIT_PROTOCOL.md"
 FOLDERS = {"KR": Path("research_data") / "score_split_kr", "US": Path("research_data") / "score_split_us"}
@@ -177,5 +178,5 @@ def evaluate_once(base: Path, market: str, px: Any, log=print) -> Dict[str, Any]
            "late_share": float(np.mean([d["late"] for d in swing])),
            "note": "NOT_DISTINGUISHED는 '차이 없음'이 아니라 '아직 모름'입니다. 두 점수는 종목 순위가 거의 같고, 차이는 어느 날에 몇 종목이 70을 넘는가에서 나옵니다."}
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(res, ensure_ascii=False, indent=1), encoding="utf-8")
+    durable.write_text(target, json.dumps(res, ensure_ascii=False, indent=1))
     return res

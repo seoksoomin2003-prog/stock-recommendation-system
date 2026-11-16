@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from terminal import notify, storage
+from utils import durable
 from utils import nyse_calendar
 
 LABEL = "com.quantengine.daily"
@@ -34,6 +35,8 @@ STEP_TIMEOUTS = {"QSF": 90 * 60,                    # 21 to 26 minutes; 26 on a 
 NETWORK_WAIT_S, NETWORK_POLL_S = 90, 5              # how long a run waits for the network before its first step
 NETWORK_PROBE = "query1.finance.yahoo.com"          # the first host every chain needs; only its name is looked up
 RETRY_QUICK_S = 300                                 # a step that failed sooner than this gets one more try at the end of the run
+# wrap-up checks whose failure ends in a state key: said in the day's message by ``Daily._notes``
+WRAP_UP_CHECKS = {"cache_prune": "캐시 정리", "price_audit": "가격 점검", "earnings_gap": "실적일 재집계", "store_watch": "기록 진행 확인"}
 RUNNING_FILE = "running.json"                       # the run in progress: pid, step, steps done
 CAFFEINATE = "/usr/bin/caffeinate"
 SLEPT_NOTE_S = 120                                  # a step during which the Mac slept this long says so
@@ -63,6 +66,18 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _mirror(src: Path, dst: Path) -> None:
+    """One write-once file into the backup, verified before it takes its name.  A copy cut short (full disk, power) used to stay
+    under the final name; the next run saw the name, skipped the file, and the backup of that day was a cut file for good."""
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    tmp = dst.with_name(dst.name + ".part")
+    shutil.copy2(src, tmp)
+    if _sha(src) != _sha(tmp):
+        tmp.unlink(missing_ok=True)
+        raise OSError("backup verification failed")
+    durable.replace(tmp, dst)
+
+
 def backup(base: Path, day: str, root: Optional[Path] = None) -> Dict[str, Any]:
     """Copy personal records to a dated folder OUTSIDE the project, verify each copy, keep the newest folders."""
     root = Path(root or backup_root())
@@ -82,19 +97,19 @@ def backup(base: Path, day: str, root: Optional[Path] = None) -> Dict[str, Any]:
     for src in sorted((base / "data" / "qsf" / "ledger").glob("*.jsonl.gz")):
         dst = mirror / src.name
         if not dst.exists():
-            mirror.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, dst)
-            if _sha(src) != _sha(dst):
-                raise OSError("backup verification failed")
+            _mirror(src, dst)
             n += 1
     # The separate records are write-once too.
     for src in sorted(p for name in FORWARD_STORES for p in (base / "research_data" / name).glob("*.json.gz")):
         dst = root / src.parent.name / src.name
         if not dst.exists():
-            dst.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(src, dst)
-            if _sha(src) != _sha(dst):
-                raise OSError("backup verification failed")
+            _mirror(src, dst)
+            n += 1
+    # So are the one-time verdict reports: each is the only copy of a reading that is never made twice.
+    for src in sorted((base / "reports" / "qsf").glob("QSF_*.json")):
+        dst = root / "reports_qsf" / src.name
+        if not dst.exists():
+            _mirror(src, dst)
             n += 1
     # Daily news files grow only on a retry of the same day, so a copy of a different size is replaced.
     for src in sorted((base / "data" / "news").glob("*/*.jsonl.gz")):
@@ -215,7 +230,7 @@ class Daily:
         st["sessions"] = {k: st["sessions"][k] for k in keep}
         tmp = self.state_file.with_suffix(".tmp")
         tmp.write_text(json.dumps(st, ensure_ascii=False, indent=1), encoding="utf-8")
-        tmp.replace(self.state_file)
+        durable.replace(tmp, self.state_file)       # whole after a power cut: an empty state would re-send every "told once" notice
 
     @contextmanager
     def _exclusive(self):
@@ -435,22 +450,24 @@ class Daily:
         got = dict(st.get(key) or {})
         for market in ("KR", "US"):
             m = dict(got.get(market) or {})
-            if m.get("delivered"):
-                continue
             try:
-                rep = book.read_when_due(self.base, market, self.now)
-                if rep is None:
-                    continue
-                unread = rep.get("status") != "REAL"
-                if unread and m.get("warned"):
-                    continue
-                tg = self.telegram(book.text(rep))
-                if tg["status"] == "NOT_CONFIGURED":
-                    tg = self.macos(title, book.short(rep))
-                m = {"decision": rep.get("decision"), "at": self.now().isoformat(), "warned": unread and tg["status"] == "SENT", "delivered": not unread and tg["status"] == "SENT"}
-            except Exception as exc:                                # never stops the run
+                told = bool(m.get("delivered"))
+                rep = book.report(self.base, market) if told else book.read_when_due(self.base, market, self.now)
+                unread = rep is not None and rep.get("status") != "REAL"       # no reading (broken record), or a damaged verdict file
+                m.pop("error", None)
+                if told and not unread:
+                    m["warned"] = False                             # the verdict file is whole (again)
+                elif rep is not None and not (unread and m.get("warned")):
+                    tg = self.telegram(book.text(rep))
+                    if tg["status"] == "NOT_CONFIGURED":
+                        tg = self.macos(title, book.short(rep))
+                    sent = tg["status"] == "SENT"
+                    m = {"decision": m.get("decision") if told else rep.get("decision"), "at": self.now().isoformat(), "warned": unread and sent,
+                         "delivered": told or (not unread and sent)}
+            except Exception as exc:                                # never stops the run; said in the day's message (``_notes``)
                 m["error"] = type(exc).__name__
-            got[market] = m
+            if m:                                                   # nothing due and nothing wrong: no entry
+                got[market] = m
         st[key] = got
         return got
 
@@ -468,6 +485,15 @@ class Daily:
                 continue
             try:
                 rep = readings.report(self.base, e)
+                if rep is None and readings.report_path(self.base, e).exists():        # there, and not a report: the command would refuse for good
+                    if not m.get("damaged"):
+                        tg = self.telegram(readings.damaged_text(e))
+                        if tg["status"] == "NOT_CONFIGURED":
+                            tg = self.macos("판정", f"{e['label']}: 결과 파일 손상")
+                        m["damaged"] = tg["status"] == "SENT"
+                    got[e["key"]] = m
+                    continue
+                m.pop("damaged", None)
                 if rep is None:
                     last = date.fromisoformat(m["tried"]) if m.get("tried") else None
                     wait = readings.RETRY_DAYS if m.get("failed", 0) >= readings.GIVE_UP else 1
@@ -478,7 +504,10 @@ class Daily:
                 if rep is None:
                     m["failed"] = m.get("failed", 0) + 1
                     if m["failed"] >= readings.GIVE_UP and not m.get("warned"):
-                        m["warned"] = self.telegram(readings.stuck_text(e, m["failed"]))["status"] == "SENT"
+                        tg = self.telegram(readings.stuck_text(e, m["failed"]))
+                        if tg["status"] == "NOT_CONFIGURED":
+                            tg = self.macos("판정", f"{e['label']}: {m['failed']}번 읽지 못함")
+                        m["warned"] = tg["status"] == "SENT"
                 else:
                     tg = self.telegram(readings.text(e, rep))
                     if tg["status"] == "NOT_CONFIGURED":
@@ -490,6 +519,39 @@ class Daily:
             got[e["key"]] = m
         st["readings"] = got
         return got
+
+    def _store_watch(self, st: Dict[str, Any]) -> Dict[str, Any]:
+        """The forward records that stopped growing (``terminal.store_watch``): index lines only, a second or less.  A side record
+        that fails never fails its step, so without this a record could stop for a year unseen.  Never stops the run."""
+        from terminal import store_watch
+        from terminal.qsf import rank_book, turnover_book
+        try:
+            ended = [f"{name}_{m.lower()}" for name, book in (("turnover_book", turnover_book), ("rank_book", rank_book)) for m in ("KR", "US")
+                     if (self.base / book.REPORTS[m]).exists()]
+            st["store_watch"] = {"at": self.now().isoformat(), "items": store_watch.look(self.base, FORWARD_STORES, ended, self.now().timestamp()),
+                                 "quality": store_watch.quality(self.base)}
+        except Exception as exc:
+            st["store_watch"] = {"at": self.now().isoformat(), "error": type(exc).__name__}
+        return st["store_watch"]
+
+    @staticmethod
+    def _notes(st: Dict[str, Any]) -> List[str]:
+        """Lines for the day's message about what the wrap-up itself could not do or found stopped.  Each of these used to end in
+        a state key that no screen and no message read."""
+        from terminal import store_watch
+        out = []
+        line = store_watch.text((st.get("store_watch") or {}).get("items") or [])
+        if line:
+            out.append(line)
+        out += (st.get("store_watch") or {}).get("quality") or []
+        failed = [f"{label}({(st.get(key) or {})['error']})" for key, label in WRAP_UP_CHECKS.items() if (st.get(key) or {}).get("error")]
+        for key, label in (("turnover_reading", "회전율 규칙 판정 확인"), ("rank_reading", "순위 규칙 판정 확인"), ("readings", "판정 읽기")):
+            errs = sorted({v["error"] for v in (st.get(key) or {}).values() if isinstance(v, dict) and v.get("error")})
+            if errs:
+                failed.append(f"{label}({', '.join(errs)})")
+        if failed:
+            out.append("마무리 점검 중 실패한 것: " + ", ".join(failed) + ". 며칠 이어지면 고칠 사람이 필요합니다(reports/RUNBOOK.md 5절).")
+        return out
 
     def _scan_status(self) -> Optional[str]:
         runs = sorted((self.base / "runs").glob("*_market_scan_*"), key=lambda p: p.name)
@@ -558,7 +620,7 @@ class Daily:
 
     @staticmethod
     def compose(session: str, steps: Dict[str, Dict[str, Any]], alerts: Dict[str, Any], prev: List[str],
-                missing: List[str], low_disk: Optional[str] = None, rules: Optional[Dict[str, Any]] = None) -> str:
+                missing: List[str], low_disk: Optional[str] = None, rules: Optional[Dict[str, Any]] = None, notes: Optional[List[str]] = None) -> str:
         icon = {OK: "✅", FAILED: "❌", SKIPPED: "⏭"}
         lines = [f"📊 퀀트 터미널 일일 요약 (기준 거래일 {session})", "", "[작업]"]
         for name, label in STEP_NAMES.items():
@@ -570,6 +632,7 @@ class Daily:
             lines.append("실패한 작업은 다음 예약 시각에 다시 시도합니다.")
         if low_disk:
             lines.append("⚠️ " + low_disk)
+        lines += ["⚠️ " + n for n in notes or []]
         if (steps.get("SCAN") or {}).get("status") == SKIPPED:
             lines.append("P6-11B는 오늘 기록이 없습니다. 모델 탭에서 자본금을 입력하면 매일 스캔합니다.")
         lines += ["", "[포트폴리오 경고]"]
@@ -607,8 +670,8 @@ class Daily:
         with self._exclusive() as got:
             if not got:
                 return {"status": "ALREADY_RUNNING"}
-            self._mark(None, 0, 0)
             try:
+                self._mark(None, 0, 0)          # inside: on a full disk this is the first write to fail, and the user must hear of it
                 out = self._run(resend)
             except Exception as exc:
                 self._crash_notice(exc)
@@ -713,12 +776,13 @@ class Daily:
         self._earnings_gap(st, steps)
         self._turnover_reading(st)
         self._rank_reading(st)
+        self._store_watch(st)
         self._save(st)
         alerts = self._alerts()
         prev = st.get("alerts") or []
         missing = self.missing_sessions(session)
         rules = self._rule_alerts()
-        text = self.compose(session, steps, alerts, prev, missing, storage.low_disk_text(self.base), rules)
+        text = self.compose(session, steps, alerts, prev, missing, storage.low_disk_text(self.base), rules, self._notes(st))
         sig = hashlib.sha256(text.encode("utf-8")).hexdigest()
         notified = st.get("notified") or {}
         out = {"status": "DONE", "session": session, "steps": steps, "telegram": None, "macos": None}
@@ -728,7 +792,8 @@ class Daily:
             failures = [STEP_NAMES[n] for n in STEP_NAMES if (steps.get(n) or {}).get("status") == FAILED]
             urgent = sum(1 for a in alerts["items"] if a["level"] == "bad")
             body = (f"실패: {', '.join(failures)}. " if failures else "") + f"경고 {len(alerts['items'])}건" + \
-                   (f", 긴급 {urgent}건" if urgent else "") + (f", 알림 조건 {len(rules['alerts'])}건" if rules["alerts"] else "")
+                   (f", 긴급 {urgent}건" if urgent else "") + (f", 알림 조건 {len(rules['alerts'])}건" if rules["alerts"] else "") + \
+                   (f". 텔레그램 전달 실패({out['telegram'].get('error')})" if out["telegram"]["status"] == "FAILED" else "")
             out["macos"] = self.macos(f"퀀트 터미널 {session}", body)
             ok = out["telegram"]["status"] == "SENT" if out["telegram"]["status"] != "NOT_CONFIGURED" \
                 else out["macos"]["status"] == "SENT"
@@ -837,6 +902,7 @@ def status(base: Path) -> Dict[str, Any]:
             "telegram": notify.telegram_status(), "capital_configured": bool(os.getenv("QPP_CAPITAL", "").strip()),
             "latest_session": latest, "steps": sessions.get(latest) if latest else None,
             "last_run": st.get("last_run"), "last_attempt": st.get("last_attempt"), "running": running(base), "earnings_gap": st.get("earnings_gap"),
+            "notes": Daily._notes(st),
             "step_names": {**STEP_NAMES, "WRAP_UP": "점검과 알림"}, "backup_dir": str(backup_root())}
 
 
