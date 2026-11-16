@@ -53,6 +53,7 @@ MULTI_CLASS_GAP = 1.2       # market value / (price x shares)
 MULTI_CLASS_SEC_GAP = 0.85  # Yahoo shares / SEC average shares
 SHARE_SCALE_GAP = 100.0     # some filers enter shares in millions or thousands; no real change between two counts is this large
 SHARE_BASIS_BREAK = 1.4     # two share counts this far apart are not one basis: a split, a bonus issue, a consolidation or an issue as large
+PRICE_BASIS_GAP = 1.4       # today's close this far from the price stored with a share count: a split since (3:2 and larger), or a count a week stale after a crash
 RESTATED = 0.03             # a figure a later report shows again within this is not restated
 RESTATED_MATCH = 0.10       # a split restates the share count and EPS by the same factor; EPS is rounded, so the two agree within this
 
@@ -252,7 +253,7 @@ def _restated_factor(eps_rows: List[Dict], share_rows: List[Dict], old_filed: st
 
 
 def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_financial: bool = False, shares: Optional[float] = None,
-            source: str = "SEC EDGAR 10-K", insider_pct: Optional[float] = None) -> Dict[str, Any]:
+            source: str = "SEC EDGAR 10-K", insider_pct: Optional[float] = None, count_unknown: bool = False) -> Dict[str, Any]:
     """One fiscal year per figure: every level and flow is the latest fiscal year's or None, a ratio needs both ends in the same
     year, and growth needs the year exactly one (or n) before.  A series that stopped gives no figure, never an older year's."""
     known = {k: [r for r in v if r["filed"] <= as_of] for k, v in annual.items() if isinstance(v, list) and not k.startswith("_")}
@@ -401,7 +402,9 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     implied = abs(ni / eps_reported) if ni and eps_reported and abs(eps_reported) >= 0.1 else None
     sec_scale_error = _scale_differs(sec_shares, implied)
     change_scale_error = _scale_differs(sec_shares, at("shares_avg", year_back("shares_avg")))
-    shares_used = shares or (None if sec_scale_error else sec_shares)
+    # ``count_unknown``: the price is on another basis than every count at hand (a split the provider's record has not caught up
+    # with).  No count is used, the reported one included: it is from before the split too.  No market value, no PER.
+    shares_used = None if count_unknown else shares or (None if sec_scale_error else sec_shares)
     mcap = close * shares_used if close and shares_used else None
     # Price over reported EPS is wrong when the EPS is on another share count than the price: after a split (BKNG 0.99 for 24.7) or
     # when the newest report has no EPS and an older one would be read.  Reported EPS is kept while the count behind it is within
@@ -410,7 +413,9 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     # current share.  Without a current count nothing can be checked and the reported EPS is all there is.
     count = eps_count(latest)
     on_todays_basis = eps_reported is not None and bool(count) and bool(shares_used) and 1 / SHARE_BASIS_BREAK < shares_used / count < SHARE_BASIS_BREAK
-    if mcap is None or on_todays_basis:
+    if count_unknown:
+        pe, eps, pe_basis = None, None, "COUNT_UNKNOWN"
+    elif mcap is None or on_todays_basis:
         pe, eps, pe_basis = div(close, eps_reported), eps_reported, "REPORTED_EPS"
     else:
         pe, eps, pe_basis = div(mcap, ni), div(ni, shares_used), "MARKET_VALUE"
@@ -459,6 +464,15 @@ def us_display_name(long_name: Optional[str], short_name: Optional[str], sec_nam
     if long_name and short_w and sec_w and (short_w & sec_w) and not (long_w & short_w) and not (long_w & sec_w):
         return short_name
     return long_name or sec_name
+
+
+def price_basis_moved(info: Dict[str, Any], close: Optional[float]) -> bool:
+    """Whether today's close and the price stored with Yahoo's share count are too far apart to be one basis.  False when the
+    record carries no price of its own: nothing can be checked, as before."""
+    own = info.get("currentPrice") or info.get("regularMarketPrice")
+    if not own or not close or own <= 0 or close <= 0:
+        return False
+    return not (1 / PRICE_BASIS_GAP < close / own < PRICE_BASIS_GAP)
 
 
 def us_total_shares(info: Dict[str, Any], close: Optional[float], annual: Optional[Dict[str, Any]] = None) -> Optional[float]:

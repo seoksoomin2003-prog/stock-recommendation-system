@@ -195,7 +195,9 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
                 exits.append(_sell(market, p, close, day, "TIME", st))
                 del pos[t]
         elif p["style"] == "LONG" and exit_top is not None:           # the rank rule replaces the under-40 rule; no long score today: not judged
-            share = ahead.get((t, "LONG_TERM"))
+            # A partial day ranks a stock among the few that were scored, so it says nothing about the top half.  The plan below has
+            # the same guard.  Added 2026-11-17 by the user's decision, before the comparison book's first record.
+            share = ahead.get((t, "LONG_TERM")) if len(long_score) >= MIN_ROWS else None
             if share is not None and share >= exit_top:
                 decisions.append({"ticker": t, "reason": "RANK"})
                 events.append({"rule": "RANK_EXIT", "ticker": t, "ahead_pct": round(share * 100, 1), "score": long_score.get(t)})

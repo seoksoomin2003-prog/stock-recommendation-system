@@ -122,6 +122,40 @@ def insider_summary(parsed: List[Optional[Dict[str, float]]]) -> Dict[str, Any]:
             "excluded_transactions": sum(p["excluded"] for p in good), "filings": len(good), "window_days": WINDOW, "source": "SEC Form 4 (거래 코드 P·S만 집계)"}
 
 
+KR_LIST_PAGES = 60      # 100 filings a page.  Measured 2026-11-17 on the 300 scanned stocks: the longest year is 2,918 filings (a
+                        # securities firm's ELS issues), five lists pass 1,000.  Twice the longest is room, not a target
+
+
+def kr_filings(get, corp: str, bgn: str, end: str, max_pages: int = KR_LIST_PAGES) -> Dict[str, Any]:
+    """Every page of a company's OpenDART filing list between two dates (YYYYMMDD): {"rows", "complete", "pages", "total_pages"}.
+    ``get`` is the client's request (endpoint, **params).  Until QSF-1.4.1 only the first page was read and taken for the whole
+    year: 105 of 420 stored lists were cut at 100 rows, the shortest covering 16 days.  A provider status other than "no data"
+    is an error, never an empty list: a request-limit answer used to read as "no filings"."""
+    rows: List[Dict[str, str]] = []
+    page = total = 1
+    while page <= min(total, max_pages):
+        got = get("list.json", corp_code=corp, bgn_de=bgn, end_de=end, page_no=page, page_count=100).json()
+        status = got.get("status")
+        if status == "013":             # no filing in the range
+            break
+        if status not in (None, "000"):
+            raise RuntimeError(f"DART_STATUS_{status}")
+        rows += got.get("list") or []
+        total = int(got.get("total_page") or 1)
+        page += 1
+    return {"rows": rows, "complete": total <= max_pages, "pages": min(total, max_pages), "total_pages": total}
+
+
+def classify_kr_list(listing: Optional[Dict[str, Any]], as_of: str) -> Dict[str, Any]:
+    """``classify_kr`` on a whole list.  A failed request or a list that does not reach back the long window is UNAVAILABLE:
+    filings not seen are not filings that did not happen."""
+    if listing is None:
+        return {"status": "UNAVAILABLE", "reason": "DART 공시 조회 실패"}
+    if not listing.get("complete"):
+        return {"status": "UNAVAILABLE", "reason": f"DART 공시 목록이 {WINDOW_LONG}일을 덮지 못합니다(공시 {listing.get('total_pages')}쪽 중 {listing.get('pages')}쪽만 읽음)."}
+    return classify_kr(listing["rows"], as_of)
+
+
 def classify_kr(reports: List[Dict[str, str]], as_of: str) -> Dict[str, Any]:
     """``reports``: OpenDART list.json rows (report_nm, rcept_dt 'YYYYMMDD').  Insider direction is not in the title,
     so insider status stays UNAVAILABLE rather than guessing from the filing's existence."""

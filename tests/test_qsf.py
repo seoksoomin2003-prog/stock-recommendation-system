@@ -397,7 +397,7 @@ def test_costs_are_the_brokers_published_fees_and_the_assumed_part_is_kept_apart
     assert config.round_trip_cost("US") == pytest.approx((2 * (10 + 10) + 0.206) / 1e4) and config.fees_only("US") == pytest.approx(20.206 / 1e4)
     assert config.fees_only("KR") == pytest.approx(23 / 1e4) and config.round_trip_cost("KR") - config.fees_only("KR") == pytest.approx(30 / 1e4)
     assert all("가정" in c["basis"] and "토스증권" in c["basis"] for c in (us, kr)) and "환전" in us["basis"]
-    assert config.FX_BPS == {"regular": 5.0, "off_hours": 50.0} and config.MODEL_VERSION == "QSF-1.4.0"
+    assert config.FX_BPS == {"regular": 5.0, "off_hours": 50.0} and config.MODEL_VERSION == "QSF-1.4.1"
 
 
 # ---------------------------------------------------------------------- ledger

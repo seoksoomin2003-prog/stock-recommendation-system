@@ -103,7 +103,7 @@ def test_korea_reads_two_dart_lists_once_a_week_and_sees_the_new_disclosure_in_t
     assert len(d.calls) == 2 and {c.get("pblntf_detail_ty") or c.get("pblntf_ty") for c in d.calls} == {"I002", "A"}
     q._earnings("005930.KS", "KR", "2026-10-29", code="005930")
     assert len(d.calls) == 2                                                             # kept for a week
-    q.cache.write("krlist:00000001", [{"report_nm": "연결재무제표기준영업(잠정)실적(공정공시)", "rcept_dt": "20261105"}])
+    q.cache.write("krlist2:00000001", {"rows": [{"report_nm": "연결재무제표기준영업(잠정)실적(공정공시)", "rcept_dt": "20261105"}], "complete": True})
     assert q._earnings("005930.KS", "KR", "2026-11-06", code="005930")["date"] == "2027-02-05"       # the day's filing list shows the event came
 
 

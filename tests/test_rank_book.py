@@ -57,9 +57,9 @@ def test_an_entry_candidate_outside_the_top_fifth_gets_no_order():
 
 
 # ---------------------------------------------------------------------- X: a long position leaves when its rank falls out of the top half
-def long_day(days, score, ahead, total=10):
-    """A's long score among ``total`` long scores, ``ahead`` of them higher."""
-    others = [snap(f"L{k}", "LONG_TERM", score=95.0 if k < ahead else 5.0, session=days[1], entry="WAIT_FOR_EARNINGS") for k in range(total - 1)]
+def long_day(days, score, ahead, total=250):
+    """A's long score among ``total`` long scores, ``ahead`` tenths of them higher."""
+    others = [snap(f"L{k}", "LONG_TERM", score=95.0 if k < ahead * total // 10 else 5.0, session=days[1], entry="WAIT_FOR_EARNINGS") for k in range(total - 1)]
     return others + [snap("A", "LONG_TERM", score=score, price=10_100.0, atr=200.0, session=days[1], entry="WAIT_FOR_EARNINGS")]
 
 
@@ -74,6 +74,9 @@ def test_a_long_position_is_sold_when_half_the_scored_stocks_are_ahead_of_it():
     assert pb.step(start(), days[1], "KR", bars, long_day(days, 30.0, ahead=4))["decisions"] == [{"ticker": "A", "reason": "SCORE"}]
     assert pb.step(start(), days[1], "KR", bars, long_day(days, 30.0, ahead=4), rules=RULES)["decisions"] == []            # the rank rule replaces the under-40 rule
     assert pb.step(start(), days[1], "KR", bars, None, rules=RULES)["decisions"] == []                                     # no long score that day: not judged
+    part = pb.step(start(), days[1], "KR", bars, long_day(days, 60.0, ahead=9, total=pb.MIN_ROWS - 1), rules=RULES)
+    assert part["decisions"] == [] and part["rule_events"] == []                       # a partly scored day ranks among too few stocks: not judged (2026-11-17)
+    assert pb.step(start(), days[1], "KR", bars, long_day(days, 60.0, ahead=9, total=pb.MIN_ROWS), rules=RULES)["decisions"] == [{"ticker": "A", "reason": "RANK"}]
     swing = pb.step(held(days), days[1], "KR", bars, long_day(days, 1.0, ahead=9), rules=RULES)
     assert swing["decisions"] == [] and swing["rule_events"] == []                                                          # a swing position is not read by the long rank
     nxt = pb.step(doc["state"], calendar(3)[2], "KR", pb.Bars(loader_of({"A": [(days[1], 10_000, 10_100), (calendar(3)[2], 10_050, 10_050)]})), None, rules=RULES)

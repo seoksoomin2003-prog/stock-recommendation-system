@@ -5,7 +5,9 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.4.0"     # 1.4.0: the regime domain no longer counts in any of the four scores; it is shown apart as the market state
+MODEL_VERSION = "QSF-1.4.1"     # 1.4.0: the regime domain no longer counts in any of the four scores; it is shown apart as the market state
+                                # 1.4.1 (inputs only): the whole Korean filing list instead of its first 100 rows; a US share count
+                                # from before a split is not used with a price from after it.  reports/QSF_INPUTS_3_2026_11_17.md
 #                                  (MARKET_STATE_*), and on a US day under its middle the order plan halves the risk per trade.  User decision
 #                                  2026-11-16 after reports/QSF_MARKET_STATE_RESULTS.md; the former formula is written down every session
 #                                  (reports/QSF_SCORE_SPLIT_PROTOCOL.md).  1.3.2: US costs are the broker's published fees (Toss Securities: 0.1% each way, SEC fee on sells) instead of an assumed

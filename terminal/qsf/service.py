@@ -270,12 +270,26 @@ class QSF(ScreenViews):
         subm = sres["data"]
         if res["data"] is None:
             return {"status": "UNAVAILABLE", "reason": f"SEC 재무 조회 실패 ({res.get('error')})", "cik": cik}
-        info = self.cache.cached(f"info:{ticker}", TTL["info"], lambda: self.src.yahoo_info(ticker))["data"] or {}
+        info, moved = self._us_info(ticker, bars[-1]["close"])
         fin = fundamentals.is_financial_sic((subm or {}).get("sic"))
-        m = fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=fin, shares=fundamentals.us_total_shares(info, bars[-1]["close"], res["data"]), insider_pct=info.get("heldPercentInsiders"))
+        m = fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=fin, shares=fundamentals.us_total_shares(info, bars[-1]["close"], res["data"]), insider_pct=info.get("heldPercentInsiders"),
+                                 count_unknown=moved)
         old = _stale("SEC 재무제표", res)
         return {**m, "cik": cik, "name": fundamentals.us_display_name(info.get("longName"), info.get("shortName"), (subm or {}).get("name")), "sector": info.get("sector"),
                 **({"stale_inputs": old} if old else {})}
+
+    def _us_info(self, ticker: str, close: Optional[float]) -> Tuple[Dict[str, Any], bool]:
+        """Yahoo's company record and whether its share count is on another price basis than today's bar (QSF-1.4.1).  The
+        record is kept 7 days and the bars are split-adjusted every day, so for up to a week after a split the price was the new
+        one and the count the old one: market value, P/B and free-cash-flow yield off by the split ratio.  The record carries the
+        price it was stored with; when today's close is far from it the record is asked again, and when it is still far (the
+        request failed, or the provider is behind) the count is not used at all: unknown, never wrong by a factor."""
+        fetch = lambda: self.src.yahoo_info(ticker)                                              # noqa: E731
+        info = self.cache.cached(f"info:{ticker}", TTL["info"], fetch)["data"] or {}
+        if not fundamentals.price_basis_moved(info, close):
+            return info, False
+        info = self.cache.cached(f"info:{ticker}", 0, fetch)["data"] or {}
+        return info, fundamentals.price_basis_moved(info, close)
 
     def _annual(self, ticker: str, cik: str) -> Dict[str, Any]:
         return fundamentals.drop_stale_series(fundamentals.extract_us(default_sources.facts_with_predecessors(ticker, cik, self.src.sec_companyfacts)))
@@ -388,8 +402,8 @@ class QSF(ScreenViews):
             # a company with no such filing is stored as one empty row, so it is not asked again every scan
             return [{"report_nm": r.get("report_nm"), "rcept_dt": r.get("rcept_dt")} for r in rows] or [{"report_nm": "", "rcept_dt": ""}]
         rows = list(self.cache.cached(f"krearn:{corp}", TTL["kr_facts"], fetch_history)["data"] or [])
-        daily = self.cache.read(f"krlist:{corp}")                                    # written by the day's filing check; read, never fetched here
-        rows += [{"report_nm": r.get("report_nm"), "rcept_dt": r.get("rcept_dt")} for r in ((daily or {}).get("data") or [])]
+        daily = self.cache.read(f"krlist2:{corp}")                                   # written by the day's filing check; read, never fetched here
+        rows += [{"report_nm": r.get("report_nm"), "rcept_dt": r.get("rcept_dt")} for r in (((daily or {}).get("data") or {}).get("rows") or [])]
         got = earnings_estimate.kr_result_dates(rows, as_of)
         return got["dates"], "DART 잠정실적 공시일 기준 추정" if got["kind"] == "PRELIMINARY" else "DART 정기보고서 제출일 기준 추정"
 
@@ -453,16 +467,15 @@ class QSF(ScreenViews):
         if res["data"]:
             fund = fundamentals.blank_mixed_cash_flow(fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=fundamentals.is_financial_kr(klass, res["data"]), shares=self._krx_shares(as_of).get(code) or info.get("sharesOutstanding"),
                                                                            source="OpenDART 사업보고서", insider_pct=info.get("heldPercentInsiders")), code)
-        def fetch_list():
+        def fetch_list():               # every page of the year (QSF-1.4.1); the first page alone was read as the whole year before
             bgn = (date.fromisoformat(as_of) - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")
-            r = self.dart._get("list.json", corp_code=corp, bgn_de=bgn, end_de=as_of.replace("-", ""), page_count=100).json()
-            return r.get("list") or []
-        rep = self.cache.cached(f"krlist:{corp}", TTL["subm"], fetch_list)
-        ev = events.classify_kr(rep["data"], as_of) if rep["data"] is not None else {"status": "UNAVAILABLE", "reason": "DART 공시 조회 실패"}
+            return events.kr_filings(self.dart._get, corp, bgn, as_of.replace("-", ""))
+        rep = self.cache.cached(f"krlist2:{corp}", TTL["subm"], fetch_list)
+        ev = events.classify_kr_list(rep["data"], as_of)
         old_fund, old_list = _stale("DART 재무제표", res) if res["data"] else [], _stale("DART 공시 목록", rep)
         if old_fund:
             fund["stale_inputs"] = old_fund
-        if old_list and rep["data"] is not None:
+        if old_list and ev.get("status") == "REAL":
             ev["stale_inputs"] = old_list
         return {"fund": fund, "events": ev}
 
@@ -487,9 +500,10 @@ class QSF(ScreenViews):
 
         def fetch_list():
             bgn = (as_of - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")
-            return self.dart._get("list.json", corp_code=corp, bgn_de=bgn, end_de=as_of.strftime("%Y%m%d"), page_count=100).json().get("list") or []
-        rep = self.cache.cached(f"krlist:{corp}", TTL["subm"], fetch_list)
-        out.update(annual=res["data"], annual_status=res["status"], annual_fetched=res["fetched_at"], reports=rep["data"], reports_status=rep["status"], reports_fetched=rep["fetched_at"])
+            return events.kr_filings(self.dart._get, corp, bgn, as_of.strftime("%Y%m%d"))
+        rep = self.cache.cached(f"krlist2:{corp}", TTL["subm"], fetch_list)
+        out.update(annual=res["data"], annual_status=res["status"], annual_fetched=res["fetched_at"], reports=(rep["data"] or {}).get("rows") if rep["data"] is not None else None,
+                   reports_status=rep["status"], reports_fetched=rep["fetched_at"])
         return out
 
     def kr_search(self, query: str, limit: int = 10) -> List[Dict[str, str]]:
@@ -591,6 +605,8 @@ class QSF(ScreenViews):
                "provenance": {"price": "Yahoo Finance 일봉", "price_date": res["data_date"], "fund": (ctx.get("fund") or {}).get("source"), "fund_filed": (ctx.get("fund") or {}).get("filed"),
                               "events": (ctx.get("events") or {}).get("source"), "regime": {k: (v or {}).get("date") for k, v in (ctx.get("regime") or {}).items() if isinstance(v, dict)}},
                "not_advice": "규칙에 따른 계산 결과입니다. 주문을 실행하지 않으며 투자 자문이 아닙니다."}
+        if (ctx.get("fund") or {}).get("cik"):
+            out["cik"] = ctx["fund"]["cik"]                 # into the record: the company, whatever its ticker becomes
         old = list((ctx.get("fund") or {}).get("stale_inputs") or []) + list((ctx.get("events") or {}).get("stale_inputs") or [])
         if old:                 # scored from stored copies because the new request failed: said on the card and in the record
             out["provenance"]["stale"] = old

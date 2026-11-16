@@ -34,6 +34,8 @@ def snapshot(card: Dict[str, Any]) -> Dict[str, Any]:
     rec["factors"] = [{**{k: f.get(k) for k in ("factor", "domain", "weight", "status", "raw", "normalized", "contribution", "source", "as_of", "reason")},
                        **({"scored": False, "reference_weight": f.get("reference_weight")} if f.get("scored") is False else {})} for f in card["factors"]]
     rec["target"], rec["stop"] = card["levels"].get("target"), card["levels"].get("stop")
+    if card.get("cik"):             # US, from 2026-11-17: a ticker can be renamed or handed to another company; the SEC number cannot
+        rec["cik"] = card["cik"]
     return rec
 
 
