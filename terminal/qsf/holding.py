@@ -220,8 +220,13 @@ def evaluate_exit(res: Dict, ctx: Dict, position: Dict[str, Any], today: date) -
         if e.get("sessions") is not None and e["sessions"] <= config.EARNINGS_BLOCK_SESSIONS:
             hit("EVENT_RISK", "HOLD_AND_REVIEW", f"실적 발표 {e['date']}가 임박했습니다.")
         if position.get("opened"):
-            ts = add_sessions(datetime.strptime(position["opened"], "%Y-%m-%d").date(), config.SWING["time_stop"], step)
-            if today >= ts:
+            opened = datetime.strptime(position["opened"], "%Y-%m-%d").date()
+            ts = add_sessions(opened, config.SWING["time_stop"], step)
+            hr = position.get("hold_rules")                # the turnover rules when they are in force (turnover_book.active_rules)
+            if today >= ts and hr and today < add_sessions(opened, hr["hold_cap"], step) and (res["score"] or 0) >= hr["hold_score"] and res["actionability"] == "ACTIONABLE":
+                hit("TIME_STOP_EXTENDED", "HOLD", f"보유 {config.SWING['time_stop']}거래일이 지났지만 스윙 점수 {res['score']:.1f}점이 {hr['hold_score']:g}점 이상이고 차단이 없어 "
+                                                  f"계속 보유로 읽습니다(최대 {hr['hold_cap']}거래일, 회전율 규칙).")
+            elif today >= ts:
                 hit("TIME_STOP", "TIME_STOP_REVIEW", f"보유 {config.SWING['time_stop']}거래일이 지나 재평가 대상입니다 ({ts}). 자동 매도는 아닙니다.")
         if (res["domains"]["REGIME"]["score_100"] or 100) < 25:
             hit("REGIME_SEVERE", "REDUCE", f"시장 국면 점수가 {res['domains']['REGIME']['score_100']:.0f}/100으로 급악화했습니다.")
@@ -253,7 +258,8 @@ def evaluate_exit(res: Dict, ctx: Dict, position: Dict[str, Any], today: date) -
     order = ["EXIT", "THESIS_INVALIDATED", "REDUCE", "PARTIAL_TAKE_PROFIT", "TIME_STOP_REVIEW", "HOLD_AND_REVIEW", "HOLD"]
     action = next((a for a in order if any(h["action"] == a for h in hits)), "HOLD")
     must = "손절선과 추세가 유지되어야 합니다." if strategy == "SWING" else "수익성, 현금흐름, 재무 건전성이 유지되어야 합니다."
-    return {"action": action, "conditions": hits, "reason": next(h["text"] for h in hits if h["action"] == action) if action != "HOLD" else f"청산 조건에 해당하지 않습니다. {must}"}
+    kept = next((h["text"] for h in hits if h["action"] == "HOLD"), None)
+    return {"action": action, "conditions": hits, "reason": next(h["text"] for h in hits if h["action"] == action) if action != "HOLD" else kept or f"청산 조건에 해당하지 않습니다. {must}"}
 
 
 def what_would_change(res: Dict) -> List[str]:

@@ -82,12 +82,28 @@ def _sell(market: str, pos: Dict[str, Any], ref_price: float, day: str, reason: 
             "slippage_bps": slip["total"], "pnl": pnl, "net_pct": pnl / pos["cost"] * 100 if pos["cost"] else None}
 
 
-def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snaps: Optional[List[Dict[str, Any]]], info: Optional[Dict[str, Dict[str, Any]]] = None) -> Dict[str, Any]:
+def _stays(p: Dict[str, Any], snap: Optional[Dict[str, Any]], rules: Dict[str, Any]) -> Optional[str]:
+    """The turnover rules' reading of a swing position at or past the time stop: the event code when it stays, None when it is sold.
+    No swing score that day is not a low score: the position waits for the next session.  The cap sells whatever the score."""
+    if p["sessions"] >= rules["hold_cap"]:
+        return None
+    if snap is None:
+        return "HOLD_NO_SCORE"
+    return "HOLD_EXTENDED" if snap["score"] >= rules["hold_score"] and snap.get("actionability") == "ACTIONABLE" else None
+
+
+def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snaps: Optional[List[Dict[str, Any]]], info: Optional[Dict[str, Dict[str, Any]]] = None,
+         rules: Optional[Dict[str, Any]] = None, version: Optional[str] = None) -> Dict[str, Any]:
     """One session of the book.  ``prev``: the state the session before wrote (None on the first).  ``snaps``: the ledger snapshots
-    of ``day`` (None or too few: no new plan, exits by price still run).  Reads no price after ``day``."""
+    of ``day`` (None or too few: no new plan, exits by price still run).  Reads no price after ``day``.
+    ``rules``: the turnover rules (reports/QSF_TURNOVER_RULES_PROTOCOL.md) when they are in force: ``reentry_wait`` sessions without a
+    new order after a stop, and a swing position past the time stop staying while its score is ``hold_score`` or more, up to
+    ``hold_cap`` sessions.  None: the book as it always was, with not one key more in its record."""
     st = copy.deepcopy(prev) if prev else new_state(market)
     pos: Dict[str, Dict[str, Any]] = st["positions"]
     exits, fills, unfilled, adjusted = [], [], [], []
+    events: List[Dict[str, Any]] = []
+    wait: Dict[str, int] = dict(st.get("cooldown") or {}) if rules else {}       # ticker -> closes left without a new order
     # 1. a restated price file: the stored levels move with it, so a split is never read as a fall
     for t, p in pos.items():
         then = bars.at(t, p["last_bar"]) if p.get("last_bar") else None
@@ -109,6 +125,8 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
             continue
         exits.append(_sell(market, p, float(b["open"]), day, e["reason"], st))
         del pos[e["ticker"]]
+        if rules and e["reason"] == "STOP":
+            wait[e["ticker"]] = int(rules["reentry_wait"])
     st["pending_exits"] = waiting
     commission = config.COSTS[market]["commission_bps"] / 1e4
     for o in st["plan"]:
@@ -146,6 +164,7 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
     st["plan"] = []
     # 3. the close: marks, then the exits this close decides
     long_score = {s["ticker"]: s["score"] for s in (snaps or []) if s.get("strategy") == "LONG_TERM" and s.get("data_date") == day and s.get("score") is not None}
+    swing_snap = {s["ticker"]: s for s in (snaps or []) if s.get("strategy") == "SWING" and s.get("data_date") == day and s.get("score") is not None}
     decisions = []
     for t in sorted(pos):
         p, b = pos[t], bars.at(t, day)
@@ -162,8 +181,12 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
         elif p["style"] == "SWING" and p.get("target") and close >= p["target"]:
             decisions.append({"ticker": t, "reason": "TARGET"})
         elif p["style"] == "SWING" and p["sessions"] >= SWING_TIME_STOP:
-            exits.append(_sell(market, p, close, day, "TIME", st))
-            del pos[t]
+            kept = _stays(p, swing_snap.get(t), rules) if rules else None
+            if kept:
+                events.append({"rule": kept, "ticker": t, "sessions": p["sessions"], "score": (swing_snap.get(t) or {}).get("score")})
+            else:
+                exits.append(_sell(market, p, close, day, "TIME", st))
+                del pos[t]
         elif p["style"] == "LONG" and t in long_score and long_score[t] < LONG_EXIT_SCORE:
             decisions.append({"ticker": t, "reason": "SCORE"})
     st["pending_exits"] += [d for d in decisions if d["ticker"] not in {e["ticker"] for e in st["pending_exits"]}]
@@ -175,14 +198,17 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
     if len({s["ticker"] for s in scored}) >= MIN_ROWS:
         cands = order_plan.candidates(scored, day, info)
         account = {"equity": equity, "cash": st["cash"], "positions": {t: {"style": p["style"], "value": p["qty"] * p["last_close"], "sector": p.get("sector")} for t, p in pos.items()}}
-        built = order_plan.build(cands, account, market, state=order_plan.market_state(scored, market, day))
+        built = order_plan.build(cands, account, market, state=order_plan.market_state(scored, market, day), blocked=wait if rules else None)
+        events += [{"rule": "REENTRY_WAIT", "ticker": s["ticker"], "style": s["style"], "left": wait[s["ticker"]]} for s in built["skipped"] if s["code"] == "REENTRY_WAIT"]
         plan = {"market_state": built["market_state"], "size_factor": built["size_factor"], "orders": built["orders"], "skipped_counts": built["skipped_counts"], "candidates": built["candidates"], "scored": True, "sleeve": built["sleeve"],
                 "skipped_first": built["skipped"][:20]}
         st["plan"] = built["orders"]
+    if rules:                   # a wait set at this open has now covered one close
+        st["cooldown"] = {t: n - 1 for t, n in wait.items() if n > 1}
     bench = bars.at(REFERENCE[market], day) if market == "US" else None
-    return {"session": day, "market": market, "rules": VERSION, "exits": exits, "fills": fills, "unfilled": unfilled, "adjusted": adjusted, "decisions": decisions, "plan": plan,
+    return {"session": day, "market": market, "rules": version or VERSION, "exits": exits, "fills": fills, "unfilled": unfilled, "adjusted": adjusted, "decisions": decisions, "plan": plan,
             "state": st, "equity": equity, "cash": st["cash"], "held_value": held_value, "positions": len(pos),
-            "benchmark_close": float(bench["close"]) if bench else None, "rows": plan["orders"]}
+            "benchmark_close": float(bench["close"]) if bench else None, "rows": plan["orders"], **({"rule_events": events} if rules else {})}
 
 
 # ---------------------------------------------------------------------- the daily record
@@ -194,29 +220,35 @@ def _session_snaps(led: Ledger, market: str, session: str) -> List[Dict[str, Any
     return out
 
 
-def _last_doc(base: Path, market: str) -> Optional[Dict[str, Any]]:
-    index = kf.read_index(base, FOLDERS[market])
-    return kf._read_day(Path(base) / FOLDERS[market], index[-1]["session"]) if index else None
+def _last_doc(base: Path, market: str, store: Optional[Path] = None) -> Optional[Dict[str, Any]]:
+    where = store or FOLDERS[market]
+    index = kf.read_index(base, where)
+    return kf._read_day(Path(base) / where, index[-1]["session"]) if index else None
 
 
 def record(base: Path, market: str, loader: Callable[[str], Sequence[Dict[str, Any]]], info: Callable[[], Dict[str, Dict[str, Any]]] = lambda: {},
-           bench: Optional[Callable[[], Sequence[Dict[str, Any]]]] = None, now: Callable[[], datetime] = _utcnow, first: str = FIRST) -> Dict[str, Any]:
+           bench: Optional[Callable[[], Sequence[Dict[str, Any]]]] = None, now: Callable[[], datetime] = _utcnow, first: str = FIRST,
+           store: Optional[Path] = None, rules: Optional[Dict[str, Any]] = None, version: Optional[str] = None,
+           seed: Optional[Callable[[], Optional[Dict[str, Any]]]] = None) -> Dict[str, Any]:
     """Write every trading day from ``first`` up to the newest ledger session, in order.  One writer at a time: a second run that
-    starts while this one works waits at the lock and then finds the days already written."""
+    starts while this one works waits at the lock and then finds the days already written.
+    ``store``, ``rules``, ``version``: another book under other rules (``turnover_book``).  ``seed``: the record whose state that
+    book's first session builds on, in place of a new account."""
+    where = store or FOLDERS[market]
     led = Ledger(Path(base))
     if led.verify()["status"] != "OK":
         return {"status": "FAILED", "reason": "LEDGER_BROKEN"}
-    folder = Path(base) / FOLDERS[market]
+    folder = Path(base) / where
     folder.mkdir(parents=True, exist_ok=True)
     with open(folder / "book.lock", "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        if kf.verify(base, FOLDERS[market])["status"] != "OK":
+        if kf.verify(base, where)["status"] != "OK":
             return {"status": "FAILED", "reason": "BOOK_CHAIN_BROKEN"}
         scored = sorted({r["session"] for r in led._live_rows() if r["market"] == market and r["session"] >= first})
         if not scored:
-            return {"status": "OK", "market": market, "written": [], "last": None, "sessions": len(kf.read_index(base, FOLDERS[market]))}
+            return {"status": "OK", "market": market, "written": [], "last": None, "sessions": len(kf.read_index(base, where))}
         bars = Bars(loader)
-        done = [r["session"] for r in kf.read_index(base, FOLDERS[market])]
+        done = [r["session"] for r in kf.read_index(base, where)]
         after = done[-1] if done else ""
         days = [d for d in bars.days(REFERENCE[market]) if first <= d <= scored[-1] and d > after]
         if not days and scored[-1] > after:
@@ -224,16 +256,16 @@ def record(base: Path, market: str, loader: Callable[[str], Sequence[Dict[str, A
         at, wrote, extra = now(), [], None
         bench_close = {b["date"]: b.get("close") for b in (bench() if bench else [])} if days else {}
         for day in days:
-            prev = _last_doc(base, market)
+            prev = _last_doc(base, market, where) or (seed() if seed else None)
 
             def scorer(b: Path, d: str) -> Dict[str, Any]:
                 nonlocal extra
                 extra = extra if extra is not None else info()
-                doc = step(prev["state"] if prev else None, d, market, bars, _session_snaps(led, market, d) if d in scored else None, extra)
+                doc = step(prev["state"] if prev else None, d, market, bars, _session_snaps(led, market, d) if d in scored else None, extra, rules=rules, version=version)
                 if doc["benchmark_close"] is None and bench_close.get(d):
                     doc["benchmark_close"] = float(bench_close[d])
                 return doc
-            if kf.write_record(base, day, at, day != days[-1], store=FOLDERS[market], scorer=scorer):
+            if kf.write_record(base, day, at, day != days[-1], store=where, scorer=scorer):
                 wrote.append(day)
         return {"status": "OK", "market": market, "written": wrote, "last": (wrote or done or [None])[-1], "sessions": len(done) + len(wrote)}
 
@@ -272,7 +304,7 @@ def status(base: Path, market: str) -> Dict[str, Any]:
                   "unrealized_pct": (p["qty"] * p["last_close"] / p["cost"] - 1) * 100 if p.get("cost") else None,
                   "pending_exit": next((e["reason"] for e in st["pending_exits"] if e["ticker"] == p["ticker"]), None)} for p in sorted(st["positions"].values(), key=lambda p: p["ticker"])]
     net = [e["net_pct"] for e in exits if e.get("net_pct") is not None]
-    return {"status": "REAL", **head, "sessions": len(docs), "started": docs[0]["session"], "last": last["session"], "integrity": kf.verify(base, FOLDERS[market])["status"],
+    return {"status": "REAL", **head, "version": last.get("rules") or VERSION, "sessions": len(docs), "started": docs[0]["session"], "last": last["session"], "integrity": kf.verify(base, FOLDERS[market])["status"],
             "equity": last["equity"], "cash": last["cash"], "held_value": last["held_value"], "return_pct": (last["equity"] / START_CASH[market] - 1) * 100,
             "max_drawdown_pct": (_drawdown(equity) or 0.0) * 100, "benchmark_return_pct": (bench[-1][1] / bench[0][1] - 1) * 100 if len(bench) >= 2 else None,
             "benchmark": "SPY" if market == "US" else "코스피", "realized": st["realized"], "fees": st["fees"], "slippage": st["slippage"],

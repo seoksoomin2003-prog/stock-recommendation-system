@@ -671,13 +671,36 @@ async function qsfPlan() {
   if (mk !== state.market) return;
   box.innerHTML = failed ? `<div class="panel"><h2>오늘 진입 후보의 주문 계획</h2><div class="empty">불러오지 못했습니다: ${esc(ERR_KO[failed.message] || failed.message)}</div></div>` : qsfPlanHtml(d);
 }
-function qsfPaperHtml(d) {
+// The turnover rules beside the paper book (TO-1).  Before the reading only counts are shown, never the comparison book's value or return.
+function qsfTurnoverHtml(tb) {
+  if (!tb) return "";
+  const r = tb.rules || {}, pbk = tb.paper_book, c = tb.rule_counts || {};
+  const pct = (v, n = 2) => (isNum(v) ? v.toFixed(n) + "%" : DASH);
+  const own = pbk ? `<div class="meta"><b>기존 장부의 매매량</b>(${pbk.sessions}거래일): 체결 ${pbk.fills}건, 매도 ${pbk.exits}건 · 거래대금 ÷ 평균 평가액 ${pct(pbk.traded_pct, 1)} · 비용(수수료·세금 + 슬리피지 추정) ÷ 평균 평가액 ${pct(pbk.cost_pct)}
+    · 손절 뒤 ${r.reentry_wait}거래일 안에 되산 횟수 ${pbk.rebuys_after_stop}건</div>` : "";
+  const what = `<div class="meta"><b>두 규칙</b>: 손절로 판 종목은 ${r.reentry_wait}거래일 동안 다시 사지 않습니다. 스윙은 30거래일째부터 점수가 ${r.hold_score}점 이상이고 차단이 없으면 계속 보유합니다(최대 ${r.hold_cap}거래일).
+    같은 계좌 상태에서 갈라진 비교 장부가 이 규칙으로 나란히 기록됩니다. 규칙: ${esc(tb.protocol)}</div>`;
+  const force = tb.mode !== "auto" ? `<div class="meta"><span class="badge risk-note">.env의 QSF_TURNOVER_RULES=${esc(tb.mode)}</span> 판정과 상관없이 규칙을 ${tb.mode === "on" ? "항상 적용" : "적용하지 않음"}으로 두셨습니다.</div>` : "";
+  let body;
+  if (tb.status === "DECIDED") {
+    const d = tb.decision;
+    body = `<div class="meta"><span class="badge ${d.decision === "ADOPT" ? "ok" : ""}">결정: ${d.decision === "ADOPT" ? "규칙 적용" : "기존 규칙 유지"}</span> <span class="badge">${d.evidence === "DISTINCT" ? "수익 차이가 통계로 구분됨" : "수익 차이가 통계로 구분되지 않음"}</span>
+      구간 ${esc(d.first)} ~ ${esc(d.last)}</div><ul class="meta">${(d.why || []).map((w) => `<li>${esc(w)}</li>`).join("")}</ul><div class="meta">${esc(d.consequence || "")} ${esc(d.note || "")}</div>`;
+  } else if (tb.status === "RECORDING") {
+    body = `<div class="meta"><span class="badge">판정 전</span> 비교 기록 ${tb.records} / ${tb.read_at}거래일 (${esc(tb.started)} ~ ${esc(tb.last)}) · 판정까지 ${tb.left}거래일.
+      규칙이 한 일: 손절 ${c.STOPS || 0}건, 재진입을 막은 후보 ${c.REENTRY_WAIT || 0}건(종목·날), 보유 연장 ${c.HOLD_EXTENDED || 0}건(종목·날). ${esc(tb.note)}</div>`;
+  } else {
+    body = `<div class="meta"><span class="badge">판정 전</span> 비교 장부의 첫 기록은 ${esc(tb.first)} 거래일입니다. ${esc(tb.note)}</div>`;
+  }
+  return `<h3>회전율 규칙 비교 <span class="meta">(TO-1${tb.active ? ` · 규칙 적용 중, ${esc(tb.adopted_version)}` : ""})</span></h3>${body}${force}${own}${what}`;
+}
+function qsfPaperHtml(d, tb) {
   const title = `<h2>모의 체결 장부 <span class="badge">판정 전 참고</span> <span class="badge risk-note">가상의 금액 · 주문을 보내지 않습니다</span></h2>`;
   const rules = `<div class="meta"><b>규칙</b>: 시작 금액 ${money(d.start_cash, 0)}. 매일 위와 같은 방식의 주문 계획을 만들고, 다음 거래일 시가에 체결된 것으로 봅니다(시가가 지정가 상한보다 높거나 손절가 이하면 체결하지 않음).
     미국에서 시장 상태가 나쁜 날(50 미만)의 새 주문은 위험 한도와 비중 한도를 절반으로 계산합니다(2026-11-16부터, PB-2).
     스윙은 종가가 손절·목표에 닿으면 다음 시가에, ${d.swing_time_stop}거래일이 지나면 그날 종가에 팝니다. 장기는 종가가 손절(5 ATR)에 닿거나 장기 점수가 ${d.long_exit_score}점 미만이 되면 다음 시가에 팝니다.
     체결마다 수수료·세금과 슬리피지 추정을 뺍니다. ${esc(d.cost_basis)}. 자세한 규칙: ${esc(d.rules)}</div><div class="meta">${esc(d.note)}</div>`;
-  if (d.status !== "REAL") return `<div class="panel">${title}<div class="empty">아직 기록이 없습니다. ${esc(d.first)} 거래일의 점수로 첫 계획을 만들고, 그다음 거래일 시가부터 체결합니다.</div>${rules}</div>`;
+  if (d.status !== "REAL") return `<div class="panel">${title}<div class="empty">아직 기록이 없습니다. ${esc(d.first)} 거래일의 점수로 첫 계획을 만들고, 그다음 거래일 시가부터 체결합니다.</div>${qsfTurnoverHtml(tb)}${rules}</div>`;
   const pc = (v) => (isNum(v) ? `<span class="${v > 0 ? "up" : v < 0 ? "down" : ""}">${v > 0 ? "+" : ""}${v.toFixed(2)}%</span>` : DASH);
   const cell = (k, v, t) => `<div${t ? ` title="${esc(t)}"` : ""}><div class="meta" style="margin:0">${k}</div><div class="num" style="font-size:16px;font-weight:600">${v}</div></div>`;
   const tiles = `<div class="grid" style="margin:8px 0">${cell("평가액", money(d.equity, 0))}${cell("시작 이후 수익률", pc(d.return_pct))}${cell(`${esc(d.benchmark)} 같은 기간`, pc(d.benchmark_return_pct), "첫 기록일 종가부터 최근 기록일 종가까지")}
@@ -700,15 +723,16 @@ function qsfPaperHtml(d) {
     ${prow ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>스타일</th><th>수량</th><th title="슬리피지를 넣은 체결가">매수가</th><th>최근 종가</th><th title="수수료를 넣은 매수 금액 대비">평가 손익</th><th>비중</th><th>손절</th><th>목표</th><th>보유 거래일</th><th class="l">매수일</th></tr></thead><tbody>${prow}</tbody></table></div>` : `<div class="meta">보유 종목이 없습니다.</div>`}
     <h3>다음 거래일 시가의 주문 계획 <span class="meta">(${esc(d.last)} 종가 기준)</span></h3>${plan.market_state ? qsfMarketState(plan.market_state) : ""}${planHtml}${qsfSkipLine(plan.skipped_counts, d.skip_labels)}
     ${erow ? `<h3>최근 매도</h3><div class="tbl-wrap"><table><thead><tr><th class="l">매도일</th><th class="l">종목</th><th>스타일</th><th class="l">이유</th><th>매수가</th><th>매도가</th><th>보유 거래일</th><th title="수수료·세금·슬리피지 추정 차감">순수익률</th><th>손익</th></tr></thead><tbody>${erow}</tbody></table></div>` : ""}
+    ${qsfTurnoverHtml(tb)}
     ${frow ? `<h3>최근 체결</h3><div class="tbl-wrap"><table><thead><tr><th class="l">체결일</th><th class="l">종목</th><th>스타일</th><th>수량</th><th>시가</th><th title="시가에 슬리피지 추정을 더한 값">체결가</th><th>슬리피지 추정</th><th>수수료</th></tr></thead><tbody>${frow}</tbody></table></div>` : ""}
     ${rules}</div>`;
 }
 async function qsfPaper() {
   const box = $("#qsfpaper"); if (!box) return;
   const mk = state.market;
-  const d = await api(`/api/qsf/paper-book?market=${mk}`).catch(() => null);
+  const [d, tb] = await Promise.all([api(`/api/qsf/paper-book?market=${mk}`).catch(() => null), api(`/api/qsf/turnover-book?market=${mk}`).catch(() => null)]);
   if (mk !== state.market) return;
-  box.innerHTML = d ? qsfPaperHtml(d) : "";
+  box.innerHTML = d ? qsfPaperHtml(d, tb) : "";
 }
 async function qsfValidation() {
   const box = $("#qsfvalid"); if (!box) return;

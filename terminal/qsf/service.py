@@ -513,7 +513,9 @@ class QSF(ScreenViews):
             return None
         plan = state["plans"].get(ticker) or {}
         # A position that became a swing later counts its time limit from that change.
-        return {"avg_cost": p["avg"], "opened": p.get("style_since") or p["opened"], "qty": p["qty"], "stop": plan.get("stop"), "target": plan.get("target"), "style": p.get("style")}
+        from terminal.qsf import turnover_book
+        return {"avg_cost": p["avg"], "opened": p.get("style_since") or p["opened"], "qty": p["qty"], "stop": plan.get("stop"), "target": plan.get("target"), "style": p.get("style"),
+                "hold_rules": turnover_book.active_rules(self.base, market)}
 
     def _krx_bars(self, bars: Dict[str, List[Dict]]) -> Tuple[Dict[str, List[Dict]], Dict[str, Any]]:
         """Korean bars rebuilt from the KRX daily snapshots (``kr_bars``).  Without any snapshot the Yahoo bars stay, and the summary says so."""
