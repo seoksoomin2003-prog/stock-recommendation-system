@@ -1163,6 +1163,8 @@ def main(argv=None) -> int:
         from terminal import news
         res = news.record(PROJECT_ROOT, args.market)
         print(json.dumps(res, ensure_ascii=False))
+        if str(res.get("stopped") or "").startswith("REFUSED"):
+            return 6                    # the feed refused (too many requests): asked again at the next hourly run, not seconds later
         return {"OK": 0, "NO_UNIVERSE": 3}.get(res["status"], 1)
     if args.command == "migrate-storage":
         from markets import storage

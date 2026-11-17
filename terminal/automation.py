@@ -34,6 +34,7 @@ STEP_TIMEOUTS = {"QSF": 90 * 60,                    # 21 to 26 minutes; 26 on a 
                  "KR_FORWARD": 90 * 60}             # ten records in one process: 33 to 37 minutes on 2026-11-11..13, too near the 45
 NETWORK_WAIT_S, NETWORK_POLL_S = 90, 5              # how long a run waits for the network before its first step
 NETWORK_PROBE = "query1.finance.yahoo.com"          # the first host every chain needs; only its name is looked up
+WAIT_RETRY_S = 600                                  # a step still waiting for its provider is asked once more before the backup, if its first try began this long ago
 RETRY_QUICK_S = 300                                 # a step that failed sooner than this gets one more try at the end of the run
 # wrap-up checks whose failure ends in a state key: said in the day's message by ``Daily._notes``
 WRAP_UP_CHECKS = {"cache_prune": "캐시 정리", "price_audit": "가격 점검", "earnings_gap": "실적일 재집계", "store_watch": "기록 진행 확인"}
@@ -301,6 +302,8 @@ class Daily:
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else "다운로드 끊김" if rc == 4 else f"코드 {rc}"}
             if name in ("NEWS", "NEWS_KR"):
                 rc = self.runner(name, ["news", "record"] if name == "NEWS" else ["--market", "KR", "news", "record"])
+                if rc == 6:             # refused for too many requests: a second request a minute later is the last thing the feed wants
+                    return {"status": FAILED, "at": at, "detail": "뉴스 제공처가 요청을 거절함(요청 과다) · 다음 시간에 다시 시도", "no_quick_retry": True}
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "점수 기록 없음" if rc == 3 else f"코드 {rc}"}
             if name == "KR_FORWARD":                                # waiting is not a failure: the day may not be published yet
                 rc = self.runner(name, ["qsf", "kr-forward-record"])
@@ -682,6 +685,25 @@ class Daily:
             self._attempt({"status": out["status"], "session": out.get("session")})
             return out
 
+    def _retry_waiting(self, st: Dict[str, Any], steps: Dict[str, Dict[str, Any]], todo: List[str], session: str, restarted: bool) -> None:
+        """One more try of the Korean forward record when it was waiting for KRX and its first try began ``WAIT_RETRY_S`` ago.
+        KRX publishes the previous day at about 08:00 KST.  Since the run got faster (2026-11-16) it reaches this step at about
+        07:50, finds nothing, and the 08:10 firing is dropped because the run is still going: on 2026-11-17 six Korean records
+        were written at 09:10, after the open.  By the end of the run the day is usually out.  A run that only came for this
+        step does not ask twice in a row: the first try must be old enough."""
+        first = steps.get("KR_FORWARD") or {}
+        if "KR_FORWARD" not in todo or first.get("status") != WAITING or first.get("retried"):
+            return
+        try:
+            began = datetime.fromisoformat(first["at"])
+        except (KeyError, TypeError, ValueError):
+            return
+        if (self.now() - began).total_seconds() < WAIT_RETRY_S or not (restarted or not self._session_moved(session)):
+            return
+        self._mark("KR_FORWARD", todo.index("KR_FORWARD"), len(todo))
+        steps["KR_FORWARD"] = {**self._timed_step("KR_FORWARD", session), "retried": True}
+        self._save(st)
+
     def _wait_for_network(self) -> bool:
         """Up to NETWORK_WAIT_S for a name lookup to work.  launchd starts the job the moment the lid opens, before Wi-Fi is back."""
         waited = 0.0
@@ -755,6 +777,8 @@ class Daily:
                 st["last_cut"] = {"at": self.now().isoformat(), "session": session, "before": name, "detail": "실행 중 새 거래일이 완료되어 새 거래일로 다시 시작"}
                 self._save(st)
                 return self._run(resend, restarted=True)
+            if name == "BACKUP":        # last in the chain: what a second try writes is in today's backup
+                self._retry_waiting(st, steps, todo, session, restarted)
             self._mark(name, k, len(todo))
             steps[name] = self._timed_step(name, session)
             self._save(st)
@@ -763,7 +787,7 @@ class Daily:
         # try at the end; "data not ready" is left alone, since the provider will not have it a minute later either.
         for k, name in enumerate(todo):
             first = steps[name]
-            if first.get("status") == FAILED and first.get("seconds", RETRY_QUICK_S) < RETRY_QUICK_S and first.get("detail") != "데이터 미준비" \
+            if first.get("status") == FAILED and first.get("seconds", RETRY_QUICK_S) < RETRY_QUICK_S and first.get("detail") != "데이터 미준비" and not first.get("no_quick_retry") \
                     and (restarted or not self._session_moved(session)):
                 self._mark(name, k, len(todo))
                 steps[name] = {**self._timed_step(name, session), "retried": True}
