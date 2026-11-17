@@ -65,3 +65,51 @@ def test_a_feed_that_refused_is_not_asked_again_in_the_same_run_and_a_quick_fail
     assert calls.count("NEWS") == 2 and us["status"] == automation.OK and us["retried"] is True      # a failure that was not a refusal: one more try, as before
     app = (ROOT / "app.py").read_text(encoding="utf-8")
     assert 'if str(res.get("stopped") or "").startswith("REFUSED"):\n            return 6' in app
+
+
+# ---------------------------------------------------------------------- the news feeds (user decision of the same day)
+import json  # noqa: E402
+
+from terminal import news  # noqa: E402
+
+
+def test_google_news_is_asked_at_its_former_pace_and_yahoo_as_before(tmp_path, monkeypatch):
+    for market, rows in (("KR", [{"ticker": "005930", "name": "삼성전자"}, {"ticker": "000660", "name": "SK하이닉스"}, {"ticker": "035420", "name": "NAVER"}]), ("US", [{"ticker": t} for t in "ABC"])):
+        folder = tmp_path / "data" / "qsf"
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / f"latest_{market}.json").write_text(json.dumps({"rows": rows}), encoding="utf-8")
+
+    class Reply:
+        status_code, content = 200, b"<rss><channel></channel></rss>"
+
+        def raise_for_status(self):
+            pass
+
+    class Client:
+        def get(self, url, **kw):
+            return Reply()
+
+        def close(self):
+            pass
+    monkeypatch.setattr(news, "_one_connection", Client)
+    kr, us = [], []
+    assert news.record(tmp_path, "KR", sleep=kr.append)["ok"] == 3 and news.record(tmp_path, "US", sleep=us.append)["ok"] == 3
+    assert kr == [1.5, 1.5] and us == [0.6, 0.6] and news.pause_of("KR") == 1.5 and news.pause_of("US") == news.PAUSE_S
+    quick = []
+    news.record(tmp_path, "KR", sleep=quick.append, pause=0.0)         # a caller's own pause is still taken
+    assert quick == [0.0, 0.0]
+
+
+def test_the_users_switch_turns_a_markets_news_record_off(tmp_path, monkeypatch):
+    monkeypatch.delenv(news.OFF_ENV, raising=False)
+    assert not news.switched_off("KR") and not news.switched_off("US")
+    for typed, off in (("KR", {"KR"}), ("kr, us", {"KR", "US"}), ("US;KR", {"KR", "US"}), ("KR  # 2027-03 Google이 막음", {"KR"}), ("", set()), ("yes", set())):
+        monkeypatch.setenv(news.OFF_ENV, typed)
+        assert {m for m in ("KR", "US") if news.switched_off(m)} == off, typed
+    monkeypatch.setenv(news.OFF_ENV, "KR")
+    d, calls = job(tmp_path, {})
+    res = d.run()
+    assert "NEWS_KR" not in calls and "NEWS" in calls
+    assert res["steps"]["NEWS_KR"]["status"] == automation.SKIPPED and news.OFF_ENV in res["steps"]["NEWS_KR"]["detail"] and res["steps"]["NEWS"]["status"] == automation.OK
+    runbook = (ROOT / "reports" / "RUNBOOK.md").read_text(encoding="utf-8")
+    assert runbook.count("QPP_NEWS_OFF") >= 2 and "막히면 끄는 것이 답이다" in runbook

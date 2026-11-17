@@ -4,11 +4,18 @@ Headlines are shown and stored as they arrive.  They feed no score, and nothing 
 history of what was known when does not exist, so any such reading could only be tested on what this record collects.
 Every ticker in the scan is recorded, not only the ones looked up, because looked-up names would be a biased sample.
 Only the title, link, source and time are stored, never the article.
+
+About the two feeds (2026-11-17).  Both hosts' robots.txt say ``Disallow: /`` for the paths asked here (news.google.com/rss/search,
+feeds.finance.yahoo.com); this was not checked when the recorder was built.  The user was told and decided to keep recording
+at the former pace: one request at a time, 300 Korean and about 500 US requests a day, stopping at the first refusal.  Either
+feed can refuse for good at any time.  Then the step fails every hour and the way out is the switch below (``QPP_NEWS_OFF``),
+not a faster or cleverer request.
 """
 import gzip
 import hashlib
 import html
 import json
+import os
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -27,6 +34,11 @@ GOOGLE_RSS = "https://news.google.com/rss/search"
 MAX_ITEMS = 20
 TIMEOUT = 15
 PAUSE_S = 0.6
+# Google News refused with 429 on 2026-11-17, the first run after requests began to share one connection: the pause was the same
+# but the handshake between requests was gone, so they came about twice as fast (300 took about 7 minutes before, 1.5 s each).
+# The pause is now the whole former spacing, whatever the connection costs.
+PAUSE_BY_MARKET = {"KR": 1.5}
+OFF_ENV = "QPP_NEWS_OFF"            # .env: KR, US or KR,US.  The daily job then skips that market's news record
 ABORT_AFTER = 15           # consecutive failures: the feed is down or refusing us, so stop asking
 MIN_OK_SHARE = 0.5
 SEEN_DAYS = 45
@@ -68,6 +80,15 @@ def feed_url(ticker: str, market: str, name: Optional[str] = None) -> str:
     return f"{GOOGLE_RSS}?{urlencode({'q': f'{chr(34)}{name or ticker}{chr(34)} when:7d', 'hl': 'ko', 'gl': 'KR', 'ceid': 'KR:ko'})}"
 
 
+def pause_of(market: str) -> float:
+    return PAUSE_BY_MARKET.get(market, PAUSE_S)
+
+
+def switched_off(market: str) -> bool:
+    """Whether the user turned this market's news record off in .env (``QPP_NEWS_OFF=KR``): for a feed that refuses for good."""
+    return market.upper() in {x.strip().upper() for x in (os.getenv(OFF_ENV) or "").split("#")[0].replace(";", ",").split(",")}
+
+
 def fetch(ticker: str, market: str, name: Optional[str] = None, http=requests) -> Dict[str, Any]:
     """``items`` may be empty: a quiet stock is not a failed feed.  Failures raise, so the cache can label them."""
     provider = "Yahoo Finance" if market == "US" else "Google 뉴스"
@@ -96,8 +117,10 @@ def universe(base: Path, market: str) -> List[Dict[str, Any]]:
     return list({r["ticker"]: {"ticker": r["ticker"], "name": r.get("name")} for r in rows}.values())
 
 
-def record(base: Path, market: str, http=requests, now: Optional[Callable[[], datetime]] = None, sleep: Callable[[float], None] = time.sleep, pause: float = PAUSE_S) -> Dict[str, Any]:
-    """Append headlines not seen before.  Nothing is backfilled: ``first_seen_at`` is when this record first knew of one."""
+def record(base: Path, market: str, http=requests, now: Optional[Callable[[], datetime]] = None, sleep: Callable[[float], None] = time.sleep, pause: Optional[float] = None) -> Dict[str, Any]:
+    """Append headlines not seen before.  Nothing is backfilled: ``first_seen_at`` is when this record first knew of one.
+    ``pause``: seconds between requests; by default the market's own (``pause_of``)."""
+    pause = pause_of(market) if pause is None else pause
     at = (now or (lambda: datetime.now(timezone.utc)))()
     names = universe(base, market)
     if not names:
