@@ -129,14 +129,18 @@ class QSF(ScreenViews):
         return holding.on_or_after_session(nb, holding.next_session_kr)
 
     def _session_bars(self, chunk: List[str], session: str) -> Dict[str, List[Dict]]:
-        """A chunk is cached for the day only once it reaches the session.  The key names its members, so a small test scan
-        cannot stand in for a full one, and a partial Yahoo reply is retried at the next slot instead of being reused."""
+        """A chunk is cached for the day only once every member reaches the session.  The key names its members, so a small test
+        scan cannot stand in for a full one, and a partial Yahoo reply is retried at the next slot instead of being reused.
+
+        A published day with a few members short (Yahoo left one stock out, 2026-11-18: CSCO) asks for those members once more
+        on their own.  Before 2026-11-18 a chunk 90% at the session was kept for the day, so a member Yahoo dropped at the first
+        slot stayed out of every later scan of that day."""
         key = "scanbars:" + session + ":" + hashlib.sha256(",".join(chunk).encode()).hexdigest()[:16]
 
-        def ready(data):
-            return session_data.enough(session_data.count_at((data or {}).values(), session), len(chunk))
+        def short(data):
+            return [s for s in chunk if not session_data.rows_at((data or {}).get(s), session)]
         old = self.cache.read(key)
-        if old is not None and ready(old["data"]):
+        if old is not None and not short(old["data"]):
             return old["data"]
         try:
             data = self.src.yahoo_history(chunk, "2y") or {}
@@ -145,7 +149,18 @@ class QSF(ScreenViews):
             return {}
         if not data:
             self._download_failures.append("EMPTY_REPLY")
-        if ready(data):
+        lagging = short(data)
+        if lagging and session_data.enough(len(chunk) - len(lagging), len(chunk)):
+            try:
+                again = self.src.yahoo_history(lagging, "2y") or {}
+            except Exception as exc:
+                self._download_failures.append(type(exc).__name__)
+                again = {}
+            for s in lagging:
+                if session_data.rows_at(again.get(s), session) or (not data.get(s) and again.get(s)):
+                    data[s] = again[s]
+            lagging = short(data)
+        if data and not lagging:
             self.cache.write(key, data)
         return data
 

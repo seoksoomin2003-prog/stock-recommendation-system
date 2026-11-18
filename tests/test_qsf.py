@@ -757,3 +757,35 @@ def test_a_bar_without_a_date_does_not_take_down_the_report():
     h = config.SWING_HORIZONS[0]
     got = ledger.validate(snap, "US", "SWING", lambda t: broken, b)["horizons"][str(h)]["buckets"][ledger.bucket_of(75.0)]
     assert got["n"] == 1 and got["mean_net"] == pytest.approx(ledger.outcome(b, b, b[8]["date"], h, config.round_trip_cost("US"))["net"])
+
+
+def test_a_stock_yahoo_left_out_is_asked_again_and_the_chunk_is_kept_only_when_whole(tmp_path):
+    """2026-11-18: Yahoo dropped CSCO from one chunk at 09:23; the 90%-whole chunk was kept for the day and CSCO missed the record."""
+    calls = []
+    names = [f"S{i:02d}" for i in range(20)]
+
+    class Drops(FakeSrc):
+        def __init__(self, drop_times):
+            super().__init__()
+            self.drop_times = drop_times
+
+        def yahoo_history(self, symbols, period="2y"):
+            calls.append(list(symbols))
+            out = {s: super(Drops, self).yahoo_history(["AAA"], period)["AAA"] for s in symbols}
+            if self.drop_times > 0 and "S07" in out:
+                self.drop_times -= 1
+                del out["S07"]
+            return out
+
+    q = QSF(tmp_path, src=Drops(1), now=lambda: datetime(2026, 11, 5, 12, 0, tzinfo=timezone.utc), terminal=FakeTerm())
+    got = q._session_bars(names, SESSION)
+    assert calls == [names, ["S07"]] and set(got) == set(names)
+    q._session_bars(names, SESSION)
+    assert len(calls) == 2                                   # whole, so kept for the day
+
+    calls.clear()
+    q2 = QSF(tmp_path / "b", src=Drops(5), now=lambda: datetime(2026, 11, 5, 12, 0, tzinfo=timezone.utc), terminal=FakeTerm())
+    got = q2._session_bars(names, SESSION)
+    assert calls == [names, ["S07"]] and "S07" not in got and len(got) == 19
+    q2._session_bars(names, SESSION)
+    assert calls[2] == names                                 # still short: not kept, the next slot downloads the chunk again
