@@ -13,7 +13,12 @@ from pipeline.prospective_ledger import read_jsonl
 
 
 @pytest.fixture()
-def scanned(tmp_path):
+def scanned(tmp_path, monkeypatch):
+    # A run's signal time is the wall clock of its completion, and the entry date follows from it.  The updates below are asked at fixed
+    # dates of November and December 2026, so the completion is fixed too (one minute after the scan's own clock): read from the real
+    # clock, every test here that expects an entry or a finished hold began to fail on the day the calendar reached its date (2026-11-20).
+    done = kt._completed_at
+    monkeypatch.setattr(kt, "_completed_at", lambda st: "2026-10-30T10:01:00+00:00" if done(st) else None)
     ctx = KRContext(fetch_kind=F.fake_kind(), provider_factory=F.provider_factory(F.FakeDownload()), now=F.NOW,
                     base_dir=tmp_path)
     v = run_kr_scan(10_000_000, ctx=ctx)
