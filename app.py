@@ -430,6 +430,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "us-challenger-record", "us-challenger-evaluate-swing", "us-challenger-evaluate-long",
                "kr-swing-challenger-record", "kr-swing-challenger-status", "kr-swing-challenger-evaluate",
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
+               "kr-challenger-record", "kr-challenger-status", "kr-challenger-evaluate-swing", "kr-challenger-evaluate-long",
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
                "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "paper-book-record", "paper-book-status", "turnover-book-record", "turnover-book-status", "rank-book-record", "rank-book-status",
                "forecast-test", "forecast-record", "forecast-status", "forecast-touch-test", "score-split-record", "score-split-status", "score-split-evaluate",
@@ -536,13 +537,7 @@ def _qsf_cache(args) -> int:
     return 0
 
 
-def _qsf_kr_forward(args) -> int:
-    from terminal.qsf import kr_forward
-    if args.action in ("kr-forward-evaluate", "kr-forward-evaluate-fund"):
-        res = kr_forward.evaluate_once(PROJECT_ROOT, store=kr_forward.FUND_FOLDER if args.action.endswith("fund") else kr_forward.FOLDER)
-        print(json.dumps({k: v for k, v in res.items() if k != "buckets"}, ensure_ascii=False, default=str))
-        return 0
-    res = kr_forward.record(PROJECT_ROOT)
+def _kr_ledger_records(res) -> None:      # the Korean side records that read the ledger only, each in its own guard
     try:                        # the swing challenger reads the ledger only; a failure here never fails the forward step
         from terminal.qsf import kr_swing_challenger
         res["swing_challenger"] = kr_swing_challenger.record(PROJECT_ROOT)
@@ -553,6 +548,21 @@ def _qsf_kr_forward(args) -> int:
         res["swing_prior"] = kr_swing_prior.record(PROJECT_ROOT)
     except Exception as exc:
         res["swing_prior"] = {"status": "FAILED", "reason": type(exc).__name__}
+    try:                        # the bundle challenger (reports/QSF_KR_CHALLENGER_PROTOCOL.md), from the ledger only; it never fails the step either
+        from terminal.qsf import kr_challenger
+        res["bundle_challenger"] = kr_challenger.record(PROJECT_ROOT)
+    except Exception as exc:
+        res["bundle_challenger"] = {"status": "FAILED", "reason": type(exc).__name__}
+
+
+def _qsf_kr_forward(args) -> int:
+    from terminal.qsf import kr_forward
+    if args.action in ("kr-forward-evaluate", "kr-forward-evaluate-fund"):
+        res = kr_forward.evaluate_once(PROJECT_ROOT, store=kr_forward.FUND_FOLDER if args.action.endswith("fund") else kr_forward.FOLDER)
+        print(json.dumps({k: v for k, v in res.items() if k != "buckets"}, ensure_ascii=False, default=str))
+        return 0
+    res = kr_forward.record(PROJECT_ROOT)
+    _kr_ledger_records(res)
     try:                        # the market-value universe record scores with a scan that writes no live file; it never fails the step either
         from terminal.qsf import kr_cap_universe
         from terminal.qsf.service import QSF
@@ -672,6 +682,17 @@ def _qsf_kr_swing_prior(args) -> int:
     res = sp.evaluate_once(PROJECT_ROOT) if args.action.endswith("evaluate") else sp.status(PROJECT_ROOT) if args.action.endswith("status") else sp.record(PROJECT_ROOT)
     print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
     return 0 if res.get("status") in (None, "OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
+
+
+def _qsf_kr_challenger(args) -> int:      # reports/QSF_KR_CHALLENGER_PROTOCOL.md
+    from terminal.qsf import kr_challenger as kc
+    if "evaluate" in args.action:
+        res = kc.evaluate_once(PROJECT_ROOT, "SWING" if args.action.endswith("swing") else "LONG_TERM")
+        print(json.dumps({k: res[k] for k in ("status", "strategy", "horizon", "dates", "verdict", "paired_ic", "reasons")}, ensure_ascii=False, indent=1, default=str))
+        return 0
+    res = kc.status(PROJECT_ROOT) if args.action.endswith("status") else kc.record(PROJECT_ROOT)
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") in (None, "OK") else 3 if res.get("status") == "WAITING" else 1
 
 
 def _qsf_stability(args) -> int:      # read only: how much the live score moves between sessions of one model version
@@ -948,6 +969,10 @@ QSF_HANDLERS = {
     "kr-swing-prior-record": _qsf_kr_swing_prior,
     "kr-swing-prior-status": _qsf_kr_swing_prior,
     "kr-swing-prior-evaluate": _qsf_kr_swing_prior,
+    "kr-challenger-record": _qsf_kr_challenger,
+    "kr-challenger-status": _qsf_kr_challenger,
+    "kr-challenger-evaluate-swing": _qsf_kr_challenger,
+    "kr-challenger-evaluate-long": _qsf_kr_challenger,
     "stability": _qsf_stability,
     "us-earnings-gap": _qsf_us_earnings_gap,
     "paper-book-record": _qsf_paper_book,

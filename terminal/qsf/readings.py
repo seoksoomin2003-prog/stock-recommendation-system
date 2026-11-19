@@ -62,6 +62,10 @@ REGISTRY: List[Dict[str, Any]] = [
        store="kr_swing_challenger"),
     _e("kr_swing_prior", "한국 이전 스윙 공식", ["qsf", "kr-swing-prior-evaluate"], "QSF_KR_SWING_PRIOR.json", "QSF_KR_SWING_PRIOR_PROTOCOL.md", 240, 20, store="kr_swing_prior",
        after="PRIOR_BETTER가 나와도 점수 공식을 자동으로 되돌리지 않습니다."),
+    _e("kr_challenger_swing", "한국 묶음 도전자 점수 · 스윙", ["qsf", "kr-challenger-evaluate-swing"], "QSF_KR_CHALLENGER_SWING.json", "QSF_KR_CHALLENGER_PROTOCOL.md", 240, 20,
+       store="kr_challenger", after="CHALLENGER_BETTER가 나와도 점수 공식은 자동으로 바뀌지 않습니다."),
+    _e("kr_challenger_long", "한국 묶음 도전자 점수 · 장기", ["qsf", "kr-challenger-evaluate-long"], "QSF_KR_CHALLENGER_LONG.json", "QSF_KR_CHALLENGER_PROTOCOL.md", 756, 63,
+       store="kr_challenger", after="CHALLENGER_BETTER가 나와도 점수 공식은 자동으로 바뀌지 않습니다."),
     _e("kr_method_120", "한국 독자 매매법 · 120일 읽기", ["qsf", "kr-method-evaluate-120"], "QSF_KR_METHOD_FORWARD_120.json", "QSF_KR_METHOD_PROTOCOL.md", 120, 10, store="kr_method",
        after="METHOD_SUPPORTED가 나와도 매매 보조 화면의 진입 규칙은 자동으로 바뀌지 않습니다."),
     _e("kr_method_240", "한국 독자 매매법 · 240일 읽기", ["qsf", "kr-method-evaluate-240"], "QSF_KR_METHOD_FORWARD_240.json", "QSF_KR_METHOD_PROTOCOL.md", 240, 10, store="kr_method",
@@ -80,6 +84,7 @@ VERDICT_KO = {
     "FORMER_BETTER": "이전 스캔 대상 쪽이 나았습니다",
     "CHALLENGER_BETTER": "도전자 공식이 지금 공식보다 나았습니다",
     "CHALLENGER_HAS_EVIDENCE": "도전자 공식에 근거가 있지만 지금 공식보다 낫다고 구분되지는 않았습니다",
+    "LIVE_BETTER": "지금 공식(사람이 정한 배점)이 도전자 공식보다 나았습니다",
     "DECISION_SUPPORTED": "2026-11-11에 공식을 바꾼 결정이 지지됐습니다",
     "PRIOR_BETTER": "이전 공식 쪽이 나았습니다",
     "SPLIT_BETTER": "시장 국면을 뺀 지금 점수 쪽이 나았습니다",
@@ -145,10 +150,16 @@ def meaning(code: str) -> str:
     return VERDICT_KO.get(code, "뜻은 규칙 문서에 있습니다")
 
 
+def why(rep: Dict[str, Any]) -> List[str]:
+    """The report's own lines on what was measured and which condition decided, when it carries them."""
+    got = rep.get("reasons") if isinstance(rep, dict) else None
+    return [str(x) for x in got] if isinstance(got, list) else []
+
+
 def text(e: Dict[str, Any], rep: Dict[str, Any]) -> str:
     """The notice sent once when a reading has been made."""
     code = verdict(e, rep)
-    lines = [f"[판정 · {e['label']}] {code}", meaning(code) + ".", e["after"],
+    lines = [f"[판정 · {e['label']}] {code}", meaning(code) + ".", *why(rep), e["after"],
              f"수치: {REPORTS / e['report']} · 규칙: {e['protocol']} · 터미널 점수 탭의 '판정 일정'에서도 볼 수 있습니다."]
     return "\n".join(lines)
 
@@ -177,7 +188,7 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
                "attempts": ((tried or {}).get(e["key"]) or {}).get("failed", 0)}
         if rep is not None:
             code = verdict(e, rep)
-            row.update(state="READ", verdict=code, meaning=meaning(code), report=str(REPORTS / e["report"]))
+            row.update(state="READ", verdict=code, meaning=meaning(code), report=str(REPORTS / e["report"]), reasons=why(rep))
         else:
             left = None if n is None else max(wanted(e) - n, 0)
             row.update(state="DUE" if left == 0 else "WAITING", left=left, expected=None if left is None else _eta(left, today))

@@ -48,7 +48,7 @@ def fill(tmp_path, store, n):
 # ---------------------------------------------------------------------- the list itself
 def test_the_list_names_real_commands_reports_stores_and_protocols():
     app = (ROOT / "app.py").read_text(encoding="utf-8")
-    assert len(rd.REGISTRY) == 20 and len(BY) == 20 and len({e["report"] for e in rd.REGISTRY}) == 20
+    assert len(rd.REGISTRY) == 22 and len(BY) == 22 and len({e["report"] for e in rd.REGISTRY}) == 22
     for e in rd.REGISTRY:
         assert f'"{e["argv"][-1]}"' in app and e["argv"][-2] == "qsf" and (ROOT / e["protocol"]).exists(), e["key"]
         assert e["argv"][:2] == ["--market", e["key"][-2:].upper()] or len(e["argv"]) == 2, e["key"]
@@ -171,7 +171,7 @@ def test_the_schedule_lists_every_reading_with_its_progress_and_its_verdict(tmp_
     p.write_text(json.dumps({"verdict": "CHALLENGER_BETTER"}), encoding="utf-8")
     got = rd.status(tmp_path, date(2026, 11, 16), {"kr_method_120": {"failed": 2}})
     rows = {r["key"]: r for r in got["readings"]}
-    assert got["total"] == 24 and got["read"] == 1 and got["guide"] == "reports/RUNBOOK.md" and "사람이 할 일은 없습니다" in got["note"]
+    assert got["total"] == 26 and got["read"] == 1 and got["guide"] == "reports/RUNBOOK.md" and "사람이 할 일은 없습니다" in got["note"]
     assert rows["kr_method_120"]["state"] == "DUE" and rows["kr_method_120"]["attempts"] == 2 and rows["kr_method_240"]["state"] == "WAITING" and rows["kr_method_240"]["left"] == 120
     assert rows["kr_cap_universe"]["left"] == 160 and rows["kr_cap_universe"]["expected"] == "2027-06" and rows["kr_cap_universe"]["applies_itself"] is False
     assert rows["kr_swing_challenger"]["state"] == "READ" and rows["kr_swing_challenger"]["verdict"] == "CHALLENGER_BETTER" and "도전자 공식이 지금 공식보다 나았습니다" in rows["kr_swing_challenger"]["meaning"]

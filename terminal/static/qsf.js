@@ -606,7 +606,7 @@ async function qsfRegime() {
   if (mk !== state.market) return;
   box.innerHTML = qsfRegimeHtml(d, mk);
 }
-const QSF_STORE_KO = { krx_forward: "한국 가격 점수", krx_forward_fund: "한국 재무 점수", krx_forward_events: "한국 공시 이벤트", us_challenger: "미국 도전자 점수", kr_swing_challenger: "한국 스윙 도전자",
+const QSF_STORE_KO = { krx_forward: "한국 가격 점수", krx_forward_fund: "한국 재무 점수", krx_forward_events: "한국 공시 이벤트", us_challenger: "미국 도전자 점수", kr_swing_challenger: "한국 스윙 도전자", kr_challenger: "한국 묶음 도전자",
   kr_swing_prior: "이전 스윙 공식", kr_cap_universe: "시가총액 대상", kr_traded_universe: "거래대금 대상", kr_method: "독자 매매법", regime_weights_kr: "국면 가중치(한국)", regime_weights_us: "국면 가중치(미국)",
   paper_book_kr: "모의 장부(한국)", paper_book_us: "모의 장부(미국)", forecast_kr: "예측 층(한국)", forecast_us: "예측 층(미국)", score_split_kr: "이전 공식(한국)", score_split_us: "이전 공식(미국)" };
 function qsfLookHtml(d) {
@@ -773,7 +773,7 @@ async function qsfReadings() {
   const box = $("#qsfreadings"); if (!box) return;
   const d = await api("/api/qsf/readings").catch(() => null);
   if (!d || d.status !== "REAL") { box.innerHTML = ""; return; }
-  const state = (r) => (r.state === "READ" ? `<span class="badge ok">읽음</span> <b>${esc(r.verdict)}</b><div class="meta" style="margin:0">${esc(r.meaning || "")}</div>`
+  const state = (r) => (r.state === "READ" ? `<span class="badge ok">읽음</span> <b>${esc(r.verdict)}</b><div class="meta" style="margin:0">${esc(r.meaning || "")}</div>${(r.reasons || []).map((x) => `<div class="meta" style="margin:0">${esc(x)}</div>`).join("")}`
     : r.state === "DUE" ? `<span class="badge risk-note">읽을 때가 됨</span>${r.attempts ? ` <span class="meta" style="margin:0">시도 ${r.attempts}번, 아직 조건 미달</span>` : ""}`
     : `<span class="badge">기다리는 중</span> <span class="meta" style="margin:0">${isNum(r.left) ? `${r.left}거래일 남음 · ${esc(r.expected)} 무렵` : ""}</span>`);
   const rows = d.readings.map((r) => `<tr><td class="l"><b>${esc(r.label)}</b>${r.applies_itself ? ' <span class="badge">스스로 적용</span>' : ""}</td>

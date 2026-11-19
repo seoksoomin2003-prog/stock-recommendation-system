@@ -18,7 +18,7 @@ ARCHIVE_DAYS = 6        # days without a write before the price archive counts a
 STORES = Path("research_data")
 ARCHIVE = Path("data") / "qsf" / "price_archive"
 LABELS = {"krx_forward": "한국 결합 점수", "krx_forward_fund": "한국 재무 점수", "krx_forward_events": "한국 공시 사건", "us_challenger": "미국 도전자 점수",
-          "kr_swing_challenger": "한국 스윙 도전자", "kr_swing_prior": "한국 이전 스윙 공식", "kr_cap_universe": "한국 시가총액 대상", "kr_traded_universe": "한국 거래대금 대상",
+          "kr_swing_challenger": "한국 스윙 도전자", "kr_swing_prior": "한국 이전 스윙 공식", "kr_challenger": "한국 묶음 도전자 점수", "kr_cap_universe": "한국 시가총액 대상", "kr_traded_universe": "한국 거래대금 대상",
           "kr_method": "한국 독자 매매법", "regime_weights_kr": "국면 가중치(한국)", "regime_weights_us": "국면 가중치(미국)", "paper_book_kr": "모의 장부(한국)",
           "paper_book_us": "모의 장부(미국)", "forecast_kr": "예측 범위(한국)", "forecast_us": "예측 범위(미국)", "score_split_kr": "점수 분리 비교(한국)",
           "score_split_us": "점수 분리 비교(미국)", "turnover_book_kr": "회전율 규칙 비교 장부(한국)", "turnover_book_us": "회전율 규칙 비교 장부(미국)",
