@@ -306,7 +306,7 @@ class Daily:
                     return {"status": SKIPPED, "at": at, "detail": f".env의 {news.OFF_ENV}로 꺼 둠"}
                 rc = self.runner(name, ["news", "record"] if name == "NEWS" else ["--market", "KR", "news", "record"])
                 if rc == 6:             # refused for too many requests: a second request a minute later is the last thing the feed wants
-                    return {"status": FAILED, "at": at, "detail": "뉴스 제공처가 요청을 거절함(요청 과다) · 다음 시간에 다시 시도", "no_quick_retry": True}
+                    return {"status": FAILED, "at": at, "detail": "뉴스 제공처가 요청을 거절함(요청 과다) · 오늘은 더 묻지 않고 내일 다시 시도", "no_quick_retry": True}
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "점수 기록 없음" if rc == 3 else f"코드 {rc}"}
             if name == "KR_FORWARD":                                # waiting is not a failure: the day may not be published yet
                 rc = self.runner(name, ["qsf", "kr-forward-record"])
@@ -688,6 +688,15 @@ class Daily:
             self._attempt({"status": out["status"], "session": out.get("session")})
             return out
 
+    def _refused_today(self, step: Dict[str, Any]) -> bool:
+        """A step its provider refused (``no_quick_retry``) on today's date in Korea."""
+        if step.get("status") != FAILED or not step.get("no_quick_retry"):
+            return False
+        try:
+            return datetime.fromisoformat(step["at"]).astimezone(KST).date() == self.now().astimezone(KST).date()
+        except (KeyError, TypeError, ValueError):
+            return False
+
     def _retry_waiting(self, st: Dict[str, Any], steps: Dict[str, Dict[str, Any]], todo: List[str], session: str, restarted: bool) -> None:
         """One more try of the Korean forward record when it was waiting for KRX and its first try began ``WAIT_RETRY_S`` ago.
         KRX publishes the previous day at about 08:00 KST.  Since the run got faster (2026-11-16) it reaches this step at about
@@ -764,6 +773,9 @@ class Daily:
         kr_day = _previous_weekday(self.now().astimezone(KST).date()).isoformat()
         if st.get("kr_day") != kr_day:              # once for each weekday, whether or not the US traded on it
             pending += [n for n in KR_STEPS if n not in pending]
+        # A feed that refused is left alone for the rest of the day (KST).  Asking again every hour got thirteen refusals on
+        # 2026-11-17 and may be what kept the refusal going; the next day's first run asks once more.
+        pending = [n for n in pending if not self._refused_today(steps.get(n) or {})]
         delivered = (st.get("notified") or {}).get("session") == session
         if not pending and delivered and not resend:
             return {"status": "UP_TO_DATE", "session": session}

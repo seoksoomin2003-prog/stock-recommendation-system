@@ -61,7 +61,7 @@ def test_a_feed_that_refused_is_not_asked_again_in_the_same_run_and_a_quick_fail
     d, calls = job(tmp_path, {"NEWS_KR": [6, 0], "NEWS": [1, 0]}, minutes=1)
     res = d.run()
     kr, us = res["steps"]["NEWS_KR"], res["steps"]["NEWS"]
-    assert calls.count("NEWS_KR") == 1 and kr["status"] == automation.FAILED and "거절" in kr["detail"] and kr["no_quick_retry"] is True and "retried" not in kr
+    assert calls.count("NEWS_KR") == 1 and kr["status"] == automation.FAILED and "거절" in kr["detail"] and "내일 다시 시도" in kr["detail"] and kr["no_quick_retry"] is True and "retried" not in kr
     assert calls.count("NEWS") == 2 and us["status"] == automation.OK and us["retried"] is True      # a failure that was not a refusal: one more try, as before
     app = (ROOT / "app.py").read_text(encoding="utf-8")
     assert 'if str(res.get("stopped") or "").startswith("REFUSED"):\n            return 6' in app
@@ -93,10 +93,10 @@ def test_google_news_is_asked_at_its_former_pace_and_yahoo_as_before(tmp_path, m
             pass
     monkeypatch.setattr(news, "_one_connection", Client)
     kr, us = [], []
-    assert news.record(tmp_path, "KR", sleep=kr.append)["ok"] == 3 and news.record(tmp_path, "US", sleep=us.append)["ok"] == 3
+    assert news.record(tmp_path, "KR", Client(), sleep=kr.append)["ok"] == 3 and news.record(tmp_path, "US", sleep=us.append)["ok"] == 3
     assert kr == [1.5, 1.5] and us == [0.6, 0.6] and news.pause_of("KR") == 1.5 and news.pause_of("US") == news.PAUSE_S
     quick = []
-    news.record(tmp_path, "KR", sleep=quick.append, pause=0.0)         # a caller's own pause is still taken
+    news.record(tmp_path, "KR", Client(), sleep=quick.append, pause=0.0)         # a caller's own pause is still taken
     assert quick == [0.0, 0.0]
 
 
@@ -113,3 +113,32 @@ def test_the_users_switch_turns_a_markets_news_record_off(tmp_path, monkeypatch)
     assert res["steps"]["NEWS_KR"]["status"] == automation.SKIPPED and news.OFF_ENV in res["steps"]["NEWS_KR"]["detail"] and res["steps"]["NEWS"]["status"] == automation.OK
     runbook = (ROOT / "reports" / "RUNBOOK.md").read_text(encoding="utf-8")
     assert runbook.count("QPP_NEWS_OFF") >= 2 and "막히면 끄는 것이 답이다" in runbook
+
+
+def test_google_is_asked_on_a_connection_of_its_own_and_yahoo_on_a_shared_one(monkeypatch):
+    made = []
+    monkeypatch.setattr(news, "_one_connection", lambda: made.append(1) or "shared")
+    assert news._client(news.requests, "KR") == (news.requests, False) and not made      # as it was while it worked: nothing kept between requests
+    assert news._client(news.requests, "US") == ("shared", True) and made == [1]
+    stand_in = object()
+    assert news._client(stand_in, "US") == (stand_in, False) and news._client(stand_in, "KR") == (stand_in, False)
+    assert news.SEPARATE_CONNECTIONS == ("KR",)
+
+
+def test_a_feed_that_refused_is_left_alone_for_the_rest_of_the_day_and_asked_once_the_next(tmp_path):
+    d, calls = job(tmp_path, {"NEWS_KR": [6]}, minutes=1)
+    assert d.run()["steps"]["NEWS_KR"]["status"] == automation.FAILED and calls.count("NEWS_KR") == 1
+    hour, calls2 = job(tmp_path, {"NEWS_KR": [0]})
+    hour.now = lambda: TUE_NIGHT + timedelta(hours=2)                  # the same Korean day, two hourly firings later
+    assert hour.run()["status"] == "UP_TO_DATE" and calls2 == []       # nothing else is pending, and the feed is not asked
+    assert hour.state()["sessions"]["2026-11-03"]["NEWS_KR"]["status"] == automation.FAILED      # still shown as failed, not hidden
+    nxt, calls3 = job(tmp_path, {"NEWS_KR": [0]})
+    nxt.now = lambda: TUE_NIGHT + timedelta(hours=16)                  # 2026-11-04 15:00 UTC is the next day in Korea; the US session is the same
+    res = nxt.run()
+    assert calls3.count("NEWS_KR") == 1 and res["steps"]["NEWS_KR"]["status"] == automation.OK     # with the day's other Korean steps, once
+    other, calls4 = job(tmp_path / "b", {"TRACK": [1, 1]}, minutes=1)
+    other.run()
+    again, calls5 = job(tmp_path / "b", {"TRACK": [0]})
+    again.now = lambda: TUE_NIGHT + timedelta(hours=2)
+    again.run()
+    assert "TRACK" in calls5                                           # an ordinary failure is still asked again every hour

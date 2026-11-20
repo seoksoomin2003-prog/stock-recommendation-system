@@ -38,6 +38,9 @@ PAUSE_S = 0.6
 # but the handshake between requests was gone, so they came about twice as fast (300 took about 7 minutes before, 1.5 s each).
 # The pause is now the whole former spacing, whatever the connection costs.
 PAUSE_BY_MARKET = {"KR": 1.5}
+# The other thing the shared connection changed.  At 1.5 s apart Google still refused the third request (2026-11-17 14:10), so the
+# Korean requests are again exactly what they were while they worked: a connection of its own for each.
+SEPARATE_CONNECTIONS = ("KR",)
 OFF_ENV = "QPP_NEWS_OFF"            # .env: KR, US or KR,US.  The daily job then skips that market's news record
 ABORT_AFTER = 15           # consecutive failures: the feed is down or refusing us, so stop asking
 MIN_OK_SHARE = 0.5
@@ -109,6 +112,14 @@ def _one_connection():
     return s
 
 
+def _client(http, market: str):
+    """(what to ask with, whether it is ours to close).  A stand-in ``http`` is used as given; the real one shares a connection
+    except for the markets in ``SEPARATE_CONNECTIONS``."""
+    if http is not requests or market in SEPARATE_CONNECTIONS:
+        return http, False
+    return _one_connection(), True
+
+
 def universe(base: Path, market: str) -> List[Dict[str, Any]]:
     try:
         rows = json.loads((Path(base) / "data" / "qsf" / f"latest_{market}.json").read_text(encoding="utf-8")).get("rows") or []
@@ -133,7 +144,7 @@ def record(base: Path, market: str, http=requests, now: Optional[Callable[[], da
     except (OSError, ValueError):
         seen = {}
     day, fresh, ok, failed, streak, stop = at.date().isoformat(), [], 0, 0, 0, None
-    client = _one_connection() if http is requests else http       # the pause between requests is unchanged
+    client, ours = _client(http, market)
     for i, row in enumerate(names):
         if i:
             sleep(pause)
@@ -154,7 +165,7 @@ def record(base: Path, market: str, http=requests, now: Optional[Callable[[], da
             if key not in seen:
                 seen[key] = day
                 fresh.append({"first_seen_at": at.isoformat(), "market": market, "ticker": row["ticker"], **it})
-    if client is not http:
+    if ours:
         client.close()
     if fresh:
         with gzip.open(folder / f"{day}.jsonl.gz", "at", encoding="utf-8") as fh:
