@@ -326,3 +326,6 @@ table.sp-ret td { padding: 4px 8px; }
 details.notice > summary { cursor: pointer; }
 details.notice[open] > summary { margin-bottom: 6px; }
 details[open] > summary .fold-hint { display: none; }
+.asst-sum { margin: 4px 0 10px; font-size: 15px; font-weight: 600; line-height: 1.55; }
+.asst-answer h4 { margin: 12px 0 4px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.asst-answer .chips { margin-top: 4px; }

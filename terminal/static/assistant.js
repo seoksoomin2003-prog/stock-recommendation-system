@@ -13,11 +13,16 @@ function asstItem(i) {
   const stock = i.ticker ? `<button type="button" class="chip" data-ticker="${esc(i.ticker)}">${esc(i.ticker)}</button>` : "";
   return `<li class="asst-item ${esc(i.level)}"><div>${esc(i.text)}</div><div class="asst-act">${stock}${where}</div></li>`;
 }
+// 답: 결론 한 줄을 먼저, 그 아래 제목이 붙은 묶음들, 끝에 자료 기준과 이어서 물어볼 것.
 function asstAnswer(a) {
-  const lines = (a.lines || []).map((x) => `<li>${esc(x)}</li>`).join("");
-  const more = (a.examples || []).length ? `<div class="chips" style="margin-top:8px">${a.examples.map((x) => `<button type="button" class="chip asst-ex">${esc(x)}</button>`).join("")}</div>` : "";
+  const list = (rows) => `<ul>${rows.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
+  const body = (a.sections || []).length ? a.sections.map((s) => `<h4>${esc(s.title)}</h4>${list(s.lines)}`).join("") : a.summary ? "" : list(a.lines || []);
+  const chips = (rows, cls) => `<div class="chips">${rows.map((x) => `<button type="button" class="chip ${cls}">${esc(x)}</button>`).join("")}</div>`;
+  const follow = (a.follow || []).length ? `<h4>이어서 물어보기</h4>${chips(a.follow, "asst-ex")}` : "";
+  const more = (a.examples || []).length ? `<h4>눌러서 물어보기</h4>${chips(a.examples, "asst-ex")}` : "";
   const go = a.tab && a.tab !== "today" ? `<button type="button" class="ghost asst-go" data-tab="${esc(a.tab)}" data-ticker="${esc(a.ticker || "")}">${esc(ASST_TAB_KO[a.tab] || a.tab)} 탭에서 보기</button>` : "";
-  return `<div class="asst-answer ${a.status === "REAL" ? "" : "unknown"}"><div class="asst-q">${esc(a.question || "")}</div><h3>${esc(a.title || "")}</h3><ul>${lines}</ul>${more}
+  return `<div class="asst-answer ${a.status === "REAL" ? "" : "unknown"}"><div class="asst-q">${esc(a.question || "")}</div><h3>${esc(a.title || "")}</h3>
+    ${a.summary ? `<p class="asst-sum">${esc(a.summary)}</p>` : ""}${body}${a.basis ? `<div class="meta">${esc(a.basis)}</div>` : ""}${follow}${more}
     <div class="asst-act">${go}</div><div class="meta">${esc(a.note || "")}</div></div>`;
 }
 async function asstAsk(q) {

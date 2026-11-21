@@ -291,9 +291,26 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
     part("alerts", lambda: alert_items(terminal.alerts_view().get("log") or [], at))
     part("job", lambda: job_items(automation.status(base), automation.STEP_NAMES))
     part("top", lambda: top_items(terminal.qsf.top3(market), market))
+    def top_still() -> List[Dict[str, Any]]:
+        days = (((terminal.qsf.top3(market).get("strategies") or {}).get("SWING") or {}).get("days")) or []
+        day = max(days, key=lambda d: d.get("session") or "") if days else {}
+        out = []
+        for x in day.get("top") or []:
+            s = _snap(terminal, {"ticker": x["ticker"], "market": market}, "SWING")
+            note = pinned(s) if s else None
+            if note:
+                out.append(item("INFO", "TOP_PINNED", f"상위 종목 {x.get('name') or x['ticker']}({x['ticker']}): {note}", x["ticker"], "stock"))
+        return out
+
+    part("top", top_still)
     part("changes", lambda: change_items(qsf_changes.report(terminal.qsf.latest(market), terminal.qsf.ledger, market, "SWING"),
                                          {h["ticker"] for h in (seen.get("book") or {}).get("holdings") or []}))
     part("readings", readings)
+    if any(i["kind"] == "TOP3" for i in items):           # the note sits right under the list it is about
+        notes = [i for i in items if i["kind"] == "TOP_PINNED"]
+        rest = [i for i in items if i["kind"] != "TOP_PINNED"]
+        under = next(n for n, i in enumerate(rest) if i["kind"] == "TOP3") + 1
+        items = rest[:under] + notes + rest[under:]
     if any(i["kind"] == "NO_ACCOUNT" for i in items):
         items = [i for i in items if i["kind"] != "NO_HOLDINGS"]
     order = {lv: n for n, lv in enumerate(LEVELS)}
@@ -405,81 +422,397 @@ def _factors(snap: Dict[str, Any], lowest: bool, n: int = 3) -> str:
     return ", ".join(f"{FACTOR_KO.get(f['factor'], f['factor'])} {f['normalized'] * 100:.0f}/100(배점 {f['weight']:g})" for f in rows[:n]) or "없음"
 
 
-def _domains(snap: Dict[str, Any]) -> str:
+# what each signal measures and the scale it is scored on, in plain words.  The third entry is the scoring line of terminal/qsf/factors.py
+# the words were read from: a test checks the line is still there, so the words cannot drift from the code unnoticed.
+FACTOR_INFO = {
+    "risk_reward": ("목표까지의 이익 여지를 손절까지의 손실 여지로 나눈 값입니다(비용 반영)", "손익비가 1.0 이하면 0점, 3.0 이상이면 100점", 'ramp(lv["reward_risk"], 1.0, 3.0)'),
+    "atr_risk": ("하루에 움직이는 폭과 1년 변동성입니다. 클수록 점수가 낮습니다", "하루 변동 폭이 가격의 6% 이상이면 0점·1.5% 이하면 100점, 연 변동성이 70% 이상이면 0점·20% 이하면 100점, 둘의 평균",
+                 'ramp(t["atr_pct"], 0.06, 0.015), ramp(t["hist_vol"], 0.70, 0.20)'),
+    "liquidity": ("20일 평균 거래대금입니다. 많을수록 사고팔기 쉽습니다", "한국은 10억 원 이하면 0점·500억 원 이상이면 100점, 미국은 2천만 달러 이하면 0점·5억 달러 이상이면 100점",
+                  'lo, hi = (1e9, 5e10) if c["market"] == "KR" else (2e7, 5e8)'),
+    "drawdown_gap": ("최근 1년에 고점에서 가장 크게 빠진 폭과 60일 안의 가장 큰 갭입니다", "낙폭이 -45% 이하면 0점·-10% 이내면 100점, 갭이 12% 이상이면 0점·1% 이하면 100점, 둘의 평균",
+                     'ramp(t["max_drawdown_252"], -0.45, -0.10), ramp(t["max_gap_60"], 0.12, 0.01)'),
+    "earnings_calendar": ("다음 실적 발표까지 남은 거래일입니다. 발표가 가까우면 점수가 낮습니다", "2거래일 이내면 0점, 15거래일 이상이면 100점", 'ramp(float(e["sessions"]), 2, 15)'),
+    "material_disclosures": ("최근 공시 가운데 긍정·부정으로 분류된 건수입니다", "60점에서 시작해 긍정 1건마다 +10점, 부정 1건마다 -25점", "0.6 + 0.1 * len(pos) - 0.25 * len(neg)"),
+    "insider_activity": ("임원 등 내부자의 장내 매수와 매도입니다", "매도만 있으면 0점, 매수만 있으면 100점, 거래가 없으면 50점", "ramp((buy - sell) / gross, -1.0, 1.0)"),
+    "earnings_revenue_quality": ("매출·이익이 늘고 있는지와 이익이 현금으로 들어오는지입니다", "매출 성장 -5%~+20%, 주당이익 성장 -10%~+25%, 영업현금/순이익 0.5~1.2배를 각각 0~100점으로 보고 평균",
+                                 '_rr(f, "rev_growth", -0.05, 0.20), _rr(f, "eps_growth", -0.10, 0.25), ramp(f.get("ocf_to_ni"), 0.5, 1.2)'),
+    "profitability": ("자기자본이익률(ROE)과 영업이익률입니다", "둘 다 0% 이하면 0점·20% 이상이면 100점, 둘의 평균", '_rr(f, "roe", 0.0, 0.20), _rr(f, "op_margin", 0.0, 0.20)'),
+    "balance_sheet": ("빚 부담과 단기 지급 능력입니다", "부채/자본이 2.0배 이상이면 0점·0.3배 이하면 100점, 유동비율이 0.8배 이하면 0점·2.0배 이상이면 100점, 둘의 평균(금융업은 자기자본/자산 4%~15%)",
+                      '_rr(f, "debt_equity", 2.0, 0.3), ramp(f.get("current_ratio"), 0.8, 2.0)'),
+    "cash_flow_quality": ("이익이 현금으로 들어오는 정도와 남는 현금입니다", "영업현금/순이익 0.5~1.2배, 잉여현금흐름 마진 -2%~+15%를 각각 0~100점으로 보고 평균",
+                          'ramp(f.get("ocf_to_ni"), 0.5, 1.2), _rr(f, "fcf_margin", -0.02, 0.15)'),
+    "trend_structure": ("이동평균선 여섯 조건 중 몇 개를 채웠는지입니다", "종가>200일선, 종가>50일선, 50일선>200일선, 20일선>50일선, 50일선 상승, 200일선 상승 가운데 채운 비율",
+                        't["ma20"] > t["ma50"], (t["ma50_slope"] or 0) > 0, (t["ma200_slope"] or 0) > 0]'),
+    "relative_strength": ("최근 수익률이 대상 종목 가운데 어느 위치인지입니다", "대상 안에서의 백분위 그대로(가장 약하면 0점, 가장 강하면 100점)", 'return obs(rank, {"percentile": rank, "rel_126": t.get("rel_126")},'),
+    "momentum": ("RSI와 MACD로 본 최근 힘입니다", "RSI가 30 이하면 0점·55~65면 100점·85 이상이면 다시 0점, MACD 히스토그램이 가격의 -1% 이하면 0점·+1% 이상이면 100점, 둘의 평균",
+                 'rsi_s = None if r is None else (ramp(r, 30, 55) if r < 55 else 1.0 if r <= 65 else ramp(r, 85, 65))'),
+    "breakout_volume": ("52주 고점과의 거리, 돌파 여부, 거래량입니다", "52주 고점 대비 -25% 이하면 0점·고점이면 100점(두 번 셈), 여기에 거래량과 갭 점수를 평균", 'dist = ramp(t["dist_high"], -0.25, 0.0)'),
+    "volatility_structure": ("볼린저 밴드 폭이 최근 1년 중 얼마나 좁은지입니다", "가장 좁으면 100점, 가장 넓으면 0점", 'None if t["bandwidth_pct"] is None else 1 - t["bandwidth_pct"]'),
+    "long_trend": ("종가가 200일 평균보다 얼마나 위인지와 200일 평균의 3개월 기울기입니다", "200일선 대비 -15% 이하면 0점·+15% 이상이면 100점, 기울기 -5% 이하면 0점·+5% 이상이면 100점, 둘의 평균",
+                   'pos = ramp(t["close"] / t["ma200"] - 1, -0.15, 0.15)'),
+    "momentum_persistence": ("최근 한 달을 뺀 1년 수익률과 오른 달의 비율입니다", "수익률 -10% 이하면 0점·+30% 이상이면 100점, 여기에 오른 달 비율을 평균", 'mean([ramp(t["ret_12_1"], -0.10, 0.30), t["pos_month_share"]])'),
+    "valuation": ("이익·자산·현금흐름에 비해 주가가 싼지입니다. 쌀수록 점수가 높습니다", "PER 40배 이상(또는 적자)이면 0점·10배 이하면 100점, PBR 8배 이상이면 0점·1.5배 이하면 100점, 잉여현금흐름 수익률 0% 이하면 0점·7% 이상이면 100점, 셋의 평균(금융업은 PER과 PBR 0.8~2.5배)",
+                  '_rr(f, "pb", 8, 1.5), _rr(f, "fcf_yield", 0.0, 0.07)'),
+    "business_quality": ("ROE, 영업이익률, 매출총이익률, 흑자를 낸 해의 비율입니다", "ROE 3%~25%, 영업이익률 0%~25%, 매출총이익률 15%~60%를 각각 0~100점으로 보고 흑자 연도 비율과 평균",
+                         '_rr(f, "roe", 0.03, 0.25), _rr(f, "op_margin", 0.0, 0.25), _rr(f, "gross_margin", 0.15, 0.60), stable'),
+    "growth_quality": ("3년 동안의 매출·주당이익 성장과 최근 매출 성장입니다", "3년 매출 성장 연 -2%~+15%, 3년 주당이익 성장 연 -5%~+20%, 최근 매출 성장 -5%~+20%를 각각 0~100점으로 보고 평균",
+                       '_rr(f, "rev_cagr3", -0.02, 0.15), _rr(f, "eps_cagr3", -0.05, 0.20), _rr(f, "rev_growth", -0.05, 0.20)'),
+    "free_cash_flow": ("남는 현금(잉여현금흐름)의 크기와 꾸준함입니다", "잉여현금흐름 마진 -2% 이하면 0점·18% 이상이면 100점, 여기에 흑자 연도 비율을 평균", '_rr(f, "fcf_margin", -0.02, 0.18), f.get("fcf_years_positive")'),
+    "balance_dilution": ("빚 부담과 주식 수가 늘었는지입니다", "부채/자본 2.0배 이상이면 0점·0.3배 이하면 100점, 주식 수가 1년에 5% 이상 늘면 0점·1% 이상 줄면 100점, 둘의 평균", 'dil = ramp(f.get("share_change"), 0.05, -0.01)'),
+    "financial_resilience": ("어려운 때를 버틸 재무 여력입니다", "유동비율 0.8~2.0배, 이자보상배율 1.5~10배, 현금/부채 0.05~0.8배를 각각 0~100점으로 보고 평균(금융업은 자기자본/자산 4%~15%)",
+                             'ramp(f.get("current_ratio"), 0.8, 2.0), ramp(f.get("interest_cover"), 1.5, 10), ramp(f.get("cash_debt"), 0.05, 0.8)'),
+    "downside_drawdown": ("내릴 때의 변동성과 최근 1년 최대 낙폭입니다", "하방 변동성 45% 이상이면 0점·12% 이하면 100점, 낙폭 -50% 이하면 0점·-12% 이내면 100점, 둘의 평균",
+                          'ramp(t["downside_vol"], 0.45, 0.12), ramp(t["max_drawdown_252"], -0.50, -0.12)'),
+    "leverage": ("자본에 비한 빚의 크기입니다", "부채/자본이 2.5배 이상이면 0점, 0.2배 이하면 100점", '_rr(f, "debt_equity", 2.5, 0.2)'),
+    "governance": ("최근 1년의 지배구조 경고 공시입니다", "없으면 80점, 1건마다 -30점", "max(0.0, 0.8 - 0.3 * len(g))"),
+    "material_events": ("중요 사건 공시 가운데 긍정·부정으로 분류된 건수입니다", "60점에서 시작해 긍정 1건마다 +10점, 부정 1건마다 -30점", "0.6 + 0.1 * len(pos) - 0.3 * len(neg)"),
+    "insider_ownership": ("내부자 지분율과 내부자의 장내 순매수입니다", "지분율 0%면 0점·10% 이상이면 100점, 여기에 순매수 점수를 평균", "mean([ramp(own, 0.0, 0.10), net])"),
+    "capital_allocation": ("주식 수 변화와 배당·자사주 환원 여부입니다", "주식 수가 1년에 5% 이상 늘면 0점·2% 이상 줄면 100점, 환원이 있으면 100점·없으면 40점, 둘의 평균", 'ramp(f.get("share_change"), 0.05, -0.02)'),
+}
+ENTRY_MEANING = {"ENTRY_NOW": "점수와 손익비가 진입 기준을 채웠다는 뜻입니다.", "WAIT_FOR_PULLBACK": "점수는 되지만 지금 가격에서는 손익비가 모자라, 가격이 지지선 쪽으로 내려올 때를 기다린다는 뜻입니다.",
+                 "WAIT_FOR_BREAKOUT_CONFIRMATION": "고점 돌파가 거래량과 함께 확인될 때까지 기다린다는 뜻입니다.", "WAIT_FOR_EARNINGS": "실적 발표가 임박해 발표 뒤로 미룬다는 뜻입니다.",
+                 "OVERVALUED_AT_CURRENT_PRICE": "사업은 괜찮게 읽히지만 지금 가격이 비싸게 읽힌다는 뜻입니다.", "NO_VALID_ENTRY_SETUP": "점수나 손익비가 진입 기준에 못 미쳐, 지금은 들어갈 근거가 없다는 뜻입니다."}
+SHARE_KO = ((0.2, "높은 편"), (0.6, "중간"), (1.01, "낮은 편"))
+
+
+PINNED_ATR = 0.01          # a day's range under 1% of the price: three US stocks on 2026-11-20 (0.2% to 0.5%), the next lowest 1.7%
+_JONG_DIGIT, _JONG_LETTER = set("013678"), set("LMNR")
+
+
+def josa(word: str, pair: str) -> str:
+    """The word with the particle that fits its last sound: josa('삼성전자', '은는') -> '삼성전자는'."""
+    last = next((c for c in reversed(word) if c.isalnum()), "")
+    if "가" <= last <= "힣":
+        closed = (ord(last) - 0xAC00) % 28 != 0
+        if pair == "으로로" and (ord(last) - 0xAC00) % 28 == 8:       # a final ㄹ takes 로
+            closed = False
+    else:
+        closed = last in _JONG_DIGIT or last.upper() in _JONG_LETTER
+    first, second = (pair[:2], pair[2:]) if pair == "으로로" else (pair[0], pair[1])
+    return word + (first if closed else second)
+
+
+def pinned(snap: Dict[str, Any]) -> Optional[str]:
+    """A note when the price has hardly moved: common once a takeover price is set, and it flatters every volatility signal."""
+    raw = next((f.get("raw") for f in snap.get("factors") or [] if f.get("factor") == "atr_risk" and isinstance(f.get("raw"), dict)), None) or {}
+    atr = raw.get("atr_pct")
+    if atr is None or atr >= PINNED_ATR:
+        return None
+    return (f"최근 하루 변동 폭이 가격의 {atr * 100:.1f}%로 거의 움직이지 않습니다. 인수·합병 가격이 정해진 종목 등에서 흔한 모습입니다. "
+            "변동이 작아 위험 요인의 점수가 높게 나오지만 오를 여지도 작을 수 있으니, 최근 공시를 먼저 확인하세요.")
+
+
+def _pc(v: Optional[float], digits: int = 1, sign: bool = False) -> str:
+    return "자료 없음" if v is None else f"{v * 100:{'+' if sign else ''}.{digits}f}%"
+
+
+def _x(v: Optional[float], digits: int = 2) -> str:
+    return "자료 없음" if v is None else f"{v:,.{digits}f}배"
+
+
+def _money(v: Optional[float], market: str) -> str:
+    if v is None:
+        return "자료 없음"
+    if market == "KR":
+        return f"{v / 1e12:,.2f}조 원" if v >= 1e12 else f"{v / 1e8:,.0f}억 원"
+    return f"{v / 1e8:,.1f}억 달러" if v >= 1e8 else f"{v / 1e4:,.0f}만 달러"
+
+
+def figures(f: Dict[str, Any], snap: Dict[str, Any], market: str) -> str:
+    """The stored figures behind one signal, as a sentence.  Only what the ledger holds: a figure it lacks reads '자료 없음'."""
+    r, name, close = f.get("raw") if isinstance(f.get("raw"), dict) else {}, f.get("factor"), snap.get("price")
+    g = r.get
+
+    def dist(level: Optional[float]) -> str:
+        return "" if not level or not close else f"({(level / close - 1) * 100:+.1f}%)"
+    if name == "risk_reward":
+        return f"목표 {price(g('target'), market)}{dist(g('target'))}, 손절 {price(g('stop'), market)}{dist(g('stop'))}, 왕복 비용 {g('cost_pct', 0):.2f}%를 뺀 손익비 {g('reward_risk', 0):.2f}"
+    if name == "atr_risk":
+        return f"하루 변동 폭이 가격의 {_pc(g('atr_pct'))}, 연 변동성 {_pc(g('hist_vol'), 0)}"
+    if name == "liquidity":
+        return f"20일 평균 거래대금 {_money(g('adv_value'), market)}"
+    if name == "drawdown_gap":
+        return f"최근 1년 최대 낙폭 {_pc(g('max_drawdown_252'))}, 60일 안의 최대 갭 {_pc(g('max_gap_60'))}"
+    if name == "earnings_calendar":
+        est = ", 과거 발표일로 추정한 날짜" if g("basis") == "ESTIMATE" else ""
+        return f"다음 실적 발표 {g('next_earnings')}({g('sessions')}거래일 뒤{est})"
+    if name in ("material_disclosures", "material_events"):
+        days = f"최근 {g('window_days')}일 " if g("window_days") else ""
+        return f"{days}긍정 공시 {g('positive', 0)}건, 부정 공시 {g('negative', 0)}건"
+    if name == "insider_activity":
+        return f"장내 매수 {g('open_market_buy', 0):,.0f}, 장내 매도 {g('open_market_sell', 0):,.0f}"
+    if name == "earnings_revenue_quality":
+        return f"매출 성장 {_pc(g('rev_growth'), sign=True)}, 주당이익 성장 {_pc(g('eps_growth'), sign=True)}, 영업현금/순이익 {_x(g('ocf_to_ni'))}"
+    if name == "profitability":
+        return f"ROE {_pc(g('roe'))}, 영업이익률 {_pc(g('op_margin'))}"
+    if name == "balance_sheet":
+        return f"자기자본/자산 {_pc(g('equity_assets'))}" if "equity_assets" in r else f"부채/자본 {_x(g('debt_equity'))}, 유동비율 {_x(g('current_ratio'))}"
+    if name == "cash_flow_quality":
+        return f"영업현금/순이익 {_x(g('ocf_to_ni'))}, 잉여현금흐름 마진 {_pc(g('fcf_margin'))}"
+    if name == "trend_structure":
+        return f"20일선 {price(g('ma20'), market)}, 50일선 {price(g('ma50'), market)}, 200일선 {price(g('ma200'), market)}, 종가 {price(close, market)}"
+    if name == "relative_strength":
+        return f"대상 안에서 백분위 {_pc(g('percentile'), 0)}, 지수 대비 6개월 수익 {_pc(g('rel_126'), sign=True)}"
+    if name == "momentum":
+        return f"RSI {g('rsi', 0):.0f}, MACD 히스토그램이 가격의 {_pc(g('macd_hist_pct'), 2, True)}"
+    if name == "breakout_volume":
+        return f"52주 고점 대비 {_pc(g('dist_high'), sign=True)}, 20일 고점 돌파 {'예' if g('breakout') else '아니오'}, 거래량이 20일 평균의 {_x(g('volume_ratio'))}"
+    if name == "volatility_structure":
+        return f"볼린저 밴드 폭이 최근 1년 중 하위 {_pc(g('bandwidth_pct'), 0)} 위치"
+    if name == "long_trend":
+        gap = f"종가가 200일선보다 {(close / g('ma200') - 1) * 100:+.1f}%, " if close and g("ma200") else ""
+        return f"{gap}200일선의 3개월 기울기 {_pc(g('ma200_slope'), sign=True)}"
+    if name == "momentum_persistence":
+        return f"최근 한 달을 뺀 1년 수익률 {_pc(g('ret_12_1'), sign=True)}, 오른 달 비율 {_pc(g('pos_month_share'), 0)}"
+    if name == "valuation":
+        fcf = "" if "fcf_yield" not in r else f", 잉여현금흐름 수익률 {_pc(g('fcf_yield'))}"
+        return f"PER {_x(g('pe'), 1)}, PBR {_x(g('pb'))}{fcf}"
+    if name == "business_quality":
+        return f"ROE {_pc(g('roe'))}, 영업이익률 {_pc(g('op_margin'))}, 매출총이익률 {_pc(g('gross_margin'))}, 흑자 연도 비율 {_pc(g('roe_years_positive'), 0)}"
+    if name == "growth_quality":
+        return f"3년 매출 성장 연 {_pc(g('rev_cagr3'), sign=True)}, 3년 주당이익 성장 연 {_pc(g('eps_cagr3'), sign=True)}, 최근 매출 성장 {_pc(g('rev_growth'), sign=True)}"
+    if name == "free_cash_flow":
+        return f"잉여현금흐름 마진 {_pc(g('fcf_margin'))}, 흑자 연도 비율 {_pc(g('fcf_years_positive'), 0)}"
+    if name == "balance_dilution":
+        first = f"자기자본/자산 {_pc(g('equity_assets'))}" if "equity_assets" in r else f"부채/자본 {_x(g('debt_equity'))}"
+        return f"{first}, 주식 수 변화 {_pc(g('share_change'), sign=True)}"
+    if name == "financial_resilience":
+        return f"자기자본/자산 {_pc(g('equity_assets'))}" if "equity_assets" in r else f"유동비율 {_x(g('current_ratio'))}, 이자보상배율 {_x(g('interest_cover'), 1)}, 현금/부채 {_x(g('cash_debt'))}"
+    if name == "downside_drawdown":
+        return f"하방 변동성 {_pc(g('downside_vol'), 0)}, 최근 1년 최대 낙폭 {_pc(g('max_drawdown_252'))}"
+    if name == "leverage":
+        return f"부채/자본 {_x(g('debt_equity'))}"
+    if name == "governance":
+        return "지배구조 경고 공시 없음" if not g("issues") else "경고 공시: " + ", ".join(g("issues")[:3])
+    if name == "insider_ownership":
+        return f"내부자 지분 {_pc(g('insider_pct'))}"
+    if name == "capital_allocation":
+        back = "있음" if g("returns_capital") else "없음" if g("returns_capital") is not None else "알 수 없음"
+        return f"주식 수 변화 {_pc(g('share_change'), sign=True)}, 배당·자사주 환원 {back}"
+    return ""
+
+
+def breakdown(snap: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """The score taken apart: points each counted signal lost and kept.  The score is 100 x sum(points x value) / sum(points of the
+    signals with a value), so the lost points add up to 100 minus the score.  None when the stored figures do not rebuild the score."""
+    counted = [f for f in snap.get("factors") or [] if f.get("weight") and f.get("scored", True) is not False]
+    have = [f for f in counted if f.get("normalized") is not None]
+    total = sum(f["weight"] for f in have)
+    if not total or snap.get("score") is None:
+        return None
+    rows = [{**f, "kept": 100 * f["weight"] * f["normalized"] / total, "lost": 100 * f["weight"] * (1 - f["normalized"]) / total} for f in have]
+    if abs(sum(r["kept"] for r in rows) - snap["score"]) > 0.05:
+        return None
+    return {"rows": rows, "total": total, "empty": [f for f in counted if f.get("normalized") is None],
+            "reference": [f for f in snap.get("factors") or [] if f.get("scored") is False and f.get("normalized") is not None]}
+
+
+def _signal_line(f: Dict[str, Any], snap: Dict[str, Any], market: str, points: str, scale: bool = True) -> str:
+    """One signal as a sentence: its value, the points, the stored figures, what it measures and (for a loss) the scale."""
+    info = FACTOR_INFO.get(f["factor"])
+    fig = figures(f, snap, market)
+    return (f"{FACTOR_KO.get(f['factor'], f['factor'])} {f['normalized'] * 100:.0f}/100({points})" + (f": {fig}." if fig else ".")
+            + (f" {info[0]}." if info else "") + (f" 채점 기준: {info[1]}." if info and scale else ""))
+
+
+def _standing(terminal: Any, market: str, strategy: str, score: float) -> Dict[str, Any]:
+    scored = sorted((r["score"] for r in _rows(terminal, market) if r["strategy"] == strategy and r.get("score") is not None), reverse=True)
+    place = 1 + sum(1 for s in scored if s > score)
+    share = place / len(scored) if scored else 1.0
+    return {"place": place, "of": len(scored), "share": share, "word": next(w for cut, w in SHARE_KO if share <= cut), "buy": sum(1 for s in scored if s >= BUY_LINE),
+            "median": scored[len(scored) // 2] if scored else None}
+
+
+def _share(share: float) -> str:
+    """Where a rank sits: the upper half reads from the top, the lower half from the bottom."""
+    return f"상위 {max(1, round(share * 100))}%" if share <= 0.5 else f"하위 {max(1, round((1 - share) * 100))}%"
+
+
+def _bands(score: float) -> List[str]:
     from terminal.qsf import config
-    parts = [f"{config.DOMAIN_LABELS.get(k, k)} {v['score_100']:.0f}" for k, v in (snap.get("domains") or {}).items() if not v.get("reference") and v.get("score_100") is not None and v.get("points") is not None]
-    return ", ".join(parts)
+    out = []
+    above = [(lo, label) for lo, _, label in config.BANDS if lo > score]
+    if above:
+        lo, label = min(above)
+        out.append(f"{lo - score:.1f}점 오르면 '{label}' 구간({lo:g}점 이상)입니다.")
+    floor = max(((lo, label) for lo, _, label in config.BANDS if lo <= score), default=None)
+    if floor and floor[0] > 0:
+        out.append(f"{score - floor[0]:.1f}점 내리면 지금 구간('{floor[1]}')을 벗어납니다.")
+    return out
 
 
-def _score_line(row: Dict[str, Any]) -> str:
-    return f"{STRATEGY_KO[row['strategy']]} {row['score']:.1f}점({row.get('band_label')}, {row.get('action_label')})"
+def _basis(snap: Dict[str, Any], market: str) -> str:
+    p = snap.get("provenance") or {}
+    parts = [f"{snap.get('data_date')} 종가 {price(snap.get('price'), market)}"]
+    if p.get("fund_filed"):
+        parts.append(f"재무 {p['fund_filed']} 공시분")
+    parts.append(f"모델 {snap.get('model_version')}")
+    if snap.get("coverage") is not None:
+        parts.append(f"데이터 반영률 {snap['coverage'] * 100:.0f}%")
+    return "기준: " + " · ".join(parts)
+
+
+def reply(title: str, summary: str, sections: List[Dict[str, Any]], tab: Optional[str] = None, follow: Optional[List[str]] = None, basis: Optional[str] = None) -> Dict[str, Any]:
+    """An answer: the conclusion first, then titled groups of lines.  ``lines`` is the same thing flat."""
+    sections = [{"title": s["title"], "lines": [x for x in s["lines"] if x]} for s in sections if any(s["lines"])]
+    return {"title": title, "summary": summary, "sections": sections, "lines": [summary] + [x for s in sections for x in s["lines"]], "tab": tab, "follow": follow or [], "basis": basis}
+
+
+def _others(name: str, skip: str, strategy: str) -> List[str]:
+    """What to ask next about the same stock: the other fixed questions, with its name written in."""
+    tail = " 장기" if strategy == "LONG_TERM" else ""
+    asks = {"WHY": f"{name}{tail} 점수 왜 이래?", "BUY_CHECK": f"{name}{tail} 사도 돼?", "STOP": f"{name}{tail} 손절 어디?", "RISK": f"{name} 위험해?", "RANGE": f"{name} 얼마까지 움직일까?",
+            "EARNINGS": f"{name} 실적 언제?", "RANK": f"{name}{tail} 몇 등이야?", "SELL_CHECK": f"{name} 팔아야 해?"}
+    order = {"WHY": ("BUY_CHECK", "STOP", "RISK", "RANGE"), "BUY_CHECK": ("WHY", "STOP", "RISK", "EARNINGS"), "STOP": ("RANGE", "BUY_CHECK", "RISK"), "RISK": ("WHY", "STOP", "RANGE"),
+             "RANGE": ("STOP", "RISK", "WHY"), "EARNINGS": ("BUY_CHECK", "WHY"), "RANK": ("WHY", "BUY_CHECK"), "SELL_CHECK": ("WHY", "STOP", "RISK")}
+    out = [asks[k] for k in order.get(skip, ()) if k != skip]
+    if skip == "WHY":
+        out.insert(0, f"{name} 점수 왜 이래?" if strategy == "LONG_TERM" else f"{name} 장기 점수 왜 이래?")
+    return out
 
 
 def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: str) -> Dict[str, Any]:
     """One stock, from the stored scan only: nothing is fetched and nothing is scored again."""
-    market, ticker = stock["market"], stock["ticker"]
+    from terminal.qsf import config
+    market, ticker, name = stock["market"], stock["ticker"], stock["name"]
     rows = {r["strategy"]: r for r in _rows(terminal, market) if r["ticker"] == ticker}
     row, snap = rows.get(strategy), _snap(terminal, stock, strategy)
-    head = f"{stock['name']}({ticker})"
+    head, kind = f"{name}({ticker})", STRATEGY_KO[strategy]
     if row is None or snap is None or row.get("score") is None:
-        return {"title": head, "lines": [f"{STRATEGY_KO[strategy]} 점수가 최신 기록에 없습니다. 종목 탭에서 조회하면 그 자리에서 평가합니다."], "tab": "stock"}
-    both = " · ".join(_score_line(r) for r in (rows.get("SWING"), rows.get("LONG_TERM")) if r and r.get("score") is not None)
-    session = snap.get("data_date")
+        return reply(head, f"{name}의 {kind} 점수가 최신 기록에 없습니다. 자료가 모자라 점수를 내지 못한 날일 수 있습니다.", [{"title": "할 수 있는 것", "lines": ["종목 탭에서 조회하면 그 자리에서 다시 평가합니다."]}], "stock")
+    score = float(row["score"])
+    st = _standing(terminal, market, strategy, score)
+    basis, follow = _basis(snap, market), _others(name if market == "KR" else ticker, intent, strategy)
+    still = pinned(snap)
+    other = rows.get("LONG_TERM" if strategy == "SWING" else "SWING")
+    other_line = f"{STRATEGY_KO[other['strategy']]} 점수는 {other['score']:.1f}점('{other.get('band_label')}')입니다." if other and other.get("score") is not None else ""
+    standing = f"{st['of']}종목 중 {st['place']}위({_share(st['share'])})"
     gates = [g.get("text") or g.get("code") for g in snap.get("gates") or []]
-    kind = STRATEGY_KO[strategy]
+    entry = snap.get("entry_status")
+    entry_line = f"진입 판단은 '{ENTRY_KO.get(entry, entry)}'입니다. {ENTRY_MEANING.get(entry, '')}".strip()
+    hold = snap.get("holding") or {}
+    close = snap.get("price")
+
+    def away(level: Optional[float]) -> str:
+        return f"지금보다 {(level / close - 1) * 100:+.1f}%" if level and close else ""
+
     if intent == "WHY":
-        lines = [f"{both}. 기준 거래일 {session}.", f"{kind} 점수의 영역별 점수(100점 만점): {_domains(snap)}.",
-                 f"점수를 가장 깎은 요인: {_factors(snap, True)}.", f"점수를 가장 올린 요인: {_factors(snap, False)}.",
-                 f"진입 판단: {ENTRY_KO.get(snap.get('entry_status'), snap.get('entry_status'))}. 데이터 반영률 {(snap.get('coverage') or 0) * 100:.0f}%."]
-        if gates:
-            lines.append("차단 조건: " + "; ".join(gates) + ".")
-        return {"title": f"{head} 점수가 이렇게 나온 이유", "lines": lines, "tab": "stock"}
+        gap = f"이고 매수 후보 구간({BUY_LINE:g}점 이상)까지 {BUY_LINE - score:.1f}점 모자랍니다" if score < BUY_LINE else f"입니다({BUY_LINE:g}점 이상이 매수 후보 구간)"
+        summary = (f"{name}의 {kind} 점수는 {score:.1f}점으로 {standing}, 대상 안에서 {st['word']}입니다(대상의 중간값 {st['median']:.1f}점). '{row.get('band_label')}' 구간{gap}."
+                   + (" 오늘은 매수 후보 구간에 든 종목이 하나도 없습니다." if st["buy"] == 0 else ""))
+        parts = breakdown(snap)
+        sections: List[Dict[str, Any]] = []
+        if parts:
+            lost = sorted((r for r in parts["rows"] if r["lost"] >= 0.5), key=lambda r: -r["lost"])[:3]
+            kept = sorted((r for r in parts["rows"] if r["kept"] >= 0.5 and all(r["factor"] != x["factor"] for x in lost)), key=lambda r: -r["kept"])[:3]
+            if lost:
+                sections.append({"title": f"점수를 깎은 것 (100점에서 {100 - score:.1f}점을 잃었고, 아래 {len(lost)}가지가 {sum(r['lost'] for r in lost):.1f}점)",
+                                 "lines": [_signal_line(r, snap, market, f"{r['lost']:.1f}점 잃음") for r in lost]})
+            if kept:
+                sections.append({"title": "점수를 받친 것", "lines": [_signal_line(r, snap, market, f"{r['kept']:.1f}점 얻음", scale=False) for r in kept]})
+            out = [f"{FACTOR_KO.get(f['factor'], f['factor'])}(배점 {f['weight']:g}): " + ("이 종목에는 해당하지 않아" if f.get("status") == "NOT_APPLICABLE" else "자료가 없어")
+                   + " 계산에서 빠졌고, 남은 요인으로만 점수를 냈습니다" + (f"({f['reason']})." if f.get("reason") else ".") for f in parts["empty"]]
+            for key, d in (snap.get("domains") or {}).items():
+                if d.get("reference") and d.get("score_100") is not None:
+                    out.append(f"{config.DOMAIN_LABELS.get(key, key)} 영역은 이 점수에 들어가지 않습니다(참고값 {d['score_100']:.0f}/100)." + (" '시장 상태'로 따로 보여 줍니다." if key == "REGIME" else
+                               " 한국 스윙에서는 과거에 순위를 거꾸로 매겨 2026-11-11에 뺐습니다." if key == "TECHNICAL" else ""))
+            if out:
+                sections.append({"title": "점수에 들어가지 않은 것", "lines": out})
+        else:
+            sections.append({"title": "요인별 점수", "lines": ["저장된 수치로 점수를 정확히 다시 나눌 수 없어 요인 점수만 보여 드립니다.", f"낮은 요인: {_factors(snap, True)}.", f"높은 요인: {_factors(snap, False)}."]})
+        if still:
+            sections.insert(0, {"title": "먼저 알아 둘 것", "lines": [still]})
+        sections.append({"title": "프로그램이 이 점수로 읽는 것", "lines": [f"판단은 '{row.get('action_label')}'입니다.", entry_line] + [f"차단 조건: {g}. 차단 조건이 있으면 점수와 상관없이 매수 후보에서 빠집니다." for g in gates]
+                         + [other_line]})
+        sections.append({"title": "무엇이 달라지면 바뀌나", "lines": _bands(score) + ["가격 요인은 매 거래일 종가로, 재무 요인은 새 사업보고서가 나올 때 다시 계산됩니다.",
+                                                                               "점수가 높은 종목의 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다. 순위의 설명으로만 읽으세요."]})
+        return reply(f"{head} {kind} 점수가 이렇게 나온 이유", summary, sections, "stock", follow, basis)
+
     if intent == "RANK":
-        scored = sorted((r["score"] for r in _rows(terminal, market) if r["strategy"] == strategy and r.get("score") is not None), reverse=True)
-        place = scored.index(row["score"]) + 1
-        return {"title": f"{head} 순위", "lines": [f"{kind} 점수 {row['score']:.1f}점은 {session}에 점수가 나온 {len(scored)}종목 중 {place}위(상위 {place / len(scored) * 100:.0f}%)입니다.",
-                                                  "순위가 높다고 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다."], "tab": "qsf"}
+        summary = f"{name}의 {kind} 점수 {score:.1f}점은 {snap.get('data_date')}에 점수가 나온 {standing}입니다."
+        lines = [f"같은 날 {kind} 점수의 중간값은 {st['median']:.1f}점이고, 매수 후보 구간({BUY_LINE:g}점 이상)에 든 종목은 {st['buy']}개입니다."]
+        if other and other.get("score") is not None:
+            so = _standing(terminal, market, other["strategy"], float(other["score"]))
+            lines.append(f"{STRATEGY_KO[other['strategy']]} 점수는 {other['score']:.1f}점으로 {so['of']}종목 중 {so['place']}위({_share(so['share'])})입니다.")
+        return reply(f"{head} 순위", summary, [{"title": "대상 안에서의 위치", "lines": lines},
+                                             {"title": "읽을 때 주의", "lines": ["순위는 그날 대상 종목끼리의 비교입니다. 순위가 높다고 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다."]}], "qsf", follow, basis)
+
     if intent == "STOP":
-        hold = snap.get("holding") or {}
-        lines = []
-        if snap.get("stop"):
-            lines.append(f"{kind} 기준 손절선 {price(snap['stop'], market)}, 기준 종가 {price(snap.get('price'), market)}" + (f", 목표 {price(snap['target'], market)}" if snap.get("target") else "") + ".")
-        if hold.get("reward_risk") is not None:
-            lines.append(f"비용을 반영한 손익비는 {hold['reward_risk']:.2f}입니다(1 미만이면 기대 이익이 감수할 손실보다 작다는 뜻).")
-        lines += [f"무효 조건: {x}." for x in (hold.get("invalidation") or [])[:2]]
-        if hold.get("gap_note"):
-            lines.append(hold["gap_note"])
-        return {"title": f"{head} 손절·목표", "lines": lines or [f"{kind} 기록에 손절선이 없습니다. 장기 보유의 손절은 직접 정한 값(주문 계획에서는 변동 폭의 5배)을 씁니다."], "tab": "stock"}
+        if strategy == "LONG_TERM" or not snap.get("stop"):
+            lines = [f"{x}." for x in (hold.get("invalidation") or [])[:5]]
+            cut = [f"비중을 줄일 조건: {x}." for x in (hold.get("reduce_conditions") or [])[:3]]
+            watch = [f"{x}." for x in (hold.get("milestones") or [])[:3]]
+            return reply(f"{head} 장기 보유의 기준", f"{name}의 장기 점수에는 가격으로 정한 손절선이 없습니다. 장기 보유는 가격이 아니라 사업과 재무가 유지되는지를 봅니다.",
+                         [{"title": "보유 논리가 깨지는 조건", "lines": lines + cut}, {"title": "다음 실적에서 지켜볼 것", "lines": watch},
+                          {"title": "가격 손절을 쓰고 싶다면", "lines": ["주문 계획은 장기 종목에 변동 폭(ATR)의 5배 아래를 손절로 씁니다. 배수는 매매 보조 탭의 위험 관리 설정에서 바꿉니다.",
+                                                              str(hold.get("review_note") or ""), f"스윙 기준의 손절선은 '{name} 손절 어디?'로 볼 수 있습니다."]}], "stock", follow, basis)
+        target = snap.get("target")
+        summary = (f"{name}의 스윙 기준 손절선은 {price(snap['stop'], market)}({away(snap['stop'])})" + (f", 목표는 {price(target, market)}({away(target)})" if target else "") + f"입니다. 기준 종가는 {price(close, market)}입니다.")
+        rr = hold.get("reward_risk")
+        ratio = [] if rr is None else [f"비용을 뺀 손익비는 {rr:.2f}입니다. 목표까지의 이익 여지가 손절까지의 손실 여지의 {rr:.2f}배라는 뜻이고, 1보다 작으면 기대 이익이 감수할 손실보다 작습니다."]
+        how = [f"손절: {hold['stop_method']}." if hold.get("stop_method") else "", f"목표: {hold['target_method']}." if hold.get("target_method") else ""] + [f"{x}." for x in (hold.get("why") or [])[:2]]
+        plan = [f"예상 보유 {hold['expected_sessions']}거래일, 첫 재검토 {hold.get('first_review')}." if hold.get("expected_sessions") else "", str(hold.get("time_stop_note") or "")]
+        return reply(f"{head} 손절·목표", summary, [{"title": "손익비", "lines": ratio}, {"title": "어떻게 정한 값인가", "lines": how},
+                                                {"title": "이 계획이 무효가 되는 조건", "lines": [f"{x}." for x in (hold.get("invalidation") or [])[:3]]},
+                                                {"title": "보유 기간", "lines": plan},
+                                                {"title": "주의", "lines": [str(hold.get("gap_note") or ""), "이 값은 그날 종가 기준의 계획이고 주문이 아닙니다. 계좌를 기록하면 주문 계획에 수량과 함께 나옵니다."]}], "stock", follow, basis)
+
     if intent == "RANGE":
         from terminal.qsf import forecast
         got = forecast.stock(terminal.base, market, ticker)
-        if got.get("status") != "REAL":
-            return {"title": f"{head} 가격 범위", "lines": ["이 종목의 가격 범위 기록이 없습니다."], "tab": "stock"}
-        lines = []
-        for h, r in sorted((got.get("ranges") or {}).items(), key=lambda kv: int(kv[0])):
-            lines.append(f"{h}거래일 뒤 종가: 80% 가능성으로 {price(r['p80'][0], market)} ~ {price(r['p80'][1], market)}, 50% 가능성으로 {price(r['p50'][0], market)} ~ {price(r['p50'][1], market)}.")
-        lines.append(f"기준 종가 {price(got.get('close'), market)}({got.get('session')}). 범위의 폭은 과거 자료로 맞춰 본 값이고, 오를지 내릴지는 말하지 않습니다(방향 예측력은 0으로 계산).")
-        return {"title": f"{head} 가격 범위", "lines": lines, "tab": "stock"}
+        if got.get("status") != "REAL" or not got.get("ranges"):
+            return reply(f"{head} 가격 범위", f"{name}의 가격 범위 기록이 없습니다.", [], "stock", follow)
+        base = got.get("close")
+        rng = sorted(got["ranges"].items(), key=lambda kv: int(kv[0]))
+
+        def span(pair: List[float]) -> str:
+            return f"{price(pair[0], market)} ~ {price(pair[1], market)}({(pair[0] / base - 1) * 100:+.1f}% ~ {(pair[1] / base - 1) * 100:+.1f}%)"
+        h0, r0 = rng[0]
+        summary = f"{name}의 {h0}거래일 뒤 종가는 80% 가능성으로 {span(r0['p80'])} 사이로 봅니다. 기준 종가는 {price(base, market)}({got.get('session')})입니다."
+        lines = [f"{h}거래일 뒤: 80% 가능성 {span(r['p80'])}, 50% 가능성 {span(r['p50'])}." for h, r in rng]
+        test = got.get("test") or {}
+        checked = (f"범위의 폭은 과거 자료({test.get('first')}~{test.get('last')}, {test.get('days')}일)에서 실제로 그 비율만큼 들어맞는지 확인했습니다." if test.get("verdict") == "RANGE_CALIBRATED"
+                   else "범위의 폭은 과거 자료로 확인되지 않았습니다. 어림으로만 보세요.")
+        return reply(f"{head} 가격 범위", summary, [{"title": "먼저 알아 둘 것", "lines": [still or ""]}, {"title": "기간별 범위", "lines": lines},
+                                                 {"title": "읽는 법", "lines": [checked, "오를지 내릴지는 말하지 않습니다. 점수의 방향 예측력이 확인되지 않아 범위의 가운데를 지금 가격에 둡니다.",
+                                                                           "80% 범위라는 것은 다섯 번에 한 번은 이 밖에서 끝난다는 뜻입니다.", str(got.get("path_note") or "")]}], "stock", follow)
+
+    raw = next((f.get("raw") or {} for f in snap.get("factors") or [] if f.get("factor") == "earnings_calendar" and isinstance(f.get("raw"), dict)), {})
+    estimated = raw.get("basis") == "ESTIMATE"
+    block = config.EARNINGS_BLOCK_SESSIONS_ESTIMATE if estimated else config.EARNINGS_BLOCK_SESSIONS
     if intent == "EARNINGS":
-        raw = next((f.get("raw") or {} for f in snap.get("factors") or [] if f.get("factor") == "earnings_calendar" and isinstance(f.get("raw"), dict)), {})
         if not raw.get("next_earnings"):
-            return {"title": f"{head} 실적 발표", "lines": ["저장된 다음 실적 발표일이 없습니다."], "tab": "assist"}
-        basis = " 회사가 확정한 날짜가 아니라 과거 발표일로 추정한 값입니다." if raw.get("basis") == "ESTIMATE" else " 회사 확정 전에는 추정치일 수 있습니다."
-        return {"title": f"{head} 실적 발표", "lines": [f"다음 실적 발표 {raw['next_earnings']}" + (f"(약 {raw['sessions']}거래일 뒤)" if raw.get("sessions") is not None else "") + "." + basis,
-                                                     "스윙은 발표가 임박하면 새 진입을 막습니다."], "tab": "assist"}
+            return reply(f"{head} 실적 발표", f"{name}의 다음 실적 발표일이 저장돼 있지 않습니다.", [{"title": "이것이 뜻하는 것", "lines": ["실적 일정 요인은 점수 계산에서 빠지고, 발표 직전 진입 차단도 걸리지 않습니다. 발표일은 직접 확인하세요."]}],
+                         "assist", follow, basis)
+        left = raw.get("sessions")
+        summary = f"{name}의 다음 실적 발표는 {raw['next_earnings']}" + (f"({left}거래일 뒤)" if left is not None else "") + "로 저장돼 있습니다."
+        source = ("회사가 확정한 날짜가 아닙니다. 작년 같은 분기의 발표일" + (f"({raw['from']})" if raw.get("from") else "") + "로 추정했습니다. 실제 발표는 며칠 앞뒤일 수 있습니다." if estimated
+                  else "Yahoo 실적 일정에서 읽은 날짜입니다. 회사가 확정하기 전에는 추정치일 수 있습니다.")
+        f = next((x for x in snap.get("factors") or [] if x.get("factor") == "earnings_calendar"), {})
+        effect = [f"실적 일정 요인은 지금 {f['normalized'] * 100:.0f}/100입니다. {FACTOR_INFO['earnings_calendar'][1]}." if f.get("normalized") is not None else "",
+                  f"스윙은 발표 {block}거래일 전부터 새 진입을 막습니다" + ("(추정일이라 폭을 넓게 잡음)." if estimated else ".")
+                  + (" 지금 그 안에 있습니다." if left is not None and left <= block else " 지금은 그 밖입니다." if left is not None else "")]
+        return reply(f"{head} 실적 발표", summary, [{"title": "이 날짜의 출처", "lines": [source]}, {"title": "점수와 진입에 미치는 것", "lines": effect}], "assist", follow, basis)
+
     marks = []
     if row.get("high_risk"):
-        marks.append("고위험 표시(변동성·낙폭이 대상 중 하위)")
+        marks.append("고위험 표시: 변동성과 낙폭이 대상 가운데 나쁜 쪽입니다. 한국의 과거 시험에서 이 표시는 이후 수익이 더 나빴던 쪽을 가려냈습니다.")
     filing = row.get("filing_events") or {}
     if filing.get("financing"):
-        marks.append("최근 자금 조달 공시(과거 시험에서 이후 수익이 부진했던 유형)")
-    notes = ["자사주 취득 공시가 있습니다(시장 대비 우위는 확인되지 않아 좋게도 나쁘게도 세지 않습니다)."] if filing.get("buyback") else []
+        marks.append("자금 조달 공시: 최근 유상증자나 사채 발행류 공시가 있습니다. 한국의 과거 시험에서 이런 종목은 이후 수익이 부진했습니다.")
+    notes = ["자사주 취득 공시가 있습니다. 시장 대비 우위는 확인되지 않아 좋게도 나쁘게도 세지 않습니다."] if filing.get("buyback") else []
+    unknown = ["고위험 표시와 공시 표시 가운데 일부는 자료가 없어 확인하지 못했습니다."] if row.get("high_risk_unknown") or row.get("filing_unknown") else []
+
     if intent == "RISK":
-        lines = ["차단 조건: " + ("; ".join(gates) if gates else "없음") + ".", "회피 표시: " + ("; ".join(marks) if marks else "없음") + ".", *notes,
-                 f"위험 영역에서 가장 낮은 요인: {_factors({**snap, 'factors': [f for f in snap.get('factors') or [] if f.get('domain') == 'RISK']}, True, 2)}."]
-        if row.get("high_risk_unknown") or row.get("filing_unknown"):
-            lines.append("일부 표시는 자료가 없어 확인하지 못했습니다. 표시가 없다는 것이 안전하다는 뜻은 아닙니다.")
-        return {"title": f"{head} 위험 점검", "lines": lines, "tab": "stock"}
+        clear = not gates and not marks
+        summary = (f"{name}에 걸린 차단 조건과 회피 표시는 없습니다. 다만 표시가 없다는 것이 안전하다는 뜻은 아닙니다." if clear
+                   else f"{name}에는 차단 조건 {len(gates)}건, 회피 표시 {len(marks)}건이 있습니다.")
+        risk = [_signal_line(f, snap, market, f"배점 {f['weight']:g}", scale=False) for f in snap.get("factors") or []
+                if f.get("domain") == "RISK" and f.get("weight") and f.get("normalized") is not None]
+        return reply(f"{head} 위험 점검", summary, [{"title": "차단 조건", "lines": [f"{g}. 차단 조건이 있으면 점수와 상관없이 매수 후보에서 빠집니다." for g in gates] or ["없음."]},
+                                                 {"title": "회피 표시", "lines": marks or ["없음."]}, {"title": "위험 요인의 실제 수치", "lines": risk},
+                                                 {"title": "참고", "lines": notes + unknown}], "stock", follow, basis)
     held = False
     try:
         held = ticker in terminal._book(market)[2]["positions"]
@@ -487,111 +820,183 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
         pass
     if intent == "SELL_CHECK":
         if not held:
-            return {"title": f"{head} 매도 점검", "lines": ["보유 기록이 없어 매도 조건을 계산하지 않습니다. 매도 조건은 매수가, 보유 기간, 손절선이 있어야 읽을 수 있습니다.",
-                                                         f"참고: {both}."], "tab": "portfolio"}
+            would = [f"{x}." for x in (hold.get("exit_triggers") or hold.get("invalidation") or [])[:7]]
+            return reply(f"{head} 매도 점검", f"{josa(name, '은는')} 보유 기록이 없어 매도 조건을 계산하지 않았습니다. 매도 조건은 매수가, 매수일, 손절선이 있어야 읽을 수 있습니다.",
+                         [{"title": f"보유했다면 보는 조건({kind})", "lines": would}, {"title": "지금의 점수", "lines": [f"{kind} 점수 {score:.1f}점('{row.get('band_label')}'), 판단 '{row.get('action_label')}'.", other_line]},
+                          {"title": "할 수 있는 것", "lines": ["포트폴리오 탭에 거래를 기록하면 이 종목의 손절·기한·청산 조건을 매일 점검해 '오늘' 탭에 올립니다."]}], "portfolio", follow, basis)
         sig = next((s for s in terminal.portfolio_signals(market)["items"] if s.get("ticker") == ticker), None)
         if not sig or sig.get("status") != "REAL":
-            return {"title": f"{head} 매도 점검", "lines": ["자료를 읽지 못해 매도 조건을 점검하지 못했습니다."], "tab": "portfolio"}
+            return reply(f"{head} 매도 점검", f"{name}의 자료를 읽지 못해 매도 조건을 점검하지 못했습니다.", [], "portfolio", follow)
         ex = sig["exit"]
-        lines = [f"보유 판단: {EXIT_KO.get(ex['action'], ex['action'])}. {ex['reason']}"] + [f"걸린 조건: {c['text']}" for c in ex.get("conditions") or [] if c.get("action") != "HOLD"][:5]
-        return {"title": f"{head} 매도 점검", "lines": lines + ["판단은 규칙이 읽은 것이고 주문은 직접 정합니다."], "tab": "portfolio"}
+        hit = [f"{c['text']}" for c in ex.get("conditions") or [] if c.get("action") != "HOLD"][:6]
+        return reply(f"{head} 매도 점검", f"{name}의 보유 판단은 '{EXIT_KO.get(ex['action'], ex['action'])}'입니다. {ex['reason']}",
+                     [{"title": "걸린 조건", "lines": hit or ["없음."]}, {"title": "읽을 때 주의", "lines": ["판단은 규칙이 읽은 것이고 자동 매도는 없습니다. 주문은 직접 정합니다."]}], "portfolio", follow, basis)
+
     # BUY_CHECK: a checklist, never an answer of yes or no
     state = terminal.market_state(market)
-    raw = next((f.get("raw") or {} for f in snap.get("factors") or [] if f.get("factor") == "earnings_calendar" and isinstance(f.get("raw"), dict)), {})
-
-    def check(ok: Optional[bool], text: str) -> str:
-        return ("○ " if ok else "✕ " if ok is False else "– ") + text
-    soon = raw.get("sessions") is not None and raw["sessions"] <= 5
-    lines = [check(row["score"] >= BUY_LINE, f"점수 구간: {kind} {row['score']:.1f}점({row.get('band_label')}). 매수 후보 구간은 {BUY_LINE:g}점 이상입니다."),
-             check(snap.get("entry_status") == "ENTRY_NOW", f"진입 판단: {ENTRY_KO.get(snap.get('entry_status'), snap.get('entry_status'))}."),
-             check(not gates, "차단 조건: " + ("; ".join(gates) if gates else "없음") + "."),
-             check(not soon if raw.get("next_earnings") else None, f"실적 발표: {raw.get('next_earnings') or '날짜 없음'}" + (" (임박)" if soon else "") + "."),
-             check(not marks, "회피 표시: " + ("; ".join(marks) if marks else "없음") + "."),
-             check(state.get("state") != "ADVERSE" if state.get("score_100") is not None else None,
-                   f"시장 상태: {state.get('score_100', 0):.0f}/100({state.get('label')})." if state.get("score_100") is not None else "시장 상태: 자료 없음."),
-             check(not held, "이미 보유 중입니다." if held else "보유 기록 없음.")]
-    passed = sum(1 for x in lines if x.startswith("○"))
-    lines += [f"– 참고: {x}" for x in notes]
-    lines.append(f"{len(lines) - len(notes)}개 중 {passed}개가 걸림 없이 통과했습니다. 이 점검표는 살지 말지에 대한 답이 아닙니다. 점수 구간의 수익 근거는 아직 확인되지 않았고, 수량과 손절은 주문 계획에서 계좌 기준으로 봅니다.")
-    return {"title": f"{head} 매수 전 점검표({kind})", "lines": lines, "tab": "stock"}
+    soon = raw.get("sessions") is not None and raw["sessions"] <= block
+    checks = [("점수 구간", score >= BUY_LINE, f"{kind} {score:.1f}점('{row.get('band_label')}'), {standing}. 매수 후보 구간은 {BUY_LINE:g}점 이상입니다."),
+              ("진입 판단", entry == "ENTRY_NOW", f"'{ENTRY_KO.get(entry, entry)}'. {ENTRY_MEANING.get(entry, '')}" + (f" 지금 손익비는 {hold['reward_risk']:.2f}입니다." if hold.get("reward_risk") is not None else "")),
+              ("차단 조건", not gates, ("; ".join(gates) + ". 점수와 상관없이 매수 후보에서 빠집니다.") if gates else "없음."),
+              ("실적 발표", (not soon) if raw.get("next_earnings") else None, (f"{raw['next_earnings']}({raw.get('sessions')}거래일 뒤)" + ("로 임박했습니다. 발표 전후에는 가격이 크게 움직일 수 있습니다." if soon else "로 임박하지 않았습니다."))
+               if raw.get("next_earnings") else "저장된 날짜가 없습니다. 직접 확인하세요."),
+              ("회피 표시", not marks, " ".join(marks) if marks else "없음."),
+              ("시장 상태", (state.get("state") != "ADVERSE") if state.get("score_100") is not None else None,
+               (f"{state['score_100']:.0f}/100({state.get('label')}). " + ("나쁜 날에는 새 주문 크기를 줄여 계산합니다." if float(state.get("size_factor") or 1) < 1 else
+                                                                         "이 시장에서는 과거에 이 값이 이후 수익을 가르지 못했습니다." if state.get("state") == "ADVERSE" else "")) if state.get("score_100") is not None else "자료 없음."),
+              ("보유 여부", not held, "이미 보유 중입니다. 추가 매수는 종목 비중 한도를 먼저 보세요." if held else "보유 기록 없음.")]
+    mark = lambda ok: "○" if ok else "✕" if ok is False else "–"      # noqa: E731
+    failed = [label for label, ok, _ in checks if ok is False]
+    passed = sum(1 for _, ok, _ in checks if ok)
+    summary = (f"{name} 매수 전 점검({kind}): {len(checks)}개 중 {passed}개가 걸림 없이 통과했습니다." + (f" 걸린 것은 {', '.join(failed)}입니다." if failed else "")
+               + " 이 점검표는 살지 말지에 대한 답이 아닙니다.")
+    return reply(f"{head} 매수 전 점검표({kind})", summary,
+                 [{"title": "점검표 (○ 통과 · ✕ 걸림 · – 확인 못 함)", "lines": [f"{mark(ok)} {label}: {text}" for label, ok, text in checks]},
+                  {"title": "참고", "lines": ([still] if still else []) + notes + unknown},
+                  {"title": "다음에 볼 것", "lines": ["수량, 지정가 상한, 손절은 포트폴리오 탭에 계좌를 기록하면 '주문 계획'에 계좌 기준으로 나옵니다.",
+                                                "점수 구간의 수익 근거는 아직 확인되지 않았습니다. 점검표는 프로그램의 규칙에 걸리는 것이 있는지 보는 용도입니다."]}], "stock", follow, basis)
 
 
 def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
     from terminal import automation
     from terminal.qsf import changes as qsf_changes, config, readings as qsf_readings
     where, base = MARKET_KO[market], Path(terminal.base)
+    other = "미국" if market == "KR" else "한국"
     texts = lambda items: [i["text"] for i in items]      # noqa: E731
+    switch = f"지금 보는 시장은 {where}입니다. {other} 것은 위의 시장 버튼을 바꾼 뒤 물으세요."
     if intent == "HELP":
-        return {"title": f"물어볼 수 있는 것 {len(EXAMPLES)}가지", "examples": EXAMPLES,
-                "lines": ["정해진 질문만 알아듣습니다. 아래 예를 누르거나 비슷하게 적으면 됩니다.",
-                          f"종목 없이 묻는 것 {len(PLAIN_INTENTS)}가지: " + " / ".join(e for _, e, _ in PLAIN_INTENTS[::-1]),
-                          f"종목을 넣어 묻는 것 {len(STOCK_INTENTS)}가지: " + " / ".join(e for _, e, _ in STOCK_INTENTS[::-1]),
-                          "종목은 '삼성전자' 자리에 코드, 티커, 회사명을 적습니다(스캔 대상: 미국 S&P 500, 한국 시가총액 상위 300). '장기'를 넣으면 장기 점수로 답합니다.",
-                          "이 목록은 'help', '도움말', '?'로 언제든 다시 볼 수 있습니다."]}
+        got = reply(f"물어볼 수 있는 것 {len(EXAMPLES)}가지", "정해진 질문만 알아듣습니다. 아래 예를 누르거나 비슷하게 적으면 됩니다.",
+                    [{"title": f"종목 없이 묻는 것 {len(PLAIN_INTENTS)}가지", "lines": [e for _, e, _ in PLAIN_INTENTS[::-1]]},
+                     {"title": f"종목을 넣어 묻는 것 {len(STOCK_INTENTS)}가지", "lines": [e for _, e, _ in STOCK_INTENTS[::-1]]},
+                     {"title": "쓰는 법", "lines": ["종목은 '삼성전자' 자리에 코드, 티커, 회사명을 적습니다(스캔 대상: 미국 S&P 500, 한국 시가총액 상위 300).", "'장기'를 넣으면 장기 점수로, 없으면 스윙 점수로 답합니다.",
+                                                "이 목록은 'help', '도움말', '?'로 언제든 다시 볼 수 있습니다."]}])
+        return {**got, "examples": EXAMPLES}
     if intent == "TODAY":
         brief = briefing(terminal, market)
-        return {"title": f"오늘 할 일({where})", "lines": [brief["headline"]] + [f"[{i['level_label']}] {i['text']}" for i in brief["items"] if i["level"] != "INFO"][:8]
-                + ([] if brief["counts"]["ACT"] + brief["counts"]["DUE"] else ["참고 항목은 아래 목록에 있습니다."]), "tab": "today"}
+        groups = [{"title": LEVEL_KO[lv], "lines": [i["text"] for i in brief["items"] if i["level"] == lv][:6]} for lv in LEVELS]
+        return reply(f"오늘 할 일({where})", brief["headline"], groups + [{"title": "읽지 못한 부분", "lines": [p["label"] for p in brief["unread_parts"]]}], "today",
+                     ["오늘 상위 종목은?", "시장 상태 어때?", "어제와 뭐가 달라졌어?"])
     if intent == "TRUST":
-        return {"title": "이 점수를 얼마나 믿을 수 있나", "lines": [config.VALIDATION_NOTICE, "지금까지 근거가 나온 것은 한국의 회피 쪽(자금 조달 공시, 위험 등급)과 가격 범위의 폭입니다. 살 종목을 고르는 힘은 확인되지 않았습니다.",
-                                                         "앞으로의 기록으로 한 번씩 판정합니다(스윙 2027년 말, 장기 2030년쯤). 일정은 점수 탭의 '추적·검증'에 있습니다."], "tab": "qsf"}
+        return reply("이 점수를 얼마나 믿을 수 있나", "점수가 높은 종목의 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다. 지금은 순위와 위험을 정리해 보는 도구로 쓰는 것이 맞습니다.",
+                     [{"title": "과거 자료로 확인한 것", "lines": [config.VALIDATION_NOTICE]},
+                      {"title": "근거가 나온 쪽", "lines": ["한국의 회피 쪽입니다: 자금 조달 공시가 있는 종목과 위험 등급이 나쁜 종목은 이후 수익이 부진했습니다.", "가격 범위의 폭입니다: 5·20거래일 뒤 종가가 범위 안에 든 비율이 과거 자료와 맞았습니다.",
+                                                  "살 종목을 고르는 힘은 확인되지 않았습니다."]},
+                      {"title": "앞으로", "lines": ["매일의 기록으로 한 번씩 판정합니다(스윙 2027년 말, 장기 2030년쯤). 때가 되면 스스로 읽고 텔레그램으로 알립니다.",
+                                                "1년 기록으로는 꽤 큰 효과만 확인됩니다. '근거 없음'이 나와도 작은 효과가 없다는 뜻은 아닙니다."]}], "qsf", ["판정은 언제 나와?", "오늘 상위 종목은?"])
     if intent == "COST":
         c = config.COSTS[market]
-        return {"title": f"{where} 거래 비용 가정", "lines": [f"왕복 {config.round_trip_cost(market) * 100:.2f}%로 계산합니다.", str(c.get("basis") or ""), "스프레드와 슬리피지는 가정값이라 실제와 다를 수 있습니다."], "tab": "qsf"}
+        return reply(f"{where} 거래 비용 가정", f"{where} 주식은 사고파는 왕복 비용을 {config.round_trip_cost(market) * 100:.2f}%로 계산합니다.",
+                     [{"title": "구성", "lines": [str(c.get("basis") or "")]},
+                      {"title": "어디에 쓰이나", "lines": ["손익비, 모의 장부, 판정의 수익 계산에 모두 이 비용을 뺍니다.", "스프레드와 슬리피지는 가정값이라 실제 체결과 다를 수 있습니다. 거래대금이 작은 종목은 더 클 수 있습니다."]},
+                      {"title": "참고", "lines": [switch]}], "qsf")
     if intent == "ALERTS":
         view = terminal.alerts_view()
         rules = [r for r in view.get("rules") or [] if r.get("status") == "ACTIVE"]
         fired = texts(alert_items(view.get("log") or [], terminal.now()))
-        return {"title": "내 알림 조건", "lines": ([f"켜 둔 조건 {len(rules)}개: " + "; ".join(r.get("name") or r.get("type") for r in rules[:8]) + "."] if rules else ["켜 둔 알림 조건이 없습니다. 매매 보조 탭의 알림 센터에서 추가합니다."])
-                + (fired or ["어제 아침 이후 발생한 알림이 없습니다."]), "tab": "assist"}
+        return reply("내 알림 조건", f"켜 둔 알림 조건은 {len(rules)}개이고, 어제 아침 이후 발생한 알림은 {len(fired)}건입니다.",
+                     [{"title": "켜 둔 조건", "lines": [str(r.get("name") or r.get("type")) for r in rules[:10]] or ["없습니다. 매매 보조 탭의 알림 센터에서 가격, 등락폭, 점수 구간, 실적 임박 조건을 추가할 수 있습니다."]},
+                      {"title": "최근 발생", "lines": fired or ["없습니다."]},
+                      {"title": "알아 둘 것", "lines": ["하루 한 번, 매일 자동 실행 때 일봉 종가로 확인해 텔레그램으로 보냅니다. 실시간 알림이 아닙니다."]}], "assist")
     if intent == "VERDICTS":
         got = qsf_readings.status(base, terminal.now().date(), automation.readings_state(base))
         waiting = sorted((r for r in got["readings"] if r.get("state") == "WAITING" and r.get("expected")), key=lambda r: r["expected"])
-        read = [f"{r['label']}: {r.get('verdict')} ({r.get('meaning')})" for r in got["readings"] if r.get("state") == "READ"]
-        nxt = [f"다음 판정: {r['label']} · {r['expected']} 무렵({r['left']}거래일 남음)." for r in waiting[:3]]
-        return {"title": "판정 일정", "lines": [f"판정 {got['total']}건 중 {got['read']}건을 읽었습니다. 때가 되면 매일 작업이 스스로 읽고 텔레그램으로 알립니다."] + read[:5] + nxt, "tab": "qsf"}
+        read = [f"{r['label']}: {r.get('verdict')}. {r.get('meaning') or ''}" for r in got["readings"] if r.get("state") == "READ"]
+        nxt = [f"{r['label']}: {r['expected']} 무렵({r['left']}거래일 남음)." for r in waiting[:4]]
+        first = f" 가장 먼저 나오는 것은 {waiting[0]['label']}({waiting[0]['expected']} 무렵)입니다." if waiting else ""
+        return reply("판정 일정", f"판정 {got['total']}건 가운데 {got['read']}건을 읽었습니다.{first}",
+                     [{"title": "이미 읽은 판정", "lines": read[:6]}, {"title": "다음에 나올 판정", "lines": nxt},
+                      {"title": "알아 둘 것", "lines": ["판정은 기록이 충분히 쌓인 날 매일 작업이 스스로 한 번 읽고 텔레그램으로 알립니다. 사람이 할 일은 없습니다.",
+                                                  "대부분의 판정은 결과만 알려 주고 점수나 규칙을 자동으로 바꾸지 않습니다. 전체 목록은 점수 탭의 '추적·검증'에 있습니다."]}], "qsf", ["이 점수 믿어도 돼?"])
     if intent == "JOB":
         st = automation.status(base)
-        done = [f"{automation.STEP_NAMES.get(n, n)} {s.get('status')}" for n, s in (st.get("steps") or {}).items()]
-        return {"title": "자료 수집 상태", "lines": [f"최근 기준 거래일 {st.get('latest_session')}. " + ", ".join(done) + "."] + (texts(job_items(st, automation.STEP_NAMES)) or ["실패한 단계가 없습니다."])
-                + texts([i for i in top_items(terminal.qsf.top3(market), market) if i["kind"] == "RECORD_LATE"]), "tab": "lab"}
+        steps = st.get("steps") or {}
+        bad = texts(job_items(st, automation.STEP_NAMES))
+        ok = [automation.STEP_NAMES.get(n, n) for n, s in steps.items() if (s or {}).get("status") == "OK"]
+        failed = [n for n, s in steps.items() if (s or {}).get("status") == "FAILED"]
+        late = texts([i for i in top_items(terminal.qsf.top3(market), market) if i["kind"] == "RECORD_LATE"])
+        summary = (f"기준 거래일 {st.get('latest_session')}의 수집은 {len(steps)}단계 중 {len(ok)}단계가 끝났" + (f"고 {len(failed)}단계가 실패했습니다." if failed else "습니다. 실패한 단계는 없습니다.")) if steps else "자료 수집 기록이 없습니다."
+        return reply("자료 수집 상태", summary, [{"title": "챙길 것", "lines": bad + late}, {"title": "끝난 단계", "lines": [", ".join(ok)] if ok else []},
+                                             {"title": "알아 둘 것", "lines": ["매일 07:10부터 매시간 시도하고, 그날 할 일이 끝났으면 건너뜁니다. 맥이 잠들어 있으면 깨어난 뒤에 돕니다.",
+                                                                         "지금 바로 돌리려면 위의 '지금 수집'을 누릅니다."]}], "lab")
     if intent == "CHANGES":
         ch = qsf_changes.report(terminal.qsf.latest(market), terminal.qsf.ledger, market, "SWING")
         if ch.get("status") != "REAL":
-            return {"title": "직전 기록과 달라진 점", "lines": ["비교할 직전 기록이 없습니다."], "tab": "qsf"}
-        move = lambda r: f"{r.get('name') or r['ticker']}({r['ticker']}) {r['previous_score']:.1f} → {r['score']:.1f}"      # noqa: E731
-        return {"title": f"{where} 스윙 점수: {ch.get('previous_session')} → {ch.get('session')}", "lines": (texts(change_items(ch)) or ["매수 후보 구간을 드나든 종목이 없습니다."])
-                + ["가장 많이 오른 점수: " + "; ".join(move(r) for r in (ch.get("up") or [])[:3]) + ".", "가장 많이 내린 점수: " + "; ".join(move(r) for r in (ch.get("down") or [])[:3]) + "."], "tab": "qsf"}
+            return reply("직전 기록과 달라진 점", "비교할 직전 기록이 없습니다.", [], "qsf")
+        move = lambda r: f"{r.get('name') or r['ticker']}({r['ticker']}) {r['previous_score']:.1f} → {r['score']:.1f}점({r['delta']:+.1f})"      # noqa: E731
+        entered, left = ch.get("entered_buy") or [], ch.get("left_buy") or []
+        summary = (f"{where} 스윙 점수는 {ch.get('previous_session')} 기록과 견줘, 매수 후보 구간에 {len(entered)}종목이 새로 들어오고 {len(left)}종목이 빠졌습니다." if entered or left
+                   else f"{where} 스윙 점수는 {ch.get('previous_session')} 기록과 견줘 매수 후보 구간을 드나든 종목이 없습니다.")
+        return reply(f"{where} 스윙 점수: {ch.get('previous_session')} → {ch.get('session')}", summary,
+                     [{"title": "매수 후보 구간", "lines": texts(change_items(ch))}, {"title": "점수가 가장 많이 오른 종목", "lines": [move(r) for r in (ch.get("up") or [])[:5]]},
+                      {"title": "점수가 가장 많이 내린 종목", "lines": [move(r) for r in (ch.get("down") or [])[:5]]},
+                      {"title": "알아 둘 것", "lines": [f"두 기록에 모두 있는 {ch.get('compared')}종목을 비교했습니다. 하루 사이의 점수 변화는 대부분 가격 요인에서 나옵니다.", switch]}], "qsf",
+                     ["오늘 상위 종목은?"] + ([f"{(ch['down'][0].get('name') if market == 'KR' else None) or ch['down'][0]['ticker']} 점수 왜 이래?"] if ch.get("down") else []))
     if intent == "MARKET":
         state = terminal.market_state(market)
         if state.get("score_100") is None:
-            return {"title": f"{where} 시장 상태", "lines": ["시장 상태 기록이 없습니다."], "tab": "qsf"}
-        parts = [f"{FACTOR_KO.get(f['factor'], f['factor'])} {f['normalized'] * 100:.0f}/100" if f.get("normalized") is not None else f"{FACTOR_KO.get(f['factor'], f['factor'])} 자료 없음" for f in state.get("factors") or []]
-        return {"title": f"{where} 시장 상태({state.get('session')})", "lines": texts(market_items(state, market)) + ["구성 요인: " + ", ".join(parts) + ".", str(state.get("note") or "")], "tab": "qsf"}
+            return reply(f"{where} 시장 상태", f"{where} 시장 상태 기록이 없습니다.", [], "qsf")
+        parts = [f"{FACTOR_KO.get(f['factor'], f['factor'])}: {f['normalized'] * 100:.0f}/100" if f.get("normalized") is not None else f"{FACTOR_KO.get(f['factor'], f['factor'])}: 자료 없음({f.get('reason') or '받지 못함'})"
+                 for f in state.get("factors") or []]
+        return reply(f"{where} 시장 상태({state.get('session')})", texts(market_items(state, market))[0],
+                     [{"title": "구성 요인 (100에 가까울수록 좋음)", "lines": parts}, {"title": "이 값의 뜻", "lines": [str(state.get("note") or ""), "종목 점수에는 들어가지 않습니다. 모든 종목에 같은 값이라 순위를 바꾸지 못합니다."]},
+                      {"title": "참고", "lines": [switch]}], "qsf", ["오늘 상위 종목은?", "오늘 뭐 해야 해?"])
     if intent == "HOLDINGS":
         book = terminal.portfolio(market)
-        return {"title": f"{where} 보유 종목 점검", "lines": texts(holding_items(book, terminal.portfolio_signals(market)["items"] if book.get("holdings") else [], market)), "tab": "portfolio"}
-    plan = terminal.order_plan(market)                     # TOP
-    return {"title": f"{where} 점수 상위와 진입 후보", "lines": texts(top_items(terminal.qsf.top3(market), market)) + texts(plan_items(plan, market)), "tab": "qsf"}
+        items = holding_items(book, terminal.portfolio_signals(market)["items"] if book.get("holdings") else [], market)
+        act = [i for i in items if i["level"] == "ACT"]
+        n = len(book.get("holdings") or [])
+        summary = (f"{where} 계좌에 기록된 보유 종목이 없습니다." if not n else f"{where} 보유 {n}종목 가운데 먼저 볼 것이 {len(act)}건 있습니다." if act else f"{where} 보유 {n}종목에 손실과 관련해 먼저 볼 것은 없습니다.")
+        return reply(f"{where} 보유 종목 점검", summary, [{"title": LEVEL_KO[lv], "lines": [i["text"] for i in items if i["level"] == lv and n]} for lv in LEVELS]
+                     + ([{"title": "할 수 있는 것", "lines": ["포트폴리오 탭에 입금과 거래(매수가, 손절가, 장기·스윙 구분)를 기록하면 손절선, 보유 기한, 청산 조건을 매일 점검합니다.", switch]}] if not n else []), "portfolio")
+    plan, top3 = terminal.order_plan(market), terminal.qsf.top3(market)                     # TOP
+    days = (((top3.get("strategies") or {}).get("SWING") or {}).get("days")) or []
+    day = max(days, key=lambda d: d.get("session") or "") if days else {}
+    best = (day.get("top") or [{}])[0]
+    summary = (f"{where} 스윙 점수 1위는 {best.get('name') or best.get('ticker')}({best.get('ticker')}) {best['score']:.1f}점입니다({day.get('session')} 기록). 순위일 뿐 매수 신호가 아닙니다." if best.get("score") is not None
+               else f"{where} 상위 종목 기록이 없습니다.")
+    rows = {r["ticker"]: r for r in _rows(terminal, market) if r["strategy"] == "SWING"}
+    tops = [f"{x.get('rank')}위 {x.get('name') or x['ticker']}({x['ticker']}) {x['score']:.1f}점: '{(rows.get(x['ticker']) or {}).get('band_label') or '구간 없음'}', 진입 판단 '{ENTRY_KO.get((rows.get(x['ticker']) or {}).get('entry_status'), '자료 없음')}'."
+            for x in day.get("top") or []]
+    past = ("미국 과거 구간 시험에서 상위 3종목의 수익은 무작위로 고른 3종목과 구분되지 않았습니다. 상위라는 이유만으로 사지 마세요." if market == "US"
+            else "한국의 상위 3종목은 과거 구간으로 시험한 적이 없고, 2026-11-09부터 매일 고정해 추적하고 있습니다. 상위라는 이유만으로 사지 마세요.")
+    still = []
+    for x in day.get("top") or []:
+        s = _snap(terminal, {"ticker": x["ticker"], "market": market}, "SWING")
+        if s and pinned(s):
+            still.append(f"{x.get('name') or x['ticker']}({x['ticker']}): {pinned(s)}")
+    return reply(f"{where} 점수 상위와 진입 후보", summary, [{"title": f"스윙 상위 3종목(진입 거래일 {day.get('entry_session')})", "lines": tops}, {"title": "먼저 알아 둘 것", "lines": still},
+                                                       {"title": "주문 계획", "lines": texts(plan_items(plan, market))}, {"title": "읽을 때 주의", "lines": [past, switch]}], "qsf",
+                 [f"{best.get('name') if market == 'KR' else best.get('ticker')} 점수 왜 이래?", f"{best.get('name') if market == 'KR' else best.get('ticker')} 사도 돼?"] if best.get("ticker") else [])
+
+
+TICKER_LIKE = r"(?<![0-9A-Za-z])(?:[0-9][0-9A-Z]{5}|[A-Z]{2,5})(?![0-9A-Za-z])"
 
 
 def answer(terminal: Any, text: str, market: str = "US") -> Dict[str, Any]:
     """A typed line read by keyword.  It answers the fixed questions in ``EXAMPLES`` and says so when it does not know one."""
+    import re
     text = " ".join(str(text or "").split())[:200]
     if not text:
-        return {"status": "UNKNOWN", "title": "질문이 비어 있습니다", "lines": ["아래 예처럼 물어보세요."], "examples": EXAMPLES, "note": NOTE}
+        return {"status": "UNKNOWN", "title": "질문이 비어 있습니다", "summary": "아래 예처럼 물어보세요.", "sections": [], "lines": ["아래 예처럼 물어보세요."], "examples": EXAMPLES, "note": NOTE}
     if text.lower().strip(" ?？!.") in ("", "help", "h", "도움", "도움말", "질문", "목록"):
         text = "help"
     stock = None if text == "help" else find_stock(text, {m: _rows(terminal, m) for m in ("KR", "US")})
     intent = read_question(text, stock is not None)
+    code = None if stock or text == "help" else next(iter(re.findall(TICKER_LIKE, text)), None)
+    if code and (intent is None or any(w in text.lower() for _, _, words in STOCK_INTENTS for w in words)):
+        say = f"'{code}'{josa(code, '은는')[len(code):]} 스캔 대상(미국 S&P 500, 한국 시가총액 상위 300)에 없어 저장된 점수가 없습니다."
+        return {"status": "UNKNOWN_STOCK", "question": text, "ticker": code, "tab": "stock", "title": "스캔 대상이 아닌 종목입니다", "summary": say,
+                "sections": [{"title": "할 수 있는 것", "lines": ["아래 버튼으로 종목 탭을 열면 시세와 재무를 보고, 점수 탭의 '평가'에 코드를 넣으면 그 자리에서 점수를 계산합니다(처음에는 수십 초 걸릴 수 있습니다)."]}],
+                "lines": [say], "follow": [], "note": NOTE}
     if intent is None:
-        return {"status": "UNKNOWN", "question": text, "title": "이 질문은 알아듣지 못했습니다",
-                "lines": ["비서는 정해진 질문만 규칙으로 읽습니다. 종목을 물었다면 스캔 대상(미국 S&P 500, 한국 시가총액 상위 300)이 아니거나 이름이 달라서일 수 있습니다. 종목 탭에서 코드로 조회해 보세요."],
-                "examples": EXAMPLES, "note": NOTE}
+        say = "비서는 정해진 질문만 규칙으로 읽습니다. 아래 예 가운데 가까운 것을 누르거나 비슷하게 적어 주세요."
+        return {"status": "UNKNOWN", "question": text, "title": "이 질문은 알아듣지 못했습니다", "summary": say,
+                "sections": [{"title": "종목을 물었다면", "lines": ["회사명이 스캔 대상(미국 S&P 500, 한국 시가총액 상위 300)의 이름과 다르거나 대상이 아닐 수 있습니다. 종목 코드로 적어 보세요."]}],
+                "lines": [say], "examples": EXAMPLES, "note": NOTE}
     strategy = "LONG_TERM" if "장기" in text else "SWING"
     try:
         got = stock_answer(terminal, intent, stock, strategy) if stock else plain_answer(terminal, intent, market)
     except Exception as exc:                               # an unreadable source is said, never guessed around
-        return {"status": "UNAVAILABLE", "question": text, "intent": intent, "title": "답을 만들지 못했습니다", "lines": [f"필요한 자료를 읽지 못했습니다({type(exc).__name__})."], "note": NOTE}
-    return {"status": "REAL", "question": text, "intent": intent, "ticker": (stock or {}).get("ticker"), "market": (stock or {}).get("market", market), **got,
-            "lines": [x for x in got["lines"] if x], "note": NOTE}
+        say = f"필요한 자료를 읽지 못했습니다({type(exc).__name__}). 자료 수집이 도는 중이거나 기록 파일을 읽지 못한 경우입니다."
+        return {"status": "UNAVAILABLE", "question": text, "intent": intent, "title": "답을 만들지 못했습니다", "summary": say, "sections": [], "lines": [say], "follow": ["오늘 수집 됐어?"], "note": NOTE}
+    return {"status": "REAL", "question": text, "intent": intent, "ticker": (stock or {}).get("ticker"), "market": (stock or {}).get("market", market), **got, "note": NOTE}

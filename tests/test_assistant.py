@@ -123,13 +123,17 @@ def factor(name, domain, weight, normalized, **kw):
     return {"factor": name, "domain": domain, "weight": weight, "normalized": normalized, "status": "REAL", **kw}
 
 
-def snap(ticker, market, strategy, score, **kw):
-    factors = [factor("risk_reward", "RISK", 6, 0.0), factor("atr_risk", "RISK", 5, 0.1), factor("balance_sheet", "FUNDAMENTAL", 3, 1.0), factor("liquidity", "RISK", 5, 0.9),
-               factor("trend_structure", "TECHNICAL", 0, 0.95, scored=False), factor("earnings_calendar", "EVENTS", 4, 1.0, raw={"next_earnings": "2027-01-27", "sessions": 44, "basis": "ESTIMATE"})]
-    return {"ticker": ticker, "market": market, "strategy": strategy, "score": score, "data_date": "2026-11-20", "price": 183100.0 if market == "KR" else 250.0, "stop": 158079.3 if market == "KR" else 230.0,
-            "target": 208941.5 if market == "KR" else 290.0, "entry_status": "NO_VALID_ENTRY_SETUP", "coverage": 0.925, "gates": [], "factors": factors,
+def snap(ticker, market, strategy, score, liq=0.9, **kw):
+    px = 183100.0 if market == "KR" else 250.0
+    factors = [factor("risk_reward", "RISK", 6, 0.0, raw={"reward_risk": 0.96, "stop": px * 0.86335, "target": px * 1.14113, "cost_pct": 0.53}),
+               factor("atr_risk", "RISK", 5, 0.1, raw={"atr_pct": 0.068, "hist_vol": 0.78}), factor("balance_sheet", "FUNDAMENTAL", 3, 1.0, raw={"debt_equity": 0.3, "current_ratio": 2.33}),
+               factor("liquidity", "RISK", 5, liq, raw={"adv_value": 3.77e12}), factor("trend_structure", "TECHNICAL", 0, 0.95, scored=False),
+               factor("earnings_calendar", "EVENTS", 4, 1.0, raw={"next_earnings": "2027-01-27", "sessions": 44, "basis": "ESTIMATE", "from": "2026-01-29"})]
+    return {"ticker": ticker, "market": market, "strategy": strategy, "score": score, "data_date": "2026-11-20", "price": px, "stop": px * 0.86335, "target": px * 1.14113,
+            "entry_status": "NO_VALID_ENTRY_SETUP", "coverage": 0.925, "gates": [], "factors": factors, "model_version": "QSF-1.4.1", "provenance": {"fund_filed": "2026-03-10"},
             "domains": {"RISK": {"score_100": 26.2, "points": 5.2}, "FUNDAMENTAL": {"score_100": 85.9, "points": 8.6}, "REGIME": {"score_100": 25.4, "points": 0.0, "reference": True}},
-            "holding": {"reward_risk": 0.96, "invalidation": ["종가가 158,079.30 아래로 마감"], "gap_note": "손절은 체결을 보장하지 않습니다."}, **kw}
+            "holding": {"reward_risk": 0.96, "invalidation": ["종가가 158,079.30 아래로 마감"], "gap_note": "손절은 체결을 보장하지 않습니다.", "stop_method": "2 ATR 시나리오",
+                        "exit_triggers": ["종가 손절선 이탈", "목표 도달"], "expected_sessions": 5, "first_review": "2026-11-30"}, **kw}
 
 
 def row(ticker, name, strategy, score, **kw):
@@ -162,7 +166,7 @@ class FakeQsf:
         self.rows = {"KR": [row("005930", "삼성전자", "SWING", 53.9, filing_events={"financing": False, "buyback": True}), row("005930", "삼성전자", "LONG_TERM", 64.2),
                             row("005935", "삼성전자우", "SWING", 40.0), row("373220", "LG에너지솔루션", "SWING", 30.0, high_risk=True, filing_events={"financing": True, "buyback": False})],
                      "US": [row("AAPL", "Apple Inc.", "SWING", 71.5), row("A", "Agilent Technologies, Inc.", "SWING", 60.0), row("IT", "Gartner, Inc.", "SWING", 55.0), row("TECH", "Bio-Techne Corporation", "SWING", 76.4)]}
-        self.ledger = FakeLedger([snap("005930", "KR", "SWING", 53.9), snap("005930", "KR", "LONG_TERM", 64.2), snap("005935", "KR", "SWING", 40.0),
+        self.ledger = FakeLedger([snap("005930", "KR", "SWING", 53.9, liq=(53.9 * 0.23 - 7.5) / 5), snap("005930", "KR", "LONG_TERM", 64.2), snap("005935", "KR", "SWING", 40.0),
                                   snap("373220", "KR", "SWING", 30.0, gates=[{"code": "SEVERE_EVENT", "text": "중대한 공시: 횡령·배임 (2026-10-14)"}]),
                                   snap("AAPL", "US", "SWING", 71.5, entry_status="ENTRY_NOW"), snap("A", "US", "SWING", 60.0), snap("IT", "US", "SWING", 55.0), snap("TECH", "US", "SWING", 76.4)])
 
@@ -250,51 +254,130 @@ def test_every_example_question_is_read_as_its_own_kind():
     assert len(A.EXAMPLES) == len(A.STOCK_INTENTS) + len(A.PLAIN_INTENTS) == 19
 
 
-def test_stock_answers_come_from_the_stored_scan(term):
+def flat(a):
+    return " ".join(a["lines"])
+
+
+def test_an_answer_gives_the_conclusion_first_then_titled_groups_and_what_to_ask_next(term):
     why = A.answer(term, "삼성전자 점수 왜 낮아?", "US")
     assert why["status"] == "REAL" and why["intent"] == "WHY" and why["ticker"] == "005930" and why["market"] == "KR" and why["note"] == A.NOTE
-    text = " ".join(why["lines"])
-    assert "스윙 53.9점" in text and "장기 64.2점" in text and "손익비 0/100(배점 6)" in text and "재무 상태 100/100" in text and "추세 구조" not in text and "시장 국면" not in text      # reference rows are not the score
+    assert why["summary"].startswith("삼성전자의 스윙 점수는 53.9점으로 3종목 중 1위(상위 33%)") and "중간값 40.0점" in why["summary"] and "16.1점 모자랍니다" in why["summary"]
+    assert "매수 후보 구간에 든 종목이 하나도 없습니다" in why["summary"] and why["lines"][0] == why["summary"]
+    titles = [s["title"] for s in why["sections"]]
+    assert titles[0].startswith("점수를 깎은 것 (100점에서 46.1점을 잃었고") and titles[1:] == ["점수를 받친 것", "점수에 들어가지 않은 것", "프로그램이 이 점수로 읽는 것", "무엇이 달라지면 바뀌나"]
+    assert why["lines"] == [why["summary"]] + [x for s in why["sections"] for x in s["lines"]]
+    lost = why["sections"][0]["lines"]
+    assert lost[0].startswith("손익비 0/100(26.1점 잃음)") and "목표 208,941원(+14.1%), 손절 158,079원(-13.7%)" in lost[0] and "손익비 0.96" in lost[0]
+    assert "채점 기준: 손익비가 1.0 이하면 0점, 3.0 이상이면 100점." in lost[0] and "하루 변동 폭이 가격의 6.8%" in lost[1]
+    kept = why["sections"][1]["lines"]
+    assert kept[0].startswith("유동성 98/100(21.3점 얻음)") and "3.77조 원" in kept[0] and "채점 기준" not in kept[0]
+    out = " ".join(why["sections"][2]["lines"])
+    assert "시장 국면 영역은 이 점수에 들어가지 않습니다(참고값 25/100)" in out and "추세 구조" not in flat(why)                    # reference rows are told apart, never scored
+    assert "'유효한 진입 근거 없음'" in flat(why) and "장기 점수는 64.2점" in flat(why) and "1.1점 오르면 '보유·관찰' 구간(55점 이상)" in flat(why)
+    assert why["basis"].startswith("기준: 2026-11-20 종가 183,100원") and "데이터 반영률 92%" in why["basis"]
+    assert why["follow"] == ["삼성전자 장기 점수 왜 이래?", "삼성전자 사도 돼?", "삼성전자 손절 어디?", "삼성전자 위험해?", "삼성전자 얼마까지 움직일까?"]
+    for q in why["follow"]:                                                       # every follow-up is itself a question it can answer
+        assert A.answer(term, q, "KR")["status"] == "REAL", q
+    assert A.answer(term, "삼성전자 장기 점수", "KR")["title"] == "삼성전자(005930) 장기 점수가 이렇게 나온 이유"
+    us = A.answer(term, "AAPL 왜?", "KR")
+    assert us["follow"][0] == "AAPL 장기 점수 왜 이래?" and "$250.00" in us["basis"]             # a US stock is asked about by its ticker
+
+
+def test_the_score_is_taken_apart_into_points_lost_and_kept():
+    s = snap("005930", "KR", "SWING", 53.9)
+    parts = A.breakdown({**s, "score": 100 * (6 * 0.0 + 5 * 0.1 + 3 * 1.0 + 5 * 0.9 + 4 * 1.0) / 23})
+    assert parts["total"] == 23 and sum(r["kept"] + r["lost"] for r in parts["rows"]) == pytest.approx(100.0)
+    assert sum(r["lost"] for r in parts["rows"]) == pytest.approx(100 - 100 * 12 / 23) and [f["factor"] for f in parts["reference"]] == ["trend_structure"]
+    assert A.breakdown({**s, "score": 99.0}) is None                              # stored figures that do not rebuild the score are not passed off as its parts
+    empty = {**s, "score": 100 * 12 / 23, "factors": s["factors"] + [factor("insider_activity", "EVENTS", 3, None, reason="내부자 공시를 해석할 수 없습니다")]}
+    assert [f["factor"] for f in A.breakdown(empty)["empty"]] == ["insider_activity"]
+
+
+def test_the_words_for_each_signal_follow_the_scoring_code():
+    """What a signal measures and how it is scaled are written once, beside the line of factors.py they describe."""
+    from terminal.qsf import config
+    src = (ROOT / "terminal" / "qsf" / "factors.py").read_text(encoding="utf-8")
+    counted = {n for p in config.PROFILES.values() for d in p["domains"].values() for n in d}
+    assert counted <= set(A.FACTOR_INFO) and counted <= set(A.FACTOR_KO)          # every signal a score counts can be explained
+    for name, (what, scale, line) in A.FACTOR_INFO.items():
+        assert line in src, name
+        assert "니다" in what and scale and "−" not in scale, name
+    f = factor("valuation", "FUNDAMENTAL", 15, 0.58, raw={"pe": 27.72, "pb": 2.52, "fcf_yield": 0.0343})
+    assert A.figures(f, {"price": 100.0}, "KR") == "PER 27.7배, PBR 2.52배, 잉여현금흐름 수익률 3.4%"
+    assert A.figures(factor("leverage", "RISK", 4, 0.5, raw={"debt_equity": None}), {}, "KR") == "부채/자본 자료 없음"      # a missing figure is said, never shown as 0
+    assert A.figures(factor("liquidity", "RISK", 5, 1.0, raw={"adv_value": 2.35e9}), {}, "US") == "20일 평균 거래대금 23.5억 달러"
+    assert A.figures(factor("balance_sheet", "FUNDAMENTAL", 3, 0.3, raw={"equity_assets": 0.076}), {}, "KR") == "자기자본/자산 7.6%"       # a bank is read by its own measure
+
+
+def test_particles_follow_the_last_sound_and_a_price_that_hardly_moves_is_said():
+    assert [A.josa(w, "은는") for w in ("삼성전자", "KB금융", "AAPL", "TECH", "Apple Inc.")] == ["삼성전자는", "KB금융은", "AAPL은", "TECH는", "Apple Inc.는"]
+    assert A.josa("현대로템", "이가") == "현대로템이" and A.josa("서울", "으로로") == "서울로" and A.josa("삼성", "으로로") == "삼성으로" and A.josa("123456", "은는") == "123456은"
+    still = {"factors": [factor("atr_risk", "RISK", 5, 1.0, raw={"atr_pct": 0.0018, "hist_vol": 0.43})]}
+    assert "0.2%로 거의 움직이지 않습니다" in A.pinned(still) and "공시를 먼저 확인" in A.pinned(still)
+    assert A.pinned({"factors": [factor("atr_risk", "RISK", 5, 0.8, raw={"atr_pct": 0.017})]}) is None and A.pinned({"factors": []}) is None
+
+
+def test_stock_answers_come_from_the_stored_scan(term):
     buy = A.answer(term, "AAPL 사도 돼?", "KR")
-    assert buy["intent"] == "BUY_CHECK" and buy["lines"][0].startswith("○ 점수 구간") and buy["lines"][1].startswith("○ 진입 판단") and buy["lines"][5].startswith("✕ 시장 상태")
-    assert "살지 말지에 대한 답이 아닙니다" in buy["lines"][-1] and "7개 중" in buy["lines"][-1]
+    table = buy["sections"][0]["lines"]
+    assert buy["intent"] == "BUY_CHECK" and len(table) == 7 and table[0].startswith("○ 점수 구간: 스윙 71.5점") and table[1].startswith("○ 진입 판단: '지금 진입 가능 구간'") and table[5].startswith("✕ 시장 상태")
+    assert "7개 중 6개가 걸림 없이 통과" in buy["summary"] and "걸린 것은 시장 상태입니다" in buy["summary"] and "살지 말지에 대한 답이 아닙니다" in buy["summary"]
     for word in ("사세요", "매수하세요", "파세요", "매도하세요", "추천합니다"):
-        assert word not in json.dumps(buy, ensure_ascii=False) and word not in json.dumps(why, ensure_ascii=False)
+        assert word not in json.dumps(buy, ensure_ascii=False)
     kr = A.answer(term, "삼성전자 사도 돼?", "KR")
-    assert kr["lines"][4].startswith("○ 회피 표시: 없음") and any(x.startswith("– 참고: 자사주 취득") for x in kr["lines"])       # a buyback is a note, not a mark against
+    assert kr["sections"][0]["lines"][4].startswith("○ 회피 표시: 없음") and any("자사주 취득 공시" in x for x in kr["sections"][1]["lines"])       # a buyback is a note, not a mark against
+    assert "'유효한 진입 근거 없음'" in kr["sections"][0]["lines"][1] and "지금 손익비는 0.96입니다" in kr["sections"][0]["lines"][1]
     risk = A.answer(term, "LG에너지솔루션 위험해?", "KR")
-    assert "횡령·배임" in risk["lines"][0] and "고위험 표시" in risk["lines"][1] and "자금 조달 공시" in risk["lines"][1]
+    by = {s["title"]: s["lines"] for s in risk["sections"]}
+    assert "차단 조건 1건, 회피 표시 2건" in risk["summary"] and "횡령·배임" in by["차단 조건"][0] and "고위험 표시" in by["회피 표시"][0] and "자금 조달 공시" in by["회피 표시"][1]
+    assert any(x.startswith("변동 폭 위험 10/100(배점 5)") for x in by["위험 요인의 실제 수치"])
+    calm = A.answer(term, "AAPL 위험해?", "KR")
+    assert "안전하다는 뜻은 아닙니다" in calm["summary"]
     stop = A.answer(term, "005930 손절 어디?", "KR")
-    assert "158,079원" in stop["lines"][0] and "208,942원" in stop["lines"][0] and "0.96" in stop["lines"][1]
-    assert "2027-01-27" in A.answer(term, "삼성전자 실적 언제?", "KR")["lines"][0] and "추정한 값" in A.answer(term, "삼성전자 실적 언제?", "KR")["lines"][0]
+    assert "손절선은 158,079원(지금보다 -13.7%), 목표는 208,941원(지금보다 +14.1%)" in stop["summary"] and "0.96" in flat(stop) and "주문이 아닙니다" in flat(stop)
+    long_stop = A.answer(term, "삼성전자 장기 손절 어디?", "KR")
+    assert "가격으로 정한 손절선이 없습니다" in long_stop["summary"] and long_stop["title"].endswith("장기 보유의 기준")
+    earn = A.answer(term, "삼성전자 실적 언제?", "KR")
+    assert "2027-01-27(44거래일 뒤)" in earn["summary"] and "추정했습니다" in flat(earn) and "발표 5거래일 전부터 새 진입을 막습니다" in flat(earn) and "지금은 그 밖입니다" in flat(earn)
     rank = A.answer(term, "TECH 몇 등이야?", "KR")
-    assert "4종목 중 1위" in rank["lines"][0] and "근거는 아직 확인되지 않았습니다" in rank["lines"][1]
+    assert "4종목 중 1위(상위 25%)" in rank["summary"] and "근거는 아직 확인되지 않았습니다" in flat(rank) and "매수 후보 구간(70점 이상)에 든 종목은 2개" in flat(rank)
+    low = A.answer(term, "IT 몇 등이야?", "KR")
+    assert "4종목 중 4위(하위 1%)" in low["summary"]
     sell = A.answer(term, "삼성전자 팔아야 해?", "KR")
-    assert sell["intent"] == "SELL_CHECK" and "보유 기록이 없어" in sell["lines"][0]
+    assert sell["intent"] == "SELL_CHECK" and sell["summary"].startswith("삼성전자는 보유 기록이 없어") and sell["tab"] == "portfolio"
     held = A.answer(FakeTerminal(term.base, held=["005930"]), "삼성전자 팔아야 해?", "KR")
-    assert "비중 축소 검토" in held["lines"][0] and "주문은 직접 정합니다" in held["lines"][-1]
-    assert A.answer(term, "삼성전자 장기 점수", "KR")["lines"][1].startswith("장기 점수의 영역별")
+    assert "'비중 축소 검토'" in held["summary"] and "주문은 직접 정합니다" in flat(held)
+    gone = A.answer(term, "ZZZZ 사도 돼?", "KR")
+    assert gone["status"] == "UNKNOWN_STOCK" and gone["ticker"] == "ZZZZ" and gone["tab"] == "stock" and "'ZZZZ'는 스캔 대상" in gone["summary"]
+    assert A.answer(term, "123456 손절", "KR")["status"] == "UNKNOWN_STOCK" and A.answer(term, "비트코인 전망", "KR")["status"] == "UNKNOWN"
 
 
 def test_plain_answers_and_what_it_does_not_know(term):
-    assert A.answer(term, "시장 상태 어때?", "KR")["intent"] == "MARKET" and "지수 추세 0/100" in " ".join(A.answer(term, "시장 상태 어때?", "KR")["lines"])
-    assert "왕복 0.53%" in A.answer(term, "수수료는 얼마로 계산해?", "KR")["lines"][0]
-    assert A.answer(term, "오늘 상위 종목은?", "US")["lines"][0].startswith("미국 스윙 점수 상위 3종목")
+    market = A.answer(term, "시장 상태 어때?", "KR")
+    assert market["intent"] == "MARKET" and market["summary"].startswith("한국 시장 상태 25/100(나쁨)") and "지수 추세: 0/100" in flat(market) and "순위를 바꾸지 못합니다" in flat(market)
+    assert "왕복 비용을 0.53%로 계산합니다" in A.answer(term, "수수료는 얼마로 계산해?", "KR")["summary"]
+    top = A.answer(term, "오늘 상위 종목은?", "US")
+    assert top["summary"].startswith("미국 스윙 점수 1위는 Bio-Techne(TECH) 76.4점") and "무작위로 고른 3종목과 구분되지 않았습니다" in flat(top) and top["follow"] == ["TECH 점수 왜 이래?", "TECH 사도 돼?"]
+    assert "과거 구간으로 시험한 적이 없고" in flat(A.answer(term, "오늘 상위 종목은?", "KR"))
     for typed in ("뭘 물어볼 수 있어?", "help", "도움말", "?", "명령어 뭐 있어"):
         got = A.answer(term, typed, "KR")
         assert got["status"] == "REAL" and got["intent"] == "HELP" and got["examples"] == A.EXAMPLES and "19가지" in got["title"], typed
-        assert "종목 없이 묻는 것 11가지" in got["lines"][1] and "종목을 넣어 묻는 것 8가지" in got["lines"][2] and "'help'" in got["lines"][-1]
+        assert [s["title"] for s in got["sections"]] == ["종목 없이 묻는 것 11가지", "종목을 넣어 묻는 것 8가지", "쓰는 법"] and "'help'" in got["lines"][-1]
     trust = A.answer(term, "이 점수 믿어도 돼?", "KR")
-    assert trust["intent"] == "TRUST" and "확인되지 않았습니다" in trust["lines"][1]
+    assert trust["intent"] == "TRUST" and "아직 확인되지 않았습니다" in trust["summary"] and "살 종목을 고르는 힘은 확인되지 않았습니다." in flat(trust)
     today = A.answer(term, "오늘 뭐 해야 해?", "KR")
-    assert today["intent"] == "TODAY" and today["tab"] == "today" and today["lines"][0] == "오늘 따로 챙길 것이 없습니다."
+    assert today["intent"] == "TODAY" and today["tab"] == "today" and today["summary"] == "오늘 따로 챙길 것이 없습니다." and [s["title"] for s in today["sections"]] == ["참고"]
+    hold = A.answer(term, "내 보유 종목 괜찮아?", "KR")
+    assert hold["summary"] == "한국 계좌에 기록된 보유 종목이 없습니다." and [s["title"] for s in hold["sections"]] == ["할 수 있는 것"]
+    job = A.answer(term, "오늘 수집 됐어?", "KR")
+    assert "1단계 중 1단계가 끝났습니다. 실패한 단계는 없습니다." in job["summary"]
     unknown = A.answer(term, "비트코인 전망", "KR")
-    assert unknown["status"] == "UNKNOWN" and unknown["examples"] == A.EXAMPLES and "알아듣지 못했습니다" in unknown["title"]
+    assert unknown["status"] == "UNKNOWN" and unknown["examples"] == A.EXAMPLES and "알아듣지 못했습니다" in unknown["title"] and unknown["lines"] == [unknown["summary"]]
     assert A.answer(term, "   ", "KR")["status"] == "UNKNOWN" and A.answer(term, "HELP 삼성전자", "KR")["intent"] != "HELP" and len(A.answer(term, "가" * 500 + " 시장", "KR")["question"]) <= 200
     broken = FakeTerminal(term.base)
     broken.market_state = lambda market="US": (_ for _ in ()).throw(OSError("x"))
     lost = A.answer(broken, "시장 상태 어때?", "KR")
-    assert lost["status"] == "UNAVAILABLE" and "OSError" in lost["lines"][0]
+    assert lost["status"] == "UNAVAILABLE" and "OSError" in lost["summary"] and lost["follow"] == ["오늘 수집 됐어?"]
 
 
 # ---------------------------------------------------------------------- wiring
@@ -311,6 +394,7 @@ def test_the_assistant_asks_no_network_and_is_wired_into_the_server_and_the_firs
     assert html.index('data-tab="today"') < html.index('data-tab="overview"') and 'id="tab-today" class="tab on"' in html and html.index("assistant.js") < html.index("command.js")
     js = (server.STATIC / "assistant.js").read_text(encoding="utf-8")
     assert "RENDER.today = renderToday" in js and "/api/assistant/ask" in js and "esc(i.text)" in js and "innerHTML = a." not in js
+    assert 'class="asst-sum">${esc(a.summary)}' in js and "a.sections.map((s) => `<h4>${esc(s.title)}</h4>" in js and "이어서 물어보기" in js and "esc(a.basis)" in js      # every text goes through esc
     assert 'RENDER.today ? "today" : "overview"' in (server.STATIC / "app.js").read_text(encoding="utf-8")
     cmd = (server.STATIC / "command.js").read_text(encoding="utf-8")
     assert "askAssistant(q)" in cmd and 'today: ["오늘", "비서"' in cmd and 'askAssistant("help")' in cmd and '"도움말"' in cmd
