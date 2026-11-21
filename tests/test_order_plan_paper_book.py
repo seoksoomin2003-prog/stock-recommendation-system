@@ -326,3 +326,9 @@ def test_the_real_account_plan_says_so_when_there_is_no_scan_and_never_writes(tm
     got = t.order_plan("US")
     assert got["status"] == "NO_SCAN" and "주문을 보내지 않습니다" in got["note"] and pb.status(tmp_path, "US")["status"] == "NO_RECORD"
     assert sorted(p.name for p in tmp_path.rglob("*") if p.is_file()) == before
+
+
+def test_candidates_are_counted_by_style_and_buy_band():
+    from terminal.qsf import order_plan
+    cands = [{"style": "SWING", "score": 71.0}, {"style": "SWING", "score": 58.0}, {"style": "LONG", "score": 70.0}, {"style": "LONG", "score": 69.9}, {"style": "LONG", "score": 55.0}]
+    assert order_plan.count_by(cands) == {"SWING": {"all": 2, "buy": 1}, "LONG": {"all": 3, "buy": 1}} and order_plan.count_by([]) == {}

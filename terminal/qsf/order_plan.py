@@ -116,6 +116,16 @@ def candidates(snaps: Iterable[Dict[str, Any]], session: str, info: Optional[Dic
     return sorted(out, key=lambda c: (-c["score"], c["ticker"], c["style"]))
 
 
+def count_by(cands: List[Dict[str, Any]], buy: float = 70.0) -> Dict[str, Dict[str, int]]:
+    """Per style, how many candidates there are and how many of them score inside the buy band.  Display only."""
+    out: Dict[str, Dict[str, int]] = {}
+    for c in cands:
+        row = out.setdefault(c["style"], {"all": 0, "buy": 0})
+        row["all"] += 1
+        row["buy"] += c["score"] >= buy
+    return out
+
+
 def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, settings: Optional[Dict[str, float]] = None, state: Optional[Dict[str, Any]] = None,
           blocked: Optional[Any] = None, outside: Optional[set] = None) -> Dict[str, Any]:
     """``account``: ``equity``, ``cash``, ``positions`` {ticker: {style, value, sector}}.  Candidates are taken in score order; each

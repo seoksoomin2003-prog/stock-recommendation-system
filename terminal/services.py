@@ -821,7 +821,7 @@ class Terminal(ModelViews):
         _, integ, state, val, _, _ = self._valued(market)
         equity = val["summary"]["equity"]
         if not equity or equity <= 0:
-            return {"status": "NO_ACCOUNT", "market": market, "session": session, "candidates": len(cands), "note": note, "market_state": mstate,
+            return {"status": "NO_ACCOUNT", "market": market, "session": session, "candidates": len(cands), "candidates_by": op.count_by(cands), "note": note, "market_state": mstate,
                     "reason": "계좌 평가액이 없습니다. 포트폴리오 탭에 입금·거래를 기록하면 그 계좌 기준으로 계획을 보여 줍니다."}
         account = {"equity": equity, "cash": state["cash"],
                    "positions": {h["ticker"]: {"style": h.get("style"), "value": h.get("value") or 0.0, "sector": h.get("sector")} for h in val["holdings"]}}

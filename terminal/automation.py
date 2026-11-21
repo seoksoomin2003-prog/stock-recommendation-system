@@ -914,6 +914,8 @@ def _launchctl(*args: str):
         return subprocess.run(["launchctl", *args], capture_output=True, text=True, timeout=LAUNCHCTL_PRINT_TIMEOUT_S if args[:1] == ("print",) else None)
     except subprocess.TimeoutExpired:
         return subprocess.CompletedProcess(["launchctl", *args], 124, "", "TIMEOUT")
+    except OSError:                               # not a Mac: there is no launchctl, so nothing is installed and the screens say so
+        return subprocess.CompletedProcess(["launchctl", *args], 127, "", "NO_LAUNCHCTL")
 
 
 def install(base: Path) -> Dict[str, Any]:

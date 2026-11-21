@@ -70,6 +70,14 @@ def holding_items(portfolio: Dict[str, Any], signals: List[Dict[str, Any]], mark
     return out
 
 
+def candidate_split(by: Optional[Dict[str, Dict[str, int]]]) -> str:
+    """Entry is read from 55 points, the buy band from 70: the count alone reads as if every candidate were a buy candidate."""
+    parts = [f"{STYLE_KO[k]} {v['all']}건 중 {v['buy']}건" for k, v in (by or {}).items() if k in STYLE_KO and v.get("all")]
+    if not parts:
+        return ""
+    return f"그중 매수 후보 구간({BUY_LINE:g}점 이상)은 {', '.join(parts)}이고, 나머지는 관망 구간(55~{BUY_LINE:g}점)이면서 진입 조건만 채운 종목입니다. "
+
+
 def plan_items(plan: Dict[str, Any], market: str) -> List[Dict[str, Any]]:
     """``plan``: Terminal.order_plan(market).  Quantities come from the account the user recorded; without one only the count is known."""
     status = plan.get("status")
@@ -78,6 +86,7 @@ def plan_items(plan: Dict[str, Any], market: str) -> List[Dict[str, Any]]:
     n = plan.get("candidates") or 0
     if status == "NO_ACCOUNT":
         return [item("INFO", "NO_ACCOUNT", f"{MARKET_KO[market]} 계좌가 기록돼 있지 않아 주문 수량·손절·한도를 계산하지 못했습니다. 지금 진입 가능 구간으로 읽힌 후보는 스윙·장기 합쳐 {n}건입니다. "
+                     + candidate_split(plan.get("candidates_by")) +
                      "포트폴리오 탭에 입금과 거래를 기록하면 계좌 기준 계획과 보유 종목 점검이 만들어집니다.", tab="portfolio",
                      short=f"계좌 미기록(진입 가능 후보 {n}건)")]
     if status != "REAL":
@@ -233,13 +242,18 @@ def _index_lines(overview: Dict[str, Any]) -> Dict[str, List[str]]:
     return out
 
 
+def macro_dates(items: List[Dict[str, Any]], market: str) -> List[Dict[str, Any]]:
+    """Macro dates that belong to the market on screen: US dates move both markets, a Korean date is not listed under the US."""
+    return [e for e in items if market != "US" or e.get("country") in (None, "US")]
+
+
 def context_items(overview: Dict[str, Any], calendar: Dict[str, Any], market: str) -> List[Dict[str, Any]]:
     """The market in one line for the day's list, and official macro dates within three days."""
     out = []
     first = (_index_lines(overview)["index"] or [None])[:2]
     if first[0]:
         out.append(item("INFO", "MARKET_MOVE", f"{MARKET_KO[market]} 지수: " + " ".join(first), tab="overview"))
-    for e in calendar.get("items") or []:
+    for e in macro_dates(calendar.get("items") or [], market):
         if e.get("days_away") is not None and 0 <= e["days_away"] <= 3:
             when = "오늘" if e["days_away"] == 0 else f"{e['days_away']}일 뒤"
             out.append(item("INFO", "MACRO_DATE", f"거시 일정: {e.get('name')} {e.get('date_kst') or e.get('date')}({when}). 발표 전후에는 시장 전체가 크게 움직일 수 있습니다.", tab="macro"))
@@ -787,6 +801,12 @@ NOTE_LIMITS = ["증권사 추정치(컨센서스), 경영진의 전망, 뉴스�
                "점수가 높은 종목의 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다. 투자 자문이 아닙니다."]
 
 
+def _middle(vals: List[float]) -> float:
+    """The median of a sorted list; with an even count the mean of the two middle values, so no stock is its own median."""
+    n = len(vals)
+    return vals[n // 2] if n % 2 else (vals[n // 2 - 1] + vals[n // 2]) / 2
+
+
 def sector_lines(peers: Dict[str, Any], ticker: str) -> List[str]:
     """Each ratio beside the scanned stocks of the same industry: the median and where this stock stands, best side first."""
     rows = peers.get("peers") or []
@@ -800,10 +820,10 @@ def sector_lines(peers: Dict[str, Any], ticker: str) -> List[str]:
         if mine is None or len(vals) < MIN_PEERS:
             continue
         if key == "pe" and mine <= 0:
-            out.append(f"{label}: 적자라 계산되지 않습니다(업종 중앙값 {vals[len(vals) // 2]:.{digits}f}배).")
+            out.append(f"{label}: 적자라 계산되지 않습니다(업종 중앙값 {_middle(vals):.{digits}f}배).")
             continue
         scale = 100 if unit == "%" else 1
-        med = vals[len(vals) // 2]
+        med = _middle(vals)
         place = 1 + sum(1 for v in vals if (v > mine if high else v < mine))
         side = "보다 높습니다" if mine > med else "보다 낮습니다" if mine < med else "와 같습니다"
         good = (mine > med) == high and mine != med
@@ -941,7 +961,7 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
         cat.append("다음 실적 발표일이 저장돼 있지 않습니다.")
     cat += [fig(fs, "material_disclosures", swing), fig(fl, "governance", long_)]
     try:
-        for e in (terminal.econ_calendar(market, 14).get("items") or [])[:3]:
+        for e in macro_dates(terminal.econ_calendar(market, 14).get("items") or [], market)[:3]:
             cat.append(f"거시 일정: {e.get('name')} {e.get('date_kst') or e.get('date')}({e.get('days_away')}일 뒤).")
     except Exception:
         pass
@@ -980,7 +1000,9 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
     except Exception:
         pass
     if swing and swing.get("stop"):
-        scen.append(f"스윙 계획의 손절 {price(swing['stop'], market)}, 목표 {price(swing.get('target'), market)}, 손익비 {((swing.get('holding') or {}).get('reward_risk') or 0):.2f}.")
+        entry = swing.get("entry_status")
+        scen.append(f"스윙 계획의 손절 {price(swing['stop'], market)}, 목표 {price(swing.get('target'), market)}, 손익비 {((swing.get('holding') or {}).get('reward_risk') or 0):.2f}."
+                    + (f" 진입 판단은 '{ENTRY_KO.get(entry, entry)}'입니다. {ENTRY_MEANING.get(entry, '')}".rstrip() if entry else ""))
     sections.append({"title": "시나리오", "lines": scen})
     # what would change the view
     hold = (long_ or {}).get("holding") or {}

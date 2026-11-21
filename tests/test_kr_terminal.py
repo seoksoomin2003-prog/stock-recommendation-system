@@ -276,3 +276,21 @@ def test_macro_spread_and_yoy(term, monkeypatch):
 def test_model_kr_without_runs_is_labelled_experimental(term):
     d = term({}).model("KR")
     assert d["baseline"]["status"] == "EXPERIMENTAL" and "run_id" not in d["baseline"]
+
+
+def test_without_a_connection_and_without_a_stored_list_the_korean_screens_answer_in_words(term, monkeypatch):
+    """A new device, or one offline for more than a week, has no usable list of listed companies: the load raises.  The score
+    card, the company screen and the name search said INTERNAL_ERROR (HTTP 500); they now say what is missing."""
+    from markets.kr import security_master
+    t = term({})
+    t.qsf._kr_master = None
+
+    def down(*a, **k):
+        raise RuntimeError("KIND download failed for KOSPI: ConnectionError")
+    monkeypatch.setattr(security_master, "load_master", down)
+    got = t.qsf.evaluate("005930", "KR")
+    assert got["status"] == "UNAVAILABLE" and "종목 목록을 받지 못했습니다" in got["reason"] and "인터넷 연결" in got["reason"] and "RuntimeError" in got["reason"]
+    company = t.qsf.kr_company("005930")
+    assert company["ident"] is None and "인터넷 연결" in company["reason"]
+    assert t.qsf.kr_search("삼성전자") == []
+    assert t.qsf._kr_identity_or_reason("005930")[0] is None

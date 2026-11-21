@@ -33,6 +33,7 @@ REGIME_MEMO_SECONDS = 30 * 60        # how long the process reuses a computed re
 TTL = {"bars": 1800, "regime": 3600, "facts": 20 * 3600, "kr_facts": 7 * 86400, "subm": 20 * 3600, "info": 7 * 86400, "earn": 3 * 86400, "form4": 3650 * 86400}
 # Korean quarterly reports, for the trailing-four-quarter record (reports/QSF_FUND_PERIOD_PROTOCOL.md).  A past year's report does not
 # change and is kept; this year's is read again monthly (an amended report); "not filed yet" is asked again the next morning.
+MASTER_DOWN = "한국 거래소 종목 목록을 받지 못했습니다. 인터넷 연결을 확인하세요. 기기에 저장된 목록이 없거나 7일보다 오래돼 대신 쓰지 못했습니다."
 QUARTER_TTL = {"new": 30 * 86400, "old": 3650 * 86400, "none": 20 * 3600, "none_old": 90 * 86400}
 USABLE = ("REAL", "STALE")
 REGIME_FRESH_DAYS = 5
@@ -530,6 +531,14 @@ class QSF(ScreenViews):
         hit = self._kr_master[self._kr_master["canonical_ticker"] == code]
         return None if hit.empty else hit.iloc[0].to_dict()
 
+    def _kr_identity_or_reason(self, code: str) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+        """For the screens.  With no connection and no usable list on the device the load raises; a screen then says so in words
+        instead of answering with an internal error.  The scan is handed its own list and never comes through here without one."""
+        try:
+            return self._kr_identity(code), None
+        except Exception as exc:
+            return None, f"{MASTER_DOWN} ({type(exc).__name__})"
+
     def _corp_code(self, code: str) -> Optional[str]:
         def fetch():
             df = self.dart.corp_codes()
@@ -579,10 +588,10 @@ class QSF(ScreenViews):
 
     def kr_company(self, code: str) -> Dict[str, Any]:
         """Identity, annual statements and recent filings of one Korean company, for the stock screen."""
-        ident = self._kr_identity(code)
+        ident, down = self._kr_identity_or_reason(code)
         out: Dict[str, Any] = {"ident": ident, "annual": None, "reports": None}
         if not ident:
-            out["reason"] = "상장 종목 목록에 없는 코드입니다 (ETF는 재무·공시가 없습니다)."
+            out["reason"] = down or "상장 종목 목록에 없는 코드입니다 (ETF는 재무·공시가 없습니다)."
             return out
         if not self.dart.configured:
             out["reason"] = "OPENDART_API_KEY가 없어 재무·공시를 불러오지 않았습니다."
@@ -606,7 +615,8 @@ class QSF(ScreenViews):
 
     def kr_search(self, query: str, limit: int = 10) -> List[Dict[str, str]]:
         """Listed companies by Korean name, exact match first."""
-        self._kr_identity("000000")               # loads the master
+        if self._kr_identity_or_reason("000000")[1]:   # loads the master; without one there is nothing to search
+            return []
         df, q = self._kr_master, (query or "").strip()
         if not q:
             return []
@@ -652,7 +662,9 @@ class QSF(ScreenViews):
         if market == "US":
             sym, bench_sym, ident, name = ticker, "SPY", None, None
         else:
-            ident = self._kr_identity(ticker)
+            ident, down = self._kr_identity_or_reason(ticker)
+            if down:
+                return {"error": "MASTER_UNAVAILABLE", "reason": down}
             if ident is None or not ident.get("yahoo_symbol"):
                 return {"error": "UNKNOWN_SECURITY", "reason": "한국 거래소 종목 목록에서 찾을 수 없습니다."}
             sym, name = ident["yahoo_symbol"], ident.get("company_name")

@@ -387,8 +387,8 @@ def test_an_analysts_note_lays_the_stock_out_from_view_to_what_would_change_it(t
 def test_ratios_are_read_beside_the_sector_best_side_first():
     rows = [{"ticker": "ME", "ratios": {"pe": -3.0, "debt_equity": 0.2, "roe": 0.30}}] + [{"ticker": f"P{k}", "ratios": {"pe": 10.0 + k, "debt_equity": 0.5 + 0.1 * k, "roe": 0.05 + 0.01 * k}} for k in range(5)]
     got = A.sector_lines({"status": "REAL", "peers": rows}, "ME")
-    assert got[0] == "PER: 적자라 계산되지 않습니다(업종 중앙값 12.0배)." and got[1].startswith("ROE 30.0%: 업종 중앙값 8.0%보다 높습니다. 6종목 중 좋은 쪽에서 1위(업종보다 나은 쪽)")
-    assert got[2].startswith("부채/자본 0.20배: 업종 중앙값 0.70배보다 낮습니다. 6종목 중 좋은 쪽에서 1위(업종보다 나은 쪽)")
+    assert got[0] == "PER: 적자라 계산되지 않습니다(업종 중앙값 12.0배)." and got[1].startswith("ROE 30.0%: 업종 중앙값 7.5%보다 높습니다. 6종목 중 좋은 쪽에서 1위(업종보다 나은 쪽)")
+    assert got[2].startswith("부채/자본 0.20배: 업종 중앙값 0.65배보다 낮습니다. 6종목 중 좋은 쪽에서 1위(업종보다 나은 쪽)")
     assert A.sector_lines({"status": "REAL", "peers": rows[:3]}, "ME") == [] and A.sector_lines({"status": "UNAVAILABLE"}, "ME") == [] and A.sector_lines({"status": "REAL", "peers": rows}, "NOPE") == []
 
 
@@ -488,3 +488,24 @@ def test_the_assistant_asks_no_network_and_is_wired_into_the_server_and_the_firs
     assert "askAssistant(q)" in cmd and 'today: ["오늘", "비서"' in cmd and 'askAssistant("help")' in cmd and '"도움말"' in cmd
     auto = (ROOT / "terminal" / "automation.py").read_text(encoding="utf-8")
     assert "self._notes(st), self._brief())" in auto and "assistant.daily_lines" in auto
+
+
+def test_a_stock_is_not_its_own_sector_median_when_the_count_is_even():
+    rows = [{"ticker": f"P{k}", "ratios": {"roe": 0.10 + 0.01 * k}} for k in range(8)]       # eight peers: the fifth used to be called the median
+    line = A.sector_lines({"status": "REAL", "peers": rows}, "P4")[0]
+    assert "업종 중앙값 13.5%보다 높습니다" in line and "와 같습니다" not in line
+    assert A._middle([1.0, 2.0, 3.0]) == 2.0 and A._middle([1.0, 2.0, 3.0, 4.0]) == 2.5
+
+
+def test_a_korean_macro_date_is_not_listed_under_the_us_market():
+    items = [{"name": "한국은행 금통위", "country": "KR", "days_away": 1, "date": "2026-11-26"}, {"name": "미국 고용보고서", "country": "US", "days_away": 2, "date": "2026-12-04"}]
+    assert [e["country"] for e in A.macro_dates(items, "US")] == ["US"] and [e["country"] for e in A.macro_dates(items, "KR")] == ["KR", "US"]
+    us = [i["text"] for i in A.context_items({}, {"items": items}, "US") if i["kind"] == "MACRO_DATE"]
+    assert len(us) == 1 and "고용보고서" in us[0]
+
+
+def test_the_candidate_count_says_how_many_are_in_the_buy_band():
+    by = {"SWING": {"all": 9, "buy": 1}, "LONG": {"all": 313, "buy": 70}}
+    text = A.plan_items({"status": "NO_ACCOUNT", "candidates": 322, "candidates_by": by}, "US")[0]["text"]
+    assert "322건" in text and "스윙 9건 중 1건" in text and "장기 313건 중 70건" in text and "관망 구간(55~70점)" in text
+    assert A.candidate_split(None) == "" and A.candidate_split({"SWING": {"all": 0, "buy": 0}}) == ""

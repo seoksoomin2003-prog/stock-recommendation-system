@@ -55,3 +55,14 @@ def test_status_reads_state_and_pid(tmp_path, monkeypatch):
     assert st["installed"] and st["state"] == "running" and st["pid"] == 4242 and st["runs"] == 3 and st["last_exit_code"] == 0
     monkeypatch.setattr(server_agent, "_launchctl", lambda *a: SimpleNamespace(returncode=113, stderr="", stdout=""))
     assert server_agent.status(tmp_path)["installed"] is False
+
+
+def test_a_device_without_launchctl_reads_as_not_installed(monkeypatch):
+    """Off a Mac there is no launchctl: the status question raised FileNotFoundError and the status screen answered with an error."""
+    from terminal import automation
+
+    def missing(*a, **k):
+        raise FileNotFoundError("launchctl")
+    monkeypatch.setattr(automation.subprocess, "run", missing)
+    res = automation._launchctl("print", "gui/501/x")
+    assert res.returncode == 127 and res.stderr == "NO_LAUNCHCTL"
