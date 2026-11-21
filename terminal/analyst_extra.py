@@ -1,10 +1,12 @@
 """What a desk analyst adds beside a stored score, each from data already on disk and none of it a score.
 
-    exposure        what a stock has moved with: the market, a theme fund beyond the market, a rate or a currency
+    exposure        what a stock has moved with: the market, its own sector fund and a theme fund beyond the market, a rate or a currency
     concentration   whether the day's buy candidates are one bet: their sectors, how alike they move, how defensive they are
     liked_but_marked  stocks the score likes that carry an avoid mark (the side the Korean tests found evidence on)
     change_since    what changed in a stock's score since the records of a week and a month ago
     fund_age        how old the statements behind the score are, and the score fresher statements would give
+    fund_gaps       stocks whose two scores (annual statements, trailing four quarters) are far apart
+    newly_marked    avoid marks that are on the newest record and were not on the one before
 
 Reference only.  Nothing here feeds the score, the order plan or any record, and none of it says where a price will go:
 co-movement is what happened in the window, not a cause and not a forecast.
@@ -32,6 +34,11 @@ FACTORS = {"US": {"market": ("SPY", "S&P 500"), "others": [("SOXX", "반도체 �
            "KR": {"market": ("^KS11", "코스피"), "others": [("091160.KS", "반도체(KODEX 반도체)", "RETURN"), ("KRW=X", "원/달러 환율", "RETURN")]}}
 DOMAIN_KO = {"TECHNICAL": "기술", "FUNDAMENTAL": "재무", "RISK": "위험", "EVENTS": "이벤트", "EVENT": "이벤트", "REGIME": "시장 국면"}
 CAVEAT = "최근 {n}거래일 동안 같이 움직인 정도입니다. 원인이 아니고, 앞으로도 그렇다는 뜻이 아닙니다."
+GAP = 10.0                  # points between the two scores from which a stock is listed
+KR_YIELD = ("KTB3Y", "국고채 3년 금리", "YIELD")
+# Yahoo's sector names, as the US rotation funds are named on the market tab
+SECTOR_KO = {"Technology": "기술", "Financial Services": "금융", "Healthcare": "헬스케어", "Consumer Cyclical": "경기소비재", "Consumer Defensive": "필수소비재", "Industrials": "산업재",
+             "Basic Materials": "소재", "Energy": "에너지", "Utilities": "유틸리티", "Real Estate": "부동산", "Communication Services": "커뮤니케이션"}
 
 
 def _closes(rows: Optional[Sequence[Dict[str, Any]]]) -> Dict[str, float]:
@@ -55,9 +62,31 @@ def factor_data(terminal: Any, market: str) -> Dict[str, List[Dict[str, Any]]]:
     return terminal.cache.cached(f"exposure:{market}:1y", FACTOR_TTL, lambda: terminal.src.yahoo_history(syms, "1y"))["data"] or {}
 
 
-def exposure(stock_rows: Sequence[Dict[str, Any]], data: Dict[str, List[Dict[str, Any]]], market: str, days: int = DAYS) -> Optional[Dict[str, Any]]:
+def own_sector(terminal: Any, market: str, row: Optional[Dict[str, Any]]) -> Optional[Tuple[str, str, List[Dict[str, Any]]]]:
+    """(symbol, name, daily prices) of the rotation fund the stock belongs to, from the prices the market tab already keeps."""
+    from terminal import services
+    from terminal.qsf import sector_picks
+    if not row:
+        return None
+    bench, _, funds = terminal.ROTATION[market]
+    hit = next(((sym, name) for sym, name in funds if sector_picks.member(market, sym, row)), None)
+    if not hit:
+        return None
+    data = terminal.cache.cached(f"rotation:{market}:2y", services.TTL["chart"], lambda: terminal.src.yahoo_history([bench] + [f for f, _ in funds], "2y"))["data"] or {}
+    return (hit[0], f"자기 업종({hit[1]} ETF)", data.get(hit[0]) or [])
+
+
+def kr_yield(terminal: Any) -> List[Dict[str, Any]]:
+    """The 3-year treasury yield the Korean market state already downloads from the Bank of Korea, as daily rows; [] when absent."""
+    rec = terminal.qsf.cache.read("ecos:kr_credit_spread") or {}
+    return [{"date": d, "close": v} for d, v in ((rec.get("data") or {}).get("treasury") or []) if v is not None]
+
+
+def exposure(stock_rows: Sequence[Dict[str, Any]], data: Dict[str, List[Dict[str, Any]]], market: str, days: int = DAYS,
+             extra: Sequence[Tuple[str, str, str]] = ()) -> Optional[Dict[str, Any]]:
     """The stock's market beta, and for each reference series what is left of their co-movement once the market is taken out:
-    the coefficient of the series in a regression on the market and the series together, and the partial correlation."""
+    the coefficient of the series in a regression on the market and the series together, and the partial correlation.
+    ``extra``: more (key, name, kind) series whose rows are in ``data``, read before the market's own list; a key seen twice is read once."""
     spec = FACTORS[market]
     y, m = _moves(_closes(stock_rows)), _moves(_closes(data.get(spec["market"][0])))
     both = sorted(set(y) & set(m))[-days:]
@@ -67,7 +96,11 @@ def exposure(stock_rows: Sequence[Dict[str, Any]], data: Dict[str, List[Dict[str
     if ms.var() <= 0:
         return None
     out = {"days": len(both), "from": both[0], "to": both[-1], "market": spec["market"][1], "beta": float(np.cov(ys, ms, ddof=1)[0, 1] / ms.var(ddof=1)), "others": []}
-    for sym, name, kind in spec["others"]:
+    seen = set()
+    for sym, name, kind in list(extra) + list(spec["others"]):
+        if sym in seen:
+            continue
+        seen.add(sym)
         x = _moves(_closes(data.get(sym)), kind)
         common = sorted(set(both) & set(x))
         if len(common) < MIN_DAYS:
@@ -229,3 +262,39 @@ def fund_age_lines(snap: Dict[str, Any], session: str) -> List[str]:
     elif other.get("score") is not None and live.get("score") is not None:
         lines.append(f"연간 보고서({other.get('fiscal_end')}까지)로 계산하면 {other['score']:.1f}점입니다. 라이브는 판정에 따라 최근 4분기 재무를 씁니다.")
     return lines
+
+
+# ---------------------------------------------------------------------- the two scores far apart
+def fund_gaps(snaps: Sequence[Dict[str, Any]], interest: Sequence[str] = (), gap: float = GAP, strategy: str = "LONG_TERM") -> Dict[str, Any]:
+    """Stocks whose score on annual statements and on trailing four quarters differ by ``gap`` points or more (one strategy).
+    ``listed``: those among ``interest`` (held, watched, candidates), widest first.  ``all``: how many in the whole scan."""
+    rows = []
+    for s in snaps:
+        fp = s.get("fund_period") or {}
+        a, t = (fp.get("annual") or {}).get("score"), (fp.get("trailing") or {}).get("score")
+        if s.get("strategy") != strategy or a is None or t is None or not (fp.get("trailing") or {}).get("newer_quarter") or abs(t - a) < gap:
+            continue
+        rows.append({"ticker": s["ticker"], "annual": a, "trailing": t, "diff": t - a, "live": fp.get("live"), "annual_end": (fp.get("annual") or {}).get("fiscal_end")})
+    mine = set(interest)
+    return {"all": len(rows), "up": sum(1 for r in rows if r["diff"] > 0), "listed": sorted((r for r in rows if r["ticker"] in mine), key=lambda r: -abs(r["diff"]))}
+
+
+# ---------------------------------------------------------------------- marks that are new today
+def newly_marked(base: Any) -> Dict[str, Any]:
+    """Korean avoid marks on the newest record that the record before did not carry.  A code the earlier record did not know is
+    left out: new to the record is not newly marked."""
+    from terminal.qsf import kr_events_forward, kr_forward
+    out: Dict[str, Any] = {"financing": [], "high_risk": [], "session": None, "previous": None}
+    try:
+        now, then = kr_events_forward.marks(base), kr_events_forward.marks(base, 1)
+        if now["session"] and then["session"]:
+            out.update(session=now["session"], previous=then["session"], financing=sorted((set(now["financing"]) - set(then["financing"])) & set(then["known"])))
+    except (OSError, ValueError, KeyError):
+        pass
+    try:
+        now, then = kr_forward.high_risk(base), kr_forward.high_risk(base, 1)
+        if now["session"] and then["session"]:
+            out.update(high_risk=sorted((set(now["codes"]) - set(then["codes"])) & set(then["ranked"])), risk_session=now["session"], risk_previous=then["session"])
+    except (OSError, ValueError, KeyError):
+        pass
+    return out

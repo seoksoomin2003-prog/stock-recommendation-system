@@ -191,6 +191,11 @@ class FakeQsf:
     def _loader(self, market):
         return lambda ticker: []
 
+    class cache:                            # the Korean treasury yield is not on disk
+        @staticmethod
+        def read(key):
+            return None
+
     def peers(self, ticker, market="US"):
         ratio = lambda pe, roe: {"pe": pe, "pb": None, "roe": roe}      # noqa: E731
         rows = [{"ticker": "005930", "ratios": ratio(27.7, 0.104), "change_1m": -0.146}] + [{"ticker": f"P{k}", "ratios": ratio(10.0 + 5 * k, 0.05 + 0.02 * k), "change_1m": -0.05 * k} for k in range(6)]
@@ -239,6 +244,8 @@ class FakeTerminal:
 
     def watchlist(self):
         return []
+
+    ROTATION = {"US": ("SPY", "S&P 500 (SPY)", []), "KR": ("^KS11", "코스피", [])}
 
     class cache:                            # no reference prices are on disk and none are fetched
         @staticmethod
@@ -359,10 +366,11 @@ def test_an_analysts_note_lays_the_stock_out_from_view_to_what_would_change_it(t
     assert note["status"] == "REAL" and note["intent"] == "ANALYZE" and note["title"] == "삼성전자(005930) 분석 노트" and A.answer(term, "삼성전자", "KR")["intent"] == "ANALYZE"
     assert note["summary"].startswith("삼성전자(기술 업종): 프로그램이 읽는 것은 스윙 53.9점('보유·관찰', 판단 '관찰', 3종목 중 1위, 업종 등급 A(업종 7종목 중 상위 15%))") and "장기 64.2점" in note["summary"]
     titles = [s["title"] for s in note["sections"]]
-    assert titles == ["지난 기록 이후 달라진 것 (장기 점수)", "밸류에이션과 업종 안에서의 위치 (기술 7종목)", "실적과 이익의 질", "재무 건전성", "가격과 수급", "무엇과 같이 움직였나 (노출)", "촉매와 일정", "위험", "시나리오",
+    assert titles == ["핵심 세 줄", "지난 기록 이후 달라진 것 (장기 점수)", "밸류에이션과 업종 안에서의 위치 (기술 7종목)", "실적과 이익의 질", "재무 건전성", "가격과 수급", "무엇과 같이 움직였나 (노출)", "촉매와 일정", "위험", "시나리오",
                       "견해가 바뀌는 조건", "이 노트의 한계"]      # a part with nothing stored is left out
     by_title = {s["title"]: s["lines"] for s in note["sections"]}
     assert by_title["지난 기록 이후 달라진 것 (장기 점수)"] == ["비교할 지난 기록이 아직 없습니다(1주 전 기록부터 비교합니다)."] and "60거래일" in by_title["무엇과 같이 움직였나 (노출)"][0]
+    assert by_title["핵심 세 줄"] == ["점수: 장기 64.2점('보유·관찰'), 스윙 53.9점('보유·관찰').", "달라진 것: 비교할 지난 기록이 아직 없습니다.", "먼저 볼 위험: 걸린 차단 조건과 회피 표시가 없습니다. 안전하다는 뜻은 아닙니다."]
     by = {s["title"]: s["lines"] for s in note["sections"]}
     value = by["밸류에이션과 업종 안에서의 위치 (기술 7종목)"]
     assert value[0] == "PER 27.7배: 업종 중앙값 25.0배보다 높습니다. 7종목 중 좋은 쪽에서 5위(업종보다 못한 쪽)." and value[1] == "ROE 10.4%: 업종 중앙값 10.4%와 같습니다. 7종목 중 좋은 쪽에서 4위."

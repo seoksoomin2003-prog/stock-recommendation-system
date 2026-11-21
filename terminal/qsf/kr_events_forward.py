@@ -85,12 +85,13 @@ def status(base: Path, calendar: Optional[Sequence[str]]) -> Dict[str, Any]:
     return kf.status(base, calendar, FOLDER)
 
 
-def marks(base: Path) -> Dict[str, Any]:
-    """Who has a financing or buyback decision on the newest record.  For display: it feeds no score.  A code not on the record is unknown, not a no."""
+def marks(base: Path, back: int = 0) -> Dict[str, Any]:
+    """Who has a financing or buyback decision on the newest record (``back``: that many records earlier).  For display: it feeds no
+    score.  A code not on the record is unknown, not a no."""
     rows = kf.read_index(base, FOLDER)
-    if not rows:
+    if len(rows) <= back:
         return {"session": None, "financing": [], "buyback": [], "known": []}
-    day = rows[-1]["session"]
+    day = rows[-1 - back]["session"]
     doc = kf._read_day(Path(base) / FOLDER, day)["rows"]
     return {"session": day, "financing": sorted(r["code"] for r in doc if r["financing"] == 1), "buyback": sorted(r["code"] for r in doc if r["buyback"] == 1), "known": sorted(r["code"] for r in doc)}
 

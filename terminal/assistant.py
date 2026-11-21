@@ -24,7 +24,7 @@ FRESH_ALERT_HOURS = 36     # the user's own alert conditions that fired since ab
 SHOWN_ORDERS = 3
 SWING_DAYS_LEFT = 3
 PART_KO = {"context": "지수와 거시 일정", "account": "보유 종목 점검", "plan": "주문 계획", "market": "시장 상태", "earnings": "실적 일정", "alerts": "내 알림 조건", "job": "자료 수집 상태",
-           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시"}
+           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시", "gaps": "재무 기준에 따른 점수 차이"}
 # the portfolio's own alert codes (terminal.portfolio.alerts) and the exit readings (automation.exit_alerts)
 ALERT_LEVEL = {"STOP_HIT": "ACT", "NEAR_STOP": "ACT", "QSF_EXIT": "ACT", "QSF_THESIS_INVALIDATED": "ACT", "QSF_REDUCE": "ACT",
                "TARGET_HIT": "DUE", "NO_STOP": "DUE", "OVERWEIGHT": "DUE", "NO_PRICE": "DUE", "NO_STYLE": "DUE", "SECTOR_OVER": "DUE",
@@ -283,13 +283,14 @@ def candidate_mix(terminal: Any, market: str) -> Optional[str]:
     picks = [r for r in rows if r.get("strategy") == "SWING" and (r.get("score") or 0) >= ax.BUY and r.get("actionability") == "ACTIONABLE"]
     if len(picks) < 3:
         return None
-    sector = {r["ticker"]: r.get("sector") or r.get("industry") for r in picks}
+    sector = {r["ticker"]: ax.SECTOR_KO.get(r.get("sector"), r.get("sector")) or r.get("industry") for r in picks}
     bench = ax.factor_data(terminal, market).get(ax.FACTORS[market]["market"][0]) or []
     return ax.concentration_line(ax.concentration([r["ticker"] for r in picks], sector.get, terminal.qsf._loader(market), bench))
 
 
-def marked_items(rows: List[Dict[str, Any]], mine: List[str], market: str) -> List[Dict[str, Any]]:
-    """Avoid marks first: on what is held or watched (due), and on stocks the score likes (reference)."""
+def marked_items(rows: List[Dict[str, Any]], mine: List[str], market: str, new: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    """Avoid marks first: on what is held or watched (due), on stocks the score likes (reference), and the marks that are new
+    since the record before (``analyst_extra.newly_marked``; due when one is held or watched)."""
     from terminal import analyst_extra as ax
     got = ax.liked_but_marked(rows, mine)
     label = lambda r: f"{r.get('name') or r['ticker']}({r['ticker']}, {', '.join(r['marks'])})"      # noqa: E731
@@ -301,6 +302,17 @@ def marked_items(rows: List[Dict[str, Any]], mine: List[str], market: str) -> Li
     if got["liked"]:
         names = ", ".join(f"{r.get('name') or r['ticker']}({r['score']:.0f}점, {', '.join(r['marks'])})" for r in got["liked"][:5])
         out.append(item("INFO", "AVOID_LIKED", f"점수는 관심 구간 이상인데 회피 표시가 붙은 종목 {len(got['liked'])}개: {names}" + (" 등" if len(got["liked"]) > 5 else "") + f". {tested}", tab="qsf"))
+    new = new or {}
+    name_of = {r["ticker"]: r.get("name") or r["ticker"] for r in rows}
+    said, fresh = [], set()
+    for key, label in (("financing", "자금 조달 공시"), ("high_risk", "고위험")):
+        codes = [c for c in new.get(key) or [] if c in name_of]            # only stocks of the scan: the records cover more
+        if codes:
+            fresh |= set(codes)
+            said.append(f"{label} {', '.join(name_of[c] for c in codes[:5])}" + (f" 외 {len(codes) - 5}개" if len(codes) > 5 else ""))
+    if said:
+        churn = " 고위험은 위험 순위 상위 20%의 경계에 따라 날마다 드나듭니다." if any(c in name_of for c in new.get("high_risk") or []) else ""
+        out.append(item("DUE" if fresh & set(mine) else "INFO", "AVOID_NEW", f"직전 기록({new.get('previous') or new.get('risk_previous')}) 뒤 새로 붙은 회피 표시: {'; '.join(said)}.{churn}", tab="qsf"))
     return out
 
 
@@ -373,10 +385,29 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
 
     def marked() -> List[Dict[str, Any]]:
         mine = [h["ticker"] for h in (seen.get("book") or {}).get("holdings") or []] + [t for t in terminal.watchlist() if not t.startswith("^")]
-        return marked_items(_rows(terminal, market), mine, market)
+        from terminal import analyst_extra as ax
+        return marked_items(_rows(terminal, market), mine, market, ax.newly_marked(base) if market == "KR" else None)
+
+    def gaps() -> List[Dict[str, Any]]:
+        from terminal import analyst_extra as ax
+        from terminal.qsf import fund_period
+        rows = _rows(terminal, market)
+        session = terminal.qsf.latest(market).get("session")
+        mine = [h["ticker"] for h in (seen.get("book") or {}).get("holdings") or []] + [t for t in terminal.watchlist() if not t.startswith("^")]
+        cands = [r["ticker"] for r in rows if (r.get("score") or 0) >= ax.BUY and r.get("actionability") == "ACTIONABLE"]
+        got = ax.fund_gaps(_snaps(terminal, market, session), mine + cands) if session else {"all": 0}
+        if not got["all"]:
+            return []
+        name_of = {r["ticker"]: r.get("name") or r["ticker"] for r in rows}
+        listed = ", ".join(f"{name_of.get(x['ticker'], x['ticker'])} {x['annual']:.0f}→{x['trailing']:.0f}점({x['diff']:+.0f})" for x in got["listed"][:6])
+        live = "최근 4분기" if fund_period.live_period(base, market) == "TRAILING" else "연간"
+        return [item("INFO", "FUND_GAP", f"장기 점수가 재무 기준(연간 → 최근 4분기)에 따라 {ax.GAP:.0f}점 넘게 달라지는 종목이 {got['all']}개입니다(최근 4분기 쪽이 높은 종목 {got['up']}개). "
+                     + (f"보유·관심·매수 후보 가운데: {listed}. " if listed else "보유·관심·매수 후보 가운데는 없습니다. ")
+                     + f"라이브 점수는 {live} 재무를 읽습니다. 이런 종목은 점수 카드의 참고 점수를 함께 보세요.", tab="qsf")]
 
     part("mix", mix)
     part("marked", marked)
+    part("gaps", gaps)
     part("changes", lambda: change_items(qsf_changes.report(terminal.qsf.latest(market), terminal.qsf.ledger, market, "SWING"),
                                          {h["ticker"] for h in (seen.get("book") or {}).get("holdings") or []}))
     part("readings", readings)
@@ -786,6 +817,38 @@ def _grade(peers: Dict[str, Any], strategy: str, part: str = "SCORE") -> Optiona
     return None if not g.get("grade") else f"{g['grade']}(업종 {g.get('n')}종목 중 상위 {max(1, round((1 - g['percentile']) * 100))}%)"
 
 
+def key_lines(rows: Dict[str, Dict[str, Any]], base: Dict[str, Any], changes: List[Dict[str, Any]], gates: List[str], marks: List[str], still: Optional[str],
+              down: List[Dict[str, Any]], market: str) -> List[str]:
+    """The note in three lines, each made by a fixed rule: where the scores stand, what changed since the last record (and how far
+    fresher statements would move the score), and the first risk that applies, in a fixed order."""
+    from terminal import analyst_extra as ax
+    scores = [f"{STRATEGY_KO[s]} {rows[s]['score']:.1f}점('{rows[s].get('band_label')}')" for s in ("LONG_TERM", "SWING") if rows.get(s) and rows[s].get("score") is not None]
+    first = "점수: " + ", ".join(scores) + "." if scores else "점수: 최신 기록에 점수가 없습니다."
+    if changes:
+        c = changes[0]
+        top = max(((d, v) for d, v in c["domains"].items() if d != "REGIME" and abs(v) >= 3), key=lambda kv: abs(kv[1]), default=None)
+        second = f"달라진 것: {c['label']} 기록보다 {c['diff']:+.1f}점" + (f"(가장 크게 바뀐 영역: {ax.DOMAIN_KO.get(top[0], top[0])} {top[1]:+.0f})" if top else "") + "."
+    else:
+        second = "달라진 것: 비교할 지난 기록이 아직 없습니다."
+    fp = base.get("fund_period") or {}
+    a, t = fp.get("annual") or {}, fp.get("trailing") or {}
+    gap = t["score"] - a["score"] if a.get("score") is not None and t.get("score") is not None and t.get("newer_quarter") else None
+    if gap is not None and abs(gap) >= ax.GAP:
+        second += f" 재무 기준이 {a.get('fiscal_end')}까지의 연간 보고서이고, 최근 4분기 재무로는 {STRATEGY_KO[base['strategy']]} {t['score']:.1f}점({gap:+.1f})입니다."
+    if gates:
+        third = f"먼저 볼 위험: 차단 조건 {len(gates)}건({gates[0]})."
+    elif marks:
+        third = f"먼저 볼 위험: 회피 표시({', '.join(marks)})."
+    elif still:
+        third = "먼저 볼 위험: 가격이 거의 움직이지 않는 종목입니다(인수·합병 가격이 정해졌을 수 있음). 공시를 먼저 확인하세요."
+    elif down:
+        r = down[0]
+        third = f"먼저 볼 위험: 점수를 가장 많이 깎는 것은 {FACTOR_KO.get(r['factor'], r['factor'])}입니다({r['normalized'] * 100:.0f}/100, -{r['lost']:.1f}점)."
+    else:
+        third = "먼저 볼 위험: 걸린 차단 조건과 회피 표시가 없습니다. 안전하다는 뜻은 아닙니다."
+    return [first, second, third]
+
+
 def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str, Any]], follow: List[str]) -> Dict[str, Any]:
     """One stock the way an analyst's note is laid out: the view, valuation beside the sector, the business, the balance sheet,
     price, catalysts, risks, scenarios and what would change the view.  Every figure is one the scan stored; nothing is forecast."""
@@ -824,6 +887,7 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
         sections.append({"title": "먼저 알아 둘 것", "lines": [still]})
     # the debate: what holds the long-term score up and what drags it
     parts = breakdown(long_) if long_ else None
+    down: List[Dict[str, Any]] = []
     if parts:
         up = sorted((r for r in parts["rows"] if r["kept"] >= 0.5 and r["normalized"] >= 0.6), key=lambda r: -r["kept"])[:3]
         down = sorted((r for r in parts["rows"] if r["lost"] >= 0.5 and r["normalized"] < 0.5), key=lambda r: -r["lost"])[:3]
@@ -831,9 +895,10 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
                          + [f"깎는 것: {_signal_line(r, long_, market, f'-{r['lost']:.1f}점', scale=False)}" for r in down]})
     from terminal import analyst_extra as ax
     try:                    # what changed since the notes of a week and a month ago, from the ledger's light records
-        moved = ax.change_lines(ax.change_since(terminal.qsf.ledger, market, ticker, base["strategy"]), {code: label for _, code, label in config.BANDS}.get)
+        changes = ax.change_since(terminal.qsf.ledger, market, ticker, base["strategy"])
+        moved = ax.change_lines(changes, {code: label for _, code, label in config.BANDS}.get)
     except Exception:
-        moved = []
+        changes, moved = [], []
     sections.append({"title": f"지난 기록 이후 달라진 것 ({STRATEGY_KO[base['strategy']]} 점수)", "lines": moved or ["비교할 지난 기록이 아직 없습니다(1주 전 기록부터 비교합니다)."]})
     sector = sector_lines(peers, ticker)
     one_month = next((p.get("change_1m") for p in peers.get("peers") or [] if p.get("ticker") == ticker), None)
@@ -854,7 +919,16 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
     sections.append({"title": "가격과 수급", "lines": [fig(fl, "long_trend", long_), fig(fs, "relative_strength", swing) or fig(fl, "relative_strength", long_), fig(fs, "breakout_volume", swing), fig(fs, "momentum", swing),
                                                  fig(fs, "atr_risk", swing), fig(fs, "liquidity", swing)]})
     try:                    # what the price has moved with: the market, a theme beyond the market, a rate or a currency
-        moves_with = ax.exposure_lines(ax.exposure(terminal.qsf._loader(market)(ticker), ax.factor_data(terminal, market), market))
+        data, extra = dict(ax.factor_data(terminal, market)), []
+        own = ax.own_sector(terminal, market, next((r for r in terminal.qsf.screen_rows(market).get("rows") or [] if r.get("ticker") == ticker), None))
+        if own and own[2]:
+            data[own[0]] = own[2]
+            extra.append((own[0], own[1], "RETURN"))
+        rate = ax.kr_yield(terminal) if market == "KR" else []
+        if rate:
+            data[ax.KR_YIELD[0]] = rate
+            extra.append(ax.KR_YIELD)
+        moves_with = ax.exposure_lines(ax.exposure(terminal.qsf._loader(market)(ticker), data, market, extra=extra))
     except Exception:
         moves_with = []
     sections.append({"title": "무엇과 같이 움직였나 (노출)", "lines": moves_with or ["기준 지수 자료를 받지 못해 계산하지 못했습니다."]})
@@ -914,6 +988,7 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
         + [f"장기 보유 논리가 깨지는 조건: {x}." for x in (hold.get("invalidation") or [])[:3]] + [f"다음 실적에서 볼 것: {x}." for x in (hold.get("milestones") or [])[:3]]
     sections.append({"title": "견해가 바뀌는 조건", "lines": change})
     sections.append({"title": "이 노트의 한계", "lines": NOTE_LIMITS})
+    sections.insert(0, {"title": "핵심 세 줄", "lines": key_lines(rows, base, changes, gates, ax.marks_of(row), still, down, market)})
     return reply(f"{head} 분석 노트", summary, sections, "stock", follow, _basis(base, market))
 
 

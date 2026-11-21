@@ -347,12 +347,13 @@ def status(base: Path, calendar: Optional[Sequence[str]], store: Path = FOLDER) 
             "independent": matured / HORIZON, "target": MIN_INDEPENDENT, "ready": matured >= need, "remaining_sessions": max(0, need - len(sessions)) + HORIZON if len(sessions) < need else max(0, need - matured)}
 
 
-def high_risk(base: Path) -> Dict[str, Any]:
-    """Stocks in the riskiest fifth of the low risk theme on the newest record.  For display: it feeds no score and is not a tested rule."""
+def high_risk(base: Path, back: int = 0) -> Dict[str, Any]:
+    """Stocks in the riskiest fifth of the low risk theme on the newest record (``back``: that many records earlier).  For display:
+    it feeds no score and is not a tested rule."""
     rows = read_index(base)
-    if not rows:
+    if len(rows) <= back:
         return {"session": None, "codes": [], "ranked": []}
-    day = rows[-1]["session"]
+    day = rows[-1 - back]["session"]
     doc = _read_day(Path(base) / FOLDER, day)
     values = [(r["code"], r["low_risk"]) for r in doc["rows"] if r.get("low_risk") is not None]
     if len(values) < MIN_STOCKS:

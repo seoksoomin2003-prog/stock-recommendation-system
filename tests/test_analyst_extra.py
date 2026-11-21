@@ -111,10 +111,115 @@ def test_the_age_of_the_statements_and_the_score_fresher_ones_would_give():
     assert "최근 4분기" in got[0] and "오래된" not in got[0] and "연간 보고서(2025-12-31까지)로 계산하면 64.2점" in got[1]
 
 
+def test_the_stocks_own_sector_and_a_yield_are_read_before_the_markets_own_list():
+    own = bars(1.1 * MARKET + RNG.normal(0, 0.008, 199))
+    stock = bars(1.0 * MARKET + 0.9 * (np.array([b["close"] for b in own[1:]]) / np.array([b["close"] for b in own[:-1]]) - 1 - 1.1 * MARKET) + NOISE)
+    data = {**DATA, "XLF": own, "KTB3Y": bars(RATE, start=3.0, level=True)}
+    e = ax.exposure(stock, data, "US", extra=[("XLF", "자기 업종(금융 ETF)", "RETURN"), ("SOXX", "다시 적힌 것", "RETURN")])
+    assert [o["symbol"] for o in e["others"]] == ["XLF", "SOXX", "^TNX"] and e["others"][0]["partial_corr"] > 0.9 and e["others"][0]["coef"] == pytest.approx(0.9, abs=0.05)      # a key given twice is read once
+    assert ax.exposure_lines(e)[1].startswith("자기 업종(금융 ETF): 시장보다 1% 더 오른 날 이 종목은 시장 대비 평균 +0.9")
+    assert ax.KR_YIELD == ("KTB3Y", "국고채 3년 금리", "YIELD") and ax.SECTOR_KO["Financial Services"] == "금융" and len(ax.SECTOR_KO) == 11
+
+    class Qsf:
+        class cache:
+            @staticmethod
+            def read(key):
+                return {"data": {"treasury": [["2026-11-19", 2.9], ["2026-11-20", None], ["2026-11-21", 2.95]], "corporate": []}} if key == "ecos:kr_credit_spread" else None
+
+    class Term:
+        qsf = Qsf()
+        ROTATION = {"US": ("SPY", "S&P 500 (SPY)", [("XLK", "기술"), ("XLF", "금융")])}
+        asked = []
+
+        class src:
+            @staticmethod
+            def yahoo_history(syms, period):
+                Term.asked.append((tuple(syms), period))
+                return {"XLF": own, "SPY": DATA["SPY"]}
+
+        class cache:
+            @staticmethod
+            def cached(key, ttl, fetch):
+                return {"data": fetch()} if key == "rotation:US:2y" else {"data": None}
+    assert ax.kr_yield(Term()) == [{"date": "2026-11-19", "close": 2.9}, {"date": "2026-11-21", "close": 2.95}]
+    sym, name, rows = ax.own_sector(Term(), "US", {"ticker": "JPM", "sector": "Financial Services"})
+    assert (sym, name) == ("XLF", "자기 업종(금융 ETF)") and rows == own and Term.asked == [(("SPY", "XLK", "XLF"), "2y")]      # the market tab's own stored download
+    assert ax.own_sector(Term(), "US", {"ticker": "X", "sector": "Utilities"}) is None and ax.own_sector(Term(), "US", None) is None
+
+
+def test_stocks_whose_two_scores_are_far_apart_are_counted_and_ones_own_are_named():
+    def s(ticker, annual, trailing, strategy="LONG_TERM", newer=True):
+        return {"ticker": ticker, "strategy": strategy, "fund_period": {"live": "ANNUAL", "annual": {"score": annual, "fiscal_end": "2025-12-31"}, "trailing": {"score": trailing, "newer_quarter": newer}}}
+    snaps = [s("A", 64.2, 85.0), s("B", 70.0, 58.0), s("C", 50.0, 59.9), s("D", 40.0, 60.0, newer=False), s("E", 40.0, 60.0, strategy="SWING"), {"ticker": "F", "strategy": "LONG_TERM"}, s("G", 30.0, None)]
+    got = ax.fund_gaps(snaps, ["B", "A", "C"])
+    assert got["all"] == 2 and got["up"] == 1 and [(r["ticker"], round(r["diff"], 1)) for r in got["listed"]] == [("A", 20.8), ("B", -12.0)] and got["listed"][0]["annual_end"] == "2025-12-31"
+    assert ax.fund_gaps(snaps, [])["listed"] == [] and ax.fund_gaps(snaps, ["E"], strategy="SWING")["all"] == 1 and ax.fund_gaps([], ["A"]) == {"all": 0, "up": 0, "listed": []}
+
+
+def test_a_mark_is_new_when_the_record_before_knew_the_stock_and_did_not_mark_it(tmp_path, monkeypatch):
+    from terminal.qsf import kr_events_forward, kr_forward
+    fin = {0: {"session": "2026-11-20", "financing": ["A", "B", "N"], "buyback": [], "known": ["A", "B", "C", "N"]}, 1: {"session": "2026-11-19", "financing": ["A"], "buyback": [], "known": ["A", "B", "C"]}}
+    risk = {0: {"session": "2026-11-20", "codes": ["C", "R"], "ranked": ["A", "B", "C", "R"]}, 1: {"session": "2026-11-19", "codes": ["R"], "ranked": ["A", "B", "C", "R"]}}
+    monkeypatch.setattr(kr_events_forward, "marks", lambda base, back=0: fin[back])
+    monkeypatch.setattr(kr_forward, "high_risk", lambda base, back=0: risk[back])
+    new = ax.newly_marked(tmp_path)
+    assert new["financing"] == ["B"] and new["high_risk"] == ["C"] and new["session"] == "2026-11-20" and new["previous"] == "2026-11-19"      # N is new to the record, not newly marked
+    rows = [{"ticker": t, "name": n, "strategy": "SWING", "score": 30.0} for t, n in (("A", "가"), ("B", "나"), ("C", "다"))]
+    watched = A.marked_items(rows, ["B"], "KR", new)
+    assert [(i["level"], i["kind"]) for i in watched] == [("DUE", "AVOID_NEW")] and "직전 기록(2026-11-19) 뒤 새로 붙은 회피 표시: 자금 조달 공시 나; 고위험 다." in watched[0]["text"] and "날마다 드나듭니다" in watched[0]["text"]
+    plain = A.marked_items(rows, [], "KR", {**new, "high_risk": []})
+    assert plain[0]["level"] == "INFO" and "날마다" not in plain[0]["text"] and A.marked_items(rows, [], "KR", {**new, "financing": ["ZZ"], "high_risk": []}) == []      # a stock outside the scan is not named
+    monkeypatch.undo()
+    assert ax.newly_marked(tmp_path) == {"financing": [], "high_risk": [], "session": None, "previous": None}             # no record yet
+    assert kr_events_forward.marks(tmp_path, 1)["session"] is None and kr_forward.high_risk(tmp_path, 3) == {"session": None, "codes": [], "ranked": []}
+
+
+def test_the_note_opens_with_three_lines_made_by_fixed_rules():
+    rows = {"LONG_TERM": {"score": 64.2, "band_label": "보유·관찰"}, "SWING": {"score": 53.9, "band_label": "보유·관찰"}}
+    base = {"strategy": "LONG_TERM", "fund_period": {"live": "ANNUAL", "annual": {"score": 64.2, "fiscal_end": "2025-12-31"}, "trailing": {"score": 85.0, "newer_quarter": True}}}
+    change = [{"label": "1주 전", "session": "2026-11-13", "diff": 3.4, "then": 60.8, "now": 64.2, "domains": {"TECHNICAL": 8.0, "RISK": -2.0, "REGIME": 30.0}, "band": ("X", "X"), "versions": ("v", "v")}]
+    down = [{"factor": "valuation", "normalized": 0.48, "lost": 8.7}]
+    a, b, c = A.key_lines(rows, base, change, [], [], None, down, "KR")
+    assert a == "점수: 장기 64.2점('보유·관찰'), 스윙 53.9점('보유·관찰')."
+    assert b == "달라진 것: 1주 전 기록보다 +3.4점(가장 크게 바뀐 영역: 기술 +8). 재무 기준이 2025-12-31까지의 연간 보고서이고, 최근 4분기 재무로는 장기 85.0점(+20.8)입니다."
+    assert c == f"먼저 볼 위험: 점수를 가장 많이 깎는 것은 {A.FACTOR_KO['valuation']}입니다(48/100, -8.7점)."
+    order = [A.key_lines(rows, {"strategy": "LONG_TERM"}, [], g, m, s, down, "KR")[2] for g, m, s in ((["중대한 공시"], ["고위험"], "묶임"), ([], ["자금 조달 공시", "고위험"], "묶임"), ([], [], "묶임"))]
+    assert order[0] == "먼저 볼 위험: 차단 조건 1건(중대한 공시)." and order[1] == "먼저 볼 위험: 회피 표시(자금 조달 공시, 고위험)." and "거의 움직이지 않는 종목" in order[2]
+    none = A.key_lines({}, {"strategy": "SWING"}, [], [], [], None, [], "US")
+    assert none == ["점수: 최신 기록에 점수가 없습니다.", "달라진 것: 비교할 지난 기록이 아직 없습니다.", "먼저 볼 위험: 걸린 차단 조건과 회피 표시가 없습니다. 안전하다는 뜻은 아닙니다."]
+    close = {"strategy": "LONG_TERM", "fund_period": {"annual": {"score": 64.2}, "trailing": {"score": 70.0, "newer_quarter": True}}}
+    assert "최근 4분기" not in A.key_lines(rows, close, [], [], [], None, [], "KR")[1]                 # under ten points apart: not said
+
+
+def test_the_days_list_names_ones_own_stocks_whose_two_scores_are_far_apart(tmp_path, monkeypatch):
+    from terminal import automation
+    from terminal.qsf import fund_period
+    from tests.test_assistant import FakeTerminal
+    monkeypatch.setattr(automation, "status", lambda base: {"installed": True, "steps": {}, "latest_session": "2026-11-20", "notes": []})
+    monkeypatch.setattr(automation, "readings_state", lambda base: {})
+    monkeypatch.delenv(fund_period.SWITCH, raising=False)
+    term = FakeTerminal(tmp_path, held=["005930"])
+    assert "FUND_GAP" not in [i["kind"] for i in A.briefing(term, "KR")["items"]]                      # no record carries both scores yet: nothing is said
+    A._SNAPS.clear()
+    for s in term.qsf.ledger.snaps:
+        if s["ticker"] == "005930" and s["strategy"] == "LONG_TERM":
+            s["fund_period"] = {"live": "ANNUAL", "annual": {"score": 64.2, "fiscal_end": "2025-12-31"}, "trailing": {"score": 85.0, "fiscal_end": "2026-09-30", "newer_quarter": True}}
+    b = A.briefing(term, "KR")
+    gap = next(i for i in b["items"] if i["kind"] == "FUND_GAP")
+    assert b["unread_parts"] == [] and gap["level"] == "INFO" and gap["tab"] == "qsf"
+    assert gap["text"] == ("장기 점수가 재무 기준(연간 → 최근 4분기)에 따라 10점 넘게 달라지는 종목이 1개입니다(최근 4분기 쪽이 높은 종목 1개). 보유·관심·매수 후보 가운데: 삼성전자 64→85점(+21). "
+                           "라이브 점수는 연간 재무를 읽습니다. 이런 종목은 점수 카드의 참고 점수를 함께 보세요.")
+    A._SNAPS.clear()
+    other = FakeTerminal(tmp_path)                                                                     # the same records, the stock neither held nor watched nor a candidate
+    other.qsf.ledger.snaps = term.qsf.ledger.snaps
+    assert "보유·관심·매수 후보 가운데는 없습니다." in next(i for i in A.briefing(other, "KR")["items"] if i["kind"] == "FUND_GAP")["text"]
+    A._SNAPS.clear()
+
+
 def test_the_additions_are_wired_into_the_note_the_list_and_the_documents():
     src = (ROOT / "terminal" / "assistant.py").read_text(encoding="utf-8")
-    for needle in ('part("mix", mix)', 'part("marked", marked)', "ax.change_since(terminal.qsf.ledger", "ax.fund_age_lines(base", "ax.exposure(terminal.qsf._loader(market)(ticker)", '"매수 후보의 구성"'):
+    for needle in ('part("mix", mix)', 'part("marked", marked)', 'part("gaps", gaps)', 'sections.insert(0, {"title": "핵심 세 줄"', "ax.own_sector(terminal, market", "ax.newly_marked(base) if market == \"KR\" else None", "ax.SECTOR_KO.get(", "ax.change_since(terminal.qsf.ledger", "ax.fund_age_lines(base", "ax.exposure(terminal.qsf._loader(market)(ticker)", '"매수 후보의 구성"'):
         assert needle in src, needle
-    assert A.PART_KO["mix"] == "매수 후보의 구성" and A.PART_KO["marked"] == "회피 표시"
+    assert A.PART_KO["mix"] == "매수 후보의 구성" and A.PART_KO["marked"] == "회피 표시" and A.PART_KO["gaps"] == "재무 기준에 따른 점수 차이"
     mod = (ROOT / "terminal" / "analyst_extra.py").read_text(encoding="utf-8")
     assert "Nothing here feeds the score" in mod and "import requests" not in mod and "ledger.append" not in mod and ".write" not in mod
