@@ -398,4 +398,4 @@ def test_the_pass_bar_keeps_a_chance_pass_rare_and_two_episodes_do_not_decide():
     got = fp.summarize(days, 20)["difference"]
     assert got["days_with_difference"] == 60 and 2.0 < got["t"] < fp.MIN_T and fp.verdict(got) == "NOT_DISTINGUISHED"      # passed before (t 2.37)
     proto = (Path(__file__).resolve().parents[1] / "reports" / "QSF_FUND_PERIOD_PROTOCOL.md").read_text(encoding="utf-8")
-    assert "수정 1 (2026-11-22)" in proto and "t ≥ 3.0" in proto and "첫 줄이 쓰이기 전에" in proto and "t ≥ 2.0 |" not in proto
+    assert "수정 1 (2026-11-22)" in proto and "차이 평균 > 0, t ≥ 3.0, 두 점수가 다른 종목을 고른 날 120일 이상" in proto and "첫 줄이 쓰이기 전에" in proto and "차이 평균 > 0, t ≥ 2.0" not in proto
