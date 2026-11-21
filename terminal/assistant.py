@@ -331,7 +331,7 @@ STOCK_INTENTS = (
     ("WHY", "삼성전자 점수 왜 낮아?", ("왜", "이유", "점수", "어때", "평가")),
 )
 PLAIN_INTENTS = (
-    ("HELP", "뭘 물어볼 수 있어?", ("도움", "물어볼", "질문 목록", "help", "사용법")),
+    ("HELP", "뭘 물어볼 수 있어?", ("도움", "물어볼", "질문 목록", "질문목록", "help", "사용법", "명령어")),
     ("TRUST", "이 점수 믿어도 돼?", ("믿", "신뢰", "근거", "정확", "검증됐")),
     ("COST", "수수료는 얼마로 계산해?", ("수수료", "비용", "세금", "거래세")),
     ("ALERTS", "걸어 둔 알림 뭐 있어?", ("알림",)),
@@ -522,7 +522,12 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
     where, base = MARKET_KO[market], Path(terminal.base)
     texts = lambda items: [i["text"] for i in items]      # noqa: E731
     if intent == "HELP":
-        return {"title": "물어볼 수 있는 것", "lines": ["아래 같은 정해진 질문만 알아듣습니다. 종목은 코드나 회사명으로 적으면 됩니다(스캔 대상: 미국 S&P 500, 한국 시가총액 상위 300)."] + EXAMPLES}
+        return {"title": f"물어볼 수 있는 것 {len(EXAMPLES)}가지", "examples": EXAMPLES,
+                "lines": ["정해진 질문만 알아듣습니다. 아래 예를 누르거나 비슷하게 적으면 됩니다.",
+                          f"종목 없이 묻는 것 {len(PLAIN_INTENTS)}가지: " + " / ".join(e for _, e, _ in PLAIN_INTENTS[::-1]),
+                          f"종목을 넣어 묻는 것 {len(STOCK_INTENTS)}가지: " + " / ".join(e for _, e, _ in STOCK_INTENTS[::-1]),
+                          "종목은 '삼성전자' 자리에 코드, 티커, 회사명을 적습니다(스캔 대상: 미국 S&P 500, 한국 시가총액 상위 300). '장기'를 넣으면 장기 점수로 답합니다.",
+                          "이 목록은 'help', '도움말', '?'로 언제든 다시 볼 수 있습니다."]}
     if intent == "TODAY":
         brief = briefing(terminal, market)
         return {"title": f"오늘 할 일({where})", "lines": [brief["headline"]] + [f"[{i['level_label']}] {i['text']}" for i in brief["items"] if i["level"] != "INFO"][:8]
@@ -575,7 +580,9 @@ def answer(terminal: Any, text: str, market: str = "US") -> Dict[str, Any]:
     text = " ".join(str(text or "").split())[:200]
     if not text:
         return {"status": "UNKNOWN", "title": "질문이 비어 있습니다", "lines": ["아래 예처럼 물어보세요."], "examples": EXAMPLES, "note": NOTE}
-    stock = find_stock(text, {m: _rows(terminal, m) for m in ("KR", "US")})
+    if text.lower().strip(" ?？!.") in ("", "help", "h", "도움", "도움말", "질문", "목록"):
+        text = "help"
+    stock = None if text == "help" else find_stock(text, {m: _rows(terminal, m) for m in ("KR", "US")})
     intent = read_question(text, stock is not None)
     if intent is None:
         return {"status": "UNKNOWN", "question": text, "title": "이 질문은 알아듣지 못했습니다",

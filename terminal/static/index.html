@@ -21,20 +21,28 @@
   <div id="netbar" class="netbar" role="alert" hidden></div>
   <div id="verbar" class="verbar" role="status" hidden></div>
 </header>
-<nav class="tabs" role="tablist">
-  <button data-tab="today" class="on">오늘</button>
-  <button data-tab="overview">시장 개요</button>
-  <button data-tab="map">시장 지도</button>
-  <button data-tab="stock">종목</button>
-  <button data-tab="compare">비교</button>
-  <button data-tab="qsf">점수</button>
-  <button data-tab="macro">거시</button>
-  <button data-tab="watch">관심종목</button>
-  <button data-tab="portfolio">포트폴리오</button>
-  <button data-tab="assist">매매 보조</button>
-  <button data-tab="paper">모의 매매</button>
-  <button data-tab="model">모델</button>
-  <button data-tab="lab">연구실</button>
+<nav class="groups" id="groups" aria-label="묶음">
+  <button type="button" data-group="today" class="on">오늘</button>
+  <button type="button" data-group="market">시장</button>
+  <button type="button" data-group="stock">종목</button>
+  <button type="button" data-group="account">내 계좌</button>
+  <button type="button" data-group="score">점수</button>
+  <button type="button" data-group="verify">검증·기록</button>
+</nav>
+<nav class="tabs" role="tablist" hidden>
+  <button data-tab="today" data-group="today" class="on">오늘</button>
+  <button data-tab="overview" data-group="market">시장 개요</button>
+  <button data-tab="map" data-group="market">시장 지도</button>
+  <button data-tab="macro" data-group="market">거시</button>
+  <button data-tab="stock" data-group="stock">종목</button>
+  <button data-tab="compare" data-group="stock">비교</button>
+  <button data-tab="watch" data-group="stock">관심종목</button>
+  <button data-tab="portfolio" data-group="account">포트폴리오</button>
+  <button data-tab="assist" data-group="account">매매 보조</button>
+  <button data-tab="paper" data-group="account">모의 매매</button>
+  <button data-tab="qsf" data-group="score">점수</button>
+  <button data-tab="model" data-group="verify">모델</button>
+  <button data-tab="lab" data-group="verify">연구실</button>
 </nav>
 <main>
   <section id="tab-today" class="tab on"></section>

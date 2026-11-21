@@ -52,11 +52,16 @@ button:disabled { opacity: .55; cursor: default; }
 .verbar button { padding: 2px 8px; font-size: 12px; }
 .netbar span { flex: 1; min-width: 0; }
 .netbar button { padding: 2px 8px; font-size: 12px; }
-.tabs { display: flex; gap: 2px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--line);
+.groups { display: flex; gap: 2px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.groups button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 10px 14px; background: none; color: var(--muted);
+                 white-space: nowrap; font-size: 15px; }
+.groups button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.tabs { display: flex; gap: 2px; padding: 0 12px; background: var(--bg); border-bottom: 1px solid var(--line);
         flex-wrap: wrap; }      /* 탭이 창보다 길면 다음 줄로 넘깁니다: 가로로 밀려 안 보이는 탭이 없게 */
-.tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 10px 12px;
-               background: none; color: var(--muted); white-space: nowrap; }
+.tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 7px 12px;
+               background: none; color: var(--muted); white-space: nowrap; font-size: 13px; }
 .tabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+.tabs[hidden], .tabs button[hidden] { display: none; }
 main { padding: 16px; max-width: 1280px; margin: 0 auto; }
 .tab { display: none; } .tab.on { display: block; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin-bottom: 14px;
@@ -311,3 +316,13 @@ table.sp-ret td { padding: 4px 8px; }
 .asst-item.ACT { border-left-color: var(--bad); } .asst-item.DUE { border-left-color: var(--warn); } .asst-item.INFO { border-left-color: var(--muted); }
 .asst-act { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .asst-act:empty { display: none; }
+/* 접는 구역: 제목만 보이고 누르면 펼쳐집니다 */
+.fold > div > .panel > h2 { cursor: pointer; margin-bottom: 0; }
+.fold > div > .panel > h2::before { content: "▸"; color: var(--muted); width: 1em; }
+.fold.open > div > .panel > h2 { margin-bottom: 10px; }
+.fold.open > div > .panel > h2::before { content: "▾"; }
+.fold:not(.open) > div > .panel > :not(h2) { display: none; }
+.fold-hint { color: var(--muted); font-size: 12px; font-weight: 400; margin-left: 6px; }
+details.notice > summary { cursor: pointer; }
+details.notice[open] > summary { margin-bottom: 6px; }
+details[open] > summary .fold-hint { display: none; }

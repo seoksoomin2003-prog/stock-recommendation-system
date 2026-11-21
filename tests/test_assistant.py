@@ -280,14 +280,17 @@ def test_plain_answers_and_what_it_does_not_know(term):
     assert A.answer(term, "시장 상태 어때?", "KR")["intent"] == "MARKET" and "지수 추세 0/100" in " ".join(A.answer(term, "시장 상태 어때?", "KR")["lines"])
     assert "왕복 0.53%" in A.answer(term, "수수료는 얼마로 계산해?", "KR")["lines"][0]
     assert A.answer(term, "오늘 상위 종목은?", "US")["lines"][0].startswith("미국 스윙 점수 상위 3종목")
-    assert A.answer(term, "뭘 물어볼 수 있어?", "KR")["lines"][1:] == A.EXAMPLES
+    for typed in ("뭘 물어볼 수 있어?", "help", "도움말", "?", "명령어 뭐 있어"):
+        got = A.answer(term, typed, "KR")
+        assert got["status"] == "REAL" and got["intent"] == "HELP" and got["examples"] == A.EXAMPLES and "19가지" in got["title"], typed
+        assert "종목 없이 묻는 것 11가지" in got["lines"][1] and "종목을 넣어 묻는 것 8가지" in got["lines"][2] and "'help'" in got["lines"][-1]
     trust = A.answer(term, "이 점수 믿어도 돼?", "KR")
     assert trust["intent"] == "TRUST" and "확인되지 않았습니다" in trust["lines"][1]
     today = A.answer(term, "오늘 뭐 해야 해?", "KR")
     assert today["intent"] == "TODAY" and today["tab"] == "today" and today["lines"][0] == "오늘 따로 챙길 것이 없습니다."
     unknown = A.answer(term, "비트코인 전망", "KR")
     assert unknown["status"] == "UNKNOWN" and unknown["examples"] == A.EXAMPLES and "알아듣지 못했습니다" in unknown["title"]
-    assert A.answer(term, "   ", "KR")["status"] == "UNKNOWN" and len(A.answer(term, "가" * 500 + " 시장", "KR")["question"]) <= 200
+    assert A.answer(term, "   ", "KR")["status"] == "UNKNOWN" and A.answer(term, "HELP 삼성전자", "KR")["intent"] != "HELP" and len(A.answer(term, "가" * 500 + " 시장", "KR")["question"]) <= 200
     broken = FakeTerminal(term.base)
     broken.market_state = lambda market="US": (_ for _ in ()).throw(OSError("x"))
     lost = A.answer(broken, "시장 상태 어때?", "KR")
@@ -310,6 +313,6 @@ def test_the_assistant_asks_no_network_and_is_wired_into_the_server_and_the_firs
     assert "RENDER.today = renderToday" in js and "/api/assistant/ask" in js and "esc(i.text)" in js and "innerHTML = a." not in js
     assert 'RENDER.today ? "today" : "overview"' in (server.STATIC / "app.js").read_text(encoding="utf-8")
     cmd = (server.STATIC / "command.js").read_text(encoding="utf-8")
-    assert "askAssistant(q)" in cmd and 'today: ["오늘", "비서"' in cmd
+    assert "askAssistant(q)" in cmd and 'today: ["오늘", "비서"' in cmd and 'askAssistant("help")' in cmd and '"도움말"' in cmd
     auto = (ROOT / "terminal" / "automation.py").read_text(encoding="utf-8")
     assert "self._notes(st), self._brief())" in auto and "assistant.daily_lines" in auto

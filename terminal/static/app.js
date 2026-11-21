@@ -93,10 +93,26 @@ function spark(cv, vals) {
 }
 
 // ------------------------------------------------------------------ tabs & routing
+// 탭은 여섯 묶음으로 나뉩니다.  윗줄은 묶음, 아랫줄은 그 묶음의 탭입니다(탭이 하나뿐인 묶음은 아랫줄을 숨깁니다).
+const groupTab = {};          // 묶음마다 마지막으로 본 탭
+function groupOf(tab) { const b = document.querySelector(`.tabs button[data-tab="${tab}"]`); return b ? b.dataset.group : null; }
+function paintGroups(tab) {
+  const g = groupOf(tab);
+  if (!g) return;
+  groupTab[g] = tab;
+  document.querySelectorAll(".groups button").forEach((b) => b.classList.toggle("on", b.dataset.group === g));
+  const mine = [...document.querySelectorAll(".tabs button")].filter((b) => { b.hidden = b.dataset.group !== g; return !b.hidden; });
+  document.querySelector(".tabs").hidden = mine.length < 2;
+}
+function showGroup(g) {
+  const first = document.querySelector(`.tabs button[data-group="${g}"]`);
+  if (first) show(groupTab[g] || first.dataset.tab);
+}
 function show(tab, push = true) {
   state.tab = tab;
   if (healthAt && Date.now() - healthAt > 30000) loadHealth();      // 탭을 옮길 때도 화면이 업데이트됐는지 확인합니다
   document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+  paintGroups(tab);
   document.querySelectorAll(".tab").forEach((s) => s.classList.toggle("on", s.id === "tab-" + tab));
   if (push) location.hash = tab === "stock" && state.ticker ? `stock/${state.ticker}` : tab;
   if (tab === "stock") return renderStock();
@@ -130,6 +146,7 @@ function openTicker(t) {
   window.scrollTo(0, 0);
 }
 document.querySelectorAll(".tabs button").forEach((b) => (b.onclick = () => show(b.dataset.tab)));
+document.querySelectorAll(".groups button").forEach((b) => (b.onclick = () => showGroup(b.dataset.group)));
 $("#market").onclick = (e) => { const b = e.target.closest("button"); if (b) setMarket(b.dataset.m); };
 async function searchKr(q) {
   setMarket("KR", false);

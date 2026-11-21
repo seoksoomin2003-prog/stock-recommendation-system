@@ -11,7 +11,7 @@ const CMD_ALIASES = {
 const CMD_MARKETS = { US: ["미국", "us", "usa"], KR: ["한국", "kr", "korea"] };
 
 function cmdTabs() {
-  return [...document.querySelectorAll(".tabs button")].map((b, i) => ({ tab: b.dataset.tab, label: b.textContent.trim(), key: i < 9 ? String(i + 1) : "" }));
+  return [...document.querySelectorAll(".tabs button")].map((b) => ({ tab: b.dataset.tab, label: b.textContent.trim(), key: "" }));
 }
 // What a typed line means, best first.  Each item: {label, hint, run}.
 function cmdParse(raw) {
@@ -39,6 +39,8 @@ function cmdParse(raw) {
     exact ? out.push(item) : out.unshift(item);
   }
   if (/[가-힣]/.test(q) && !out.length) out.push({ label: `'${q}' 한국 종목 검색`, hint: "검색", run: () => searchKr(q) });
+  if (typeof askAssistant === "function" && ["help", "h", "?", "？", "도움", "도움말", "질문", "질문 목록", "비서"].includes(low))
+    out.unshift({ label: "비서에게 물어볼 수 있는 질문 19가지 보기", hint: "도움말", run: () => askAssistant("help") });
   // 문장으로 적은 것은 비서에게 묻습니다.  물음표로 끝나거나 묻는 말이 들어 있으면 맨 위에 둡니다.
   if (q.length >= 2 && typeof askAssistant === "function" && (/\s/.test(q) || /[?？]$/.test(q))) {
     const ask = { label: `'${q}' 비서에게 묻기`, hint: "질문", run: () => askAssistant(q) };
@@ -50,9 +52,9 @@ function cmdParse(raw) {
 const cmdEl = document.createElement("div");
 cmdEl.id = "cmd";
 cmdEl.hidden = true;
-cmdEl.innerHTML = `<div class="cmd-box" role="dialog" aria-label="명령창"><input id="cmd-q" autocomplete="off" spellcheck="false" placeholder="종목 코드, 회사명, 탭 이름, 질문 (예: AAPL, 삼성전자, 점수, 지도, 한국)">
+cmdEl.innerHTML = `<div class="cmd-box" role="dialog" aria-label="명령창"><input id="cmd-q" autocomplete="off" spellcheck="false" placeholder="종목 코드, 회사명, 탭 이름, 질문, help (예: AAPL, 삼성전자, 점수, 지도, 한국)">
   <ul id="cmd-list" role="listbox"></ul>
-  <div class="cmd-help">↑↓ 선택 · Enter 이동 · Esc 닫기 · 어디서나 <kbd>/</kbd> 또는 <kbd>⌘K</kbd> · 탭 바로가기 <kbd>1</kbd>~<kbd>9</kbd> · 시장 전환 <kbd>M</kbd> · 도움말 <kbd>?</kbd></div></div>`;
+  <div class="cmd-help">↑↓ 선택 · Enter 이동 · Esc 닫기 · 어디서나 <kbd>/</kbd> 또는 <kbd>⌘K</kbd> · 묶음 바로가기 <kbd>1</kbd>~<kbd>6</kbd> · 시장 전환 <kbd>M</kbd> · 도움말 <kbd>?</kbd></div></div>`;
 document.body.appendChild(cmdEl);
 let cmdItems = [], cmdSel = 0;
 function cmdPaint() {
@@ -80,7 +82,7 @@ document.addEventListener("keydown", (e) => {
   if (!cmdEl.hidden || typing(e) || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
   if (e.key === "/") { e.preventDefault(); cmdOpen(); return; }
   if (e.key === "?") { e.preventDefault(); cmdOpen(); return; }
-  if (/^[1-9]$/.test(e.key)) { const t = cmdTabs()[+e.key - 1]; if (t) { show(t.tab); window.scrollTo(0, 0); } return; }
+  if (/^[1-9]$/.test(e.key)) { const g = document.querySelectorAll(".groups button")[+e.key - 1]; if (g) { showGroup(g.dataset.group); window.scrollTo(0, 0); } return; }
   if (e.key === "m" || e.key === "M") setMarket(state.market === "US" ? "KR" : "US");
 });
 $("#cmdbtn").onclick = cmdOpen;

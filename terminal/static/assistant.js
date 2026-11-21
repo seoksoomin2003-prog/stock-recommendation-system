@@ -42,12 +42,12 @@ async function renderToday() {
   state.loaded.today = true;
   const mk = isKR() ? "한국" : "미국";
   box.innerHTML = `<div class="panel"><h2>오늘 <span class="badge">${mk}</span></h2>
-      <form id="asst-form" class="asst-ask" autocomplete="off"><input id="asst-q" maxlength="200" placeholder="물어보기 (예: 삼성전자 점수 왜 낮아? · 오늘 뭐 해야 해?)" aria-label="비서에게 묻기">
+      <form id="asst-form" class="asst-ask" autocomplete="off"><input id="asst-q" maxlength="200" placeholder="물어보기 (예: 삼성전자 점수 왜 낮아? · 오늘 뭐 해야 해? · help)" aria-label="비서에게 묻기">
         <button class="btn-primary" type="submit">묻기</button><button class="ghost" type="button" id="asst-help">물어볼 수 있는 것</button></form>
       <div id="asst-out"></div></div>
     <div class="panel" id="asst-brief">${loading}</div>`;
   $("#asst-form").onsubmit = (e) => { e.preventDefault(); asstAsk($("#asst-q").value); };
-  $("#asst-help").onclick = () => asstAsk("뭘 물어볼 수 있어?");
+  $("#asst-help").onclick = () => asstAsk("help");
   box.onclick = (e) => {
     const go = e.target.closest(".asst-go"), ex = e.target.closest(".asst-ex"), tk = e.target.closest("[data-ticker]");
     if (ex) return asstAsk(ex.textContent);

@@ -100,7 +100,7 @@ function qsfRecordHtml(d) {
     <td>${win(r)}</td>${fifths(r)}
     <td>${p1(r.buy_excess)}</td><td${r.not_stored_note ? ` title="${esc(r.not_stored_note)}"` : ""}>${isNum(r.universe_return) && isNum(r.market_return) ? `${p1(r.universe_return)} / ${p1(r.market_return)}` : DASH}</td>
     <td class="l">${esc(r.reading_label)}${r.beats_market === false ? " · 시장은 못 이김" : ""}</td></tr>${qsfWhyHtml(r)}`).join("");
-  return `<details class="qsf-record" open><summary>과거 성적: 이 점수를 얼마나 믿을 수 있나</summary>
+  return `<details class="qsf-record"><summary>과거 성적: 이 점수를 얼마나 믿을 수 있나 <span class="fold-hint">표 보기</span></summary>
     <div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">점수 · 보유 기간</th><th title="임의의 두 종목 중 점수가 높은 쪽의 수익이 더 좋았던 비율. 50%면 동전 던지기입니다. 아래 작은 숫자는 오차 범위(약 95%)입니다.">높은 점수가 이긴 비율</th>
       <th title="같은 날 스캔한 종목 평균 대비">상위 20%</th><th title="같은 날 스캔한 종목 평균 대비">하위 20%</th><th title="같은 날 스캔한 종목 평균 대비">70점 이상</th>
       <th title="스캔한 종목 전체의 평균 수익과 같은 기간 시장 수익">대상 평균 / 시장</th><th class="l">판정</th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -117,10 +117,27 @@ async function qsfLoadRecord() {
   }
 }
 
+// 긴 화면은 제목만 보이고, 제목을 누르면 펼쳐집니다.  펼친 것은 이 브라우저가 기억합니다.  처음에는 판정 일정만 펼쳐 둡니다.
+const QSF_FOLD_OPEN = ["readings"];
+function qsfFoldState() { try { const v = JSON.parse(localStorage.getItem("qsfFolds") || "null"); return Array.isArray(v) ? v : QSF_FOLD_OPEN; } catch (e) { return QSF_FOLD_OPEN; } }
+function qsfFolds(el) {
+  const open = new Set(qsfFoldState());
+  el.querySelectorAll(".fold").forEach((f) => f.classList.toggle("open", open.has(f.dataset.fold)));
+  el.onclick = (e) => {
+    const h = e.target.closest(".fold > div > .panel > h2");
+    if (!h || e.target.closest("button, a, input, select")) return;
+    const f = h.closest(".fold");
+    f.classList.toggle("open");
+    try { localStorage.setItem("qsfFolds", JSON.stringify([...el.querySelectorAll(".fold.open")].map((x) => x.dataset.fold))); } catch (err) { /* private mode: not remembered */ }
+    if (f.classList.contains("open")) redrawAll();          // 접힌 동안 그리지 못한 그래프를 지금 그립니다
+  };
+}
+
 async function renderQsf() {
   const el = $("#tab-qsf");
   el.innerHTML = `<div class="panel"><h2>종목 점수 (QSF 1.1)</h2>
-    <div class="notice"><b>미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. 한국 스캔 대상은 2026-11-11부터 시가총액 상위 300종목입니다. 이 대상 안에서 점수는 과거 시험(2019~2026)의 기준에 못 미쳤고(장기 점수는 순위와 약한 양의 관계, 상위 종목은 시장 수준), 이전 대상(거래대금 상위 300)에서는 장기 점수가 한 구간에서만 순위를 설명했으며 그 대상 자체가 시장보다 크게 부진했습니다. 한국 스윙 점수는 2026-11-11에 차트 항목을 뺀 새 구성이라 과거 성적이 없습니다. 2026-11-16부터 네 점수 모두 시장 국면을 빼고 '시장 상태'로 따로 보여 줍니다(종목 순위는 거의 그대로이고 매수 후보 수가 달라집니다). 참고용으로만 쓰세요.</b><br>모델 탭의 기준 모델(미국 종목에 순위를 매겨 상위 5개와 진입·손절 계획을 내는, 규칙이 고정된 모델)과 별개인 규칙 기반 점수이며, 두 결과를 합치지 않습니다. 가중치와 구간은 사전에 정한 연구 기본값입니다. 주문을 실행하지 않고, 투자 자문이 아닙니다.</div>
+    <details class="notice qsf-caveat"><summary><b>점수가 높다고 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다. 참고용으로만 쓰세요.</b> <span class="fold-hint">자세히</span></summary>
+    <b>미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. 한국 스캔 대상은 2026-11-11부터 시가총액 상위 300종목입니다. 이 대상 안에서 점수는 과거 시험(2019~2026)의 기준에 못 미쳤고(장기 점수는 순위와 약한 양의 관계, 상위 종목은 시장 수준), 이전 대상(거래대금 상위 300)에서는 장기 점수가 한 구간에서만 순위를 설명했으며 그 대상 자체가 시장보다 크게 부진했습니다. 한국 스윙 점수는 2026-11-11에 차트 항목을 뺀 새 구성이라 과거 성적이 없습니다. 2026-11-16부터 네 점수 모두 시장 국면을 빼고 '시장 상태'로 따로 보여 줍니다(종목 순위는 거의 그대로이고 매수 후보 수가 달라집니다). 참고용으로만 쓰세요.</b><br>모델 탭의 기준 모델(미국 종목에 순위를 매겨 상위 5개와 진입·손절 계획을 내는, 규칙이 고정된 모델)과 별개인 규칙 기반 점수이며, 두 결과를 합치지 않습니다. 가중치와 구간은 사전에 정한 연구 기본값입니다. 주문을 실행하지 않고, 투자 자문이 아닙니다.</details>
     <div id="qsfrecord"></div>
     <form id="qsfform" class="qsf-form">
       <input id="qsfticker" placeholder="${isKR() ? "종목코드 (예: 005930)" : "티커 (예: AAPL)"}" autocomplete="off" aria-label="종목">
@@ -130,10 +147,13 @@ async function renderQsf() {
       <span class="seg" id="qsfview" role="group" aria-label="보기">${Object.entries(QSF_VIEWS).map(([k, v]) => `<button type="button" data-v="${k}">${v}</button>`).join("")}</span>
       <span class="seg" id="qsfstratseg" role="group" aria-label="전략"><button type="button" data-s="SWING">스윙</button><button type="button" data-s="LONG_TERM">장기</button></span>
     </div>
-    <div data-view="rank"><div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsfcap"></div><div id="qsfchanges"></div></div>
+    <div data-view="rank"><div id="qsfdetail"></div><div id="qsfrank"></div><div class="fold" data-fold="cap"><div id="qsfcap"></div></div><div class="fold" data-fold="changes"><div id="qsfchanges"></div></div></div>
     <div data-view="screen"><div id="qsfscreen"></div></div>
     <div data-view="exec"><div id="qsfplan"></div><div id="qsfpaper"></div></div>
-    <div data-view="track"><div id="qsfreadings"></div><div id="qsftop3"></div><div id="qsffcast"></div><div id="qsfmethod"></div><div id="qsfregime"></div><div id="qsflook"></div><div id="qsfvalid"></div></div>`;
+    <div data-view="track"><div class="fold" data-fold="readings"><div id="qsfreadings"></div></div><div class="fold" data-fold="top3"><div id="qsftop3"></div></div><div class="fold" data-fold="fcast"><div id="qsffcast"></div></div>
+      <div class="fold" data-fold="method"><div id="qsfmethod"></div></div><div class="fold" data-fold="regime"><div id="qsfregime"></div></div><div class="fold" data-fold="look"><div id="qsflook"></div></div>
+      <div class="fold" data-fold="valid"><div id="qsfvalid"></div></div></div>`;
+  qsfFolds(el);
   $("#qsfview").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetView(b.dataset.v)));
   $("#qsfstratseg").querySelectorAll("button").forEach((b) => (b.onclick = () => qsfSetStrategy(b.dataset.s)));
   qsfState.fresh = {};
