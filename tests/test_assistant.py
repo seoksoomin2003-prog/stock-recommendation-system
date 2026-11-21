@@ -182,6 +182,11 @@ class FakeQsf:
     def top3(self, market):
         return {"strategies": {"SWING": {"days": [{"session": "2026-11-20", "entry_session": "2026-11-23", "before_open": True, "top": [{"ticker": "TECH", "name": "Bio-Techne", "score": 76.4}]}]}}}
 
+    dividends: list = []
+
+    def dividends_upcoming(self, market, days):
+        return {"status": "REAL", "items": [d for d in self.dividends if d["days_away"] <= days]}
+
     def earnings_upcoming(self, market, days):
         return {"items": []}
 
@@ -509,3 +514,15 @@ def test_the_candidate_count_says_how_many_are_in_the_buy_band():
     text = A.plan_items({"status": "NO_ACCOUNT", "candidates": 322, "candidates_by": by}, "US")[0]["text"]
     assert "322건" in text and "스윙 9건 중 1건" in text and "장기 313건 중 70건" in text and "관망 구간(55~70점)" in text
     assert A.candidate_split(None) == "" and A.candidate_split({"SWING": {"all": 0, "buy": 0}}) == ""
+
+
+def test_the_days_list_names_an_ex_dividend_date_and_the_note_shows_the_stored_expectations(term):
+    term.qsf.dividends = [{"ticker": "AAPL", "name": "Apple Inc.", "date": "2026-11-24", "days_away": 3, "held": False, "watched": True},
+                          {"ticker": "A", "name": "Agilent", "date": "2026-12-20", "days_away": 29, "held": True, "watched": False}]
+    items = [i for i in A.briefing(term, "US")["items"] if i["kind"] == "EX_DIVIDEND"]
+    assert len(items) == 1 and items[0]["level"] == "INFO" and items[0]["ticker"] == "AAPL" and "배당락일 2026-11-24(3일 뒤)" in items[0]["text"]      # only within five days
+    term.qsf.stored_info = lambda ticker, market: {"targetMeanPrice": 200000.0, "numberOfAnalystOpinions": 35}
+    note = A.answer(term, "삼성전자 분석해 줘", "KR")
+    by = {s["title"]: s["lines"] for s in note["sections"]}
+    assert by["시장의 기대 (야후 집계, 참고)"][0].startswith("목표주가: 증권사 35곳 평균 200,000원(지금 가격 대비 ") and "공식 자료가 아닙니다" in by["시장의 기대 (야후 집계, 참고)"][-1]
+    assert "야후가 모은 지금 값만" in by["이 노트의 한계"][0]

@@ -12,7 +12,26 @@ NEGATIVE_8K = {"1.02": "중요 계약 종료 (8-K 1.02)", "2.04": "채무 가속
                "2.06": "중요 자산 손상 (8-K 2.06)", "4.02": "과거 재무제표 신뢰 불가 (8-K 4.02)"}
 GOV_8K = {"4.01": "감사인 변경 (8-K 4.01)", "4.02": "재무제표 신뢰 불가 (8-K 4.02)"}
 GOV_FORMS = {"NT 10-K": "연차보고서 지연 (NT 10-K)", "NT 10-Q": "분기보고서 지연 (NT 10-Q)", "10-K/A": "연차보고서 정정 (10-K/A)"}
-KEPT_FORMS = {"4", "8-K", "8-K/A", "NT 10-K", "NT 10-Q", "10-K/A"}
+# Filings a company makes when it is being bought or taken private (kept since 2026-11-22; shown as a fact, never scored).
+# 425 and S-4 are left out: the buying side files them too, in numbers.  A merger proxy can also come from a buyer whose own
+# shareholders must vote, so the mark says what was filed and leaves the reading to the price beside it.
+DEAL_FORMS = {"PREM14A": "합병 주주총회 예비 위임장", "DEFM14A": "합병 주주총회 위임장", "PREM14C": "합병 예비 정보 설명서", "DEFM14C": "합병 정보 설명서",
+              "SC TO-T": "제3자의 공개매수 신고", "SC 14D9": "공개매수에 대한 회사 의견서", "SC 13E3": "비공개 전환 거래 신고"}
+DEAL_DAYS = 365
+KEPT_FORMS = {"4", "8-K", "8-K/A", "NT 10-K", "NT 10-Q", "10-K/A"} | set(DEAL_FORMS) | {f + "/A" for f in DEAL_FORMS}
+
+
+def deal_filings(filings, as_of: str, days: int = DEAL_DAYS):
+    """Merger and tender-offer filings of the last ``days`` days, newest first.  Amendments count as their form."""
+    from datetime import date, timedelta
+    start = (date.fromisoformat(as_of) - timedelta(days=days)).isoformat()
+    out = []
+    for f in filings or []:
+        form = str(f.get("form") or "")
+        base = form[:-2] if form.endswith("/A") else form
+        if base in DEAL_FORMS and f.get("date") and start <= f["date"] <= as_of:
+            out.append({"form": base, "date": f["date"], "label": DEAL_FORMS[base]})
+    return sorted(out, key=lambda r: (r["date"], r["form"]), reverse=True)
 WINDOW = 90
 WINDOW_LONG = 365
 SEVERE_WINDOW = 180

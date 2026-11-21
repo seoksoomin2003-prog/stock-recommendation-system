@@ -8,6 +8,7 @@ screen.  They use the scorer's own state (``self.base``, ``self.cache``, ``self.
 import gzip
 import json
 import threading
+from datetime import date
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
@@ -294,6 +295,38 @@ class ScreenViews:
         today = now.astimezone(ZoneInfo("America/New_York" if market == "US" else "Asia/Seoul")).date()
         res = earnings_calendar.upcoming(out.get("rows") or [], read, today, now.timestamp(), days, held, watched)
         return {**res, "market": market, "session": out.get("session")}
+
+    def dividends_upcoming(self, market: str = "US", days: int = 14) -> Dict[str, Any]:
+        """Ex-dividend dates of holdings and watchlist within ``days`` days, from the stored Yahoo records.  Never asks the network.
+        Yahoo is not an official source: the date is shown as Yahoo's, and a stock without a stored date is simply absent."""
+        from zoneinfo import ZoneInfo
+
+        from terminal import portfolio as pf
+        held: set = set()
+        watched: set = set()
+        try:
+            held = set(self.terminal._book(market)[2]["positions"])
+        except Exception:
+            pass
+        try:
+            watched = {t for t in self.terminal.watchlist() if pf.market_of(t) == market}
+        except Exception:
+            pass
+        today = self.now().astimezone(ZoneInfo("America/New_York" if market == "US" else "Asia/Seoul")).date()
+        items = []
+        for t in sorted(held | watched):
+            info = self.stored_info(t, market)
+            day = info.get("exDividendDate")
+            if not day:
+                continue
+            try:
+                away = (date.fromisoformat(day) - today).days
+            except ValueError:
+                continue
+            if 0 <= away <= days:
+                items.append({"ticker": t, "name": info.get("longName") or info.get("shortName"), "date": day, "days_away": away, "held": t in held, "watched": t in watched,
+                              "rate": info.get("dividendRate")})
+        return {"status": "REAL", "market": market, "items": sorted(items, key=lambda i: (i["date"], i["ticker"])), "source": "Yahoo Finance 종목 정보(공식 자료 아님)"}
 
     def screen_rows(self, market: str = "US") -> Dict[str, Any]:
         """The newest scan with each stock's sector and industry.  Added when read, so no score or record contains it."""

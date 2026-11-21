@@ -566,6 +566,10 @@ class Terminal(ModelViews):
             out["earnings_status"] = e.get("status")
         except Exception as exc:
             out["earnings"], out["earnings_status"] = [], f"UNAVAILABLE ({type(exc).__name__})"
+        try:                    # ex-dividend dates of holdings and watchlist, from the stored Yahoo records (reference, not official)
+            out["dividends"] = self.qsf.dividends_upcoming(market, days).get("items") or []
+        except Exception:
+            out["dividends"] = []
         return out
 
     def sector_picks(self, market: str, fund: str) -> Dict[str, Any]:

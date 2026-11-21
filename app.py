@@ -555,6 +555,7 @@ def _kr_ledger_records(res) -> None:      # the Korean side records that read th
     except Exception as exc:
         res["bundle_challenger"] = {"status": "FAILED", "reason": type(exc).__name__}
     _fund_period_record(res, "KR")
+    _expectations_record(res, "KR")
 
 
 def _qsf_kr_forward(args) -> int:
@@ -802,6 +803,20 @@ def _qsf_fund_period(args) -> int:      # reports/QSF_FUND_PERIOD_PROTOCOL.md
     return 0 if res.get("status") in ("OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
 
 
+def _expectations_record(res, market: str) -> None:    # analyst estimates, short interest, ex-dividend dates as stored; it never fails the step
+    try:
+        from terminal.cache import FileCache
+        from terminal.qsf import expectations
+        from terminal.qsf.ledger import Ledger
+        rows = [r for r in Ledger(PROJECT_ROOT)._live_rows() if r["market"] == market]
+        session = max((r["session"] for r in rows), default=None)
+        tickers = {s["ticker"] for s in Ledger(PROJECT_ROOT).of_session(market, session, "SWING")} if session else set()
+        got = expectations.record(PROJECT_ROOT, market, session, tickers, FileCache(PROJECT_ROOT / "data" / "qsf" / "cache").read) if session else {"status": "NO_SESSION"}
+        res["expectations"] = {k: v for k, v in got.items() if k != "market"}
+    except Exception as exc:
+        res["expectations"] = {"status": "FAILED", "reason": type(exc).__name__}
+
+
 def _fund_period_record(res, market: str) -> None:      # both scores side by side, from the ledger only; it never fails the step
     try:
         from terminal.qsf import fund_period
@@ -860,6 +875,7 @@ def _qsf_us_challenger_record(args) -> int:
     except Exception as exc:
         res["score_split"] = {"status": "FAILED", "reason": type(exc).__name__}
     _fund_period_record(res, "US")
+    _expectations_record(res, "US")
     try:                        # the forecast layer reads the ledger and the scan's prices; it never fails the step
         res["forecast"] = {k: v for k, v in _forecast_record("US").items() if k != "market"}
     except Exception as exc:

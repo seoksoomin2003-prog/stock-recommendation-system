@@ -23,8 +23,9 @@ FRESH_READING_DAYS = 14    # a verdict is shown as new for this long after its r
 FRESH_ALERT_HOURS = 36     # the user's own alert conditions that fired since about yesterday morning
 SHOWN_ORDERS = 3
 SWING_DAYS_LEFT = 3
+EX_DIVIDEND_DAYS = 5       # an ex-dividend date of a holding or a watched stock within this many days is listed
 PART_KO = {"context": "지수와 거시 일정", "account": "보유 종목 점검", "plan": "주문 계획", "market": "시장 상태", "earnings": "실적 일정", "alerts": "내 알림 조건", "job": "자료 수집 상태",
-           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시", "gaps": "재무 기준에 따른 점수 차이"}
+           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시", "gaps": "재무 기준에 따른 점수 차이", "dividends": "배당락일"}
 # the portfolio's own alert codes (terminal.portfolio.alerts) and the exit readings (automation.exit_alerts)
 ALERT_LEVEL = {"STOP_HIT": "ACT", "NEAR_STOP": "ACT", "QSF_EXIT": "ACT", "QSF_THESIS_INVALIDATED": "ACT", "QSF_REDUCE": "ACT",
                "TARGET_HIT": "DUE", "NO_STOP": "DUE", "OVERWEIGHT": "DUE", "NO_PRICE": "DUE", "NO_STYLE": "DUE", "SECTOR_OVER": "DUE",
@@ -386,7 +387,7 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
         out = []
         for x in day.get("top") or []:
             s = _snap(terminal, {"ticker": x["ticker"], "market": market}, "SWING")
-            note = pinned(s) if s else None
+            note = still_note(terminal, s)
             if note:
                 out.append(item("INFO", "TOP_PINNED", f"상위 종목 {x.get('name') or x['ticker']}({x['ticker']}): {note}", x["ticker"], "stock"))
         return out
@@ -419,7 +420,19 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
                      + (f"보유·관심·매수 후보 가운데: {listed}. " if listed else "보유·관심·매수 후보 가운데는 없습니다. ")
                      + f"라이브 점수는 {live} 재무를 읽습니다. 이런 종목은 점수 카드의 참고 점수를 함께 보세요.", tab="qsf")]
 
+    def dividends() -> List[Dict[str, Any]]:
+        from terminal import analyst_more as am
+        soon = [d for d in terminal.qsf.dividends_upcoming(market, EX_DIVIDEND_DAYS).get("items") or []]
+        return [item("DUE" if d.get("held") else "INFO", "EX_DIVIDEND", am.dividend_item_text(d), d["ticker"], "stock") for d in soon]
+
+    def financial_share() -> List[Dict[str, Any]]:
+        from terminal import analyst_more as am
+        line = am.financial_share_line([r for r in terminal.qsf.screen_rows(market).get("rows") or [] if r.get("strategy") == "LONG_TERM"], BUY_LINE)
+        return [item("INFO", "FINANCIAL_SHARE", line, tab="qsf")] if line else []
+
+    part("dividends", dividends)
     part("mix", mix)
+    part("mix", financial_share)
     part("marked", marked)
     part("gaps", gaps)
     part("changes", lambda: change_items(qsf_changes.report(terminal.qsf.latest(market), terminal.qsf.ledger, market, "SWING"),
@@ -623,6 +636,23 @@ def pinned(snap: Dict[str, Any]) -> Optional[str]:
             "변동이 작아 위험 요인의 점수가 높게 나오지만 오를 여지도 작을 수 있으니, 최근 공시를 먼저 확인하세요.")
 
 
+def still_note(terminal: Any, snap: Optional[Dict[str, Any]]) -> Optional[str]:
+    """The pinned-price note, with the merger filings of the stored SEC list stated as a fact in place of the guess; the filings
+    alone when the price still moves.  US only: the Korean list carries no such form."""
+    from terminal import analyst_more as am
+    if not snap:
+        return None
+    note = pinned(snap)
+    try:
+        deals = terminal.qsf.stored_deals(snap.get("cik"), snap.get("data_date")) if snap.get("market") == "US" and snap.get("cik") else []
+    except Exception:
+        deals = []
+    line = am.deal_line(deals, still=bool(note))
+    if line and note:
+        return f"{note.split('. ')[0]}. {line} 변동이 작아 위험 요인의 점수가 높게 나옵니다."
+    return line or note
+
+
 def _pc(v: Optional[float], digits: int = 1, sign: bool = False) -> str:
     return "자료 없음" if v is None else f"{v * 100:{'+' if sign else ''}.{digits}f}%"
 
@@ -796,7 +826,7 @@ def _others(name: str, skip: str, strategy: str) -> List[str]:
 RATIO_INFO = {"pe": ("PER", "배", 1, False), "pb": ("PBR", "배", 2, False), "fcf_yield": ("잉여현금흐름 수익률", "%", 1, True), "op_margin": ("영업이익률", "%", 1, True),
               "roe": ("ROE", "%", 1, True), "rev_cagr3": ("3년 매출 성장(연)", "%", 1, True), "debt_equity": ("부채/자본", "배", 2, False)}
 MIN_PEERS = 5
-NOTE_LIMITS = ["증권사 추정치(컨센서스), 경영진의 전망, 뉴스의 뜻은 읽지 않습니다. 저장된 가격·재무·공시 분류만으로 쓴 노트입니다.",
+NOTE_LIMITS = ["증권사 추정치(컨센서스)는 야후가 모은 지금 값만 참고로 보여 주고 점수에는 쓰지 않습니다. 경영진의 전망과 뉴스의 뜻은 읽지 않습니다. 저장된 가격·재무·공시 분류로 쓴 노트입니다.",
                "업종 안에서의 위치는 스캔 대상 종목끼리의 비교이고, 미래 수익으로 검증된 것이 아닙니다.",
                "점수가 높은 종목의 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다. 투자 자문이 아닙니다."]
 
@@ -902,7 +932,7 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
     summary = f"{name}({group}): 프로그램이 읽는 것은 " + " · ".join(views) + "입니다. 아래는 그 근거를 애널리스트 노트의 순서로 정리한 것입니다."
 
     sections: List[Dict[str, Any]] = []
-    still = pinned(swing or base)
+    still = still_note(terminal, swing or base)
     if still:
         sections.append({"title": "먼저 알아 둘 것", "lines": [still]})
     # the debate: what holds the long-term score up and what drags it
@@ -926,8 +956,22 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
     if one_month is not None and len(moves) >= MIN_PEERS:
         mid = moves[len(moves) // 2]
         sector.append(f"최근 한 달 주가 {one_month * 100:+.1f}%: 업종 중앙값 {mid * 100:+.1f}%" + ("와 비슷합니다." if abs(one_month - mid) < 0.005 else "보다 나았습니다." if one_month > mid else "보다 부진했습니다."))
+    from terminal import analyst_more as am
+    raw_of = lambda key: (fl.get(key) or {}).get("raw") if isinstance((fl.get(key) or {}).get("raw"), dict) else {}      # noqa: E731
+    try:                    # today's ratios inside the stock's own range over the stored prices (reference)
+        own_range = am.valuation_lines(am.valuation_history(terminal.qsf._loader(market)(ticker), terminal.qsf.stored_annual(ticker, market, base.get("cik")),
+                                                            raw_of("valuation").get("pe"), raw_of("valuation").get("pb"), raw_of("balance_dilution").get("share_change")))
+    except Exception:
+        own_range = []
     sections.append({"title": f"밸류에이션과 업종 안에서의 위치 ({peers.get('group') or '업종'} {len(peers.get('peers') or [])}종목)",
-                     "lines": sector or ["같은 업종의 스캔 종목이 모자라 비교하지 못했습니다."]})
+                     "lines": (sector or ["같은 업종의 스캔 종목이 모자라 비교하지 못했습니다."]) + own_range})
+    try:                    # what the market expects, as Yahoo's stored record states it (reference; recorded apart for later)
+        from terminal.qsf import expectations
+        expected = expectations.lines(terminal.qsf.stored_info(ticker, market), close, market, date.fromisoformat(base["data_date"]))
+    except Exception:
+        expected = []
+    if expected:
+        sections.append({"title": "시장의 기대 (야후 집계, 참고)", "lines": expected})
     try:
         aged = ax.fund_age_lines(base, base["data_date"])
     except Exception:
@@ -963,6 +1007,12 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
     try:
         for e in macro_dates(terminal.econ_calendar(market, 14).get("items") or [], market)[:3]:
             cat.append(f"거시 일정: {e.get('name')} {e.get('date_kst') or e.get('date')}({e.get('days_away')}일 뒤).")
+    except Exception:
+        pass
+    try:                    # how the price moved around past results announcements: stored dates, stored prices
+        days, basis = terminal.qsf._past_result_dates(market, base["data_date"], ticker if market == "KR" else None, base.get("cik"))
+        bench = ax.factor_data(terminal, market).get(ax.FACTORS[market]["market"][0]) or []
+        cat += am.reaction_lines(am.reactions(terminal.qsf._loader(market)(ticker), days, bench), basis)
     except Exception:
         pass
     sections.append({"title": "촉매와 일정", "lines": cat})
@@ -1010,6 +1060,15 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
         + [f"장기 보유 논리가 깨지는 조건: {x}." for x in (hold.get("invalidation") or [])[:3]] + [f"다음 실적에서 볼 것: {x}." for x in (hold.get("milestones") or [])[:3]]
     sections.append({"title": "견해가 바뀌는 조건", "lines": change})
     sections.append({"title": "이 노트의 한계", "lines": NOTE_LIMITS})
+    try:                    # a bank has no gross margin: "not applicable" in place of "no data", and why its score reads differently
+        mine = next((r for r in terminal.qsf.screen_rows(market).get("rows") or [] if r.get("ticker") == ticker), None) or {}
+        if am.is_financial(mine.get("sector")):
+            for sec in sections:
+                sec["lines"] = [am.financial_wording(x) for x in sec["lines"]]
+                if sec["title"].startswith("밸류에이션"):
+                    sec["lines"] = sec["lines"] + [am.FINANCIAL_NOTE]
+    except Exception:
+        pass
     sections.insert(0, {"title": "핵심 세 줄", "lines": key_lines(rows, base, changes, gates, ax.marks_of(row), still, down, market)})
     return reply(f"{head} 분석 노트", summary, sections, "stock", follow, _basis(base, market))
 
@@ -1028,7 +1087,7 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
     score = float(row["score"])
     st = _standing(terminal, market, strategy, score)
     basis, follow = _basis(snap, market), _others(name if market == "KR" else ticker, intent, strategy)
-    still = pinned(snap)
+    still = still_note(terminal, snap)
     other = rows.get("LONG_TERM" if strategy == "SWING" else "SWING")
     other_line = f"{STRATEGY_KO[other['strategy']]} 점수는 {other['score']:.1f}점('{other.get('band_label')}')입니다." if other and other.get("score") is not None else ""
     standing = f"{st['of']}종목 중 {st['place']}위({_share(st['share'])})"
@@ -1345,8 +1404,8 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
     still = []
     for x in day.get("top") or []:
         s = _snap(terminal, {"ticker": x["ticker"], "market": market}, "SWING")
-        if s and pinned(s):
-            still.append(f"{x.get('name') or x['ticker']}({x['ticker']}): {pinned(s)}")
+        if s and still_note(terminal, s):
+            still.append(f"{x.get('name') or x['ticker']}({x['ticker']}): {still_note(terminal, s)}")
     try:
         mix_line = candidate_mix(terminal, market)
     except Exception:

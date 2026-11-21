@@ -13,6 +13,7 @@ import os
 import tempfile
 import threading
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -142,6 +143,35 @@ INFO_FIELDS = ("longName", "shortName", "sector", "industry", "exchange", "curre
                "heldPercentInsiders", "currentPrice", "regularMarketPrice")
 
 
+# What the same record says about the market's expectations, positioning and dates (kept since 2026-11-22; no score reads them).
+# Yahoo is not an official source and these values cannot be checked against one: they are shown and recorded as reference only.
+EXPECT_NUMBERS = ("forwardEps", "epsCurrentYear", "trailingEps", "targetMeanPrice", "targetMedianPrice", "targetHighPrice", "targetLowPrice",
+                  "numberOfAnalystOpinions", "recommendationMean", "sharesShort", "sharesShortPriorMonth", "shortPercentOfFloat", "shortRatio",
+                  "heldPercentInstitutions", "dividendRate", "payoutRatio")
+EXPECT_DATES = ("exDividendDate", "dateShortInterest", "earningsTimestampStart")
+EXPECT_FIELDS = EXPECT_NUMBERS + EXPECT_DATES + ("recommendationKey",)
+
+
+def _epoch_day(v) -> Optional[str]:
+    """Yahoo gives these dates as seconds since 1970 (UTC midnight for a calendar date)."""
+    n = _num(v)
+    if n is None or n <= 0:
+        return None
+    try:
+        return datetime.fromtimestamp(n, timezone.utc).strftime("%Y-%m-%d")
+    except (OverflowError, OSError, ValueError):
+        return None
+
+
+def yahoo_expectations(info: Dict) -> Dict:
+    """The expectation fields of a raw Yahoo record, numbers as numbers and dates as days.  A missing field stays missing."""
+    out = {k: _num(info.get(k)) for k in EXPECT_NUMBERS}
+    out.update({k: _epoch_day(info.get(k)) for k in EXPECT_DATES})
+    key = info.get("recommendationKey")
+    out["recommendationKey"] = key if isinstance(key, str) and key and key != "none" else None
+    return {k: v for k, v in out.items() if v is not None}
+
+
 def _yf_info(ticker: str) -> Dict:
     import yfinance as yf
     return yf.Ticker(ticker).info or {}
@@ -154,7 +184,7 @@ def yahoo_info(ticker: str, fetch=_yf_info) -> Dict:
               "fiftyTwoWeekHigh", "fiftyTwoWeekLow", "sharesOutstanding", "averageVolume", "currentPrice", "regularMarketPrice"):
         if k in out:
             out[k] = _num(out[k])
-    return {k: v for k, v in out.items() if v is not None}
+    return {**{k: v for k, v in out.items() if v is not None}, **yahoo_expectations(info)}
 
 
 def yahoo_earnings_dates(ticker: str) -> List[str]:

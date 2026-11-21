@@ -51,6 +51,11 @@ def _stale(what: str, res: Dict[str, Any]) -> List[Dict[str, Any]]:
     return [{"what": what, "fetched_at": res.get("fetched_at"), "age_days": None if age is None else round(age / 86400, 1), "error": res.get("error")}]
 
 
+def _us_fund_key(ticker: str, cik: str) -> str:
+    """The one name under which a US company's annual statements are stored (read by the score and by the note)."""
+    return f"annual4:{default_sources.facts_key(ticker, cik)}"
+
+
 def _kr_fund_key(code: str, fiscal_month: int) -> str:
     """December companies keep their stored statements; the few others were read with the wrong year and get a key of their own."""
     return f"krfund3:{code}" if fiscal_month == 12 else f"krfund3:{code}:fm{fiscal_month:02d}"
@@ -285,7 +290,7 @@ class QSF(ScreenViews):
             return {"status": "UNAVAILABLE", "reason": f"SEC 식별 실패 ({type(exc).__name__})"}
         if not cik:
             return {"status": "UNAVAILABLE", "reason": "SEC CIK 없음 (ETF·지수이거나 미국 상장 기업이 아님)", "no_cik": True}
-        res = self.cache.cached(f"annual4:{default_sources.facts_key(ticker, cik)}", TTL["facts"], lambda: self._annual(ticker, cik))
+        res = self.cache.cached(_us_fund_key(ticker, cik), TTL["facts"], lambda: self._annual(ticker, cik))
         sres = self._us_subm_res(cik)
         subm = sres["data"]
         if res["data"] is None:
@@ -586,6 +591,30 @@ class QSF(ScreenViews):
             ev["stale_inputs"] = old_list
         return {"fund": fund, "events": ev}
 
+    # ------------------------------------------------------------------ stored records for the note (no network)
+    def stored_info(self, ticker: str, market: str) -> Dict[str, Any]:
+        """Yahoo's company record as the scan last stored it.  Reads the cache only; an unknown stock gives an empty record."""
+        for key in ([f"info:{ticker}"] if market == "US" else [f"info:{ticker}.KS", f"info:{ticker}.KQ"]):
+            rec = self.cache.read(key)
+            if rec and rec.get("data"):
+                return rec["data"]
+        return {}
+
+    def stored_deals(self, cik: Optional[str], as_of: str) -> List[Dict[str, Any]]:
+        """Merger and tender-offer filings in the stored SEC list (``events.deal_filings``).  US only; no request is made."""
+        rec = self.cache.read(f"submforms:{cik}") if cik else None
+        return events.deal_filings(((rec or {}).get("data") or {}).get("filings"), as_of)
+
+    def stored_annual(self, ticker: str, market: str, cik: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """The annual statements the score last read, from the cache only."""
+        if market == "US":
+            key = _us_fund_key(ticker, cik) if cik else None
+        else:
+            ident = self._kr_identity_or_reason(ticker)[0] or {}
+            key = _kr_fund_key(ticker, fundamentals.fiscal_month_of(ident.get("fiscal_month"))) if ident else None
+        rec = self.cache.read(key) if key else None
+        return (rec or {}).get("data") or None
+
     def kr_company(self, code: str) -> Dict[str, Any]:
         """Identity, annual statements and recent filings of one Korean company, for the stock screen."""
         ident, down = self._kr_identity_or_reason(code)
@@ -749,7 +778,8 @@ class QSF(ScreenViews):
         own = config.STYLE_TO_STRATEGY.get((pos or {}).get("style"))
         cards = {s: self.card(ctx, s, pos if own in (None, s) else None) for s in strategies}
         risky = self._high_risk(market)
-        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None,
+        deals = self.stored_deals((ctx.get("fund") or {}).get("cik"), ctx["expected_session"]) if market == "US" else []     # a stated fact beside the cards, never scored
+        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "deals": deals, "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None,
                 "risk_grade": self._risk_grade(ticker, market), "filing_events": self._filing_mark(self._filing_marks(market), ticker), "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
 
     def signal(self, ticker: str, weight_pct: Optional[float] = None, max_weight_pct: Optional[float] = None, market: str = "US") -> Dict[str, Any]:
