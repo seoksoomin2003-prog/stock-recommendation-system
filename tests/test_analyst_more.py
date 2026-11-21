@@ -177,3 +177,13 @@ def test_a_financial_company_reads_not_applicable_and_a_crowded_buy_list_is_said
     got = am.financial_share_line(rows)
     assert got.startswith("장기 매수 후보 10개 중 금융업이 3개(30%)입니다. 대상 전체에서 금융업은 13%입니다.") and "금융 비중이 큰 목록" in got
     assert am.financial_share_line(rows[2:]) is None and am.financial_share_line(rows[:6]) is None          # under a quarter, or too few candidates: nothing is said
+
+
+def test_a_screener_row_opens_its_score_card_in_the_view_that_shows_it():
+    """Found in the 2026-11-22 terminal review: the card was drawn into the rank view's panel while the screener view was on
+    screen, so a click on a screener row showed nothing."""
+    from pathlib import Path
+    page = (Path(am.__file__).parent / "static" / "qsf.js").read_text(encoding="utf-8")
+    click = next(line for line in page.splitlines() if 'body.querySelectorAll(".qs-open")' in line)      # the screener's rows (the change list's rows are already in the rank view)
+    assert click.index('qsfSetView("rank")') < click.index("qsfEvaluate(b.dataset.t, mk)")
+    assert '<div data-view="rank"><div id="qsfdetail">' in page                      # the panel the card is drawn into lives in the rank view
