@@ -1261,14 +1261,31 @@ def _usdt(v: Optional[float]) -> str:
     return f"{v:,.2f} USDT" if v >= 1 else f"{v:.6f} USDT"
 
 
-def _coin_read() -> Dict[str, Any]:
+def _coin_read(terminal: Any = None) -> Dict[str, Any]:
     from terminal import coin_bridge
-    return coin_bridge.read()
+    return coin_bridge.read(base=getattr(terminal, "base", None))
+
+
+def _simple(d: Dict[str, Any]) -> bool:
+    """True on a machine without the predictor's files: the rank is the plain one made from public data, not the registered score."""
+    return d.get("mode") == "SIMPLE"
+
+
+def _coin_value(d: Dict[str, Any], r: Dict[str, Any]) -> str:
+    """The figure the coin is ranked by, in words."""
+    return f"간이 점수 {r['score']:.0f}점" if _simple(d) else f"{r['alpha'] * 100:+.2f}%"
+
+
+def _coin_basis(d: Dict[str, Any]) -> str:
+    return f"기준: {_coin_time(d['close_ms'])} 마감(4시간봉) · " + ("거래소 공개 시세로 만든 간이 순위(등록된 점수 아님)" if _simple(d) else f"horizon_bot_beta 점수 v{d.get('version')}")
 
 
 def _coin_stale(d: Dict[str, Any]) -> Optional[str]:
     if d.get("status") != "STALE":
         return None
+    if _simple(d):
+        return (f"코인 시세가 {d['age_hours']:.0f}시간 전 마감({_coin_time(d['close_ms'])}) 기준입니다. 거래소에서 새 시세를 받지 못해 저장해 둔 값을 보여 줍니다"
+                + (f"({d['fetch_error']})" if d.get("fetch_error") else "") + ". 인터넷 연결을 확인하세요. 10분 뒤 다시 받습니다.")
     return (f"코인 점수가 {d['age_hours']:.0f}시간 전 마감({_coin_time(d['close_ms'])}) 기준입니다. 4시간마다 새로 나와야 하는 값이라 오래된 것입니다. "
             "예측기가 멈췄거나 맥이 잠들어 있었습니다(horizon_bot_beta 폴더의 ./run_predictor.sh status 로 확인).")
 
@@ -1282,15 +1299,20 @@ def coin_items(d: Dict[str, Any]) -> List[Dict[str, Any]]:
     if stale:
         out.append(item("DUE", "COIN_STALE", stale, tab="coin"))
     m, rows = d["market"], d["rows"]
+    if _simple(d):
+        out.append(item("INFO", "COIN_SIMPLE", d["mode_note"], tab="coin"))
     if m.get("btc_price") is not None:
         vs = f", 200일 평균보다 {m['btc_vs_200d'] * 100:+.1f}%" if m.get("btc_vs_200d") is not None else ""
         out.append(item("INFO", "COIN_MARKET", f"비트코인 {_usdt(m['btc_price'])}(7일 {(m.get('btc_change_7d') or 0) * 100:+.1f}%, 30일 {(m.get('btc_change_30d') or 0) * 100:+.1f}%{vs}). "
                         f"대상 {m['coins']}개 가운데 7일 동안 내린 코인이 {m['falling_7d']}개, 200일 평균 위에 있는 코인이 {m['above_200d']}개입니다.", tab="coin"))
-    top = ", ".join(f"{_coin_label(r)} {r['alpha'] * 100:+.2f}%" for r in rows[:3])
-    out.append(item("INFO", "COIN_TOP", f"상대 순위 상위 3개({_coin_time(d['close_ms'])} 마감): {top}. 숫자는 7일 동안 대상의 중간 코인보다 더 오를 것으로 본 폭이고, 오를지 내릴지를 말하지 않습니다.", tab="coin"))
-    over = [r for r in rows if r["beats_cost"]]
-    out.append(item("INFO", "COIN_COST", f"기대 폭이 왕복 비용({d['cost_round_trip'] * 100:.2f}%)을 넘는 코인은 {len(over)}개입니다" + (f": {', '.join(_coin_label(r) for r in over[:5])}." if over else ". 지금은 순위 차이가 비용보다 작습니다."), tab="coin"))
-    out.append(item("INFO", "COIN_CAVEAT", d["caveats"][1] + " " + d["caveats"][2], tab="coin"))
+    top = ", ".join(f"{_coin_label(r)} {_coin_value(d, r)}" for r in rows[:3])
+    if _simple(d):
+        out.append(item("INFO", "COIN_TOP", f"간이 순위 상위 3개({_coin_time(d['close_ms'])} 마감): {top}. 세 신호의 순위를 같은 비중으로 합친 점수(0~100)이고, 기대수익이 아니며 오를지 내릴지를 말하지 않습니다.", tab="coin"))
+    else:
+        out.append(item("INFO", "COIN_TOP", f"상대 순위 상위 3개({_coin_time(d['close_ms'])} 마감): {top}. 숫자는 7일 동안 대상의 중간 코인보다 더 오를 것으로 본 폭이고, 오를지 내릴지를 말하지 않습니다.", tab="coin"))
+        over = [r for r in rows if r["beats_cost"]]
+        out.append(item("INFO", "COIN_COST", f"기대 폭이 왕복 비용({d['cost_round_trip'] * 100:.2f}%)을 넘는 코인은 {len(over)}개입니다" + (f": {', '.join(_coin_label(r) for r in over[:5])}." if over else ". 지금은 순위 차이가 비용보다 작습니다."), tab="coin"))
+    out.append(item("INFO", "COIN_CAVEAT", d["caveats"][-3] + " " + d["caveats"][-2], tab="coin"))      # the spot caveat and the result in money, in either mode
     return out
 
 
@@ -1298,7 +1320,7 @@ def coin_briefing(terminal: Any, now: Optional[Callable[[], datetime]] = None) -
     at = (now or terminal.now)()
     failed: List[Dict[str, str]] = []
     try:
-        d = _coin_read()
+        d = _coin_read(terminal)
         items = coin_items(d)
     except Exception as exc:
         d, items = {}, []
@@ -1307,7 +1329,7 @@ def coin_briefing(terminal: Any, now: Optional[Callable[[], datetime]] = None) -
     items.sort(key=lambda i: order[i["level"]])
     return {"status": "REAL", "market": "COIN", "generated_at": at.isoformat(timespec="seconds"), "session": _coin_time(d["close_ms"]) + " 마감" if d.get("close_ms") else None,
             "headline": headline(items), "counts": {lv: sum(1 for i in items if i["level"] == lv) for lv in LEVELS}, "levels": LEVEL_KO, "orders": 0, "items": items,
-            "unread_parts": failed, "note": "코인 점수는 horizon_bot_beta의 예측기가 계산한 값을 읽어 보여 주는 것입니다. " + NOTE}
+            "unread_parts": failed, "note": ("코인 순위는 거래소 공개 시세로 만든 간이 순위입니다(등록된 점수 아님). " if _simple(d) else "코인 점수는 horizon_bot_beta의 예측기가 계산한 값을 읽어 보여 주는 것입니다. ") + NOTE}
 
 
 def find_coin(text: str, rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
@@ -1328,8 +1350,14 @@ def coin_note(d: Dict[str, Any], r: Dict[str, Any]) -> Dict[str, Any]:
     n, label = r["of"], _coin_label(r)
     unit = " (1,000개 단위로 거래되는 계약)" if r.get("per_thousand") else ""
     cost = d["cost_round_trip"]
-    summary = (f"{label}의 상대 순위는 대상 {n}개 중 {r['rank']}위입니다. 앞으로 7일 동안 대상의 중간 코인보다 {r['alpha'] * 100:+.2f}% 움직일 것으로 본 값이고, "
-               + ("왕복 비용({:.2f}%)을 넘습니다.".format(cost * 100) if r["beats_cost"] else "왕복 비용({:.2f}%)을 넘지 못합니다.".format(cost * 100)) + " 오를지 내릴지를 말하는 값이 아닙니다.")
+    if _simple(d):
+        summary = (f"{label}의 간이 순위는 대상 {n}개 중 {r['rank']}위입니다(간이 점수 {r['score']:.0f}점, 0~100). 세 신호의 순위를 같은 비중으로 합친 값이고 등록된 점수(α)가 아니어서, "
+                   "기대수익과 비용 비교가 없습니다. 오를지 내릴지를 말하는 값이 아닙니다.")
+        recomputed = "참고: 위 수치는 터미널이 거래소 공개 시세에서 horizon_bot_beta와 같은 정의로 계산한 값입니다. 대상 30개를 최근 거래대금으로 골라, 그 예측기의 대상이나 순위와 다를 수 있습니다."
+    else:
+        summary = (f"{label}의 상대 순위는 대상 {n}개 중 {r['rank']}위입니다. 앞으로 7일 동안 대상의 중간 코인보다 {r['alpha'] * 100:+.2f}% 움직일 것으로 본 값이고, "
+                   + ("왕복 비용({:.2f}%)을 넘습니다.".format(cost * 100) if r["beats_cost"] else "왕복 비용({:.2f}%)을 넘지 못합니다.".format(cost * 100)) + " 오를지 내릴지를 말하는 값이 아닙니다.")
+        recomputed = "참고: 위 수치는 터미널이 예측기의 봉 자료에서 같은 정의로 다시 계산한 값이라, 예측기 안의 값과 조금 다를 수 있습니다."
     place = lambda k: f"대상 {n}개 중 낮은 순서로 {r[k]}위" if r.get(k) else "순위 없음"      # noqa: E731
     signals = []
     if r.get("funding") is not None:
@@ -1342,9 +1370,9 @@ def coin_note(d: Dict[str, Any], r: Dict[str, Any]) -> Dict[str, Any]:
           "200일 평균 " + ("위에 있습니다." if r.get("above_200d") else "아래에 있습니다." if r.get("above_200d") is not None else "자료가 모자랍니다.")]
     m = d["market"]
     market = [f"비트코인은 7일 {(m.get('btc_change_7d') or 0) * 100:+.1f}%, 200일 평균보다 {(m.get('btc_vs_200d') or 0) * 100:+.1f}%입니다. 대상 {m['coins']}개 가운데 {m['falling_7d']}개가 7일 동안 내렸습니다.", m["note"]]
-    sections = [{"title": "먼저 알아 둘 것", "lines": [_coin_stale(d) or ""]}, {"title": "점수를 만든 신호 셋", "lines": signals + ["참고: 위 수치는 터미널이 예측기의 봉 자료에서 같은 정의로 다시 계산한 값이라, 예측기 안의 값과 조금 다를 수 있습니다."]},
+    sections = [{"title": "먼저 알아 둘 것", "lines": [_coin_stale(d) or ""]}, {"title": "점수를 만든 신호 셋", "lines": signals + [recomputed]},
                 {"title": "가격", "lines": px}, {"title": "시장", "lines": market}, {"title": "이 점수가 말하지 않는 것", "lines": d["caveats"]}]
-    return reply(f"{label} 코인 노트", summary, sections, "coin", ["코인 상위는?", "코인 시장 상태 어때?", "이 코인 점수 믿어도 돼?"], f"기준: {_coin_time(d['close_ms'])} 마감(4시간봉) · horizon_bot_beta 점수 v{d.get('version')}")
+    return reply(f"{label} 코인 노트", summary, sections, "coin", ["코인 상위는?", "코인 시장 상태 어때?", "이 코인 점수 믿어도 돼?"], _coin_basis(d))
 
 
 def coin_answer(terminal: Any, text: str) -> Dict[str, Any]:
@@ -1352,7 +1380,7 @@ def coin_answer(terminal: Any, text: str) -> Dict[str, Any]:
     text = " ".join(str(text or "").split())[:200]
     done = lambda got, intent, ticker=None: {"status": "REAL", "question": text, "intent": intent, "ticker": ticker, "market": "COIN", **got, "note": NOTE}      # noqa: E731
     try:
-        d = _coin_read()
+        d = _coin_read(terminal)
     except Exception as exc:
         say = f"코인 자료를 읽지 못했습니다({type(exc).__name__})."
         return {"status": "UNAVAILABLE", "question": text, "title": "답을 만들지 못했습니다", "summary": say, "sections": [], "lines": [say], "note": NOTE}
@@ -1360,7 +1388,11 @@ def coin_answer(terminal: Any, text: str) -> Dict[str, Any]:
         say = f"코인 자료를 읽지 못했습니다. {d.get('reason')}"
         return {"status": "UNAVAILABLE", "question": text, "title": "코인 자료 없음", "summary": say, "sections": [], "lines": [say], "tab": "coin", "note": NOTE}
     low = text.lower()
-    rows, basis = d["rows"], f"기준: {_coin_time(d['close_ms'])} 마감(4시간봉) · horizon_bot_beta 점수 v{d.get('version')}"
+    rows, basis = d["rows"], _coin_basis(d)
+    if any(w in low for w in ("믿", "신뢰", "근거", "정확", "검증")) and _simple(d):
+        return done(reply("코인 간이 순위를 얼마나 믿을 수 있나", "지금 보이는 것은 간이 순위입니다. 수익으로 시험한 적이 없어, 등록된 점수보다도 근거가 약합니다.",
+                          [{"title": "지금 보이는 순위", "lines": [d["mode_note"]]}, {"title": "등록된 점수에서 확인한 것 (참고)", "lines": COIN_TRUST[1:]},
+                           {"title": "이 순위가 말하지 않는 것", "lines": d["caveats"][1:]}], "coin", ["코인 상위는?", "코인 시장 상태 어때?"], basis), "COIN_TRUST")
     if any(w in low for w in ("믿", "신뢰", "근거", "정확", "검증")):
         return done(reply("코인 점수를 얼마나 믿을 수 있나", "코인 점수는 대상 코인끼리의 약한 순위이고, 살 코인을 고르는 힘이 확인된 것은 아닙니다.", [{"title": "지금까지 확인한 것", "lines": COIN_TRUST},
                                                                                                          {"title": "이 점수가 말하지 않는 것", "lines": d["caveats"]}], "coin", ["코인 상위는?", "코인 시장 상태 어때?"], basis), "COIN_TRUST")
@@ -1380,13 +1412,15 @@ def coin_answer(terminal: Any, text: str) -> Dict[str, Any]:
                           [{"title": "먼저 알아 둘 것", "lines": [stale or ""]}, {"title": "지금의 모습", "lines": lines}, {"title": "읽을 때 주의", "lines": [m["note"], d["caveats"][0]]}], "coin",
                           ["코인 상위는?", "비트코인 분석해 줘", "이 코인 점수 믿어도 돼?"], basis), "COIN_MARKET")
     if any(w in low for w in ("상위", "순위", "후보", "추천", "뭐 살", "뭘 살", "1등", "1위", "오늘", "할 일", "요약")):
-        top = [f"{r['rank']}위 {_coin_label(r)}: 기대 상대 폭 {r['alpha'] * 100:+.2f}%" + (" (비용을 넘음)" if r["beats_cost"] else "") + f", 7일 {(r.get('change_7d') or 0) * 100:+.1f}%, 하루 변동성 {(r.get('sigma_day') or 0) * 100:.1f}%." for r in rows[:5]]
-        low_rows = [f"{r['rank']}위 {_coin_label(r)}: {r['alpha'] * 100:+.2f}%." for r in rows[-3:]]
-        return done(reply("코인 상대 순위", f"상대 순위 1위는 {_coin_label(rows[0])}입니다({rows[0]['alpha'] * 100:+.2f}%, 7일 동안 대상의 중간 코인 대비). 순위일 뿐 매수 신호가 아닙니다.",
+        top = [f"{r['rank']}위 {_coin_label(r)}: " + (_coin_value(d, r) if _simple(d) else f"기대 상대 폭 {r['alpha'] * 100:+.2f}%") + (" (비용을 넘음)" if r["beats_cost"] else "") + f", 7일 {(r.get('change_7d') or 0) * 100:+.1f}%, 하루 변동성 {(r.get('sigma_day') or 0) * 100:.1f}%." for r in rows[:5]]
+        low_rows = [f"{r['rank']}위 {_coin_label(r)}: {_coin_value(d, r)}." for r in rows[-3:]]
+        first = (f"간이 순위 1위는 {_coin_label(rows[0])}입니다({_coin_value(d, rows[0])}). 등록된 점수가 아니고, 순위일 뿐 매수 신호가 아닙니다." if _simple(d)
+                 else f"상대 순위 1위는 {_coin_label(rows[0])}입니다({rows[0]['alpha'] * 100:+.2f}%, 7일 동안 대상의 중간 코인 대비). 순위일 뿐 매수 신호가 아닙니다.")
+        return done(reply("코인 간이 순위" if _simple(d) else "코인 상대 순위", first,
                           [{"title": "먼저 알아 둘 것", "lines": [stale or ""]}, {"title": "상위 5개", "lines": top}, {"title": "하위 3개", "lines": low_rows}, {"title": "읽을 때 주의", "lines": d["caveats"][:3]}], "coin",
                           [f"{rows[0]['name'] or rows[0]['coin']} 분석해 줘", "코인 시장 상태 어때?", "이 코인 점수 믿어도 돼?"], basis), "COIN_TOP")
     help_ = text.lower().strip(" ?？!.") in ("", "help", "h", "도움", "도움말", "질문", "목록") or any(w in low for w in ("물어볼", "사용법", "명령어"))
-    say = "코인 시장에서는 아래 다섯 가지를 물어볼 수 있습니다. 코인은 이름이나 기호로 적습니다(대상: 예측기가 고른 30개)." if help_ else "이 질문은 알아듣지 못했습니다. 코인 시장에서는 아래 질문을 알아듣습니다."
+    say = "코인 시장에서는 아래 다섯 가지를 물어볼 수 있습니다. 코인은 이름이나 기호로 적습니다(대상: " + ("최근 거래대금이 큰 30개" if _simple(d) else "예측기가 고른 30개") + ")." if help_ else "이 질문은 알아듣지 못했습니다. 코인 시장에서는 아래 질문을 알아듣습니다."
     return {"status": "REAL" if help_ else "UNKNOWN", "question": text, "intent": "COIN_HELP" if help_ else None, "market": "COIN", "title": "코인에 대해 물어볼 수 있는 것", "summary": say,
             "sections": [{"title": "대상 코인", "lines": [", ".join(r["coin"] for r in rows)]}], "lines": [say], "examples": COIN_EXAMPLES, "note": NOTE}
 

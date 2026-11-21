@@ -107,7 +107,7 @@ class Clock:
 def coins(tmp_path, monkeypatch):
     folder = make(tmp_path / "p")
     state = {"now": CLOSE + H}
-    monkeypatch.setattr(A, "_coin_read", lambda: cb.read(now_ms=state["now"], folder=folder))
+    monkeypatch.setattr(A, "_coin_read", lambda terminal=None: cb.read(now_ms=state["now"], folder=folder))
     return state
 
 
@@ -120,10 +120,10 @@ def test_the_coin_days_list_and_its_stale_and_missing_cases(coins, monkeypatch):
     coins["now"] = CLOSE + 11 * 3600_000
     old = A.briefing(Clock(), "COIN")
     assert old["items"][0]["kind"] == "COIN_STALE" and old["items"][0]["level"] == "DUE" and "11시간 전 마감" in old["items"][0]["text"] and "오늘 챙길 것이 1건" in old["headline"]
-    monkeypatch.setattr(A, "_coin_read", lambda: cb.read(folder=Path("/nonexistent-coin-folder")))
+    monkeypatch.setattr(A, "_coin_read", lambda terminal=None: cb.read(folder=Path("/nonexistent-coin-folder")))
     none = A.briefing(Clock(), "COIN")
     assert [i["kind"] for i in none["items"]] == ["COIN_UNAVAILABLE"] and none["session"] is None
-    monkeypatch.setattr(A, "_coin_read", lambda: (_ for _ in ()).throw(OSError("x")))
+    monkeypatch.setattr(A, "_coin_read", lambda terminal=None: (_ for _ in ()).throw(OSError("x")))
     assert A.briefing(Clock(), "COIN")["unread_parts"] == [{"part": "coin", "label": "코인 예측기 자료", "error": "OSError"}]
 
 

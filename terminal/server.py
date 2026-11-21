@@ -199,7 +199,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
         ("GET", "/api/today"): lambda q, b: today.build(t, q.get("t", ""), _market(q.get("market", "US"))),
         ("GET", "/api/assistant/today"): lambda q, b: assistant.briefing(t, _market3(q.get("market", "US"))),
         ("POST", "/api/assistant/ask"): lambda q, b: assistant.answer(t, b.get("q", ""), _market3(b.get("market", "US"))),
-        ("GET", "/api/coin/latest"): lambda q, b: coin_bridge.read(),
+        ("GET", "/api/coin/latest"): lambda q, b: coin_bridge.read(base=t.base),
         ("GET", "/api/lab/compare"): lambda q, b: t.lab.comparison(),
         ("GET", "/api/lab/research"): lambda q, b: t.lab.research(),
         ("POST", "/api/lab/run"): lambda q, b: t.lab.run_background(),
