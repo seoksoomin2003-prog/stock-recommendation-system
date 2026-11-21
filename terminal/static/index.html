@@ -22,7 +22,8 @@
   <div id="verbar" class="verbar" role="status" hidden></div>
 </header>
 <nav class="tabs" role="tablist">
-  <button data-tab="overview" class="on">시장 개요</button>
+  <button data-tab="today" class="on">오늘</button>
+  <button data-tab="overview">시장 개요</button>
   <button data-tab="map">시장 지도</button>
   <button data-tab="stock">종목</button>
   <button data-tab="compare">비교</button>
@@ -36,7 +37,8 @@
   <button data-tab="lab">연구실</button>
 </nav>
 <main>
-  <section id="tab-overview" class="tab on"></section>
+  <section id="tab-today" class="tab on"></section>
+  <section id="tab-overview" class="tab"></section>
   <section id="tab-map" class="tab"></section>
   <section id="tab-stock" class="tab"></section>
   <section id="tab-compare" class="tab"></section>
@@ -67,6 +69,7 @@
 <script src="rotation.js"></script>
 <script src="sectorpicks.js"></script>
 <script src="peers.js"></script>
+<script src="assistant.js"></script>
 <script src="command.js"></script>
 <script src="collect.js"></script>
 </body>

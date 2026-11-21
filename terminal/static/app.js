@@ -538,7 +538,7 @@ function fromHash() {
   if (booted && tab === state.tab && (tab !== "stock" || (tk || "").toUpperCase() === state.ticker)) return;
   booted = true;
   if (tab === "stock" && tk) { state.ticker = decodeURIComponent(tk).toUpperCase(); state.loaded.stock = null; setMarket(marketOf(state.ticker), false); }
-  show(RENDER[tab] ? tab : "overview", false);
+  show(RENDER[tab] ? tab : RENDER.today ? "today" : "overview", false);
 }
 window.addEventListener("hashchange", fromHash);
 window.addEventListener("DOMContentLoaded", fromHash);   // after every script (portfolio.js) has registered

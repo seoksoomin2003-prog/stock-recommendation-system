@@ -295,3 +295,19 @@ table.sp-ret td { padding: 4px 8px; }
 .fc-fold { margin: 8px 0; font-size: 13px; } .fc-fold summary { cursor: pointer; } .fc-fold li { margin: 4px 0; }
 @media (max-width: 560px) { .fc-row { grid-template-columns: 62px 1fr; gap: 6px; } .fc-legend { margin-left: 0; } }
 .fc-table td:first-child, .fc-table th:first-child { white-space: nowrap; }
+/* 오늘(비서) */
+.asst-ask { display: flex; gap: 8px; flex-wrap: wrap; }
+.asst-ask input { flex: 1 1 260px; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--ink); font-size: 14px; }
+.asst-answer { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; }
+.asst-answer.unknown { border-left-color: var(--muted); }
+.asst-answer h3 { margin: 2px 0 6px; font-size: 14px; }
+.asst-answer ul { margin: 0; padding-left: 18px; }
+.asst-answer li { margin: 3px 0; overflow-wrap: anywhere; }
+.asst-q { color: var(--muted); font-size: 12px; }
+.asst-h { display: flex; align-items: center; gap: 8px; }
+.asst-h.ACT { color: var(--bad); } .asst-h.DUE { color: var(--warn); }
+.asst-list { list-style: none; margin: 0; padding: 0; }
+.asst-item { padding: 8px 10px; margin: 6px 0; border: 1px solid var(--line); border-left: 3px solid var(--line); border-radius: 6px; overflow-wrap: anywhere; }
+.asst-item.ACT { border-left-color: var(--bad); } .asst-item.DUE { border-left-color: var(--warn); } .asst-item.INFO { border-left-color: var(--muted); }
+.asst-act { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.asst-act:empty { display: none; }

@@ -21,7 +21,7 @@ from urllib.parse import parse_qs, urlparse
 from terminal.services import Terminal, clean_ticker
 
 STATIC = Path(__file__).resolve().parent / "static"
-from terminal import automation, model_scan, record_status, server_agent, today  # noqa: E402
+from terminal import assistant, automation, model_scan, record_status, server_agent, today  # noqa: E402
 from terminal.qsf import changes as qsf_changes, forecast as qsf_forecast, kr_cap_view as qsf_cap_view, kr_method as qsf_kr_method, lookahead as qsf_lookahead, paper_book as qsf_paper_book, regime_weights as qsf_regime_weights, screen as qsf_screen, track_record as qsf_track_record, turnover_book as qsf_turnover_book  # noqa: E402
 from terminal.qsf import rank_book as qsf_rank_book, readings as qsf_readings  # noqa: E402
 
@@ -192,6 +192,8 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
         ("GET", "/api/qsf/heatmap"): lambda q, b: t.qsf.heatmap(_market(q.get("market", "US")), _strategy(q.get("strategy", "SWING"))),
         ("GET", "/api/record"): lambda q, b: record_status.build(t),
         ("GET", "/api/today"): lambda q, b: today.build(t, q.get("t", ""), _market(q.get("market", "US"))),
+        ("GET", "/api/assistant/today"): lambda q, b: assistant.briefing(t, _market(q.get("market", "US"))),
+        ("POST", "/api/assistant/ask"): lambda q, b: assistant.answer(t, b.get("q", ""), _market(b.get("market", "US"))),
         ("GET", "/api/lab/compare"): lambda q, b: t.lab.comparison(),
         ("GET", "/api/lab/research"): lambda q, b: t.lab.research(),
         ("POST", "/api/lab/run"): lambda q, b: t.lab.run_background(),

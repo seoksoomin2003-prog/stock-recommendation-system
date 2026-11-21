@@ -568,6 +568,15 @@ class Daily:
         except (OSError, ValueError):
             return None
 
+    def _brief(self) -> List[str]:
+        """The assistant's three lines (terminal.assistant.daily_lines).  They never fail or hold back the message."""
+        try:
+            from terminal import assistant
+            t = self._term()
+            return assistant.daily_lines([assistant.briefing(t, m) for m in ("US", "KR")])
+        except Exception:
+            return []
+
     # ------------------------------------------------------------------ alerts and gaps
     def _term(self):
         if self._terminal is None:
@@ -626,7 +635,8 @@ class Daily:
 
     @staticmethod
     def compose(session: str, steps: Dict[str, Dict[str, Any]], alerts: Dict[str, Any], prev: List[str],
-                missing: List[str], low_disk: Optional[str] = None, rules: Optional[Dict[str, Any]] = None, notes: Optional[List[str]] = None) -> str:
+                missing: List[str], low_disk: Optional[str] = None, rules: Optional[Dict[str, Any]] = None, notes: Optional[List[str]] = None,
+                brief: Optional[List[str]] = None) -> str:
         icon = {OK: "✅", FAILED: "❌", SKIPPED: "⏭"}
         lines = [f"📊 퀀트 터미널 일일 요약 (기준 거래일 {session})", "", "[작업]"]
         for name, label in STEP_NAMES.items():
@@ -668,6 +678,8 @@ class Daily:
         if missing:
             lines += ["", f"⚠️ 도전자 기록이 빠진 거래일 {len(missing)}일: {', '.join(missing[-5:])}",
                       "지난 날짜는 소급 기록하지 않습니다."]
+        if brief:
+            lines += ["", "[오늘 볼 것]"] + list(brief) + ["자세한 것과 질문은 화면의 '오늘' 탭에 있습니다. 순위는 매수 신호가 아닙니다."]
         lines += ["", "일봉 종가 기준 자동 계산이며 주문은 실행하지 않습니다."]
         return "\n".join(lines)
 
@@ -821,7 +833,7 @@ class Daily:
         prev = st.get("alerts") or []
         missing = self.missing_sessions(session)
         rules = self._rule_alerts()
-        text = self.compose(session, steps, alerts, prev, missing, storage.low_disk_text(self.base), rules, self._notes(st))
+        text = self.compose(session, steps, alerts, prev, missing, storage.low_disk_text(self.base), rules, self._notes(st), self._brief())
         sig = hashlib.sha256(text.encode("utf-8")).hexdigest()
         notified = st.get("notified") or {}
         out = {"status": "DONE", "session": session, "steps": steps, "telegram": None, "macos": None}

@@ -1,6 +1,7 @@
 // 명령창과 단축키: '/' 또는 Ctrl/⌘+K로 열고, 종목 코드·회사명·탭 이름·명령을 쳐서 바로 이동한다.  읽기 전용 이동만 한다.
 "use strict";
 const CMD_ALIASES = {
+  today: ["오늘", "비서", "할일", "today", "brief"],
   overview: ["개요", "시장", "overview", "ov"], stock: ["종목", "stock", "des"], qsf: ["점수", "score", "qsf", "순위", "rank"],
   map: ["지도", "히트맵", "heatmap", "map", "imap", "rrg", "순환"], compare: ["비교", "compare", "comp"],
   macro: ["거시", "macro", "eco", "일정", "캘린더", "calendar"], watch: ["관심", "관심종목", "watch", "watchlist"],
@@ -38,13 +39,18 @@ function cmdParse(raw) {
     exact ? out.push(item) : out.unshift(item);
   }
   if (/[가-힣]/.test(q) && !out.length) out.push({ label: `'${q}' 한국 종목 검색`, hint: "검색", run: () => searchKr(q) });
+  // 문장으로 적은 것은 비서에게 묻습니다.  물음표로 끝나거나 묻는 말이 들어 있으면 맨 위에 둡니다.
+  if (q.length >= 2 && typeof askAssistant === "function" && (/\s/.test(q) || /[?？]$/.test(q))) {
+    const ask = { label: `'${q}' 비서에게 묻기`, hint: "질문", run: () => askAssistant(q) };
+    /[?？]$|왜|어때|뭐|뭘|언제|어디|얼마|돼|될까|할까|알려|괜찮/.test(q) ? out.unshift(ask) : out.push(ask);
+  }
   return out;
 }
 
 const cmdEl = document.createElement("div");
 cmdEl.id = "cmd";
 cmdEl.hidden = true;
-cmdEl.innerHTML = `<div class="cmd-box" role="dialog" aria-label="명령창"><input id="cmd-q" autocomplete="off" spellcheck="false" placeholder="종목 코드, 회사명, 탭 이름 (예: AAPL, 삼성전자, 점수, 지도, 한국)">
+cmdEl.innerHTML = `<div class="cmd-box" role="dialog" aria-label="명령창"><input id="cmd-q" autocomplete="off" spellcheck="false" placeholder="종목 코드, 회사명, 탭 이름, 질문 (예: AAPL, 삼성전자, 점수, 지도, 한국)">
   <ul id="cmd-list" role="listbox"></ul>
   <div class="cmd-help">↑↓ 선택 · Enter 이동 · Esc 닫기 · 어디서나 <kbd>/</kbd> 또는 <kbd>⌘K</kbd> · 탭 바로가기 <kbd>1</kbd>~<kbd>9</kbd> · 시장 전환 <kbd>M</kbd> · 도움말 <kbd>?</kbd></div></div>`;
 document.body.appendChild(cmdEl);
