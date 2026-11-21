@@ -556,6 +556,7 @@ def _kr_ledger_records(res) -> None:      # the Korean side records that read th
         res["bundle_challenger"] = {"status": "FAILED", "reason": type(exc).__name__}
     _fund_period_record(res, "KR")
     _expectations_record(res, "KR")
+    _five_views_record(res, "KR")
 
 
 def _qsf_kr_forward(args) -> int:
@@ -817,6 +818,16 @@ def _expectations_record(res, market: str) -> None:    # analyst estimates, shor
         res["expectations"] = {"status": "FAILED", "reason": type(exc).__name__}
 
 
+def _five_views_record(res, market: str) -> None:      # the five-views team list of the session, a record only; it never fails the step
+    try:
+        from terminal import assistant, five_views
+        from terminal.services import Terminal
+        t = assistant.five_team(Terminal(PROJECT_ROOT), market)
+        res["five_views"] = {k: v for k, v in five_views.record(PROJECT_ROOT, market, t["session"], t).items() if k != "market"} if t.get("session") else {"status": "NO_SESSION"}
+    except Exception as exc:
+        res["five_views"] = {"status": "FAILED", "reason": type(exc).__name__}
+
+
 def _fund_period_record(res, market: str) -> None:      # both scores side by side, from the ledger only; it never fails the step
     try:
         from terminal.qsf import fund_period
@@ -876,6 +887,7 @@ def _qsf_us_challenger_record(args) -> int:
         res["score_split"] = {"status": "FAILED", "reason": type(exc).__name__}
     _fund_period_record(res, "US")
     _expectations_record(res, "US")
+    _five_views_record(res, "US")
     try:                        # the forecast layer reads the ledger and the scan's prices; it never fails the step
         res["forecast"] = {k: v for k, v in _forecast_record("US").items() if k != "market"}
     except Exception as exc:

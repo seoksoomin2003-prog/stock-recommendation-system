@@ -168,6 +168,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
         ("POST", "/api/settings"): lambda q, b: t.settings_set(b),
         ("GET", "/api/sizing"): lambda q, b: t.sizing(q.get("t", ""), q.get("entry"), q.get("stop"), q.get("equity"), q.get("style"), _market(q.get("market", "US"))),
         ("GET", "/api/kr/search"): lambda q, b: {"items": t.qsf.kr_search(q.get("q", ""))},
+        ("GET", "/api/five/team"): lambda q, b: _five_team(t, "KR" if q.get("market") == "KR" else "US"),
         ("GET", "/api/symbols"): lambda q, b: symbols.suggest(symbols.universe({m: assistant._rows(t, m) for m in ("US", "KR")}), q.get("q", ""), "KR" if q.get("market") == "KR" else "US"),
         ("GET", "/api/model/plan"): lambda q, b: t.model_plan(),
         ("GET", "/api/lab/status"): lambda q, b: t.lab.status(),
@@ -335,6 +336,13 @@ class _Server(ThreadingHTTPServer):
         if isinstance(exc, (ConnectionError, TimeoutError)):       # the browser left mid-reply, or sent nothing in time
             return
         log.error("request failed: %s\n%s", type(exc).__name__, traceback.format_exc())
+
+
+def _five_team(t, market: str):
+    """The five-views team list of the newest scan with its lines as the assistant words them."""
+    from terminal import five_views as fv
+    team = assistant.five_team(t, market)
+    return {"status": "REAL" if team.get("session") else "UNAVAILABLE", "market": market, **team, "lines": fv.team_lines(team, assistant.MARKET_KO[market]) if team.get("session") else []}
 
 
 def serve(port: int = 8765, base_dir: Path = Path("."), terminal: Optional[Terminal] = None,

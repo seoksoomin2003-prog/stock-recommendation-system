@@ -45,7 +45,7 @@ function qsfSetView(v) {
 }
 // A view is fetched when first shown, and again after the market or strategy changes; hidden views cost nothing.
 const QSF_LOADERS = {
-  rank: () => { qsfRank(); qsfCap(); qsfChanges(); },
+  rank: () => { qsfRank(); qsfFive(); qsfCap(); qsfChanges(); },
   screen: () => ($("#qsfscreenform") ? qsfScreenRun(true) : qsfScreenBuild()),
   exec: () => { qsfPlan(); qsfPaper(); },
   track: () => { qsfReadings(); qsfTop3(); fcTrack(); qsfMethod(); qsfRegime(); qsfLookahead(); qsfValidation(); },
@@ -162,7 +162,7 @@ async function renderQsf() {
       <span class="seg" id="qsfview" role="group" aria-label="보기">${Object.entries(QSF_VIEWS).map(([k, v]) => `<button type="button" data-v="${k}">${v}</button>`).join("")}</span>
       <span class="seg" id="qsfstratseg" role="group" aria-label="전략"><button type="button" data-s="SWING">스윙</button><button type="button" data-s="LONG_TERM">장기</button></span>
     </div>
-    <div data-view="rank"><div id="qsfdetail"></div><div id="qsfrank"></div><div class="fold" data-fold="cap"><div id="qsfcap"></div></div><div class="fold" data-fold="changes"><div id="qsfchanges"></div></div></div>
+    <div data-view="rank"><div id="qsfdetail"></div><div id="qsfrank"></div><div id="qsffive"></div><div class="fold" data-fold="cap"><div id="qsfcap"></div></div><div class="fold" data-fold="changes"><div id="qsfchanges"></div></div></div>
     <div data-view="screen"><div id="qsfscreen"></div></div>
     <div data-view="exec"><div id="qsfplan"></div><div id="qsfpaper"></div></div>
     <div data-view="track"><div class="fold" data-fold="readings"><div id="qsfreadings"></div></div><div class="fold" data-fold="top3"><div id="qsftop3"></div></div><div class="fold" data-fold="fcast"><div id="qsffcast"></div></div>
@@ -255,6 +255,7 @@ function qsfDrawDetail(d) {
     ${d.high_risk ? `<div class="meta">${QSF_RISK_NOTE} 기준일 ${esc(d.high_risk.session)}.</div>` : ""}
     ${d.filing_events ? `<div class="meta">${QSF_FILING_NOTE} 기준일 ${esc(d.filing_events.session)}.</div>` : ""}
     ${(d.deals || []).length ? `<div class="notice">SEC에 인수·합병 절차 공시가 있습니다: ${d.deals.slice(0, 3).map((x) => `${esc(x.label)}(${esc(x.form)}, ${esc(x.date)})`).join(", ")}. 인수 가격이 정해진 종목은 더 오를 여지가 작고 거래가 깨지면 크게 내릴 수 있습니다. 인수하는 쪽이 내는 경우도 있으니 공시 원문을 확인하세요. 점수는 이 공시를 읽지 않습니다.</div>` : ""}
+    ${qsfFiveHtml(d.five_views)}
     ${qsfRiskGradeLine(d.risk_grade)}
     ${QSF_RANK_NOTE[d.rank_basis] ? `<div class="meta">${QSF_RANK_NOTE[d.rank_basis]}</div>` : ""}
     ${qsfAuditLine(d.price_audit)}
@@ -452,6 +453,30 @@ function qsfCapHtml(d) {
     <div class="tbl-wrap"><table class="qs-table"><thead><tr><th>순위</th><th class="l">종목</th><th>점수</th><th title="20거래일 평균 거래대금 순위">거래대금 순위</th><th class="l">라이브 대상</th><th class="l">상태</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="meta">점수는 그날 기록에 적힌 값입니다(다시 계산하지 않음). 규칙: ${esc(d.protocol)}</div></div>`;
 }
+// 다섯 관점(버핏·멍거·그레이엄·린치·드러켄밀러식 기준)을 종목 카드 옆과 팀 목록으로 보여 줍니다. 점수와 무관한 참고입니다.
+function qsfFiveHtml(f) {
+  if (!f || !f.judged) return "";
+  return `<div class="panel"><h3>다섯 관점 <span class="meta" style="margin:0">알려진 원칙을 기준값으로 옮긴 참고 · 점수와 무관</span></h3>
+    ${f.views.map((v) => `<div class="meta" style="margin:6px 0"><b>${esc(v.name)}</b> <span class="badge">${esc(v.verdict_label)}</span> ${esc(v.motto)} · ${v.verdict === "UNKNOWN" ? `확인할 수 있는 기준이 ${v.known}개뿐이라 판단하지 않았습니다.` : `기준 ${v.known}개 중 ${v.met}개 충족. ${esc(v.detail || "")}`}</div>`).join("")}
+    <div class="meta" style="margin:8px 0 0"><b>${esc(f.team_line)}</b></div><div class="meta">${esc(f.note)}</div></div>`;
+}
+
+async function qsfFive() {
+  const box = $("#qsffive"); if (!box) return;
+  if (isCoin()) { box.innerHTML = ""; return; }
+  const mk = state.market;
+  const d = await api(`/api/five/team?market=${mk}`).catch(() => null);
+  if (mk !== state.market) return;
+  if (!d || d.status !== "REAL") { box.innerHTML = ""; return; }
+  const picked = (d.picked || []).map((r) => `<tr><td class="l"><button type="button" class="qs-open" data-t="${esc(r.ticker)}"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span></button></td>
+    <td class="l">${esc(r.sector || "")}</td><td class="num">${r.agree}</td><td class="l">${esc((r.agree_names || []).join(", "))}</td><td class="num">${Math.round(r.mean_share * 100)}%</td><td class="num">${Math.round(r.weight * 100)}%</td></tr>`).join("");
+  box.innerHTML = `<div class="panel"><h2>다섯 관점 팀 목록 <span class="meta" style="margin:0">${esc(d.session || "")} 기록 · 다섯 중 ${d.agree_needed}개 이상이 '기준에 맞음'</span></h2>
+    <div class="meta">${esc((d.lines || [])[0] || "")}</div>
+    ${picked ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th class="l">업종</th><th>합의</th><th class="l">맞다고 본 관점</th><th>기준 충족 평균</th><th>비중</th></tr></thead><tbody>${picked}</tbody></table></div>` : ""}
+    ${(d.lines || []).slice(1 + (d.picked || []).length).map((x) => `<div class="meta">${esc(x)}</div>`).join("")}</div>`;
+  box.querySelectorAll(".qs-open").forEach((b) => { b.onclick = () => { qsfEvaluate(b.dataset.t, mk); $("#qsfmsg").scrollIntoView({ block: "start" }); }; });
+}
+
 async function qsfCap() {
   const box = $("#qsfcap"); if (!box) return;
   if (!isKR()) { box.innerHTML = ""; return; }

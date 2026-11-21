@@ -299,7 +299,7 @@ def test_every_example_question_is_read_as_its_own_kind():
         assert A.read_question(example, False) == key, example
     assert A.read_question("삼성전자", True) == "ANALYZE" and A.read_question("비트코인 전망", False) is None      # a name alone asks for the whole picture
     assert A.read_question("삼성전자 점수 어때", True) == "WHY" and A.read_question("증시 왜 이렇게 급락해?", False) == "MARKET"
-    assert len(A.EXAMPLES) == len(A.STOCK_INTENTS) + len(A.PLAIN_INTENTS) == 20
+    assert len(A.EXAMPLES) == len(A.STOCK_INTENTS) + len(A.PLAIN_INTENTS) == 22
 
 
 def flat(a):
@@ -454,8 +454,8 @@ def test_plain_answers_and_what_it_does_not_know(term):
     assert "과거 구간으로 시험한 적이 없고" in flat(A.answer(term, "오늘 상위 종목은?", "KR"))
     for typed in ("뭘 물어볼 수 있어?", "help", "도움말", "?", "명령어 뭐 있어"):
         got = A.answer(term, typed, "KR")
-        assert got["status"] == "REAL" and got["intent"] == "HELP" and got["examples"] == A.EXAMPLES and "20가지" in got["title"], typed
-        assert [s["title"] for s in got["sections"]] == ["종목 없이 묻는 것 11가지", "종목을 넣어 묻는 것 9가지", "쓰는 법"] and "'help'" in got["lines"][-1]
+        assert got["status"] == "REAL" and got["intent"] == "HELP" and got["examples"] == A.EXAMPLES and "22가지" in got["title"], typed
+        assert [s["title"] for s in got["sections"]] == ["종목 없이 묻는 것 12가지", "종목을 넣어 묻는 것 10가지", "쓰는 법"] and "'help'" in got["lines"][-1]
     trust = A.answer(term, "이 점수 믿어도 돼?", "KR")
     assert trust["intent"] == "TRUST" and "아직 확인되지 않았습니다" in trust["summary"] and "살 종목을 고르는 힘은 확인되지 않았습니다." in flat(trust)
     today = A.answer(term, "오늘 뭐 해야 해?", "KR")
@@ -534,12 +534,39 @@ def test_example_questions_name_a_stock_of_the_market_on_screen(term):
     assert not any("삼성전자" in q for q in us["examples"]) and "AAPL 분석해 줘" in us["examples"] and "AAPL 점수 왜 낮아?" in us["examples"]
     assert "삼성전자 분석해 줘" in kr["examples"] and not any("AAPL" in q for q in kr["examples"]) and kr["examples"] == A.EXAMPLES
     by = {s["title"]: s["lines"] for s in us["sections"]}
-    assert by["종목을 넣어 묻는 것 9가지"] == A.stock_examples("US") and all(q.startswith("AAPL ") for q in by["종목을 넣어 묻는 것 9가지"]) and by["쓰는 법"][0].startswith("종목은 'AAPL' 자리에")
+    assert by["종목을 넣어 묻는 것 10가지"] == A.stock_examples("US") and all(q.startswith("AAPL ") for q in by["종목을 넣어 묻는 것 10가지"]) and by["쓰는 법"][0].startswith("종목은 'AAPL' 자리에")
     assert {s["title"]: s["lines"] for s in kr["sections"]}["쓰는 법"][0].startswith("종목은 '삼성전자' 자리에")
-    assert len(A.examples_for("US")) == len(A.examples_for("KR")) == 20 and A.examples_for("US")[:11] == A.examples_for("KR")[:11]      # the questions without a stock are the same
+    assert len(A.examples_for("US")) == len(A.examples_for("KR")) == 22 and A.examples_for("US")[:12] == A.examples_for("KR")[:12]      # the questions without a stock are the same
     assert not any("삼성전자" in q for q in A.answer(term, "", "US")["examples"]) and not any("삼성전자" in q for q in A.answer(term, "무슨 말인지 모를 문장", "US")["examples"])
     for q in A.stock_examples("US"):                        # every US example is itself a question the assistant answers about AAPL
         got = A.answer(term, q, "US")
         assert got["status"] == "REAL" and got["ticker"] == "AAPL", q
     page = (Path(A.__file__).parent / "static" / "assistant.js").read_text(encoding="utf-8")
     assert 'isKR() ? "삼성전자" : "AAPL"' in page
+
+
+def test_the_five_views_answer_a_stock_and_give_the_team_list(term, monkeypatch):
+    """User request 2026-11-22: five well-known approaches as a team, one or two lines each, and a team list."""
+    from terminal import five_views as fv
+    assert A.read_question("삼성전자 다섯 관점은?", True) == "FIVE" and A.read_question("버핏이라면 삼성전자 어때", True) == "FIVE" and A.read_question("다섯 관점 팀 목록은?", False) == "TEAM"
+    assert A.read_question("삼성전자 분석해 줘", True) == "ANALYZE" and A.read_question("오늘 상위 종목은?", False) == "TOP"          # the other questions are read as before
+    good = {"price": 100.0, "domains": {"REGIME": {"score_100": 60.0}}, "factors": [
+        {"factor": "valuation", "raw": {"pe": 12.0, "pb": 1.2}}, {"factor": "business_quality", "raw": {"roe": 0.2, "op_margin": 0.25, "gross_margin": 0.5, "roe_years_positive": 1.0}},
+        {"factor": "growth_quality", "raw": {"eps_cagr3": 0.15, "rev_growth": 0.08}}, {"factor": "free_cash_flow", "raw": {"fcf_margin": 0.12, "fcf_years_positive": 1.0}},
+        {"factor": "balance_dilution", "raw": {"debt_equity": 0.3, "share_change": -0.01}}, {"factor": "financial_resilience", "raw": {"current_ratio": 2.5}},
+        {"factor": "capital_allocation", "raw": {"returns_capital": True}}, {"factor": "long_trend", "raw": {"ma200": 90.0, "ma200_slope": 0.05}},
+        {"factor": "relative_strength", "raw": {"percentile": 0.8}}, {"factor": "momentum_persistence", "raw": {"ret_12_1": 0.2}}, {"factor": "downside_drawdown", "raw": {"max_drawdown_252": -0.15}},
+        {"factor": "material_events", "raw": {"negative": 0}}, {"factor": "governance", "raw": {"issues": []}}]}
+    monkeypatch.setattr(A, "five_opinions", lambda terminal, stock: fv.opinions(good, None))
+    got = A.answer(term, "삼성전자 다섯 관점은?", "KR")
+    assert got["status"] == "REAL" and got["intent"] == "FIVE" and got["title"] == "삼성전자(005930) 다섯 관점" and got["summary"].startswith("다섯 관점 가운데 5개가 '기준에 맞음'")
+    by = {s["title"]: s["lines"] for s in got["sections"]}
+    assert len(by["다섯 관점"]) == 5 and by["다섯 관점"][0].startswith("버핏식(좋은 사업을 적정한 값에): 기준 7개 중 7개 충족, 기준에 맞음. 맞는 것: ROE 20.0%")
+    assert "실존 투자자의 실제 의견이 아닙니다" in by["이 답의 한계"][0] and got["follow"][0] == "삼성전자 분석해 줘"
+    note = A.answer(term, "삼성전자 분석해 줘", "KR")
+    five = {s["title"]: s["lines"] for s in note["sections"]}["다섯 관점 (참고)"]
+    assert len(five) == 7 and five[5].startswith("다섯 관점 가운데 5개") and five[6] == fv.NOTE
+    team = A.answer(term, "다섯 관점 팀 목록은?", "KR")                                     # the stored snapshots of the scratch terminal carry no figures: an honest empty list
+    assert team["status"] == "REAL" and team["intent"] == "TEAM" and team["title"] == "다섯 관점 팀 목록(한국)" and "목록을 억지로 채우지 않습니다" in team["summary"]
+    items = [i for i in A.briefing(term, "KR")["items"] if i["kind"] == "FIVE_TEAM"]
+    assert len(items) == 1 and items[0]["level"] == "INFO" and "기준에 맞음'으로 본 종목이 없습니다" in items[0]["text"]
