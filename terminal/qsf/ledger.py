@@ -36,6 +36,8 @@ def snapshot(card: Dict[str, Any]) -> Dict[str, Any]:
     rec["target"], rec["stop"] = card["levels"].get("target"), card["levels"].get("stop")
     if card.get("cik"):             # US, from 2026-11-17: a ticker can be renamed or handed to another company; the SEC number cannot
         rec["cik"] = card["cik"]
+    if card.get("fund_period"):     # from 2026-11-23: the score on annual statements and on trailing four quarters (reports/QSF_FUND_PERIOD_PROTOCOL.md)
+        rec["fund_period"] = card["fund_period"]
     return rec
 
 

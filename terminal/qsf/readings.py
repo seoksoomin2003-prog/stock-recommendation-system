@@ -6,8 +6,10 @@ waits for and how many sessions that record needs.  The daily job (``automation.
 day its record is long enough, tells the verdict once, and never runs a reading again once its report exists: the one-reading rule
 of every protocol is kept by the report file, as before.
 
-Nothing here changes a score, a universe or a rule.  Every protocol in this list says the verdict is reported and the user decides;
-the two comparison books that do apply their own decision (turnover and rank rules) have their own modules and are only shown here.
+Nothing here changes a score, a universe or a rule.  Every protocol in this list but one says the verdict is reported and the user
+decides.  The one (``applies``: the fund-period comparison) names in its protocol what its verdict changes, and the change is made
+where the score is computed (``fund_period.live_period`` reads the report this module only tells of).  The two comparison books that
+apply their own decision (turnover and rank rules) have their own modules and are only shown here.
 """
 import json
 from datetime import date, timedelta
@@ -26,9 +28,9 @@ NO_CHANGE = "이 결과로 점수·스캔 대상·규칙이 자동으로 바뀌�
 
 
 def _e(key: str, label: str, argv: List[str], report: str, protocol: str, need: int, horizon: int, store: Optional[str] = None, ledger: Optional[str] = None,
-       verdict: tuple = ("verdict",), after: str = NO_CHANGE) -> Dict[str, Any]:
+       verdict: tuple = ("verdict",), after: str = NO_CHANGE, applies: bool = False) -> Dict[str, Any]:
     return {"key": key, "label": label, "argv": argv, "report": report, "protocol": f"reports/{protocol}", "need": need, "horizon": horizon, "store": store, "ledger": ledger,
-            "verdict": verdict, "after": after}
+            "verdict": verdict, "after": after, "applies": applies}
 
 
 def _per_market(key: str, label: str, action: str, report: str, protocol: str, need: int, horizon: int, store: Optional[str] = None, ledger: bool = False, **kw) -> List[Dict[str, Any]]:
@@ -44,6 +46,8 @@ REGISTRY: List[Dict[str, Any]] = [
        after="AVOID_RULE_SUPPORTED가 나와도 매수 후보에서 자동으로 빼지 않습니다. 화면의 회피 표시를 보고 직접 판단합니다."),
     *_per_market("score_split", "점수 분리 비교", "score-split-evaluate", "QSF_SCORE_SPLIT_{m}.json", "QSF_SCORE_SPLIT_PROTOCOL.md", 240, 20, store="score_split_{m}",
                  after="WITH_REGIME_BETTER가 나와도 점수를 자동으로 되돌리지 않습니다."),
+    *_per_market("fund_period", "재무 기준 기간 비교", "fund-period-evaluate", "QSF_FUND_PERIOD_{m}.json", "QSF_FUND_PERIOD_PROTOCOL.md", 240, 20, store="fund_period_{m}", applies=True,
+                 after="TRAILING_BETTER가 나오면 다음 스캔부터 그 시장의 라이브 점수가 최근 4분기 재무를 씁니다. 그 밖에는 연간 재무 그대로입니다. .env의 QSF_FUND_PERIOD로 뒤집을 수 있습니다."),
     *_per_market("regime_weights", "국면 가중치 기록 읽기", "regime-weights-evaluate", "QSF_REGIME_WEIGHTS_FORWARD_{m}.json", "QSF_REGIME_WEIGHTS_PROTOCOL.md", 240, 20,
                  store="regime_weights_{m}", verdict=("reading",), after="판정 없이 수치만 적는 읽기입니다. 아무것도 바뀌지 않습니다."),
     _e("us_challenger_swing", "미국 도전자 점수 · 스윙", ["qsf", "us-challenger-evaluate-swing"], "QSF_US_CHALLENGER_SWING.json", "QSF_US_CHALLENGER_PROTOCOL.md", 240, 20,
@@ -88,6 +92,8 @@ VERDICT_KO = {
     "DECISION_SUPPORTED": "2026-11-11에 공식을 바꾼 결정이 지지됐습니다",
     "PRIOR_BETTER": "이전 공식 쪽이 나았습니다",
     "SPLIT_BETTER": "시장 국면을 뺀 지금 점수 쪽이 나았습니다",
+    "TRAILING_BETTER": "최근 4분기 재무로 계산한 점수 쪽이 나았습니다",
+    "ANNUAL_BETTER": "연간 재무로 계산한 점수 쪽이 나았습니다",
     "WITH_REGIME_BETTER": "시장 국면을 넣은 이전 점수 쪽이 나았습니다",
     "AVOID_RULE_SUPPORTED": "회피 표시가 붙은 종목을 빼는 규칙이 지지됐습니다",
     "MARKS_FLAG_LOSERS_BUT_SCORE_KNOWS": "회피 표시가 부진한 종목을 가리키지만 점수가 이미 반영하고 있습니다",
@@ -184,7 +190,7 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
     base, rows = Path(base), []
     for e in REGISTRY:
         rep, n = report(base, e), records(base, e)
-        row = {"key": e["key"], "label": e["label"], "protocol": e["protocol"], "records": n, "wanted": wanted(e), "after": e["after"], "applies_itself": False,
+        row = {"key": e["key"], "label": e["label"], "protocol": e["protocol"], "records": n, "wanted": wanted(e), "after": e["after"], "applies_itself": bool(e.get("applies")),
                "attempts": ((tried or {}).get(e["key"]) or {}).get("failed", 0)}
         if rep is not None:
             code = verdict(e, rep)

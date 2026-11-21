@@ -244,6 +244,20 @@ function qsfStaleNote(c) {
   return `<div class="notice"><b>오래된 자료로 채점</b>: 새 자료를 받지 못해 저장해 둔 자료를 썼습니다. ${old.map(one).join(" · ")}. 다시 받아지면 점수가 달라질 수 있습니다.</div>`;
 }
 
+// 점수가 읽은 재무의 기준일과, 다른 기간(최근 4분기)의 재무로 계산한 참고 점수 (reports/QSF_FUND_PERIOD_PROTOCOL.md)
+function qsfFundPeriodNote(c) {
+  const fp = c.fund_period;
+  if (!fp || !fp.annual || !fp.trailing) return "";
+  const live = fp.live === "TRAILING" ? fp.trailing : fp.annual, other = fp.live === "TRAILING" ? fp.annual : fp.trailing;
+  const liveName = fp.live === "TRAILING" ? "최근 4분기" : "연간 보고서", otherName = fp.live === "TRAILING" ? "연간 보고서" : "최근 4분기";
+  const age = live.fiscal_end && c.data_date ? Math.round((new Date(c.data_date) - new Date(live.fiscal_end)) / 86400000) : null;
+  const head = `재무 기준: ${esc(live.fiscal_end || "확인 불가")}까지 (${liveName}${age === null ? "" : `, ${age}일 지남`})`;
+  if (!isNum(other.score)) return `<div class="meta">${head} · ${otherName} 기준 점수는 계산하지 못했습니다.</div>`;
+  if (fp.live !== "TRAILING" && !fp.trailing.newer_quarter) return `<div class="meta">${head} · 이보다 새로운 분기 보고서가 없습니다.</div>`;
+  const diff = other.score - c.score;
+  return `<div class="meta">${head} · <b>${otherName}(${esc(other.fiscal_end || "")}까지) 기준 점수 ${other.score.toFixed(1)}</b> (${diff > 0 ? "+" : ""}${diff.toFixed(1)}) · 참고값입니다. 매일 따로 기록하고 240거래일 뒤 한 번 읽어 정합니다.</div>`;
+}
+
 function qsfCard(c, planOpen = false) {
   const h = c.holding, m = c.market, e = c.entry;
   // Only the card of a holding's own style carries c.position.
@@ -265,7 +279,7 @@ function qsfCard(c, planOpen = false) {
       <div>${qsfLabel(c)}<div class="meta" style="margin:4px 0 0">구간: ${esc(c.band_label)}${c.diagnostic_only ? " · 진단용 점수" : ""}</div></div></header>
     <div class="qsf-meta"><span>신뢰도 <b>${QSF_CONF[c.confidence]}</b></span><span>데이터 반영률 <b>${(c.coverage * 100).toFixed(0)}%</b></span><span>시세 <b>${esc(c.data_date)}</b> ${qsfPrice(c.price, m)}</span><span>${esc(c.model_version)}</span></div>
     <p>${esc(c.why_summary)}</p>
-    ${qsfStaleNote(c)}
+    ${qsfStaleNote(c)}${qsfFundPeriodNote(c)}
     ${c.gates.length ? `<div class="notice"><b>위험 게이트 ${c.gates.length}건</b>: ${c.gates.map((g) => esc(g.text)).join(" ")} 점수는 진단용으로 남기지만 실행 대상이 아닙니다.</div>` : ""}
     <h3>영역별 점수</h3><div class="qsf-domains">${Object.entries(c.domains).filter(([k]) => k !== "REGIME").map(([, v]) => `<div><span>${esc(v.label)} <small class="meta" style="margin:0">${v.reference ? "참고 · 점수 미반영" : v.max_points + "점"}</small></span>${qsfBar(v.score_100)}</div>`).join("")}</div>
     ${qsfMarketState(c.market_state)}

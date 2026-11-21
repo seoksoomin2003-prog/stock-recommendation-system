@@ -20,7 +20,7 @@ import numpy as np
 from markets import session_data
 from terminal import sources as default_sources
 from terminal.cache import FileCache
-from terminal.qsf import config, earnings_estimate, engine, events, fundamentals, holding, ledger, technicals
+from terminal.qsf import config, earnings_estimate, engine, events, fund_period, fund_trailing, fundamentals, holding, ledger, technicals
 from terminal.qsf.views import ScreenViews, _n
 from utils import nyse_calendar
 
@@ -31,6 +31,10 @@ KR_MIN_UNIVERSE = 200       # a whole-market Korean scan with fewer stocks than 
 # 20 hours, not 24: a copy stored at 07:15 must be old enough for the next day's 07:10 run.  Korean statements keep 7 days ("kr_facts").
 REGIME_MEMO_SECONDS = 30 * 60        # how long the process reuses a computed regime; its inputs have their own cache times below
 TTL = {"bars": 1800, "regime": 3600, "facts": 20 * 3600, "kr_facts": 7 * 86400, "subm": 20 * 3600, "info": 7 * 86400, "earn": 3 * 86400, "form4": 3650 * 86400}
+# Korean quarterly reports, for the trailing-four-quarter record (reports/QSF_FUND_PERIOD_PROTOCOL.md).  A past year's report does not
+# change and is kept; this year's is read again monthly (an amended report); "not filed yet" is asked again the next morning.
+QUARTER_TTL = {"new": 30 * 86400, "old": 3650 * 86400, "none": 20 * 3600, "none_old": 90 * 86400}
+USABLE = ("REAL", "STALE")
 REGIME_FRESH_DAYS = 5
 EARN_NONE_TTL = 6 * 3600           # "the provider lists no date" is kept this long: each morning's scan still asks, a lookup or a retry an hour later does not
 EARN_PAUSE_S = 15 * 60             # after the provider refuses for too many requests, earnings dates are not asked for this long
@@ -287,8 +291,8 @@ class QSF(ScreenViews):
             return {"status": "UNAVAILABLE", "reason": f"SEC 재무 조회 실패 ({res.get('error')})", "cik": cik}
         info, moved = self._us_info(ticker, bars[-1]["close"])
         fin = fundamentals.is_financial_sic((subm or {}).get("sic"))
-        m = fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=fin, shares=fundamentals.us_total_shares(info, bars[-1]["close"], res["data"]), insider_pct=info.get("heldPercentInsiders"),
-                                 count_unknown=moved)
+        kw = dict(is_financial=fin, shares=fundamentals.us_total_shares(info, bars[-1]["close"], res["data"]), insider_pct=info.get("heldPercentInsiders"), count_unknown=moved)
+        m = self._with_other_period("US", fundamentals.metrics(res["data"], bars[-1]["close"], as_of, **kw), self._us_trailing(ticker, cik, bars[-1]["close"], as_of, kw))
         old = _stale("SEC 재무제표", res)
         return {**m, "cik": cik, "name": fundamentals.us_display_name(info.get("longName"), info.get("shortName"), (subm or {}).get("name")), "sector": info.get("sector"),
                 **({"stale_inputs": old} if old else {})}
@@ -307,7 +311,84 @@ class QSF(ScreenViews):
         return info, fundamentals.price_basis_moved(info, close)
 
     def _annual(self, ticker: str, cik: str) -> Dict[str, Any]:
-        return fundamentals.drop_stale_series(fundamentals.extract_us(default_sources.facts_with_predecessors(ticker, cik, self.src.sec_companyfacts)))
+        facts = default_sources.facts_with_predecessors(ticker, cik, self.src.sec_companyfacts)
+        try:                    # the quarterly rows of the same download, for the trailing record; never a reason to lose the annual figures
+            self.cache.write(f"periods1:{default_sources.facts_key(ticker, cik)}", fund_trailing.us_periods(facts))
+        except Exception:
+            pass
+        return fundamentals.drop_stale_series(fundamentals.extract_us(facts))
+
+    def _us_trailing(self, ticker: str, cik: str, close: Optional[float], as_of: str, kw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Trailing-four-quarter figures from the period rows kept at the last download; None when there are none or they cannot be read."""
+        rec = self.cache.read(f"periods1:{default_sources.facts_key(ticker, cik)}")
+        if not rec or not rec.get("data"):
+            return None
+        try:
+            return fund_trailing.metrics(rec["data"], close, as_of, "US", **kw)
+        except Exception as exc:
+            return {"status": "UNAVAILABLE", "reason": f"최근 4분기 수치를 만들지 못했습니다 ({type(exc).__name__})"}
+
+    def _with_other_period(self, market: str, annual: Dict[str, Any], trailing: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """The figures the live score reads, carrying the other period's under ``other_period`` (reports/QSF_FUND_PERIOD_PROTOCOL.md).
+        Live is annual until the market's one reading says otherwise.  A company with no quarter newer than its fiscal year has
+        one set of figures: the annual ones stand for both.  A stock without trailing figures stays on annual ones either way."""
+        if annual.get("status") not in USABLE:
+            return annual
+        annual = {**annual, "period_basis": "ANNUAL"}
+        ok = bool(trailing) and trailing.get("status") in USABLE
+        if ok and trailing.get("period_basis") != "TRAILING":
+            trailing = dict(annual)
+        if ok and fund_period.live_period(self.base, market) == "TRAILING":
+            return {**trailing, "live_period": "TRAILING", "other_period": annual}
+        return {**annual, "live_period": "ANNUAL", "other_period": trailing if ok else None}
+
+    def _kr_quarter(self, corp: str, code: str, klass: str, year: int, months: int, fs: str, fiscal_month: int, newest: bool) -> Any:
+        """One quarterly report's concepts (year to date), None when DART has no such report, "ERROR" when it could not be asked."""
+        from markets.kr import dart
+        reprt = fund_trailing.REPORT_OF_MONTHS[months]
+        key = f"krq1:{code}:{year}:{reprt}:{fs}"
+
+        def fetch():
+            got = self.dart.statements(corp, year, reprt, fs)
+            if not got.get("list"):
+                return {"none": True}
+            obs = dart.normalize_statements(got["list"], corp_code=corp, ticker=code, year=year, reprt_code=reprt, fs_div=fs, fiscal_month=fiscal_month)
+            concepts = dart.extract_concepts(obs, klass, amount_type="YTD")
+            if months == 3:
+                concepts = fund_trailing.fill_first_quarter(concepts, dart.extract_concepts(obs, klass, amount_type="QUARTER_3M"))
+            return fund_trailing.slim(concepts) or {"none": True}
+        old = self.cache.read(key)
+        none = bool(old) and bool((old.get("data") or {}).get("none"))
+        ttl = QUARTER_TTL[("none" if newest else "none_old") if none else ("new" if newest else "old")]
+        res = self.cache.cached(key, ttl, fetch)
+        if res["data"] is None:
+            return "ERROR"
+        return None if res["data"].get("none") else res["data"]
+
+    def _kr_trailing(self, code: str, corp: str, klass: str, fiscal_month: int, as_of: str, annual: Dict[str, Any], close: Optional[float], kw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Trailing-four-quarter figures of a Korean company: the newest quarterly report on file and the same quarter of the four
+        years before, on the annual statements' basis.  None when no quarter is newer than the fiscal year or a report could not be asked."""
+        try:
+            fs = {"CONSOLIDATED": "CFS", "SEPARATE": "OFS"}.get(fund_trailing.latest_basis(annual) or "")
+            if not fs:
+                return None
+            for year, months, _ in fund_trailing.kr_quarter_candidates(date.fromisoformat(as_of), fiscal_month):
+                got = self._kr_quarter(corp, code, klass, year, months, fs, fiscal_month, True)
+                if got == "ERROR":
+                    return None
+                if got:
+                    break
+            else:
+                return dict(annual_only=True)
+            reports = {year: got}
+            for y in range(year - fund_trailing.YEARS_BACK, year):
+                past = self._kr_quarter(corp, code, klass, y, months, fs, fiscal_month, False)
+                if past and past != "ERROR":
+                    reports[y] = past
+            periods = fund_trailing.kr_periods(annual, fundamentals.extract_kr(reports), months)
+            return fundamentals.blank_mixed_cash_flow(fund_trailing.metrics(periods, close, as_of, "KR", **kw), code)
+        except Exception as exc:
+            return {"status": "UNAVAILABLE", "reason": f"최근 4분기 수치를 만들지 못했습니다 ({type(exc).__name__})"}
 
     def _us_subm(self, cik: str) -> Optional[Dict[str, Any]]:
         return self._us_subm_res(cik)["data"]
@@ -480,8 +561,10 @@ class QSF(ScreenViews):
         info = self.cache.cached(f"info:{ident.get('yahoo_symbol')}", TTL["info"], lambda: self.src.yahoo_info(ident["yahoo_symbol"]))["data"] or {}
         fund = {"status": "UNAVAILABLE", "reason": f"DART 재무 조회 실패 ({res.get('error')})"}
         if res["data"]:
-            fund = fundamentals.blank_mixed_cash_flow(fundamentals.metrics(res["data"], bars[-1]["close"], as_of, is_financial=fundamentals.is_financial_kr(klass, res["data"]), shares=self._krx_shares(as_of).get(code) or info.get("sharesOutstanding"),
-                                                                           source="OpenDART 사업보고서", insider_pct=info.get("heldPercentInsiders")), code)
+            kw = dict(is_financial=fundamentals.is_financial_kr(klass, res["data"]), shares=self._krx_shares(as_of).get(code) or info.get("sharesOutstanding"), insider_pct=info.get("heldPercentInsiders"))
+            fund = fundamentals.blank_mixed_cash_flow(fundamentals.metrics(res["data"], bars[-1]["close"], as_of, source="OpenDART 사업보고서", **kw), code)
+            other = self._kr_trailing(code, corp, klass, fm, as_of, res["data"], bars[-1]["close"], kw)
+            fund = self._with_other_period("KR", fund, dict(fund, period_basis="ANNUAL") if other and other.get("annual_only") else other)
         def fetch_list():               # every page of the year (QSF-1.4.1); the first page alone was read as the whole year before
             bgn = (date.fromisoformat(as_of) - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")
             return events.kr_filings(self.dart._get, corp, bgn, as_of.replace("-", ""))
@@ -625,6 +708,17 @@ class QSF(ScreenViews):
         old = list((ctx.get("fund") or {}).get("stale_inputs") or []) + list((ctx.get("events") or {}).get("stale_inputs") or [])
         if old:                 # scored from stored copies because the new request failed: said on the card and in the record
             out["provenance"]["stale"] = old
+        fund = ctx.get("fund") or {}
+        if fund.get("live_period"):             # the score the other period's statements give, for the side-by-side record
+            other, other_score = fund.get("other_period"), None
+            if other and other.get("period_basis") == fund.get("period_basis"):
+                other_score = res["score"]      # no quarter newer than the fiscal year: one set of figures, one score
+            elif other:
+                try:
+                    other_score = engine.score({**ctx, "fund": other}, strategy, held=bool(position))["score"]
+                except Exception:
+                    other_score = None
+            out["fund_period"] = fund_period.card_field(fund["live_period"], res["score"], fund, other_score, other)
         out["why_summary"] = _why(out)
         if position:
             if position.get("rank_rules") and strategy == "LONG_TERM":
