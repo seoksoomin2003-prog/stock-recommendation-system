@@ -29,7 +29,14 @@ SWITCH = "QSF_FUND_PERIOD"      # .env: ANNUAL or TRAILING overrides the reading
 MIN_ROWS = 200                  # fewer trailing swing scores than this is a partial day, not a day
 HORIZONS = {"SWING": 20, "LONG_TERM": 63}
 READ_AT = 240                   # matured swing sessions at the single reading
-MIN_T = 2.0
+# User decision 2026-11-22 ("기준 조이기"), made before any record of this store existed.  The difference series is 240 daily
+# values of 20-session returns: they overlap, so there are about twelve independent periods.  With no effect at all the
+# Newey-West t of such a series reaches 2.0 in 7.7% of cases (a normal test would give 2.3%) and 3.0 in about 2.2%
+# (20,000 simulated series each for normal noise, fat-tailed noise and noise absent on half the days: 2.2%, 1.8%, 2.0%).
+# A passing reading rewrites the live score's inputs by itself, so the bar is the value that keeps a chance pass under 2.5%.
+MIN_T = 3.0
+# Two 30-session episodes in an otherwise empty year gave t 2.37.  A verdict now needs a difference on at least half the days.
+MIN_DIFF_DAYS = READ_AT // 2
 ADOPT = "TRAILING_BETTER"
 VERDICT_KO = {"TRAILING_BETTER": "최근 4분기 재무 쪽이 나았습니다", "ANNUAL_BETTER": "연간 재무 쪽이 나았습니다",
               "NOT_DISTINGUISHED": "구분되지 않았습니다. 차이가 없다는 뜻이 아니라 아직 모른다는 뜻입니다"}
@@ -158,19 +165,24 @@ def summarize(days: List[Dict[str, Any]], lag: int) -> Dict[str, Any]:
         out[k] = {"mean": float(r.mean()), "sd": float(r.std(ddof=1)) if len(r) > 1 else None, "worst_tenth": float(worst.mean()),
                   "empty_share": float(np.mean([d[k]["names"] == 0 for d in days])), "mean_names": float(np.mean([d[k]["names"] for d in days])), "ic": _mean(d[f"ic_{k}"] for d in days)}
     diff = [d["diff"] for d in days]
-    out["difference"] = {"mean": float(np.mean(diff)), "t": validate.newey_west_t(diff, lag)}
+    out["difference"] = {"mean": float(np.mean(diff)), "t": validate.newey_west_t(diff, lag), "days_with_difference": int(sum(1 for x in diff if x != 0))}
     return out
 
 
 def verdict(diff: Dict[str, Any]) -> str:
+    """Both conditions must hold: the two scores picked different stocks on at least ``MIN_DIFF_DAYS`` days, and the mean
+    difference stands ``MIN_T`` standard errors from zero.  A reading without the day count (none exists) does not pass."""
     m, t = diff["mean"], diff["t"]
-    return "TRAILING_BETTER" if t is not None and m > 0 and t >= MIN_T else "ANNUAL_BETTER" if t is not None and m < 0 and t <= -MIN_T else "NOT_DISTINGUISHED"
+    if t is None or (diff.get("days_with_difference") or 0) < MIN_DIFF_DAYS:
+        return "NOT_DISTINGUISHED"
+    return "TRAILING_BETTER" if m > 0 and t >= MIN_T else "ANNUAL_BETTER" if m < 0 and t <= -MIN_T else "NOT_DISTINGUISHED"
 
 
 def reasons(s: Dict[str, Any], code: str) -> List[str]:
     d, t = s["difference"], s["difference"]["t"]
     return [f"잰 것: 점수 70 이상이고 실행 가능한 종목을 같은 비중으로 20거래일 보유한 수익(비용 차감), {s['days']}거래일.",
-            f"하루 평균: 최근 4분기 {s['trailing']['mean'] * 100:+.2f}%, 연간 {s['annual']['mean'] * 100:+.2f}%. 차이 {d['mean'] * 100:+.2f}%p, t {'없음' if t is None else format(t, '+.2f')} (기준: 차이가 양수이고 t 2.0 이상).",
+            f"하루 평균: 최근 4분기 {s['trailing']['mean'] * 100:+.2f}%, 연간 {s['annual']['mean'] * 100:+.2f}%. 차이 {d['mean'] * 100:+.2f}%p, t {'없음' if t is None else format(t, '+.2f')} (기준: 차이가 양수이고 t {MIN_T:g} 이상).",
+            f"두 점수가 다른 종목을 고른 날: {d.get('days_with_difference', 0)}일 (기준: {MIN_DIFF_DAYS}일 이상). 기준 t {MIN_T:g}은 효과가 없을 때 우연히 넘을 확률이 2.5%보다 작도록 모의실험으로 정한 값입니다.",
             f"후보가 없던 날의 비율: 최근 4분기 {s['trailing']['empty_share'] * 100:.0f}%, 연간 {s['annual']['empty_share'] * 100:.0f}%.",
             "최근 4분기 쪽이 나았으므로 다음 스캔부터 이 시장의 라이브 점수가 최근 4분기 재무를 씁니다." if code == ADOPT else "라이브 점수는 연간 재무 그대로입니다."]
 

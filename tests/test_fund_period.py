@@ -340,7 +340,11 @@ def test_the_one_reading_compares_the_buy_bands_and_a_better_trailing_score_beco
     days = fp.measure(docs_for(3, tickers), Panel(400, tickers), "US")
     trailing = [int(t[1:]) / 1000 for t in tickers if 60 + int(t[1:]) / 2 >= 70 and int(t[1:]) % 2 == 0]
     assert len(days) == 3 and days[0]["trailing"] == {"names": 10, "ret": pytest.approx(np.mean(trailing) - cost)} and days[0]["annual"] == {"names": 0, "ret": 0.0} and days[0]["diff"] == pytest.approx(np.mean(trailing) - cost)
-    assert fp.verdict({"mean": 0.01, "t": 2.5}) == "TRAILING_BETTER" and fp.verdict({"mean": -0.01, "t": -2.5}) == "ANNUAL_BETTER" and fp.verdict({"mean": 0.01, "t": 1.9}) == fp.verdict({"mean": 0.01, "t": None}) == "NOT_DISTINGUISHED"
+    enough = {"days_with_difference": fp.MIN_DIFF_DAYS}
+    assert fp.MIN_T == 3.0 and fp.MIN_DIFF_DAYS == 120
+    assert fp.verdict({"mean": 0.01, "t": 3.0, **enough}) == "TRAILING_BETTER" and fp.verdict({"mean": -0.01, "t": -3.1, **enough}) == "ANNUAL_BETTER"
+    for diff in ({"mean": 0.01, "t": 2.9, **enough}, {"mean": 0.01, "t": None, **enough}, {"mean": 0.01, "t": 9.0, "days_with_difference": 119}, {"mean": 0.01, "t": 9.0}, {"mean": -0.01, "t": 3.5, **enough}):
+        assert fp.verdict(diff) == "NOT_DISTINGUISHED", diff          # under the bar, no statistic, too few days, an old report without the count, sign and t disagree
     store = {}
     monkeypatch.setattr(fp.kf, "verify", lambda base, folder: {"status": "OK"})
     monkeypatch.setattr(fp.kf, "read_index", lambda base, folder: [{"session": d["session"]} for d in store["docs"]])
@@ -351,7 +355,7 @@ def test_the_one_reading_compares_the_buy_bands_and_a_better_trailing_score_beco
     assert fp.live_period(tmp_path, "US") == "ANNUAL"
     store["docs"] = docs_for(250, tickers, every=2)
     res = fp.evaluate_once(tmp_path, "US", Panel(500, tickers), log=lambda *_: None)
-    assert res["verdict"] == "TRAILING_BETTER" and res["applies"] == "TRAILING" and res["swing"]["days"] == 240 and res["long"]["reading"] == "FIGURES_ONLY" and len(res["reasons"]) == 4
+    assert res["verdict"] == "TRAILING_BETTER" and res["applies"] == "TRAILING" and res["swing"]["days"] == 240 and res["long"]["reading"] == "FIGURES_ONLY" and len(res["reasons"]) == 5 and "기준: 120일 이상" in res["reasons"][2] and res["swing"]["difference"]["days_with_difference"] >= 120
     assert "다음 스캔부터" in res["reasons"][-1] and fp.live_period(tmp_path, "US") == "TRAILING" and fp.live_period(tmp_path, "KR") == "ANNUAL"
     with pytest.raises(RuntimeError, match="다시 읽지 않습니다"):
         fp.evaluate_once(tmp_path, "US", Panel(500, tickers), log=lambda *_: None)
@@ -375,3 +379,23 @@ def test_the_daily_job_the_backup_the_readings_and_the_documents_know_the_record
     proto = (ROOT / fp.PROTOCOL).read_text(encoding="utf-8")
     assert "나란히 기록" in proto and "TRAILING_BETTER" in proto and "QSF_FUND_PERIOD=ANNUAL" in proto and "IC가 A -0.002, B -0.014" in proto
     assert config.MODEL_VERSION == "QSF-1.4.1"                                                         # the live formula and its inputs did not change
+
+
+def test_the_pass_bar_keeps_a_chance_pass_rare_and_two_episodes_do_not_decide():
+    """User decision 2026-11-22.  The difference series is 240 overlapping 20-session returns: with no effect the statistic
+    passed the old bar (2.0) about three times as often as a normal test would.  The bar is tied to that fact here."""
+    rng = np.random.default_rng(11)
+    ts = []
+    for _ in range(3000):
+        noise = rng.standard_normal(260)
+        ts.append(fp.validate.newey_west_t(list(np.convolve(noise, np.ones(20), "valid")[:240]), 20))
+    ts = np.array(ts)
+    assert np.mean(ts >= 2.0) > 0.055 and np.mean(ts >= fp.MIN_T) < 0.03                              # the old bar was loose, the new one is not
+    two = [0.0] * 240
+    for start in (20, 150):
+        two[start:start + 30] = [0.01] * 30
+    days = [{"annual": {"ret": 0.0, "names": 0}, "trailing": {"ret": x, "names": 1 if x else 0}, "diff": x, "ic_annual": None, "ic_trailing": None} for x in two]
+    got = fp.summarize(days, 20)["difference"]
+    assert got["days_with_difference"] == 60 and 2.0 < got["t"] < fp.MIN_T and fp.verdict(got) == "NOT_DISTINGUISHED"      # passed before (t 2.37)
+    proto = (Path(__file__).resolve().parents[1] / "reports" / "QSF_FUND_PERIOD_PROTOCOL.md").read_text(encoding="utf-8")
+    assert "수정 1 (2026-11-22)" in proto and "t ≥ 3.0" in proto and "첫 줄이 쓰이기 전에" in proto and "t ≥ 2.0 |" not in proto
