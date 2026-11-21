@@ -494,6 +494,20 @@ PLAIN_INTENTS = (
     ("TODAY", "오늘 뭐 해야 해?", ("오늘", "할 일", "할일", "브리핑", "뭐 해", "뭘 해", "요약")),
 )
 EXAMPLES = [e for _, e, _ in PLAIN_INTENTS[::-1]] + [e for _, e, _ in STOCK_INTENTS[::-1]]
+EXAMPLE_STOCK = {"KR": "삼성전자", "US": "AAPL"}       # the stock the example questions name: one of the market on screen
+
+
+def example_stock(market: str) -> str:
+    return EXAMPLE_STOCK.get(market, EXAMPLE_STOCK["KR"])
+
+
+def stock_examples(market: str) -> List[str]:
+    """The questions that name a stock, written with a stock of the market on screen (a US screen showed 삼성전자)."""
+    return [e.replace(EXAMPLE_STOCK["KR"], example_stock(market)) for _, e, _ in STOCK_INTENTS[::-1]]
+
+
+def examples_for(market: str) -> List[str]:
+    return [e for _, e, _ in PLAIN_INTENTS[::-1]] + stock_examples(market)
 _SNAPS: Dict[Any, Any] = {}          # one session's snapshots, kept while the ledger does not change
 
 
@@ -1270,10 +1284,10 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
     if intent == "HELP":
         got = reply(f"물어볼 수 있는 것 {len(EXAMPLES)}가지", "정해진 질문만 알아듣습니다. 아래 예를 누르거나 비슷하게 적으면 됩니다.",
                     [{"title": f"종목 없이 묻는 것 {len(PLAIN_INTENTS)}가지", "lines": [e for _, e, _ in PLAIN_INTENTS[::-1]]},
-                     {"title": f"종목을 넣어 묻는 것 {len(STOCK_INTENTS)}가지", "lines": [e for _, e, _ in STOCK_INTENTS[::-1]]},
-                     {"title": "쓰는 법", "lines": ["종목은 '삼성전자' 자리에 코드, 티커, 회사명을 적습니다(스캔 대상: 미국 S&P 500, 한국 시가총액 상위 300).", "'장기'를 넣으면 장기 점수로, 없으면 스윙 점수로 답합니다.",
+                     {"title": f"종목을 넣어 묻는 것 {len(STOCK_INTENTS)}가지", "lines": stock_examples(market)},
+                     {"title": "쓰는 법", "lines": [f"종목은 '{example_stock(market)}' 자리에 코드, 티커, 회사명을 적습니다(스캔 대상: 미국 S&P 500, 한국 시가총액 상위 300).", "'장기'를 넣으면 장기 점수로, 없으면 스윙 점수로 답합니다.",
                                                 "이 목록은 'help', '도움말', '?'로 언제든 다시 볼 수 있습니다."]}])
-        return {**got, "examples": EXAMPLES}
+        return {**got, "examples": examples_for(market)}
     if intent == "TODAY":
         brief = briefing(terminal, market)
         groups = [{"title": LEVEL_KO[lv], "lines": [i["text"] for i in brief["items"] if i["level"] == lv][:6]} for lv in LEVELS]
@@ -1424,7 +1438,7 @@ def answer(terminal: Any, text: str, market: str = "US") -> Dict[str, Any]:
     import re
     text = " ".join(str(text or "").split())[:200]
     if not text:
-        return {"status": "UNKNOWN", "title": "질문이 비어 있습니다", "summary": "아래 예처럼 물어보세요.", "sections": [], "lines": ["아래 예처럼 물어보세요."], "examples": EXAMPLES, "note": NOTE}
+        return {"status": "UNKNOWN", "title": "질문이 비어 있습니다", "summary": "아래 예처럼 물어보세요.", "sections": [], "lines": ["아래 예처럼 물어보세요."], "examples": examples_for(market), "note": NOTE}
     if market == "COIN":
         return coin_answer(terminal, text)
     if text.lower().strip(" ?？!.") in ("", "help", "h", "도움", "도움말", "질문", "목록"):
@@ -1441,7 +1455,7 @@ def answer(terminal: Any, text: str, market: str = "US") -> Dict[str, Any]:
         say = "비서는 정해진 질문만 규칙으로 읽습니다. 아래 예 가운데 가까운 것을 누르거나 비슷하게 적어 주세요."
         return {"status": "UNKNOWN", "question": text, "title": "이 질문은 알아듣지 못했습니다", "summary": say,
                 "sections": [{"title": "종목을 물었다면", "lines": ["회사명이 스캔 대상(미국 S&P 500, 한국 시가총액 상위 300)의 이름과 다르거나 대상이 아닐 수 있습니다. 종목 코드로 적어 보세요."]}],
-                "lines": [say], "examples": EXAMPLES, "note": NOTE}
+                "lines": [say], "examples": examples_for(market), "note": NOTE}
     strategy = "LONG_TERM" if "장기" in text else "SWING"
     try:
         got = stock_answer(terminal, intent, stock, strategy) if stock else plain_answer(terminal, intent, market)

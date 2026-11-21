@@ -526,3 +526,20 @@ def test_the_days_list_names_an_ex_dividend_date_and_the_note_shows_the_stored_e
     by = {s["title"]: s["lines"] for s in note["sections"]}
     assert by["시장의 기대 (야후 집계, 참고)"][0].startswith("목표주가: 증권사 35곳 평균 200,000원(지금 가격 대비 ") and "공식 자료가 아닙니다" in by["시장의 기대 (야후 집계, 참고)"][-1]
     assert "야후가 모은 지금 값만" in by["이 노트의 한계"][0]
+
+
+def test_example_questions_name_a_stock_of_the_market_on_screen(term):
+    """The US screen listed its examples with 삼성전자 (user report 2026-11-22)."""
+    us, kr = A.answer(term, "help", "US"), A.answer(term, "help", "KR")
+    assert not any("삼성전자" in q for q in us["examples"]) and "AAPL 분석해 줘" in us["examples"] and "AAPL 점수 왜 낮아?" in us["examples"]
+    assert "삼성전자 분석해 줘" in kr["examples"] and not any("AAPL" in q for q in kr["examples"]) and kr["examples"] == A.EXAMPLES
+    by = {s["title"]: s["lines"] for s in us["sections"]}
+    assert by["종목을 넣어 묻는 것 9가지"] == A.stock_examples("US") and all(q.startswith("AAPL ") for q in by["종목을 넣어 묻는 것 9가지"]) and by["쓰는 법"][0].startswith("종목은 'AAPL' 자리에")
+    assert {s["title"]: s["lines"] for s in kr["sections"]}["쓰는 법"][0].startswith("종목은 '삼성전자' 자리에")
+    assert len(A.examples_for("US")) == len(A.examples_for("KR")) == 20 and A.examples_for("US")[:11] == A.examples_for("KR")[:11]      # the questions without a stock are the same
+    assert not any("삼성전자" in q for q in A.answer(term, "", "US")["examples"]) and not any("삼성전자" in q for q in A.answer(term, "무슨 말인지 모를 문장", "US")["examples"])
+    for q in A.stock_examples("US"):                        # every US example is itself a question the assistant answers about AAPL
+        got = A.answer(term, q, "US")
+        assert got["status"] == "REAL" and got["ticker"] == "AAPL", q
+    page = (Path(A.__file__).parent / "static" / "assistant.js").read_text(encoding="utf-8")
+    assert 'isKR() ? "삼성전자" : "AAPL"' in page

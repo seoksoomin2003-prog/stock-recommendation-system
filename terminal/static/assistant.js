@@ -47,7 +47,7 @@ async function renderToday() {
   state.loaded.today = true;
   const mk = isCoin() ? "코인" : isKR() ? "한국" : "미국";
   box.innerHTML = `<div class="panel"><h2>오늘 <span class="badge">${mk}</span></h2>
-      <form id="asst-form" class="asst-ask" autocomplete="off"><input id="asst-q" maxlength="200" placeholder="${isCoin() ? "물어보기 (예: 코인 상위는? · 비트코인 분석해 줘 · help)" : "물어보기 (예: 삼성전자 점수 왜 낮아? · 오늘 뭐 해야 해? · help)"}" aria-label="비서에게 묻기">
+      <form id="asst-form" class="asst-ask" autocomplete="off"><input id="asst-q" maxlength="200" placeholder="${isCoin() ? "물어보기 (예: 코인 상위는? · 비트코인 분석해 줘 · help)" : `물어보기 (예: ${isKR() ? "삼성전자" : "AAPL"} 점수 왜 낮아? · 오늘 뭐 해야 해? · help)`}" aria-label="비서에게 묻기">
         <button class="btn-primary" type="submit">묻기</button><button class="ghost" type="button" id="asst-help">물어볼 수 있는 것</button></form>
       <div id="asst-out"></div></div>
     <div class="panel" id="asst-brief">${loading}</div>`;
