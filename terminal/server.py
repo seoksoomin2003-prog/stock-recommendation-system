@@ -229,6 +229,8 @@ def make_handler(t: Terminal, errors: Optional[ErrorTally] = None):
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Frame-Options", "DENY")                           # no other page may frame the terminal and trick a click
+            self.send_header("Content-Security-Policy", "frame-ancestors 'none'")
             self.end_headers()
             self.wfile.write(body)
 
@@ -246,7 +248,15 @@ def make_handler(t: Terminal, errors: Optional[ErrorTally] = None):
 
         def _dispatch(self, method: str):
             u = urlparse(self.path)
+            # A page on another site can point its own name at 127.0.0.1 (DNS rebinding) and then read every GET as if it were
+            # this page: portfolio, journal, alerts.  Such a request carries the other site's name in Host, so only this
+            # address is answered.  A request without Host (a script, not a browser) is answered as before.
+            host = self.headers.get("Host")
+            if host is not None and host not in (f"{HOST}:{self.server.server_port}", f"localhost:{self.server.server_port}"):
+                return self._json(403, {"error": "FORBIDDEN_HOST"})
             if u.path.startswith("/api/"):
+                if self.headers.get("Sec-Fetch-Site") == "cross-site":            # another site's page loading an API address as an image or script
+                    return self._json(403, {"error": "FORBIDDEN_SITE"})
                 fn = table.get((method, u.path))
                 if not fn:
                     return self._json(404, {"error": "NOT_FOUND"})

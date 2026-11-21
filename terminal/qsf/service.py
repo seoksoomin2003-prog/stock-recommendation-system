@@ -346,7 +346,10 @@ class QSF(ScreenViews):
             trailing = dict(annual)
         if ok and fund_period.live_period(self.base, market) == "TRAILING":
             return {**trailing, "live_period": "TRAILING", "other_period": annual}
-        return {**annual, "live_period": "ANNUAL", "other_period": trailing if ok else None}
+        # Without trailing figures the stock is scored on annual ones under either rule, so the trailing side of the record
+        # carries the annual figures too.  It was left empty, which took the stock out of the trailing buy band in the reading
+        # although it would be in it once trailing became live: the arm measured was not the rule that would be applied.
+        return {**annual, "live_period": "ANNUAL", "other_period": trailing if ok else dict(annual)}
 
     def _kr_quarter(self, corp: str, code: str, klass: str, year: int, months: int, fs: str, fiscal_month: int, newest: bool) -> Any:
         """One quarterly report's concepts (year to date), None when DART has no such report, "ERROR" when it could not be asked."""

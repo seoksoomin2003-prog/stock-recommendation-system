@@ -31,10 +31,10 @@ def raw(port, data: bytes) -> bytes:
 def test_malformed_length_and_body_are_answered(live):
     httpd, _ = live
     p = httpd.server_port
-    assert b" 400 " in raw(p, b"POST /api/watchlist/add HTTP/1.1\r\nHost: x\r\nContent-Length: abc\r\n\r\n").split(b"\r\n")[0] + b" "
-    assert b"413" in raw(p, b"POST /api/watchlist/add HTTP/1.1\r\nHost: x\r\nContent-Length: 999999\r\n\r\n").split(b"\r\n")[0]
+    assert b" 400 " in raw(p, b"POST /api/watchlist/add HTTP/1.1\r\nHost: localhost:%d\r\nContent-Length: abc\r\n\r\n" % p).split(b"\r\n")[0] + b" "
+    assert b"413" in raw(p, b"POST /api/watchlist/add HTTP/1.1\r\nHost: localhost:%d\r\nContent-Length: 999999\r\n\r\n" % p).split(b"\r\n")[0]
     deep = b"[" * 4000 + b"]" * 4000
-    assert b"400" in raw(p, b"POST /api/watchlist/add HTTP/1.1\r\nHost: x\r\nContent-Length: %d\r\n\r\n" % len(deep) + deep).split(b"\r\n")[0]
+    assert b"400" in raw(p, b"POST /api/watchlist/add HTTP/1.1\r\nHost: localhost:%d\r\nContent-Length: %d\r\n\r\n" % (p, len(deep)) + deep).split(b"\r\n")[0]
 
 
 def test_unexpected_error_is_logged_with_traceback_but_no_secret(live, tmp_path, monkeypatch):

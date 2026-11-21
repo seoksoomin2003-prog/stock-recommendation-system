@@ -476,3 +476,33 @@ def test_rotation_weekly_ratio_momentum_and_quadrants(tmp_path):
     assert by["XLV"]["tail"][-1]["ratio"] == pytest.approx(100.0) and by["XLV"]["tail"][-1]["momentum"] == pytest.approx(100.0)
     empty = Terminal(tmp_path / "e", src=fake_src(yahoo_history=lambda s, p: {}), now=lambda: AFTER)
     assert empty.rotation("KR")["status"] == "UNAVAILABLE"
+
+
+def _get_with(url, **headers):
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=5) as r:
+            return r.status, r.headers, r.read()
+    except urllib.error.HTTPError as e:
+        return e.code, e.headers, e.read()
+
+
+def test_another_sites_name_or_page_gets_no_answer_and_no_page_may_frame_the_terminal(live):
+    """DNS rebinding: a page on another site points its own name at 127.0.0.1 and reads the GETs (portfolio, journal).  The
+    request then carries that name in Host.  Found in the 2026-11-22 audit: every GET answered whatever the Host was."""
+    url, httpd = live
+    port = httpd.server_port
+    assert _get_with(f"{url}/api/health", Host="evil.example:8765")[0] == 403 and json.loads(_get_with(f"{url}/api/health", Host="evil.example")[2]) == {"error": "FORBIDDEN_HOST"}
+    assert _get_with(f"{url}/", Host=f"evil.example:{port}")[0] == 403 and _get_with(f"{url}/app.js", Host="127.0.0.1.evil.example")[0] == 403      # the page itself too
+    assert _get_with(f"{url}/api/health", Host=f"localhost:{port}")[0] == 200 and _get(f"{url}/api/health")[0] == 200 and _get(f"{url}/")[0] == 200
+    cross = _get_with(f"{url}/api/health", **{"Sec-Fetch-Site": "cross-site"})
+    assert cross[0] == 403 and json.loads(cross[2]) == {"error": "FORBIDDEN_SITE"}                         # another site's page loading an API address
+    assert _get_with(f"{url}/api/health", **{"Sec-Fetch-Site": "same-origin"})[0] == 200 and _get_with(f"{url}/api/health", **{"Sec-Fetch-Site": "none"})[0] == 200
+    assert _get_with(f"{url}/", **{"Sec-Fetch-Site": "cross-site"})[0] == 200                              # a link from elsewhere may still open the page
+    for path in ("/", "/api/health"):
+        h = _get(f"{url}{path}")[1]
+        assert h["X-Frame-Options"] == "DENY" and h["Content-Security-Policy"] == "frame-ancestors 'none'"
+    import socket
+    with socket.create_connection(("127.0.0.1", port), timeout=5) as s:                                   # no Host at all (a script): answered as before
+        s.sendall(b"GET /api/health HTTP/1.0\r\n\r\n")
+        assert b" 200 " in s.recv(64).split(b"\r\n")[0]

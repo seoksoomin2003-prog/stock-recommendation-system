@@ -294,3 +294,18 @@ def test_without_a_connection_and_without_a_stored_list_the_korean_screens_answe
     assert company["ident"] is None and "인터넷 연결" in company["reason"]
     assert t.qsf.kr_search("삼성전자") == []
     assert t.qsf._kr_identity_or_reason("005930")[0] is None
+
+
+def test_an_unreadable_list_pointer_is_fetched_again_instead_of_stopping_korea(tmp_path, monkeypatch):
+    """LATEST.json was parsed outside the fallback: a pointer cut short by a full disk stopped every Korean scan for good."""
+    import json as _json
+    from markets.kr import security_master as sm
+    df = pd.DataFrame([{"canonical_ticker": "005930", "dart_corp_code": "00126380", "company_name": "삼성전자", "eligible": True, "market": "KOSPI", "exclusion_reason": "NONE"}])
+    monkeypatch.setattr(sm, "build_master", lambda raws, verified_at=None: df)
+    folder = tmp_path / "security_master"
+    folder.mkdir()
+    for torn in ('{"file": "master_x.csv.gz", "retrie', '{"retrieved_at": "2026-11-20T00:00:00+00:00"}', "[]"):      # cut short, no file name, not a record
+        (folder / "LATEST.json").write_text(torn)
+        got = sm.load_master(tmp_path, fetch=lambda m: b"raw")
+        assert list(got["master"]["canonical_ticker"]) == ["005930"]
+        assert _json.loads((folder / "LATEST.json").read_text())["file"].startswith("master_")                # the pointer is whole again

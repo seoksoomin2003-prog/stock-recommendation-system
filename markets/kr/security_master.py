@@ -137,9 +137,15 @@ def load_master(data_dir: Path, fetch: Callable[[str], bytes] = fetch_kind, max_
     sdir.mkdir(parents=True, exist_ok=True)
     meta_path = sdir / "LATEST.json"
     kept = None                                     # the newest snapshot on disk and its age in hours
+    meta = None
     if meta_path.exists():
-        meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        age = (now - datetime.fromisoformat(meta["retrieved_at"])).total_seconds() / 3600
+        try:                # an unreadable pointer (cut short by a full disk or a kill) is treated as no pointer: the list is fetched again
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            age = (now - datetime.fromisoformat(meta["retrieved_at"])).total_seconds() / 3600
+            meta["file"]
+        except (OSError, ValueError, KeyError, TypeError):
+            meta = None
+    if meta is not None:
         if (sdir / meta["file"]).exists():
             kept = (meta, age)
             if age <= max_age_hours:

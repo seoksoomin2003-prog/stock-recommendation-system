@@ -192,7 +192,8 @@ def test_the_service_carries_the_other_periods_figures_and_a_card_keeps_both_sco
     assert got["live_period"] == "ANNUAL" and got["period_basis"] == "ANNUAL" and got["roe"] == 0.10 and got["other_period"] == trailing
     same = q._with_other_period("US", annual, {**annual, "period_basis": "ANNUAL", "roe": 0.11})
     assert same["other_period"] == {**annual, "period_basis": "ANNUAL"}                                # no newer quarter: the annual figures stand for both
-    assert q._with_other_period("US", annual, None)["other_period"] is None and q._with_other_period("US", annual, {"status": "UNAVAILABLE"})["other_period"] is None
+    for missing in (None, {"status": "UNAVAILABLE"}):       # no trailing figures: the stock is on annual ones under either rule, and the record says so
+        assert q._with_other_period("US", annual, missing)["other_period"] == {**annual, "period_basis": "ANNUAL"}
     assert q._with_other_period("US", {"status": "UNAVAILABLE", "reason": "x"}, trailing) == {"status": "UNAVAILABLE", "reason": "x"}
     monkeypatch.setenv(fp.SWITCH, "TRAILING")
     live = q._with_other_period("US", annual, trailing)
