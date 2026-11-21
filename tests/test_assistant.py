@@ -179,6 +179,11 @@ class FakeQsf:
     def earnings_upcoming(self, market, days):
         return {"items": []}
 
+    def peers(self, ticker, market="US"):
+        ratio = lambda pe, roe: {"pe": pe, "pb": None, "roe": roe}      # noqa: E731
+        rows = [{"ticker": "005930", "ratios": ratio(27.7, 0.104), "change_1m": -0.146}] + [{"ticker": f"P{k}", "ratios": ratio(10.0 + 5 * k, 0.05 + 0.02 * k), "change_1m": -0.05 * k} for k in range(6)]
+        return {"status": "REAL", "group": "기술", "peers": rows, "grades": {"SWING": {"SCORE": {"grade": "A", "percentile": 0.85, "n": 7}}}} if ticker == "005930" else {"status": "UNAVAILABLE"}
+
 
 class FakeTerminal:
     def __init__(self, base, held=(), plan=None, broken=()):
@@ -202,10 +207,20 @@ class FakeTerminal:
         return self.plan
 
     def market_state(self, market="US"):
-        return {"score_100": 25.4, "state": "ADVERSE", "label": "나쁨", "size_factor": 1.0, "session": "2026-11-20", "factors": [{"factor": "index_trend", "normalized": 0.0}], "note": "참고 표시입니다."}
+        return {"score_100": 25.4, "state": "ADVERSE", "label": "나쁨", "size_factor": 1.0, "session": "2026-11-20", "note": "참고 표시입니다.",
+                "factors": [{"factor": "index_trend", "normalized": 0.0, "raw": {"close": 4869.96, "ma200": 6525.3, "ma50": 6107.8}}, {"factor": "breadth", "normalized": 0.0, "raw": {"breadth": 0.157, "n": 299}}]}
 
     def alerts_view(self):
         return {"rules": [], "log": []}
+
+    def overview(self, market="US"):
+        one = lambda name, close, day, month: {"name": name, "close": close, "change_pct": day, "change_1m_pct": month, "date": "2026-11-20", "status": "REAL"}      # noqa: E731
+        return {"groups": [{"title": "지수", "items": [one("코스피", 4869.96, -3.1, -12.3), one("코스닥", 700.0, -2.0, None)]},
+                           {"title": "금리·환율·원자재", "items": [one("원/달러", 1334.79, 0.33, 0.7)]},
+                           {"title": "섹터 ETF", "items": [one("기술", 1.0, -7.3, -18.3), one("에너지", 1.0, 0.1, -10.4), one("금융", 1.0, -1.8, -6.0), one("유틸리티", 1.0, 0.2, -0.4), one("필수소비재", 1.0, 0.3, 0.5)]}]}
+
+    def econ_calendar(self, market="US", days=14):
+        return {"items": [{"name": "FOMC 금리 결정", "date": "2026-11-23", "date_kst": "2026-11-23", "days_away": 2}]}
 
     def _book(self, market="US"):
         return [], {"status": "OK"}, {"positions": {t: {} for t in self.held}}
@@ -250,8 +265,9 @@ def test_every_example_question_is_read_as_its_own_kind():
         assert A.read_question(example, True) == key, example
     for key, example, _ in A.PLAIN_INTENTS:
         assert A.read_question(example, False) == key, example
-    assert A.read_question("삼성전자", True) == "WHY" and A.read_question("비트코인 전망", False) is None
-    assert len(A.EXAMPLES) == len(A.STOCK_INTENTS) + len(A.PLAIN_INTENTS) == 19
+    assert A.read_question("삼성전자", True) == "ANALYZE" and A.read_question("비트코인 전망", False) is None      # a name alone asks for the whole picture
+    assert A.read_question("삼성전자 점수 어때", True) == "WHY" and A.read_question("증시 왜 이렇게 급락해?", False) == "MARKET"
+    assert len(A.EXAMPLES) == len(A.STOCK_INTENTS) + len(A.PLAIN_INTENTS) == 20
 
 
 def flat(a):
@@ -268,17 +284,18 @@ def test_an_answer_gives_the_conclusion_first_then_titled_groups_and_what_to_ask
     assert why["lines"] == [why["summary"]] + [x for s in why["sections"] for x in s["lines"]]
     lost = why["sections"][0]["lines"]
     assert lost[0].startswith("손익비 0/100(26.1점 잃음)") and "목표 208,941원(+14.1%), 손절 158,079원(-13.7%)" in lost[0] and "손익비 0.96" in lost[0]
-    assert "채점 기준: 손익비가 1.0 이하면 0점, 3.0 이상이면 100점." in lost[0] and "하루 변동 폭이 가격의 6.8%" in lost[1]
+    assert "채점 기준: 손익비가 1.0 이하면 0점, 3.0 이상이면 100점." in lost[0] and "하루 변동 폭이 가격의 6.8%" in lost[1] and lost[1].startswith("변동 폭 안정성 10/100")      # every signal reads one way: 100 is the good end
     kept = why["sections"][1]["lines"]
     assert kept[0].startswith("유동성 98/100(21.3점 얻음)") and "3.77조 원" in kept[0] and "채점 기준" not in kept[0]
     out = " ".join(why["sections"][2]["lines"])
     assert "시장 국면 영역은 이 점수에 들어가지 않습니다(참고값 25/100)" in out and "추세 구조" not in flat(why)                    # reference rows are told apart, never scored
     assert "'유효한 진입 근거 없음'" in flat(why) and "장기 점수는 64.2점" in flat(why) and "1.1점 오르면 '보유·관찰' 구간(55점 이상)" in flat(why)
     assert why["basis"].startswith("기준: 2026-11-20 종가 183,100원") and "데이터 반영률 92%" in why["basis"]
-    assert why["follow"] == ["삼성전자 장기 점수 왜 이래?", "삼성전자 사도 돼?", "삼성전자 손절 어디?", "삼성전자 위험해?", "삼성전자 얼마까지 움직일까?"]
+    assert why["follow"] == ["삼성전자 장기 점수 왜 이래?", "삼성전자 분석해 줘", "삼성전자 사도 돼?", "삼성전자 손절 어디?", "삼성전자 위험해?"]
     for q in why["follow"]:                                                       # every follow-up is itself a question it can answer
         assert A.answer(term, q, "KR")["status"] == "REAL", q
     assert A.answer(term, "삼성전자 장기 점수", "KR")["title"] == "삼성전자(005930) 장기 점수가 이렇게 나온 이유"
+    assert why["follow"][0] == "삼성전자 장기 점수 왜 이래?" and "삼성전자 분석해 줘" in why["follow"]
     us = A.answer(term, "AAPL 왜?", "KR")
     assert us["follow"][0] == "AAPL 장기 점수 왜 이래?" and "$250.00" in us["basis"]             # a US stock is asked about by its ticker
 
@@ -317,6 +334,40 @@ def test_particles_follow_the_last_sound_and_a_price_that_hardly_moves_is_said()
     assert A.pinned({"factors": [factor("atr_risk", "RISK", 5, 0.8, raw={"atr_pct": 0.017})]}) is None and A.pinned({"factors": []}) is None
 
 
+def test_an_analysts_note_lays_the_stock_out_from_view_to_what_would_change_it(term):
+    note = A.answer(term, "삼성전자 분석해 줘", "US")
+    assert note["status"] == "REAL" and note["intent"] == "ANALYZE" and note["title"] == "삼성전자(005930) 분석 노트" and A.answer(term, "삼성전자", "KR")["intent"] == "ANALYZE"
+    assert note["summary"].startswith("삼성전자(기술 업종): 프로그램이 읽는 것은 스윙 53.9점('보유·관찰', 판단 '관찰', 3종목 중 1위, 업종 등급 A(업종 7종목 중 상위 15%))") and "장기 64.2점" in note["summary"]
+    titles = [s["title"] for s in note["sections"]]
+    assert titles == ["밸류에이션과 업종 안에서의 위치 (기술 7종목)", "재무 건전성", "가격과 수급", "촉매와 일정", "위험", "시나리오", "견해가 바뀌는 조건", "이 노트의 한계"]      # a part with nothing stored is left out
+    by = {s["title"]: s["lines"] for s in note["sections"]}
+    value = by["밸류에이션과 업종 안에서의 위치 (기술 7종목)"]
+    assert value[0] == "PER 27.7배: 업종 중앙값 25.0배보다 높습니다. 7종목 중 좋은 쪽에서 5위(업종보다 못한 쪽)." and value[1] == "ROE 10.4%: 업종 중앙값 10.4%와 같습니다. 7종목 중 좋은 쪽에서 4위."
+    assert value[-1].startswith("최근 한 달 주가 -14.6%: 업종 중앙값 -14.6%") or value[-1].startswith("최근 한 달 주가 -14.6%: 업종 중앙값 -15.0%")
+    assert any(x.startswith("다음 실적 발표 2027-01-27(44거래일 뒤, 과거 발표일로 추정)") for x in by["촉매와 일정"]) and "거시 일정: FOMC 금리 결정 2026-11-23(2일 뒤)." in by["촉매와 일정"]
+    assert any("시장 상태 25/100(나쁨)" in x for x in by["위험"]) and any(x.startswith("스윙 계획의 손절 158,079원, 목표 208,941원, 손익비 0.96") for x in by["시나리오"])
+    assert by["이 노트의 한계"] == A.NOTE_LIMITS and "컨센서스" in by["이 노트의 한계"][0]
+    for word in ("사세요", "매수하세요", "파세요", "매도하세요", "추천합니다", "목표주가"):
+        assert word not in json.dumps(note, ensure_ascii=False), word
+    bare = A.answer(term, "AAPL 어때?", "KR")                                       # no sector data for this one: the note says so and still stands
+    assert bare["intent"] == "ANALYZE" and "같은 업종의 스캔 종목이 모자라 비교하지 못했습니다." in flat(bare) and "업종 정보 없음" in bare["summary"]
+
+
+def test_ratios_are_read_beside_the_sector_best_side_first():
+    rows = [{"ticker": "ME", "ratios": {"pe": -3.0, "debt_equity": 0.2, "roe": 0.30}}] + [{"ticker": f"P{k}", "ratios": {"pe": 10.0 + k, "debt_equity": 0.5 + 0.1 * k, "roe": 0.05 + 0.01 * k}} for k in range(5)]
+    got = A.sector_lines({"status": "REAL", "peers": rows}, "ME")
+    assert got[0] == "PER: 적자라 계산되지 않습니다(업종 중앙값 12.0배)." and got[1].startswith("ROE 30.0%: 업종 중앙값 8.0%보다 높습니다. 6종목 중 좋은 쪽에서 1위(업종보다 나은 쪽)")
+    assert got[2].startswith("부채/자본 0.20배: 업종 중앙값 0.70배보다 낮습니다. 6종목 중 좋은 쪽에서 1위(업종보다 나은 쪽)")
+    assert A.sector_lines({"status": "REAL", "peers": rows[:3]}, "ME") == [] and A.sector_lines({"status": "UNAVAILABLE"}, "ME") == [] and A.sector_lines({"status": "REAL", "peers": rows}, "NOPE") == []
+
+
+def test_the_days_list_opens_with_the_market_and_names_a_macro_date_within_three_days(term):
+    got = A.context_items(term.overview("KR"), term.econ_calendar("KR"), "KR")
+    assert kinds(got) == ["MARKET_MOVE", "MACRO_DATE"] and got[0]["text"].startswith("한국 지수: 코스피 4,869.96(전일 대비 -3.10%, 한 달 -12.3%, 2026-11-20). 코스닥 700.00(전일 대비 -2.00%, 2026-11-20).")
+    assert "FOMC 금리 결정 2026-11-23(2일 뒤)" in got[1]["text"] and A.context_items({}, {"items": [{"name": "x", "date": "2026-12-20", "days_away": 20}]}, "US") == []
+    assert {"MARKET_MOVE", "MACRO_DATE"} <= set(kinds(A.briefing(term, "KR")["items"]))
+
+
 def test_stock_answers_come_from_the_stored_scan(term):
     buy = A.answer(term, "AAPL 사도 돼?", "KR")
     table = buy["sections"][0]["lines"]
@@ -330,7 +381,7 @@ def test_stock_answers_come_from_the_stored_scan(term):
     risk = A.answer(term, "LG에너지솔루션 위험해?", "KR")
     by = {s["title"]: s["lines"] for s in risk["sections"]}
     assert "차단 조건 1건, 회피 표시 2건" in risk["summary"] and "횡령·배임" in by["차단 조건"][0] and "고위험 표시" in by["회피 표시"][0] and "자금 조달 공시" in by["회피 표시"][1]
-    assert any(x.startswith("변동 폭 위험 10/100(배점 5)") for x in by["위험 요인의 실제 수치"])
+    assert any(x.startswith("변동 폭 안정성 10/100(배점 5)") for x in by["위험 요인의 실제 수치"])
     calm = A.answer(term, "AAPL 위험해?", "KR")
     assert "안전하다는 뜻은 아닙니다" in calm["summary"]
     stop = A.answer(term, "005930 손절 어디?", "KR")
@@ -355,14 +406,20 @@ def test_stock_answers_come_from_the_stored_scan(term):
 def test_plain_answers_and_what_it_does_not_know(term):
     market = A.answer(term, "시장 상태 어때?", "KR")
     assert market["intent"] == "MARKET" and market["summary"].startswith("한국 시장 상태 25/100(나쁨)") and "지수 추세: 0/100" in flat(market) and "순위를 바꾸지 못합니다" in flat(market)
+    by = {s["title"]: s["lines"] for s in market["sections"]}
+    assert market["title"] == "한국 시장 노트(2026-11-20)" and by["지수"][0] == "코스피 4,869.96(전일 대비 -3.10%, 한 달 -12.3%, 2026-11-20)."
+    assert "대표 지수는 200일 평균보다 -25.4%, 50일 평균보다 -20.3%입니다." in by["얼마나 불안한가"] and any("200일 평균 위에 있는 종목은 16%" in x for x in by["얼마나 불안한가"])
+    assert by["업종"] == ["한 달 동안 가장 약한 업종: 기술 -18.3%, 에너지 -10.4%, 금융 -6.0%.", "가장 강한 업종: 필수소비재 +0.5%, 유틸리티 -0.4%, 금융 -6.0%."]
+    assert "스윙 점수의 중간값은 40.0점이고, 3종목 가운데 매수 후보 구간(70점 이상)은 0개입니다." in by["점수로 본 시장"] and by["다가오는 일정"] == ["FOMC 금리 결정 2026-11-23(2일 뒤)."]
+    assert "왜 움직였는지(뉴스의 뜻)는 판단하지 않습니다" in flat(market)
     assert "왕복 비용을 0.53%로 계산합니다" in A.answer(term, "수수료는 얼마로 계산해?", "KR")["summary"]
     top = A.answer(term, "오늘 상위 종목은?", "US")
     assert top["summary"].startswith("미국 스윙 점수 1위는 Bio-Techne(TECH) 76.4점") and "무작위로 고른 3종목과 구분되지 않았습니다" in flat(top) and top["follow"] == ["TECH 점수 왜 이래?", "TECH 사도 돼?"]
     assert "과거 구간으로 시험한 적이 없고" in flat(A.answer(term, "오늘 상위 종목은?", "KR"))
     for typed in ("뭘 물어볼 수 있어?", "help", "도움말", "?", "명령어 뭐 있어"):
         got = A.answer(term, typed, "KR")
-        assert got["status"] == "REAL" and got["intent"] == "HELP" and got["examples"] == A.EXAMPLES and "19가지" in got["title"], typed
-        assert [s["title"] for s in got["sections"]] == ["종목 없이 묻는 것 11가지", "종목을 넣어 묻는 것 8가지", "쓰는 법"] and "'help'" in got["lines"][-1]
+        assert got["status"] == "REAL" and got["intent"] == "HELP" and got["examples"] == A.EXAMPLES and "20가지" in got["title"], typed
+        assert [s["title"] for s in got["sections"]] == ["종목 없이 묻는 것 11가지", "종목을 넣어 묻는 것 9가지", "쓰는 법"] and "'help'" in got["lines"][-1]
     trust = A.answer(term, "이 점수 믿어도 돼?", "KR")
     assert trust["intent"] == "TRUST" and "아직 확인되지 않았습니다" in trust["summary"] and "살 종목을 고르는 힘은 확인되지 않았습니다." in flat(trust)
     today = A.answer(term, "오늘 뭐 해야 해?", "KR")

@@ -40,7 +40,7 @@ function cmdParse(raw) {
   }
   if (/[가-힣]/.test(q) && !out.length) out.push({ label: `'${q}' 한국 종목 검색`, hint: "검색", run: () => searchKr(q) });
   if (typeof askAssistant === "function" && ["help", "h", "?", "？", "도움", "도움말", "질문", "질문 목록", "비서"].includes(low))
-    out.unshift({ label: "비서에게 물어볼 수 있는 질문 19가지 보기", hint: "도움말", run: () => askAssistant("help") });
+    out.unshift({ label: "비서에게 물어볼 수 있는 질문 목록 보기", hint: "도움말", run: () => askAssistant("help") });
   // 문장으로 적은 것은 비서에게 묻습니다.  물음표로 끝나거나 묻는 말이 들어 있으면 맨 위에 둡니다.
   if (q.length >= 2 && typeof askAssistant === "function" && (/\s/.test(q) || /[?？]$/.test(q))) {
     const ask = { label: `'${q}' 비서에게 묻기`, hint: "질문", run: () => askAssistant(q) };
