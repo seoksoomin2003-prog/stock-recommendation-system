@@ -24,7 +24,7 @@ FRESH_ALERT_HOURS = 36     # the user's own alert conditions that fired since ab
 SHOWN_ORDERS = 3
 SWING_DAYS_LEFT = 3
 PART_KO = {"context": "지수와 거시 일정", "account": "보유 종목 점검", "plan": "주문 계획", "market": "시장 상태", "earnings": "실적 일정", "alerts": "내 알림 조건", "job": "자료 수집 상태",
-           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정"}
+           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시"}
 # the portfolio's own alert codes (terminal.portfolio.alerts) and the exit readings (automation.exit_alerts)
 ALERT_LEVEL = {"STOP_HIT": "ACT", "NEAR_STOP": "ACT", "QSF_EXIT": "ACT", "QSF_THESIS_INVALIDATED": "ACT", "QSF_REDUCE": "ACT",
                "TARGET_HIT": "DUE", "NO_STOP": "DUE", "OVERWEIGHT": "DUE", "NO_PRICE": "DUE", "NO_STYLE": "DUE", "SECTOR_OVER": "DUE",
@@ -276,6 +276,34 @@ def daily_lines(briefs: List[Dict[str, Any]]) -> List[str]:
 
 
 # ---------------------------------------------------------------------- the day's list
+def candidate_mix(terminal: Any, market: str) -> Optional[str]:
+    """The day's swing buy candidates as a group: their sectors and how alike they move (``analyst_extra.concentration``)."""
+    from terminal import analyst_extra as ax
+    rows = (terminal.qsf.screen_rows(market).get("rows") or [])
+    picks = [r for r in rows if r.get("strategy") == "SWING" and (r.get("score") or 0) >= ax.BUY and r.get("actionability") == "ACTIONABLE"]
+    if len(picks) < 3:
+        return None
+    sector = {r["ticker"]: r.get("sector") or r.get("industry") for r in picks}
+    bench = ax.factor_data(terminal, market).get(ax.FACTORS[market]["market"][0]) or []
+    return ax.concentration_line(ax.concentration([r["ticker"] for r in picks], sector.get, terminal.qsf._loader(market), bench))
+
+
+def marked_items(rows: List[Dict[str, Any]], mine: List[str], market: str) -> List[Dict[str, Any]]:
+    """Avoid marks first: on what is held or watched (due), and on stocks the score likes (reference)."""
+    from terminal import analyst_extra as ax
+    got = ax.liked_but_marked(rows, mine)
+    label = lambda r: f"{r.get('name') or r['ticker']}({r['ticker']}, {', '.join(r['marks'])})"      # noqa: E731
+    tested = ("한국의 과거 시험에서 근거가 나온 쪽은 점수가 아니라 이 표시였습니다(자금 조달 공시가 있는 종목은 이후 수익이 부진)." if market == "KR"
+              else "미국에서는 이 표시를 수익으로 시험한 적이 없습니다. 참고 표시입니다.")
+    out = []
+    if got["mine"]:
+        out.append(item("DUE", "AVOID_MINE", f"보유·관심 종목 가운데 회피 표시가 붙은 것: {', '.join(label(r) for r in got['mine'][:6])}. {tested}", got["mine"][0]["ticker"], "stock"))
+    if got["liked"]:
+        names = ", ".join(f"{r.get('name') or r['ticker']}({r['score']:.0f}점, {', '.join(r['marks'])})" for r in got["liked"][:5])
+        out.append(item("INFO", "AVOID_LIKED", f"점수는 관심 구간 이상인데 회피 표시가 붙은 종목 {len(got['liked'])}개: {names}" + (" 등" if len(got["liked"]) > 5 else "") + f". {tested}", tab="qsf"))
+    return out
+
+
 def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datetime]] = None) -> Dict[str, Any]:
     """The day's list for one market.  ``terminal``: terminal.services.Terminal.  Reads only; nothing is stored or sent."""
     if market == "COIN":
@@ -338,6 +366,17 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
         return out
 
     part("top", top_still)
+
+    def mix() -> List[Dict[str, Any]]:
+        line = candidate_mix(terminal, market)
+        return [item("INFO", "CANDIDATE_MIX", line, tab="qsf")] if line else []
+
+    def marked() -> List[Dict[str, Any]]:
+        mine = [h["ticker"] for h in (seen.get("book") or {}).get("holdings") or []] + [t for t in terminal.watchlist() if not t.startswith("^")]
+        return marked_items(_rows(terminal, market), mine, market)
+
+    part("mix", mix)
+    part("marked", marked)
     part("changes", lambda: change_items(qsf_changes.report(terminal.qsf.latest(market), terminal.qsf.ledger, market, "SWING"),
                                          {h["ticker"] for h in (seen.get("book") or {}).get("holdings") or []}))
     part("readings", readings)
@@ -790,6 +829,12 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
         down = sorted((r for r in parts["rows"] if r["lost"] >= 0.5 and r["normalized"] < 0.5), key=lambda r: -r["lost"])[:3]
         sections.append({"title": "핵심 논점 (장기 점수 기준)", "lines": [f"받치는 것: {_signal_line(r, long_, market, f'{r['kept']:.1f}점', scale=False)}" for r in up]
                          + [f"깎는 것: {_signal_line(r, long_, market, f'-{r['lost']:.1f}점', scale=False)}" for r in down]})
+    from terminal import analyst_extra as ax
+    try:                    # what changed since the notes of a week and a month ago, from the ledger's light records
+        moved = ax.change_lines(ax.change_since(terminal.qsf.ledger, market, ticker, base["strategy"]), {code: label for _, code, label in config.BANDS}.get)
+    except Exception:
+        moved = []
+    sections.append({"title": f"지난 기록 이후 달라진 것 ({STRATEGY_KO[base['strategy']]} 점수)", "lines": moved or ["비교할 지난 기록이 아직 없습니다(1주 전 기록부터 비교합니다)."]})
     sector = sector_lines(peers, ticker)
     one_month = next((p.get("change_1m") for p in peers.get("peers") or [] if p.get("ticker") == ticker), None)
     moves = sorted(p["change_1m"] for p in peers.get("peers") or [] if p.get("change_1m") is not None)
@@ -798,12 +843,21 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
         sector.append(f"최근 한 달 주가 {one_month * 100:+.1f}%: 업종 중앙값 {mid * 100:+.1f}%" + ("와 비슷합니다." if abs(one_month - mid) < 0.005 else "보다 나았습니다." if one_month > mid else "보다 부진했습니다."))
     sections.append({"title": f"밸류에이션과 업종 안에서의 위치 ({peers.get('group') or '업종'} {len(peers.get('peers') or [])}종목)",
                      "lines": sector or ["같은 업종의 스캔 종목이 모자라 비교하지 못했습니다."]})
-    sections.append({"title": "실적과 이익의 질", "lines": [fig(fl, "growth_quality", long_), fig(fl, "business_quality", long_), fig(fs, "earnings_revenue_quality", swing), fig(fl, "free_cash_flow", long_),
+    try:
+        aged = ax.fund_age_lines(base, base["data_date"])
+    except Exception:
+        aged = []
+    sections.append({"title": "실적과 이익의 질", "lines": aged + [fig(fl, "growth_quality", long_), fig(fl, "business_quality", long_), fig(fs, "earnings_revenue_quality", swing), fig(fl, "free_cash_flow", long_),
                                                     fig(fs, "cash_flow_quality", swing)]})
     sections.append({"title": "재무 건전성", "lines": [fig(fl, "financial_resilience", long_), fig(fs, "balance_sheet", swing), fig(fl, "leverage", long_), fig(fl, "balance_dilution", long_),
                                                  fig(fl, "capital_allocation", long_)]})
     sections.append({"title": "가격과 수급", "lines": [fig(fl, "long_trend", long_), fig(fs, "relative_strength", swing) or fig(fl, "relative_strength", long_), fig(fs, "breakout_volume", swing), fig(fs, "momentum", swing),
                                                  fig(fs, "atr_risk", swing), fig(fs, "liquidity", swing)]})
+    try:                    # what the price has moved with: the market, a theme beyond the market, a rate or a currency
+        moves_with = ax.exposure_lines(ax.exposure(terminal.qsf._loader(market)(ticker), ax.factor_data(terminal, market), market))
+    except Exception:
+        moves_with = []
+    sections.append({"title": "무엇과 같이 움직였나 (노출)", "lines": moves_with or ["기준 지수 자료를 받지 못해 계산하지 못했습니다."]})
     # catalysts: dates the program holds, never a guess at what they will bring
     raw = (fs.get("earnings_calendar") or {}).get("raw") if isinstance((fs.get("earnings_calendar") or {}).get("raw"), dict) else {}
     cat = []
@@ -1196,7 +1250,12 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
         s = _snap(terminal, {"ticker": x["ticker"], "market": market}, "SWING")
         if s and pinned(s):
             still.append(f"{x.get('name') or x['ticker']}({x['ticker']}): {pinned(s)}")
+    try:
+        mix_line = candidate_mix(terminal, market)
+    except Exception:
+        mix_line = None
     return reply(f"{where} 점수 상위와 진입 후보", summary, [{"title": f"스윙 상위 3종목(진입 거래일 {day.get('entry_session')})", "lines": tops}, {"title": "먼저 알아 둘 것", "lines": still},
+                                                       {"title": "매수 후보의 구성", "lines": [mix_line or ""]},
                                                        {"title": "주문 계획", "lines": texts(plan_items(plan, market))}, {"title": "읽을 때 주의", "lines": [past, switch]}], "qsf",
                  [f"{best.get('name') if market == 'KR' else best.get('ticker')} 점수 왜 이래?", f"{best.get('name') if market == 'KR' else best.get('ticker')} 사도 돼?"] if best.get("ticker") else [])
 
