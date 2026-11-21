@@ -21,6 +21,7 @@ async function renderAlerts(box) {
     </form><div class="msg" id="al-msg"></div>
     <div id="al-rules">${loading}</div><div id="al-now"></div><div id="al-log"></div>`;
   const f = $("#al-form");
+  prefillTicker(f.ticker);          // 열어 둔 종목을 미리 적어 둡니다.  전체 종목에 걸려면 칸을 비우면 됩니다.
   const sync = () => {
     const t = f.type.value, v = AL_VALUE[t];
     $("#al-vlabel").hidden = !v; $("#al-slabel").hidden = t !== "BAND_CHANGE";

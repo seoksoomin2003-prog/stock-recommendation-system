@@ -255,6 +255,7 @@ async function renderAssist() {
         <div><button type="submit">저장</button></div></form>
       <div class="meta">1회 거래 위험: 손절가에 도달했을 때 잃는 금액을 계좌의 몇 %로 제한할지 정합니다. 이 값들은 계산기와 경고에 쓰입니다.</div><div class="msg" id="stmsg"></div></div>
     <div class="panel" id="plan">${loading}</div>`;
+  prefillTicker($("#szform").elements.t);          // 열어 둔 종목을 미리 적어 둡니다.  계산은 버튼을 눌러야 합니다.
   $("#szform").onsubmit = (e) => { e.preventDefault(); runSizing(); };
   $("#stform").onsubmit = async (e) => {
     e.preventDefault(); const f = e.target, body = {};

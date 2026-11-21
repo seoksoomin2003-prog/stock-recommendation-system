@@ -1448,9 +1448,13 @@ def answer(terminal: Any, text: str, market: str = "US") -> Dict[str, Any]:
     code = None if stock or text == "help" else next(iter(re.findall(TICKER_LIKE, text)), None)
     if code and (intent is None or any(w in text.lower() for _, _, words in STOCK_INTENTS for w in words)):
         say = f"'{code}'{josa(code, '은는')[len(code):]} 스캔 대상(미국 S&P 500, 한국 시가총액 상위 300)에 없어 저장된 점수가 없습니다."
-        return {"status": "UNKNOWN_STOCK", "question": text, "ticker": code, "tab": "stock", "title": "스캔 대상이 아닌 종목입니다", "summary": say,
-                "sections": [{"title": "할 수 있는 것", "lines": ["아래 버튼으로 종목 탭을 열면 시세와 재무를 보고, 점수 탭의 '평가'에 코드를 넣으면 그 자리에서 점수를 계산합니다(처음에는 수십 초 걸릴 수 있습니다)."]}],
-                "lines": [say], "follow": [], "note": NOTE}
+        from terminal import symbols                         # a mistyped ticker gets the scanned stocks it may have meant, from stored names only
+        near = [x for x in symbols.suggest(symbols.universe({m: _rows(terminal, m) for m in ("KR", "US")}), code, market)["items"] if x["match"] != "EXACT"][:4]
+        maybe = [{"title": "혹시 이 종목인가요", "lines": [f"{x['ticker']} {x['name']}({MARKET_KO[x['market']]})" for x in near]}] if near else []
+        ask = [f"{x['name'] if x['market'] == 'KR' else x['ticker']} 분석해 줘" for x in near]
+        return {"status": "UNKNOWN_STOCK", "question": text, "ticker": code, "tab": "stock", "title": "스캔 대상이 아닌 종목입니다", "summary": say + (" 비슷한 종목을 아래에 적었습니다." if near else ""),
+                "sections": maybe + [{"title": "할 수 있는 것", "lines": ["아래 버튼으로 종목 탭을 열면 시세와 재무를 보고, 점수 탭의 '평가'에 코드를 넣으면 그 자리에서 점수를 계산합니다(처음에는 수십 초 걸릴 수 있습니다)."]}],
+                "lines": [say], "follow": ask, "suggestions": near, "note": NOTE}
     if intent is None:
         say = "비서는 정해진 질문만 규칙으로 읽습니다. 아래 예 가운데 가까운 것을 누르거나 비슷하게 적어 주세요."
         return {"status": "UNKNOWN", "question": text, "title": "이 질문은 알아듣지 못했습니다", "summary": say,

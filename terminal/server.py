@@ -21,7 +21,7 @@ from urllib.parse import parse_qs, urlparse
 from terminal.services import Terminal, clean_ticker
 
 STATIC = Path(__file__).resolve().parent / "static"
-from terminal import assistant, automation, coin_bridge, model_scan, record_status, server_agent, today  # noqa: E402
+from terminal import assistant, automation, coin_bridge, model_scan, record_status, server_agent, symbols, today  # noqa: E402
 from terminal.qsf import changes as qsf_changes, forecast as qsf_forecast, kr_cap_view as qsf_cap_view, kr_method as qsf_kr_method, lookahead as qsf_lookahead, paper_book as qsf_paper_book, regime_weights as qsf_regime_weights, screen as qsf_screen, track_record as qsf_track_record, turnover_book as qsf_turnover_book  # noqa: E402
 from terminal.qsf import rank_book as qsf_rank_book, readings as qsf_readings  # noqa: E402
 
@@ -168,6 +168,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
         ("POST", "/api/settings"): lambda q, b: t.settings_set(b),
         ("GET", "/api/sizing"): lambda q, b: t.sizing(q.get("t", ""), q.get("entry"), q.get("stop"), q.get("equity"), q.get("style"), _market(q.get("market", "US"))),
         ("GET", "/api/kr/search"): lambda q, b: {"items": t.qsf.kr_search(q.get("q", ""))},
+        ("GET", "/api/symbols"): lambda q, b: symbols.suggest(symbols.universe({m: assistant._rows(t, m) for m in ("US", "KR")}), q.get("q", ""), "KR" if q.get("market") == "KR" else "US"),
         ("GET", "/api/model/plan"): lambda q, b: t.model_plan(),
         ("GET", "/api/lab/status"): lambda q, b: t.lab.status(),
         ("GET", "/api/automation/status"): lambda q, b: {**automation.status(t.base), "server_agent": server_agent.status(t.base)},
@@ -337,9 +338,13 @@ class _Server(ThreadingHTTPServer):
 
 
 def serve(port: int = 8765, base_dir: Path = Path("."), terminal: Optional[Terminal] = None,
-          background: bool = False) -> ThreadingHTTPServer:
+          background: bool = False, warm_up: bool = False) -> ThreadingHTTPServer:
+    """``warm_up``: compute the first screen in the background (the real server; tests and scratch servers leave it off)."""
     t = terminal or Terminal(base_dir)
     httpd = _Server((HOST, port), make_handler(t))
+    if warm_up:
+        from terminal import warm
+        warm.start(t)
     if background:
         threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd

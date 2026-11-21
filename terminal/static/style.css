@@ -333,3 +333,17 @@ details[open] > summary .fold-hint { display: none; }
 .groups button[hidden] { display: none; }
 #tab-coin .kv div b span { display: inline; font-size: inherit; }
 
+/* 종목 찾기: 검색창 아래 제안 목록, '혹시 이 종목인가요?' 목록 */
+.search { position: relative; }
+.sug { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 30; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.18); padding: 4px 0; max-height: 60vh; overflow-y: auto; }
+.sug[hidden] { display: none; }
+.search .sug-item, .sym-item { display: flex; align-items: baseline; gap: 8px; width: 100%; text-align: left; background: transparent; color: var(--ink); padding: 7px 12px; }
+.search .sug-item { border: 0; border-radius: 0; }
+.search .sug-item.on, .search .sug-item:hover { background: var(--hover, rgba(127,127,127,.12)); }
+.sug-item span, .sym-item span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.sug-item small, .sym-item small { color: var(--muted); white-space: nowrap; }
+.sym-list { display: grid; gap: 6px; max-width: 520px; margin: 10px 0; }
+.sym-raw { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.sym-raw .meta { margin: 0; }
+.qsf-tostock { font-size: 13px; font-weight: 500; margin-left: 6px; }

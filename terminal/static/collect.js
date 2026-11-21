@@ -4,6 +4,13 @@ const COLLECT_START_WAIT_MS = 60000;      // 시작한 프로세스가 상태를
 let collectClicked = null;                // 버튼을 누른 시각(서버 시각 ISO)과 브라우저 시각
 let collectSawRun = false;                // 이 화면에서 실행 중인 것을 본 적이 있는지
 
+// 수집이 끝났거나 '화면 새로 고침'을 눌렀습니다: 기억해 둔 순위 응답과 종목 찾기 결과를 버리고, 점수 탭은 다음에 열 때 다시 그립니다.
+function collectStale() {
+  if (typeof qsfDropLatest === "function") qsfDropLatest();
+  if (typeof symbolCache !== "undefined") symbolCache.clear();
+  state.loaded.qsf = false;
+}
+
 function collectPaint(html, closable) {
   const bar = $("#collectbar");
   bar.hidden = false;
@@ -11,7 +18,7 @@ function collectPaint(html, closable) {
   const x = $("#collectclose");
   if (x) x.onclick = () => { bar.hidden = true; };
   const r = $("#collectrefresh");
-  if (r) r.onclick = () => { bar.hidden = true; state.loaded = {}; show(state.tab, false); };
+  if (r) r.onclick = () => { bar.hidden = true; collectStale(); state.loaded = {}; show(state.tab, false); };
 }
 
 function collectResult(a) {
@@ -59,6 +66,7 @@ async function collectPoll() {
   btn.disabled = false;
   if (!collectClicked && !collectSawRun) return;          // 화면을 열었을 때 실행 중이 아니면 아무것도 띄우지 않는다
   collectClicked = null; collectSawRun = false;
+  collectStale();
   collectPaint(collectResult(a), true);
 }
 

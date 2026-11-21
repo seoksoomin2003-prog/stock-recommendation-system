@@ -10,6 +10,8 @@ const CMD_ALIASES = {
 };
 const CMD_MARKETS = { US: ["미국", "us", "usa"], KR: ["한국", "kr", "korea"], COIN: ["코인", "coin", "crypto", "가상자산"] };
 
+const CMD_HELP = ["help", "h", "?", "？", "도움", "도움말", "질문", "질문 목록", "비서"];
+
 function cmdTabs() {
   return [...document.querySelectorAll(".tabs button")].map((b) => ({ tab: b.dataset.tab, label: b.textContent.trim(), key: "" }));
 }
@@ -33,13 +35,13 @@ function cmdParse(raw) {
     const target = tabs.find((t) => rest && [t.label, ...(CMD_ALIASES[t.tab] || [])].some((n) => n.toLowerCase() === rest));
     const item = target && target.tab === "compare" && typeof compareWith === "function"
       ? { label: `${code} 비교 차트`, hint: "비교", run: () => compareWith([code]) }
-      : { label: `${code} 종목 화면`, hint: "종목", run: () => openTicker(code) };
+      : { label: `${code} 종목 화면`, hint: "종목", ticker: code, run: () => findSymbol(code) };      // 스캔한 종목의 코드가 아니면 가까운 종목을 먼저 묻습니다
     // a word that is exactly a tab or market name (port, kr, map) goes there first; the ticker of the same letters comes second
     const exact = words.length === 1 && (Object.values(CMD_MARKETS).flat().includes(low) || tabs.some((t) => [t.label, ...(CMD_ALIASES[t.tab] || [])].some((n) => n.toLowerCase() === low)));
     exact ? out.push(item) : out.unshift(item);
   }
-  if (/[가-힣]/.test(q) && !out.length) out.push({ label: `'${q}' 한국 종목 검색`, hint: "검색", run: () => searchKr(q) });
-  if (typeof askAssistant === "function" && ["help", "h", "?", "？", "도움", "도움말", "질문", "질문 목록", "비서"].includes(low))
+  if (/[가-힣]/.test(q) && !out.length) out.push({ label: `'${q}' 한국 종목 검색`, hint: "검색", run: () => findSymbol(q) });
+  if (typeof askAssistant === "function" && CMD_HELP.includes(low))
     out.unshift({ label: "비서에게 물어볼 수 있는 질문 목록 보기", hint: "도움말", run: () => askAssistant("help") });
   // 문장으로 적은 것은 비서에게 묻습니다.  물음표로 끝나거나 묻는 말이 들어 있으면 맨 위에 둡니다.
   if (q.length >= 2 && typeof askAssistant === "function" && (/\s/.test(q) || /[?？]$/.test(q))) {
@@ -56,20 +58,45 @@ cmdEl.innerHTML = `<div class="cmd-box" role="dialog" aria-label="명령창"><in
   <ul id="cmd-list" role="listbox"></ul>
   <div class="cmd-help">↑↓ 선택 · Enter 이동 · Esc 닫기 · 어디서나 <kbd>/</kbd> 또는 <kbd>⌘K</kbd> · 묶음 바로가기 <kbd>1</kbd>~<kbd>6</kbd> · 시장 전환 <kbd>M</kbd> · 도움말 <kbd>?</kbd></div></div>`;
 document.body.appendChild(cmdEl);
-let cmdItems = [], cmdSel = 0;
+let cmdItems = [], cmdSel = 0, cmdMoved = false, cmdSymTimer = null, cmdSymToken = 0;
+// 시장·탭 이름이나 도움말처럼 그 자체가 명령인 말
+function cmdIsCommand(low) {
+  return CMD_HELP.includes(low) || Object.values(CMD_MARKETS).flat().includes(low) || cmdTabs().some((t) => [t.label, ...(CMD_ALIASES[t.tab] || [])].some((n) => n.toLowerCase() === low));
+}
+// 명령이 아닌 말은 스캔한 종목에서도 찾아(/api/symbols) 결과에 더합니다.  이미 있던 이동 결과의 순서는 바꾸지 않고, 검색·질문 줄 앞에 넣습니다.
+function cmdSymbols(raw) {
+  clearTimeout(cmdSymTimer);
+  const token = ++cmdSymToken, q = raw.trim();
+  if (!q || q.length > 30 || /[?？]$/.test(q) || cmdIsCommand(q.toLowerCase())) return;
+  cmdSymTimer = setTimeout(async () => {
+    let d;
+    try { d = await symbolSuggest(q); } catch (e) { return; }
+    if (token !== cmdSymToken || cmdEl.hidden || $("#cmd-q").value.trim() !== q) return;
+    const have = new Set(cmdItems.map((it) => it.ticker).filter(Boolean));
+    const found = (d.items || []).filter((i) => !have.has(i.ticker))
+      .map((i) => ({ label: `${i.ticker} ${i.name}`, hint: `종목 · ${MARKET_KO[i.market] || i.market}`, ticker: i.ticker, run: () => openTicker(i.ticker) }));
+    if (!found.length) return;
+    const cur = cmdItems[cmdSel];
+    let at = cmdItems.length;
+    while (at > 0 && ["검색", "질문"].includes(cmdItems[at - 1].hint)) at--;
+    cmdItems.splice(at, 0, ...found);
+    cmdSel = cmdMoved ? Math.max(0, cmdItems.indexOf(cur)) : 0;          // 화살표로 고른 줄은 그 줄에 그대로 둡니다
+    cmdPaint();
+  }, 150);
+}
 function cmdPaint() {
   $("#cmd-list").innerHTML = cmdItems.map((it, i) => `<li role="option" class="${i === cmdSel ? "on" : ""}" data-i="${i}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></li>`).join("")
     || '<li class="none">해당하는 이동이 없습니다.</li>';
 }
 function cmdOpen() {
-  cmdEl.hidden = false; $("#cmd-q").value = ""; cmdItems = cmdParse(""); cmdSel = 0; cmdPaint(); $("#cmd-q").focus();
+  cmdEl.hidden = false; $("#cmd-q").value = ""; cmdItems = cmdParse(""); cmdSel = 0; cmdMoved = false; cmdSymbols(""); cmdPaint(); $("#cmd-q").focus();
 }
 function cmdClose() { cmdEl.hidden = true; }
 function cmdRun(i) { const it = cmdItems[i]; if (!it) return; cmdClose(); it.run(); window.scrollTo(0, 0); }
-$("#cmd-q").addEventListener("input", (e) => { cmdItems = cmdParse(e.target.value); cmdSel = 0; cmdPaint(); });
+$("#cmd-q").addEventListener("input", (e) => { cmdItems = cmdParse(e.target.value); cmdSel = 0; cmdMoved = false; cmdPaint(); cmdSymbols(e.target.value); });
 $("#cmd-q").addEventListener("keydown", (e) => {
-  if (e.key === "ArrowDown") { cmdSel = Math.min(cmdSel + 1, cmdItems.length - 1); cmdPaint(); e.preventDefault(); }
-  else if (e.key === "ArrowUp") { cmdSel = Math.max(cmdSel - 1, 0); cmdPaint(); e.preventDefault(); }
+  if (e.key === "ArrowDown") { cmdSel = Math.min(cmdSel + 1, cmdItems.length - 1); cmdMoved = true; cmdPaint(); e.preventDefault(); }
+  else if (e.key === "ArrowUp") { cmdSel = Math.max(cmdSel - 1, 0); cmdMoved = true; cmdPaint(); e.preventDefault(); }
   else if (e.key === "Enter" && !e.isComposing) { cmdRun(cmdSel); e.preventDefault(); }
   else if (e.key === "Escape") cmdClose();
 });

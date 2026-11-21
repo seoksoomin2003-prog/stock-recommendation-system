@@ -2,7 +2,7 @@
 "use strict";
 const $ = (s, el = document) => el.querySelector(s);
 const STATUS_KO = { REAL: "실데이터", STALE: "지연·오래됨", UNAVAILABLE: "데이터 없음", FROZEN: "고정", EXPERIMENTAL: "실험" };
-const state = { tab: "overview", ticker: null, range: "1y", loaded: {}, market: "US" };
+const state = { tab: "overview", ticker: null, card: null, range: "1y", loaded: {}, market: "US" };
 try { const m = localStorage.getItem("qse-market"); if (m === "KR" || m === "COIN") state.market = m; } catch (e) { /* storage unavailable */ }
 // 코인 시장은 주식 탭을 쓰지 않습니다: '오늘'과 '코인' 묶음만 보입니다.  주식 시장에서는 '코인' 묶음이 숨습니다.
 const isCoin = () => state.market === "COIN";
@@ -111,20 +111,29 @@ function showGroup(g) {
   const first = document.querySelector(`.tabs button[data-group="${g}"]`);
   if (first) show(groupTab[g] || first.dataset.tab);
 }
+const tabScroll = {};        // 탭을 떠날 때의 스크롤 위치.  다시 그리지 않는 탭(RETURN)으로 돌아올 때 되돌립니다.
+// 주소 표시줄에 적는 이름: 종목 화면은 stock/코드, 평가한 점수 카드가 있는 점수 탭은 qsf/코드, 나머지는 탭 이름입니다.
+function tabHash(tab) {
+  if (tab === "stock" && state.ticker) return `stock/${state.ticker}`;
+  if (tab === "qsf" && state.card && marketOf(state.card) === state.market) return `qsf/${state.card}`;
+  return tab;
+}
 function show(tab, push = true) {
   if (!groupShown(groupOf(tab) || "today")) tab = isCoin() ? "coin" : "today";       // 지금 시장에 없는 탭이면 그 시장의 첫 화면으로
+  if (tab !== state.tab) tabScroll[state.tab] = window.scrollY;
   state.tab = tab;
   if (healthAt && Date.now() - healthAt > 30000) loadHealth();      // 탭을 옮길 때도 화면이 업데이트됐는지 확인합니다
   document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
   paintGroups(tab);
   document.querySelectorAll(".tab").forEach((s) => s.classList.toggle("on", s.id === "tab-" + tab));
-  if (push) location.hash = tab === "stock" && state.ticker ? `stock/${state.ticker}` : tab;
+  if (push) location.hash = tabHash(tab);
   if (tab === "stock") return renderStock();
   if (!state.loaded[tab] || ALWAYS_FRESH.has(tab)) RENDER[tab]();
+  else if (RETURN[tab]) RETURN[tab](tabScroll[tab] || 0);          // 이미 그려 둔 탭: 다시 만들지 않고 돌아왔다고만 알립니다
 }
 function paintMarket() {
   $("#market").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.m === state.market));
-  $("#q").placeholder = state.market === "COIN" ? "코인에 대해 묻기 (예: 비트코인, 코인 상위는?)" : "종목 코드 또는 한글 회사명";
+  $("#q").placeholder = state.market === "COIN" ? "코인에 대해 묻기 (예: 비트코인, 코인 상위는?)" : "종목 코드 또는 회사명";
 }
 function setMarket(m, render = true) {
   if (m === state.market) return;
@@ -138,6 +147,8 @@ function setMarket(m, render = true) {
   if (render) show(state.tab);
 }
 // Recently opened stocks, on this browser only.  Shown as shortcuts on the empty stock tab.
+// A ticker is stored only once it is known to exist: a scanned stock at once, any other after its chart came back with prices
+// (loadChart).  A mistyped code is therefore never a shortcut or a default of the compare tab.
 function recentTickers() { try { return JSON.parse(localStorage.getItem("recentTickers") || "[]").filter((x) => typeof x === "string"); } catch (e) { return []; } }
 function rememberTicker(t) {
   try { localStorage.setItem("recentTickers", JSON.stringify([t, ...recentTickers().filter((x) => x !== t)].slice(0, 12))); } catch (e) { /* not remembered */ }
@@ -145,7 +156,7 @@ function rememberTicker(t) {
 function tickerChips(list) { return list.map((t) => `<button type="button" class="chip" data-ticker="${esc(t)}">${esc(t)}</button>`).join(""); }
 function openTicker(t) {
   state.ticker = String(t).toUpperCase(); state.loaded.stock = null;
-  rememberTicker(state.ticker);
+  if (knownSymbols.has(state.ticker)) rememberTicker(state.ticker);
   setMarket(marketOf(state.ticker), false);
   show("stock");
   window.scrollTo(0, 0);
@@ -164,12 +175,95 @@ async function searchKr(q) {
     el.innerHTML = `<div class="panel"><h2>'${esc(q)}' 검색 결과</h2>${d.items.length ? `<div class="tbl-wrap"><table><tbody>${d.items.map((i) => `<tr class="click" data-ticker="${esc(i.ticker)}"><td class="l"><b>${esc(i.name)}</b></td><td class="l">${esc(i.ticker)}</td><td class="l">${esc(i.market || "")}</td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">일치하는 상장 종목이 없습니다.</div>'}</div>`;
   } catch (err) { el.innerHTML = errBox(err); }
 }
+// ------------------------------------------------------------------ 종목 찾기
+// 스캔한 종목(S&P 500, 한국 시가총액 상위 300) 안에서 코드, 회사명, 비슷한 코드를 찾습니다 (/api/symbols).  서버는 저장해 둔 이름만 봅니다.
+const MARKET_KO = { US: "미국", KR: "한국" };
+const knownSymbols = new Set();           // 스캔 대상으로 확인된 종목 코드
+const symbolCache = new Map();            // 같은 말을 다시 묻지 않습니다.  수집이 끝나면 비웁니다 (collect.js).
+function symbolSuggest(text) {
+  const q = String(text).trim().replace(/\s+/g, " "), mk = isKR() ? "KR" : "US", key = `${mk}|${q.toLowerCase()}`;
+  if (!symbolCache.has(key)) {
+    if (symbolCache.size > 200) symbolCache.clear();
+    const p = api(`/api/symbols?q=${encodeURIComponent(q)}&market=${mk}`).then((d) => { [d.exact, ...(d.items || [])].forEach((i) => i && knownSymbols.add(String(i.ticker).toUpperCase())); return d; });
+    p.catch(() => symbolCache.delete(key));
+    symbolCache.set(key, p);
+  }
+  return symbolCache.get(key);
+}
+const symbolLabel = (i) => `<b>${esc(i.ticker)}</b> <span>${esc(i.name)}</span> <small>${esc(MARKET_KO[i.market] || i.market)}</small>`;
+// 찾기 전과 같은 열기: 한글은 한국 상장 종목 전체에서 검색하고, 그 밖은 적은 코드 그대로 엽니다 (ETF와 지수는 스캔 밖에 있습니다).
+const openTyped = (q) => (/[가-힣]/.test(q) ? searchKr(q) : openTicker(q));
+// 적은 말이 스캔한 종목의 코드면 바로 열고, 아니면 가까운 종목을 먼저 묻습니다.  회사명(apple, 삼성전자)을 코드로 읽지 않게 합니다.
+async function findSymbol(text) {
+  const q = String(text).trim();
+  if (!q) return;
+  let d = null;
+  try { d = await symbolSuggest(q); } catch (e) { /* 찾지 못하면 이전처럼 엽니다 */ }
+  if (d && d.exact) return openTicker(d.exact.ticker);
+  const items = (d && d.items) || [], same = items.filter((i) => String(i.name).toLowerCase() === q.toLowerCase());
+  if (same.length === 1) return openTicker(same[0].ticker);          // 회사명을 끝까지 적었습니다
+  if (!items.length) return openTyped(q);
+  symbolChoices(q, items);
+}
+function symbolChoices(q, items) {
+  if (isCoin()) setMarket(items[0].market === "KR" ? "KR" : "US", false);
+  state.ticker = null; state.loaded.stock = "search";
+  show("stock");
+  $("#tab-stock").innerHTML = `<div class="panel"><h2>혹시 이 종목인가요?</h2>
+    <div class="meta">입력: '${esc(q)}' · 코드가 같은 스캔 종목은 없습니다. 코드나 회사명이 가까운 종목은 아래와 같습니다.</div>
+    <div class="sym-list">${items.map((i) => `<button type="button" class="sym-item" data-ticker="${esc(i.ticker)}">${symbolLabel(i)}</button>`).join("")}</div>
+    <div class="sym-raw"><button type="button" class="ghost" id="sym-raw">'${esc(q)}' ${/[가-힣]/.test(q) ? "한국 상장 종목 전체에서 찾기" : "그대로 열기"}</button>
+      <span class="meta">ETF나 지수처럼 스캔 대상이 아닌 종목도 종목 화면에서 볼 수 있습니다.</span></div></div>`;
+  $("#sym-raw").onclick = () => openTyped(q);
+  window.scrollTo(0, 0);
+}
+// 검색창 자동 완성: 치는 동안 최대 8개를 검색창 아래에 보여 줍니다.  ↑↓로 고르고 Enter로 열며, Esc나 바깥을 누르면 닫힙니다.
+const sug = { box: document.createElement("div"), q: "", items: [], sel: -1, timer: null, token: 0 };
+sug.box.id = "qsug"; sug.box.className = "sug"; sug.box.hidden = true; sug.box.setAttribute("role", "listbox"); sug.box.setAttribute("aria-label", "종목 제안");
+$("#search").appendChild(sug.box);
+function sugPaint() {
+  sug.box.hidden = !sug.items.length;
+  sug.box.innerHTML = sug.items.map((i, k) => `<button type="button" role="option" aria-selected="${k === sug.sel}" class="sug-item${k === sug.sel ? " on" : ""}" data-sym="${esc(i.ticker)}">${symbolLabel(i)}</button>`).join("");
+}
+function sugClose() { clearTimeout(sug.timer); sug.token++; sug.q = ""; sug.items = []; sug.sel = -1; sugPaint(); }
+function sugPick(t) { sugClose(); $("#q").value = ""; $("#q").blur(); openTicker(t); }
+async function sugLoad(q) {
+  const token = ++sug.token;
+  let d;
+  try { d = await symbolSuggest(q); } catch (e) { return; }
+  if (token !== sug.token || $("#q").value.trim() !== q) return;
+  sug.q = q; sug.items = (d.items || []).slice(0, 8); sug.sel = -1; sugPaint();
+}
+$("#q").addEventListener("input", () => {
+  const q = $("#q").value.trim();
+  if (!q || isCoin()) return sugClose();
+  clearTimeout(sug.timer);
+  if (q === sug.q) return;                       // 한글 조합이 끝나며 같은 말로 다시 온 입력: 고른 줄을 그대로 둡니다
+  sug.timer = setTimeout(() => sugLoad(q), 150);
+});
+$("#q").addEventListener("keydown", (e) => {
+  const n = sug.items.length;
+  if (e.key === "ArrowDown" && n) { sug.sel = Math.min(sug.sel + 1, n - 1); sugPaint(); e.preventDefault(); }
+  else if (e.key === "ArrowUp" && n) { sug.sel = Math.max(sug.sel - 1, -1); sugPaint(); e.preventDefault(); }
+  else if (e.key === "Enter" && !e.isComposing && sug.sel >= 0) { e.preventDefault(); sugPick(sug.items[sug.sel].ticker); }
+  else if (e.key === "Escape") sugClose();
+});
+sug.box.addEventListener("click", (e) => { const b = e.target.closest("[data-sym]"); if (b) sugPick(b.dataset.sym); });
+document.addEventListener("click", (e) => { if (!sug.box.hidden && !e.target.closest("#search")) sugClose(); });
 $("#search").onsubmit = (e) => {
   e.preventDefault(); const t = $("#q").value.trim(); if (!t) return;
   if (isCoin()) { askAssistant(t); $("#q").value = ""; $("#q").blur(); return; }       // 코인 시장에서는 검색창이 비서에게 묻습니다
-  /[가-힣]/.test(t) ? searchKr(t) : openTicker(t);
+  sugClose();
+  findSymbol(t);
   $("#q").value = ""; $("#q").blur();
 };
+// 열어 둔 종목을 다른 탭의 종목 칸에 미리 적어 둡니다.  제출하지 않고, 사용자가 적은 값은 건드리지 않습니다
+// (비어 있거나, 앞서 여기서 적어 둔 값 그대로일 때만 적습니다).  화면의 시장과 종목의 시장이 같을 때만 합니다.
+function prefillTicker(input) {
+  if (!input || !state.ticker || marketOf(state.ticker) !== state.market) return;
+  if (input.value && input.value !== input.dataset.prefill) return;
+  input.value = state.ticker; input.dataset.prefill = state.ticker;
+}
 document.addEventListener("click", (e) => { const el = e.target.closest("[data-ticker]"); if (el && !e.target.closest("button.x")) openTicker(el.dataset.ticker); });
 
 // theme: auto (OS) → light → dark
@@ -249,6 +343,7 @@ async function loadChart(t) {
   $("#c-meta").innerHTML = '<div class="meta">불러오는 중…</div>';
   try {
     const c = await api(`/api/chart?t=${encodeURIComponent(t)}&range=${state.range}`);
+    if (c.status !== "UNAVAILABLE") rememberTicker(t);          // 가격이 온 종목만 '최근 본 종목'에 남깁니다
     if (state.ticker !== t) return;
     lastChart = c; drawPrice(); redrawers.add(drawPrice);
     const L = c.last || {};
@@ -270,7 +365,7 @@ function renderProfile(c) {
     ["PBR", fmt(p.priceToBook, 2)], ["배당수익률", isNum(p.dividendYield) ? `${fmt(p.dividendYield, 2)}%` : DASH],
     ["베타", fmt(p.beta, 2)], ["평균 거래량", big(p.averageVolume, "")], ["상장 주식수", big(p.sharesOutstanding, "")]];
   $("#s-head").innerHTML = `<div class="head"><h2 style="margin:0">${esc(p.longName || p.shortName || c.ticker)} <span class="meta" style="margin:0">${esc(c.ticker)} · ${esc(p.exchange || "")}</span></h2>
-      <span><button class="ghost" id="addw">＋ 관심종목</button> <button class="ghost" id="addc" type="button">비교 차트</button></span></div>
+      <span><button class="ghost" id="addw">＋ 관심종목</button> <button class="ghost" id="addc" type="button">비교 차트</button> <button class="ghost" id="addq" type="button" title="점수 탭에서 이 종목의 점수 카드를 엽니다">점수 카드</button></span></div>
     <div class="head" id="s-price"></div>
     <div class="meta">${esc([sectorKo(p.sector), p.industry].filter(Boolean).join(" · "))}${p.website ? ` · <a href="${esc(p.website)}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>
     <div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span><b class="num">${v}</b></div>`).join("")}</div>
@@ -279,6 +374,7 @@ function renderProfile(c) {
   renderHeadPrice();
   const s = $("#sum"); if (s) s.onclick = () => s.classList.toggle("open");
   $("#addc").onclick = () => compareWith([c.ticker]);
+  $("#addq").onclick = () => { if (typeof qsfOpenCard === "function") qsfOpenCard(c.ticker); };
   $("#addw").onclick = async () => { try { await api("/api/watchlist/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: c.ticker }) }); $("#addw").textContent = "✓ 추가됨"; state.loaded.watch = false; } catch (e) { alert(ERR_KO[e.message] || e.message); } };
 }
 function renderFund(f) {
@@ -530,6 +626,7 @@ async function renderModel() {
 
 const ALWAYS_FRESH = new Set(["watch", "portfolio", "assist", "paper", "model"]);
 const RENDER = { overview: renderOverview, macro: renderMacro, watch: renderWatch, model: renderModel, stock: renderStock };
+const RETURN = {};          // 다시 그리지 않고 돌아온 탭이 할 일 (탭 이름 -> 함수(떠날 때의 스크롤 위치)).  점수 탭이 씁니다 (qsf.js).
 
 // ------------------------------------------------------------------ boot
 applyTheme(theme);
@@ -556,11 +653,16 @@ loadHealth();
 setInterval(loadHealth, 5 * 60 * 1000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - healthAt > 30000) loadHealth(); });
 let booted = false;
+// #탭, #stock/코드, #qsf/코드(점수 탭의 오늘 순위 보기에서 그 종목을 평가)를 읽습니다.  모르는 이름은 첫 화면으로 갑니다.
+const HASH_TICKER = /^[0-9A-Z^][0-9A-Z.\-]{0,11}$/;
 function fromHash() {
   const [tab, tk] = location.hash.replace(/^#/, "").split("/");
-  if (booted && tab === state.tab && (tab !== "stock" || (tk || "").toUpperCase() === state.ticker)) return;
+  const card = tab === "qsf" && HASH_TICKER.test((tk || "").toUpperCase()) ? tk.toUpperCase() : null;
+  // 화면이 이미 그 주소대로면 다시 그리지 않습니다.  종목이 없는 #stock도 같다고 봅니다: 다시 그리면 방금 띄운 '혹시 이 종목인가요?' 목록이 지워집니다.
+  if (booted && tab === state.tab && (tab !== "stock" || (tk || "").toUpperCase() === (state.ticker || "")) && (!card || card === state.card)) return;
   booted = true;
   if (tab === "stock" && tk) { state.ticker = decodeURIComponent(tk).toUpperCase(); state.loaded.stock = null; setMarket(marketOf(state.ticker), false); }
+  if (card && typeof qsfOpenCard === "function") return qsfOpenCard(card, false);
   show(RENDER[tab] ? tab : RENDER.today ? "today" : "overview", false);
 }
 window.addEventListener("hashchange", fromHash);

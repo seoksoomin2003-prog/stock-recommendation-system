@@ -1135,7 +1135,7 @@ def cmd_terminal_agent(args) -> int:
 def cmd_terminal(args) -> int:
     from terminal.server import HOST, serve, setup_error_log
     try:
-        httpd = serve(port=args.port, base_dir=PROJECT_ROOT)
+        httpd = serve(port=args.port, base_dir=PROJECT_ROOT, warm_up=True)
         setup_error_log(PROJECT_ROOT)
     except OSError as exc:
         print(f"터미널 서버를 시작할 수 없습니다 (포트 {args.port}): {exc.strerror}. --port 로 다른 포트를 지정하세요.", flush=True)
