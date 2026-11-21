@@ -11,8 +11,9 @@ GROUPS = ["today", "market", "stock", "account", "score", "verify"]
 def test_every_tab_belongs_to_one_of_six_groups_and_keeps_its_section():
     html = read("index.html")
     nav = html[html.index('<nav class="groups"'):html.index('<nav class="tabs"')]
-    assert re.findall(r'data-group="(\w+)"', nav) == GROUPS and re.findall(r">([^<]+)</button>", nav) == ["오늘", "시장", "종목", "내 계좌", "점수", "검증·기록"]
-    tabs = re.findall(r'<button data-tab="(\w+)" data-group="(\w+)"', html)
+    assert re.findall(r'data-group="(\w+)"', nav) == GROUPS + ["coin"] and re.findall(r">([^<]+)</button>", nav) == ["오늘", "시장", "종목", "내 계좌", "점수", "검증·기록", "코인"]
+    assert '<button type="button" data-group="coin" hidden>코인</button>' in nav                 # the coin group shows only in the coin market
+    tabs = [x for x in re.findall(r'<button data-tab="(\w+)" data-group="(\w+)"', html) if x[1] != "coin"]
     assert len(tabs) == 13 and {g for _, g in tabs} == set(GROUPS) and len({t for t, _ in tabs}) == 13
     assert [g for _, g in tabs] == sorted((g for _, g in tabs), key=GROUPS.index)          # the tabs of a group sit together, in the groups' order
     assert dict(tabs)["qsf"] == "score" and dict(tabs)["today"] == "today" and [t for t, g in tabs if g == "market"] == ["overview", "map", "macro"]

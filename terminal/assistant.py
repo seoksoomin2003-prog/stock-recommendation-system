@@ -15,7 +15,7 @@ from typing import Any, Callable, Dict, List, Optional
 LEVELS = ("ACT", "DUE", "INFO")
 LEVEL_KO = {"ACT": "먼저 볼 것", "DUE": "오늘 챙길 것", "INFO": "참고"}
 STYLE_KO = {"LONG": "장기", "SWING": "스윙"}
-MARKET_KO = {"US": "미국", "KR": "한국"}
+MARKET_KO = {"US": "미국", "KR": "한국", "COIN": "코인"}
 NOTE = ("비서는 프로그램이 이미 계산한 것을 정해진 규칙으로 정리해 보여 줄 뿐입니다. 투자 자문이 아니고 주문을 실행하지 않습니다. "
         "점수가 높은 종목의 수익이 더 좋다는 근거는 아직 확인되지 않았습니다.")
 EARNINGS_DAYS = 5          # a holding's earnings within this many days is due; the scan's own entry block is a separate rule
@@ -278,6 +278,8 @@ def daily_lines(briefs: List[Dict[str, Any]]) -> List[str]:
 # ---------------------------------------------------------------------- the day's list
 def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datetime]] = None) -> Dict[str, Any]:
     """The day's list for one market.  ``terminal``: terminal.services.Terminal.  Reads only; nothing is stored or sent."""
+    if market == "COIN":
+        return coin_briefing(terminal, now)
     from terminal import automation
     from terminal.qsf import changes as qsf_changes, readings as qsf_readings
     at = (now or terminal.now)()
@@ -1208,6 +1210,8 @@ def answer(terminal: Any, text: str, market: str = "US") -> Dict[str, Any]:
     text = " ".join(str(text or "").split())[:200]
     if not text:
         return {"status": "UNKNOWN", "title": "질문이 비어 있습니다", "summary": "아래 예처럼 물어보세요.", "sections": [], "lines": ["아래 예처럼 물어보세요."], "examples": EXAMPLES, "note": NOTE}
+    if market == "COIN":
+        return coin_answer(terminal, text)
     if text.lower().strip(" ?？!.") in ("", "help", "h", "도움", "도움말", "질문", "목록"):
         text = "help"
     stock = None if text == "help" else find_stock(text, {m: _rows(terminal, m) for m in ("KR", "US")})
@@ -1230,3 +1234,159 @@ def answer(terminal: Any, text: str, market: str = "US") -> Dict[str, Any]:
         say = f"필요한 자료를 읽지 못했습니다({type(exc).__name__}). 자료 수집이 도는 중이거나 기록 파일을 읽지 못한 경우입니다."
         return {"status": "UNAVAILABLE", "question": text, "intent": intent, "title": "답을 만들지 못했습니다", "summary": say, "sections": [], "lines": [say], "follow": ["오늘 수집 됐어?"], "note": NOTE}
     return {"status": "REAL", "question": text, "intent": intent, "ticker": (stock or {}).get("ticker"), "market": (stock or {}).get("market", market), **got, "note": NOTE}
+
+
+# ---------------------------------------------------------------------- the coin market (terminal/coin_bridge.py)
+COIN_EXAMPLES = ["코인 상위는?", "코인 시장 상태 어때?", "비트코인 분석해 줘", "솔라나 점수 왜 이래?", "이 코인 점수 믿어도 돼?"]
+COIN_TRUST = ["점수(α)는 사용자의 다른 프로젝트 horizon_bot_beta가 등록해 기록 중인 값입니다. 터미널은 그 값을 읽어 보여 줄 뿐 새 점수를 만들지 않습니다.",
+              "신호 셋(자금조달비, 낮은 변동성, 낮은 베타)은 이미 본 과거 자료(2021~2026-08)에서 7일 기준으로 여섯 해 모두 같은 방향이었습니다. 다만 그 자료는 여러 번 본 것이라 증거가 아니고 후보를 고른 근거입니다.",
+              "큰 코인 사이에서 모멘텀은 거꾸로 작동했고, 짧은 반전은 있지만 비용을 넘기에는 너무 빨리 사라졌습니다.",
+              "돈으로 본 결과: 점수 1위 코인 하나를 산 시험은 -62.7%였습니다(같은 기간 대상 30개 평균 -79.2%, 비트코인 보유 +40.2%). 다른 코인보다 덜 떨어졌을 뿐 시장 하락을 견디지 못했습니다.",
+              "시장 방향을 맞히려는 시험도 실패했습니다(예측과 실제의 상관 -0.08).",
+              "판정은 앞으로의 기록으로 합니다(시장 중립 그림자 장부 2027-05-15). 그 전에는 이 점수를 '덜 나쁜 코인을 가리는 약한 순위'로만 읽는 것이 맞습니다."]
+
+
+def _coin_time(close_ms: int) -> str:
+    from zoneinfo import ZoneInfo
+    return datetime.fromtimestamp(close_ms / 1000, timezone.utc).astimezone(ZoneInfo("Asia/Seoul")).strftime("%m월 %d일 %H:%M")
+
+
+def _coin_label(r: Dict[str, Any]) -> str:
+    return f"{r['name']}({r['coin']})" if r.get("name") else r["coin"]
+
+
+def _usdt(v: Optional[float]) -> str:
+    if v is None:
+        return "자료 없음"
+    return f"{v:,.2f} USDT" if v >= 1 else f"{v:.6f} USDT"
+
+
+def _coin_read() -> Dict[str, Any]:
+    from terminal import coin_bridge
+    return coin_bridge.read()
+
+
+def _coin_stale(d: Dict[str, Any]) -> Optional[str]:
+    if d.get("status") != "STALE":
+        return None
+    return (f"코인 점수가 {d['age_hours']:.0f}시간 전 마감({_coin_time(d['close_ms'])}) 기준입니다. 4시간마다 새로 나와야 하는 값이라 오래된 것입니다. "
+            "예측기가 멈췄거나 맥이 잠들어 있었습니다(horizon_bot_beta 폴더의 ./run_predictor.sh status 로 확인).")
+
+
+def coin_items(d: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """The coin day's list from one read of the bridge."""
+    if d.get("status") == "UNAVAILABLE":
+        return [item("DUE", "COIN_UNAVAILABLE", f"코인 자료를 읽지 못했습니다. {d.get('reason')}", tab="coin")]
+    out = []
+    stale = _coin_stale(d)
+    if stale:
+        out.append(item("DUE", "COIN_STALE", stale, tab="coin"))
+    m, rows = d["market"], d["rows"]
+    if m.get("btc_price") is not None:
+        vs = f", 200일 평균보다 {m['btc_vs_200d'] * 100:+.1f}%" if m.get("btc_vs_200d") is not None else ""
+        out.append(item("INFO", "COIN_MARKET", f"비트코인 {_usdt(m['btc_price'])}(7일 {(m.get('btc_change_7d') or 0) * 100:+.1f}%, 30일 {(m.get('btc_change_30d') or 0) * 100:+.1f}%{vs}). "
+                        f"대상 {m['coins']}개 가운데 7일 동안 내린 코인이 {m['falling_7d']}개, 200일 평균 위에 있는 코인이 {m['above_200d']}개입니다.", tab="coin"))
+    top = ", ".join(f"{_coin_label(r)} {r['alpha'] * 100:+.2f}%" for r in rows[:3])
+    out.append(item("INFO", "COIN_TOP", f"상대 순위 상위 3개({_coin_time(d['close_ms'])} 마감): {top}. 숫자는 7일 동안 대상의 중간 코인보다 더 오를 것으로 본 폭이고, 오를지 내릴지를 말하지 않습니다.", tab="coin"))
+    over = [r for r in rows if r["beats_cost"]]
+    out.append(item("INFO", "COIN_COST", f"기대 폭이 왕복 비용({d['cost_round_trip'] * 100:.2f}%)을 넘는 코인은 {len(over)}개입니다" + (f": {', '.join(_coin_label(r) for r in over[:5])}." if over else ". 지금은 순위 차이가 비용보다 작습니다."), tab="coin"))
+    out.append(item("INFO", "COIN_CAVEAT", d["caveats"][1] + " " + d["caveats"][2], tab="coin"))
+    return out
+
+
+def coin_briefing(terminal: Any, now: Optional[Callable[[], datetime]] = None) -> Dict[str, Any]:
+    at = (now or terminal.now)()
+    failed: List[Dict[str, str]] = []
+    try:
+        d = _coin_read()
+        items = coin_items(d)
+    except Exception as exc:
+        d, items = {}, []
+        failed.append({"part": "coin", "label": "코인 예측기 자료", "error": type(exc).__name__})
+    order = {lv: n for n, lv in enumerate(LEVELS)}
+    items.sort(key=lambda i: order[i["level"]])
+    return {"status": "REAL", "market": "COIN", "generated_at": at.isoformat(timespec="seconds"), "session": _coin_time(d["close_ms"]) + " 마감" if d.get("close_ms") else None,
+            "headline": headline(items), "counts": {lv: sum(1 for i in items if i["level"] == lv) for lv in LEVELS}, "levels": LEVEL_KO, "orders": 0, "items": items,
+            "unread_parts": failed, "note": "코인 점수는 horizon_bot_beta의 예측기가 계산한 값을 읽어 보여 주는 것입니다. " + NOTE}
+
+
+def find_coin(text: str, rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    import re
+    low = text.lower()
+    for r in sorted(rows, key=lambda r: -len(r.get("name") or "")):
+        if r.get("name") and r["name"] in text:
+            return r
+    tokens = {x.upper() for x in re.findall(r"[A-Za-z]{2,10}", text)}
+    for r in rows:
+        if r["coin"] in tokens or r["symbol"] in tokens:
+            return r
+    return next((r for r in rows if len(r["coin"]) >= 3 and r["coin"].lower() in low.split()), None)
+
+
+def coin_note(d: Dict[str, Any], r: Dict[str, Any]) -> Dict[str, Any]:
+    """One coin: where it ranks, the three signals behind the score with their real values, its price, and what the score cannot say."""
+    n, label = r["of"], _coin_label(r)
+    unit = " (1,000개 단위로 거래되는 계약)" if r.get("per_thousand") else ""
+    cost = d["cost_round_trip"]
+    summary = (f"{label}의 상대 순위는 대상 {n}개 중 {r['rank']}위입니다. 앞으로 7일 동안 대상의 중간 코인보다 {r['alpha'] * 100:+.2f}% 움직일 것으로 본 값이고, "
+               + ("왕복 비용({:.2f}%)을 넘습니다.".format(cost * 100) if r["beats_cost"] else "왕복 비용({:.2f}%)을 넘지 못합니다.".format(cost * 100)) + " 오를지 내릴지를 말하는 값이 아닙니다.")
+    place = lambda k: f"대상 {n}개 중 낮은 순서로 {r[k]}위" if r.get(k) else "순위 없음"      # noqa: E731
+    signals = []
+    if r.get("funding") is not None:
+        signals.append(f"자금조달비 {r['funding'] * 100:+.4f}%(8시간마다, 연으로 {r['funding_year'] * 100:+.1f}%): {place('funding_place')}. 낮거나 음수일수록 롱 쪽이 덜 붐빈다는 뜻이라 점수에 유리합니다. 현물에는 이 비용이 없습니다.")
+    if r.get("sigma_day") is not None:
+        signals.append(f"변동성 하루 약 {r['sigma_day'] * 100:.1f}%: {place('sigma_place')}. 낮을수록 점수에 유리합니다.")
+    if r.get("beta") is not None:
+        signals.append(f"베타 {r['beta']:.2f}(대상 코인 평균이 1% 움직일 때 이 코인이 움직이는 폭): {place('beta_place')}. 낮을수록 점수에 유리합니다.")
+    px = [f"가격 {_usdt(r['price'])}{unit}.", "최근 움직임: " + ", ".join(f"{k} {v * 100:+.1f}%" for k, v in (("1일", r.get("change_1d")), ("7일", r.get("change_7d")), ("30일", r.get("change_30d"))) if v is not None) + ".",
+          "200일 평균 " + ("위에 있습니다." if r.get("above_200d") else "아래에 있습니다." if r.get("above_200d") is not None else "자료가 모자랍니다.")]
+    m = d["market"]
+    market = [f"비트코인은 7일 {(m.get('btc_change_7d') or 0) * 100:+.1f}%, 200일 평균보다 {(m.get('btc_vs_200d') or 0) * 100:+.1f}%입니다. 대상 {m['coins']}개 가운데 {m['falling_7d']}개가 7일 동안 내렸습니다.", m["note"]]
+    sections = [{"title": "먼저 알아 둘 것", "lines": [_coin_stale(d) or ""]}, {"title": "점수를 만든 신호 셋", "lines": signals + ["참고: 위 수치는 터미널이 예측기의 봉 자료에서 같은 정의로 다시 계산한 값이라, 예측기 안의 값과 조금 다를 수 있습니다."]},
+                {"title": "가격", "lines": px}, {"title": "시장", "lines": market}, {"title": "이 점수가 말하지 않는 것", "lines": d["caveats"]}]
+    return reply(f"{label} 코인 노트", summary, sections, "coin", ["코인 상위는?", "코인 시장 상태 어때?", "이 코인 점수 믿어도 돼?"], f"기준: {_coin_time(d['close_ms'])} 마감(4시간봉) · horizon_bot_beta 점수 v{d.get('version')}")
+
+
+def coin_answer(terminal: Any, text: str) -> Dict[str, Any]:
+    """The coin market's fixed questions, answered from one read of the bridge."""
+    text = " ".join(str(text or "").split())[:200]
+    done = lambda got, intent, ticker=None: {"status": "REAL", "question": text, "intent": intent, "ticker": ticker, "market": "COIN", **got, "note": NOTE}      # noqa: E731
+    try:
+        d = _coin_read()
+    except Exception as exc:
+        say = f"코인 자료를 읽지 못했습니다({type(exc).__name__})."
+        return {"status": "UNAVAILABLE", "question": text, "title": "답을 만들지 못했습니다", "summary": say, "sections": [], "lines": [say], "note": NOTE}
+    if d.get("status") == "UNAVAILABLE":
+        say = f"코인 자료를 읽지 못했습니다. {d.get('reason')}"
+        return {"status": "UNAVAILABLE", "question": text, "title": "코인 자료 없음", "summary": say, "sections": [], "lines": [say], "tab": "coin", "note": NOTE}
+    low = text.lower()
+    rows, basis = d["rows"], f"기준: {_coin_time(d['close_ms'])} 마감(4시간봉) · horizon_bot_beta 점수 v{d.get('version')}"
+    if any(w in low for w in ("믿", "신뢰", "근거", "정확", "검증")):
+        return done(reply("코인 점수를 얼마나 믿을 수 있나", "코인 점수는 대상 코인끼리의 약한 순위이고, 살 코인을 고르는 힘이 확인된 것은 아닙니다.", [{"title": "지금까지 확인한 것", "lines": COIN_TRUST},
+                                                                                                         {"title": "이 점수가 말하지 않는 것", "lines": d["caveats"]}], "coin", ["코인 상위는?", "코인 시장 상태 어때?"], basis), "COIN_TRUST")
+    coin = find_coin(text, rows)
+    if coin:
+        return done(coin_note(d, coin), "COIN_NOTE", coin["coin"])
+    stale = _coin_stale(d)
+    if any(w in low for w in ("시장", "상태", "분위기", "장세", "급락", "폭락", "떨어")):
+        m = d["market"]
+        lines = [f"비트코인 {_usdt(m['btc_price'])}: 7일 {(m.get('btc_change_7d') or 0) * 100:+.1f}%, 30일 {(m.get('btc_change_30d') or 0) * 100:+.1f}%.",
+                 f"비트코인은 200일 평균보다 {m['btc_vs_200d'] * 100:+.1f}%입니다." if m.get("btc_vs_200d") is not None else "",
+                 f"비트코인은 최근 1년 고점보다 {m['btc_from_high_1y'] * 100:+.1f}%입니다." if m.get("btc_from_high_1y") is not None else "",
+                 f"대상 {m['coins']}개 가운데 7일 동안 내린 코인 {m['falling_7d']}개, 200일 평균 위에 있는 코인 {m['above_200d']}개({m['above_200d_of']}개 중).",
+                 f"평균 자금조달비 {m['funding_mean'] * 100:+.4f}%(8시간): 음수면 숏이 롱에게 내는 상태, 곧 하락에 건 쪽이 붐빈다는 뜻입니다." if m.get("funding_mean") is not None else ""]
+        fall = m["falling_7d"] == m["coins"]
+        return done(reply("코인 시장 노트", f"대상 {m['coins']}개 가운데 {m['falling_7d']}개가 7일 동안 내렸습니다" + (": 전부입니다." if fall else ".") + " 순위가 높은 코인도 시장이 내리면 내립니다.",
+                          [{"title": "먼저 알아 둘 것", "lines": [stale or ""]}, {"title": "지금의 모습", "lines": lines}, {"title": "읽을 때 주의", "lines": [m["note"], d["caveats"][0]]}], "coin",
+                          ["코인 상위는?", "비트코인 분석해 줘", "이 코인 점수 믿어도 돼?"], basis), "COIN_MARKET")
+    if any(w in low for w in ("상위", "순위", "후보", "추천", "뭐 살", "뭘 살", "1등", "1위", "오늘", "할 일", "요약")):
+        top = [f"{r['rank']}위 {_coin_label(r)}: 기대 상대 폭 {r['alpha'] * 100:+.2f}%" + (" (비용을 넘음)" if r["beats_cost"] else "") + f", 7일 {(r.get('change_7d') or 0) * 100:+.1f}%, 하루 변동성 {(r.get('sigma_day') or 0) * 100:.1f}%." for r in rows[:5]]
+        low_rows = [f"{r['rank']}위 {_coin_label(r)}: {r['alpha'] * 100:+.2f}%." for r in rows[-3:]]
+        return done(reply("코인 상대 순위", f"상대 순위 1위는 {_coin_label(rows[0])}입니다({rows[0]['alpha'] * 100:+.2f}%, 7일 동안 대상의 중간 코인 대비). 순위일 뿐 매수 신호가 아닙니다.",
+                          [{"title": "먼저 알아 둘 것", "lines": [stale or ""]}, {"title": "상위 5개", "lines": top}, {"title": "하위 3개", "lines": low_rows}, {"title": "읽을 때 주의", "lines": d["caveats"][:3]}], "coin",
+                          [f"{rows[0]['name'] or rows[0]['coin']} 분석해 줘", "코인 시장 상태 어때?", "이 코인 점수 믿어도 돼?"], basis), "COIN_TOP")
+    help_ = text.lower().strip(" ?？!.") in ("", "help", "h", "도움", "도움말", "질문", "목록") or any(w in low for w in ("물어볼", "사용법", "명령어"))
+    say = "코인 시장에서는 아래 다섯 가지를 물어볼 수 있습니다. 코인은 이름이나 기호로 적습니다(대상: 예측기가 고른 30개)." if help_ else "이 질문은 알아듣지 못했습니다. 코인 시장에서는 아래 질문을 알아듣습니다."
+    return {"status": "REAL" if help_ else "UNKNOWN", "question": text, "intent": "COIN_HELP" if help_ else None, "market": "COIN", "title": "코인에 대해 물어볼 수 있는 것", "summary": say,
+            "sections": [{"title": "대상 코인", "lines": [", ".join(r["coin"] for r in rows)]}], "lines": [say], "examples": COIN_EXAMPLES, "note": NOTE}
+

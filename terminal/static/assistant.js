@@ -1,7 +1,7 @@
 // 오늘(비서): 프로그램이 이미 계산한 것을 정해진 규칙으로 정리해 보여 줍니다.  외부 AI를 쓰지 않고, 주문을 실행하지 않으며, 매수·매도를 권하지 않습니다.
 "use strict";
 const ASST_LEVELS = ["ACT", "DUE", "INFO"];
-const ASST_TAB_KO = { portfolio: "포트폴리오", qsf: "점수", assist: "매매 보조", lab: "연구실", stock: "종목", today: "오늘" };
+const ASST_TAB_KO = { portfolio: "포트폴리오", qsf: "점수", assist: "매매 보조", lab: "연구실", stock: "종목", today: "오늘", coin: "코인", overview: "시장 개요", macro: "거시" };
 let asstPending = null;       // 명령창에서 넘어온 질문
 
 function asstGo(tab, ticker) {
@@ -45,9 +45,9 @@ function askAssistant(q) {
 async function renderToday() {
   const box = $("#tab-today");
   state.loaded.today = true;
-  const mk = isKR() ? "한국" : "미국";
+  const mk = isCoin() ? "코인" : isKR() ? "한국" : "미국";
   box.innerHTML = `<div class="panel"><h2>오늘 <span class="badge">${mk}</span></h2>
-      <form id="asst-form" class="asst-ask" autocomplete="off"><input id="asst-q" maxlength="200" placeholder="물어보기 (예: 삼성전자 점수 왜 낮아? · 오늘 뭐 해야 해? · help)" aria-label="비서에게 묻기">
+      <form id="asst-form" class="asst-ask" autocomplete="off"><input id="asst-q" maxlength="200" placeholder="${isCoin() ? "물어보기 (예: 코인 상위는? · 비트코인 분석해 줘 · help)" : "물어보기 (예: 삼성전자 점수 왜 낮아? · 오늘 뭐 해야 해? · help)"}" aria-label="비서에게 묻기">
         <button class="btn-primary" type="submit">묻기</button><button class="ghost" type="button" id="asst-help">물어볼 수 있는 것</button></form>
       <div id="asst-out"></div></div>
     <div class="panel" id="asst-brief">${loading}</div>`;

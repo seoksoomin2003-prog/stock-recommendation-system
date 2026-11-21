@@ -1,14 +1,14 @@
 // 명령창과 단축키: '/' 또는 Ctrl/⌘+K로 열고, 종목 코드·회사명·탭 이름·명령을 쳐서 바로 이동한다.  읽기 전용 이동만 한다.
 "use strict";
 const CMD_ALIASES = {
-  today: ["오늘", "비서", "할일", "today", "brief"],
+  today: ["오늘", "비서", "할일", "today", "brief"], coin: ["코인 순위", "coin rank"],
   overview: ["개요", "시장", "overview", "ov"], stock: ["종목", "stock", "des"], qsf: ["점수", "score", "qsf", "순위", "rank"],
   map: ["지도", "히트맵", "heatmap", "map", "imap", "rrg", "순환"], compare: ["비교", "compare", "comp"],
   macro: ["거시", "macro", "eco", "일정", "캘린더", "calendar"], watch: ["관심", "관심종목", "watch", "watchlist"],
   portfolio: ["포트폴리오", "포트", "portfolio", "port", "위험", "risk"], assist: ["보조", "매매", "assist", "알림", "alert", "alrt"],
   model: ["모델", "model"], lab: ["연구", "연구실", "lab", "기록"],
 };
-const CMD_MARKETS = { US: ["미국", "us", "usa"], KR: ["한국", "kr", "korea"] };
+const CMD_MARKETS = { US: ["미국", "us", "usa"], KR: ["한국", "kr", "korea"], COIN: ["코인", "coin", "crypto", "가상자산"] };
 
 function cmdTabs() {
   return [...document.querySelectorAll(".tabs button")].map((b) => ({ tab: b.dataset.tab, label: b.textContent.trim(), key: "" }));
@@ -83,6 +83,6 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "/") { e.preventDefault(); cmdOpen(); return; }
   if (e.key === "?") { e.preventDefault(); cmdOpen(); return; }
   if (/^[1-9]$/.test(e.key)) { const g = document.querySelectorAll(".groups button")[+e.key - 1]; if (g) { showGroup(g.dataset.group); window.scrollTo(0, 0); } return; }
-  if (e.key === "m" || e.key === "M") setMarket(state.market === "US" ? "KR" : "US");
+  if (e.key === "m" || e.key === "M") setMarket({ US: "KR", KR: "COIN", COIN: "US" }[state.market] || "US");
 });
 $("#cmdbtn").onclick = cmdOpen;

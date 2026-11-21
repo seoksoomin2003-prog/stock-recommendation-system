@@ -3,7 +3,10 @@
 const $ = (s, el = document) => el.querySelector(s);
 const STATUS_KO = { REAL: "실데이터", STALE: "지연·오래됨", UNAVAILABLE: "데이터 없음", FROZEN: "고정", EXPERIMENTAL: "실험" };
 const state = { tab: "overview", ticker: null, range: "1y", loaded: {}, market: "US" };
-try { if (localStorage.getItem("qse-market") === "KR") state.market = "KR"; } catch (e) { /* storage unavailable */ }
+try { const m = localStorage.getItem("qse-market"); if (m === "KR" || m === "COIN") state.market = m; } catch (e) { /* storage unavailable */ }
+// 코인 시장은 주식 탭을 쓰지 않습니다: '오늘'과 '코인' 묶음만 보입니다.  주식 시장에서는 '코인' 묶음이 숨습니다.
+const isCoin = () => state.market === "COIN";
+const groupShown = (g) => (isCoin() ? g === "today" || g === "coin" : g !== "coin");
 const KR_RE = /^[0-9][0-9A-Z]{5}$/;
 const marketOf = (t) => (KR_RE.test(String(t).toUpperCase()) ? "KR" : "US");
 const isKR = () => state.market === "KR";
@@ -100,7 +103,7 @@ function paintGroups(tab) {
   const g = groupOf(tab);
   if (!g) return;
   groupTab[g] = tab;
-  document.querySelectorAll(".groups button").forEach((b) => b.classList.toggle("on", b.dataset.group === g));
+  document.querySelectorAll(".groups button").forEach((b) => { b.classList.toggle("on", b.dataset.group === g); b.hidden = !groupShown(b.dataset.group); });
   const mine = [...document.querySelectorAll(".tabs button")].filter((b) => { b.hidden = b.dataset.group !== g; return !b.hidden; });
   document.querySelector(".tabs").hidden = mine.length < 2;
 }
@@ -109,6 +112,7 @@ function showGroup(g) {
   if (first) show(groupTab[g] || first.dataset.tab);
 }
 function show(tab, push = true) {
+  if (!groupShown(groupOf(tab) || "today")) tab = isCoin() ? "coin" : "today";       // 지금 시장에 없는 탭이면 그 시장의 첫 화면으로
   state.tab = tab;
   if (healthAt && Date.now() - healthAt > 30000) loadHealth();      // 탭을 옮길 때도 화면이 업데이트됐는지 확인합니다
   document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
@@ -120,6 +124,7 @@ function show(tab, push = true) {
 }
 function paintMarket() {
   $("#market").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.m === state.market));
+  $("#q").placeholder = state.market === "COIN" ? "코인에 대해 묻기 (예: 비트코인, 코인 상위는?)" : "종목 코드 또는 한글 회사명";
 }
 function setMarket(m, render = true) {
   if (m === state.market) return;
@@ -161,6 +166,7 @@ async function searchKr(q) {
 }
 $("#search").onsubmit = (e) => {
   e.preventDefault(); const t = $("#q").value.trim(); if (!t) return;
+  if (isCoin()) { askAssistant(t); $("#q").value = ""; $("#q").blur(); return; }       // 코인 시장에서는 검색창이 비서에게 묻습니다
   /[가-힣]/.test(t) ? searchKr(t) : openTicker(t);
   $("#q").value = ""; $("#q").blur();
 };

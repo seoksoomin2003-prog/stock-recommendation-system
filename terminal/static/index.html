@@ -9,7 +9,7 @@
 <body>
 <header class="top">
   <div class="brand">퀀트 터미널 <span class="ver">QSF 1.1</span></div>
-  <span class="seg" id="market" role="group" aria-label="시장"><button type="button" data-m="US">미국</button><button type="button" data-m="KR">한국</button></span>
+  <span class="seg" id="market" role="group" aria-label="시장"><button type="button" data-m="US">미국</button><button type="button" data-m="KR">한국</button><button type="button" data-m="COIN">코인</button></span>
   <form id="search" class="search" autocomplete="off">
     <input id="q" name="q" placeholder="종목 코드 또는 한글 회사명" maxlength="30" aria-label="종목 코드 또는 회사명">
     <button type="submit">조회</button>
@@ -28,6 +28,7 @@
   <button type="button" data-group="account">내 계좌</button>
   <button type="button" data-group="score">점수</button>
   <button type="button" data-group="verify">검증·기록</button>
+  <button type="button" data-group="coin" hidden>코인</button>
 </nav>
 <nav class="tabs" role="tablist" hidden>
   <button data-tab="today" data-group="today" class="on">오늘</button>
@@ -43,6 +44,7 @@
   <button data-tab="qsf" data-group="score">점수</button>
   <button data-tab="model" data-group="verify">모델</button>
   <button data-tab="lab" data-group="verify">연구실</button>
+  <button data-tab="coin" data-group="coin">코인</button>
 </nav>
 <main>
   <section id="tab-today" class="tab on"></section>
@@ -58,6 +60,7 @@
   <section id="tab-model" class="tab"></section>
   <section id="tab-lab" class="tab"></section>
   <section id="tab-qsf" class="tab"></section>
+  <section id="tab-coin" class="tab"></section>
 </main>
 <footer class="foot">
   무료 공개 데이터(Yahoo Finance 지연 시세 · SEC EDGAR · FRED)만 사용합니다. 실시간 시세가 아니며, 투자 권유가 아닌 연구용 정보입니다.
@@ -78,6 +81,7 @@
 <script src="sectorpicks.js"></script>
 <script src="peers.js"></script>
 <script src="assistant.js"></script>
+<script src="coin.js"></script>
 <script src="command.js"></script>
 <script src="collect.js"></script>
 </body>
