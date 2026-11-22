@@ -19,6 +19,8 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 MEETS, PARTLY, FAILS, UNKNOWN = "MEETS", "PARTLY", "FAILS", "UNKNOWN"
 VERDICT_KO = {MEETS: "기준에 맞음", PARTLY: "일부 맞음", FAILS: "맞지 않음", UNKNOWN: "자료 부족"}
 MEET_SHARE, PART_SHARE, MIN_KNOWN = 0.70, 0.45, 4
+MIN_MET = 4            # "meets" also needs this many criteria actually met (user decision 2026-11-22, before the first record): three of
+#                        four known boxes let stocks with few figures on file, financials above all, meet a view on thin ground
 AGREE, TEAM_SIZE = 3, 10
 FOLDERS = {"KR": "five_views_kr", "US": "five_views_us"}
 FINANCIAL = ("Financial Services", "금융")
@@ -182,7 +184,9 @@ VIEWS: List[Tuple[str, str, str, Callable[[Dict[str, Any]], List[Check]]]] = [
 # its balance sheet is clean, and a stock under its 200-day line is not a trend follower's because its earnings grew.  The same
 # holds when a core figure is missing: a view cannot be "met" on the boxes around the one it is about (review 2026-11-22, before
 # the first record: 9 US stocks met the Buffett view with no return on equity, 33 Korean stocks the Lynch view with no PEG).
-CORE = {"BUFFETT": (0,), "MUNGER": (0,), "GRAHAM": (0, 1), "LYNCH": (0,), "DRUCKENMILLER": (1,)}
+# Munger's core is two (user decision 2026-11-22, before the first record): nothing to avoid AND return on equity.  With the first
+# alone 293 of 501 US and 95 of 300 Korean stocks met the view, among them stocks with a return on equity of 10%.
+CORE = {"BUFFETT": (0,), "MUNGER": (0, 4), "GRAHAM": (0, 1), "LYNCH": (0,), "DRUCKENMILLER": (1,)}
 
 
 # ---------------------------------------------------------------------------------------------- one stock
@@ -194,11 +198,13 @@ def read_view(key: str, name: str, motto: str, checks: List[Check]) -> Dict[str,
     verdict = UNKNOWN if len(known) < MIN_KNOWN else MEETS if share >= MEET_SHARE else PARTLY if share >= PART_SHARE else FAILS
     core = [checks[i] for i in CORE.get(key, ()) if i < len(checks)]
     core_missed, core_unknown = [c for c in core if c[1] is False], [c for c in core if c[1] is None]
-    capped = verdict == MEETS and bool(core_missed or core_unknown)
+    few = len(met) < MIN_MET
+    capped = verdict == MEETS and bool(core_missed or core_unknown or few)
     if capped:
         verdict = PARTLY
     why = " ".join(x for x in (f"핵심 기준({', '.join(c[0] for c in core_missed)})을 채우지 못해 '맞음'으로 보지 않습니다." if core_missed else "",
-                               f"핵심 기준({', '.join(c[0] for c in core_unknown)})을 확인할 자료가 없어 '맞음'으로 보지 않습니다." if core_unknown else "") if x) if capped else ""
+                               f"핵심 기준({', '.join(c[0] for c in core_unknown)})을 확인할 자료가 없어 '맞음'으로 보지 않습니다." if core_unknown else "",
+                               f"충족한 기준이 {MIN_MET}개에 못 미쳐 '맞음'으로 보지 않습니다." if few else "") if x) if capped else ""
     line = f"{name}({motto}): 기준 {len(known)}개 중 {len(met)}개 충족, {VERDICT_KO[verdict]}." + (f" {why}" if why else "")
     if verdict == UNKNOWN:
         line = f"{name}({motto}): 확인할 수 있는 기준이 {len(known)}개뿐이라 판단하지 않았습니다."

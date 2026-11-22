@@ -72,13 +72,28 @@ def test_a_view_is_not_met_when_its_core_figure_is_missing():
     assert by["BUFFETT"]["met"] == 5 and by["BUFFETT"]["known"] == 6 and by["BUFFETT"]["verdict"] == fv.PARTLY and by["BUFFETT"]["core_unknown"] == ["ROE 15% 이상"]
     assert by["BUFFETT"]["line"].endswith("일부 맞음. 핵심 기준(ROE 15% 이상)을 확인할 자료가 없어 '맞음'으로 보지 않습니다.") and by["BUFFETT"]["capped"].startswith("핵심 기준(ROE 15% 이상)")
     assert "자본이 0 이하라 부채/자본 계산 안 됨(기준: 부채/자본 0.8배 이하)" in by["BUFFETT"]["detail"] and "99" not in by["BUFFETT"]["detail"]      # the stored 99 is a mark, not a ratio
-    assert by["MUNGER"]["verdict"] == fv.MEETS and by["MUNGER"]["capped"] == ""                                                       # its own core figure is there
+    assert by["MUNGER"]["verdict"] == fv.PARTLY and by["MUNGER"]["core_unknown"] == ["ROE 15% 이상"]                                   # return on equity is Munger's core too
+    assert by["DRUCKENMILLER"]["verdict"] == fv.MEETS and by["DRUCKENMILLER"]["capped"] == ""                                         # its own core figure is there
     no_growth = {v["key"]: v for v in fv.opinions(long_snap(eps3=None), SWING)["views"]}["LYNCH"]
     assert no_growth["checks"][0] == {"ask": "PEG(PER ÷ 이익 성장률) 1 이하", "met": None, "shown": "PEG 자료 없음"} and no_growth["met"] == no_growth["known"] == 5 and no_growth["verdict"] == fv.PARTLY
     both = {v["key"]: v for v in fv.opinions(long_snap(pe=40.0, pb=None), SWING)["views"]}["GRAHAM"]
     assert both["verdict"] == fv.PARTLY and "채우지 못해" in both["capped"] and "확인할 자료가 없어" in both["capped"]                  # one core box missed, the other not known
     from pathlib import Path
     assert '"debt_equity": 99.0 if (eq is not None and eq <= 0 and debt)' in (Path(fv.__file__).parent / "qsf" / "fundamentals.py").read_text(encoding="utf-8") and fv.NO_EQUITY == 99.0
+
+
+def test_meets_needs_four_criteria_met_and_munger_needs_return_on_equity():
+    """User decision 2026-11-22 ("둘 다 적용해"), before the first record.  On the 2026-11-20 record three of four known boxes made
+    Allstate (two loss years of five) meet the Buffett view, and Samsung Electronics met the Munger view at a 10.4% return on equity."""
+    assert fv.MIN_MET == 4 and fv.CORE["MUNGER"] == (0, 4) and fv.munger({})[4][0] == "ROE 15% 이상" and fv.munger({})[0][0] == "경고 공시와 회피 표시가 없음"
+    thin = {v["key"]: v for v in fv.opinions(long_snap(op=None, gross=None, fcf=None, de=None, cur=None, years=0.6), SWING)["views"]}["BUFFETT"]
+    assert (thin["met"], thin["known"]) == (3, 4) and thin["verdict"] == fv.PARTLY and thin["capped"] == "충족한 기준이 4개에 못 미쳐 '맞음'으로 보지 않습니다."
+    assert thin["line"] == "버핏식(좋은 사업을 적정한 값에): 기준 4개 중 3개 충족, 일부 맞음. 충족한 기준이 4개에 못 미쳐 '맞음'으로 보지 않습니다."
+    four = {v["key"]: v for v in fv.opinions(long_snap(op=None, gross=None, fcf=None, de=None, cur=None), SWING)["views"]}["BUFFETT"]
+    assert (four["met"], four["known"]) == (4, 4) and four["verdict"] == fv.MEETS and four["capped"] == ""
+    plain = {v["key"]: v for v in fv.opinions(long_snap(roe=0.10), SWING)["views"]}
+    assert (plain["MUNGER"]["met"], plain["MUNGER"]["known"]) == (6, 7) and plain["MUNGER"]["verdict"] == fv.PARTLY and plain["MUNGER"]["core_missed"] == ["ROE 15% 이상"]
+    assert plain["MUNGER"]["capped"] == "핵심 기준(ROE 15% 이상)을 채우지 못해 '맞음'으로 보지 않습니다." and plain["GRAHAM"]["verdict"] == fv.MEETS      # Graham does not ask for it
 
 
 def test_a_missing_half_of_a_criterion_is_not_read_as_a_low_figure():
