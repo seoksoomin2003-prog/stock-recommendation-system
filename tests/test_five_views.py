@@ -30,7 +30,7 @@ def test_a_stock_that_meets_every_checklist_is_read_by_all_five_views_and_joins_
     first = op["views"][0]
     assert first["line"] == "버핏식(좋은 사업을 적정한 값에): 기준 7개 중 7개 충족, 기준에 맞음." and first["detail"].startswith("맞는 것: ROE 20.0%, 영업이익률 25.0%")
     out = fv.lines(op)
-    assert len(out) == 7 and out[5].startswith("다섯 관점 가운데 5개가 '기준에 맞음'(버핏식, 멍거식, 그레이엄식, 린치식, 드러켄밀러식).") and "실존 투자자의 실제 의견이 아닙니다" in out[6]
+    assert len(out) == 7 and out[5] == "다섯 관점 가운데 5개가 '기준에 맞음'(버핏식, 멍거식, 그레이엄식, 린치식, 드러켄밀러식). 과반이 맞다고 봤습니다." and "실존 투자자의 실제 의견이 아닙니다" in out[6]
     assert "매수" not in " ".join(out) and "매도" not in " ".join(out)                                    # criteria met, never an order to trade
     f = fv.figures(long_snap(), SWING)
     assert f["percentile"] == 0.80                                                                       # the stock's own percentile, not the credit spread's
@@ -140,16 +140,19 @@ def test_the_team_list_needs_a_majority_and_can_be_empty(tmp_path):
 from tests.test_terminal_1 import _loopback_only, live  # noqa: E402,F401  (fixtures: a local server on 127.0.0.1 only)
 
 
-def test_the_team_list_has_a_route_and_the_score_tab_shows_both(live):
+def test_the_score_card_shows_the_five_views_and_no_screen_shows_the_team_list(live):
+    """User decision 2026-11-22: the market-wide team list leaves the screens (its daily record stays)."""
+    import urllib.error
     import urllib.request
     from pathlib import Path
     url, _ = live
-    with urllib.request.urlopen(f"{url}/api/five/team?market=KR", timeout=5) as r:
-        got = json.loads(r.read())
-    assert "verdicts" not in got
-    assert got["status"] == "UNAVAILABLE" and got["picked"] == [] and got["lines"] == [] and got["agree_needed"] == fv.AGREE      # no scan in the scratch terminal: an empty list, not an error
+    try:
+        urllib.request.urlopen(f"{url}/api/five/team?market=KR", timeout=5)
+        raise AssertionError("the team list still has a route")
+    except urllib.error.HTTPError as exc:
+        assert exc.code == 404
     page = (Path(fv.__file__).parent / "static" / "qsf.js").read_text(encoding="utf-8")
-    assert "${qsfFiveHtml(d.five_views)}" in page and "/api/five/team?market=" in page and '<div id="qsffive"></div>' in page
-    assert "rank: () => { qsfRank(); qsfFive(); qsfCap(); qsfChanges(); }" in page
+    assert "${qsfFiveHtml(d.five_views, d.ticker, d.market)}" in page and "/api/five/team" not in page and "qsffive" not in page and "qsfFive()" not in page
+    assert "rank: () => { qsfRank(); qsfCap(); qsfChanges(); }" in page
     service = (Path(fv.__file__).parent / "qsf" / "service.py").read_text(encoding="utf-8")
     assert '"five_views": five' in service and "never fails the evaluation" in service

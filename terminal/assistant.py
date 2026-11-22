@@ -25,7 +25,7 @@ SHOWN_ORDERS = 3
 SWING_DAYS_LEFT = 3
 EX_DIVIDEND_DAYS = 5       # an ex-dividend date of a holding or a watched stock within this many days is listed
 PART_KO = {"context": "지수와 거시 일정", "account": "보유 종목 점검", "plan": "주문 계획", "market": "시장 상태", "earnings": "실적 일정", "alerts": "내 알림 조건", "job": "자료 수집 상태",
-           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시", "gaps": "재무 기준에 따른 점수 차이", "dividends": "배당락일", "five": "다섯 관점 팀 목록"}
+           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시", "gaps": "재무 기준에 따른 점수 차이", "dividends": "배당락일"}
 # the portfolio's own alert codes (terminal.portfolio.alerts) and the exit readings (automation.exit_alerts)
 ALERT_LEVEL = {"STOP_HIT": "ACT", "NEAR_STOP": "ACT", "QSF_EXIT": "ACT", "QSF_THESIS_INVALIDATED": "ACT", "QSF_REDUCE": "ACT",
                "TARGET_HIT": "DUE", "NO_STOP": "DUE", "OVERWEIGHT": "DUE", "NO_PRICE": "DUE", "NO_STYLE": "DUE", "SECTOR_OVER": "DUE",
@@ -436,17 +436,6 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
     part("marked", marked)
     part("gaps", gaps)
 
-    def five() -> List[Dict[str, Any]]:
-        t = five_team(terminal, market)
-        if not t.get("session"):
-            return []
-        if not t["picked"]:
-            return [item("INFO", "FIVE_TEAM", f"다섯 관점 팀 목록: 다섯 중 {t['agree_needed']}개 이상이 '기준에 맞음'으로 본 종목이 없습니다({t['judged']}종목 가운데). 알려진 원칙을 기준값으로 옮긴 참고 목록이고 점수와 무관합니다.", tab="qsf")]
-        names = ", ".join(f"{r['name']}({r['agree']}개)" for r in t["picked"][:5])
-        return [item("INFO", "FIVE_TEAM", f"다섯 관점 팀 목록: {t['judged']}종목 가운데 {t['eligible']}종목이 과반 합의에 들었습니다. 합의가 많은 순: {names}{' 등' if len(t['picked']) > 5 else ''}. "
-                     "'다섯 관점 팀 목록은?'으로 전체를 봅니다. 실존 투자자의 의견이 아니라 알려진 원칙을 기준값으로 옮긴 참고 목록이고, 점수와 무관하며 수익으로 검증하지 않았습니다.", tab="qsf")]
-
-    part("five", five)
     part("changes", lambda: change_items(qsf_changes.report(terminal.qsf.latest(market), terminal.qsf.ledger, market, "SWING"),
                                          {h["ticker"] for h in (seen.get("book") or {}).get("holdings") or []}))
     part("readings", readings)
@@ -481,7 +470,9 @@ FACTOR_KO = {"trend_structure": "추세 구조", "relative_strength": "상대 �
              "vkospi_regime": "한국 변동성 지수", "index_trend": "지수 추세", "breadth": "시장 폭", "usdkrw_regime": "원·달러 환율", "credit_liquidity": "신용 스프레드"}
 BUY_LINE = 70.0
 # (key, an example the screen shows, needs a stock, words that mean it).  Read in this order: the first that fits answers.
-# the five views (terminal/five_views.py): asked with a stock for its five opinions, without one for the team list
+# the five views (terminal/five_views.py): asked with a stock for its five opinions.  The portfolio they make is a feature of its
+# own, asked for at a stock and made only then (terminal/five_portfolio.py, user decision 2026-11-22); without a stock the
+# answer says how to ask.
 # "다섯" and "관점" alone are not enough: "장기 관점에서 어때", "다섯 거래일 뒤 범위", "상위 다섯 종목" are other questions
 FIVE_WORDS = ("다섯 관점", "다섯관점", "5 관점", "5관점", "다섯 명", "다섯명", "5인", "버핏", "멍거", "그레이엄", "그레리엄", "그레이험", "린치", "드러켄", "거장", "팀 목록", "팀목록")
 STOCK_INTENTS = (
@@ -494,7 +485,8 @@ STOCK_INTENTS = (
     ("RANK", "삼성전자 몇 등이야?", ("몇 등", "몇등", "순위", "등수")),
     ("WHY", "삼성전자 점수 왜 낮아?", ("왜", "이유", "점수")),
     ("ANALYZE", "삼성전자 분석해 줘", ("분석", "리포트", "의견", "전망", "어때", "평가", "노트", "살펴")),
-    ("FIVE", "삼성전자 다섯 관점은?", FIVE_WORDS),         # last in the list, read first: see read_question
+    ("FIVE", "삼성전자 다섯 관점은?", FIVE_WORDS),         # read before the others: see read_question
+    ("PORTFOLIO", "삼성전자 포트폴리오 받아보기", ("포트폴리오",)),
 )
 PLAIN_INTENTS = (
     ("HELP", "뭘 물어볼 수 있어?", ("도움", "물어볼", "질문 목록", "질문목록", "help", "사용법", "명령어")),
@@ -508,7 +500,6 @@ PLAIN_INTENTS = (
     ("HOLDINGS", "내 보유 종목 괜찮아?", ("보유", "내 종목", "계좌", "포트")),
     ("TOP", "오늘 상위 종목은?", ("상위", "후보", "추천", "뭐 살", "뭘 살", "1등", "1위")),
     ("TODAY", "오늘 뭐 해야 해?", ("오늘", "할 일", "할일", "브리핑", "뭐 해", "뭘 해", "요약")),
-    ("TEAM", "다섯 관점 팀 목록은?", FIVE_WORDS),
 )
 EXAMPLES = [e for _, e, _ in PLAIN_INTENTS[::-1]] + [e for _, e, _ in STOCK_INTENTS[::-1]]
 EXAMPLE_STOCK = {"KR": "삼성전자", "US": "AAPL"}       # the stock the example questions name: one of the market on screen
@@ -560,6 +551,8 @@ def find_stock(text: str, rows_by_market: Dict[str, List[Dict[str, Any]]]) -> Op
 
 def read_question(text: str, has_stock: bool) -> Optional[str]:
     low = text.lower()
+    if has_stock and "포트폴리오" in low:                    # "삼성전자 포트폴리오 받아보기": asking is the button
+        return "PORTFOLIO"
     if any(w in low for w in FIVE_WORDS):                   # "버핏이라면 어때": the five views, before "어때" is read as a note
         return "FIVE" if has_stock else "TEAM"
     if has_stock:
@@ -846,9 +839,9 @@ def _others(name: str, skip: str, strategy: str) -> List[str]:
     """What to ask next about the same stock: the other fixed questions, with its name written in."""
     tail = " 장기" if strategy == "LONG_TERM" else ""
     asks = {"ANALYZE": f"{name} 분석해 줘", "WHY": f"{name}{tail} 점수 왜 이래?", "BUY_CHECK": f"{name}{tail} 사도 돼?", "STOP": f"{name}{tail} 손절 어디?", "RISK": f"{name} 위험해?", "RANGE": f"{name} 얼마까지 움직일까?",
-            "EARNINGS": f"{name} 실적 언제?", "RANK": f"{name}{tail} 몇 등이야?", "SELL_CHECK": f"{name} 팔아야 해?", "FIVE": f"{name} 다섯 관점은?"}
+            "EARNINGS": f"{name} 실적 언제?", "RANK": f"{name}{tail} 몇 등이야?", "SELL_CHECK": f"{name} 팔아야 해?", "FIVE": f"{name} 다섯 관점은?", "PORTFOLIO": f"{name} 포트폴리오 받아보기"}
     order = {"ANALYZE": ("WHY", "BUY_CHECK", "STOP", "RANGE"), "WHY": ("ANALYZE", "BUY_CHECK", "STOP", "RISK"), "BUY_CHECK": ("ANALYZE", "WHY", "STOP", "RISK"), "STOP": ("RANGE", "BUY_CHECK", "RISK"), "RISK": ("WHY", "STOP", "RANGE"),
-             "RANGE": ("STOP", "RISK", "WHY"), "EARNINGS": ("BUY_CHECK", "WHY"), "RANK": ("WHY", "BUY_CHECK"), "SELL_CHECK": ("WHY", "STOP", "RISK"), "FIVE": ("ANALYZE", "WHY", "RISK")}
+             "RANGE": ("STOP", "RISK", "WHY"), "EARNINGS": ("BUY_CHECK", "WHY"), "RANK": ("WHY", "BUY_CHECK"), "SELL_CHECK": ("WHY", "STOP", "RISK"), "FIVE": ("PORTFOLIO", "ANALYZE", "WHY"), "PORTFOLIO": ("FIVE", "ANALYZE", "RISK")}
     out = [asks[k] for k in order.get(skip, ()) if k != skip]
     if skip == "WHY":
         out.insert(0, f"{name} 점수 왜 이래?" if strategy == "LONG_TERM" else f"{name} 장기 점수 왜 이래?")
@@ -1130,12 +1123,19 @@ def five_opinions(terminal: Any, stock: Dict[str, str]) -> Dict[str, Any]:
 
 
 def five_team(terminal: Any, market: str) -> Dict[str, Any]:
-    """The team list of the newest scan: every scanned stock read by the five views (``five_views.team``)."""
-    from terminal import analyst_extra as ax
+    """The team list of the newest scan: every scanned stock read by the five views (``five_views.team``).  Since 2026-11-22 it
+    is read by the daily record only; no screen shows it."""
     from terminal import five_views as fv
     session = terminal.qsf.latest(market).get("session")
     if not session:
         return {"picked": [], "eligible": 0, "judged": 0, "meets_by_view": {k: 0 for k, *_ in fv.VIEWS}, "agree_needed": fv.AGREE, "size": fv.TEAM_SIZE, "session": None}
+    return {**_five_seen(terminal, market, session)["team"], "session": session}
+
+
+def _five_seen(terminal: Any, market: str, session: str) -> Dict[str, Any]:
+    """Every scanned stock of the session read by the five views, once per session: {survey, team}."""
+    from terminal import analyst_extra as ax
+    from terminal import five_views as fv
     key = (str(terminal.base), market, session, terminal.qsf.ledger._index_stamp())
     if key not in _FIVE:
         snaps = [s for s in _snaps(terminal, market, session) if s.get("data_date") == session]
@@ -1153,9 +1153,33 @@ def five_team(terminal: Any, market: str) -> Dict[str, Any]:
                 return {}
         stocks = [{"ticker": t, "name": (rows.get(t) or {}).get("name"), "sector": sector.get(t), "long": long_.get(t), "swing": swing.get(t), "info": info(t), "marks": ax.marks_of(rows.get(t) or {})}
                   for t in sorted(set(long_) | set(swing)) if t not in BENCHMARKS]          # the index fund the scan carries is not a stock to pick
-        _FIVE.clear()
-        _FIVE[key] = {**fv.team(stocks), "session": session}
+        seen = fv.survey(stocks)
+        if len(_FIVE) > 3:
+            _FIVE.clear()
+        _FIVE[key] = {"survey": seen, "team": fv.team_of(seen)}
     return _FIVE[key]
+
+
+def five_portfolio(terminal: Any, stock: Dict[str, str]) -> Dict[str, Any]:
+    """The portfolio around one stock (terminal/five_portfolio.py), made when asked: by the card's button or by the question."""
+    from terminal import five_portfolio as fp
+    market = stock["market"]
+    session = terminal.qsf.latest(market).get("session")
+    if not session:
+        return {"status": "NO_SCAN", "rules": fp.RULES, "seed": stock["ticker"], "market": market, "rows": [], "lines": [], "seed_lines": [], "by_view": [], "reason": "저장된 스캔 기록이 없습니다."}
+    return {**fp.build(_five_seen(terminal, market, session)["survey"], stock["ticker"]), "market": market, "session": session, "name": stock.get("name")}
+
+
+def portfolio_answer(terminal: Any, stock: Dict[str, str], follow: List[str]) -> Dict[str, Any]:
+    from terminal import five_views as fv
+    p = five_portfolio(terminal, stock)
+    head = f"{stock['name']}({stock['ticker']})"
+    if p["status"] not in ("OK", "EMPTY"):
+        return reply(f"{head} 다섯 관점 포트폴리오", p["reason"], [{"title": "이 답의 한계", "lines": [fv.NOTE]}], "qsf", follow)
+    lines = p["lines"]
+    return reply(f"{head} 다섯 관점 포트폴리오", lines[0],
+                 [{"title": f"{stock['name']}에 대한 다섯 의견", "lines": p["seed_lines"]}, {"title": "포트폴리오", "lines": lines[1:-2]},
+                  {"title": "이 포트폴리오의 한계", "lines": [f"{p['session']} 스캔 기록으로 지금 만들었습니다. 저장해 두지 않으며, 다시 물으면 그때의 기록으로 다시 만듭니다."] + lines[-2:]}], "qsf", follow)
 
 
 def five_answer(terminal: Any, stock: Dict[str, str], follow: List[str]) -> Dict[str, Any]:
@@ -1167,7 +1191,7 @@ def five_answer(terminal: Any, stock: Dict[str, str], follow: List[str]) -> Dict
         return reply(f"{head} 다섯 관점", f"{stock['name']}의 저장된 자료가 모자라 다섯 관점 모두 판단하지 않았습니다.", [{"title": "이 답의 한계", "lines": [fv.NOTE]}], "stock", follow)
     return reply(f"{head} 다섯 관점", fv.team_line(op),
                  [{"title": "다섯 관점", "lines": [v["line"] + (f" {v['detail']}" if v["detail"] and v["verdict"] != fv.UNKNOWN else "") for v in op["views"]]},
-                  {"title": "팀으로 보면", "lines": [fv.team_line(op), f"팀 목록은 다섯 관점 중 {fv.AGREE}개 이상이 '기준에 맞음'으로 본 종목을, 합의가 많은 순으로 최대 {fv.TEAM_SIZE}개 담습니다."]},
+                  {"title": "다섯을 합쳐 보면", "lines": [fv.team_line(op), f"'{stock['name'] if stock['market'] == 'KR' else stock['ticker']} 포트폴리오 받아보기'라고 묻거나 점수 카드의 버튼을 누르면, 이 종목을 중심으로 다섯 관점이 만든 포트폴리오를 그때 작성합니다."]},
                   {"title": "이 답의 한계", "lines": [fv.NOTE]}], "stock", follow, _basis(snap, stock["market"]) if snap else None)
 
 
@@ -1180,6 +1204,8 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
         return analyst_note(terminal, stock, rows, _others(name if market == "KR" else ticker, intent, strategy))
     if intent == "FIVE":
         return five_answer(terminal, stock, _others(name if market == "KR" else ticker, intent, strategy))
+    if intent == "PORTFOLIO":
+        return portfolio_answer(terminal, stock, _others(name if market == "KR" else ticker, intent, strategy))
     row, snap = rows.get(strategy), _snap(terminal, stock, strategy)
     head, kind = f"{name}({ticker})", STRATEGY_KO[strategy]
     if row is None or snap is None or row.get("score") is None:
@@ -1374,12 +1400,14 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
                      {"title": "쓰는 법", "lines": [f"종목은 '{example_stock(market)}' 자리에 코드, 티커, 회사명을 적습니다(스캔 대상: 미국 S&P 500, 한국 시가총액 상위 300).", "'장기'를 넣으면 장기 점수로, 없으면 스윙 점수로 답합니다.",
                                                 "이 목록은 'help', '도움말', '?'로 언제든 다시 볼 수 있습니다."]}])
         return {**got, "examples": examples_for(market)}
-    if intent == "TEAM":
+    if intent == "TEAM":                                    # the five views asked without a stock: say how to ask
         from terminal import five_views as fv
-        t = five_team(terminal, market)
-        out = fv.team_lines(t, where)
-        ask = [f"{r['name'] if market == 'KR' else r['ticker']} 다섯 관점은?" for r in t["picked"][:3]]
-        return reply(f"다섯 관점 팀 목록({where})", out[0], [{"title": "팀 목록" if t["picked"] else "목록 없음", "lines": out[1:-1]}, {"title": "이 목록의 한계", "lines": [out[-1], switch]}], "qsf", ask + ["오늘 상위 종목은?"])
+        eg = example_stock(market)
+        return reply("다섯 관점은 종목을 넣어 묻습니다", f"종목을 넣어 물어 주세요. 예: '{eg} 다섯 관점은?', '{eg} 포트폴리오 받아보기'.",
+                     [{"title": "할 수 있는 것", "lines": [f"'{eg} 다섯 관점은?': 그 종목에 대한 다섯 관점의 의견을 한두 줄씩 봅니다. 점수 카드에도 나옵니다.",
+                                                   f"'{eg} 포트폴리오 받아보기': 그 종목을 중심으로 다섯 관점이 만든 포트폴리오를 그때 만들어 보여 줍니다. 점수 카드의 '포트폴리오 받아보기' 버튼과 같습니다.",
+                                                   "포트폴리오는 요청할 때만 만듭니다. 시장 전체에서 고른 목록을 자동으로 띄우지 않습니다."]},
+                      {"title": "한계", "lines": [fv.NOTE, switch]}], "qsf", [f"{eg} 다섯 관점은?", f"{eg} 포트폴리오 받아보기"])
     if intent == "TODAY":
         brief = briefing(terminal, market)
         groups = [{"title": LEVEL_KO[lv], "lines": [i["text"] for i in brief["items"] if i["level"] == lv][:6]} for lv in LEVELS]

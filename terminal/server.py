@@ -168,7 +168,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
         ("POST", "/api/settings"): lambda q, b: t.settings_set(b),
         ("GET", "/api/sizing"): lambda q, b: t.sizing(q.get("t", ""), q.get("entry"), q.get("stop"), q.get("equity"), q.get("style"), _market(q.get("market", "US"))),
         ("GET", "/api/kr/search"): lambda q, b: {"items": t.qsf.kr_search(q.get("q", ""))},
-        ("GET", "/api/five/team"): lambda q, b: _five_team(t, "KR" if q.get("market") == "KR" else "US"),
+        ("GET", "/api/five/portfolio"): lambda q, b: _five_portfolio(t, q.get("t", ""), "KR" if q.get("market") == "KR" else "US"),
         ("GET", "/api/symbols"): lambda q, b: symbols.suggest(symbols.universe({m: assistant._rows(t, m) for m in ("US", "KR")}), q.get("q", ""), "KR" if q.get("market") == "KR" else "US"),
         ("GET", "/api/model/plan"): lambda q, b: t.model_plan(),
         ("GET", "/api/lab/status"): lambda q, b: t.lab.status(),
@@ -338,11 +338,13 @@ class _Server(ThreadingHTTPServer):
         log.error("request failed: %s\n%s", type(exc).__name__, traceback.format_exc())
 
 
-def _five_team(t, market: str):
-    """The five-views team list of the newest scan with its lines as the assistant words them."""
+def _five_portfolio(t, ticker: str, market: str):
+    """The portfolio around one stock, made from the five views when the card's button asks for it (terminal/five_portfolio.py).
+    Nothing is stored and nothing is fetched: it reads the newest recorded scan."""
     from terminal import five_views as fv
-    team = {k: v for k, v in assistant.five_team(t, market).items() if k != "verdicts"}       # every stock's letters are for the record, not the screen
-    return {"status": "REAL" if team.get("session") else "UNAVAILABLE", "market": market, **team, "lines": fv.team_lines(team, assistant.MARKET_KO[market]) if team.get("session") else []}
+    code = _code(ticker, market)
+    name = next((r.get("name") for r in assistant._rows(t, market) if r["ticker"] == code), None)
+    return {**assistant.five_portfolio(t, {"ticker": code, "market": market, "name": name or code}), "note": fv.NOTE}
 
 
 def serve(port: int = 8765, base_dir: Path = Path("."), terminal: Optional[Terminal] = None,

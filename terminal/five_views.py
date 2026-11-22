@@ -153,6 +153,9 @@ def lynch(f: Dict[str, Any]) -> List[Check]:
             ("PER 25배 이하", _pe_ok(pe, 25), f"PER {_x(pe)}")]
 
 
+MARKET_ASK = "시장 상태가 50 이상"          # the one criterion that is the same for every stock of a session
+
+
 def druckenmiller(f: Dict[str, Any]) -> List[Check]:
     price, ma200 = f.get("price"), f.get("ma200")
     above = None if not price or not ma200 else price > ma200
@@ -161,7 +164,7 @@ def druckenmiller(f: Dict[str, Any]) -> List[Check]:
     else:
         earn = None if f.get("eps_growth") is None else f["eps_growth"] > 0
         shown = f"최근 주당이익 성장 {_pct(f.get('eps_growth'))}"
-    return [("시장 상태가 50 이상", _at_least(f.get("market_state"), 50.0), "시장 상태 " + ("자료 없음" if f.get("market_state") is None else f"{f['market_state']:.0f}/100")),
+    return [(MARKET_ASK, _at_least(f.get("market_state"), 50.0), "시장 상태 " + ("자료 없음" if f.get("market_state") is None else f"{f['market_state']:.0f}/100")),
             ("가격이 200일선 위", above, "200일선 대비 " + ("자료 없음" if above is None else f"{(price / ma200 - 1) * 100:+.1f}%")),
             ("200일선이 오르는 중", None if f.get("ma200_slope") is None else f["ma200_slope"] > 0, f"200일선 기울기 {_pct(f.get('ma200_slope'))}"),
             ("상대 강도 상위 30%", _at_least(f.get("percentile"), 0.70), f"상대 강도 백분위 {_pct(f.get('percentile'), 0)}"),
@@ -230,7 +233,7 @@ def team_line(op: Dict[str, Any]) -> str:
     if not op["judged"]:
         return "다섯 관점 모두 자료가 모자라 판단하지 않았습니다."
     who = f"({', '.join(op['agree_names'])})" if op["agree_names"] else ""
-    tail = "과반이 맞다고 봐 팀 목록에 듭니다." if op["in_team"] else f"팀 목록은 {AGREE}개 관점 이상이 맞다고 볼 때 듭니다."
+    tail = "과반이 맞다고 봤습니다." if op["in_team"] else f"과반({AGREE}개)에는 못 미칩니다."
     return f"다섯 관점 가운데 {op['agree']}개가 '기준에 맞음'{who}. {tail}"
 
 
@@ -243,21 +246,44 @@ def lines(op: Dict[str, Any], detail: bool = True) -> List[str]:
 
 
 # ---------------------------------------------------------------------------------------------- the team list
-def team(stocks: Iterable[Dict[str, Any]], size: int = TEAM_SIZE) -> Dict[str, Any]:
-    """``stocks``: {ticker, name, long, swing, info, marks}.  The stocks at least ``AGREE`` views find to meet their criteria,
-    most agreement first (then the mean share of criteria met), at most ``size``, equal weight.  It can be empty."""
-    rows, tally, judged, verdicts = [], {key: 0 for key, *_ in VIEWS}, 0, {}
+def _against(v: Dict[str, Any]) -> List[str]:
+    """What a view holds against the stock, the stock's own figures first: a missed core criterion, then the others, and last the
+    market state, which says nothing about one stock."""
+    missed = [(i, c) for i, c in enumerate(v["checks"]) if c["met"] is False]
+    missed.sort(key=lambda ic: (ic[1]["ask"] == MARKET_ASK, ic[0] not in CORE.get(v["key"], ()), ic[0]))
+    return [f"{c['shown']}(기준: {c['ask']})" for _, c in missed][:2]
+
+
+def survey(stocks: Iterable[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """``stocks``: {ticker, name, sector, long, swing, info, marks}.  Every stock at least one view could judge, with each view's
+    verdict and its first reasons for and against.  The team list and the portfolio (terminal/five_portfolio.py) read this."""
+    out: Dict[str, Dict[str, Any]] = {}
     for s in stocks:
         op = opinions(s.get("long"), s.get("swing"), s.get("info"), s.get("marks") or ())
         if not op["judged"]:
             continue
+        views = {v["key"]: {"verdict": v["verdict"], "label": v["verdict_label"], "share": v["share"] or 0.0, "met": v["met"], "known": v["known"], "capped": v["capped"],
+                            "pro": [c["shown"] for c in v["checks"] if c["met"] and c["ask"] != MARKET_ASK][:3], "con": _against(v)} for v in op["views"]}
+        out[s["ticker"]] = {"ticker": s["ticker"], "name": s.get("name") or s["ticker"], "sector": s.get("sector"), "agree": op["agree"], "agree_names": op["agree_names"],
+                            "in_team": op["in_team"], "mean_share": round(op["mean_share"], 4), "views": views}
+    return out
+
+
+def team(stocks: Iterable[Dict[str, Any]], size: int = TEAM_SIZE) -> Dict[str, Any]:
+    """``stocks``: as ``survey``.  The stocks at least ``AGREE`` views find to meet their criteria, most agreement first (then the
+    mean share of criteria met), at most ``size``, equal weight.  It can be empty."""
+    return team_of(survey(stocks), size)
+
+
+def team_of(seen: Dict[str, Dict[str, Any]], size: int = TEAM_SIZE) -> Dict[str, Any]:
+    rows, tally, judged, verdicts = [], {key: 0 for key, *_ in VIEWS}, 0, {}
+    for ticker, e in seen.items():
         judged += 1
-        verdicts[s["ticker"]] = "".join(v["verdict"][0] for v in op["views"])          # M, P, F or U per view, in the order of VIEWS
-        for v in op["views"]:
-            tally[v["key"]] += v["verdict"] == MEETS
-        if op["in_team"]:
-            rows.append({"ticker": s["ticker"], "name": s.get("name") or s["ticker"], "sector": s.get("sector"), "agree": op["agree"], "agree_names": op["agree_names"],
-                         "mean_share": round(op["mean_share"], 4)})
+        verdicts[ticker] = "".join(e["views"][key]["verdict"][0] for key, *_ in VIEWS)          # M, P, F or U per view, in the order of VIEWS
+        for key, *_ in VIEWS:
+            tally[key] += e["views"][key]["verdict"] == MEETS
+        if e["in_team"]:
+            rows.append({k: e[k] for k in ("ticker", "name", "sector", "agree", "agree_names", "mean_share")})
     rows.sort(key=lambda r: (-r["agree"], -r["mean_share"], r["ticker"]))
     picked = rows[:size]
     for r in picked:

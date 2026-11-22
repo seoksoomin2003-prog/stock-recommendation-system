@@ -455,7 +455,7 @@ def test_plain_answers_and_what_it_does_not_know(term):
     for typed in ("뭘 물어볼 수 있어?", "help", "도움말", "?", "명령어 뭐 있어"):
         got = A.answer(term, typed, "KR")
         assert got["status"] == "REAL" and got["intent"] == "HELP" and got["examples"] == A.EXAMPLES and "22가지" in got["title"], typed
-        assert [s["title"] for s in got["sections"]] == ["종목 없이 묻는 것 12가지", "종목을 넣어 묻는 것 10가지", "쓰는 법"] and "'help'" in got["lines"][-1]
+        assert [s["title"] for s in got["sections"]] == ["종목 없이 묻는 것 11가지", "종목을 넣어 묻는 것 11가지", "쓰는 법"] and "'help'" in got["lines"][-1]
     trust = A.answer(term, "이 점수 믿어도 돼?", "KR")
     assert trust["intent"] == "TRUST" and "아직 확인되지 않았습니다" in trust["summary"] and "살 종목을 고르는 힘은 확인되지 않았습니다." in flat(trust)
     today = A.answer(term, "오늘 뭐 해야 해?", "KR")
@@ -534,9 +534,9 @@ def test_example_questions_name_a_stock_of_the_market_on_screen(term):
     assert not any("삼성전자" in q for q in us["examples"]) and "AAPL 분석해 줘" in us["examples"] and "AAPL 점수 왜 낮아?" in us["examples"]
     assert "삼성전자 분석해 줘" in kr["examples"] and not any("AAPL" in q for q in kr["examples"]) and kr["examples"] == A.EXAMPLES
     by = {s["title"]: s["lines"] for s in us["sections"]}
-    assert by["종목을 넣어 묻는 것 10가지"] == A.stock_examples("US") and all(q.startswith("AAPL ") for q in by["종목을 넣어 묻는 것 10가지"]) and by["쓰는 법"][0].startswith("종목은 'AAPL' 자리에")
+    assert by["종목을 넣어 묻는 것 11가지"] == A.stock_examples("US") and all(q.startswith("AAPL ") for q in by["종목을 넣어 묻는 것 11가지"]) and by["쓰는 법"][0].startswith("종목은 'AAPL' 자리에")
     assert {s["title"]: s["lines"] for s in kr["sections"]}["쓰는 법"][0].startswith("종목은 '삼성전자' 자리에")
-    assert len(A.examples_for("US")) == len(A.examples_for("KR")) == 22 and A.examples_for("US")[:12] == A.examples_for("KR")[:12]      # the questions without a stock are the same
+    assert len(A.examples_for("US")) == len(A.examples_for("KR")) == 22 and A.examples_for("US")[:11] == A.examples_for("KR")[:11]      # the questions without a stock are the same
     assert not any("삼성전자" in q for q in A.answer(term, "", "US")["examples"]) and not any("삼성전자" in q for q in A.answer(term, "무슨 말인지 모를 문장", "US")["examples"])
     for q in A.stock_examples("US"):                        # every US example is itself a question the assistant answers about AAPL
         got = A.answer(term, q, "US")
@@ -549,6 +549,7 @@ def test_the_five_views_answer_a_stock_and_give_the_team_list(term, monkeypatch)
     """User request 2026-11-22: five well-known approaches as a team, one or two lines each, and a team list."""
     from terminal import five_views as fv
     assert A.read_question("삼성전자 다섯 관점은?", True) == "FIVE" and A.read_question("버핏이라면 삼성전자 어때", True) == "FIVE" and A.read_question("다섯 관점 팀 목록은?", False) == "TEAM"
+    assert A.read_question("삼성전자 포트폴리오 받아보기", True) == "PORTFOLIO" and A.read_question("버핏식 포트폴리오로 삼성전자", True) == "PORTFOLIO" and A.read_question("내 포트폴리오 괜찮아?", False) == "HOLDINGS"
     assert A.read_question("삼성전자 분석해 줘", True) == "ANALYZE" and A.read_question("오늘 상위 종목은?", False) == "TOP"          # the other questions are read as before
     # review 2026-11-22: "다섯" and "관점" alone took other questions away
     assert A.read_question("장기 관점에서 삼성전자 어때?", True) == "ANALYZE" and A.read_question("삼성전자 다섯 거래일 뒤 범위는?", True) == A.read_question("삼성전자 범위는?", True)
@@ -565,11 +566,14 @@ def test_the_five_views_answer_a_stock_and_give_the_team_list(term, monkeypatch)
     assert got["status"] == "REAL" and got["intent"] == "FIVE" and got["title"] == "삼성전자(005930) 다섯 관점" and got["summary"].startswith("다섯 관점 가운데 5개가 '기준에 맞음'")
     by = {s["title"]: s["lines"] for s in got["sections"]}
     assert len(by["다섯 관점"]) == 5 and by["다섯 관점"][0].startswith("버핏식(좋은 사업을 적정한 값에): 기준 7개 중 7개 충족, 기준에 맞음. 맞는 것: ROE 20.0%")
-    assert "실존 투자자의 실제 의견이 아닙니다" in by["이 답의 한계"][0] and got["follow"][0] == "삼성전자 분석해 줘"
+    assert "실존 투자자의 실제 의견이 아닙니다" in by["이 답의 한계"][0] and got["follow"][:2] == ["삼성전자 포트폴리오 받아보기", "삼성전자 분석해 줘"]
     note = A.answer(term, "삼성전자 분석해 줘", "KR")
     five = {s["title"]: s["lines"] for s in note["sections"]}["다섯 관점 (참고)"]
     assert len(five) == 7 and five[5].startswith("다섯 관점 가운데 5개") and five[6] == fv.NOTE
-    team = A.answer(term, "다섯 관점 팀 목록은?", "KR")                                     # the stored snapshots of the scratch terminal carry no figures: an honest empty list
-    assert team["status"] == "REAL" and team["intent"] == "TEAM" and team["title"] == "다섯 관점 팀 목록(한국)" and "목록을 억지로 채우지 않습니다" in team["summary"]
-    items = [i for i in A.briefing(term, "KR")["items"] if i["kind"] == "FIVE_TEAM"]
-    assert len(items) == 1 and items[0]["level"] == "INFO" and "기준에 맞음'으로 본 종목이 없습니다" in items[0]["text"]
+    # user decision 2026-11-22: the market-wide list leaves the screens; the portfolio is asked for at a stock and made only then
+    team = A.answer(term, "다섯 관점 팀 목록은?", "KR")
+    assert team["status"] == "REAL" and team["intent"] == "TEAM" and team["title"] == "다섯 관점은 종목을 넣어 묻습니다" and team["follow"] == ["삼성전자 다섯 관점은?", "삼성전자 포트폴리오 받아보기"]
+    assert "요청할 때만 만듭니다" in " ".join(team["lines"]) and not any(i["kind"] == "FIVE_TEAM" for i in A.briefing(term, "KR")["items"]) and "five" not in A.PART_KO
+    assert "TEAM" not in [k for k, _, _ in A.PLAIN_INTENTS] and "삼성전자 포트폴리오 받아보기" in A.EXAMPLES
+    port = A.answer(term, "삼성전자 포트폴리오 받아보기", "KR")                           # the scratch terminal's snapshots carry no figures: said, not made up
+    assert port["status"] == "REAL" and port["intent"] == "PORTFOLIO" and port["title"] == "삼성전자(005930) 다섯 관점 포트폴리오" and "판단할 수 없는 종목을 중심으로 포트폴리오를 만들지 않습니다" in port["summary"]
