@@ -794,7 +794,11 @@ function qsfTurnoverHtml(tb) {
   } else {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 장부의 첫 기록은 ${esc(tb.first)} 거래일입니다. ${esc(tb.note)}</div>`;
   }
-  return `<h3>회전율 규칙 비교 <span class="meta">(TO-1${tb.active ? ` · 규칙 적용 중, ${esc(tb.adopted_version)}` : ""})</span></h3>${body}${qsfBookWarn(tb, "QSF_TURNOVER_RULES")}${force}${own}${what}`;
+  // The button that puts the rules in force (user decision 2026-11-22).  It appears once the reading exists; .env, when set, decides first.
+  const sw = tb.status !== "DECIDED" ? `<div class="meta">규칙을 켜는 버튼은 ${tb.read_at}거래일 판정이 나온 뒤 여기에 생깁니다. 그 전에 켜면 비교가 뜻을 잃습니다.</div>`
+    : tb.mode !== "auto" ? "" : `<div class="meta"><button type="button" class="qsf-turnover-switch" data-on="${tb.active ? "0" : "1"}">${tb.active ? "이 규칙 쓰지 않기" : "이 규칙 쓰기"}</button>
+      <span class="qsf-turnover-said">지금: ${tb.active ? "규칙을 쓰는 중" : "쓰지 않음"}. 누르면 다음 기록부터 모의 장부, 주문 계획, 보유 종목 판단에 반영됩니다.</span></div>`;
+  return `<h3>회전율 규칙 비교 <span class="meta">(TO-1${tb.active ? ` · 규칙 적용 중, ${esc(tb.adopted_version)}` : ""})</span></h3>${body}${sw}${qsfBookWarn(tb, "QSF_TURNOVER_RULES")}${force}${own}${what}`;
 }
 // The rank rules beside the paper book (RK-1): the same reading of progress, counts only before the decision.
 function qsfRankBookHtml(rb) {
@@ -858,6 +862,16 @@ async function qsfPaper() {
     api(`/api/qsf/rank-book?market=${mk}`).catch(() => null)]);
   if (mk !== state.market) return;
   box.innerHTML = d ? qsfPaperHtml(d, tb, rb) : "";
+  box.querySelectorAll(".qsf-turnover-switch").forEach((b) => { b.onclick = async () => {
+    const said = b.parentElement.querySelector(".qsf-turnover-said");
+    b.disabled = true;
+    try {
+      const r = await api("/api/qsf/turnover-rules", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ market: mk, on: b.dataset.on === "1" }) });
+      if (r.status !== "OK") { said.textContent = r.reason || "바꾸지 못했습니다."; b.disabled = false; return; }
+      if (r.note) alert(r.note);
+      qsfPaper();
+    } catch (e) { said.textContent = "바꾸지 못했습니다: " + (ERR_KO[e.message] || e.message); b.disabled = false; }
+  }; });
 }
 // Every one-time reading: how far its record is, about when it will be read, and the verdict once the daily job has read it.
 async function qsfReadings() {

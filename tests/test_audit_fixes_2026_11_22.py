@@ -447,3 +447,49 @@ def test_the_live_card_reads_the_band_the_stock_was_recorded_in(tmp_path):
     finally:
         qsf_service.engine.score = engine_score
     assert seen == {"SWING": "BUY_CANDIDATE", "LONG_TERM": None}                                                 # a blocked or unjudged record gives no buffer
+
+
+# ---------------------------------------------------------------------- second round of decisions, 2026-11-22
+def test_the_live_verdicts_start_at_the_first_session_of_the_new_formula():
+    from terminal.qsf import live_forward as lf, readings as rd
+    assert lf.FIRST == rd.LEDGER_FIRST == "2026-11-23"
+
+    class Led:
+        def _live_rows(self):
+            return [{"market": "US", "session": d} for d in ("2026-11-09", "2026-11-20", "2026-11-23", "2026-11-24")]
+
+        def _load(self, r):
+            return [{"strategy": "SWING", "score": 50.0 + k, "actionability": "ACTIONABLE", "data_date": r["session"], "ticker": f"T{k}"} for k in range(lf.MIN_ROWS)]
+    assert list(lf.session_rows(Led(), "US", "SWING")) == ["2026-11-23", "2026-11-24"]                          # the sessions of the earlier formulas are not in the sample
+    text = (ROOT / "reports" / "QSF_LIVE_FORWARD_PROTOCOL.md").read_text(encoding="utf-8")
+    assert "## 시작일 변경 (2026-11-22, 사용자 결정)" in text and "2026-11-23" in text
+
+
+def test_the_turnover_rules_are_switched_by_a_button_and_not_before_the_reading(tmp_path, monkeypatch):
+    from terminal.qsf import rank_book, turnover_book as tb
+    from tests.test_turnover_book import decided
+    monkeypatch.delenv(tb.ENV, raising=False)
+    early = tb.set_switch(tmp_path, "US", True)
+    assert early["status"] == "REFUSED" and "판정이 나온 뒤" in early["reason"] and tb.stored_switch(tmp_path, "US") is None and tb.active_rules(tmp_path, "US") is None
+    decided(tmp_path, "ADOPT")                                                                               # the US reading exists; it switches nothing on by itself
+    st = tb.status(tmp_path, "US")
+    assert tb.active_rules(tmp_path, "US") is None and st["can_switch"] is True and st["switch"] is None and tb.status(tmp_path, "KR")["can_switch"] is False
+    on = tb.set_switch(tmp_path, "US", True)
+    assert on["status"] == "OK" and on["active"] is True and tb.active_rules(tmp_path, "US") == tb.RULES and tb.active_rules(tmp_path, "KR") is None          # each market by its own button
+    assert rank_book.paper_rules(tmp_path, "US") == (tb.RULES, tb.ADOPTED_VERSION) and tb.status(tmp_path, "US")["switch"] == "on"
+    assert tb.set_switch(tmp_path, "US", False)["active"] is False and tb.active_rules(tmp_path, "US") is None and tb.stored_switch(tmp_path, "US") == "off"
+    tb.set_switch(tmp_path, "US", True)
+    monkeypatch.setenv(tb.ENV, "off")                                                                        # .env, when it says on or off, is read first
+    got = tb.set_switch(tmp_path, "US", True)
+    assert tb.active_rules(tmp_path, "US") is None and got["active"] is False and ".env" in got["note"] and tb.status(tmp_path, "US")["can_switch"] is False
+    monkeypatch.setenv(tb.ENV, "on")
+    assert tb.active_rules(tmp_path, "KR") == tb.RULES
+    monkeypatch.delenv(tb.ENV)
+    (tmp_path / tb.SWITCH_FILE).write_text("{cut", encoding="utf-8")                                         # a damaged switch file: never pressed, the rules are off
+    assert tb.stored_switch(tmp_path, "US") is None and tb.active_rules(tmp_path, "US") is None
+    assert tb.set_switch(tmp_path, "US", True)["status"] == "OK" and tb.active_rules(tmp_path, "US") == tb.RULES
+    with pytest.raises(ValueError):
+        tb.set_switch(tmp_path, "JP", True)
+    assert '("POST", "/api/qsf/turnover-rules")' in (ROOT / "terminal" / "server.py").read_text(encoding="utf-8")
+    js = (ROOT / "terminal" / "static" / "qsf.js").read_text(encoding="utf-8")
+    assert "qsf-turnover-switch" in js and "/api/qsf/turnover-rules" in js and "이 규칙 쓰기" in js

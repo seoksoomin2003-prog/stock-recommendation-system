@@ -54,8 +54,48 @@ def switch_of(env: str) -> Dict[str, Any]:
     return {"mode": SWITCH_WORDS.get(raw, "auto"), "unknown": None if raw in SWITCH_WORDS else raw}
 
 
-def mode() -> str:
-    return switch_of(ENV)["mode"]
+SWITCH_FILE = Path("data") / "qsf" / "turnover_switch.json"          # the screen's button, one entry per market
+
+
+def stored_switch(base: Path, market: str) -> Optional[str]:
+    """What the screen's button was last set to for ``market``: "on", "off" or None (never pressed, or the file cannot be read)."""
+    try:
+        got = (json.loads((Path(base) / SWITCH_FILE).read_text(encoding="utf-8")).get(market) or {}).get("mode")
+    except (OSError, ValueError, AttributeError):
+        return None
+    return got if got in ("on", "off") else None
+
+
+def mode(base: Optional[Path] = None, market: Optional[str] = None) -> str:
+    """auto, on or off.  ``.env`` decides when it says on or off (it is the same on every screen and survives a lost file); without
+    it the screen's button for that market does; without either, auto: the rules are not in force."""
+    env = switch_of(ENV)["mode"]
+    if env != "auto" or base is None or market is None:
+        return env
+    return stored_switch(base, market) or "auto"
+
+
+def set_switch(base: Path, market: str, on: bool, now: Callable[[], datetime] = _utcnow) -> Dict[str, Any]:
+    """The screen's button (user decision 2026-11-22: a button, not a line in a file).  Turning the rules on is refused until the
+    market's reading exists: before it, the paper book would run under the rules it is being compared with, and the comparison
+    would measure nothing.  Turning them off is always allowed."""
+    if market not in REPORTS:
+        raise ValueError(market)
+    rep = report(base, market)
+    if on and (not rep or rep.get("status") == "DAMAGED"):
+        return {"status": "REFUSED", "market": market, "reason": "240거래일 판정이 나온 뒤에 켤 수 있습니다. 그 전에 켜면 비교하려는 두 장부가 같은 규칙을 쓰게 되어 비교가 뜻을 잃습니다."}
+    path = Path(base) / SWITCH_FILE
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        doc = doc if isinstance(doc, dict) else {}
+    except (OSError, ValueError):
+        doc = {}
+    doc[market] = {"mode": "on" if on else "off", "at": now().isoformat()}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    durable.write_text(path, json.dumps(doc, ensure_ascii=False, indent=1))
+    env = switch_of(ENV)["mode"]
+    return {"status": "OK", "market": market, "mode": doc[market]["mode"], "active": active_rules(base, market) is not None, "env": env,
+            "note": f".env의 {ENV}={env} 가 이 버튼보다 먼저 읽힙니다. 버튼대로 하려면 .env의 그 줄을 지우세요." if env != "auto" else None}
 
 
 def read_report(path: Path, market: str) -> Optional[Dict[str, Any]]:
@@ -81,14 +121,14 @@ def report(base: Path, market: str) -> Optional[Dict[str, Any]]:
 
 def active_rules(base: Path, market: str) -> Optional[Dict[str, Any]]:
     """The rules when they are in force for the paper book, the real order plan and the holding reading of ``market``."""
-    m = mode()
+    m = mode(base, market)
     if m == "off":
         return None
     if m == "on":
         return dict(RULES)
     # "auto": the reading no longer switches the rules on (user decision 2026-11-22).  Its two conditions (cheaper, and a mean
     # difference of zero or more) are met about half the time when the rules change nothing (audit QNT-02), so the reading
-    # reports and the user decides: QSF_TURNOVER_RULES=on puts the rules in force.
+    # reports and the user decides: the button on the screen (``set_switch``) or QSF_TURNOVER_RULES=on puts the rules in force.
     return None
 
 
@@ -194,9 +234,9 @@ def evaluate_once(base: Path, market: str, now: Callable[[], datetime] = _utcnow
     base_docs = [kf._read_day(base / paper_book.FOLDERS[market], s) for s in sessions]
     res = {"status": "REAL", "protocol": PROTOCOL, "version": VERSION, "market": market, "first": sessions[0], "last": sessions[-1], "seed_session": seed["session"],
            "read_at": now().isoformat(), "rules": dict(RULES), **measure(base_docs, rule_docs, seed),
-           "note": "계좌 하나의 경로를 나란히 본 비교입니다. 점수가 맞는지의 근거가 아니며 투자 자문이 아닙니다. 규칙은 .env의 QSF_TURNOVER_RULES=on 일 때만 쓰입니다(auto와 off는 쓰지 않음)."}
+           "note": "계좌 하나의 경로를 나란히 본 비교입니다. 점수가 맞는지의 근거가 아니며 투자 자문이 아닙니다. 규칙은 화면의 '이 규칙 쓰기' 버튼을 누르거나 .env의 QSF_TURNOVER_RULES=on 일 때만 쓰입니다."}
     res["consequence"] = ("자동으로 바뀌는 것은 없습니다(2026-11-22 결정). 이 두 조건은 규칙에 효과가 없어도 절반쯤은 채워지므로, 위의 t가 기준을 넘었는지를 함께 보고 정하세요. "
-                          "규칙을 쓰려면 .env에 QSF_TURNOVER_RULES=on 을 적습니다. 그러면 모의 장부, 실제 계좌의 주문 계획, 보유 종목 판단이 두 규칙을 씁니다." if res["decision"] == "ADOPT"
+                          "규칙을 쓰려면 점수 탭 모의 장부의 회전율 규칙 칸에서 '이 규칙 쓰기'를 누릅니다(.env의 QSF_TURNOVER_RULES=on 도 같습니다). 그러면 모의 장부, 실제 계좌의 주문 계획, 보유 종목 판단이 두 규칙을 씁니다." if res["decision"] == "ADOPT"
                           else "아무것도 바뀌지 않습니다. 비교 장부는 더 적지 않습니다.")
     res["applies_itself"] = False
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -242,6 +282,7 @@ def status(base: Path, market: str) -> Dict[str, Any]:
     rep = report(base, market)
     head = {"market": market, "protocol": PROTOCOL, "version": VERSION, "rules": dict(RULES), "read_at": READ_AT, "first": FIRST, "mode": mode(),
             "switch_unknown": switch_of(ENV)["unknown"], "damaged": rep.get("reason") if rep and rep.get("status") == "DAMAGED" else None,
+            "switch": stored_switch(base, market), "can_switch": bool(rep and rep.get("status") != "DAMAGED") and mode() == "auto",
             "active": active_rules(base, market) is not None, "adopted_version": ADOPTED_VERSION, "rule_labels": RULE_KO,
             "note": "판정 전에는 비교 장부의 평가액·수익률·비용을 보여 주지 않습니다. 240거래일이 되면 프로그램이 스스로 읽고 알립니다. 규칙을 스스로 바꾸지는 않습니다(2026-11-22 결정)."}
     if head["damaged"]:

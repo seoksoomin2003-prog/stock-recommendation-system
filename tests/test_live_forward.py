@@ -8,7 +8,7 @@ import pytest
 from terminal.qsf import live_forward as lf
 
 
-def calendar(n, start=date(2026, 11, 9)):
+def calendar(n, start=date(2026, 11, 23)):          # the verdicts' first session since the decision of 2026-11-22
     out, d = [], start
     while len(out) < n:
         if d.weekday() < 5:

@@ -23,7 +23,7 @@ GIVE_UP = 15                    # attempts without a report after which the user
 RETRY_DAYS = 7
 REPORTS = Path("reports") / "qsf"
 STORES = Path("research_data")
-LEDGER_FIRST = "2026-11-09"     # live_forward.FIRST: the first ledger session the live verdicts read
+LEDGER_FIRST = "2026-11-23"     # live_forward.FIRST: the first ledger session the live verdicts read (moved 2026-11-22, user decision)
 PRIMARY_KEYS = ("live_swing_", "live_long_")
 KIND_KO = {True: "주된 판정", False: "참고 판정"}
 REFERENCE_NOTE = "참고 판정입니다. 판정이 서른 개쯤이라 그중 몇은 우연히 기준을 넘을 수 있으므로, 점수가 통하는지는 실전 점수 판정 넷(미국·한국의 스윙·장기)으로 답합니다."
@@ -218,7 +218,7 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
             itself = book is rank_book                    # the turnover reading reports and applies nothing (user decision 2026-11-22)
             row = {"key": f"{book.VERSION}_{m}", "label": f"{label}({ko})", "protocol": book.PROTOCOL, "records": s["records"], "wanted": s["read_at"], "applies_itself": itself, "primary": False,
                    "after": "적용으로 정해지면 프로그램이 스스로 규칙을 바꿉니다. .env로 뒤집을 수 있습니다." if itself else
-                   "조건을 채워도 프로그램이 스스로 규칙을 바꾸지 않습니다. 결과를 알리고, 쓰려면 .env에 QSF_TURNOVER_RULES=on 을 적습니다.", "attempts": 0}
+                   "조건을 채워도 프로그램이 스스로 규칙을 바꾸지 않습니다. 결과를 알리고, 쓰려면 점수 탭 모의 장부의 회전율 규칙 칸에서 '이 규칙 쓰기'를 누릅니다.", "attempts": 0}
             if s["status"] == "DECIDED":
                 adopt = s["decision"]["decision"] == "ADOPT"
                 row.update(state="READ", verdict=s["decision"]["decision"], meaning=("규칙 적용" if itself else "적용 조건 충족(자동 적용 안 함)") if adopt else "기존 규칙 유지", report=str(book.REPORTS[m]))

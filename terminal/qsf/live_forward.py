@@ -17,7 +17,10 @@ from terminal.qsf.ledger import Ledger
 from utils import durable
 
 PROTOCOL = "reports/QSF_LIVE_FORWARD_PROTOCOL.md"
-FIRST = "2026-11-09"                                   # the first ledger session of QSF-1.1.8 in both markets
+# The first ledger session the verdicts read.  Until 2026-11-22 it was 2026-11-09 (the first session of QSF-1.1.8): ten sessions
+# recorded under seven earlier formulas would have been judged together with the rest.  User decision 2026-11-22: the sample
+# starts at the first session recorded under QSF-1.5.0.  No return of any recorded session had been read when it was moved.
+FIRST = "2026-11-23"
 PRIMARY = {"SWING": 20, "LONG_TERM": 63}
 EXTRA = {"SWING": (5, 10), "LONG_TERM": (21,)}
 NEED = {s: config.MIN_INDEPENDENT * h for s, h in PRIMARY.items()}

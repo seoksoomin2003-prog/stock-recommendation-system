@@ -194,6 +194,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callab
         ("GET", "/api/qsf/forecast"): lambda q, b: qsf_forecast.view(t.base, _market(q.get("market", "US"))),
         ("GET", "/api/qsf/forecast-stock"): lambda q, b: qsf_forecast.stock(t.base, _market(q.get("market", "US")), _code(q.get("t", ""), _market(q.get("market", "US")))),
         ("GET", "/api/qsf/paper-book"): lambda q, b: qsf_paper_book.status(t.base, _market(q.get("market", "US"))),
+        ("POST", "/api/qsf/turnover-rules"): lambda q, b: qsf_turnover_book.set_switch(t.base, _market(b.get("market", "US")), b.get("on") is True),
         ("GET", "/api/qsf/turnover-book"): lambda q, b: qsf_turnover_book.status(t.base, _market(q.get("market", "US"))),
         ("GET", "/api/qsf/readings"): lambda q, b: qsf_readings.status(t.base, date.today(), automation.readings_state(t.base)),
         ("GET", "/api/qsf/rank-book"): lambda q, b: qsf_rank_book.status(t.base, _market(q.get("market", "US"))),
