@@ -13,6 +13,7 @@ from datetime import date, datetime, time as clock, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
+from terminal.qsf import calibrate
 import numpy as np
 
 from terminal.qsf import config, krx_history as kh, research_ensemble as en, research_kr as kr, research_swing as rs, validate
@@ -427,6 +428,7 @@ def evaluate_once(base: Path, log=print, store: Path = FOLDER) -> Dict[str, Any]
     picks = list(range(len(rows)))
     cost = config.round_trip_cost("KR")
     test = en.evaluate(score, px, rows, picks, HORIZON, {}, cost)
+    test["t_bar"] = calibrate.bar(validate.MIN_T, len(rows), HORIZON, STEP, rs.lag_of(HORIZON))          # the bar for this sample's own design (2026-11-22)
     for regime in ("ic_spy_above_200d", "ic_spy_below_200d"):      # prices start at the first record, too short for a 200-day average
         test.pop(regime, None)
     later_ic = [v for v in (rs._ic(score[n], px.forward(rows[n] + 1, HORIZON)) for n in picks) if v is not None]

@@ -91,7 +91,7 @@ function qsfWhyHtml(r) {
     <details><summary>판정 근거 자세히 (다섯 조건 중 ${r.checks_passed}개 충족)</summary>
       ${why.length > 2 ? `<ul>${why.slice(2).map((w) => `<li>${esc(w)}</li>`).join("")}</ul>` : ""}
       <div class="tbl-wrap"><table><thead><tr><th class="l">사전에 정한 조건</th><th class="l">기준</th><th class="l">실제 (전반 / 후반)</th><th class="l">결과</th></tr></thead><tbody>${checks}</tbody></table></div>
-      ${domains ? `<div class="meta">영역 하나만으로 같은 시험을 본 결과입니다. 판정에는 쓰지 않습니다. t값이 2.24보다 작으면 우연과 구별되지 않습니다.</div>
+      ${domains ? `<div class="meta">영역 하나만으로 같은 시험을 본 결과입니다. 판정에는 쓰지 않습니다. t값이 2.24보다 작으면 우연과 구별되지 않습니다(겹치는 표본에서는 그보다 높아야 합니다: 앞으로의 판정은 표본 구조에 맞춘 기준을 씁니다).</div>
       <div class="tbl-wrap"><table><thead><tr><th class="l">영역</th><th>높은 점수가 이긴 비율</th><th>t값</th><th>전반 IC</th><th>후반 IC</th></tr></thead><tbody>${domains}</tbody></table></div>` : ""}
       ${bands ? `<div class="meta">${esc(r.band_note || "")}</div>
       <div class="tbl-wrap"><table><thead><tr><th class="l">점수 구간</th><th>건수</th><th>같은 날 평균 대비</th><th>지수 대비</th><th>평균을 이긴 비율</th></tr></thead><tbody>${bands}</tbody></table></div>` : ""}
@@ -784,7 +784,7 @@ function qsfTurnoverHtml(tb) {
   let body;
   if (tb.status === "DECIDED") {
     const d = tb.decision;
-    body = `<div class="meta"><span class="badge ${d.decision === "ADOPT" ? "ok" : ""}">결정: ${d.decision === "ADOPT" ? "규칙 적용" : "기존 규칙 유지"}</span> <span class="badge">${d.evidence === "DISTINCT" ? "수익 차이가 통계로 구분됨" : "수익 차이가 통계로 구분되지 않음"}</span>
+    body = `<div class="meta"><span class="badge ${d.decision === "ADOPT" ? "ok" : ""}">읽은 결과: ${d.decision === "ADOPT" ? "적용 조건 충족 · 자동 적용 안 함" : "기존 규칙 유지"}</span> <span class="badge">${d.evidence === "DISTINCT" ? "수익 차이가 통계로 구분됨" : "수익 차이가 통계로 구분되지 않음"}</span>
       구간 ${esc(d.first)} ~ ${esc(d.last)}</div><ul class="meta">${(d.why || []).map((w) => `<li>${esc(w)}</li>`).join("")}</ul><div class="meta">${esc(d.consequence || "")} ${esc(d.note || "")}</div>`;
   } else if (tb.status === "RECORDING") {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 기록 ${tb.records} / ${tb.read_at}거래일 (${esc(tb.started)} ~ ${esc(tb.last)}) · 판정까지 ${tb.left}거래일.
@@ -801,7 +801,7 @@ function qsfRankBookHtml(rb) {
   if (!rb) return "";
   const r = rb.rules || {}, c = rb.rule_counts || {}, top = (v) => Math.round(v * 100);
   const what = `<div class="meta"><b>두 규칙</b>: 진입 후보는 그날 그 시장·스타일 점수의 상위 ${top(r.entry_top)}% 안일 때만 삽니다. 장기 보유는 순위가 상위 ${top(r.long_exit_top)}% 밖으로 밀리면 팝니다(40점 미만 규칙 대신).
-    적용 기준은 하루 수익률 차이의 평균이 0보다 크고 t가 2.0 이상일 때뿐이고, 그 밖에는 지금 규칙이 남습니다. 규칙: ${esc(rb.protocol)}</div>`;
+    적용 기준은 하루 수익률 차이의 평균이 0보다 크고 t가 기준(표의 2.0을 이 표본 구조에 맞춰 고친 값, 약 2.2) 이상일 때뿐이고, 그 밖에는 지금 규칙이 남습니다. 규칙: ${esc(rb.protocol)}</div>`;
   const force = rb.mode !== "auto" ? `<div class="meta"><span class="badge risk-note">.env의 QSF_RANK_RULES=${esc(rb.mode)}</span> 판정과 상관없이 규칙을 ${rb.mode === "on" ? "항상 적용" : "적용하지 않음"}으로 두셨습니다.</div>` : "";
   let body;
   if (rb.status === "DECIDED") {
@@ -867,7 +867,7 @@ async function qsfReadings() {
   const state = (r) => (r.state === "READ" ? `<span class="badge ok">읽음</span> <b>${esc(r.verdict)}</b><div class="meta" style="margin:0">${esc(r.meaning || "")}</div>${(r.reasons || []).map((x) => `<div class="meta" style="margin:0">${esc(x)}</div>`).join("")}`
     : r.state === "DUE" ? `<span class="badge risk-note">읽을 때가 됨</span>${r.attempts ? ` <span class="meta" style="margin:0">시도 ${r.attempts}번, 아직 조건 미달</span>` : ""}`
     : `<span class="badge">기다리는 중</span> <span class="meta" style="margin:0">${isNum(r.left) ? `${r.left}거래일 남음 · ${esc(r.expected)} 무렵` : ""}</span>`);
-  const rows = d.readings.map((r) => `<tr><td class="l"><b>${esc(r.label)}</b>${r.applies_itself ? ' <span class="badge">스스로 적용</span>' : ""}</td>
+  const rows = d.readings.map((r) => `<tr><td class="l"><b>${esc(r.label)}</b> <span class="badge${r.primary ? " ok" : ""}" title="${r.primary ? "점수가 통하는지에 답하는 네 판정 가운데 하나입니다." : "참고 판정입니다. 판정이 서른 개쯤이라 몇은 우연히 기준을 넘을 수 있어, 점수가 통하는지는 실전 점수 판정 넷으로 답합니다."}">${r.primary ? "주된 판정" : "참고"}</span>${r.applies_itself ? ' <span class="badge">스스로 적용</span>' : ""}</td>
     <td class="num">${isNum(r.records) ? r.records : DASH} / ${r.wanted}</td><td class="l">${state(r)}</td><td class="l"><span class="meta" style="margin:0">${esc(r.after)}</span></td>
     <td class="l"><span class="meta" style="margin:0">${esc(r.state === "READ" ? r.report : r.protocol)}</span></td></tr>`).join("");
   box.innerHTML = `<div class="panel"><h2>판정 일정 <span class="badge">${d.read} / ${d.total} 읽음</span></h2><div class="meta">${esc(d.note)} 안내: ${esc(d.guide)}</div>

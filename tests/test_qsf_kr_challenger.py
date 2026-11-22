@@ -244,7 +244,7 @@ def test_the_notice_and_the_screen_carry_the_reasons(tmp_path):
     e = {x["key"]: x for x in rd.REGISTRY}["kr_challenger_swing"]
     rep = {"verdict": "LIVE_BETTER", "reasons": ["잰 것: 가~나.", "IC 차이(도전자 − 라이브): 평균 -0.030."]}
     text = rd.text(e, rep)
-    assert "[판정 · 한국 묶음 도전자 점수 · 스윙] LIVE_BETTER" in text and "지금 공식(사람이 정한 배점)이 도전자 공식보다 나았습니다." in text
+    assert "[참고 판정 · 한국 묶음 도전자 점수 · 스윙] LIVE_BETTER" in text and "지금 공식(사람이 정한 배점)이 도전자 공식보다 나았습니다." in text
     assert "잰 것: 가~나." in text and "평균 -0.030." in text and "자동으로 바뀌지 않습니다" in text
     assert rd.why({"verdict": "X"}) == [] and rd.why({"reasons": "한 줄"}) == []
     (tmp_path / rd.REPORTS).mkdir(parents=True)

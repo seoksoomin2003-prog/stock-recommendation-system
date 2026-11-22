@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
+from terminal.qsf import calibrate
 import numpy as np
 
 from terminal.qsf import config, engine, kr_forward as kf, validate
@@ -138,8 +139,9 @@ def verdict(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     diff = [a - b for a, b in zip(lv, pr)]
     gap = {"mean": float(np.mean(diff)), "t": _t(diff)}
     t = gap["t"]
-    word = "DECISION_SUPPORTED" if t is not None and gap["mean"] > 0 and t >= MIN_T else "PRIOR_BETTER" if t is not None and gap["mean"] < 0 and t <= -MIN_T else "NOT_DISTINGUISHED"
-    return {"samples": len(rows), "live": {"mean": float(np.mean(lv)), "t": _t(lv)}, "prior": {"mean": float(np.mean(pr)), "t": _t(pr)}, "difference": gap, "verdict": word}
+    bar = calibrate.plain_bar(MIN_T, len(rows))          # a dozen samples: the table's value is passed too often (2026-11-22)
+    word = "DECISION_SUPPORTED" if t is not None and gap["mean"] > 0 and t >= bar else "PRIOR_BETTER" if t is not None and gap["mean"] < 0 and t <= -bar else "NOT_DISTINGUISHED"
+    return {"samples": len(rows), "t_bar": bar, "live": {"mean": float(np.mean(lv)), "t": _t(lv)}, "prior": {"mean": float(np.mean(pr)), "t": _t(pr)}, "difference": gap, "verdict": word}
 
 
 def evaluate_once(base: Path, log=print, panel: Any = None) -> Dict[str, Any]:

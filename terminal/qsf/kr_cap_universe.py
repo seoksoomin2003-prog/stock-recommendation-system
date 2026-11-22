@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from terminal.qsf import calibrate
 import numpy as np
 
 from terminal.qsf import config, kr_forward as kf, krx_history as kh, live_forward as lf, validate
@@ -199,8 +200,9 @@ def universe_reading(days: List[Dict[str, Any]], h: int = HORIZON) -> Dict[str, 
     early, late = float(np.mean(diff[:mid])), float(np.mean(diff[mid:]))
     t = validate.newey_west_t(diff, h)
     both = early > 0 and late > 0
-    return {"mean": float(np.mean(diff)), "t": t, "early": early, "late": late,
-            "reading": "UNIVERSE_BETTER" if both and t is not None and t >= MIN_T else "SAME_DIRECTION_NOT_SIGNIFICANT" if both else "NOT_SUPPORTED"}
+    bar = calibrate.bar(MIN_T, len(diff), h, 1, h)          # the bar for this sample's own design (2026-11-22)
+    return {"mean": float(np.mean(diff)), "t": t, "t_bar": bar, "early": early, "late": late,
+            "reading": "UNIVERSE_BETTER" if both and t is not None and t >= bar else "SAME_DIRECTION_NOT_SIGNIFICANT" if both else "NOT_SUPPORTED"}
 
 
 def evaluate_once(base: Path, log=print, panel: Any = None) -> Dict[str, Any]:

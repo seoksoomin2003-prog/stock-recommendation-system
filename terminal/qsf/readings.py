@@ -24,13 +24,19 @@ RETRY_DAYS = 7
 REPORTS = Path("reports") / "qsf"
 STORES = Path("research_data")
 LEDGER_FIRST = "2026-11-09"     # live_forward.FIRST: the first ledger session the live verdicts read
+PRIMARY_KEYS = ("live_swing_", "live_long_")
+KIND_KO = {True: "주된 판정", False: "참고 판정"}
+REFERENCE_NOTE = "참고 판정입니다. 판정이 서른 개쯤이라 그중 몇은 우연히 기준을 넘을 수 있으므로, 점수가 통하는지는 실전 점수 판정 넷(미국·한국의 스윙·장기)으로 답합니다."
 NO_CHANGE = "이 결과로 점수·스캔 대상·규칙이 자동으로 바뀌지는 않습니다."
 
 
 def _e(key: str, label: str, argv: List[str], report: str, protocol: str, need: int, horizon: int, store: Optional[str] = None, ledger: Optional[str] = None,
        verdict: tuple = ("verdict",), after: str = NO_CHANGE, applies: bool = False, committee: Optional[str] = None) -> Dict[str, Any]:
+    # ``primary``: the four verdicts of the live score.  Thirty readings are scheduled; with that many, some pass by chance
+    # (audit 2026-11-22, QNT-04).  The four are the ones the question "does the score work" is answered by; every other
+    # reading is reference (user decision 2026-11-22) and is said to be in its notice and on the schedule.
     return {"key": key, "label": label, "argv": argv, "report": report, "protocol": f"reports/{protocol}", "need": need, "horizon": horizon, "store": store, "ledger": ledger,
-            "verdict": verdict, "after": after, "applies": applies, "committee": committee}
+            "verdict": verdict, "after": after, "applies": applies, "committee": committee, "primary": key.startswith(PRIMARY_KEYS)}
 
 
 def _per_market(key: str, label: str, action: str, report: str, protocol: str, need: int, horizon: int, store: Optional[str] = None, ledger: bool = False, **kw) -> List[Dict[str, Any]]:
@@ -172,7 +178,7 @@ def why(rep: Dict[str, Any]) -> List[str]:
 def text(e: Dict[str, Any], rep: Dict[str, Any]) -> str:
     """The notice sent once when a reading has been made."""
     code = verdict(e, rep)
-    lines = [f"[판정 · {e['label']}] {code}", meaning(code) + ".", *why(rep), e["after"],
+    lines = [f"[{KIND_KO[bool(e.get('primary'))]} · {e['label']}] {code}", meaning(code) + ".", *why(rep), *([] if e.get("primary") else [REFERENCE_NOTE]), e["after"],
              f"수치: {REPORTS / e['report']} · 규칙: {e['protocol']} · 터미널 점수 탭의 '판정 일정'에서도 볼 수 있습니다."]
     return "\n".join(lines)
 
@@ -197,7 +203,7 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
     base, rows = Path(base), []
     for e in REGISTRY:
         rep, n = report(base, e), records(base, e)
-        row = {"key": e["key"], "label": e["label"], "protocol": e["protocol"], "records": n, "wanted": wanted(e), "after": e["after"], "applies_itself": bool(e.get("applies")),
+        row = {"key": e["key"], "label": e["label"], "protocol": e["protocol"], "records": n, "wanted": wanted(e), "after": e["after"], "applies_itself": bool(e.get("applies")), "primary": bool(e.get("primary")),
                "attempts": ((tried or {}).get(e["key"]) or {}).get("failed", 0)}
         if rep is not None:
             code = verdict(e, rep)
@@ -209,10 +215,13 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
     for book, label in ((turnover_book, "회전율 규칙 비교"), (rank_book, "순위 규칙 비교")):
         for m, ko in (("KR", "한국"), ("US", "미국")):
             s = book.status(base, m)
-            row = {"key": f"{book.VERSION}_{m}", "label": f"{label}({ko})", "protocol": book.PROTOCOL, "records": s["records"], "wanted": s["read_at"], "applies_itself": True,
-                   "after": "적용으로 정해지면 프로그램이 스스로 규칙을 바꿉니다. .env로 뒤집을 수 있습니다.", "attempts": 0}
+            itself = book is rank_book                    # the turnover reading reports and applies nothing (user decision 2026-11-22)
+            row = {"key": f"{book.VERSION}_{m}", "label": f"{label}({ko})", "protocol": book.PROTOCOL, "records": s["records"], "wanted": s["read_at"], "applies_itself": itself, "primary": False,
+                   "after": "적용으로 정해지면 프로그램이 스스로 규칙을 바꿉니다. .env로 뒤집을 수 있습니다." if itself else
+                   "조건을 채워도 프로그램이 스스로 규칙을 바꾸지 않습니다. 결과를 알리고, 쓰려면 .env에 QSF_TURNOVER_RULES=on 을 적습니다.", "attempts": 0}
             if s["status"] == "DECIDED":
-                row.update(state="READ", verdict=s["decision"]["decision"], meaning="규칙 적용" if s["decision"]["decision"] == "ADOPT" else "기존 규칙 유지", report=str(book.REPORTS[m]))
+                adopt = s["decision"]["decision"] == "ADOPT"
+                row.update(state="READ", verdict=s["decision"]["decision"], meaning=("규칙 적용" if itself else "적용 조건 충족(자동 적용 안 함)") if adopt else "기존 규칙 유지", report=str(book.REPORTS[m]))
             else:
                 row.update(state="DUE" if s["left"] == 0 else "WAITING", left=s["left"], expected=_eta(s["left"], today))
             rows.append(row)

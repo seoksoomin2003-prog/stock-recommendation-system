@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from terminal.qsf import calibrate
 import numpy as np
 
 from terminal.qsf import config, kr_forward as kf, validate
@@ -166,6 +167,7 @@ def summarize(days: List[Dict[str, Any]], lag: int) -> Dict[str, Any]:
                   "empty_share": float(np.mean([d[k]["names"] == 0 for d in days])), "mean_names": float(np.mean([d[k]["names"] for d in days])), "ic": _mean(d[f"ic_{k}"] for d in days)}
     diff = [d["diff"] for d in days]
     out["difference"] = {"mean": float(np.mean(diff)), "t": validate.newey_west_t(diff, lag), "days_with_difference": int(sum(1 for x in diff if x != 0))}
+    out["difference"]["t_bar"] = calibrate.bar(MIN_T, len(diff), lag, 1, lag)          # the bar for this sample's own design (2026-11-22)
     return out
 
 
@@ -175,14 +177,15 @@ def verdict(diff: Dict[str, Any]) -> str:
     m, t = diff["mean"], diff["t"]
     if t is None or (diff.get("days_with_difference") or 0) < MIN_DIFF_DAYS:
         return "NOT_DISTINGUISHED"
-    return "TRAILING_BETTER" if m > 0 and t >= MIN_T else "ANNUAL_BETTER" if m < 0 and t <= -MIN_T else "NOT_DISTINGUISHED"
+    bar = diff.get("t_bar") or MIN_T
+    return "TRAILING_BETTER" if m > 0 and t >= bar else "ANNUAL_BETTER" if m < 0 and t <= -bar else "NOT_DISTINGUISHED"
 
 
 def reasons(s: Dict[str, Any], code: str) -> List[str]:
     d, t = s["difference"], s["difference"]["t"]
     return [f"잰 것: 점수 70 이상이고 실행 가능한 종목을 같은 비중으로 20거래일 보유한 수익(비용 차감), {s['days']}거래일.",
-            f"하루 평균: 최근 4분기 {s['trailing']['mean'] * 100:+.2f}%, 연간 {s['annual']['mean'] * 100:+.2f}%. 차이 {d['mean'] * 100:+.2f}%p, t {'없음' if t is None else format(t, '+.2f')} (기준: 차이가 양수이고 t {MIN_T:g} 이상).",
-            f"두 점수가 다른 종목을 고른 날: {d.get('days_with_difference', 0)}일 (기준: {MIN_DIFF_DAYS}일 이상). 기준 t {MIN_T:g}은 효과가 없을 때 우연히 넘을 확률이 2.5%보다 작도록 모의실험으로 정한 값입니다.",
+            f"하루 평균: 최근 4분기 {s['trailing']['mean'] * 100:+.2f}%, 연간 {s['annual']['mean'] * 100:+.2f}%. 차이 {d['mean'] * 100:+.2f}%p, t {'없음' if t is None else format(t, '+.2f')} (기준: 차이가 양수이고 t {(d.get('t_bar') or MIN_T):g} 이상).",
+            f"두 점수가 다른 종목을 고른 날: {d.get('days_with_difference', 0)}일 (기준: {MIN_DIFF_DAYS}일 이상). 기준 t {(d.get('t_bar') or MIN_T):g}은 표의 값 {MIN_T:g}을 이 표본 구조(겹치는 20거래일 수익의 하루 값)에서 우연히 넘는 비율이 표와 같아지도록 모의실험으로 고친 값입니다.",
             f"후보가 없던 날의 비율: 최근 4분기 {s['trailing']['empty_share'] * 100:.0f}%, 연간 {s['annual']['empty_share'] * 100:.0f}%.",
             "최근 4분기 쪽이 나았으므로 다음 스캔부터 이 시장의 라이브 점수가 최근 4분기 재무를 씁니다." if code == ADOPT else "라이브 점수는 연간 재무 그대로입니다."]
 

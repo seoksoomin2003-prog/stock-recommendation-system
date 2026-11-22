@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from terminal.qsf import calibrate
 import numpy as np
 
 from terminal.qsf import config, engine, kr_forward as kf, validate
@@ -147,6 +148,7 @@ def summarize(days: List[Dict[str, Any]], lag: int) -> Dict[str, Any]:
                   "empty_share": float(np.mean([d[k]["names"] == 0 for d in days])), "mean_names": float(np.mean([d[k]["names"] for d in days])), "ic": _mean(d[f"ic_{k}"] for d in days)}
     diff = [d["diff"] for d in days]
     out["difference"] = {"mean": float(np.mean(diff)), "t": validate.newey_west_t(diff, lag)}
+    out["difference"]["t_bar"] = calibrate.bar(MIN_T, len(diff), lag, 1, lag)          # the bar for this sample's own design (2026-11-22)
     out["by_state"] = {s: {"days": sum(1 for d in days if d["state"] == s), "live": _mean(d["live"]["ret"] for d in days if d["state"] == s),
                            "with_regime": _mean(d["with_regime"]["ret"] for d in days if d["state"] == s)} for s in ("FAVOURABLE", "ADVERSE")}
     return out
@@ -154,7 +156,8 @@ def summarize(days: List[Dict[str, Any]], lag: int) -> Dict[str, Any]:
 
 def verdict(diff: Dict[str, Any]) -> str:
     m, t = diff["mean"], diff["t"]
-    return "SPLIT_BETTER" if t is not None and m > 0 and t >= MIN_T else "WITH_REGIME_BETTER" if t is not None and m < 0 and t <= -MIN_T else "NOT_DISTINGUISHED"
+    bar = diff.get("t_bar") or MIN_T
+    return "SPLIT_BETTER" if t is not None and m > 0 and t >= bar else "WITH_REGIME_BETTER" if t is not None and m < 0 and t <= -bar else "NOT_DISTINGUISHED"
 
 
 def evaluate_once(base: Path, market: str, px: Any, log=print) -> Dict[str, Any]:

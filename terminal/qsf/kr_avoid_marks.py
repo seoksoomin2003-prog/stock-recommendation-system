@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Optional, Set
 
 import numpy as np
 
-from terminal.qsf import config, kr_events_forward as kef, kr_forward as kf, live_forward as lf, validate
+from terminal.qsf import calibrate, config, kr_events_forward as kef, kr_forward as kf, live_forward as lf, validate
 from terminal.qsf.ledger import Ledger
 from utils import durable
 
@@ -86,13 +86,15 @@ def _negative(s: Dict[str, Any], limit: float) -> bool:
 
 def reading(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     one, two = series(rows, "excess_any"), series(rows, "within_watch")
-    p1 = _negative(one, T1)
-    p2 = _negative(two, T2) and two["days"] >= MIN_DAYS_2
+    # the bars for these samples' own design (daily values of H-session returns, lag H): terminal/qsf/calibrate.py, 2026-11-22
+    b1, b2 = (calibrate.bar(-T1, one.get("days", 0), H, 1, H), calibrate.bar(-T2, two.get("days", 0), H, 1, H))
+    p1 = _negative(one, -b1)
+    p2 = _negative(two, -b2) and two["days"] >= MIN_DAYS_2
     return {"verdict": "AVOID_RULE_SUPPORTED" if p1 and p2 else "MARKS_FLAG_LOSERS_BUT_SCORE_KNOWS" if p1 else "NO_EVIDENCE",
-            "reading_1": {**one, "passed": p1}, "reading_2": {**two, "passed": p2}}
+            "reading_1": {**one, "passed": p1, "t_bar": -b1}, "reading_2": {**two, "passed": p2, "t_bar": -b2}}
 
 
-def evaluate_once(base: Path, loader: Callable[[str], List[Dict]], bench: List[Dict], log=print) -> Dict[str, Any]:
+def evaluate_once(base: Path, loader: Callable[[str], List[Dict]], bench: List[Dict], log=print, benches: Optional[Dict[str, List[Dict]]] = None) -> Dict[str, Any]:
     base = Path(base)
     out = base / REPORT
     if out.exists():
@@ -101,7 +103,7 @@ def evaluate_once(base: Path, loader: Callable[[str], List[Dict]], bench: List[D
     if led.verify()["status"] != "OK":
         raise RuntimeError("원장 검증에 실패해 판정하지 않습니다.")
     snaps = lf.session_rows(led, "KR", "SWING")
-    px = lf.Prices(loader, bench)
+    px = lf.Prices(loader, bench, benches)
     ready = lf.matured_sessions(list(snaps), px.calendar, H)
     if len(ready) < NEED:
         raise RuntimeError(f"아직 판정할 수 없습니다. 만기 거래일 {len(ready)}개, 기준 {NEED}개입니다.")

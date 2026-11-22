@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from terminal.qsf import holding, kr_forward as kf, order_plan as op, paper_book as pb, turnover_book as tb
+from terminal.qsf import holding, kr_forward as kf, order_plan as op, paper_book as pb, rank_book as rk, turnover_book as tb
 from tests.test_earnings_gap import daily
 from tests.test_order_plan_paper_book import FakeLedger, account, calendar, cand, filler, held, loader_of, snap
 from tests.test_qsf import run
@@ -158,7 +158,7 @@ def test_the_figures_count_what_was_traded_paid_and_bought_back():
 
 @pytest.mark.parametrize("cost_rules, mean, t, decision, evidence, words", [
     (0.5, 0.0002, 0.9, "ADOPT", "NOT_DISTINCT", "약한 결정"),
-    (0.5, 0.0002, 2.4, "ADOPT", "DISTINCT", "규칙을 적용합니다"),
+    (0.5, 0.0002, 2.4, "ADOPT", "DISTINCT", "스스로 적용하지는 않습니다"),          # since 2026-11-22 the word is a finding, not a switch
     (0.5, 0.0, None, "ADOPT", "NOT_DISTINCT", "계산할 수 없음"),
     (0.5, -0.0001, -0.4, "KEEP", "NOT_DISTINCT", "기존 규칙을 유지합니다"),
     (0.5, -0.0004, -2.6, "KEEP", "DISTINCT", "0보다 작습니다"),
@@ -236,7 +236,7 @@ def test_the_daily_job_reads_tells_once_and_sends_an_undelivered_notice_again(tm
     assert got["KR"]["delivered"] is False and got["KR"]["decision"] in ("ADOPT", "KEEP") and len(sent) == 1 and (tmp_path / tb.REPORTS["KR"]).exists() and "US" not in got
     ok, sent2, _ = daily(tmp_path, AT)
     again = ok._turnover_reading(st)
-    assert again["KR"]["delivered"] is True and len(sent2) == 1 and "[회전율 규칙 판정 · 한국] 결정:" in sent2[0] and ".env" in sent2[0] and "bp" in sent2[0]
+    assert again["KR"]["delivered"] is True and len(sent2) == 1 and "[회전율 규칙 판정 · 한국] 결정:" in sent2[0] and "bp" in sent2[0]
     assert ok._turnover_reading(st)["KR"]["delivered"] is True and len(sent2) == 1       # never twice
     quiet, _, shown = daily(tmp_path, AT, tg="NOT_CONFIGURED")
     fresh = quiet._turnover_reading({})
@@ -265,7 +265,8 @@ def test_the_rules_are_in_force_after_an_adopt_and_the_env_switch_overrules_the_
     decided(tmp_path, "KEEP")
     assert tb.active_rules(tmp_path, "US") is None
     decided(tmp_path, "ADOPT")
-    assert tb.active_rules(tmp_path, "US") == tb.RULES and tb.active_rules(tmp_path, "KR") is None                 # each market by its own reading
+    assert tb.active_rules(tmp_path, "US") is None and tb.active_rules(tmp_path, "KR") is None                     # since 2026-11-22 the reading reports and switches nothing on
+    assert rk.paper_rules(tmp_path, "US") == (None, None)                                                           # so the paper book stays as it is
     monkeypatch.setenv(tb.ENV, "off")
     assert tb.active_rules(tmp_path, "US") is None
     monkeypatch.setenv(tb.ENV, " ON ")

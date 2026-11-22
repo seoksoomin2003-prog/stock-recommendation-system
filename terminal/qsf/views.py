@@ -464,16 +464,17 @@ class ScreenViews:
 
     def validation(self) -> Dict[str, Any]:
         """Reused until an input changes."""
-        return self._memo("validation", self._stamp(["bars:2y:^KS11"]), self._validation)
+        return self._memo("validation", self._stamp(["bars:2y:^KQ11,^KS11"]), self._validation)
 
     def _validation(self) -> Dict[str, Any]:
         out = {"integrity": self.ledger.verify(), "cohorts": {}, "correlations": {}}
         for market in config.MARKETS:
             snaps = self.ledger.snapshots(market=market, keep=ledger.light)       # the report reads a few fields of each snapshot
             loader = self._loader(market)
-            bench = loader("SPY") if market == "US" else (self._history(["^KS11"])["data"] or {}).get("^KS11") or []
+            kr = {} if market == "US" else {k: v for k, v in (self._history(["^KS11", "^KQ11"])["data"] or {}).items() if v}
+            bench = loader("SPY") if market == "US" else kr.get("^KS11") or []
             for s in config.STRATEGIES:
                 key = f"{market}_{s}"
-                out["cohorts"][key] = ledger.validate(snaps, market, s, loader, bench)
+                out["cohorts"][key] = ledger.validate(snaps, market, s, loader, bench, benches=kr)      # KOSDAQ names against the KOSDAQ index (2026-11-22)
                 out["correlations"][key] = ledger.factor_correlations([x for x in snaps if x["strategy"] == s])
         return out

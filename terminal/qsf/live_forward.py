@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import numpy as np
 
-from terminal.qsf import config, ledger as ledger_mod, validate
+from terminal.qsf import calibrate, config, ledger as ledger_mod, validate
 from terminal.qsf.ledger import Ledger
 from utils import durable
 
@@ -24,6 +24,9 @@ NEED = {s: config.MIN_INDEPENDENT * h for s, h in PRIMARY.items()}
 MIN_ROWS = 30
 BUY = validate.BUY_SCORE
 REPORT_DIR = Path("reports") / "qsf"
+# Cohorts whose money conditions read the top fifth of the day instead of the score band of 70: no Korean swing score has ever
+# reached 70, so the band condition could not be met whatever the score was worth (audit 2026-11-22, QNT-06; user decision).
+TOP_BAND = (("KR", "SWING"),)
 NOTE = "NO_EVIDENCE는 '효과 없음'이 아니라 '이 기록으로는 모름'입니다. 겹치는 표본이라 1년 기록의 검정력은 낮습니다."
 
 
@@ -46,8 +49,11 @@ def session_rows(led: Ledger, market: str, strategy: str, first: str = FIRST) ->
 class Prices:
     """Bars per ticker, loaded once, with what ``ledger.outcome`` needs to answer quickly."""
 
-    def __init__(self, loader: Callable[[str], List[Dict]], bench: List[Dict]):
+    def __init__(self, loader: Callable[[str], List[Dict]], bench: List[Dict], benches: Optional[Dict[str, List[Dict]]] = None):
+        """``benches``: {a snapshot's recorded benchmark: its bars}.  A stock is compared with the index it was recorded against
+        (a KOSDAQ stock with the KOSDAQ index: user decision 2026-11-22); without an entry, with ``bench``."""
         self.loader, self.bench = loader, bench
+        self.benches = {k: (v, {b["date"]: b for b in v}) for k, v in (benches or {}).items() if v}
         self.bench_by_date = {b["date"]: b for b in bench}
         self.calendar = sorted(self.bench_by_date)
         self.cache: Dict[str, Any] = {}
@@ -58,20 +64,23 @@ class Prices:
             days = [b.get("date") for b in bars]
             self.cache[snap["ticker"]] = (bars, days if all(isinstance(d, str) for d in days) and days == sorted(days) else None)
         bars, days = self.cache[snap["ticker"]]
-        return ledger_mod.outcome(bars, self.bench, session, h, cost, snap.get("entry_session"), days, self.bench_by_date, self.calendar)
+        bench, by_date = self.benches.get(snap.get("benchmark")) or (self.bench, self.bench_by_date)
+        return ledger_mod.outcome(bars, bench, session, h, cost, snap.get("entry_session"), days, by_date, self.calendar)
 
 
 def day_stats(session: str, snaps: List[Dict[str, Any]], px: Prices, h: int, cost: float) -> Optional[Dict[str, Any]]:
     """One session's cross-section, or None while its holds have not ended.  Returns are net of one round trip."""
-    score, net, bench = [], [], []
+    score, net, bench, own = [], [], [], []
     for s in snaps:
         o = px.outcome(s, session, h, cost)
         if not o:
             continue
         score.append(float(s["score"]))
         net.append(o["net"])
+        own.append(float("nan"))
         if o.get("relative_net") is not None and not o.get("stopped"):
             bench.append(o["net"] - o["relative_net"])                   # the index's return over the same days
+            own[-1] = bench[-1]                                          # this stock's own index
     if len(score) < MIN_ROWS or not bench:
         return None
     sc, r = np.array(score), np.array(net)
@@ -81,7 +90,15 @@ def day_stats(session: str, snaps: List[Dict[str, Any]], px: Prices, h: int, cos
     idx = float(np.median(bench))
     q = validate.rank(sc) / (len(sc) - 1)
     buy, top = r[sc >= BUY], r[q >= 0.8]
-    d.update(date=session, universe_net=float(r.mean()), index=idx, universe_effect=float(r.mean()) - idx,
+    ix = np.array(own)
+    one_index = float(np.nanmax(ix) - np.nanmin(ix)) < 1e-12             # every stock against the same index (the US): the day's index, as before
+
+    def index_of(mask: np.ndarray) -> float:
+        """The mean index return of these stocks' own indexes: KOSDAQ names against the KOSDAQ index."""
+        return idx if one_index or not np.isfinite(ix[mask]).any() else float(np.nanmean(ix[mask]))
+    every = np.ones(len(sc), dtype=bool)
+    d.update(date=session, universe_net=float(r.mean()), index=idx, universe_effect=float(r.mean()) - index_of(every),
+             buy_index=index_of(sc >= BUY) if len(buy) else None, top_index=index_of(q >= 0.8) if len(top) else None,
              buy_net=float(buy.mean()) if len(buy) else None, top_net=float(top.mean()) if len(top) else None,
              versions=sorted({str(s.get("model_version")) for s in snaps}))
     return d
@@ -100,28 +117,35 @@ def summarize(rows: List[Dict[str, Any]], h: int) -> Dict[str, Any]:
 
     def part(sel):
         return {"dates": len(sel), "ic": _mean(sel, lambda r: r["ic"]), "spread_net": _mean(sel, lambda r: r.get("spread_net")),
-                "buy_minus_index": _mean(sel, lambda r: None if r["buy_net"] is None else r["buy_net"] - r["index"]),
+                "buy_minus_index": _mean(sel, lambda r: None if r["buy_net"] is None else r["buy_net"] - (r["index"] if r.get("buy_index") is None else r["buy_index"])),
                 "score_effect": _mean(sel, lambda r: None if r["buy_net"] is None else r["buy_net"] - r["universe_net"]),
-                "top_minus_index": _mean(sel, lambda r: None if r["top_net"] is None else r["top_net"] - r["index"]),
+                "top_minus_index": _mean(sel, lambda r: None if r["top_net"] is None else r["top_net"] - (r["index"] if r.get("top_index") is None else r["top_index"])),
                 "top_score_effect": _mean(sel, lambda r: None if r["top_net"] is None else r["top_net"] - r["universe_net"]),
                 "universe_effect": _mean(sel, lambda r: r["universe_effect"])}
     separate = ic[::h]
     sd = float(np.std(separate, ddof=1)) if len(separate) > 2 else 0.0
     return {"dates": len(rows), "first": rows[0]["date"], "last": rows[-1]["date"], "split": mid, "lag": h, "mean_n": float(np.mean([r["n"] for r in rows])),
-            "ic": float(np.mean(ic)), "t": validate.newey_west_t(ic, h), "ic_positive_share": float(np.mean([x > 0 for x in ic])),
+            "ic": float(np.mean(ic)), "t": validate.newey_west_t(ic, h), "t_bar": calibrate.bar(validate.MIN_T, len(ic), h, 1, h), "t_nominal": validate.MIN_T,
+            "ic_positive_share": float(np.mean([x > 0 for x in ic])),
             "spread_net": _mean(rows, lambda r: r.get("spread_net")), "buy_excess": _mean(rows, lambda r: r.get("buy_excess")),
             "buy_dates": sum(1 for r in rows if r.get("buy_excess") is not None), "buy_trades": sum(r.get("buy_n", 0) for r in rows),
             "all": part(rows), "early": part(early), "late": part(late),
             "separate_samples": {"samples": len(separate), "ic": float(np.mean(separate)), "t": float(np.mean(separate) / (sd / math.sqrt(len(separate)))) if sd > 0 else None}}
 
 
-def reading(s: Dict[str, Any]) -> Dict[str, Any]:
-    """Condition A is ``validate.verdict`` unchanged; condition B is the buy band against the index in both halves."""
-    a = validate.verdict(s)
+def reading(s: Dict[str, Any], top_band: bool = False) -> Dict[str, Any]:
+    """Condition A is ``validate.verdict`` with the t bar of this sample's own design; condition B is the buy band against the
+    index in both halves.  ``top_band`` (the cohorts of ``TOP_BAND``): the two conditions that read the band of 70 read the
+    day's top fifth instead, as the challenger readings do."""
+    checks = dict(validate.verdict(s)["checks"])
     gt = lambda v: v is not None and v > 0          # noqa: E731
-    money = gt(s["early"]["buy_minus_index"]) and gt(s["late"]["buy_minus_index"])
-    rank_ok = a["verdict"] == "WEAK_POSITIVE_EVIDENCE"
-    return {"verdict": "WEAK_POSITIVE_EVIDENCE" if rank_ok and money else "RANK_ONLY" if rank_ok else "NO_EVIDENCE", "condition_a": a["checks"], "condition_b": money}
+    if top_band:
+        checks["buy_band"] = gt(s["all"]["top_score_effect"])
+    key = "top_minus_index" if top_band else "buy_minus_index"
+    money = gt(s["early"][key]) and gt(s["late"][key])
+    rank_ok = all(checks.values())
+    return {"verdict": "WEAK_POSITIVE_EVIDENCE" if rank_ok and money else "RANK_ONLY" if rank_ok else "NO_EVIDENCE", "condition_a": checks, "condition_b": money,
+            "band": "TOP_FIFTH" if top_band else "SCORE_70", "t_bar": s.get("t_bar")}
 
 
 def matured_sessions(sessions: Sequence[str], calendar: Sequence[str], h: int) -> List[str]:
@@ -156,8 +180,10 @@ def _pooled(base: Path, strategy: str) -> Optional[Dict[str, Any]]:
     return {"t": got, "combined": z, "engine_level_reference": z >= validate.MIN_T, "note": "참고 근거입니다. 시장별 판정을 바꾸지 않습니다."}
 
 
-def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str], List[Dict]], bench: List[Dict], log=print) -> Dict[str, Any]:
+def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str], List[Dict]], bench: List[Dict], log=print,
+                  benches: Optional[Dict[str, List[Dict]]] = None) -> Dict[str, Any]:
     base = Path(base)
+    top = (market, strategy) in TOP_BAND
     out = report_path(base, market, strategy)
     if out.exists():
         raise RuntimeError("판정은 한 번만 합니다. 이미 결과가 있습니다.")
@@ -166,7 +192,7 @@ def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str]
         raise RuntimeError("원장 검증에 실패해 판정하지 않습니다.")
     h, need = PRIMARY[strategy], NEED[strategy]
     rows = session_rows(led, market, strategy)
-    px = Prices(loader, bench)
+    px = Prices(loader, bench, benches)
     ready = matured_sessions(list(rows), px.calendar, h)
     if len(ready) < need:
         raise RuntimeError(f"아직 판정할 수 없습니다. 만기 거래일 {len(ready)}개, 기준 {need}개입니다.")
@@ -179,12 +205,13 @@ def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str]
     extra = {}
     for x in EXTRA[strategy]:
         got = [d for d in (day_stats(s, rows[s], px, x, cost) for s in used) if d]
-        extra[str(x)] = {**summarize(got, x), **reading(summarize(got, x))} if len(got) > 2 * x else {"dates": len(got), "status": "UNAVAILABLE"}
+        extra[str(x)] = {**summarize(got, x), **reading(summarize(got, x), top)} if len(got) > 2 * x else {"dates": len(got), "status": "UNAVAILABLE"}
     versions: Dict[str, List[float]] = {}
     for d in days:
         versions.setdefault("+".join(d["versions"]), []).append(d["ic"])
     res = {"status": "REAL", "protocol": PROTOCOL, "market": market, "strategy": strategy, "horizon": h, "sessions_used": len(used), "first": used[0], "last": used[-1],
-           "cost_round_trip_pct": cost * 100, **reading(primary), "primary": primary, "other_horizons": extra,
+           "cost_round_trip_pct": cost * 100, **reading(primary, top), "primary": primary, "other_horizons": extra,
+           "benchmarks": sorted(px.benches) or None,
            "by_version": {k: {"dates": len(v), "ic": float(np.mean(v))} for k, v in sorted(versions.items())}, "note": NOTE}
     out.parent.mkdir(parents=True, exist_ok=True)
     durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))

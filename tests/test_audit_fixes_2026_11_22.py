@@ -6,6 +6,7 @@ from argparse import Namespace
 from datetime import date
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 import app
@@ -258,3 +259,74 @@ def test_the_paper_record_books_a_crash_and_carries_a_vanished_holding_at_its_la
     assert never["unpriced"] == ["AAA"] and never["total_return"] == 0.0 and never["carried_at_last_close"] == {}
     text = (ROOT / "reports" / "IC1_PAPER_READING_PROTOCOL.md").read_text(encoding="utf-8")
     assert "## 수정 이력" in text and "50%를 넘는 하락은 손실로 반영" in text and "마지막 종가로 평가" in text and "세 관점 이상이 회피" in text
+
+
+# ---------------------------------------------------------------------- decisions of 2026-11-22 on the readings (roadmap 11, 12, 13, 20)
+def test_the_t_bar_of_a_reading_is_the_value_noise_of_its_own_design_reaches_as_rarely_as_the_table_says():
+    from terminal.qsf import calibrate, validate
+    rng = np.random.default_rng(3)
+    x = calibrate.noise(rng, 20, 240, 20, 1)
+    assert max(abs(calibrate.t_many(x, 20)[i] - validate.newey_west_t(list(x[i]), 20)) for i in range(20)) < 1e-9          # the repo's own t, row by row
+    swing, long_ = calibrate.bar(2.24, 240, 20, 1, 20), calibrate.bar(2.24, 756, 63, 1, 63)
+    assert 3.2 < swing < 3.5 and 3.2 < long_ < 3.5 and calibrate.bar(2.24, 240, 20, 1, 20) == swing                        # the audit's simulation: about 3.4; and the same every time
+    assert 2.0 <= calibrate.bar(2.0, 240, 1, 1, 0) < 2.15 and calibrate.bar(2.0, 2, 20, 1, 20) == 2.0                      # independent values: the table's value nearly holds
+    assert 2.15 < calibrate.plain_bar(2.0, 12) < 2.35 and calibrate.plain_bar(2.0, 2) == 2.0 and calibrate.bar(3.0, 240, 20, 1, 20) > 4.5
+    assert calibrate.tail(2.24) == pytest.approx(0.01255, abs=2e-4)
+    # under the bar, pure noise of that design passes about as often as the table says (a different seed from the one that set the bar)
+    noise_t = calibrate.t_many(calibrate.noise(np.random.default_rng(99), 20000, 240, 20, 1), 20)
+    assert 0.006 < float((noise_t >= swing).mean()) < 0.02 and float((noise_t >= 2.24).mean()) > 0.04
+    base = {"ic": 0.05, "t": 2.6, "early": {"ic": 0.04, "spread_net": 0.01}, "late": {"ic": 0.06, "spread_net": 0.01}, "buy_excess": 0.01, "buy_dates": 20}
+    assert validate.verdict(base)["checks"]["t"] is True and validate.verdict({**base, "t_bar": swing})["checks"]["t"] is False          # a past result reads as it did; a new one by its own bar
+
+
+def _summary(**over):
+    part = {"ic": 0.05, "spread_net": 0.01, "buy_minus_index": None, "top_minus_index": 0.004, "top_score_effect": 0.003}
+    return {"ic": 0.05, "t": 4.0, "t_bar": 3.33, "early": dict(part), "late": dict(part), "all": dict(part), "buy_excess": None, "buy_dates": 0, **over}
+
+
+def test_the_korean_swing_verdict_reads_the_top_fifth_where_no_score_reaches_seventy():
+    from terminal.qsf import live_forward as lf
+    s = _summary()
+    by_band, by_top = lf.reading(s), lf.reading(s, top_band=True)
+    assert by_band["verdict"] == "NO_EVIDENCE" and by_band["condition_a"]["buy_band"] is False and by_band["band"] == "SCORE_70"          # could never pass: no stock at 70
+    assert by_top["verdict"] == "WEAK_POSITIVE_EVIDENCE" and by_top["band"] == "TOP_FIFTH" and by_top["t_bar"] == 3.33
+    assert lf.reading(_summary(t=3.0), top_band=True)["verdict"] == "NO_EVIDENCE"                                                          # under its own bar
+    worse = _summary()
+    worse["late"]["top_minus_index"] = -0.001
+    assert lf.reading(worse, top_band=True)["verdict"] == "RANK_ONLY" and lf.TOP_BAND == (("KR", "SWING"),)
+
+
+def test_a_kosdaq_stock_is_compared_with_the_kosdaq_index():
+    from terminal.qsf import ledger, live_forward as lf
+    days = [f"2026-12-{d:02d}" for d in range(1, 29)]
+    flat = [{"date": d, "open": 100.0, "high": 100.0, "low": 100.0, "close": 100.0, "adj_close": 100.0, "volume": 1} for d in days]
+    rising = [{**b, "open": 100.0 * 1.01 ** n, "close": 100.0 * 1.01 ** (n + 1), "adj_close": 100.0 * 1.01 ** (n + 1)} for n, b in enumerate(flat)]
+    px = lf.Prices(lambda t: rising, flat, {"^KS11": flat, "^KQ11": rising})
+    kospi = px.outcome({"ticker": "A", "benchmark": "^KS11", "entry_session": days[1]}, days[0], 5, 0.0)
+    kosdaq = px.outcome({"ticker": "A", "benchmark": "^KQ11", "entry_session": days[1]}, days[0], 5, 0.0)
+    assert kospi["relative_net"] > 0.04 and abs(kosdaq["relative_net"]) < 1e-9 and kosdaq["net"] == kospi["net"]          # the same stock: ahead of a flat KOSPI, level with its own index
+    assert lf.Prices(lambda t: rising, flat).outcome({"ticker": "A", "benchmark": "^KQ11", "entry_session": days[1]}, days[0], 5, 0.0)["relative_net"] > 0.04          # no table: as before
+    snaps = [{"market": "KR", "ticker": f"T{k}", "strategy": "SWING", "score": 75.0, "actionability": "ACTIONABLE", "data_date": days[0], "entry_session": days[1], "benchmark": "^KQ11"} for k in range(3)]
+    old = ledger.validate(snaps, "KR", "SWING", lambda t: rising, flat)["horizons"]["5"]["buckets"]["70-80"]["mean_relative_net"]
+    new = ledger.validate(snaps, "KR", "SWING", lambda t: rising, flat, benches={"^KS11": flat, "^KQ11": rising})["horizons"]["5"]["buckets"]["70-80"]["mean_relative_net"]
+    assert old > 0.03 and abs(new + 2 * 0.0) < 0.02 and new < old
+
+
+def test_the_four_live_verdicts_are_the_main_readings_and_the_rest_say_they_are_reference():
+    from terminal.qsf import readings as rd
+    by = {e["key"]: e for e in rd.REGISTRY}
+    assert sorted(k for k, e in by.items() if e["primary"]) == ["live_long_kr", "live_long_us", "live_swing_kr", "live_swing_us"]
+    main, side = rd.text(by["live_swing_us"], {"verdict": "NO_EVIDENCE"}), rd.text(by["fund_period_us"], {"verdict": "NOT_DISTINGUISHED"})
+    assert main.startswith("[주된 판정 · ") and rd.REFERENCE_NOTE not in main and side.startswith("[참고 판정 · ") and rd.REFERENCE_NOTE in side
+
+
+def test_every_protocol_whose_reading_has_not_run_carries_the_amendment():
+    names = ("QSF_LIVE_FORWARD", "QSF_KR_AVOID_MARKS", "QSF_SCORE_SPLIT", "QSF_FUND_PERIOD", "QSF_US_CHALLENGER", "QSF_KR_CHALLENGER", "QSF_KR_FORWARD", "QSF_KR_EVENTS_FORWARD",
+             "QSF_KR_CAP_UNIVERSE", "QSF_KR_TRADED_UNIVERSE", "QSF_KR_SWING_CHALLENGER", "QSF_KR_SWING_PRIOR", "QSF_KR_METHOD", "QSF_RANK_RULES", "QSF_TURNOVER_RULES")
+    for name in names:
+        text = (ROOT / "reports" / f"{name}_PROTOCOL.md").read_text(encoding="utf-8")
+        assert "## 수정 이력: 2026-11-22, t 기준의 보정 (읽기 전)" in text and "terminal/qsf/calibrate.py" in text, name
+    live = (ROOT / "reports" / "QSF_LIVE_FORWARD_PROTOCOL.md").read_text(encoding="utf-8")
+    assert "상위 20%" in live and "코스닥 종목은 코스닥" in live and "주된 판정" in live
+    turn = (ROOT / "reports" / "QSF_TURNOVER_RULES_PROTOCOL.md").read_text(encoding="utf-8")
+    assert "스스로 규칙을 적용하지 않는다" in turn and "QSF_TURNOVER_RULES=on" in turn

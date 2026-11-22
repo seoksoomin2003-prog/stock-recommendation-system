@@ -15,6 +15,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
+from terminal.qsf import calibrate
 from terminal.qsf import kr_forward as kf, paper_book, validate
 from utils import durable
 
@@ -30,7 +31,7 @@ LAG = 20
 MIN_T = 2.0
 ENV = "QSF_TURNOVER_RULES"
 MARKET_KO = {"KR": "한국", "US": "미국"}
-DECISION_KO = {"ADOPT": "적용", "KEEP": "유지"}
+DECISION_KO = {"ADOPT": "적용 조건 충족(자동 적용 안 함)", "KEEP": "유지"}
 RULE_KO = {"REENTRY_WAIT": "재진입을 막은 후보(종목·날)", "HOLD_EXTENDED": "보유 연장(종목·날)", "HOLD_NO_SCORE": "점수가 없어 넘긴 날"}
 
 
@@ -85,8 +86,10 @@ def active_rules(base: Path, market: str) -> Optional[Dict[str, Any]]:
         return None
     if m == "on":
         return dict(RULES)
-    rep = report(base, market)
-    return dict(RULES) if rep and rep.get("decision") == "ADOPT" else None
+    # "auto": the reading no longer switches the rules on (user decision 2026-11-22).  Its two conditions (cheaper, and a mean
+    # difference of zero or more) are met about half the time when the rules change nothing (audit QNT-02), so the reading
+    # reports and the user decides: QSF_TURNOVER_RULES=on puts the rules in force.
+    return None
 
 
 # ---------------------------------------------------------------------- the daily record
@@ -138,17 +141,20 @@ def rule_counts(docs: List[Dict[str, Any]]) -> Dict[str, int]:
     return out
 
 
-def decide(base_fig: Dict[str, Any], rule_fig: Dict[str, Any], mean_diff: float, t: Optional[float]) -> Dict[str, Any]:
-    """The protocol's decision.  ADOPT: the comparison book paid less and its mean daily return was not below the paper book's."""
+def decide(base_fig: Dict[str, Any], rule_fig: Dict[str, Any], mean_diff: float, t: Optional[float], bar: Optional[float] = None) -> Dict[str, Any]:
+    """The protocol's reading.  ADOPT: the comparison book paid less and its mean daily return was not below the paper book's.
+    Since 2026-11-22 the word is a finding, not a switch: nothing is applied by it (see ``active_rules``).  ``bar``: the t bar
+    for the sample's own design (terminal/qsf/calibrate.py); MIN_T without it."""
+    bar = bar or MIN_T
     cheaper = rule_fig["cost_pct"] < base_fig["cost_pct"]
     decision = "ADOPT" if cheaper and mean_diff >= 0 else "KEEP"
-    distinct = t is not None and abs(t) >= MIN_T
+    distinct = t is not None and abs(t) >= bar
     t_txt = "계산할 수 없음(두 장부의 수익률이 같음)" if t is None else f"{t:+.2f}"
     why = [f"비용(수수료·세금 + 슬리피지 추정 ÷ 평균 평가액): 규칙 적용 {rule_fig['cost_pct']:.2f}%, 기존 {base_fig['cost_pct']:.2f}%. " + ("규칙 쪽이 낮습니다." if cheaper else "규칙 쪽이 낮지 않습니다."),
-           f"하루 수익률 차이(규칙 − 기존)의 평균: {mean_diff * 1e4:+.2f}bp, t {t_txt} (기준 ±{MIN_T:g}). " + ("0 이상입니다." if mean_diff >= 0 else "0보다 작습니다."),
+           f"하루 수익률 차이(규칙 − 기존)의 평균: {mean_diff * 1e4:+.2f}bp, t {t_txt} (기준 ±{bar:g}). " + ("0 이상입니다." if mean_diff >= 0 else "0보다 작습니다."),
            f"기간 수익률: 규칙 적용 {rule_fig['return_pct']:+.2f}%, 기존 {base_fig['return_pct']:+.2f}%. 최대 낙폭: {rule_fig['max_drawdown_pct']:.2f}%, {base_fig['max_drawdown_pct']:.2f}%."]
     if decision == "ADOPT":
-        why.append("두 조건(비용이 낮음, 수익 차이의 평균이 0 이상)을 모두 채워 규칙을 적용합니다." + ("" if distinct else " 다만 수익 차이는 통계로 구분되지 않아, 비용 절감과 점 추정에 기댄 약한 결정입니다."))
+        why.append("두 조건(비용이 낮음, 수익 차이의 평균이 0 이상)을 모두 채웠습니다. 프로그램이 스스로 적용하지는 않습니다." + ("" if distinct else " 다만 수익 차이는 통계로 구분되지 않아, 비용 절감과 점 추정에 기댄 약한 결정입니다."))
     else:
         why.append("두 조건(비용이 낮음, 수익 차이의 평균이 0 이상) 중 채우지 못한 것이 있어 기존 규칙을 유지합니다." + ("" if distinct else " 수익 차이는 통계로 구분되지 않았습니다."))
     return {"decision": decision, "evidence": "DISTINCT" if distinct else "NOT_DISTINCT", "cheaper": cheaper, "why": why}
@@ -161,7 +167,7 @@ def measure(base_docs: List[Dict[str, Any]], rule_docs: List[Dict[str, Any]], se
     mean_diff = sum(diff) / len(diff)
     t = validate.newey_west_t(diff, LAG)
     return {"paper_book": b, "rules_book": r, "difference": {"mean_daily": mean_diff, "t": t, "days": len(diff)}, "rule_counts": rule_counts(rule_docs),
-            **decide(b, r, mean_diff, t)}
+            **decide(b, r, mean_diff, t, calibrate.bar(MIN_T, len(diff), 1, 1, LAG))}
 
 
 # ---------------------------------------------------------------------- the single reading
@@ -188,9 +194,11 @@ def evaluate_once(base: Path, market: str, now: Callable[[], datetime] = _utcnow
     base_docs = [kf._read_day(base / paper_book.FOLDERS[market], s) for s in sessions]
     res = {"status": "REAL", "protocol": PROTOCOL, "version": VERSION, "market": market, "first": sessions[0], "last": sessions[-1], "seed_session": seed["session"],
            "read_at": now().isoformat(), "rules": dict(RULES), **measure(base_docs, rule_docs, seed),
-           "note": "계좌 하나의 경로를 나란히 본 비교입니다. 점수가 맞는지의 근거가 아니며 투자 자문이 아닙니다. .env의 QSF_TURNOVER_RULES(auto/on/off)로 이 결정을 뒤집을 수 있습니다."}
-    res["consequence"] = ("이 뒤의 기록부터 기존 모의 장부(PB-3), 실제 계좌의 주문 계획, 보유 종목 판단이 두 규칙을 씁니다." if res["decision"] == "ADOPT"
+           "note": "계좌 하나의 경로를 나란히 본 비교입니다. 점수가 맞는지의 근거가 아니며 투자 자문이 아닙니다. 규칙은 .env의 QSF_TURNOVER_RULES=on 일 때만 쓰입니다(auto와 off는 쓰지 않음)."}
+    res["consequence"] = ("자동으로 바뀌는 것은 없습니다(2026-11-22 결정). 이 두 조건은 규칙에 효과가 없어도 절반쯤은 채워지므로, 위의 t가 기준을 넘었는지를 함께 보고 정하세요. "
+                          "규칙을 쓰려면 .env에 QSF_TURNOVER_RULES=on 을 적습니다. 그러면 모의 장부, 실제 계좌의 주문 계획, 보유 종목 판단이 두 규칙을 씁니다." if res["decision"] == "ADOPT"
                           else "아무것도 바뀌지 않습니다. 비교 장부는 더 적지 않습니다.")
+    res["applies_itself"] = False
     target.parent.mkdir(parents=True, exist_ok=True)
     durable.write_text(target, json.dumps(res, ensure_ascii=False, indent=1))        # whole and on the disk: this file switches rules on
     return res
@@ -217,7 +225,7 @@ def text(rep: Dict[str, Any]) -> str:
         return f"[회전율 규칙 판정 · {name}] 읽지 못했습니다: {rep.get('reason')} 기록을 확인해야 합니다. 규칙: {PROTOCOL}"
     lines = [f"[회전율 규칙 판정 · {name}] 결정: {DECISION_KO[rep['decision']]}", f"구간 {rep['first']} ~ {rep['last']} ({rep['difference']['days']}거래일)"]
     lines += [f"- {w}" for w in rep["why"]]
-    lines += [rep["consequence"], "터미널 점수 탭의 모의 장부에서 수치를 볼 수 있습니다. 뒤집으려면 .env의 QSF_TURNOVER_RULES를 on 또는 off로 두세요."]
+    lines += [rep["consequence"], "터미널 점수 탭의 모의 장부에서 수치를 볼 수 있습니다."]
     return "\n".join(lines)
 
 
@@ -235,7 +243,7 @@ def status(base: Path, market: str) -> Dict[str, Any]:
     head = {"market": market, "protocol": PROTOCOL, "version": VERSION, "rules": dict(RULES), "read_at": READ_AT, "first": FIRST, "mode": mode(),
             "switch_unknown": switch_of(ENV)["unknown"], "damaged": rep.get("reason") if rep and rep.get("status") == "DAMAGED" else None,
             "active": active_rules(base, market) is not None, "adopted_version": ADOPTED_VERSION, "rule_labels": RULE_KO,
-            "note": "판정 전에는 비교 장부의 평가액·수익률·비용을 보여 주지 않습니다. 240거래일이 되면 프로그램이 스스로 읽고 정합니다."}
+            "note": "판정 전에는 비교 장부의 평가액·수익률·비용을 보여 주지 않습니다. 240거래일이 되면 프로그램이 스스로 읽고 알립니다. 규칙을 스스로 바꾸지는 않습니다(2026-11-22 결정)."}
     if head["damaged"]:
         rep = None
     out: Dict[str, Any] = {"status": "DAMAGED" if head["damaged"] else "DECIDED" if rep else "RECORDING" if index else "NO_RECORD", **head, "records": len(index), "left": max(READ_AT - len(index), 0),

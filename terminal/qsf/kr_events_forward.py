@@ -9,9 +9,10 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
+from terminal.qsf import calibrate
 import numpy as np
 
-from terminal.qsf import config, kr_forward as kf, krx_history as kh, research_ensemble as en, research_kr as kr, research_kr_events as ke, research_swing as rs
+from terminal.qsf import config, kr_forward as kf, krx_history as kh, research_ensemble as en, research_kr as kr, research_kr_events as ke, research_swing as rs, validate
 from terminal.qsf.research_score import test_verdict
 from utils import durable
 
@@ -164,6 +165,7 @@ def evaluate_once(base: Path, log=print) -> Dict[str, Any]:
     picks = list(range(len(rows)))
     cost = config.round_trip_cost("KR")
     test = en.evaluate(score, px, rows, picks, HORIZON, {}, cost)
+    test["t_bar"] = calibrate.bar(validate.MIN_T, len(rows), HORIZON, STEP, rs.lag_of(HORIZON))          # the bar for this sample's own design (2026-11-22)
     for regime in ("ic_spy_above_200d", "ic_spy_below_200d"):      # prices start at the first record, too short for a 200-day average
         test.pop(regime, None)
     judged = test_verdict(test)

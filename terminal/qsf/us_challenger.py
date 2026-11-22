@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence
 from zoneinfo import ZoneInfo
 
+from terminal.qsf import calibrate
 import numpy as np
 
 from terminal.qsf import config, kr_forward as kf, research_ensemble as en, research_kr as kr, research_swing as rs, validate
@@ -214,8 +215,9 @@ def paired_ic(score: np.ndarray, live: np.ndarray, px: Panel, rows: List[int], h
     x, y = kf._half(diff)
     t = validate.newey_west_t(diff, rs.lag_of(h))
     early, late = float(np.mean(x)) if x else None, float(np.mean(y)) if y else None
-    good = np.mean(diff) > 0 and t is not None and t >= MIN_T and (early or 0) > 0 and (late or 0) > 0
-    return {"dates": len(diff), "mean": float(np.mean(diff)), "t": t, "early": early, "late": late, "supports_challenger": bool(good)}
+    bar = calibrate.bar(MIN_T, len(diff), h, STEP, rs.lag_of(h))          # the bar for this sample's own design (2026-11-22)
+    good = np.mean(diff) > 0 and t is not None and t >= bar and (early or 0) > 0 and (late or 0) > 0
+    return {"dates": len(diff), "mean": float(np.mean(diff)), "t": t, "t_bar": bar, "early": early, "late": late, "supports_challenger": bool(good)}
 
 
 def evaluate_once(base: Path, strategy: str, loader: Callable[[str], List[Dict]], calendar: Sequence[str], log=print) -> Dict[str, Any]:
@@ -255,6 +257,8 @@ def evaluate_once(base: Path, strategy: str, loader: Callable[[str], List[Dict]]
     picks = list(range(len(rows)))
     cost = config.round_trip_cost("US")
     test, base_test = en.evaluate(score, px, rows, picks, h, {}, cost), en.evaluate(live, px, rows, picks, h, {}, cost)
+    for one in (test, base_test):
+        one["t_bar"] = calibrate.bar(validate.MIN_T, len(rows), h, STEP, rs.lag_of(h))
     verdict, base_verdict = test_verdict(test), test_verdict(base_test)
     paired = paired_ic(score, live, px, rows, h)
     later = [v for v in (rs._ic(score[n], px.forward(rows[n] + 1, h)) for n in picks) if v is not None]

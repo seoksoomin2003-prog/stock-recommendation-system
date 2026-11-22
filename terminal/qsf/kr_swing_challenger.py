@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from terminal.qsf import calibrate
 import numpy as np
 
 from terminal.qsf import config, kr_forward as kf, validate
@@ -141,9 +142,10 @@ def verdict(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     diff = [a - b for a, b in zip(ch, lv)]
     own = {"mean": float(np.mean(ch)), "t": _t(ch)}
     gap = {"mean": float(np.mean(diff)), "t": _t(diff)}
-    has = own["mean"] > 0 and own["t"] is not None and own["t"] >= MIN_T
-    better = has and gap["mean"] > 0 and gap["t"] is not None and gap["t"] >= MIN_T
-    return {"samples": len(rows), "challenger": own, "live": {"mean": float(np.mean(lv)), "t": _t(lv)}, "difference": gap,
+    bar = calibrate.plain_bar(MIN_T, len(rows))          # a dozen samples: the table's value is passed too often (2026-11-22)
+    has = own["mean"] > 0 and own["t"] is not None and own["t"] >= bar
+    better = has and gap["mean"] > 0 and gap["t"] is not None and gap["t"] >= bar
+    return {"samples": len(rows), "t_bar": bar, "challenger": own, "live": {"mean": float(np.mean(lv)), "t": _t(lv)}, "difference": gap,
             "verdict": "CHALLENGER_BETTER" if better else "CHALLENGER_HAS_EVIDENCE" if has else "NO_EVIDENCE"}
 
 

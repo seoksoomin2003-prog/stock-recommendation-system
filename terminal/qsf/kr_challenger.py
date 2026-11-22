@@ -10,9 +10,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from terminal.qsf import calibrate
 import numpy as np
 
-from terminal.qsf import config, kr_forward as kf, kr_swing_challenger as sc, research_ensemble as en, research_kr as kr, research_swing as rs, us_challenger as uc
+from terminal.qsf import config, kr_forward as kf, kr_swing_challenger as sc, research_ensemble as en, research_kr as kr, research_swing as rs, validate, us_challenger as uc
 from terminal.qsf.ledger import Ledger
 from terminal.qsf.research_score import test_verdict
 from utils import durable
@@ -167,7 +168,7 @@ def verdict(own: bool, paired: Dict[str, Any]) -> str:
     if own and paired.get("supports_challenger"):
         return "CHALLENGER_BETTER"
     m, t, early, late = paired.get("mean"), paired.get("t"), paired.get("early"), paired.get("late")
-    if m is not None and t is not None and m < 0 and t <= -MIN_T and early is not None and early < 0 and late is not None and late < 0:
+    if m is not None and t is not None and m < 0 and t <= -(paired.get("t_bar") or MIN_T) and early is not None and early < 0 and late is not None and late < 0:
         return "LIVE_BETTER"
     return "CHALLENGER_HAS_EVIDENCE" if own else "NO_EVIDENCE"
 
@@ -231,6 +232,8 @@ def evaluate_once(base: Path, strategy: str, log=print, panel: Any = None) -> Di
     for t in (test, base_test):
         for regime in ("ic_spy_above_200d", "ic_spy_below_200d"):      # not in the rules
             t.pop(regime, None)
+    for one in (test, base_test):
+        one["t_bar"] = calibrate.bar(validate.MIN_T, len(chosen), h, STEP, rs.lag_of(h))          # the bar for this sample's own design (2026-11-22)
     own, base_own = test_verdict(test), test_verdict(base_test)
     paired = uc.paired_ic(score, live, view, rows_i, h)
     apart = picks[::max(1, h // STEP)]                                 # samples a whole horizon apart, the former way of reading

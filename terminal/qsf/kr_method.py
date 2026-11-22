@@ -12,6 +12,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set
 
+from terminal.qsf import calibrate
 import numpy as np
 
 from terminal.qsf import config, kr_avoid_marks, kr_forward as kf, kr_risk_grade, krx_history as kh, research_kr as kr, validate
@@ -235,7 +236,7 @@ def select(readings: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
         v = r.get("vs_b0") or {}
         gt = lambda x, y: x is not None and x > y          # noqa: E731
         checks[m] = {"trades": r["trades"] >= MIN_TRADES, "above_b0": gt(r.get("mean_net_minus_b0"), 0),
-                     "t": v.get("t") is not None and v["t"] >= SELECT_T, "both_halves": gt(v.get("early"), 0) and gt(v.get("late"), 0)}
+                     "t": v.get("t") is not None and v["t"] >= calibrate.bar(SELECT_T, v.get("blocks") or 0, 1, 1, 1), "both_halves": gt(v.get("early"), 0) and gt(v.get("late"), 0)}
     passed = sorted((m for m in METHODS if all(checks[m].values())), key=lambda m: -readings[m]["mean_net"])
     return {"checks": checks, "passed": passed, "primary": passed[:MAX_PRIMARY], "verdict": "PRIMARY_NAMED" if passed else "NO_PRIMARY"}
 

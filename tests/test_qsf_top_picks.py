@@ -163,7 +163,7 @@ def test_reports_are_reused_until_an_input_changes(tmp_path):
     assert svc.validation() == {"n": 1} and svc.validation() == {"n": 1} and len(calls) == 1
     (tmp_path / "bars_KR.json.gz").write_bytes(b"x")                       # new prices: computed again
     assert svc.validation() == {"n": 2}
-    svc.cache.write("bars:2y:^KS11", [1])                                  # a refreshed index too
+    svc.cache.write("bars:2y:^KQ11,^KS11", [1])                            # a refreshed index too (both Korean indexes since 2026-11-22: a KOSDAQ stock against KOSDAQ)
     assert svc.validation() == {"n": 3}
     svc.now = lambda: datetime(2026, 11, 9, 3, tzinfo=timezone.utc)        # and a new day
     assert svc.validation() == {"n": 4} and svc.validation() == {"n": 4}

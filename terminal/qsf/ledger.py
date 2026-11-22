@@ -424,8 +424,10 @@ def bucket_of(score: float) -> str:
     return "100"
 
 
-def validate(snaps: List[Dict[str, Any]], market: str, strategy: str, loader: Callable[[str], List[Dict]], bench: List[Dict], cost: Optional[float] = None) -> Dict[str, Any]:
-    """Bucket report for ONE cohort.  Below the independence minimum the verdict stays 'no verdict', whatever the numbers say."""
+def validate(snaps: List[Dict[str, Any]], market: str, strategy: str, loader: Callable[[str], List[Dict]], bench: List[Dict], cost: Optional[float] = None,
+             benches: Optional[Dict[str, List[Dict]]] = None) -> Dict[str, Any]:
+    """Bucket report for ONE cohort.  Below the independence minimum the verdict stays 'no verdict', whatever the numbers say.
+    ``benches``: {a snapshot's recorded benchmark: its bars}; a stock is compared with the index it was recorded against."""
     cost = config.round_trip_cost(market) if cost is None else cost
     horizons = config.SWING_HORIZONS if strategy == "SWING" else tuple(m * 21 for m in config.LONG_HORIZONS_MONTHS)
     cohort = [s for s in snaps if s["market"] == market and s["strategy"] == strategy and s.get("score") is not None and s.get("actionability") != "INSUFFICIENT_DATA"]
@@ -448,6 +450,7 @@ def validate(snaps: List[Dict[str, Any]], market: str, strategy: str, loader: Ca
     cache: Dict[str, Tuple[List[Dict], Optional[List[str]]]] = {}
     bench_by_date = {b["date"]: b for b in bench}
     calendar = sorted(bench_by_date)          # the market's sessions: a recorded stock that stopped trading exits at its last trade
+    own = {k: (v, {b["date"]: b for b in v}) for k, v in (benches or {}).items() if v}
     for h in horizons:
         buckets: Dict[str, List[Dict[str, float]]] = {}
         matured = set()
@@ -458,7 +461,8 @@ def validate(snaps: List[Dict[str, Any]], market: str, strategy: str, loader: Ca
                 ok = all(isinstance(d, str) for d in days) and days == sorted(days)
                 cache[s["ticker"]] = (bars, days if ok else None)      # bars out of order or without a date take the plain scan
             path, days = cache[s["ticker"]]
-            o = outcome(path, bench, s["data_date"], h, cost, s.get("entry_session"), days, bench_by_date, calendar)
+            its, its_by_date = own.get(s.get("benchmark")) or (bench, bench_by_date)
+            o = outcome(path, its, s["data_date"], h, cost, s.get("entry_session"), days, its_by_date, calendar)
             if o:
                 buckets.setdefault(bucket_of(s["score"]), []).append(o)
                 matured.add(s["data_date"])

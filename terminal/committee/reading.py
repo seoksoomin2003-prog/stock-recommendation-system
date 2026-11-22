@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from terminal.committee import portfolios, record
-from terminal.qsf import validate
+from terminal.qsf import calibrate, validate
 from utils import durable
 
 PROTOCOL = "reports/IC1_PAPER_READING_PROTOCOL.md"
@@ -21,8 +21,8 @@ BETTER, WORSE, UNKNOWN, ANY_BETTER = "BETTER", "WORSE", "NOT_DISTINGUISHED", "PA
 WORD = {BETTER: "지수보다 나음", WORSE: "지수보다 못함", UNKNOWN: "구분되지 않음"}
 
 
-def judge(t: Optional[float]) -> str:
-    return UNKNOWN if t is None else BETTER if t >= BAR else WORSE if t <= -BAR else UNKNOWN
+def judge(t: Optional[float], bar: float = BAR) -> str:
+    return UNKNOWN if t is None else BETTER if t >= bar else WORSE if t <= -bar else UNKNOWN
 
 
 def evaluate_once(base: Path, market: str, price: Callable[[str, str], Optional[float]], benchmark: Callable[[str], Optional[float]], one_way_cost: float) -> Dict[str, Any]:
@@ -46,11 +46,12 @@ def evaluate_once(base: Path, market: str, price: Callable[[str, str], Optional[
         daily = s.pop("daily", [])
         excess = [r - b for r, b in zip(daily, index) if b is not None]
         t = validate.newey_west_t(excess, LAG) if len(excess) >= 3 else None
-        code = judge(t)
+        bar = calibrate.bar(BAR, len(excess), 1, 1, LAG)          # the bar for this sample's own design (protocol, amendment of 2026-11-22)
+        code = judge(t, bar)
         invested = [1.0 - float(((r.get("portfolios") or {}).get(key) or {}).get("cash", 1.0)) for r in rows[:READ_AT]]
-        out[key] = {**s, "verdict": code, "t": None if t is None else round(t, 3), "mean_excess_daily": round(sum(excess) / len(excess), 6) if excess else None, "excess_days": len(excess),
+        out[key] = {**s, "verdict": code, "t": None if t is None else round(t, 3), "t_bar": bar, "mean_excess_daily": round(sum(excess) / len(excess), 6) if excess else None, "excess_days": len(excess),
                     "average_invested": round(sum(invested) / len(invested), 4)}
-        reasons.append(f"{portfolios.SPEC[key]['name']}: {WORD[code]}(t {'계산 안 됨' if t is None else f'{t:+.2f}'}, 기준 ±{BAR:g}). 누적 {s.get('total_return', 0) * 100:+.1f}%, "
+        reasons.append(f"{portfolios.SPEC[key]['name']}: {WORD[code]}(t {'계산 안 됨' if t is None else f'{t:+.2f}'}, 기준 ±{bar:g}). 누적 {s.get('total_return', 0) * 100:+.1f}%, "
                        f"지수 {(s.get('benchmark_return') or 0) * 100:+.1f}%, 평균 투자 비중 {out[key]['average_invested'] * 100:.0f}%.")
     verdict = ANY_BETTER if any(v["verdict"] == BETTER for v in out.values()) else UNKNOWN
     res = {"status": "REAL", "protocol": PROTOCOL, "rules": rows[0].get("rules"), "market": market, "first": rows[0]["session"], "last": rows[-1]["session"], "records": len(rows), "days": READ_AT,

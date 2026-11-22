@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
+from terminal.qsf import calibrate
 from terminal.qsf import kr_forward as kf, paper_book, turnover_book as tb, validate
 from utils import durable
 
@@ -86,12 +87,14 @@ def rule_counts(docs: List[Dict[str, Any]]) -> Dict[str, int]:
     return out
 
 
-def decide(base_fig: Dict[str, Any], rule_fig: Dict[str, Any], mean_diff: float, t: Optional[float]) -> Dict[str, Any]:
-    """The protocol's decision.  ADOPT only on a distinct, positive mean daily return difference."""
-    distinct = t is not None and abs(t) >= MIN_T
-    decision = "ADOPT" if t is not None and mean_diff > 0 and t >= MIN_T else "KEEP"
+def decide(base_fig: Dict[str, Any], rule_fig: Dict[str, Any], mean_diff: float, t: Optional[float], bar: Optional[float] = None) -> Dict[str, Any]:
+    """The protocol's decision.  ADOPT only on a distinct, positive mean daily return difference.  ``bar``: the t bar for the
+    sample's own design (terminal/qsf/calibrate.py, 2026-11-22); MIN_T without it."""
+    bar = bar or MIN_T
+    distinct = t is not None and abs(t) >= bar
+    decision = "ADOPT" if t is not None and mean_diff > 0 and t >= bar else "KEEP"
     t_txt = "계산할 수 없음(두 장부의 수익률이 같음)" if t is None else f"{t:+.2f}"
-    why = [f"하루 수익률 차이(순위 규칙 − 기존)의 평균: {mean_diff * 1e4:+.2f}bp, t {t_txt} (적용 기준: 평균이 0보다 크고 t가 {MIN_T:g} 이상).",
+    why = [f"하루 수익률 차이(순위 규칙 − 기존)의 평균: {mean_diff * 1e4:+.2f}bp, t {t_txt} (적용 기준: 평균이 0보다 크고 t가 {bar:g} 이상).",
            f"기간 수익률: 순위 규칙 {rule_fig['return_pct']:+.2f}%, 기존 {base_fig['return_pct']:+.2f}%. 최대 낙폭: {rule_fig['max_drawdown_pct']:.2f}%, {base_fig['max_drawdown_pct']:.2f}%.",
            f"비용(수수료·세금 + 슬리피지 추정 ÷ 평균 평가액): 순위 규칙 {rule_fig['cost_pct']:.2f}%, 기존 {base_fig['cost_pct']:.2f}%."]
     if decision == "ADOPT":
@@ -100,7 +103,7 @@ def decide(base_fig: Dict[str, Any], rule_fig: Dict[str, Any], mean_diff: float,
         why.append("수익 차이가 통계로 구분되지만 순위 규칙 쪽이 낮아 기존 규칙을 유지합니다.")
     else:
         why.append("수익 차이가 통계로 구분되지 않아 기존 규칙을 유지합니다. 순위 규칙이 나쁘다는 뜻이 아니라 낫다는 근거가 없었다는 뜻입니다.")
-    return {"decision": decision, "evidence": "DISTINCT" if distinct else "NOT_DISTINCT", "why": why}
+    return {"decision": decision, "evidence": "DISTINCT" if distinct else "NOT_DISTINCT", "why": why, "t_bar": bar}
 
 
 def measure(base_docs: List[Dict[str, Any]], rule_docs: List[Dict[str, Any]], seed: Dict[str, Any]) -> Dict[str, Any]:
@@ -109,7 +112,8 @@ def measure(base_docs: List[Dict[str, Any]], rule_docs: List[Dict[str, Any]], se
     diff = [x - y for x, y in zip(r.pop("log_returns"), b.pop("log_returns"))]
     mean_diff = sum(diff) / len(diff)
     t = validate.newey_west_t(diff, LAG)
-    return {"paper_book": b, "rules_book": r, "difference": {"mean_daily": mean_diff, "t": t, "days": len(diff)}, "rule_counts": rule_counts(rule_docs), **decide(b, r, mean_diff, t)}
+    return {"paper_book": b, "rules_book": r, "difference": {"mean_daily": mean_diff, "t": t, "days": len(diff)}, "rule_counts": rule_counts(rule_docs),
+            **decide(b, r, mean_diff, t, calibrate.bar(MIN_T, len(diff), 1, 1, LAG))}
 
 
 # ---------------------------------------------------------------------- the single reading

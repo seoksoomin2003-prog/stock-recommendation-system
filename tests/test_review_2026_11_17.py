@@ -231,7 +231,8 @@ def test_damage_after_the_verdict_was_told_is_told_once_and_clears_when_restored
     p = verdict_file(tmp_path, book, "US", whole)
     daily, sent, _, _ = job(tmp_path)
     st = {}
-    assert getattr(daily, run)(st)["US"]["delivered"] is True and len(sent) == 1 and book.active_rules(tmp_path, "US") is not None
+    in_force = book is rb                    # the turnover reading reports and switches nothing on (user decision 2026-11-22); the rank reading still applies itself
+    assert getattr(daily, run)(st)["US"]["delivered"] is True and len(sent) == 1 and (book.active_rules(tmp_path, "US") is not None) is in_force
     getattr(daily, run)(st)
     assert len(sent) == 1                                           # told once
     p.write_text(whole[:40], encoding="utf-8")
@@ -239,7 +240,7 @@ def test_damage_after_the_verdict_was_told_is_told_once_and_clears_when_restored
     assert got["delivered"] is True and got["warned"] is True and got["decision"] == "ADOPT" and len(sent) == 2 and "읽을 수 없습니다" in sent[1]
     assert getattr(daily, run)(st)["US"]["warned"] is True and len(sent) == 2      # the damage is told once too
     p.write_text(whole, encoding="utf-8")
-    assert getattr(daily, run)(st)["US"]["warned"] is False and len(sent) == 2 and book.active_rules(tmp_path, "US") is not None
+    assert getattr(daily, run)(st)["US"]["warned"] is False and len(sent) == 2 and (book.active_rules(tmp_path, "US") is not None) is in_force
 
 
 def test_the_switch_takes_the_words_people_type_and_names_the_ones_it_does_not(monkeypatch, tmp_path):

@@ -261,7 +261,8 @@ def summarize(rows: List[Dict[str, Any]], h: int) -> Dict[str, Any]:
 def verdict(s: Dict[str, Any]) -> Dict[str, Any]:
     """The protocol's five conditions, unchanged.  ``WEAK_POSITIVE_EVIDENCE`` is the strongest word this check can return."""
     gt = lambda v, x: v is not None and v > x      # noqa: E731
-    checks = {"ic": s.get("ic") is not None and s["ic"] >= MIN_IC, "t": s.get("t") is not None and s["t"] >= MIN_T,
+    # ``t_bar``: the bar for this summary's own design (terminal/qsf/calibrate.py), set by the readings that have not run yet
+    checks = {"ic": s.get("ic") is not None and s["ic"] >= MIN_IC, "t": s.get("t") is not None and s["t"] >= (s.get("t_bar") or MIN_T),
               "ic_both_halves": gt((s.get("early") or {}).get("ic"), 0) and gt((s.get("late") or {}).get("ic"), 0),
               "spread_both_halves": gt((s.get("early") or {}).get("spread_net"), 0) and gt((s.get("late") or {}).get("spread_net"), 0),
               "buy_band": gt(s.get("buy_excess"), 0) and s.get("buy_dates", 0) >= MIN_BUY_DATES}
