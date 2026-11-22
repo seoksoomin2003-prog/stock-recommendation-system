@@ -59,8 +59,9 @@ def figures(long_snap: Optional[Dict[str, Any]], swing_snap: Optional[Dict[str, 
             out["insider_buy"], out["insider_sell"] = ins.get("open_market_buy"), ins.get("open_market_sell")
     base = long_snap or swing_snap or {}
     out["price"] = base.get("price")
-    regime = (base.get("domains") or {}).get("REGIME")
-    out["market_state"] = regime.get("score_100") if isinstance(regime, dict) else None
+    # the market state the program shows everywhere else is the swing scan's (order_plan.market_state reads SWING first)
+    regimes = [((s or {}).get("domains") or {}).get("REGIME") for s in (swing_snap, long_snap)]
+    out["market_state"] = next((r["score_100"] for r in regimes if isinstance(r, dict) and r.get("score_100") is not None), None)
     d = info or {}
     out["eps_now"], out["eps_next"] = d.get("epsCurrentYear"), d.get("forwardEps")
     return out
@@ -72,6 +73,13 @@ def _pct(v: Optional[float], digits: int = 1) -> str:
 
 def _x(v: Optional[float], digits: int = 1) -> str:
     return "자료 없음" if v is None else f"{v:.{digits}f}배"
+
+
+NO_EQUITY = 99.0          # terminal/qsf/fundamentals.py stores this as debt over equity when equity is zero or negative
+
+
+def _de(v: Optional[float]) -> str:
+    return "부채/자본 자료 없음" if v is None else "자본이 0 이하라 부채/자본 계산 안 됨" if v == NO_EQUITY else f"부채/자본 {v:.2f}배"
 
 
 def _at_most(v: Optional[float], limit: float) -> Optional[bool]:
@@ -93,17 +101,18 @@ def graham(f: Dict[str, Any]) -> List[Check]:
     return [("PER 15배 이하", _pe_ok(pe, 15), f"PER {_x(pe)}"),
             ("PBR 1.5배 이하이거나 PER×PBR 22.5 이하", cheap_assets, f"PBR {_x(pb, 2)}"),
             ("유동비율 2배 이상", _at_least(f.get("current_ratio"), 2.0), f"유동비율 {_x(f.get('current_ratio'), 2)}"),
-            ("부채/자본 1배 이하", _at_most(f.get("debt_equity"), 1.0), f"부채/자본 {_x(f.get('debt_equity'), 2)}"),
+            ("부채/자본 1배 이하", _at_most(f.get("debt_equity"), 1.0), _de(f.get("debt_equity"))),
             ("적자를 낸 해가 없음", _at_least(f.get("roe_years_positive"), 1.0), f"흑자 연도 {_pct(f.get('roe_years_positive'), 0)}"),
             ("배당이나 자사주로 돌려줌", f.get("returns_capital") if isinstance(f.get("returns_capital"), bool) else None, "주주 환원 " + ("있음" if f.get("returns_capital") else "없음" if f.get("returns_capital") is False else "자료 없음")),
             ("3년 주당이익이 늘었음", None if f.get("eps_cagr3") is None else f["eps_cagr3"] > 0, f"3년 주당이익 성장 연 {_pct(f.get('eps_cagr3'))}")]
 
 
 def buffett(f: Dict[str, Any]) -> List[Check]:
-    fcf = None if f.get("fcf_margin") is None else (f["fcf_margin"] >= 0.05 and (f.get("fcf_years_positive") or 0) >= 0.75)
+    margin, years = f.get("fcf_margin"), f.get("fcf_years_positive")
+    fcf = None if margin is None else False if margin < 0.05 else None if years is None else years >= 0.75
     return [("ROE 15% 이상", _at_least(f.get("roe"), 0.15), f"ROE {_pct(f.get('roe'))}"),
             ("영업이익률 15% 이상", _at_least(f.get("op_margin"), 0.15), f"영업이익률 {_pct(f.get('op_margin'))}"),
-            ("부채/자본 0.8배 이하", _at_most(f.get("debt_equity"), 0.8), f"부채/자본 {_x(f.get('debt_equity'), 2)}"),
+            ("부채/자본 0.8배 이하", _at_most(f.get("debt_equity"), 0.8), _de(f.get("debt_equity"))),
             ("적자를 낸 해가 없음", _at_least(f.get("roe_years_positive"), 1.0), f"흑자 연도 {_pct(f.get('roe_years_positive'), 0)}"),
             ("남는 현금이 매출의 5% 이상이고 꾸준함", fcf, f"잉여현금흐름 마진 {_pct(f.get('fcf_margin'))}"),
             ("주식 수를 늘리지 않음", _at_most(f.get("share_change"), 0.01), f"주식 수 변화 {_pct(f.get('share_change'))}"),
@@ -113,16 +122,17 @@ def buffett(f: Dict[str, Any]) -> List[Check]:
 def munger(f: Dict[str, Any]) -> List[Check]:
     known = f.get("governance_issues") is not None or f.get("negative") is not None or bool(f.get("marks"))
     clean = None if not known else not ((f.get("governance_issues") or 0) > 0 or (f.get("negative") or 0) > 0 or f.get("marks"))
-    moat = None
-    if f.get("gross_margin") is not None or f.get("op_margin") is not None:
-        moat = (f.get("gross_margin") or 0) >= 0.40 or (f.get("op_margin") or 0) >= 0.20
+    gross, op = f.get("gross_margin"), f.get("op_margin")
+    wide = (gross is not None and gross >= 0.40) or (op is not None and op >= 0.20)
+    moat = True if wide else None if gross is None or op is None else False          # one margin missing and the other low: not known
+    margins = ", ".join(x for x in (None if gross is None else f"매출총이익률 {_pct(gross)}", None if op is None else f"영업이익률 {_pct(op)}") if x) or "이익률 자료 없음"
     warn = ", ".join(f.get("marks") or []) or ("경고 공시 있음" if clean is False else "경고 공시 없음" if clean else "자료 없음")
     return [("경고 공시와 회피 표시가 없음", clean, warn),
             ("주식 수 희석 3% 이하", _at_most(f.get("share_change"), 0.03), f"주식 수 변화 {_pct(f.get('share_change'))}"),
-            ("부채/자본 1배 이하", _at_most(f.get("debt_equity"), 1.0), f"부채/자본 {_x(f.get('debt_equity'), 2)}"),
+            ("부채/자본 1배 이하", _at_most(f.get("debt_equity"), 1.0), _de(f.get("debt_equity"))),
             ("적자를 낸 해가 없음", _at_least(f.get("roe_years_positive"), 1.0), f"흑자 연도 {_pct(f.get('roe_years_positive'), 0)}"),
             ("ROE 15% 이상", _at_least(f.get("roe"), 0.15), f"ROE {_pct(f.get('roe'))}"),
-            ("매출총이익률 40% 이상이거나 영업이익률 20% 이상", moat, f"매출총이익률 {_pct(f.get('gross_margin'))}, 영업이익률 {_pct(f.get('op_margin'))}"),
+            ("매출총이익률 40% 이상이거나 영업이익률 20% 이상", moat, margins),
             ("PER 30배 이하", _pe_ok(f.get("pe"), 30), f"PER {_x(f.get('pe'))}")]
 
 
@@ -131,11 +141,12 @@ def lynch(f: Dict[str, Any]) -> List[Check]:
     peg = None if pe is None or g is None or pe <= 0 else (pe / (g * 100) if g > 0 else None)
     peg_ok = None if pe is None or g is None else (False if pe <= 0 or g <= 0 else peg <= 1.0)
     buys = None if f.get("insider_buy") is None or f.get("insider_sell") is None else f["insider_buy"] > f["insider_sell"]
-    return [("PEG(PER ÷ 이익 성장률) 1 이하", peg_ok, "PEG " + ("계산 안 됨" if peg is None else f"{peg:.2f}")),
+    peg_shown = f"PEG {peg:.2f}" if peg is not None else "PEG 자료 없음" if peg_ok is None else "PEG 계산 안 됨(적자이거나 3년 이익이 줄었음)"
+    return [("PEG(PER ÷ 이익 성장률) 1 이하", peg_ok, peg_shown),
             ("3년 주당이익 성장이 연 10~30%", None if g is None else 0.10 <= g <= 0.30, f"3년 주당이익 성장 연 {_pct(g)}"),
             ("최근 주당이익이 늘었음", None if f.get("eps_growth") is None else f["eps_growth"] > 0, f"최근 주당이익 성장 {_pct(f.get('eps_growth'))}"),
             ("최근 매출이 늘었음", None if f.get("rev_growth") is None else f["rev_growth"] > 0, f"최근 매출 성장 {_pct(f.get('rev_growth'))}"),
-            ("부채/자본 0.8배 이하", _at_most(f.get("debt_equity"), 0.8), f"부채/자본 {_x(f.get('debt_equity'), 2)}"),
+            ("부채/자본 0.8배 이하", _at_most(f.get("debt_equity"), 0.8), _de(f.get("debt_equity"))),
             ("내부자가 판 것보다 많이 삼", buys, "내부자 순매수 " + ("있음" if buys else "없음" if buys is False else "자료 없음")),
             ("PER 25배 이하", _pe_ok(pe, 25), f"PER {_x(pe)}")]
 
@@ -168,7 +179,9 @@ VIEWS: List[Tuple[str, str, str, Callable[[Dict[str, Any]], List[Check]]]] = [
 
 # The criteria without which the approach is not itself (positions in each checklist).  A stock that misses one of them can at
 # most "partly meet" that view however many other boxes it ticks: a stock at 40 times earnings is not a Graham stock because
-# its balance sheet is clean, and a stock under its 200-day line is not a trend follower's because its earnings grew.
+# its balance sheet is clean, and a stock under its 200-day line is not a trend follower's because its earnings grew.  The same
+# holds when a core figure is missing: a view cannot be "met" on the boxes around the one it is about (review 2026-11-22, before
+# the first record: 9 US stocks met the Buffett view with no return on equity, 33 Korean stocks the Lynch view with no PEG).
 CORE = {"BUFFETT": (0,), "MUNGER": (0,), "GRAHAM": (0, 1), "LYNCH": (0,), "DRUCKENMILLER": (1,)}
 
 
@@ -179,11 +192,14 @@ def read_view(key: str, name: str, motto: str, checks: List[Check]) -> Dict[str,
     missed = [c for c in known if not c[1]]
     share = len(met) / len(known) if known else None
     verdict = UNKNOWN if len(known) < MIN_KNOWN else MEETS if share >= MEET_SHARE else PARTLY if share >= PART_SHARE else FAILS
-    core_missed = [checks[i] for i in CORE.get(key, ()) if i < len(checks) and checks[i][1] is False]
-    capped = verdict == MEETS and bool(core_missed)
+    core = [checks[i] for i in CORE.get(key, ()) if i < len(checks)]
+    core_missed, core_unknown = [c for c in core if c[1] is False], [c for c in core if c[1] is None]
+    capped = verdict == MEETS and bool(core_missed or core_unknown)
     if capped:
         verdict = PARTLY
-    line = f"{name}({motto}): 기준 {len(known)}개 중 {len(met)}개 충족, {VERDICT_KO[verdict]}." + (f" 핵심 기준({', '.join(c[0] for c in core_missed)})을 채우지 못해 '맞음'으로 보지 않습니다." if capped else "")
+    why = " ".join(x for x in (f"핵심 기준({', '.join(c[0] for c in core_missed)})을 채우지 못해 '맞음'으로 보지 않습니다." if core_missed else "",
+                               f"핵심 기준({', '.join(c[0] for c in core_unknown)})을 확인할 자료가 없어 '맞음'으로 보지 않습니다." if core_unknown else "") if x) if capped else ""
+    line = f"{name}({motto}): 기준 {len(known)}개 중 {len(met)}개 충족, {VERDICT_KO[verdict]}." + (f" {why}" if why else "")
     if verdict == UNKNOWN:
         line = f"{name}({motto}): 확인할 수 있는 기준이 {len(known)}개뿐이라 판단하지 않았습니다."
     detail = []
@@ -192,7 +208,7 @@ def read_view(key: str, name: str, motto: str, checks: List[Check]) -> Dict[str,
     if missed:
         detail.append("걸리는 것: " + ", ".join(f"{c[2]}(기준: {c[0]})" for c in missed[:3]))
     return {"key": key, "name": name, "motto": motto, "verdict": verdict, "verdict_label": VERDICT_KO[verdict], "met": len(met), "known": len(known), "share": share, "core_missed": [c[0] for c in core_missed],
-            "line": line, "detail": ". ".join(detail) + ("." if detail else ""), "checks": [{"ask": c[0], "met": c[1], "shown": c[2]} for c in checks]}
+            "core_unknown": [c[0] for c in core_unknown], "capped": why, "line": line, "detail": ". ".join(detail) + ("." if detail else ""), "checks": [{"ask": c[0], "met": c[1], "shown": c[2]} for c in checks]}
 
 
 def opinions(long_snap: Optional[Dict[str, Any]], swing_snap: Optional[Dict[str, Any]] = None, info: Optional[Dict[str, Any]] = None, marks: Iterable[str] = ()) -> Dict[str, Any]:
@@ -224,12 +240,13 @@ def lines(op: Dict[str, Any], detail: bool = True) -> List[str]:
 def team(stocks: Iterable[Dict[str, Any]], size: int = TEAM_SIZE) -> Dict[str, Any]:
     """``stocks``: {ticker, name, long, swing, info, marks}.  The stocks at least ``AGREE`` views find to meet their criteria,
     most agreement first (then the mean share of criteria met), at most ``size``, equal weight.  It can be empty."""
-    rows, tally, judged = [], {key: 0 for key, *_ in VIEWS}, 0
+    rows, tally, judged, verdicts = [], {key: 0 for key, *_ in VIEWS}, 0, {}
     for s in stocks:
         op = opinions(s.get("long"), s.get("swing"), s.get("info"), s.get("marks") or ())
         if not op["judged"]:
             continue
         judged += 1
+        verdicts[s["ticker"]] = "".join(v["verdict"][0] for v in op["views"])          # M, P, F or U per view, in the order of VIEWS
         for v in op["views"]:
             tally[v["key"]] += v["verdict"] == MEETS
         if op["in_team"]:
@@ -239,7 +256,7 @@ def team(stocks: Iterable[Dict[str, Any]], size: int = TEAM_SIZE) -> Dict[str, A
     picked = rows[:size]
     for r in picked:
         r["weight"] = round(1 / len(picked), 4)
-    return {"picked": picked, "eligible": len(rows), "judged": judged, "meets_by_view": tally, "agree_needed": AGREE, "size": size}
+    return {"picked": picked, "eligible": len(rows), "judged": judged, "meets_by_view": tally, "agree_needed": AGREE, "size": size, "verdicts": verdicts}
 
 
 def team_lines(t: Dict[str, Any], market_ko: str) -> List[str]:
@@ -265,7 +282,9 @@ def team_lines(t: Dict[str, Any], market_ko: str) -> List[str]:
 
 # ---------------------------------------------------------------------------------------------- the record
 def record(base: Path, market: str, session: str, t: Dict[str, Any]) -> Dict[str, Any]:
-    """One line per session, appended once: the picked stocks with their agreement, and how many stocks each view accepted.
+    """One line per session, appended once: the picked stocks with their agreement, how many stocks each view accepted, and every
+    judged stock's five verdicts as five letters (``views`` gives their order; M meets, P partly, F fails, U not judged), so that
+    a later question about any view can be asked of the record and not of a reconstruction.
     A record only: no verdict is defined for it (user decision 2026-11-22)."""
     folder = Path(base) / "research_data" / FOLDERS[market]
     folder.mkdir(parents=True, exist_ok=True)
@@ -278,7 +297,8 @@ def record(base: Path, market: str, session: str, t: Dict[str, Any]) -> Dict[str
             except ValueError:
                 continue
     row = {"session": session, "market": market, "rules": "FV-1", "agree_needed": t["agree_needed"], "judged": t["judged"], "eligible": t["eligible"], "meets_by_view": t["meets_by_view"],
-           "picked": [{k: r[k] for k in ("ticker", "agree", "agree_names", "mean_share", "weight")} for r in t["picked"]]}
+           "picked": [{k: r[k] for k in ("ticker", "agree", "agree_names", "mean_share", "weight")} for r in t["picked"]],
+           "views": [key for key, *_ in VIEWS], "verdicts": t.get("verdicts") or {}}
     with open(path, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
     return {"status": "OK", "session": session, "picked": len(t["picked"])}

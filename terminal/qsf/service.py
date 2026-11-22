@@ -599,9 +599,9 @@ class QSF(ScreenViews):
         cards; no score reads them, and a failure here never fails the evaluation."""
         try:
             from terminal import five_views as fv
-            marks = (["고위험 등급"] if ticker in self._high_risk(market)["codes"] else []) + (["자금 조달 공시"] if (self._filing_mark(self._filing_marks(market), ticker) or {}).get("financing") else [])
+            marks = (["고위험"] if ticker in self._high_risk(market)["codes"] else []) + (["자금 조달 공시"] if (self._filing_mark(self._filing_marks(market), ticker) or {}).get("financing") else [])
             op = fv.opinions(cards.get("LONG_TERM"), cards.get("SWING"), self.stored_info(ticker, market), marks)
-            return {"views": [{k: v[k] for k in ("key", "name", "motto", "verdict", "verdict_label", "met", "known", "line", "detail")} for v in op["views"]],
+            return {"views": [{k: v[k] for k in ("key", "name", "motto", "verdict", "verdict_label", "met", "known", "line", "detail", "capped")} for v in op["views"]],
                     "agree": op["agree"], "judged": op["judged"], "in_team": op["in_team"], "team_line": fv.team_line(op), "note": fv.NOTE}
         except Exception:
             return None

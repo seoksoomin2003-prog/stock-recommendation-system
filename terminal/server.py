@@ -341,7 +341,7 @@ class _Server(ThreadingHTTPServer):
 def _five_team(t, market: str):
     """The five-views team list of the newest scan with its lines as the assistant words them."""
     from terminal import five_views as fv
-    team = assistant.five_team(t, market)
+    team = {k: v for k, v in assistant.five_team(t, market).items() if k != "verdicts"}       # every stock's letters are for the record, not the screen
     return {"status": "REAL" if team.get("session") else "UNAVAILABLE", "market": market, **team, "lines": fv.team_lines(team, assistant.MARKET_KO[market]) if team.get("session") else []}
 
 

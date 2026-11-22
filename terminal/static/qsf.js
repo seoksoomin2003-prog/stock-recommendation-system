@@ -457,7 +457,7 @@ function qsfCapHtml(d) {
 function qsfFiveHtml(f) {
   if (!f || !f.judged) return "";
   return `<div class="panel"><h3>다섯 관점 <span class="meta" style="margin:0">알려진 원칙을 기준값으로 옮긴 참고 · 점수와 무관</span></h3>
-    ${f.views.map((v) => `<div class="meta" style="margin:6px 0"><b>${esc(v.name)}</b> <span class="badge">${esc(v.verdict_label)}</span> ${esc(v.motto)} · ${v.verdict === "UNKNOWN" ? `확인할 수 있는 기준이 ${v.known}개뿐이라 판단하지 않았습니다.` : `기준 ${v.known}개 중 ${v.met}개 충족. ${esc(v.detail || "")}`}</div>`).join("")}
+    ${f.views.map((v) => `<div class="meta" style="margin:6px 0"><b>${esc(v.name)}</b> <span class="badge">${esc(v.verdict_label)}</span> ${esc(v.motto)} · ${v.verdict === "UNKNOWN" ? `확인할 수 있는 기준이 ${v.known}개뿐이라 판단하지 않았습니다.` : `기준 ${v.known}개 중 ${v.met}개 충족. ${v.capped ? `<b>${esc(v.capped)}</b> ` : ""}${esc(v.detail || "")}`}</div>`).join("")}
     <div class="meta" style="margin:8px 0 0"><b>${esc(f.team_line)}</b></div><div class="meta">${esc(f.note)}</div></div>`;
 }
 

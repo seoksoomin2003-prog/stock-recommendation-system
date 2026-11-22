@@ -550,6 +550,9 @@ def test_the_five_views_answer_a_stock_and_give_the_team_list(term, monkeypatch)
     from terminal import five_views as fv
     assert A.read_question("삼성전자 다섯 관점은?", True) == "FIVE" and A.read_question("버핏이라면 삼성전자 어때", True) == "FIVE" and A.read_question("다섯 관점 팀 목록은?", False) == "TEAM"
     assert A.read_question("삼성전자 분석해 줘", True) == "ANALYZE" and A.read_question("오늘 상위 종목은?", False) == "TOP"          # the other questions are read as before
+    # review 2026-11-22: "다섯" and "관점" alone took other questions away
+    assert A.read_question("장기 관점에서 삼성전자 어때?", True) == "ANALYZE" and A.read_question("삼성전자 다섯 거래일 뒤 범위는?", True) == A.read_question("삼성전자 범위는?", True)
+    assert A.read_question("오늘 상위 다섯 종목은?", False) == "TOP" and A.read_question("린치식으로 보면 삼성전자는?", True) == "FIVE" and A.read_question("거장들의 팀 목록", False) == "TEAM"
     good = {"price": 100.0, "domains": {"REGIME": {"score_100": 60.0}}, "factors": [
         {"factor": "valuation", "raw": {"pe": 12.0, "pb": 1.2}}, {"factor": "business_quality", "raw": {"roe": 0.2, "op_margin": 0.25, "gross_margin": 0.5, "roe_years_positive": 1.0}},
         {"factor": "growth_quality", "raw": {"eps_cagr3": 0.15, "rev_growth": 0.08}}, {"factor": "free_cash_flow", "raw": {"fcf_margin": 0.12, "fcf_years_positive": 1.0}},

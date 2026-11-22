@@ -482,7 +482,8 @@ FACTOR_KO = {"trend_structure": "추세 구조", "relative_strength": "상대 �
 BUY_LINE = 70.0
 # (key, an example the screen shows, needs a stock, words that mean it).  Read in this order: the first that fits answers.
 # the five views (terminal/five_views.py): asked with a stock for its five opinions, without one for the team list
-FIVE_WORDS = ("다섯", "5인", "관점", "버핏", "멍거", "그레이엄", "그레리엄", "그레이험", "린치", "드러켄", "거장", "팀 목록")
+# "다섯" and "관점" alone are not enough: "장기 관점에서 어때", "다섯 거래일 뒤 범위", "상위 다섯 종목" are other questions
+FIVE_WORDS = ("다섯 관점", "다섯관점", "5 관점", "5관점", "다섯 명", "다섯명", "5인", "버핏", "멍거", "그레이엄", "그레리엄", "그레이험", "린치", "드러켄", "거장", "팀 목록", "팀목록")
 STOCK_INTENTS = (
     ("STOP", "삼성전자 손절 어디?", ("손절", "목표", "손익비", "익절")),
     ("RANGE", "삼성전자 얼마까지 움직일까?", ("범위", "얼마까지", "예측", "움직", "오를", "내릴", "떨어질")),
@@ -1113,6 +1114,7 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
 
 
 _FIVE: Dict[Any, Any] = {}           # one session's team list, kept while the ledger does not change
+BENCHMARKS = frozenset(("SPY", "^KS11", "^KQ11"))       # terminal/qsf/config.py BENCHMARK
 
 
 def five_opinions(terminal: Any, stock: Dict[str, str]) -> Dict[str, Any]:
@@ -1150,7 +1152,7 @@ def five_team(terminal: Any, market: str) -> Dict[str, Any]:
             except Exception:
                 return {}
         stocks = [{"ticker": t, "name": (rows.get(t) or {}).get("name"), "sector": sector.get(t), "long": long_.get(t), "swing": swing.get(t), "info": info(t), "marks": ax.marks_of(rows.get(t) or {})}
-                  for t in sorted(set(long_) | set(swing))]
+                  for t in sorted(set(long_) | set(swing)) if t not in BENCHMARKS]          # the index fund the scan carries is not a stock to pick
         _FIVE.clear()
         _FIVE[key] = {**fv.team(stocks), "session": session}
     return _FIVE[key]
