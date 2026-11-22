@@ -151,4 +151,4 @@ def test_a_us_record_carries_the_sec_number_and_a_korean_one_is_as_before():
 
 
 def test_the_version_names_the_input_change():
-    assert config.MODEL_VERSION == "QSF-1.4.1" and (ROOT / "reports" / "QSF_INPUTS_3_2026_11_17.md").exists()
+    assert config.MODEL_VERSION == "QSF-1.5.0" and (ROOT / "reports" / "QSF_INPUTS_3_2026_11_17.md").exists()

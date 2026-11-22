@@ -753,8 +753,11 @@ class QSF(ScreenViews):
         return ctx
 
     def card(self, ctx: Dict[str, Any], strategy: str, position: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        res = engine.score(ctx, strategy, held=bool(position))
         market, session = ctx["market"], ctx["expected_session"]
+        prev = self.ledger.previous(market, ctx["ticker"], strategy, session)
+        # the buy band's buffer (QSF-1.5.0): a stock recorded in the band stays in it down to config.BUY_BAND_EXIT
+        ctx["prev_band"] = prev.get("band") if prev and prev.get("actionability") == "ACTIONABLE" else None
+        res = engine.score(ctx, strategy, held=bool(position))
         entry_day = self._entry_date(market, session)
         entry = holding.entry_status(res, ctx)
         plan = holding.swing_plan(res, ctx, entry_day) if strategy == "SWING" else holding.long_plan(res, ctx, entry_day)
@@ -786,7 +789,6 @@ class QSF(ScreenViews):
                 position = {**position, "ahead_share": self._ahead_share(market, strategy, res["score"])}
             out["position"] = position
             out["exit"] = holding.evaluate_exit(res, ctx, position, self.now().date())
-        prev = self.ledger.previous(market, ctx["ticker"], strategy, session)
         out["stability"] = ledger.stability(prev, out)
         return out
 

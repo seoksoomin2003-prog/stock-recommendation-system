@@ -16,22 +16,35 @@ from terminal.qsf import config, factors, technicals
 _QUALITY = {"REAL": 1.0, "STALE": 0.5}
 
 
-def classify(score: Optional[float]) -> Dict[str, str]:
+BUY_CODES = ("STRONG_BUY_CANDIDATE", "BUY_CANDIDATE")
+
+
+def kept_in_buy_band(score: Optional[float], prev_band: Optional[str]) -> bool:
+    """In the buy band's buffer: under the line of 70, not under ``config.BUY_BAND_EXIT``, and in the band at the previous record."""
+    return prev_band in BUY_CODES and score is not None and config.BUY_BAND_EXIT <= score < config.BANDS[1][0]
+
+
+def classify(score: Optional[float], prev_band: Optional[str] = None) -> Dict[str, str]:
+    """``prev_band``: the band of the stock's previous record, when the caller knows it (the live card).  Research and replays
+    pass none and read the score alone, as before."""
     if score is None:
         return {"band": "NONE", "band_label": "점수 없음"}
+    if kept_in_buy_band(score, prev_band):
+        return {"band": "BUY_CANDIDATE", "band_label": f"매수 후보(완충 구간: {config.BUY_BAND_EXIT:g}점까지 유지)"}
     for lo, code, label in config.BANDS:
         if score >= lo:
             return {"band": code, "band_label": label}
     return {"band": "SELL_AVOID", "band_label": "매도·회피 후보"}
 
 
-def action_for(score: Optional[float], held: bool) -> str:
-    """Held and new candidates get different words: SELL only ever applies to a position actually held."""
+def action_for(score: Optional[float], held: bool, prev_band: Optional[str] = None) -> str:
+    """Held and new candidates get different words: SELL only ever applies to a position actually held.  The buy word follows the
+    band, buffer included, so the two never part."""
     if score is None:
         return "INSUFFICIENT_DATA"
     if held:
         return "HOLD" if score >= 55 else "REDUCE" if score >= 40 else "SELL"
-    return "BUY" if score >= 70 else "WATCH" if score >= 55 else "AVOID"
+    return "BUY" if score >= 70 or kept_in_buy_band(score, prev_band) else "WATCH" if score >= 55 else "AVOID"
 
 
 def _color(action: str, score: Optional[float]) -> str:
@@ -94,10 +107,10 @@ def _reference_row(fid: str, domain: str, weight: float, ctx: Dict[str, Any]) ->
     return row
 
 
-def band_shown(score: Optional[float], sufficient: bool) -> Dict[str, str]:
+def band_shown(score: Optional[float], sufficient: bool, prev_band: Optional[str] = None) -> Dict[str, str]:
     """The band code is the score's, as recorded.  Its label is not shown as a verdict on a card that could not be judged: the
     index fund SPY, with 28% of its data, read "매수 후보" beside "판단 불가" (audit 2026-11-22)."""
-    out = classify(score)
+    out = classify(score, prev_band if sufficient else None)
     return out if sufficient or score is None else {**out, "band_label": INSUFFICIENT_BAND_LABEL}
 
 
@@ -228,7 +241,8 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
         if stale_names and confidence == "HIGH":
             confidence = "MEDIUM"
     gates = hard_gates(ctx, strategy)
-    action = action_for(composite if sufficient else None, held)
+    prev_band = ctx.get("prev_band")            # the live card's previous record; absent in research and replays
+    action = action_for(composite if sufficient else None, held, prev_band)
     actionability = "INSUFFICIENT_DATA" if not sufficient else "BLOCKED" if gates else "ACTIONABLE"
     display = action
     if actionability == "BLOCKED" and action == "BUY":
@@ -239,7 +253,8 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
     neg = sorted((r for r in ranked if r["normalized"] <= 0.4), key=weighted)[:3]
     return {"model_version": config.MODEL_VERSION, "spec_version": config.SPEC_VERSION, "profile": profile["id"],
             "market": market, "strategy": strategy, "held": held, "score": composite,
-            "diagnostic_only": not sufficient, **band_shown(composite, sufficient), "action": display, "raw_action": action,
+            "diagnostic_only": not sufficient, **band_shown(composite, sufficient, prev_band), "band_kept": bool(sufficient and kept_in_buy_band(composite, prev_band)),
+            "action": display, "raw_action": action,
             "action_label": config.ACTION_LABELS[display], "color": _color(display, composite), "actionability": actionability,
             "coverage": coverage, "input_coverage": input_coverage, "partial": partial_names, "confidence": confidence, "domains": domains, "market_state": market_state(rows, market), "factors": rows, "gates": gates,
             "short_domains": short, "missing": missing_names, "stale": stale_names,

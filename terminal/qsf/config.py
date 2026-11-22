@@ -5,7 +5,14 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.4.1"     # 1.4.0: the regime domain no longer counts in any of the four scores; it is shown apart as the market state
+MODEL_VERSION = "QSF-1.5.0"     # 1.5.0 (user decisions 2026-11-22 after the audit of that day, reports/QSF_1_5_0_2026_11_22.md):
+                                # (1) a company losing money now gets 0 for the earnings-growth figures it cannot have, and 0 for cash
+                                # conversion when both profit and operating cash flow are at or below zero; they were "missing", which
+                                # left the factor to its better figures (27 US loss-makers, 6 with a growth factor of 0.7 or more).
+                                # A turnaround from a loss base stays missing.  (2) the buy band has a buffer: in at 70, out under 67.
+                                # (3) gates: a day of more than 45% anywhere in the last year, and doubled or backward price rows.
+                                # Weights, anchors and every other formula are unchanged.
+                                # 1.4.0: the regime domain no longer counts in any of the four scores; it is shown apart as the market state
                                 # 1.4.1 (inputs only): the whole Korean filing list instead of its first 100 rows; a US share count
                                 # from before a split is not used with a price from after it.  reports/QSF_INPUTS_3_2026_11_17.md
 #                                  (MARKET_STATE_*), and on a US day under its middle the order plan halves the risk per trade.  User decision
@@ -96,6 +103,9 @@ def profile_for(market: str, strategy: str) -> Dict:
 
 # The market state: the regime factors under the swing weights, one reading per market and day whichever card it is read from.
 # It is in no score.  Under the middle of its scale a day is ADVERSE.
+# The buy band's buffer (QSF-1.5.0): a stock recorded in the buy band at its previous session stays in it down to this score.
+# The line of 70 made a stock change its label on a move of 0.01 point; it now enters at 70 and leaves under 67.
+BUY_BAND_EXIT = 67.0
 MARKET_STATE_WEIGHTS = {"US": dict(_US_REGIME_SWING), "KR": dict(_KR_REGIME_SWING)}
 MARKET_STATE_MID = 50.0
 MARKET_STATE_LABELS = {"FAVOURABLE": "좋음", "ADVERSE": "나쁨", "UNKNOWN": "알 수 없음(자료 부족)"}

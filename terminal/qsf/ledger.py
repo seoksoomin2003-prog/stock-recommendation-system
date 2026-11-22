@@ -72,6 +72,7 @@ def _prev_view(s: Dict[str, Any]) -> Dict[str, Any]:
     """What ``stability`` reads of an earlier snapshot, and nothing else."""
     it = sys.intern
     return {"score": s.get("score"), "model_version": s.get("model_version"), "data_date": s.get("data_date"),
+            "band": s.get("band"), "actionability": s.get("actionability"),          # the buy band's buffer reads the band the stock was recorded in (QSF-1.5.0)
             "factors": [{"factor": it(str(f["factor"])), "status": it(str(f["status"])) if isinstance(f.get("status"), str) else f.get("status"),
                          "source": it(f["source"]) if isinstance(f.get("source"), str) else f.get("source"), "contribution": f.get("contribution")}
                         for f in s.get("factors") or []]}

@@ -387,3 +387,63 @@ def test_a_whole_scan_without_statements_for_most_stocks_is_not_recorded(tmp_pat
     assert 'res.get("reason") == "FUNDAMENTALS_NOT_READY"' in src and "return 7" in src
     from terminal import automation
     assert "재무 자료 미준비" in automation.NO_STATEMENTS and inspect.getsource(automation).count("NO_STATEMENTS if rc == 7") == 2
+
+
+# ---------------------------------------------------------------------- QSF-1.5.0 (user decisions 2026-11-22: "적자 성장만 고침", "구간 완충")
+def test_a_loss_maker_gets_zero_for_the_earnings_growth_it_cannot_have_and_a_turnaround_stays_missing():
+    from terminal.qsf import config
+    base = {**GOOD_FUND, "rev_growth": 0.30, "rev_cagr3": 0.25}
+    grow = lambda fund: next(x for x in engine.score(ctx(fund=fund), "LONG_TERM")["factors"] if x["factor"] == "growth_quality")          # noqa: E731
+    loss = grow({**base, "eps_cagr3": None, "eps_growth": None, "loss_now": True})
+    turn = grow({**base, "eps_cagr3": None, "eps_growth": None, "loss_now": False})
+    assert turn["normalized"] == pytest.approx(1.0) and turn["inputs"] == {"have": 2, "total": 3}              # a turnaround from a loss base: the figure stays missing
+    assert loss["normalized"] == pytest.approx(2 / 3) and "inputs" not in loss and "0점으로 읽음" in loss["explanation"] and loss["raw"]["eps_cagr3"] is None          # was 1.0 on sales alone
+    swing = lambda fund: next(x for x in engine.score(ctx(fund=fund), "SWING")["factors"] if x["factor"] == "earnings_revenue_quality")      # noqa: E731
+    burn = swing({**base, "eps_growth": None, "ocf_to_ni": None, "loss_now": True, "cash_burn": True})
+    only_loss = swing({**base, "eps_growth": None, "ocf_to_ni": None, "loss_now": True, "cash_burn": False})
+    assert burn["normalized"] == pytest.approx(1 / 3) and "현금 전환을 0점" in burn["explanation"] and only_loss["normalized"] == pytest.approx(0.5)          # profit down, cash still coming in: cash conversion stays missing
+    whole = engine.score(ctx(), "LONG_TERM")
+    assert whole["score"] == pytest.approx(engine.score(ctx(fund={**GOOD_FUND, "loss_now": False, "cash_burn": False}), "LONG_TERM")["score"])          # a profitable company: nothing changes
+    assert config.MODEL_VERSION == "QSF-1.5.0" and (ROOT / "reports" / "QSF_1_5_0_2026_11_22.md").exists()
+
+
+def test_the_statement_reader_marks_a_loss_and_a_cash_burn_and_computes_no_figure_for_them():
+    from terminal.qsf import fundamentals
+    from tests.test_qsf import facts
+    m = fundamentals.metrics(fundamentals.extract_us(facts()), 100.0, "2026-11-05")
+    assert m["status"] in ("REAL", "STALE") and m["loss_now"] is False and m["cash_burn"] is False
+    src = inspect.getsource(fundamentals.metrics)
+    assert '"loss_now": bool(ni is not None and ni <= 0)' in src and "burn_ni <= 0 and ocf is not None and ocf <= 0" in src
+
+
+def test_the_buy_band_is_entered_at_seventy_and_left_under_sixty_seven():
+    from terminal.qsf import config
+    assert config.BUY_BAND_EXIT == 67.0
+    for score, prev, band, action in ((70.0, None, "BUY_CANDIDATE", "BUY"), (69.99, None, "HOLD_WATCH", "WATCH"), (69.99, "BUY_CANDIDATE", "BUY_CANDIDATE", "BUY"),
+                                      (67.0, "STRONG_BUY_CANDIDATE", "BUY_CANDIDATE", "BUY"), (66.99, "BUY_CANDIDATE", "HOLD_WATCH", "WATCH"), (68.0, "HOLD_WATCH", "HOLD_WATCH", "WATCH"),
+                                      (85.0, "BUY_CANDIDATE", "STRONG_BUY_CANDIDATE", "BUY"), (50.0, "BUY_CANDIDATE", "WEAK_REDUCE", "AVOID")):
+        assert engine.classify(score, prev)["band"] == band and engine.action_for(score, False, prev) == action, (score, prev)
+    assert "완충 구간" in engine.classify(68.0, "BUY_CANDIDATE")["band_label"] and engine.classify(68.0)["band_label"] == "보유·관찰"
+    assert engine.action_for(68.0, True, "BUY_CANDIDATE") == "HOLD"                                              # a held stock reads its own words, as before
+    c = ctx()
+    plain = engine.score(c, "SWING")
+    assert plain["band_kept"] is False and "prev_band" not in c                                                  # research and replays pass no previous band: the score alone
+
+
+def test_the_live_card_reads_the_band_the_stock_was_recorded_in(tmp_path):
+    from tests.test_qsf import service
+    q = service(tmp_path)
+    seen = {}
+
+    def score(c, strategy, held=False):
+        seen[strategy] = c.get("prev_band")
+        return real(c, strategy, held=held)
+    real, engine_score = engine.score, engine.score
+    try:
+        qsf_service.engine.score = score
+        q.ledger.previous = lambda market, ticker, strategy, before: {"score": 71.0, "band": "BUY_CANDIDATE", "actionability": "ACTIONABLE", "factors": [], "model_version": "x", "data_date": "2026-11-03"} \
+            if strategy == "SWING" else {"score": 71.0, "band": "BUY_CANDIDATE", "actionability": "BLOCKED", "factors": [], "model_version": "x", "data_date": "2026-11-03"}
+        q.evaluate("AAA")
+    finally:
+        qsf_service.engine.score = engine_score
+    assert seen == {"SWING": "BUY_CANDIDATE", "LONG_TERM": None}                                                 # a blocked or unjudged record gives no buffer

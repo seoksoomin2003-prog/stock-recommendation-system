@@ -358,6 +358,7 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     group_ni = at("net_income_all")
     if group_equity and ocf is not None and group_ni is not None:
         ocf_ni = ocf / group_ni if group_ni > 0 else None
+    burn_ni = group_ni if group_equity and ocf is not None and group_ni is not None else ni          # the profit the cash figure above was set against
     # Cash flow of one year less spending of another is no figure at all: a company whose capex tag stopped has no free cash flow.
     fcf = ocf - capex if ocf is not None and capex is not None else None
     by_end = {r["end"]: r["val"] for r in series.get("capex") or []} if fcf is not None else {}
@@ -426,6 +427,9 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
     out = {
         "status": "STALE" if latest and _days(latest, as_of) > STALE_DAYS else "REAL", "source": source, "fiscal_end": latest, "filed": filed,
         "is_financial": is_financial, "basis": latest_basis, "basis_changed": basis_changed, "basis_conflict": False,
+        # QSF-1.5.0: what the growth and cash-conversion figures cannot say when there is no profit to measure them by.  The figures
+        # themselves stay None (they are not computed); the factors read these marks and score 0 instead of leaving the figure out.
+        "loss_now": bool(ni is not None and ni <= 0), "cash_burn": bool(not is_financial and burn_ni is not None and burn_ni <= 0 and ocf is not None and ocf <= 0),
         "roe": div(ni, eq) if (eq or 0) > 0 else None, "roe_prev": roe_prev, "op_margin": div(at("op_income"), rev), "gross_margin": div(at("gross_profit"), rev),
         "net_margin": div(ni, rev), "rev_growth": growth("revenue"), "eps_growth": eps_growth(), "rev_cagr3": cagr("revenue"), "eps_cagr3": eps_growth(3),
         "debt_basis": debt_basis, "ocf_to_ni": None if is_financial else ocf_ni, "fcf": fcf, "fcf_margin": div(fcf, rev), "fcf_years_positive": sum(fcfs) / len(fcfs) if fcfs else None,

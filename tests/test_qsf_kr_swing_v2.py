@@ -37,7 +37,7 @@ def test_only_the_korean_swing_profile_changed():
     assert {d: kr["domains"][d] for d in ("FUNDAMENTAL", "RISK", "EVENTS")} == {d: us["domains"][d] for d in ("FUNDAMENTAL", "RISK", "EVENTS")}
     # QSF-1.4.0 (2026-11-16): the regime domain is reference only everywhere; the technical domain only in the Korean swing profile
     assert {k: sorted(p["reference"]) for k, p in config.PROFILES.items()} == {"US_SWING_V2": ["REGIME"], "US_LONG_TERM_V2": ["REGIME"], "KR_SWING_V3": ["REGIME", "TECHNICAL"], "KR_LONG_TERM_V2": ["REGIME"]}
-    assert sum(sum(v.values()) for v in config.profile_for("KR", "LONG_TERM")["domains"].values()) == 90 and config.MODEL_VERSION == "QSF-1.4.1"
+    assert sum(sum(v.values()) for v in config.profile_for("KR", "LONG_TERM")["domains"].values()) == 90 and config.MODEL_VERSION == "QSF-1.5.0"
 
 
 def test_the_technical_value_cannot_move_the_korean_swing_score(monkeypatch):

@@ -137,6 +137,26 @@ def _rr(f: Dict, key: str, lo: float, hi: float) -> Optional[float]:
     return rel if rel is not None else ramp(f.get(key), lo, hi)
 
 
+def _eps_growth(f: Dict, key: str, lo: float, hi: float) -> Optional[float]:
+    """An earnings-growth figure, or 0 when it cannot be computed because the company is losing money now (QSF-1.5.0).  Until
+    then it was left out and the factor rested on its other figures: a loss-maker with rising sales read as a strong grower.
+    A figure missing for another reason (a turnaround from a loss base, no history) stays missing."""
+    v = _rr(f, key, lo, hi)
+    return 0.0 if v is None and f.get("loss_now") else v
+
+
+def _cash_conversion(f: Dict) -> Optional[float]:
+    """Operating cash flow over net income, or 0 when both are at or below zero: no profit, and no cash either (QSF-1.5.0)."""
+    v = ramp(f.get("ocf_to_ni"), 0.5, 1.2)
+    return 0.0 if v is None and f.get("cash_burn") else v
+
+
+def _zero_note(f: Dict) -> str:
+    said = [w for w, on in (("적자라 이익 성장을 0점으로 읽음", f.get("loss_now") and (f.get("eps_growth") is None or f.get("eps_cagr3") is None)),
+                            ("이익도 영업현금도 0 이하라 현금 전환을 0점으로 읽음", f.get("cash_burn") and f.get("ocf_to_ni") is None)) if on]
+    return f" ({'; '.join(said)})" if said else ""
+
+
 def _f(c) -> Optional[Dict]:
     f = c.get("fund")
     return f if f and f.get("status") in ("REAL", "STALE") else None
@@ -156,9 +176,9 @@ def earnings_revenue_quality(c) -> Dict:
     f = _f(c)
     if not f:
         return _fund_missing(c)
-    return _fobs(c, mean([_rr(f, "rev_growth", -0.05, 0.20), _rr(f, "eps_growth", -0.10, 0.25), ramp(f.get("ocf_to_ni"), 0.5, 1.2)]),
+    return _fobs(c, mean([_rr(f, "rev_growth", -0.05, 0.20), _eps_growth(f, "eps_growth", -0.10, 0.25), _cash_conversion(f)]),
                  {k: f.get(k) for k in ("rev_growth", "eps_growth", "ocf_to_ni")},
-                 f"매출 성장 {pct(f.get('rev_growth'))}, EPS 성장 {pct(f.get('eps_growth'))}, 영업현금/순이익 {num(f.get('ocf_to_ni'))}")
+                 f"매출 성장 {pct(f.get('rev_growth'))}, EPS 성장 {pct(f.get('eps_growth'))}, 영업현금/순이익 {num(f.get('ocf_to_ni'))}{_zero_note(f)}")
 
 
 def profitability(c) -> Dict:
@@ -189,9 +209,9 @@ def cash_flow_quality(c) -> Dict:
         return not_applicable("금융업은 현금흐름 품질을 같은 기준으로 비교하지 않습니다")
     if f.get("cash_flow_note"):
         return missing(f["cash_flow_note"])
-    return _fobs(c, mean([ramp(f.get("ocf_to_ni"), 0.5, 1.2), _rr(f, "fcf_margin", -0.02, 0.15)]),
+    return _fobs(c, mean([_cash_conversion(f), _rr(f, "fcf_margin", -0.02, 0.15)]),
                  {k: f.get(k) for k in ("ocf_to_ni", "fcf_margin")},
-                 f"영업현금/순이익 {num(f.get('ocf_to_ni'))}, FCF 마진 {pct(f.get('fcf_margin'))}")
+                 f"영업현금/순이익 {num(f.get('ocf_to_ni'))}, FCF 마진 {pct(f.get('fcf_margin'))}" + (" (이익도 영업현금도 0 이하라 현금 전환을 0점으로 읽음)" if f.get("cash_burn") and f.get("ocf_to_ni") is None else ""))
 
 
 def valuation(c) -> Dict:
@@ -222,9 +242,10 @@ def growth_quality(c) -> Dict:
     f = _f(c)
     if not f:
         return _fund_missing(c)
-    return _fobs(c, mean([_rr(f, "rev_cagr3", -0.02, 0.15), _rr(f, "eps_cagr3", -0.05, 0.20), _rr(f, "rev_growth", -0.05, 0.20)]),
+    return _fobs(c, mean([_rr(f, "rev_cagr3", -0.02, 0.15), _eps_growth(f, "eps_cagr3", -0.05, 0.20), _rr(f, "rev_growth", -0.05, 0.20)]),
                  {k: f.get(k) for k in ("rev_cagr3", "eps_cagr3", "rev_growth")},
-                 f"3년 매출 CAGR {pct(f.get('rev_cagr3'))}, 3년 EPS CAGR {pct(f.get('eps_cagr3'))}, 최근 매출 성장 {pct(f.get('rev_growth'))}")
+                 f"3년 매출 CAGR {pct(f.get('rev_cagr3'))}, 3년 EPS CAGR {pct(f.get('eps_cagr3'))}, 최근 매출 성장 {pct(f.get('rev_growth'))}"
+                 + (" (적자라 3년 EPS 성장을 0점으로 읽음)" if f.get("loss_now") and f.get("eps_cagr3") is None else ""))
 
 
 def free_cash_flow(c) -> Dict:
