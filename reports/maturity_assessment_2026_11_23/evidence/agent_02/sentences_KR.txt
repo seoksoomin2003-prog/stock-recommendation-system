@@ -1,0 +1,24 @@
+session 2026-11-20 KR stocks 300
+plain sentences said per (strategy, factor, side) under today's code:
+  ('LONG_TERM', 'financial_resilience', 'bad'): said 9, figure does not support 0  e.g. []
+  ('LONG_TERM', 'financial_resilience', 'good'): said 10, figure does not support 0  e.g. []
+  ('LONG_TERM', 'free_cash_flow', 'bad'): said 83, figure does not support 0  e.g. []
+  ('LONG_TERM', 'free_cash_flow', 'good'): said 102, figure does not support 28  e.g. [('005930', 'fcf years 0.75'), ('000660', 'fcf years 0.5'), ('207940', 'fcf years 0.75'), ('329180', 'fcf years 0.6666666666666666')]
+  ('LONG_TERM', 'growth_quality', 'bad'): said 81, figure does not support 0  e.g. []
+  ('LONG_TERM', 'growth_quality', 'good'): said 50, figure does not support 5  e.g. [('003490', 'rev3 0.214079800428993, eps3 -0.23620676172572397, rev1 0.4115572569410062'), ('277810', 'rev3 0.35833202623477156, eps3 -0.4103092880510747, rev1 0.763761716448563'), ('031980', 'rev3 0.4185051398505324, eps3 0.28972326855053065, rev1 -0.0359339272421314'), ('032820', 'rev3 0.207477412587876, eps3 -0.4054591323324753, rev1 0.2229497432546088')]
+  ('LONG_TERM', 'leverage', 'bad'): said 49, figure does not support 0  e.g. []
+  ('LONG_TERM', 'leverage', 'good'): said 163, figure does not support 0  e.g. []
+  ('LONG_TERM', 'valuation', 'bad'): said 100, figure does not support 0  e.g. []
+  ('LONG_TERM', 'valuation', 'good'): said 137, figure does not support 11  e.g. [('017670', 'pe 38.19178082191781 pb 1.1638612156102615 fy 0.11389186638784292'), ('047040', 'pe -4.711711711711712 pb 1.2838288873791894 fy 0.08128824513459568'), ('004020', 'pe -520.7547169811321 pb 0.19013768729106462 fy 0.148605028862839'), ('051900', 'pe -42.05685618729097 pb 0.6911390458934986 fy 0.09547218536053573')]
+  ('SWING', 'balance_sheet', 'bad'): said 90, figure does not support 0  e.g. []
+  ('SWING', 'balance_sheet', 'good'): said 149, figure does not support 0  e.g. []
+  ('SWING', 'cash_flow_quality', 'bad'): said 46, figure does not support 0  e.g. []
+  ('SWING', 'cash_flow_quality', 'good'): said 111, figure does not support 23  e.g. [('017670', 'ocf/ni 10.461248680295613 fcf_margin 0.10043035313964449'), ('047050', 'ocf/ni 3.0488877110178505 fcf_margin 0.03913449937796156'), ('011070', 'ocf/ni 3.9014071300056847 fcf_margin 0.03290071980571598'), ('032640', 'ocf/ni 5.820121125001473 fcf_margin 0.08751982381277972')]
+  ('SWING', 'earnings_revenue_quality', 'bad'): said 35, figure does not support 0  e.g. []
+  ('SWING', 'earnings_revenue_quality', 'good'): said 84, figure does not support 6  e.g. [('012450', 'rev 1.3756772813114617, eps -0.3892884664782944'), ('003490', 'rev 0.4115572569410062, eps -0.40185081323611893'), ('259960', 'rev 0.22761291684000007, eps -0.42454446892596087'), ('161390', 'rev 1.2527004640560215, eps -0.022545693334792616')]
+  ('SWING', 'profitability', 'bad'): said 130, figure does not support 0  e.g. []
+  ('SWING', 'profitability', 'good'): said 74, figure does not support 0  e.g. []
+  ('LONG_TERM', 'financial_resilience', 'bad-financial'): 9 e.g. [('105560', 'equity/assets 0.07623540928664983'), ('055550', 'equity/assets 0.07680825475914067'), ('086790', 'equity/assets 0.06766407485892971'), ('316140', 'equity/assets 0.0629458631248504')]
+  ('SWING', 'balance_sheet', 'bad-financial'): 9 e.g. [('105560', 'equity/assets 0.07623540928664983'), ('055550', 'equity/assets 0.07680825475914067'), ('086790', 'equity/assets 0.06766407485892971'), ('316140', 'equity/assets 0.0629458631248504')]
+partial factors left unsaid (count of clear readings): {'SWING': 131, 'LONG_TERM': 1170}
+card sentence: first strength/weakness whose text has a figure worded '없음':

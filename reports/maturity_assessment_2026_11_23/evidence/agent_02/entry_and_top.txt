@@ -1,0 +1,14 @@
+KR long cards 300 | ENTRY_NOW under today's rule (score>=55, valuation>=0.25): 129 43%
+   of which: band below buy: 94 | loss now (pe<=0): 1 | business_quality<0.4: 4 | growth_quality<0.3: 20 | rev down and eps down: 5 | valuation>=0.65 & business_quality<0.4 (cheap+weak): 4
+   first strength factor: {'valuation': 129, 'business_quality': 37, 'growth_quality': 33, 'liquidity': 27, 'balance_dilution': 22, 'financial_resilience': 18, 'insider_ownership': 11, 'free_cash_flow': 10}
+   first strength among buy bands: {'valuation': 25, 'business_quality': 9, 'growth_quality': 1, 'free_cash_flow': 1}
+   in top three strengths: {'balance_dilution': 108, 'capital_allocation': 41, 'business_quality': 95, 'financial_resilience': 68, 'insider_ownership': 93}
+   valuation>=0.8: 107 bands {'HOLD_WATCH': 58, 'BUY_CANDIDATE': 23, 'WEAK_REDUCE': 22, 'STRONG_BUY_CANDIDATE': 3, 'SELL_AVOID': 1}
+   business_quality>=0.7: 61 entry {'ENTRY_NOW': 45, 'OVERVALUED_AT_CURRENT_PRICE': 10, 'NO_VALID_ENTRY_SETUP': 6} valuation<0.25: 11
+US long cards 504 | ENTRY_NOW under today's rule (score>=55, valuation>=0.25): 307 61%
+   of which: band below buy: 237 | loss now (pe<=0): 3 | business_quality<0.4: 9 | growth_quality<0.3: 72 | rev down and eps down: 21 | valuation>=0.65 & business_quality<0.4 (cheap+weak): 5
+   first strength factor: {'business_quality': 274, 'valuation': 95, 'free_cash_flow': 43, 'growth_quality': 26, 'liquidity': 21, 'balance_dilution': 16, 'financial_resilience': 12, 'long_trend': 9}
+   first strength among buy bands: {'business_quality': 59, 'valuation': 16, 'financial_resilience': 2, 'downside_drawdown': 2, 'free_cash_flow': 1}
+   in top three strengths: {'balance_dilution': 127, 'capital_allocation': 12, 'business_quality': 354, 'financial_resilience': 83, 'insider_ownership': 10}
+   valuation>=0.8: 72 bands {'STRONG_BUY_CANDIDATE': 2, 'HOLD_WATCH': 47, 'BUY_CANDIDATE': 22, 'WEAK_REDUCE': 1}
+   business_quality>=0.7: 285 entry {'OVERVALUED_AT_CURRENT_PRICE': 58, 'ENTRY_NOW': 200, 'WAIT_FOR_EARNINGS': 1, 'NO_VALID_ENTRY_SETUP': 26} valuation<0.25: 64

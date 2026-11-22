@@ -1,0 +1,23 @@
+session 2026-11-20 file 2026-11-20_US_000032.jsonl.gz snaps 1008 version QSF-1.4.1
+long 504 swing 504
+snapshot keys: ['action', 'actionability', 'band', 'benchmark', 'cik', 'confidence', 'coverage', 'data_date', 'domains', 'entry_session', 'entry_status', 'factors', 'gates', 'held', 'holding', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+--- LONG: status counts / partial inputs / raw None counts
+  valuation                  {'REAL': 499, 'STALE': 2, 'MISSING': 3} partial=0 rawNone={'pb': 31, 'fcf_yield': 38, 'pe': 1}
+  business_quality           {'REAL': 498, 'STALE': 2, 'MISSING': 4} partial=0 rawNone={'gross_margin': 313, 'roe': 31, 'op_margin': 120}
+  growth_quality             {'REAL': 498, 'STALE': 2, 'MISSING': 4} partial=0 rawNone={'eps_cagr3': 90, 'rev_cagr3': 12, 'rev_growth': 10}
+  free_cash_flow             {'REAL': 408, 'MISSING': 41, 'NOT_APPLICABLE': 53, 'STALE': 2} partial=0 rawNone={'fcf_margin': 1}
+  balance_dilution           {'REAL': 499, 'STALE': 2, 'MISSING': 3} partial=0 rawNone={'debt_equity': 9, 'share_change': 17}
+  financial_resilience       {'REAL': 498, 'STALE': 2, 'MISSING': 4} partial=0 rawNone={'interest_cover': 145, 'cash_debt': 15, 'current_ratio': 28}
+  leverage                   {'REAL': 437, 'NOT_APPLICABLE': 53, 'MISSING': 12, 'STALE': 2} partial=0 rawNone={}
+  capital_allocation         {'REAL': 495, 'MISSING': 7, 'STALE': 2} partial=0 rawNone={'share_change': 13, 'returns_capital': 19}
+  insider_ownership          {'REAL': 501, 'MISSING': 3} partial=0 rawNone={'insider_pct': 1}
+--- SWING: status counts / partial inputs / raw None counts
+  earnings_revenue_quality   {'REAL': 498, 'STALE': 2, 'MISSING': 4} partial=0 rawNone={'eps_growth': 45, 'ocf_to_ni': 77, 'rev_growth': 10}
+  profitability              {'REAL': 496, 'STALE': 2, 'MISSING': 6} partial=0 rawNone={'roe': 29, 'op_margin': 118}
+  balance_sheet              {'REAL': 498, 'STALE': 2, 'MISSING': 4} partial=0 rawNone={'debt_equity': 8, 'current_ratio': 28}
+  cash_flow_quality          {'REAL': 444, 'NOT_APPLICABLE': 53, 'MISSING': 5, 'STALE': 2} partial=0 rawNone={'fcf_margin': 37, 'ocf_to_ni': 23}
+financial (leverage N/A): 53
+pe<=0 (loss) : 27 ['ALB', 'ARE', 'BAX', 'BE', 'CNC', 'CRL', 'CRWD', 'DD', 'DOW', 'ECHO', 'F', 'GIS', 'HAS', 'HPE', 'IFF', 'INTC', 'IP', 'IVZ', 'KHC', 'LITE', 'LYB', 'LYV', 'MRNA', 'OMC', 'SJM', 'TTWO', 'VTRS']
+no equity (99): 31 ['ABBV', 'AZO', 'BKNG', 'CAH', 'CCI', 'DELL', 'DPZ', 'DVA', 'FDXF', 'FICO', 'HCA', 'HLT', 'HPQ', 'IRM', 'LOW', 'MAR', 'MAS', 'MCD', 'MCK', 'MO', 'MSCI', 'MTD', 'ORLY', 'OTIS', 'PM', 'SBAC', 'SBUX', 'TDG', 'VRSN', 'WYNN', 'YUM']
+long bands: {('HOLD_WATCH', 'ACTIONABLE'): 302, ('STRONG_BUY_CANDIDATE', 'ACTIONABLE'): 3, ('BUY_CANDIDATE', 'ACTIONABLE'): 75, ('WEAK_REDUCE', 'ACTIONABLE'): 112, ('SELL_AVOID', 'ACTIONABLE'): 4, ('HOLD_WATCH', 'INSUFFICIENT_DATA'): 3, ('SELL_AVOID', 'BLOCKED'): 1, ('WEAK_REDUCE', 'BLOCKED'): 1, ('WEAK_REDUCE', 'INSUFFICIENT_DATA'): 1, ('BUY_CANDIDATE', 'INSUFFICIENT_DATA'): 2}
+long entry: {'OVERVALUED_AT_CURRENT_PRICE': 63, 'ENTRY_NOW': 313, 'WAIT_FOR_EARNINGS': 4, 'NO_VALID_ENTRY_SETUP': 124}

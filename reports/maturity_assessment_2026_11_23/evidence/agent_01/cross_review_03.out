@@ -1,0 +1,74 @@
+== 0. is the dump the live code's output?  (dump vs this agent's two server replies)
+   US AAPL SWING: dump 69.8333 HOLD_WATCH WAIT_FOR_PULLBACK | server 69.8327 HOLD_WATCH WAIT_FOR_PULLBACK
+   US AAPL LONG_TERM: dump 69.3660 HOLD_WATCH OVERVALUED_AT_CURRENT_PRICE | server 69.3660 HOLD_WATCH OVERVALUED_AT_CURRENT_PRICE
+   KR 005930 SWING: dump 53.8825 WEAK_REDUCE NO_VALID_ENTRY_SETUP | server 53.8825 WEAK_REDUCE NO_VALID_ENTRY_SETUP
+   KR 005930 LONG_TERM: dump 64.1972 HOLD_WATCH ENTRY_NOW | server 64.2083 HOLD_WATCH ENTRY_NOW
+
+== 1. the stance's line on the screen against the score floor of the order plan's candidates
+   presets: {'DEFENSIVE': (75.0, True, 0.5), 'NORMAL': (70.0, False, 1.0), 'AGGRESSIVE': (67.0, False, 1.5)}
+   US SWING DEFENSIVE  screen line 75: screen candidates   1 | plan candidates   0 | under 70: 0 | size factor 0.5
+   US LONG  DEFENSIVE  screen line 75: screen candidates  16 | plan candidates  15 lowest plan score 75.39 | under 70: 0 | size factor 0.5
+   US SWING NORMAL     screen line 70: screen candidates  13 | plan candidates   9 lowest plan score 55.91 | under 70: 8 | size factor 1
+   US LONG  NORMAL     screen line 70: screen candidates  78 | plan candidates 307 lowest plan score 55.17 | under 70: 237 | size factor 1
+   US SWING AGGRESSIVE screen line 67: screen candidates  43 | plan candidates   9 lowest plan score 55.91 | under 70: 8 | size factor 1.5
+   US LONG  AGGRESSIVE screen line 67: screen candidates 129 | plan candidates 307 lowest plan score 55.17 | under 70: 237 | size factor 1.5
+   KR SWING DEFENSIVE  screen line 75: screen candidates   0 | plan candidates   0 | under 70: 0 | size factor 0.5
+   KR LONG  DEFENSIVE  screen line 75: screen candidates   7 | plan candidates   7 lowest plan score 75.50 | under 70: 0 | size factor 0.5
+   KR SWING NORMAL     screen line 70: screen candidates   0 | plan candidates  18 lowest plan score 55.17 | under 70: 18 | size factor 1
+   KR LONG  NORMAL     screen line 70: screen candidates  34 | plan candidates 129 lowest plan score 55.12 | under 70: 95 | size factor 1
+   KR SWING AGGRESSIVE screen line 67: screen candidates   1 | plan candidates  18 lowest plan score 55.17 | under 70: 18 | size factor 1.5
+   KR LONG  AGGRESSIVE screen line 67: screen candidates  59 | plan candidates 129 lowest plan score 55.12 | under 70: 95 | size factor 1.5
+
+== 2. stance.judge reads the score; the band shown reads the conservative score
+   US: cards whose buy label was held back: 3
+      VEEV    LONG_TERM score 71.40 conservative 69.73 band HOLD_WATCH conf MEDIUM coverage 0.922 entry OVERVALUED_AT_CURRENT_PRICE  | stance says: DEF=LINE, NOR=CANDIDATE, AGG=CANDIDATE
+      FISV    LONG_TERM score 70.26 conservative 69.81 band HOLD_WATCH conf HIGH   coverage 0.978 entry ENTRY_NOW                    | stance says: DEF=LINE, NOR=CANDIDATE, AGG=CANDIDATE
+      RL      LONG_TERM score 70.23 conservative 68.66 band HOLD_WATCH conf MEDIUM coverage 0.922 entry ENTRY_NOW                    | stance says: DEF=LINE, NOR=CANDIDATE, AGG=CANDIDATE
+   US: held back out of the buy band AND a DEFENSIVE candidate: 0
+   KR: cards whose buy label was held back: 5
+      439260  LONG_TERM score 72.06 conservative 69.61 band HOLD_WATCH conf LOW    coverage 0.889 entry ENTRY_NOW                    | stance says: DEF=LINE, NOR=CANDIDATE, AGG=CANDIDATE
+      086790  LONG_TERM score 71.39 conservative 69.22 band HOLD_WATCH conf LOW    coverage 0.899 entry ENTRY_NOW                    | stance says: DEF=LINE, NOR=CANDIDATE, AGG=CANDIDATE
+      032830  LONG_TERM score 71.20 conservative 69.05 band HOLD_WATCH conf LOW    coverage 0.899 entry ENTRY_NOW                    | stance says: DEF=LINE, NOR=CANDIDATE, AGG=CANDIDATE
+      055550  LONG_TERM score 70.47 conservative 68.40 band HOLD_WATCH conf LOW    coverage 0.899 entry ENTRY_NOW                    | stance says: DEF=LINE, NOR=CANDIDATE, AGG=CANDIDATE
+      105560  LONG_TERM score 70.10 conservative 68.06 band HOLD_WATCH conf LOW    coverage 0.899 entry ENTRY_NOW                    | stance says: DEF=LINE, NOR=CANDIDATE, AGG=CANDIDATE
+   KR: held back out of the buy band AND a DEFENSIVE candidate: 0
+   bound: score s, missing share m of the applicable weight -> conservative = s(1-m) + 50m.  For s >= 75 and conservative < 70: m > (s-70)/(s-50)
+      s=75: m > 0.200 -> coverage < 0.800; confidence there: LOW
+      s=80: m > 0.333 -> coverage < 0.667; confidence there: under the 70% sufficiency rule: not judged
+      s=85: m > 0.429 -> coverage < 0.571; confidence there: under the 70% sufficiency rule: not judged
+
+== 3. Korean swing: the factor that is absent for every stock, and the line the conservative score makes
+   scored factors and weights: {'earnings_revenue_quality': 3, 'profitability': 2, 'balance_sheet': 3, 'cash_flow_quality': 2, 'risk_reward': 6, 'atr_risk': 5, 'liquidity': 5, 'drawdown_gap': 4, 'earnings_calendar': 4, 'material_disclosures': 3, 'insider_activity': 3} | sum 40
+   insider_activity status over 300 cards: {'MISSING': 300}
+   scored factors MISSING, by count: {'insider_activity': 300, 'cash_flow_quality': 3, 'earnings_revenue_quality': 3, 'earnings_calendar': 2}
+   top card 138930: score 67.86 conservative 66.45 | weight with data 35, missing 3 | by the formula 66.45
+   score needed for the buy label when only insider_activity is absent: 71.62; with the buffer: 68.38
+      engine.score at 70: score 70.00 conservative 68.50 band HOLD_WATCH action WATCH held_back True confidence HIGH
+      engine.score at 71: score 71.00 conservative 69.42 band HOLD_WATCH action WATCH held_back True confidence HIGH
+      engine.score at 71.6: score 71.60 conservative 69.98 band HOLD_WATCH action WATCH held_back True confidence HIGH
+      engine.score at 71.7: score 71.70 conservative 70.07 band BUY_CANDIDATE action BUY held_back False confidence HIGH
+      engine.score at 80: score 80.00 conservative 77.75 band BUY_CANDIDATE action BUY held_back True confidence HIGH
+      engine.score at 81: score 81.00 conservative 78.68 band BUY_CANDIDATE action BUY held_back True confidence HIGH
+      engine.score at 82.5: score 82.50 conservative 80.06 band STRONG_BUY_CANDIDATE action BUY held_back False confidence HIGH
+
+== 4. risk_reward against the price
+   4a. the program's own functions on a made-up year of highs (two swing highs at 110 and 130; ATR 2.0; close moved in steps of 0.1)
+      close 108.0 -> 108.1 (0.09%): target 110.0 -> 130.0, reward/risk 0.35 -> 4.84, factor 0.00 -> 1.00
+      one high only, close 107.9: target 110.0 (1년 내 저항선(스윙 ), reward/risk 0.38, factor 0.00
+      one high only, close 108.1: target 114.1 (위에 저항선이 없어 3), reward/risk 1.25, factor 0.13
+   4b. Agent 03's price test repeated on the dump (stored close, ATR and resistance; x0.97 and x1.03), with what caused each large change
+   US swing: largest score change 7.50 points; changes of 3 points or more: 2 of 1008; of those, target switched from the stored high to the 3-ATR projection: 0
+      TECH    x0.97: factor 0.00 -> 1.00 = 7.50 points | ATR 0.18% of price, so 3% is 16.9 ATR | target switched: False
+      PTC     x0.97: factor 0.00 -> 0.74 = 5.57 points | ATR 0.50% of price, so 3% is 5.9 ATR | target switched: False
+      SPY     x0.97: factor 0.32 -> 0.62 = 2.73 points | ATR 2.33% of price, so 3% is 1.3 ATR | target switched: False
+      SPY     x1.03: factor 0.32 -> 0.02 = 2.72 points | ATR 2.33% of price, so 3% is 1.3 ATR | target switched: False
+      AFL     x0.97: factor 0.00 -> 0.35 = 2.66 points | ATR 1.98% of price, so 3% is 1.5 ATR | target switched: False
+      among the 276 cases where the target did switch: largest change 2.35 points
+   KR swing: largest score change 4.03 points; changes of 3 points or more: 55 of 600; of those, target switched from the stored high to the 3-ATR projection: 48
+      031210  x0.97: factor 0.47 -> 0.69 = 4.03 points | ATR 3.29% of price, so 3% is 0.9 ATR | target switched: False
+      031210  x1.03: factor 0.47 -> 0.26 = 4.01 points | ATR 3.29% of price, so 3% is 0.9 ATR | target switched: False
+      031980  x1.03: factor 0.00 -> 0.23 = 3.71 points | ATR 15.86% of price, so 3% is 0.2 ATR | target switched: True
+      003690  x0.97: factor 0.07 -> 0.29 = 3.67 points | ATR 3.28% of price, so 3% is 0.9 ATR | target switched: False
+      319660  x1.03: factor 0.00 -> 0.23 = 3.66 points | ATR 13.88% of price, so 3% is 0.2 ATR | target switched: True
+      among the 86 cases where the target did switch: largest change 3.71 points
+   the factor's whole weight on the 100 scale: US swing 7.5 | KR swing 16.22 (with insider_activity absent)

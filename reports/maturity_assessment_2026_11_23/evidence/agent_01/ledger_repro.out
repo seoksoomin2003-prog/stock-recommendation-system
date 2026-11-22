@@ -1,0 +1,10 @@
+verify: {'status': 'OK', 'shards': 30, 'voided': 3, 'bad_files': []}
+live code model version: QSF-1.5.1
+US sessions: 13 first 2026-11-04 last 2026-11-20
+US 2026-11-20 snapshots 1008 recomputed 1008 max abs diff 4.263256414560601e-14 None mismatches 0 versions ['QSF-1.4.1']
+US record has input_coverage/partial/band_kept/conservative_score/band_held_back: [False, False, False, False, False]
+US price provenance labels: {'Yahoo Finance 일봉': 1008}
+KR sessions: 13 first 2026-11-04 last 2026-11-20
+KR 2026-11-20 snapshots 600 recomputed 600 max abs diff 4.263256414560601e-14 None mismatches 0 versions ['QSF-1.4.1']
+KR record has input_coverage/partial/band_kept/conservative_score/band_held_back: [False, False, False, False, False]
+KR price provenance labels: {'Yahoo Finance 일봉': 600}

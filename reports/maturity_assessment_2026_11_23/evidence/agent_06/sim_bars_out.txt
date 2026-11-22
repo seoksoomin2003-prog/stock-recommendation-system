@@ -1,0 +1,29 @@
+A. calibrated bars: chance of noise passing (independent generator, 20000 series each)
+design                                   nominal  table%%  bar    pass@nominal%%  pass@bar%%  own_quantile
+live swing   n240 h20 step1 lag20         2.24   1.255   3.33        5.51      1.255      3.33
+live long    n756 h63 step1 lag63         2.24   1.255   3.35        5.31      1.000      3.23
+fund period  n240 h20 step1 lag20         3.00   0.135   4.84        1.94      0.140      4.86
+split/univ.  n240 h20 step1 lag20         2.00   2.275   2.91        7.61      2.400      2.96
+committee    n240 h1  step1 lag5          3.00   0.135   3.15        0.22      0.165      3.19
+rank/turnover n240 h1 step1 lag20         2.00   2.275   2.24        3.67      2.430      2.29
+kr_forward   n48  h20 step5 lag4          2.24   1.255   3.26        5.12      1.280      3.28
+challenger L n151 h63 step5 lag13         2.24   1.255   3.31        5.47      1.200      3.28
+kr_method    n12  h1  step1 lag1          2.00   2.275   2.62        5.29      2.135      2.58
+kr_method    n24  h1  step1 lag1          2.00   2.275   2.27        3.60      2.180      2.24
+
+B. pooled reference (t_US + t_KR)/sqrt(2) against max of the two bars (live swing design)
+  pass at table 2.24: 5.70%   pass at bar 3.33: 1.06%   (table says 1.25%)   sd of one t: 1.42, of pooled: 1.43
+  long design: pass at bar 3.35: 0.97%
+
+C. plain t of a few separate samples (kr_swing_challenger, kr_swing_prior, top_picks)
+  n=12: plain_bar(2.0)=2.24  pass@2.0 3.54%  pass@bar 2.33%  (table 2.28%)
+  n=13: plain_bar(2.0)=2.24  pass@2.0 3.43%  pass@bar 2.27%  (table 2.28%)
+  n=15: plain_bar(2.0)=2.20  pass@2.0 3.29%  pass@bar 2.27%  (table 2.28%)
+  n=20: plain_bar(2.0)=2.17  pass@2.0 3.05%  pass@bar 2.20%  (table 2.28%)
+  top_picks wording 'evidence' under noise: on the first day it can appear 2.50%, at least once in the following 250 daily looks 6.92%
+
+E. main bar under noise that is not the calibration's own (live swing design, bar 3.33)
+  fat tails (t, 3 d.o.f.)      pass@bar 1.27%  (target 1.25%)
+  volatility clusters          pass@bar 0.58%  (target 1.25%)
+  one-day part AR(1) 0.15      pass@bar 1.43%  (target 1.25%)
+  one-day part AR(1) 0.30      pass@bar 1.12%  (target 1.25%)

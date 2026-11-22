@@ -1,0 +1,530 @@
+{
+ "ledger_verify": {
+  "status": "OK",
+  "shards": 30,
+  "voided": 3,
+  "bad_files": []
+ },
+ "ledger_sessions": {
+  "US": {
+   "n": 13,
+   "first": "2026-11-04",
+   "last": "2026-11-20"
+  },
+  "KR": {
+   "n": 14,
+   "first": "2026-11-04",
+   "last": "2026-11-20"
+  }
+ },
+ "ledger_index_keys": [
+  "file",
+  "hash",
+  "market",
+  "model_version",
+  "prev_hash",
+  "records",
+  "seq",
+  "session",
+  "sha256"
+ ],
+ "ledger_newest_US": {
+  "session": "2026-11-20",
+  "snapshots": 1008,
+  "model_versions": {
+   "QSF-1.4.1": 1008
+  },
+  "actionability": {
+   "LONG_TERM|ACTIONABLE": 496,
+   "LONG_TERM|BLOCKED": 2,
+   "LONG_TERM|INSUFFICIENT_DATA": 6,
+   "SWING|ACTIONABLE": 491,
+   "SWING|BLOCKED": 10,
+   "SWING|INSUFFICIENT_DATA": 3
+  },
+  "gates": {
+   "EARNINGS_IMMINENT": 8,
+   "SEVERE_EVENT": 4,
+   "SHORT_HISTORY": 6
+  },
+  "provenance_price": {
+   "Yahoo Finance 일봉": 1008
+  },
+  "cards_scored_from_stored_copies": 0,
+  "cards_whose_price_date_is_not_the_session": 0,
+  "buy_band_cards": {
+   "LONG_TERM|complete": 69,
+   "LONG_TERM|with_missing_factor": 9,
+   "SWING|complete": 12,
+   "SWING|with_missing_factor": 1
+  },
+  "confidence": {
+   "LONG_TERM|HIGH": 496,
+   "LONG_TERM|INSUFFICIENT": 6,
+   "LONG_TERM|MEDIUM": 2,
+   "SWING|HIGH": 498,
+   "SWING|INSUFFICIENT": 3,
+   "SWING|MEDIUM": 3
+  },
+  "snapshot_has_conservative_score": false,
+  "snapshot_keys": [
+   "action",
+   "actionability",
+   "band",
+   "benchmark",
+   "cik",
+   "confidence",
+   "coverage",
+   "data_date",
+   "domains",
+   "entry_session",
+   "entry_status",
+   "factors",
+   "gates",
+   "held",
+   "holding",
+   "market",
+   "model_version",
+   "price",
+   "profile",
+   "provenance",
+   "recorded_at",
+   "score",
+   "spec_version",
+   "stop",
+   "strategy",
+   "target",
+   "ticker"
+  ]
+ },
+ "ledger_newest_KR": {
+  "session": "2026-11-20",
+  "snapshots": 600,
+  "model_versions": {
+   "QSF-1.4.1": 600
+  },
+  "actionability": {
+   "LONG_TERM|ACTIONABLE": 292,
+   "LONG_TERM|BLOCKED": 8,
+   "SWING|ACTIONABLE": 291,
+   "SWING|BLOCKED": 9
+  },
+  "gates": {
+   "SEVERE_EVENT": 14,
+   "SHORT_HISTORY": 2,
+   "LOW_LIQUIDITY": 6,
+   "EARNINGS_IMMINENT": 1
+  },
+  "provenance_price": {
+   "Yahoo Finance 일봉": 600
+  },
+  "cards_scored_from_stored_copies": 0,
+  "cards_whose_price_date_is_not_the_session": 0,
+  "buy_band_cards": {
+   "LONG_TERM|complete": 20,
+   "LONG_TERM|with_missing_factor": 15
+  },
+  "confidence": {
+   "LONG_TERM|HIGH": 262,
+   "LONG_TERM|LOW": 1,
+   "LONG_TERM|MEDIUM": 37,
+   "SWING|HIGH": 288,
+   "SWING|MEDIUM": 12
+  },
+  "snapshot_has_conservative_score": false,
+  "snapshot_keys": [
+   "action",
+   "actionability",
+   "band",
+   "benchmark",
+   "confidence",
+   "coverage",
+   "data_date",
+   "domains",
+   "entry_session",
+   "entry_status",
+   "factors",
+   "gates",
+   "held",
+   "holding",
+   "market",
+   "model_version",
+   "price",
+   "profile",
+   "provenance",
+   "recorded_at",
+   "score",
+   "spec_version",
+   "stop",
+   "strategy",
+   "target",
+   "ticker"
+  ]
+ },
+ "latest_US": {
+  "status": "REAL",
+  "session": "2026-11-20",
+  "model_version": "QSF-1.4.1",
+  "tickers": 504,
+  "scored": 1008,
+  "fundamentals": null,
+  "stale_inputs": null,
+  "price_source": null,
+  "universe": null,
+  "generated_at": "2026-11-20T22:38:30.510273+00:00",
+  "errors": 0
+ },
+ "latest_KR": {
+  "status": "REAL",
+  "session": "2026-11-20",
+  "model_version": "QSF-1.4.1",
+  "tickers": 300,
+  "scored": 600,
+  "fundamentals": null,
+  "stale_inputs": null,
+  "price_source": {
+   "stocks": 300,
+   "by_source": {
+    "KRX+YAHOO": 300
+   },
+   "krx_last": "2026-11-19",
+   "dropped_yahoo_days": 0
+  },
+  "universe": {
+   "rule": "MARKET_CAP",
+   "krx_day": "2026-11-19",
+   "members": 300,
+   "size": 300,
+   "same_day": false
+  },
+  "generated_at": "2026-11-20T22:47:07.771593+00:00",
+  "errors": 0
+ },
+ "lookahead_stored": {
+  "file": "data/qsf/lookahead_audit.json",
+  "status": "OK",
+  "checked_at": "2026-11-20T23:25:20.386300+00:00",
+  "prices_to": "2026-11-20",
+  "sampled_days": 10,
+  "functions": [
+   {
+    "id": "kr_method.signals",
+    "days": 10,
+    "filled": 10,
+    "moved": 0,
+    "ok": true
+   },
+   {
+    "id": "kr_method.atr",
+    "days": 10,
+    "filled": 10,
+    "moved": 0,
+    "ok": true
+   },
+   {
+    "id": "kr_risk_grade.inputs",
+    "days": 10,
+    "filled": 10,
+    "moved": 0,
+    "ok": true
+   },
+   {
+    "id": "regime_weights.state",
+    "days": 10,
+    "filled": 10,
+    "moved": 0,
+    "ok": true
+   }
+  ],
+  "control": {
+   "id": "kr_risk_grade.targets",
+   "days": 10,
+   "moved": 10,
+   "ok": true
+  },
+  "records": [
+   {
+    "store": "krx_forward",
+    "sessions": 11,
+    "first": "2026-11-06",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 6,
+    "late": 0
+   },
+   {
+    "store": "krx_forward_fund",
+    "sessions": 11,
+    "first": "2026-11-06",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 6,
+    "late": 0
+   },
+   {
+    "store": "krx_forward_events",
+    "sessions": 11,
+    "first": "2026-11-06",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 6,
+    "late": 0
+   },
+   {
+    "store": "us_challenger",
+    "sessions": 9,
+    "first": "2026-11-09",
+    "last": "2026-11-19",
+    "chain": "OK",
+    "before_next_open": 9,
+    "late": 0
+   },
+   {
+    "store": "kr_swing_challenger",
+    "sessions": 10,
+    "first": "2026-11-09",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 7,
+    "late": 0
+   },
+   {
+    "store": "kr_swing_prior",
+    "sessions": 8,
+    "first": "2026-11-11",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 6,
+    "late": 0
+   },
+   {
+    "store": "kr_challenger",
+    "sessions": 3,
+    "first": "2026-11-18",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 2,
+    "late": 0
+   },
+   {
+    "store": "kr_cap_universe",
+    "sessions": 9,
+    "first": "2026-11-10",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 5,
+    "late": 0
+   },
+   {
+    "store": "kr_traded_universe",
+    "sessions": 8,
+    "first": "2026-11-11",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 5,
+    "late": 0
+   },
+   {
+    "store": "kr_method",
+    "sessions": 8,
+    "first": "2026-11-11",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 4,
+    "late": 0
+   },
+   {
+    "store": "regime_weights_kr",
+    "sessions": 7,
+    "first": "2026-11-12",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 4,
+    "late": 0
+   },
+   {
+    "store": "regime_weights_us",
+    "sessions": 6,
+    "first": "2026-11-12",
+    "last": "2026-11-19",
+    "chain": "OK",
+    "before_next_open": 4,
+    "late": 0
+   },
+   {
+    "store": "paper_book_kr",
+    "sessions": 7,
+    "first": "2026-11-12",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 5,
+    "late": 0
+   },
+   {
+    "store": "paper_book_us",
+    "sessions": 6,
+    "first": "2026-11-12",
+    "last": "2026-11-19",
+    "chain": "OK",
+    "before_next_open": 4,
+    "late": 0
+   },
+   {
+    "store": "forecast_kr",
+    "sessions": 6,
+    "first": "2026-11-13",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 4,
+    "late": 0
+   },
+   {
+    "store": "forecast_us",
+    "sessions": 5,
+    "first": "2026-11-13",
+    "last": "2026-11-19",
+    "chain": "OK",
+    "before_next_open": 3,
+    "late": 0
+   },
+   {
+    "store": "score_split_kr",
+    "sessions": 5,
+    "first": "2026-11-16",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 3,
+    "late": 0
+   },
+   {
+    "store": "score_split_us",
+    "sessions": 4,
+    "first": "2026-11-16",
+    "last": "2026-11-19",
+    "chain": "OK",
+    "before_next_open": 2,
+    "late": 0
+   },
+   {
+    "store": "turnover_book_kr",
+    "sessions": 5,
+    "first": "2026-11-16",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 3,
+    "late": 0
+   },
+   {
+    "store": "turnover_book_us",
+    "sessions": 4,
+    "first": "2026-11-16",
+    "last": "2026-11-19",
+    "chain": "OK",
+    "before_next_open": 2,
+    "late": 0
+   },
+   {
+    "store": "rank_book_kr",
+    "sessions": 5,
+    "first": "2026-11-16",
+    "last": "2026-11-20",
+    "chain": "OK",
+    "before_next_open": 3,
+    "late": 0
+   },
+   {
+    "store": "rank_book_us",
+    "sessions": 4,
+    "first": "2026-11-16",
+    "last": "2026-11-19",
+    "chain": "OK",
+    "before_next_open": 2,
+    "late": 0
+   }
+  ],
+  "problems": []
+ },
+ "krx_day_files": {
+  "kospi": 4405,
+  "kosdaq": 4405,
+  "only_one_board": 0,
+  "first": "2010-01-04",
+  "last": "2026-11-20",
+  "in_800_day_window": 570,
+  "weekday_gaps_in_window": 0,
+  "longest_gaps": [],
+  "one_weekday_gaps": []
+ },
+ "bars_KR_store": {
+  "stocks": 300,
+  "rows_min_median_max": [
+   177,
+   531,
+   531
+  ],
+  "last_dates": {
+   "2026-11-20": 300
+  },
+  "longest_weekday_gap_per_stock": {
+   "2": 1,
+   "3": 299
+  },
+  "longest_run_of_days_without_trade_in_the_last_year": {
+   "0": 293,
+   "1-5": 3,
+   "11+": 3,
+   "6-10": 1
+  },
+  "impossible_rows": 0,
+  "doubled_or_unordered_rows": 0,
+  "stocks_under_200_rows": 1
+ },
+ "coin_reply_on_file": {
+  "symbols": 30,
+  "starting_with_a_digit": [
+   "1000PEPEUSDT"
+  ],
+  "close_ms": 1795348800000,
+  "fetched_ms": 1795360827593
+ },
+ "price_archive": {
+  "KR.json.gz": 315180,
+  "KR.json.lock": 0,
+  "US.json.gz": 256840,
+  "US.json.lock": 0
+ },
+ "backups": {
+  "folder_is_default": true,
+  "entries": 39,
+  "newest": [
+   "turnover_book_kr",
+   "turnover_book_us",
+   "us_challenger"
+  ],
+  "same_device_as_repository": true
+ },
+ "forward_store_index_lines": {
+  "forecast_kr": 6,
+  "forecast_us": 6,
+  "kr_cap_universe": 9,
+  "kr_challenger": 3,
+  "kr_method": 8,
+  "kr_swing_challenger": 10,
+  "kr_swing_prior": 8,
+  "kr_traded_universe": 8,
+  "krx_forward": 11,
+  "krx_forward_events": 11,
+  "krx_forward_fund": 11,
+  "paper_book_kr": 7,
+  "paper_book_us": 7,
+  "rank_book_kr": 5,
+  "rank_book_us": 5,
+  "regime_weights_kr": 7,
+  "regime_weights_us": 7,
+  "score_split_kr": 5,
+  "score_split_us": 5,
+  "turnover_book_kr": 5,
+  "turnover_book_us": 5,
+  "us_challenger": 10
+ }
+}

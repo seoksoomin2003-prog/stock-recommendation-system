@@ -1,0 +1,234 @@
+{
+ "US all factors 0.499": {
+  "score_100": 49.9,
+  "state": "ADVERSE",
+  "size_factor": 0.5,
+  "new_exposure_cap": 0.5,
+  "coverage": 1.0
+ },
+ "US all factors 0.501": {
+  "score_100": 50.1,
+  "state": "FAVOURABLE",
+  "size_factor": 1.0,
+  "new_exposure_cap": null,
+  "coverage": 1.0
+ },
+ "US all STALE 0.8": {
+  "score_100": 80.0,
+  "state": "FAVOURABLE",
+  "size_factor": 1.0,
+  "new_exposure_cap": null,
+  "coverage": 0.5
+ },
+ "US one factor": {
+  "score_100": 100.0,
+  "state": "UNKNOWN",
+  "size_factor": 0.5,
+  "new_exposure_cap": 0.5,
+  "coverage": 0.25
+ },
+ "US none": {
+  "score_100": null,
+  "state": "UNKNOWN",
+  "size_factor": 0.5,
+  "new_exposure_cap": 0.5,
+  "coverage": null
+ },
+ "KR none": {
+  "score_100": null,
+  "state": "UNKNOWN",
+  "size_factor": 1.0,
+  "new_exposure_cap": null,
+  "coverage": null
+ },
+ "assistant US one factor": [
+  "미국 시장 상태를 읽을 수 없습니다(요인의 절반 이상이 비어 100/100이라는 값을 읽지 않습니다). 나쁜 날과 같게 새 주문의 위험 한도와 비중 한도를 0.5배로 줄여 계산했습니다. 새 주문의 합계도 계좌의 50%까지만 잡습니다."
+ ],
+ "assistant US none": [
+  "미국 시장 상태를 읽을 수 없습니다(값이 없습니다). 나쁜 날과 같게 새 주문의 위험 한도와 비중 한도를 0.5배로 줄여 계산했습니다. 새 주문의 합계도 계좌의 50%까지만 잡습니다."
+ ],
+ "assistant KR none": [
+  "한국 시장 상태를 읽을 수 없습니다(자료 없음). 이 시장은 주문 크기를 바꾸지 않습니다."
+ ],
+ "US 2026-11-16 live / credit at 0.5 / credit absent": [
+  48.9,
+  "ADVERSE",
+  54.1,
+  "FAVOURABLE",
+  55.1,
+  "FAVOURABLE"
+ ],
+ "US 2026-11-17 live / credit at 0.5 / credit absent": [
+  40.4,
+  "ADVERSE",
+  47.3,
+  "ADVERSE",
+  46.6,
+  "ADVERSE"
+ ],
+ "US 2026-11-05 live / credit at 0.5 / credit absent": [
+  36.2,
+  "ADVERSE",
+  42.7,
+  "ADVERSE",
+  40.8,
+  "ADVERSE"
+ ],
+ "US 2026-11-06 live / credit at 0.5 / credit absent": [
+  37.2,
+  "ADVERSE",
+  45.1,
+  "ADVERSE",
+  43.8,
+  "ADVERSE"
+ ],
+ "stance DEFENSIVE x US adverse": {
+  "size_factor": 0.25,
+  "new_exposure_cap": 0.5
+ },
+ "stance NORMAL x US adverse": {
+  "size_factor": 0.5,
+  "new_exposure_cap": 0.5
+ },
+ "stance AGGRESSIVE x US adverse": {
+  "size_factor": 0.75,
+  "new_exposure_cap": 0.5
+ },
+ "stance DEFENSIVE x US favourable": {
+  "size_factor": 0.5,
+  "new_exposure_cap": 0.5
+ },
+ "stance NORMAL x US favourable": {
+  "size_factor": 1.0,
+  "new_exposure_cap": null
+ },
+ "stance AGGRESSIVE x US favourable": {
+  "size_factor": 1.5,
+  "new_exposure_cap": null
+ },
+ "stance DEFENSIVE x KR adverse": {
+  "size_factor": 0.5,
+  "new_exposure_cap": 0.5
+ },
+ "stance NORMAL x KR adverse": {
+  "size_factor": 1.0,
+  "new_exposure_cap": null
+ },
+ "stance AGGRESSIVE x KR adverse": {
+  "size_factor": 1.5,
+  "new_exposure_cap": null
+ },
+ "plan DEFENSIVE x US adverse": {
+  "orders": 14,
+  "new_exposure_pct": 50.0,
+  "max_weight_pct": 5.0,
+  "max_risk_pct": 0.5,
+  "skipped": {
+   "EXPOSURE_FULL": 16
+  }
+ },
+ "plan NORMAL x US adverse": {
+  "orders": 7,
+  "new_exposure_pct": 50.0,
+  "max_weight_pct": 10.0,
+  "max_risk_pct": 1.0,
+  "skipped": {
+   "EXPOSURE_FULL": 23
+  }
+ },
+ "plan AGGRESSIVE x US adverse": {
+  "orders": 5,
+  "new_exposure_pct": 50.0,
+  "max_weight_pct": 15.0,
+  "max_risk_pct": 1.5,
+  "skipped": {
+   "EXPOSURE_FULL": 25
+  }
+ },
+ "plan DEFENSIVE x US favourable": {
+  "orders": 7,
+  "new_exposure_pct": 50.0,
+  "max_weight_pct": 10.0,
+  "max_risk_pct": 1.0,
+  "skipped": {
+   "EXPOSURE_FULL": 23
+  }
+ },
+ "plan NORMAL x US favourable": {
+  "orders": 7,
+  "new_exposure_pct": 98.9,
+  "max_weight_pct": 20.0,
+  "max_risk_pct": 2.0,
+  "skipped": {
+   "SLEEVE_FULL": 1,
+   "NO_CASH": 22
+  }
+ },
+ "plan AGGRESSIVE x US favourable": {
+  "orders": 5,
+  "new_exposure_pct": 98.9,
+  "max_weight_pct": 30.0,
+  "max_risk_pct": 3.0,
+  "skipped": {
+   "SLEEVE_FULL": 1,
+   "NO_CASH": 24
+  }
+ },
+ "plan DEFENSIVE x KR adverse": {
+  "orders": 10,
+  "new_exposure_pct": 50.0,
+  "max_weight_pct": 5.0,
+  "max_risk_pct": 0.5,
+  "skipped": {
+   "EXPOSURE_FULL": 20
+  }
+ },
+ "plan NORMAL x KR adverse": {
+  "orders": 10,
+  "new_exposure_pct": 98.9,
+  "max_weight_pct": 10.0,
+  "max_risk_pct": 1.0,
+  "skipped": {
+   "SLEEVE_FULL": 4,
+   "NO_CASH": 16
+  }
+ },
+ "plan AGGRESSIVE x KR adverse": {
+  "orders": 7,
+  "new_exposure_pct": 98.9,
+  "max_weight_pct": 15.0,
+  "max_risk_pct": 1.5,
+  "skipped": {
+   "SLEEVE_FULL": 3,
+   "NO_CASH": 20
+  }
+ },
+ "exposure state=None": {
+  "druckenmiller": 1.0,
+  "committee": 1.0
+ },
+ "exposure state=15.4": {
+  "druckenmiller": 0.4,
+  "committee": 0.6
+ },
+ "exposure state=25.4": {
+  "druckenmiller": 0.4,
+  "committee": 0.6
+ },
+ "exposure state=34.9": {
+  "druckenmiller": 0.4,
+  "committee": 0.6
+ },
+ "exposure state=35.0": {
+  "druckenmiller": 0.7,
+  "committee": 0.8
+ },
+ "exposure state=49.9": {
+  "druckenmiller": 0.7,
+  "committee": 0.8
+ },
+ "exposure state=50.0": {
+  "druckenmiller": 1.0,
+  "committee": 1.0
+ }
+}

@@ -1,0 +1,1205 @@
+{
+ "US": {
+  "2026-11-04": {
+   "model": "QSF-1.1.1",
+   "live": 62.7,
+   "state": "FAVOURABLE",
+   "coverage": 1.0,
+   "tested_signal": 72.2,
+   "factors": {
+    "vix_regime": 0.8,
+    "vix_term": 0.832,
+    "credit_spread": 0.135,
+    "index_trend_breadth": 0.667
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-04",
+    "vix_term": "2026-11-04",
+    "credit_spread": "2026-11-03",
+    "index_trend_breadth": "2026-11-04"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.390612569610183,
+     "vix": 16.610000610351562
+    },
+    "vix_term": {
+     "vix_vix3m": 0.8835107066179115
+    },
+    "credit_spread": {
+     "percentile": 0.8649681528662421,
+     "spread": 3.4,
+     "window_obs": 785
+    },
+    "index_trend_breadth": {
+     "breadth": 0.6381709741550696,
+     "close": 766.8099975585938,
+     "ma200": 729.9129989624023,
+     "ma50": 767.0575952148438
+    }
+   }
+  },
+  "2026-11-05": {
+   "model": "QSF-1.1.2",
+   "live": 36.2,
+   "state": "ADVERSE",
+   "coverage": 1.0,
+   "tested_signal": 54.4,
+   "factors": {
+    "vix_regime": 0.297,
+    "vix_term": 0.0,
+    "credit_spread": 0.176,
+    "index_trend_breadth": 0.721
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-05",
+    "vix_term": "2026-11-05",
+    "credit_spread": "2026-11-04",
+    "index_trend_breadth": "2026-11-05"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.9242424242424242,
+     "vix": 28.18000030517578
+    },
+    "vix_term": {
+     "vix_vix3m": 1.1029354656222607
+    },
+    "credit_spread": {
+     "percentile": 0.8244274809160306,
+     "spread": 3.32,
+     "window_obs": 786
+    },
+    "index_trend_breadth": {
+     "breadth": 0.610337972166998,
+     "close": 733.0,
+     "ma200": 730.150998840332,
+     "ma50": 766.3959948730469
+    }
+   }
+  },
+  "2026-11-06": {
+   "model": "QSF-1.1.3",
+   "live": 37.2,
+   "state": "ADVERSE",
+   "coverage": 1.0,
+   "tested_signal": 57.1,
+   "factors": {
+    "vix_regime": 0.407,
+    "vix_term": 0.039,
+    "credit_spread": 0.107,
+    "index_trend_breadth": 0.689
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-06",
+    "vix_term": "2026-11-06",
+    "credit_spread": "2026-11-05",
+    "index_trend_breadth": "2026-11-06"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.8711217183770883,
+     "vix": 25.639999389648438
+    },
+    "vix_term": {
+     "vix_vix3m": 1.0422763817907135
+    },
+    "credit_spread": {
+     "percentile": 0.8931297709923665,
+     "spread": 3.48,
+     "window_obs": 786
+    },
+    "index_trend_breadth": {
+     "breadth": 0.584493041749503,
+     "close": 735.2899780273438,
+     "ma200": 730.382548828125,
+     "ma50": 765.679794921875
+    }
+   }
+  },
+  "2026-11-09": {
+   "model": "QSF-1.1.8",
+   "live": 55.9,
+   "state": "FAVOURABLE",
+   "coverage": 1.0,
+   "tested_signal": 73.3,
+   "factors": {
+    "vix_regime": 0.656,
+    "vix_term": 0.473,
+    "credit_spread": 0.124,
+    "index_trend_breadth": 0.788
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-09",
+    "vix_term": "2026-11-09",
+    "credit_spread": "2026-11-06",
+    "index_trend_breadth": "2026-11-09"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.665871121718377,
+     "vix": 19.920000076293945
+    },
+    "vix_term": {
+     "vix_vix3m": 0.9553956696325862
+    },
+    "credit_spread": {
+     "percentile": 0.8762755102040817,
+     "spread": 3.42,
+     "window_obs": 784
+    },
+    "index_trend_breadth": {
+     "breadth": 0.664,
+     "close": 752.6900024414062,
+     "ma200": 730.6998489379882,
+     "ma50": 765.3465954589843
+    }
+   }
+  },
+  "2026-11-10": {
+   "model": "QSF-1.1.8",
+   "live": 58.0,
+   "state": "FAVOURABLE",
+   "coverage": 1.0,
+   "tested_signal": 73.3,
+   "factors": {
+    "vix_regime": 0.676,
+    "vix_term": 0.536,
+    "credit_spread": 0.163,
+    "index_trend_breadth": 0.774
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-10",
+    "vix_term": "2026-11-10",
+    "credit_spread": "2026-11-09",
+    "index_trend_breadth": "2026-11-10"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.6364359586316627,
+     "vix": 19.459999084472656
+    },
+    "vix_term": {
+     "vix_vix3m": 0.9428294408880852
+    },
+    "credit_spread": {
+     "percentile": 0.8367346938775511,
+     "spread": 3.34,
+     "window_obs": 784
+    },
+    "index_trend_breadth": {
+     "breadth": 0.6527777777777778,
+     "close": 749.9199829101562,
+     "ma200": 730.9857989501953,
+     "ma50": 765.0039953613282
+    }
+   }
+  },
+  "2026-11-11": {
+   "model": "QSF-1.3.1",
+   "live": 64.0,
+   "state": "FAVOURABLE",
+   "coverage": 1.0,
+   "tested_signal": 77.8,
+   "factors": {
+    "vix_regime": 0.761,
+    "vix_term": 0.705,
+    "credit_spread": 0.163,
+    "index_trend_breadth": 0.789
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-11",
+    "vix_term": "2026-11-11",
+    "credit_spread": "2026-11-09",
+    "index_trend_breadth": "2026-11-11"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.4821002386634845,
+     "vix": 17.489999771118164
+    },
+    "vix_term": {
+     "vix_vix3m": 0.9090436579616292
+    },
+    "credit_spread": {
+     "percentile": 0.8367346938775511,
+     "spread": 3.34,
+     "window_obs": 784
+    },
+    "index_trend_breadth": {
+     "breadth": 0.6646825396825397,
+     "close": 759.8099975585938,
+     "ma200": 731.3073989868165,
+     "ma50": 764.9645947265625
+    }
+   }
+  },
+  "2026-11-12": {
+   "model": "QSF-1.3.2",
+   "live": 60.2,
+   "state": "FAVOURABLE",
+   "coverage": 1.0,
+   "tested_signal": 74.4,
+   "factors": {
+    "vix_regime": 0.709,
+    "vix_term": 0.589,
+    "credit_spread": 0.189,
+    "index_trend_breadth": 0.769
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-12",
+    "vix_term": "2026-11-12",
+    "credit_spread": "2026-11-11",
+    "index_trend_breadth": "2026-11-12"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.5783611774065235,
+     "vix": 18.700000762939453
+    },
+    "vix_term": {
+     "vix_vix3m": 0.932203452681446
+    },
+    "credit_spread": {
+     "percentile": 0.8114649681528663,
+     "spread": 3.3,
+     "window_obs": 785
+    },
+    "index_trend_breadth": {
+     "breadth": 0.6488095238095238,
+     "close": 757.1199951171875,
+     "ma200": 731.6158990478516,
+     "ma50": 764.8037951660157
+    }
+   }
+  },
+  "2026-11-13": {
+   "model": "QSF-1.3.2",
+   "live": 61.8,
+   "state": "FAVOURABLE",
+   "coverage": 1.0,
+   "tested_signal": 74.8,
+   "factors": {
+    "vix_regime": 0.683,
+    "vix_term": 0.57,
+    "credit_spread": 0.276,
+    "index_trend_breadth": 0.794
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-13",
+    "vix_term": "2026-11-13",
+    "credit_spread": "2026-11-12",
+    "index_trend_breadth": "2026-11-13"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.6237072394590294,
+     "vix": 19.299999237060547
+    },
+    "vix_term": {
+     "vix_vix3m": 0.9359844059918124
+    },
+    "credit_spread": {
+     "percentile": 0.7235668789808917,
+     "spread": 3.2,
+     "window_obs": 785
+    },
+    "index_trend_breadth": {
+     "breadth": 0.6686507936507936,
+     "close": 754.3699951171875,
+     "ma200": 731.9175491333008,
+     "ma50": 764.4277954101562
+    }
+   }
+  },
+  "2026-11-16": {
+   "model": "QSF-1.4.1",
+   "live": 48.8,
+   "state": "ADVERSE",
+   "coverage": 1.0,
+   "tested_signal": 64.3,
+   "factors": {
+    "vix_regime": 0.526,
+    "vix_term": 0.274,
+    "credit_spread": 0.239,
+    "index_trend_breadth": 0.727
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-16",
+    "vix_term": "2026-11-16",
+    "credit_spread": "2026-11-13",
+    "index_trend_breadth": "2026-11-16"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.7995226730310262,
+     "vix": 22.90999984741211
+    },
+    "vix_term": {
+     "vix_vix3m": 0.9952215200623741
+    },
+    "credit_spread": {
+     "percentile": 0.7614795918367347,
+     "spread": 3.23,
+     "window_obs": 784
+    },
+    "index_trend_breadth": {
+     "breadth": 0.6150793650793651,
+     "close": 739.9500122070312,
+     "ma200": 732.1574493408203,
+     "ma50": 763.8229956054688
+    }
+   }
+  },
+  "2026-11-17": {
+   "model": "QSF-1.4.1",
+   "live": 40.4,
+   "state": "ADVERSE",
+   "coverage": 1.0,
+   "tested_signal": 57.0,
+   "factors": {
+    "vix_regime": 0.415,
+    "vix_term": 0.154,
+    "credit_spread": 0.157,
+    "index_trend_breadth": 0.68
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-17",
+    "vix_term": "2026-11-17",
+    "credit_spread": "2026-11-16",
+    "index_trend_breadth": "2026-11-17"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.8647573587907716,
+     "vix": 25.459999084472656
+    },
+    "vix_term": {
+     "vix_vix3m": 1.0192153543247566
+    },
+    "credit_spread": {
+     "percentile": 0.8431122448979592,
+     "spread": 3.34,
+     "window_obs": 784
+    },
+    "index_trend_breadth": {
+     "breadth": 0.5776892430278885,
+     "close": 732.4400024414062,
+     "ma200": 732.3425994873047,
+     "ma50": 763.1525952148437
+    }
+   }
+  },
+  "2026-11-18": {
+   "model": "QSF-1.4.1",
+   "live": 34.6,
+   "state": "ADVERSE",
+   "coverage": 1.0,
+   "tested_signal": 47.4,
+   "factors": {
+    "vix_regime": 0.454,
+    "vix_term": 0.194,
+    "credit_spread": 0.112,
+    "index_trend_breadth": 0.489
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-18",
+    "vix_term": "2026-11-18",
+    "credit_spread": "2026-11-17",
+    "index_trend_breadth": "2026-11-18"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.8440731901352426,
+     "vix": 24.559999465942383
+    },
+    "vix_term": {
+     "vix_vix3m": 1.0111156253700444
+    },
+    "credit_spread": {
+     "percentile": 0.8878980891719745,
+     "spread": 3.43,
+     "window_obs": 785
+    },
+    "index_trend_breadth": {
+     "breadth": 0.5575757575757576,
+     "close": 730.2000122070312,
+     "ma200": 732.5459494018555,
+     "ma50": 762.5085949707031
+    }
+   }
+  },
+  "2026-11-19": {
+   "model": "QSF-1.4.1",
+   "live": 24.5,
+   "state": "ADVERSE",
+   "coverage": 1.0,
+   "tested_signal": 37.6,
+   "factors": {
+    "vix_regime": 0.285,
+    "vix_term": 0.0,
+    "credit_spread": 0.098,
+    "index_trend_breadth": 0.441
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-19",
+    "vix_term": "2026-11-19",
+    "credit_spread": "2026-11-18",
+    "index_trend_breadth": "2026-11-19"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.9276054097056484,
+     "vix": 28.440000534057617
+    },
+    "vix_term": {
+     "vix_vix3m": 1.0521642549609234
+    },
+    "credit_spread": {
+     "percentile": 0.9020356234096693,
+     "spread": 3.47,
+     "window_obs": 786
+    },
+    "index_trend_breadth": {
+     "breadth": 0.5198412698412699,
+     "close": 715.8699951171875,
+     "ma200": 732.6943493652344,
+     "ma50": 761.66939453125
+    }
+   }
+  },
+  "2026-11-20": {
+   "model": "QSF-1.4.1",
+   "live": 15.4,
+   "state": "ADVERSE",
+   "coverage": 1.0,
+   "tested_signal": 23.0,
+   "factors": {
+    "vix_regime": 0.0,
+    "vix_term": 0.0,
+    "credit_spread": 0.08,
+    "index_trend_breadth": 0.394
+   },
+   "status": {
+    "vix_regime": "REAL",
+    "vix_term": "REAL",
+    "credit_spread": "REAL",
+    "index_trend_breadth": "REAL"
+   },
+   "as_of": {
+    "vix_regime": "2026-11-20",
+    "vix_term": "2026-11-20",
+    "credit_spread": "2026-11-19",
+    "index_trend_breadth": "2026-11-20"
+   },
+   "raw": {
+    "vix_regime": {
+     "percentile_5y": 0.994431185361973,
+     "vix": 35.88999938964844
+    },
+    "vix_term": {
+     "vix_vix3m": 1.1599870320022148
+    },
+    "credit_spread": {
+     "percentile": 0.9198473282442748,
+     "spread": 3.52,
+     "window_obs": 786
+    },
+    "index_trend_breadth": {
+     "breadth": 0.48214285714285715,
+     "close": 689.8099975585938,
+     "ma200": 732.7552993774414,
+     "ma50": 760.179794921875
+    }
+   }
+  }
+ },
+ "KR": {
+  "2026-11-04": {
+   "model": "QSF-1.1.1",
+   "live": 25.0,
+   "state": "ADVERSE",
+   "coverage": 0.6,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": null
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "MISSING"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-04",
+    "breadth": "2026-11-04",
+    "usdkrw_regime": "2026-11-05",
+    "credit_liquidity": null
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5683.7998046875,
+     "ma200": 6504.925927734375,
+     "ma50": 6455.09765625
+    },
+    "breadth": {
+     "breadth": 0.2808219178082192,
+     "n": 292
+    },
+    "usdkrw_regime": {
+     "change_63": -0.0463539237406716,
+     "usdkrw": 1341.780029296875
+    },
+    "credit_liquidity": null
+   }
+  },
+  "2026-11-05": {
+   "model": "QSF-1.1.2",
+   "live": 25.0,
+   "state": "ADVERSE",
+   "coverage": 0.6,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": null
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "MISSING"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-04",
+    "breadth": "2026-11-05",
+    "usdkrw_regime": "2026-11-05",
+    "credit_liquidity": null
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5683.7998046875,
+     "ma200": 6504.925927734375,
+     "ma50": 6455.09765625
+    },
+    "breadth": {
+     "breadth": 0.2150170648464164,
+     "n": 293
+    },
+    "usdkrw_regime": {
+     "change_63": -0.03491115502287667,
+     "usdkrw": 1357.8800048828125
+    },
+    "credit_liquidity": null
+   }
+  },
+  "2026-11-06": {
+   "model": "QSF-1.1.3",
+   "live": 25.0,
+   "state": "ADVERSE",
+   "coverage": 0.6,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": null
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "MISSING"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-05",
+    "breadth": "2026-11-06",
+    "usdkrw_regime": "2026-11-06",
+    "credit_liquidity": null
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5383.7998046875,
+     "ma200": 6508.913327636718,
+     "ma50": 6424.5146484375
+    },
+    "breadth": {
+     "breadth": 0.19047619047619047,
+     "n": 294
+    },
+    "usdkrw_regime": {
+     "change_63": -0.03786047650923241,
+     "usdkrw": 1363.6500244140625
+    },
+    "credit_liquidity": null
+   }
+  },
+  "2026-11-09": {
+   "model": "QSF-1.1.8",
+   "live": 25.0,
+   "state": "ADVERSE",
+   "coverage": 0.6,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": null
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "MISSING"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-09",
+    "breadth": "2026-11-09",
+    "usdkrw_regime": "2026-11-10",
+    "credit_liquidity": null
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5018.85009765625,
+     "ma200": 6512.718876953125,
+     "ma50": 6357.2914453125
+    },
+    "breadth": {
+     "breadth": 0.20136518771331058,
+     "n": 293
+    },
+    "usdkrw_regime": {
+     "change_63": -0.04947542322926257,
+     "usdkrw": 1346.3800048828125
+    },
+    "credit_liquidity": null
+   }
+  },
+  "2026-11-10": {
+   "model": "QSF-1.1.8",
+   "live": 37.5,
+   "state": "UNKNOWN",
+   "coverage": 0.4,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": null,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": null
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "MISSING",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "MISSING"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-09",
+    "breadth": null,
+    "usdkrw_regime": "2026-11-10",
+    "credit_liquidity": null
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5018.85009765625,
+     "ma200": 6512.718876953125,
+     "ma50": 6357.2914453125
+    },
+    "breadth": null,
+    "usdkrw_regime": {
+     "change_63": -0.05232763167419874,
+     "usdkrw": 1342.3399658203125
+    },
+    "credit_liquidity": null
+   }
+  },
+  "2026-11-11": {
+   "model": "QSF-1.3.1",
+   "live": 26.8,
+   "state": "ADVERSE",
+   "coverage": 0.75,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": 0.342
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "REAL"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-10",
+    "breadth": "2026-11-11",
+    "usdkrw_regime": "2026-11-11",
+    "credit_liquidity": "2026-11-11"
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5239.1298828125,
+     "ma200": 6515.299025878906,
+     "ma50": 6325.90984375
+    },
+    "breadth": {
+     "breadth": 0.16387959866220736,
+     "n": 299
+    },
+    "usdkrw_regime": {
+     "change_63": -0.055813923433907675,
+     "usdkrw": 1337.77001953125
+    },
+    "credit_liquidity": {
+     "percentile": 0.658130081300813,
+     "value": 0.681,
+     "window_obs": 2460
+    }
+   }
+  },
+  "2026-11-12": {
+   "model": "QSF-1.3.2",
+   "live": 26.9,
+   "state": "ADVERSE",
+   "coverage": 0.75,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": 0.346
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "REAL"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-11",
+    "breadth": "2026-11-12",
+    "usdkrw_regime": "2026-11-12",
+    "credit_liquidity": "2026-11-12"
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5375.35986328125,
+     "ma200": 6518.188076171875,
+     "ma50": 6295.169638671875
+    },
+    "breadth": {
+     "breadth": 0.16722408026755853,
+     "n": 299
+    },
+    "usdkrw_regime": {
+     "change_63": -0.05715114417254552,
+     "usdkrw": 1334.47998046875
+    },
+    "credit_liquidity": {
+     "percentile": 0.653799268590004,
+     "value": 0.6779999999999999,
+     "window_obs": 2461
+    }
+   }
+  },
+  "2026-11-13": {
+   "model": "QSF-1.3.2",
+   "live": 27.0,
+   "state": "ADVERSE",
+   "coverage": 0.75,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": 0.349
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "REAL"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-12",
+    "breadth": "2026-11-13",
+    "usdkrw_regime": "2026-11-13",
+    "credit_liquidity": "2026-11-13"
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5342.72998046875,
+     "ma200": 6520.698024902344,
+     "ma50": 6266.246640625
+    },
+    "breadth": {
+     "breadth": 0.1806020066889632,
+     "n": 299
+    },
+    "usdkrw_regime": {
+     "change_63": -0.056279287366771236,
+     "usdkrw": 1335.1099853515625
+    },
+    "credit_liquidity": {
+     "percentile": 0.6505485574969525,
+     "value": 0.6750000000000003,
+     "window_obs": 2461
+    }
+   }
+  },
+  "2026-11-16": {
+   "model": "QSF-1.4.1",
+   "live": 27.1,
+   "state": "ADVERSE",
+   "coverage": 0.75,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": 0.353
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "REAL"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-13",
+    "breadth": "2026-11-16",
+    "usdkrw_regime": "2026-11-16",
+    "credit_liquidity": "2026-11-16"
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5290.52978515625,
+     "ma200": 6522.627373046875,
+     "ma50": 6235.6568359375
+    },
+    "breadth": {
+     "breadth": 0.1939799331103679,
+     "n": 299
+    },
+    "usdkrw_regime": {
+     "change_63": -0.0551012444077299,
+     "usdkrw": 1335.68994140625
+    },
+    "credit_liquidity": {
+     "percentile": 0.6474176494509963,
+     "value": 0.6730000000000005,
+     "window_obs": 2459
+    }
+   }
+  },
+  "2026-11-17": {
+   "model": "QSF-1.4.1",
+   "live": 27.0,
+   "state": "ADVERSE",
+   "coverage": 0.75,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": 0.348
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "REAL"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-16",
+    "breadth": "2026-11-17",
+    "usdkrw_regime": "2026-11-18",
+    "credit_liquidity": "2026-11-17"
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5100.5,
+     "ma200": 6523.701123046875,
+     "ma50": 6200.95083984375
+    },
+    "breadth": {
+     "breadth": 0.16722408026755853,
+     "n": 299
+    },
+    "usdkrw_regime": {
+     "change_63": -0.04300437658732914,
+     "usdkrw": 1330.97998046875
+    },
+    "credit_liquidity": {
+     "percentile": 0.6522976819845465,
+     "value": 0.677,
+     "window_obs": 2459
+    }
+   }
+  },
+  "2026-11-18": {
+   "model": "QSF-1.4.1",
+   "live": 27.1,
+   "state": "ADVERSE",
+   "coverage": 0.75,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": 0.354
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "REAL"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-18",
+    "breadth": "2026-11-18",
+    "usdkrw_regime": "2026-11-19",
+    "credit_liquidity": "2026-11-18"
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5067.43994140625,
+     "ma200": 6524.568422851563,
+     "ma50": 6138.825234375
+    },
+    "breadth": {
+     "breadth": 0.17725752508361203,
+     "n": 299
+    },
+    "usdkrw_regime": {
+     "change_63": -0.03872981227518024,
+     "usdkrw": 1331.3399658203125
+    },
+    "credit_liquidity": {
+     "percentile": 0.6459349593495934,
+     "value": 0.6729999999999996,
+     "window_obs": 2460
+    }
+   }
+  },
+  "2026-11-19": {
+   "model": "QSF-1.4.1",
+   "live": 27.0,
+   "state": "ADVERSE",
+   "coverage": 0.75,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 1.0,
+    "credit_liquidity": 0.352
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "REAL"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-18",
+    "breadth": "2026-11-19",
+    "usdkrw_regime": "2026-11-19",
+    "credit_liquidity": "2026-11-19"
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5067.43994140625,
+     "ma200": 6524.568422851563,
+     "ma50": 6138.825234375
+    },
+    "breadth": {
+     "breadth": 0.17391304347826086,
+     "n": 299
+    },
+    "usdkrw_regime": {
+     "change_63": -0.0366936324031647,
+     "usdkrw": 1334.1600341796875
+    },
+    "credit_liquidity": {
+     "percentile": 0.6477041852905323,
+     "value": 0.6739999999999995,
+     "window_obs": 2461
+    }
+   }
+  },
+  "2026-11-20": {
+   "model": "QSF-1.4.1",
+   "live": 25.4,
+   "state": "ADVERSE",
+   "coverage": 0.75,
+   "tested_signal": 0.0,
+   "factors": {
+    "vkospi_regime": null,
+    "index_trend": 0.0,
+    "breadth": 0.0,
+    "usdkrw_regime": 0.939,
+    "credit_liquidity": 0.332
+   },
+   "status": {
+    "vkospi_regime": "MISSING",
+    "index_trend": "REAL",
+    "breadth": "REAL",
+    "usdkrw_regime": "REAL",
+    "credit_liquidity": "REAL"
+   },
+   "as_of": {
+    "vkospi_regime": null,
+    "index_trend": "2026-11-19",
+    "breadth": "2026-11-20",
+    "usdkrw_regime": "2026-11-20",
+    "credit_liquidity": "2026-11-20"
+   },
+   "raw": {
+    "vkospi_regime": null,
+    "index_trend": {
+     "close": 5137.89013671875,
+     "ma200": 6525.307524414063,
+     "ma50": 6107.838837890625
+    },
+    "breadth": {
+     "breadth": 0.15719063545150502,
+     "n": 299
+    },
+    "usdkrw_regime": {
+     "change_63": -0.02508039386851213,
+     "usdkrw": 1346.1300048828125
+    },
+    "credit_liquidity": {
+     "percentile": 0.6684274685087362,
+     "value": 0.6869999999999998,
+     "window_obs": 2461
+    }
+   }
+  }
+ }
+}

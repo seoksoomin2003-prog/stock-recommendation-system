@@ -1,0 +1,2 @@
+Full suite on commit 02aed81 (run by the chief evaluator in a worktree whose tree equals main, 2026-11-23, before the assessment):
+2065 passed, 6 skipped, 3 xfailed, 12 warnings in 293.29s

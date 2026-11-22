@@ -1,0 +1,971 @@
+{
+ "S0_all_sources_answer": {
+  "SWING": {
+   "score": 72.13,
+   "conservative": 70.75,
+   "band_label": "매수 후보",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.938,
+   "input_coverage": 0.9,
+   "confidence": "HIGH",
+   "gates": [],
+   "missing": [
+    "balance_sheet",
+    "cash_flow_quality"
+   ],
+   "partial": [
+    "earnings_revenue_quality",
+    "profitability"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_price": "Yahoo Finance 일봉",
+   "provenance_stale": null,
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "why": "72.1점 (매수 후보). 다만 지금은 진입 조건이 아닙니다: 위에 저항선이 없어 목표가를 3 ATR 위로 잡는데, 그러면 지금 가격에서의 손익비(1.27)는 계산상 기준 1.5에 닿지 않습니다. 신고가 근처를 따라가지 않고 20일선 부근의 눌림을 기다리는 규칙입니다. 강점: 추세 조건 6개 중 6개 충족 (종가 68.67, 50일선 66.89, 200일선 62.20)"
+  },
+  "LONG_TERM": {
+   "score": 67.87,
+   "conservative": 62.9,
+   "band_label": "보유·관찰",
+   "action": "WATCH",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.722,
+   "input_coverage": 0.513,
+   "confidence": "LOW",
+   "gates": [],
+   "missing": [
+    "free_cash_flow",
+    "balance_dilution",
+    "financial_resilience",
+    "leverage",
+    "capital_allocation"
+   ],
+   "partial": [
+    "valuation",
+    "business_quality",
+    "growth_quality",
+    "insider_ownership"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_price": "Yahoo Finance 일봉",
+   "provenance_stale": null,
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "why": "67.9점 (보유·관찰). 유지되어야 할 조건: 수익성 지속 악화 (ROE·영업이익률 하락). 약점: PER 45.8, PBR 11.44, FCF 수익률 없음"
+  }
+ },
+ "S1_price_timeout_no_copy": {
+  "status": "UNAVAILABLE",
+  "reason": "가격 이력을 받지 못했습니다."
+ },
+ "S2_all_sources_down_2_days_later": {
+  "SWING": {
+   "score": 72.13,
+   "conservative": 70.75,
+   "band_label": "매수 후보",
+   "action": "BLOCKED",
+   "actionability": "BLOCKED",
+   "coverage": 0.938,
+   "input_coverage": 0.9,
+   "confidence": "HIGH",
+   "gates": [
+    "STALE_PRICE"
+   ],
+   "missing": [
+    "balance_sheet",
+    "cash_flow_quality"
+   ],
+   "partial": [
+    "earnings_revenue_quality",
+    "profitability"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_price": "Yahoo Finance 일봉",
+   "provenance_stale": [
+    {
+     "what": "SEC 재무제표",
+     "fetched_at": "2026-11-20T16:02:14.234814+00:00",
+     "age_days": 2.0,
+     "error": "TimeoutError"
+    },
+    {
+     "what": "SEC 공시 목록",
+     "fetched_at": "2026-11-20T16:02:14.235031+00:00",
+     "age_days": 2.0,
+     "error": "TimeoutError"
+    }
+   ],
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "why": "72.1점 (매수 후보)이지만 위험 게이트로 차단: 마지막 시세 2026-11-04가 최근 완료 거래일 2026-11-06이 아닙니다."
+  },
+  "LONG_TERM": {
+   "score": 67.87,
+   "conservative": 62.9,
+   "band_label": "보유·관찰",
+   "action": "WATCH",
+   "actionability": "BLOCKED",
+   "coverage": 0.722,
+   "input_coverage": 0.513,
+   "confidence": "LOW",
+   "gates": [
+    "STALE_PRICE"
+   ],
+   "missing": [
+    "free_cash_flow",
+    "balance_dilution",
+    "financial_resilience",
+    "leverage",
+    "capital_allocation"
+   ],
+   "partial": [
+    "valuation",
+    "business_quality",
+    "growth_quality",
+    "insider_ownership"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_price": "Yahoo Finance 일봉",
+   "provenance_stale": [
+    {
+     "what": "SEC 재무제표",
+     "fetched_at": "2026-11-20T16:02:14.234814+00:00",
+     "age_days": 2.0,
+     "error": "TimeoutError"
+    },
+    {
+     "what": "SEC 공시 목록",
+     "fetched_at": "2026-11-20T16:02:14.235031+00:00",
+     "age_days": 2.0,
+     "error": "TimeoutError"
+    }
+   ],
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "why": "67.9점 (보유·관찰)이지만 위험 게이트로 차단: 마지막 시세 2026-11-04가 최근 완료 거래일 2026-11-06이 아닙니다."
+  }
+ },
+ "S3_statements_timeout_no_copy": {
+  "SWING": {
+   "score": 70.14,
+   "conservative": 67.63,
+   "band_label": "보유·관찰 · 빠진 요인을 중간값으로 보면 67.6점",
+   "action": "WATCH",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.875,
+   "input_coverage": 0.875,
+   "confidence": "MEDIUM",
+   "gates": [],
+   "missing": [
+    "earnings_revenue_quality",
+    "profitability",
+    "balance_sheet",
+    "cash_flow_quality"
+   ],
+   "partial": [],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_price": "Yahoo Finance 일봉",
+   "provenance_stale": null,
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "why": "70.1점 (보유·관찰 · 빠진 요인을 중간값으로 보면 67.6점). 유지되어야 할 조건: 종가가 65.95 아래로 마감. 약점: 비용 반영 손익비 1.27 (손절 65.95, 목표 72.76, 위에 저항선이 없어 3 ATR 변동성 투영). 자료가 없는 요인(이익·매출의 질, 수익성, 재무 상태, 현금흐름의 질)을 빼고 계산한 점수라서, 그 자리를 중간값으로 읽은 점수로 구간을 정했습니다."
+  },
+  "LONG_TERM": {
+   "score": 78.2,
+   "conservative": 58.46,
+   "band_label": "판단 불가(자료 부족)",
+   "action": "INSUFFICIENT_DATA",
+   "actionability": "INSUFFICIENT_DATA",
+   "coverage": 0.3,
+   "input_coverage": 0.289,
+   "confidence": "INSUFFICIENT",
+   "gates": [],
+   "missing": [
+    "valuation",
+    "business_quality",
+    "growth_quality",
+    "free_cash_flow",
+    "balance_dilution",
+    "financial_resilience",
+    "leverage",
+    "capital_allocation"
+   ],
+   "partial": [
+    "insider_ownership"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_price": "Yahoo Finance 일봉",
+   "provenance_stale": null,
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "why": "데이터 반영률 30%로 기준에 못 미쳐 판단하지 않습니다. 빠진 요인: valuation, business_quality, growth_quality, free_cash_flow"
+  }
+ },
+ "S4_statements_timeout_30_day_old_copy": {
+  "SWING": {
+   "score": 72.13,
+   "conservative": 70.75,
+   "band_label": "매수 후보",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.938,
+   "input_coverage": 0.9,
+   "confidence": "HIGH",
+   "gates": [],
+   "missing": [
+    "balance_sheet",
+    "cash_flow_quality"
+   ],
+   "partial": [
+    "earnings_revenue_quality",
+    "profitability"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_price": "Yahoo Finance 일봉",
+   "provenance_stale": [
+    {
+     "what": "SEC 재무제표",
+     "fetched_at": "2026-10-23T16:02:14.311468+00:00",
+     "age_days": 30.0,
+     "error": "TimeoutError"
+    }
+   ],
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "why": "72.1점 (매수 후보). 다만 지금은 진입 조건이 아닙니다: 위에 저항선이 없어 목표가를 3 ATR 위로 잡는데, 그러면 지금 가격에서의 손익비(1.27)는 계산상 기준 1.5에 닿지 않습니다. 신고가 근처를 따라가지 않고 20일선 부근의 눌림을 기다리는 규칙입니다. 강점: 추세 조건 6개 중 6개 충족 (종가 68.67, 50일선 66.89, 200일선 62.20)"
+  },
+  "LONG_TERM": {
+   "score": 67.87,
+   "conservative": 62.9,
+   "band_label": "보유·관찰",
+   "action": "WATCH",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.722,
+   "input_coverage": 0.513,
+   "confidence": "LOW",
+   "gates": [],
+   "missing": [
+    "free_cash_flow",
+    "balance_dilution",
+    "financial_resilience",
+    "leverage",
+    "capital_allocation"
+   ],
+   "partial": [
+    "valuation",
+    "business_quality",
+    "growth_quality",
+    "insider_ownership"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_price": "Yahoo Finance 일봉",
+   "provenance_stale": [
+    {
+     "what": "SEC 재무제표",
+     "fetched_at": "2026-10-23T16:02:14.311468+00:00",
+     "age_days": 30.0,
+     "error": "TimeoutError"
+    }
+   ],
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "why": "67.9점 (보유·관찰). 유지되어야 할 조건: 수익성 지속 악화 (ROE·영업이익률 하락). 약점: PER 45.8, PBR 11.44, FCF 수익률 없음"
+  }
+ },
+ "S4_statements_timeout_400_day_old_copy": {
+  "SWING": {
+   "score": 72.13,
+   "conservative": 70.75,
+   "band_label": "매수 후보",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.938,
+   "input_coverage": 0.9,
+   "confidence": "HIGH",
+   "gates": [],
+   "missing": [
+    "balance_sheet",
+    "cash_flow_quality"
+   ],
+   "partial": [
+    "earnings_revenue_quality",
+    "profitability"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_price": "Yahoo Finance 일봉",
+   "provenance_stale": [
+    {
+     "what": "SEC 재무제표",
+     "fetched_at": "2025-10-18T16:02:14.349708+00:00",
+     "age_days": 400.0,
+     "error": "TimeoutError"
+    }
+   ],
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "why": "72.1점 (매수 후보). 다만 지금은 진입 조건이 아닙니다: 위에 저항선이 없어 목표가를 3 ATR 위로 잡는데, 그러면 지금 가격에서의 손익비(1.27)는 계산상 기준 1.5에 닿지 않습니다. 신고가 근처를 따라가지 않고 20일선 부근의 눌림을 기다리는 규칙입니다. 강점: 추세 조건 6개 중 6개 충족 (종가 68.67, 50일선 66.89, 200일선 62.20)"
+  },
+  "LONG_TERM": {
+   "score": 67.87,
+   "conservative": 62.9,
+   "band_label": "보유·관찰",
+   "action": "WATCH",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.722,
+   "input_coverage": 0.513,
+   "confidence": "LOW",
+   "gates": [],
+   "missing": [
+    "free_cash_flow",
+    "balance_dilution",
+    "financial_resilience",
+    "leverage",
+    "capital_allocation"
+   ],
+   "partial": [
+    "valuation",
+    "business_quality",
+    "growth_quality",
+    "insider_ownership"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_price": "Yahoo Finance 일봉",
+   "provenance_stale": [
+    {
+     "what": "SEC 재무제표",
+     "fetched_at": "2025-10-18T16:02:14.349708+00:00",
+     "age_days": 400.0,
+     "error": "TimeoutError"
+    }
+   ],
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "why": "67.9점 (보유·관찰). 유지되어야 할 조건: 수익성 지속 악화 (ROE·영업이익률 하락). 약점: PER 45.8, PBR 11.44, FCF 수익률 없음"
+  }
+ },
+ "S5_company_record_30_days_old_request_fails": {
+  "score": 67.87,
+  "conservative": 62.9,
+  "band_label": "보유·관찰",
+  "action": "WATCH",
+  "actionability": "ACTIONABLE",
+  "coverage": 0.722,
+  "input_coverage": 0.513,
+  "confidence": "LOW",
+  "gates": [],
+  "missing": [
+   "free_cash_flow",
+   "balance_dilution",
+   "financial_resilience",
+   "leverage",
+   "capital_allocation"
+  ],
+  "partial": [
+   "valuation",
+   "business_quality",
+   "growth_quality",
+   "insider_ownership"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04",
+  "provenance_price": "Yahoo Finance 일봉",
+  "provenance_stale": [
+   {
+    "what": "야후 종목 정보(주식 수·시가총액)",
+    "fetched_at": "2026-10-23T16:02:14.391257+00:00",
+    "age_days": 30.0,
+    "error": "TimeoutError"
+   }
+  ],
+  "market_state": {
+   "state": "FAVOURABLE",
+   "coverage": 1.0
+  },
+  "why": "67.9점 (보유·관찰). 유지되어야 할 조건: 수익성 지속 악화 (ROE·영업이익률 하락). 약점: PER 45.8, PBR 11.44, FCF 수익률 없음"
+ },
+ "S5_company_record_400_days_old_request_fails": {
+  "score": 88.23,
+  "conservative": 71.24,
+  "band_label": "판단 불가(자료 부족)",
+  "action": "INSUFFICIENT_DATA",
+  "actionability": "INSUFFICIENT_DATA",
+  "coverage": 0.556,
+  "input_coverage": 0.402,
+  "confidence": "INSUFFICIENT",
+  "gates": [],
+  "missing": [
+   "valuation",
+   "free_cash_flow",
+   "balance_dilution",
+   "financial_resilience",
+   "leverage",
+   "capital_allocation"
+  ],
+  "partial": [
+   "business_quality",
+   "growth_quality",
+   "insider_ownership"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04",
+  "provenance_price": "Yahoo Finance 일봉",
+  "provenance_stale": [
+   {
+    "what": "야후 종목 정보(주식 수·시가총액)",
+    "fetched_at": "2025-10-18T16:02:14.428567+00:00",
+    "age_days": 400.0,
+    "error": "TimeoutError"
+   }
+  ],
+  "market_state": {
+   "state": "FAVOURABLE",
+   "coverage": 1.0
+  },
+  "why": "데이터 반영률 56%로 기준에 못 미쳐 판단하지 않습니다. 빠진 요인: valuation, free_cash_flow, balance_dilution, financial_resilience"
+ },
+ "S7_scan_2_of_25_without_bars": {
+  "status": "REAL",
+  "reason": null,
+  "tickers": 25,
+  "asked": null,
+  "at_session": null,
+  "scored": 46,
+  "errors": {
+   "T0": "NO_PRICE",
+   "T1": "NO_PRICE"
+  },
+  "no_bars": null,
+  "download": null,
+  "recorded": true
+ },
+ "S7_scan_4_of_25_without_bars": {
+  "status": "DATA_NOT_READY",
+  "reason": "NOT_PUBLISHED",
+  "tickers": 25,
+  "asked": 25,
+  "at_session": 21,
+  "scored": null,
+  "errors": {},
+  "no_bars": 4,
+  "download": {
+   "chunks": 1,
+   "failed": 0,
+   "kinds": {}
+  },
+  "recorded": false
+ },
+ "S7b_scan_2_of_25_one_session_behind": {
+  "status": "REAL",
+  "scored": 50,
+  "late_rows": [
+   {
+    "ticker": "T0",
+    "strategy": "SWING",
+    "action": "BLOCKED",
+    "actionability": "BLOCKED",
+    "gates": [
+     "STALE_PRICE"
+    ],
+    "data_date": "2026-11-03"
+   },
+   {
+    "ticker": "T1",
+    "strategy": "SWING",
+    "action": "BLOCKED",
+    "actionability": "BLOCKED",
+    "gates": [
+     "STALE_PRICE"
+    ],
+    "data_date": "2026-11-03"
+   },
+   {
+    "ticker": "T0",
+    "strategy": "LONG_TERM",
+    "action": "WATCH",
+    "actionability": "BLOCKED",
+    "gates": [
+     "STALE_PRICE"
+    ],
+    "data_date": "2026-11-03"
+   },
+   {
+    "ticker": "T1",
+    "strategy": "LONG_TERM",
+    "action": "WATCH",
+    "actionability": "BLOCKED",
+    "gates": [
+     "STALE_PRICE"
+    ],
+    "data_date": "2026-11-03"
+   }
+  ]
+ },
+ "S7c_whole_scan_one_stock_with_hole_one_doubled": {
+  "status": "REAL",
+  "scored": 50,
+  "recorded": true,
+  "rows": [
+   {
+    "ticker": "T3",
+    "strategy": "SWING",
+    "score": 78.19091019910209,
+    "action": "BLOCKED",
+    "actionability": "BLOCKED",
+    "gates": [
+     "DATA_ANOMALY"
+    ]
+   },
+   {
+    "ticker": "T4",
+    "strategy": "SWING",
+    "score": 78.01504234287944,
+    "action": "BLOCKED",
+    "actionability": "BLOCKED",
+    "gates": [
+     "DATA_ANOMALY"
+    ]
+   },
+   {
+    "ticker": "T3",
+    "strategy": "LONG_TERM",
+    "score": 70.37170102437024,
+    "action": "WATCH",
+    "actionability": "BLOCKED",
+    "gates": [
+     "DATA_ANOMALY"
+    ]
+   },
+   {
+    "ticker": "T4",
+    "strategy": "LONG_TERM",
+    "score": 69.70618876327948,
+    "action": "WATCH",
+    "actionability": "BLOCKED",
+    "gates": [
+     "DATA_ANOMALY"
+    ]
+   }
+  ],
+  "summary_mentions_gated": false
+ },
+ "S8_whole_scan_statements_down": {
+  "status": "DATA_NOT_READY",
+  "reason": "FUNDAMENTALS_NOT_READY",
+  "fundamentals": {
+   "stocks": 25,
+   "with_statements": 0,
+   "share": 0.0
+  },
+  "recorded": false,
+  "ledger_rows": 0
+ },
+ "S8b_named_scan_statements_down": {
+  "status": "REAL",
+  "reason": null,
+  "fundamentals": {
+   "stocks": 25,
+   "with_statements": 0,
+   "share": 0.0
+  },
+  "recorded": true,
+  "ledger_rows": 1
+ },
+ "S8c_whole_scan_statements_down_400_day_copies": {
+  "status": "REAL",
+  "reason": null,
+  "fundamentals": {
+   "stocks": 25,
+   "with_statements": 25,
+   "share": 1.0
+  },
+  "stale_inputs": {
+   "stocks": 25,
+   "oldest_days": 400.0,
+   "tickers": [
+    "T0",
+    "T1",
+    "T10",
+    "T11",
+    "T12",
+    "T13",
+    "T14",
+    "T15",
+    "T16",
+    "T17",
+    "T18",
+    "T19",
+    "T2",
+    "T20",
+    "T21",
+    "T22",
+    "T23",
+    "T24",
+    "T3",
+    "T4"
+   ]
+  },
+  "recorded": true,
+  "first_row": {
+   "ticker": "T0",
+   "strategy": "SWING",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "confidence": "HIGH"
+  }
+ },
+ "S9_source_filter": {
+  "rows_in": 7,
+  "rows_out": 4,
+  "dates_out": [
+   "2026-10-28",
+   "2026-10-30",
+   "2026-11-03",
+   "2026-11-04"
+  ],
+  "dropped_count_returned": false
+ },
+ "LABEL_a_krx_at_session": {
+  "label": "KRX 일별 시세로 만든 일봉",
+  "info": {
+   "source": "KRX",
+   "krx_last": "2026-11-04",
+   "tail_days": 0,
+   "tail_skipped": null,
+   "reason": null
+  },
+  "last_bar_used": "2026-11-04",
+  "session": "2026-11-04",
+  "bars_used_after_krx_last": 0
+ },
+ "LABEL_b_krx_two_days_behind": {
+  "label": "KRX 일별 시세로 만든 일봉 (KRX가 아직 내지 않은 최근 2거래일은 Yahoo)",
+  "info": {
+   "source": "KRX+YAHOO",
+   "krx_last": "2026-11-02",
+   "tail_days": 2,
+   "tail_skipped": null,
+   "reason": null
+  },
+  "last_bar_used": "2026-11-04",
+  "session": "2026-11-04",
+  "bars_used_after_krx_last": 2
+ },
+ "LABEL_c_yahoo_has_an_unfinished_day_past_the_session": {
+  "label": "KRX 일별 시세로 만든 일봉 (KRX가 아직 내지 않은 최근 1거래일은 Yahoo)",
+  "info": {
+   "source": "KRX+YAHOO",
+   "krx_last": "2026-11-03",
+   "tail_days": 1,
+   "tail_skipped": null,
+   "reason": null
+  },
+  "last_bar_used": "2026-11-03",
+  "session": "2026-11-03",
+  "bars_used_after_krx_last": 0
+ },
+ "LABEL_d_stock_not_in_krx": {
+  "label": "Yahoo Finance 일봉 (KRX 일별 자료를 쓰지 못함: KRX 일별 자료에 없는 종목)",
+  "info": {
+   "source": "YAHOO",
+   "krx_last": null,
+   "tail_days": null,
+   "tail_skipped": null,
+   "reason": "KRX 일별 자료에 없는 종목"
+  },
+  "last_bar_used": "2026-11-04",
+  "session": "2026-11-04",
+  "bars_used_after_krx_last": 0
+ },
+ "LABEL_e_yahoo_without_the_last_krx_day": {
+  "label": "KRX 일별 시세로 만든 일봉",
+  "info": {
+   "source": "KRX",
+   "krx_last": "2026-11-02",
+   "tail_days": 0,
+   "tail_skipped": 2,
+   "reason": null
+  },
+  "last_bar_used": "2026-11-02",
+  "session": "2026-11-04",
+  "bars_used_after_krx_last": 0
+ },
+ "LABEL_f_info_unknown": "Yahoo Finance 일봉 (KRX 일별 자료를 쓰지 못함)",
+ "LABEL_g_panel_unreadable": {
+  "label": "Yahoo Finance 일봉 (KRX 일별 자료를 쓰지 못함: KRX 일별 자료를 읽지 못함)",
+  "summary": {
+   "stocks": 1,
+   "by_source": {
+    "YAHOO": 1
+   },
+   "error": "OSError"
+  },
+  "bars_are_yahoo": true
+ },
+ "LABEL_h_after_the_panel_is_back_the_label_follows": {
+  "label": "KRX 일별 시세로 만든 일봉",
+  "summary": {
+   "stocks": 1,
+   "by_source": {
+    "KRX": 1
+   },
+   "krx_last": "2026-11-04",
+   "dropped_yahoo_days": 0
+  }
+ },
+ "LABEL_i_no_snapshot_at_all": {
+  "label": "Yahoo Finance 일봉 (KRX 일별 자료를 쓰지 못함: KRX 일별 자료에 없는 종목)",
+  "summary": {
+   "stocks": 1,
+   "by_source": {
+    "YAHOO": 1
+   },
+   "krx_last": null,
+   "dropped_yahoo_days": 0
+  }
+ },
+ "KRX_one_day_file_missing": {
+  "rows": [
+   300,
+   299
+  ],
+  "source": "KRX",
+  "close_240_rows_back_full_vs_holed": [
+   54127.6,
+   53965.22
+  ],
+  "ratio": 0.997,
+  "true_move_on_the_missing_day": 0.997,
+  "note": "the missing day's move is lost from every earlier price: the rate of the next day is chained onto the day before the hole"
+ },
+ "COIN_a_ordinary": {
+  "items": {
+   "BTC": {
+    "close": 140000000.0,
+    "usd": 100000.0,
+    "date": "2026-11-05",
+    "status": "REAL",
+    "change_pct": 11.11111111
+   },
+   "SHIB": {
+    "close": 0.028,
+    "usd": 2e-05,
+    "date": "2026-11-05",
+    "status": "REAL",
+    "change_pct": 0.0
+   }
+  },
+  "covered": [
+   "BTC",
+   "SHIB"
+  ],
+  "error": null,
+  "fx_status": "REAL",
+  "fx_date": "2026-11-05"
+ },
+ "COIN_b_no_rate": {
+  "items": {
+   "BTC": {
+    "close": null,
+    "status": "UNAVAILABLE",
+    "reason": "NO_RATE"
+   },
+   "SHIB": {
+    "close": null,
+    "status": "UNAVAILABLE",
+    "reason": "NO_RATE"
+   }
+  },
+  "covered": [
+   "BTC",
+   "SHIB"
+  ],
+  "error": null,
+  "fx_status": "UNAVAILABLE",
+  "fx_date": null
+ },
+ "COIN_c_refresh_failed_reply_three_days_old": {
+  "items": {
+   "BTC": {
+    "close": 140000000.0,
+    "usd": 100000.0,
+    "date": "2026-11-02",
+    "status": "STALE",
+    "change_pct": 11.11111111
+   },
+   "SHIB": {
+    "close": 0.028,
+    "usd": 2e-05,
+    "date": "2026-11-02",
+    "status": "STALE",
+    "change_pct": 0.0
+   }
+  },
+  "covered": [
+   "BTC",
+   "SHIB"
+  ],
+  "error": "TimeoutError",
+  "fx_status": "REAL",
+  "fx_date": "2026-11-05"
+ },
+ "COIN_d_no_reply_at_all": {
+  "items": {
+   "BTC": {
+    "close": null,
+    "status": "UNAVAILABLE",
+    "reason": "NOT_COVERED"
+   },
+   "SHIB": {
+    "close": null,
+    "status": "UNAVAILABLE",
+    "reason": "NOT_COVERED"
+   }
+  },
+  "covered": [],
+  "error": "TimeoutError",
+  "fx_status": "REAL",
+  "fx_date": "2026-11-05"
+ },
+ "COIN_e_other_unit_prefixes": {
+  "items": {
+   "PEPE": {
+    "close": 0.014,
+    "usd": 1e-05,
+    "date": "2026-11-05",
+    "status": "REAL",
+    "change_pct": 0.0
+   },
+   "MOG": {
+    "close": null,
+    "status": "UNAVAILABLE",
+    "reason": "NOT_COVERED"
+   },
+   "000MOG": {
+    "close": 1.26,
+    "usd": 0.0009,
+    "date": "2026-11-05",
+    "status": "REAL",
+    "change_pct": 0.0
+   },
+   "BABYDOGE": {
+    "close": null,
+    "status": "UNAVAILABLE",
+    "reason": "NOT_COVERED"
+   },
+   "1MBABYDOGE": {
+    "close": 2.1,
+    "usd": 0.0015,
+    "date": "2026-11-05",
+    "status": "REAL",
+    "change_pct": 0.0
+   }
+  },
+  "covered": [
+   "000MOG",
+   "1MBABYDOGE",
+   "PEPE"
+  ],
+  "error": null,
+  "fx_status": "REAL",
+  "fx_date": "2026-11-05"
+ },
+ "COIN_f_zero_or_nan_close": {
+  "items": {
+   "BTC": {
+    "close": 0.0,
+    "usd": 0.0,
+    "date": "2026-11-05",
+    "status": "REAL",
+    "change_pct": -100.0
+   },
+   "ETH": {
+    "close": NaN,
+    "usd": NaN,
+    "date": "2026-11-05",
+    "status": "REAL",
+    "change_pct": NaN
+   }
+  },
+  "covered": [
+   "BTC",
+   "ETH"
+  ],
+  "error": null,
+  "fx_status": "REAL",
+  "fx_date": "2026-11-05"
+ },
+ "COIN_g_fewer_than_seven_bars": {
+  "items": {
+   "BTC": {
+    "close": 140000000.0,
+    "usd": 100000.0,
+    "date": "2026-11-05",
+    "status": "REAL",
+    "change_pct": null
+   }
+  },
+  "covered": [
+   "BTC"
+  ],
+  "error": null,
+  "fx_status": "REAL",
+  "fx_date": "2026-11-05"
+ },
+ "MOVES": {
+  "PLAIN": 0.1,
+  "SPLIT_ADJUSTED": 0.1,
+  "SPLIT_NOT_ADJUSTED": -0.45,
+  "NO_BAR_ON_SINCE": null,
+  "NO_NEWER_BAR": null,
+  "EMPTY": null,
+  "MIXED_BASIS": -0.03,
+  "EX_DIVIDEND": 0.0,
+  "UNKNOWN_TICKER": null
+ },
+ "MOVES_none_without_an_earlier_record": null,
+ "DRIFT_weights": {
+  "before": {
+   "PLAIN": 0.2,
+   "NO_BAR_ON_SINCE": 0.2,
+   "SPLIT_NOT_ADJUSTED": 0.2
+  },
+  "after": {
+   "PLAIN": 0.2366,
+   "NO_BAR_ON_SINCE": 0.2151,
+   "SPLIT_NOT_ADJUSTED": 0.1183
+  },
+  "note": "an unknown move leaves the weight as it was, silently; an unadjusted split halves it"
+ }
+}

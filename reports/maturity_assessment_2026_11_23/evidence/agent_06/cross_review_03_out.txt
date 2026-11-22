@@ -1,0 +1,49 @@
+A. random numbers: what a +-20% weight shake does to ANY weighted sum (independent uniform factors, 500 stocks)
+  10 factors, weights +-20%    : rank correlation 5% point 0.988, median 0.995
+  10 factors, weights +-50%    : rank correlation 5% point 0.930, median 0.970
+  10 factors, weights x or / 2 : rank correlation 5% point 0.883, median 0.947
+  10 factors, weights x or / 4 : rank correlation 5% point 0.703, median 0.849
+  16 factors, weights +-20%    : rank correlation 5% point 0.989, median 0.994
+  16 factors, weights +-50%    : rank correlation 5% point 0.931, median 0.967
+  16 factors, weights x or / 2 : rank correlation 5% point 0.890, median 0.941
+  16 factors, weights x or / 4 : rank correlation 5% point 0.714, median 0.824
+
+B. random numbers: effective-number measures when the factors are truly independent (sampling only)
+  n=504 p=16: participation ratio 15.5 of 16; eigenvalues over 1: 7.7 (so a count of 'eigenvalues over 1' near 8 means no structure at all)
+  n=300 p=16: participation ratio 15.2 of 16; eigenvalues over 1: 7.7 (so a count of 'eigenvalues over 1' near 8 means no structure at all)
+  n=300 p=10: participation ratio 9.7 of 10; eigenvalues over 1: 4.8 (so a count of 'eigenvalues over 1' near 5 means no structure at all)
+
+C. Agent 03's re-scored cards of 2026-11-20 (scores and factor values only)
+  card keys: ['action', 'actionability', 'band', 'band_label', 'confidence', 'conservative', 'coverage', 'earnings', 'entry_status', 'factors', 'fund', 'gates', 'held_back', 'input_coverage', 'name', 'price', 'raw_action', 'rs_rank', 'score', 'sector', 'stop', 'strategy', 'tech', 'ticker']
+  factor entry: {'factor': 'trend_structure', 'domain': 'TECHNICAL', 'weight': 10, 'reference_weight': None, 'scored': None, 'status': 'REAL', 'normalized': 0.8333333333333334, 'raw': {'ma20': 175.61350021362304, 'ma50': 171.0897998046875, 'ma200': 138.9832498550415, 'ma50_slope': 0.059966324872825494, 'ma200_slope': 0.058221369613991936}, 'inputs': None}
+  US SWING: 504 stocks, 16 factors, rebuilt score max gap 0.0000
+     without EVENTS       (weight share 12.5%): rank correlation 0.990, top fifth kept 91/100, top 20 kept 16/20, mean score -1.8
+     without FUNDAMENTAL  (weight share 12.5%): rank correlation 0.985, top fifth kept 92/100, top 20 kept 14/20, mean score -2.0
+     without RISK         (weight share 25.0%): rank correlation 0.974, top fifth kept 87/100, top 20 kept 12/20, mean score +0.1
+     without TECHNICAL    (weight share 50.0%): rank correlation 0.464, top fifth kept 41/100, top 20 kept 5/20, mean score +6.5
+     weights +-20%    : rank correlation 5% point 0.998, top 20 kept (5% point) 17/20
+     weights +-50%    : rank correlation 5% point 0.984, top 20 kept (5% point) 15/20
+     weights x or / 2 : rank correlation 5% point 0.973, top 20 kept (5% point) 13/20
+  US LONG_TERM: 504 stocks, 16 factors, rebuilt score max gap 0.0000
+     without EVENTS       (weight share 11.1%): rank correlation 0.994, top fifth kept 97/100, top 20 kept 18/20, mean score -0.2
+     without FUNDAMENTAL  (weight share 55.6%): rank correlation 0.636, top fifth kept 52/100, top 20 kept 6/20, mean score -1.4
+     without RISK         (weight share 22.2%): rank correlation 0.900, top fifth kept 76/100, top 20 kept 8/20, mean score -0.2
+     without TECHNICAL    (weight share 11.1%): rank correlation 0.944, top fifth kept 82/100, top 20 kept 14/20, mean score +1.1
+     weights +-20%    : rank correlation 5% point 0.990, top 20 kept (5% point) 17/20
+     weights +-50%    : rank correlation 5% point 0.945, top 20 kept (5% point) 13/20
+     weights x or / 2 : rank correlation 5% point 0.894, top 20 kept (5% point) 11/20
+  KR SWING: 300 stocks, 11 factors, rebuilt score max gap 0.0000
+     without EVENTS       (weight share 25.0%): rank correlation 0.985, top fifth kept 56/60, top 20 kept 17/20, mean score -8.4
+     without FUNDAMENTAL  (weight share 25.0%): rank correlation 0.722, top fifth kept 36/60, top 20 kept 15/20, mean score -2.4
+     without RISK         (weight share 50.0%): rank correlation 0.770, top fifth kept 26/60, top 20 kept 0/20, mean score +18.8
+     weights +-20%    : rank correlation 5% point 0.990, top 20 kept (5% point) 16/20
+     weights +-50%    : rank correlation 5% point 0.945, top 20 kept (5% point) 11/20
+     weights x or / 2 : rank correlation 5% point 0.910, top 20 kept (5% point) 10/20
+  KR LONG_TERM: 300 stocks, 16 factors, rebuilt score max gap 0.0000
+     without EVENTS       (weight share 11.1%): rank correlation 0.997, top fifth kept 59/60, top 20 kept 19/20, mean score -2.8
+     without FUNDAMENTAL  (weight share 55.6%): rank correlation 0.649, top fifth kept 34/60, top 20 kept 7/20, mean score -0.1
+     without RISK         (weight share 22.2%): rank correlation 0.965, top fifth kept 49/60, top 20 kept 14/20, mean score +1.8
+     without TECHNICAL    (weight share 11.1%): rank correlation 0.980, top fifth kept 50/60, top 20 kept 17/20, mean score +1.4
+     weights +-20%    : rank correlation 5% point 0.995, top 20 kept (5% point) 18/20
+     weights +-50%    : rank correlation 5% point 0.970, top 20 kept (5% point) 15/20
+     weights x or / 2 : rank correlation 5% point 0.952, top 20 kept (5% point) 13/20

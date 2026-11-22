@@ -1,0 +1,11 @@
+client_ok: {'127.0.0.1': True, '169.254.10.2': True, '100.64.0.5': False, '192.168.1.9': True, '0.0.0.0': True, '198.18.0.1': True, '8.8.8.8': False, '::ffff:192.168.0.2': False, 'fe80::1': False}
+host_ok: {'127.0.0.1:8766': True, '0.0.0.0:8766': True, '192.168.0.5:08766': False, '192.168.0.5:8766 ': False, '169.254.1.1:8766': True, '[::1]:8766': False, 'localhost:8766': False, '192.168.0.5:8766:1': False}
+listening after switch without a factory: False
+paired: True
+pair with no live code: {'error': 'PHONE_CODE_EXPIRED'}
+torn file -> device: None | status on: False
+restored -> device: True
+tries='x' raises: ValueError
+live code stored in clear in the state file: True
+tries per code: 5 of 1,000,000 -> 5e-06
+no write inside the hour: True

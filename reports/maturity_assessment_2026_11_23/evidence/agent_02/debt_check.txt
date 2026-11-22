@@ -1,0 +1,4 @@
+US non-financial long cards with debt/equity < 0.02: 9
+  of which an interest expense is on file: 4 | in a buy band: 5
+[('CME', 0.0, True, 'BUY_CANDIDATE', 'ENTRY_NOW'), ('CMG', 0.0, False, 'HOLD_WATCH', 'ENTRY_NOW'), ('GEV', 0.0056, False, 'WEAK_REDUCE', 'NO_VALID_ENTRY_SETUP'), ('JKHY', 0.0195, False, 'BUY_CANDIDATE', 'ENTRY_NOW'), ('LULU', 0.0, False, 'BUY_CANDIDATE', 'ENTRY_NOW'), ('ODFL', 0.0093, True, 'HOLD_WATCH', 'OVERVALUED_AT_CURRENT_PRICE'), ('P', 0.0, True, 'HOLD_WATCH', 'ENTRY_NOW'), ('PHM', 0.0034, False, 'BUY_CANDIDATE', 'ENTRY_NOW'), ('SNDK', 0.0, True, 'BUY_CANDIDATE', 'ENTRY_NOW')]
+US swing cards with ocf/ni > 3 (full cash-conversion credit on a thin profit): 48

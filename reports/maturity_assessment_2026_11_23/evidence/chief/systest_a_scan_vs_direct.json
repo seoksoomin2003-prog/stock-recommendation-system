@@ -1,0 +1,3022 @@
+{
+ "US": {
+  "session": "2026-11-20",
+  "scan_status": "REAL",
+  "scanned": 504,
+  "sample": [
+   "REG",
+   "MAS",
+   "UNH",
+   "WTW",
+   "NTAP",
+   "IT",
+   "CCL",
+   "CHRW",
+   "STE",
+   "LULU",
+   "AVY",
+   "LH"
+  ],
+  "rows": [
+   {
+    "ticker": "REG",
+    "strategy": "SWING",
+    "rank_in_scan": 213,
+    "scan_score": 53.504079627906904,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.95625,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 73.63999938964844,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 51.62840309094626,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.95625,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 73.63999938964844,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -1.875676536960647,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.9549977200060467
+      ],
+      "direct": [
+       "REAL",
+       0.9548899225668381
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.4354589090641143
+      ],
+      "direct": [
+       "REAL",
+       0.4354589090641143
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "insider_activity",
+      "scan": [
+       "REAL",
+       0.5
+      ],
+      "direct": [
+       "REAL",
+       0.0
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.5428163122290858
+      ],
+      "direct": [
+       "REAL",
+       0.542815863754591
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.37524950099800397
+      ],
+      "direct": [
+       "REAL",
+       0.37524950099800397
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "risk_reward",
+      "scan": [
+       "REAL",
+       0.0
+      ],
+      "direct": [
+       "REAL",
+       0.0
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "REG",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 264,
+    "scan_score": 61.624120528395665,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.9222222222222223,
+    "scan_input_coverage": 0.6935185185185185,
+    "scan_confidence": "LOW",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 73.63999938964844,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 61.54628703815714,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.9222222222222223,
+    "direct_input_coverage": 0.7046296296296297,
+    "direct_confidence": "LOW",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 73.63999938964844,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -0.07783349023852537,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.9688335941746183
+      ],
+      "direct": [
+       "REAL",
+       0.9688335941746183
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "insider_ownership",
+      "scan": [
+       "REAL",
+       0.064600003
+      ],
+      "direct": [
+       "REAL",
+       0.0323000015
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.5428163122290858
+      ],
+      "direct": [
+       "REAL",
+       0.542815863754591
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.37524950099800397
+      ],
+      "direct": [
+       "REAL",
+       0.37524950099800397
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "MAS",
+    "strategy": "SWING",
+    "rank_in_scan": 94,
+    "scan_score": 62.79663889292999,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.9875,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "WAIT_FOR_PULLBACK",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 82.5999984741211,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 62.79591478093952,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.9875,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "WAIT_FOR_PULLBACK",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 82.5999984741211,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -0.000724111990471954,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.6337792356457622
+      ],
+      "direct": [
+       "REAL",
+       0.6336350670788395
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.6802640086571832
+      ],
+      "direct": [
+       "REAL",
+       0.6802640086571832
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.6953350643219273
+      ],
+      "direct": [
+       "REAL",
+       0.6953633749703736
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "risk_reward",
+      "scan": [
+       "REAL",
+       0.0
+      ],
+      "direct": [
+       "REAL",
+       0.0
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "MAS",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 235,
+    "scan_score": 62.83044616219442,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.9027777777777778,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 82.5999984741211,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 62.83057248877269,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.9027777777777778,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 82.5999984741211,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.00012632657826827653,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.668795307375945
+      ],
+      "direct": [
+       "REAL",
+       0.6687953976412773
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.6953350643219273
+      ],
+      "direct": [
+       "REAL",
+       0.6953633749703736
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "UNH",
+    "strategy": "SWING",
+    "rank_in_scan": 388,
+    "scan_score": 40.65868171281282,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 1.0,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 339.8500061035156,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 40.65868168122735,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 1.0,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 339.8500061035156,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -3.158547201564943e-08,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.4739968115232676
+      ],
+      "direct": [
+       "REAL",
+       0.47399680646959463
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.075
+      ],
+      "direct": [
+       "REAL",
+       0.075
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       1.0
+      ],
+      "direct": [
+       "REAL",
+       1.0
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.2554890219560878
+      ],
+      "direct": [
+       "REAL",
+       0.2554890219560878
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "UNH",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 303,
+    "scan_score": 59.69145559798334,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.9472222222222222,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 339.8500061035156,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 59.69145570151851,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.9472222222222222,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 339.8500061035156,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 1.0353516444183697e-07,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.5560382410209359
+      ],
+      "direct": [
+       "REAL",
+       0.5560382596572666
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       1.0
+      ],
+      "direct": [
+       "REAL",
+       1.0
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.2554890219560878
+      ],
+      "direct": [
+       "REAL",
+       0.2554890219560878
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "WTW",
+    "strategy": "SWING",
+    "rank_in_scan": 50,
+    "scan_score": 65.75585250166726,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.9875,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "WAIT_FOR_PULLBACK",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 331.010009765625,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 65.75289053445522,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.9875,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "WAIT_FOR_PULLBACK",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 331.010009765625,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -0.0029619672120446694,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.7537204991216955
+      ],
+      "direct": [
+       "REAL",
+       0.7536847345855721
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.5588202537620911
+      ],
+      "direct": [
+       "REAL",
+       0.5585911461241543
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.7037786322834442
+      ],
+      "direct": [
+       "REAL",
+       0.7037986973415119
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "risk_reward",
+      "scan": [
+       "REAL",
+       0.0
+      ],
+      "direct": [
+       "REAL",
+       0.0
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "WTW",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 73,
+    "scan_score": 70.47331689354775,
+    "scan_band": "BUY_CANDIDATE",
+    "scan_band_label": "매수 후보",
+    "scan_action": "BUY",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.9472222222222222,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 331.010009765625,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 70.47340829477508,
+    "direct_band": "BUY_CANDIDATE",
+    "direct_band_label": "매수 후보",
+    "direct_action": "BUY",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.9472222222222222,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 331.010009765625,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 9.140122733697353e-05,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.6126483260097665
+      ],
+      "direct": [
+       "REAL",
+       0.6126486745314434
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.7037786322834442
+      ],
+      "direct": [
+       "REAL",
+       0.7037986973415119
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "momentum_persistence",
+      "scan": [
+       "REAL",
+       0.45051181788140904
+      ],
+      "direct": [
+       "REAL",
+       0.45051194701339525
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "NTAP",
+    "strategy": "SWING",
+    "rank_in_scan": 401,
+    "scan_score": 40.0801056956624,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 1.0,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 157.64999389648438,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 40.07971866602405,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 1.0,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 157.64999389648438,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -0.00038702963834680304,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.2106436030155063
+      ],
+      "direct": [
+       "REAL",
+       0.2106435750707872
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.23076921914593662
+      ],
+      "direct": [
+       "REAL",
+       0.23073710979584497
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.8967216054138638
+      ],
+      "direct": [
+       "REAL",
+       0.8967239273166313
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "NTAP",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 121,
+    "scan_score": 67.4721252219211,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 1.0,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 157.64999389648438,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 67.47213523214842,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 1.0,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 157.64999389648438,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 1.0010227313728137e-05,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.42317848426104954
+      ],
+      "direct": [
+       "REAL",
+       0.42317842857975235
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.8967216054138638
+      ],
+      "direct": [
+       "REAL",
+       0.8967239273166313
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "momentum_persistence",
+      "scan": [
+       "REAL",
+       0.9166666666666667
+      ],
+      "direct": [
+       "REAL",
+       0.9166666666666667
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "IT",
+    "strategy": "SWING",
+    "rank_in_scan": 382,
+    "scan_score": 41.03692021523901,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 1.0,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 174.49000549316406,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 41.036864656866605,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 1.0,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 174.49000549316406,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -5.555837240223127e-05,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.15637519208757109
+      ],
+      "direct": [
+       "REAL",
+       0.156370574239798
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.775315905981982
+      ],
+      "direct": [
+       "REAL",
+       0.7753162523379447
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "IT",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 323,
+    "scan_score": 58.68499998862109,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.9888888888888889,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 174.49000549316406,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 58.685001527980916,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.9888888888888889,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 174.49000549316406,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 1.5393598289392685e-06,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.775315905981982
+      ],
+      "direct": [
+       "REAL",
+       0.7753162523379447
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "CCL",
+    "strategy": "SWING",
+    "rank_in_scan": 311,
+    "scan_score": 46.20834276936215,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 1.0,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 26.59000015258789,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 46.20340889111988,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 1.0,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 26.59000015258789,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -0.004933878242269429,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.3360498041068314
+      ],
+      "direct": [
+       "REAL",
+       0.3356020834131569
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.3385073687742074
+      ],
+      "direct": [
+       "REAL",
+       0.33833651886166316
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       1.0
+      ],
+      "direct": [
+       "REAL",
+       1.0
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.5608782435129741
+      ],
+      "direct": [
+       "REAL",
+       0.5608782435129741
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "risk_reward",
+      "scan": [
+       "REAL",
+       0.0
+      ],
+      "direct": [
+       "REAL",
+       0.0
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "CCL",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 326,
+    "scan_score": 58.3592650169019,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.9175925925925927,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 26.59000015258789,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 58.359264880129416,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.9175925925925927,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 26.59000015258789,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -1.367724848932994e-07,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.3976767140132478
+      ],
+      "direct": [
+       "REAL",
+       0.397676689394199
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       1.0
+      ],
+      "direct": [
+       "REAL",
+       1.0
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.5608782435129741
+      ],
+      "direct": [
+       "REAL",
+       0.5608782435129741
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "CHRW",
+    "strategy": "SWING",
+    "rank_in_scan": 392,
+    "scan_score": 40.51781695406184,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 1.0,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 134.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 40.518004883627654,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 1.0,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 134.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.00018792956581137332,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.5438630261789725
+      ],
+      "direct": [
+       "REAL",
+       0.5438925826486881
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.21285869104189623
+      ],
+      "direct": [
+       "REAL",
+       0.2128589585853444
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.81264610667898
+      ],
+      "direct": [
+       "REAL",
+       0.8126460838528989
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "risk_reward",
+      "scan": [
+       "REAL",
+       0.0
+      ],
+      "direct": [
+       "REAL",
+       0.0
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "CHRW",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 456,
+    "scan_score": 48.2706733029715,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.9212962962962962,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 134.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 48.270672966437814,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.9212962962962962,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 134.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -3.3653368802788464e-07,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.2667718093909492
+      ],
+      "direct": [
+       "REAL",
+       0.26677181592370686
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.81264610667898
+      ],
+      "direct": [
+       "REAL",
+       0.8126460838528989
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "momentum_persistence",
+      "scan": [
+       "REAL",
+       0.3181798177381848
+      ],
+      "direct": [
+       "REAL",
+       0.3181796956182966
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "STE",
+    "strategy": "SWING",
+    "rank_in_scan": 93,
+    "scan_score": 62.94579130856634,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 1.0,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "WAIT_FOR_PULLBACK",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 255.75999450683594,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 62.94573401820829,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 1.0,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "WAIT_FOR_PULLBACK",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 255.75999450683594,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -5.7290358050465784e-05,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.7677354442214495
+      ],
+      "direct": [
+       "REAL",
+       0.767719926598018
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.6703698622319993
+      ],
+      "direct": [
+       "REAL",
+       0.6703731838731559
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.7415432585068651
+      ],
+      "direct": [
+       "REAL",
+       0.7415429663906952
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.8343313373253493
+      ],
+      "direct": [
+       "REAL",
+       0.8343313373253493
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "risk_reward",
+      "scan": [
+       "REAL",
+       0.0
+      ],
+      "direct": [
+       "REAL",
+       0.0
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "STE",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 119,
+    "scan_score": 67.60333527392191,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 1.0,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 255.75999450683594,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 67.60333453112113,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 1.0,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 255.75999450683594,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -7.428007791077107e-07,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.7277120531145828
+      ],
+      "direct": [
+       "REAL",
+       0.727712097396799
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.7415432585068651
+      ],
+      "direct": [
+       "REAL",
+       0.7415429663906952
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "momentum_persistence",
+      "scan": [
+       "REAL",
+       0.2744238415948015
+      ],
+      "direct": [
+       "REAL",
+       0.2744239808612557
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.8343313373253493
+      ],
+      "direct": [
+       "REAL",
+       0.8343313373253493
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "LULU",
+    "strategy": "SWING",
+    "rank_in_scan": 362,
+    "scan_score": 42.48681638641323,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 1.0,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 102.62000274658203,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 42.48557172667695,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 1.0,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 102.62000274658203,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -0.0012446597362796297,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.2017722765862484
+      ],
+      "direct": [
+       "REAL",
+       0.2016684343640369
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.8643844889604935
+      ],
+      "direct": [
+       "REAL",
+       0.8643930278471108
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "LULU",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 22,
+    "scan_score": 75.06208907667468,
+    "scan_band": "BUY_CANDIDATE",
+    "scan_band_label": "매수 후보",
+    "scan_action": "BUY",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.9370370370370371,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 102.62000274658203,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 75.06212702728187,
+    "direct_band": "BUY_CANDIDATE",
+    "direct_band_label": "매수 후보",
+    "direct_action": "BUY",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.9370370370370371,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 102.62000274658203,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 3.795060719369303e-05,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.8643844889604935
+      ],
+      "direct": [
+       "REAL",
+       0.8643930278471108
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "AVY",
+    "strategy": "SWING",
+    "rank_in_scan": 141,
+    "scan_score": 59.78177739036835,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.9875,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "WAIT_FOR_PULLBACK",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 181.14999389648438,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 59.77918274524352,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.9875,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "WAIT_FOR_PULLBACK",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 181.14999389648438,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -0.0025946451248302083,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.8219826167237338
+      ],
+      "direct": [
+       "REAL",
+       0.8215664196767825
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.49067605484201987
+      ],
+      "direct": [
+       "REAL",
+       0.49067605484201987
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.5638739046894484
+      ],
+      "direct": [
+       "REAL",
+       0.563874958516428
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "risk_reward",
+      "scan": [
+       "REAL",
+       0.0
+      ],
+      "direct": [
+       "REAL",
+       0.0
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "AVY",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 350,
+    "scan_score": 57.23446423261104,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.9324074074074074,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 181.14999389648438,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 57.23446912585546,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.9324074074074074,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 181.14999389648438,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 4.893244422987664e-06,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.8135588845934533
+      ],
+      "direct": [
+       "REAL",
+       0.8135588703639425
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.5638739046894484
+      ],
+      "direct": [
+       "REAL",
+       0.563874958516428
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "momentum_persistence",
+      "scan": [
+       "REAL",
+       0.5683573761271437
+      ],
+      "direct": [
+       "REAL",
+       0.5683575060069541
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "LH",
+    "strategy": "SWING",
+    "rank_in_scan": 14,
+    "scan_score": 69.91500290291707,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 1.0,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "WAIT_FOR_PULLBACK",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 367.1300048828125,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 69.87538323331111,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 1.0,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "WAIT_FOR_PULLBACK",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 367.1300048828125,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -0.039619669605954755,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.8820945908135441
+      ],
+      "direct": [
+       "REAL",
+       0.8813594380995047
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "breakout_volume",
+      "scan": [
+       "REAL",
+       0.6988354743364101
+      ],
+      "direct": [
+       "REAL",
+       0.6957253682150116
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.8259965246751733
+      ],
+      "direct": [
+       "REAL",
+       0.826266671216001
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "risk_reward",
+      "scan": [
+       "REAL",
+       0.1451922781761995
+      ],
+      "direct": [
+       "REAL",
+       0.14548067090874628
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "LH",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 239,
+    "scan_score": 62.6311140203372,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 1.0,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 367.1300048828125,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 62.632314159542936,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 1.0,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 367.1300048828125,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0012001392057356952,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.9385791518080573
+      ],
+      "direct": [
+       "REAL",
+       0.9385789839663503
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "liquidity",
+      "scan": [
+       "REAL",
+       0.8259965246751733
+      ],
+      "direct": [
+       "REAL",
+       0.826266671216001
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "momentum_persistence",
+      "scan": [
+       "REAL",
+       0.7655304549539902
+      ],
+      "direct": [
+       "REAL",
+       0.7655306441191881
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   }
+  ]
+ },
+ "KR": {
+  "session": "2026-11-20",
+  "scan_status": "REAL",
+  "scanned": 300,
+  "sample": [
+   "105560",
+   "122870",
+   "020150",
+   "001120",
+   "004800",
+   "006260",
+   "192080",
+   "047050",
+   "007070",
+   "003380",
+   "052690",
+   "086450"
+  ],
+  "rows": [
+   {
+    "ticker": "105560",
+    "strategy": "SWING",
+    "rank_in_scan": 18,
+    "scan_score": 59.18787228105408,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.9210526315789473,
+    "scan_input_coverage": 0.8421052631578947,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "WAIT_FOR_PULLBACK",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 152400.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 59.187872849542195,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.9210526315789473,
+    "direct_input_coverage": 0.8421052631578947,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "WAIT_FOR_PULLBACK",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 152400.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 5.684881188017243e-07,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.4866586031326879
+      ],
+      "direct": [
+       "REAL",
+       0.4866586429268576
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.85
+      ],
+      "direct": [
+       "REAL",
+       0.8466666666666667
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "105560",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 35,
+    "scan_score": 70.09786287514753,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰 · 빠진 요인을 중간값으로 보면 68.1점",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.8987341772151899,
+    "scan_input_coverage": 0.7468354430379747,
+    "scan_confidence": "LOW",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 152400.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 70.08377836873849,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰 · 빠진 요인을 중간값으로 보면 68.0점",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.8987341772151899,
+    "direct_input_coverage": 0.7468354430379747,
+    "direct_confidence": "LOW",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 152400.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -0.014084506409034248,
+    "same_words": false,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.6451298851992286
+      ],
+      "direct": [
+       "REAL",
+       0.645129925096821
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "momentum_persistence",
+      "scan": [
+       "REAL",
+       0.6649655975005556
+      ],
+      "direct": [
+       "REAL",
+       0.6649654979813688
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.85
+      ],
+      "direct": [
+       "REAL",
+       0.8466666666666667
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "122870",
+    "strategy": "SWING",
+    "rank_in_scan": 64,
+    "scan_score": 53.30644676734665,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.925,
+    "scan_input_coverage": 0.925,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 47800.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 53.30644676734665,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.925,
+    "direct_input_coverage": 0.925,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 47800.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.8366666666666667
+      ],
+      "direct": [
+       "REAL",
+       0.8333333333333334
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "OUTSIDE_UNIVERSE"
+   },
+   {
+    "ticker": "122870",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 40,
+    "scan_score": 69.34740090336638,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.8824074074074073,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 47800.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 69.33628979225529,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.8824074074074073,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 47800.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -0.011111111111091532,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.8366666666666667
+      ],
+      "direct": [
+       "REAL",
+       0.8333333333333334
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "OUTSIDE_UNIVERSE"
+   },
+   {
+    "ticker": "020150",
+    "strategy": "SWING",
+    "rank_in_scan": 264,
+    "scan_score": 34.30487948671384,
+    "scan_band": "SELL_AVOID",
+    "scan_band_label": "매도·회피 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.925,
+    "scan_input_coverage": 0.925,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 37800.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 34.30487948671384,
+    "direct_band": "SELL_AVOID",
+    "direct_band_label": "매도·회피 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.925,
+    "direct_input_coverage": 0.925,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 37800.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.42333333333333334
+      ],
+      "direct": [
+       "REAL",
+       0.4266666666666667
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "020150",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 244,
+    "scan_score": 40.02719207541641,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.8824074074074073,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 37800.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 40.03830318652751,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.8824074074074073,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 37800.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.011111111111098637,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.42333333333333334
+      ],
+      "direct": [
+       "REAL",
+       0.4266666666666667
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "001120",
+    "strategy": "SWING",
+    "rank_in_scan": 211,
+    "scan_score": 40.73953006475575,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.925,
+    "scan_input_coverage": 0.9,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 32600.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 40.73953006475575,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.925,
+    "direct_input_coverage": 0.9,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 32600.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.5166666666666667
+      ],
+      "direct": [
+       "REAL",
+       0.5233333333333333
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "001120",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 164,
+    "scan_score": 52.98723674929632,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.8824074074074073,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 32600.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 53.00945897151855,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.8824074074074073,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 32600.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.022222222222225696,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.5166666666666667
+      ],
+      "direct": [
+       "REAL",
+       0.5233333333333333
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "004800",
+    "strategy": "SWING",
+    "rank_in_scan": 248,
+    "scan_score": 35.8681562743909,
+    "scan_band": "SELL_AVOID",
+    "scan_band_label": "매도·회피 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.925,
+    "scan_input_coverage": 0.925,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 116700.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 35.8681562743909,
+    "direct_band": "SELL_AVOID",
+    "direct_band_label": "매도·회피 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.925,
+    "direct_input_coverage": 0.925,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 116700.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "004800",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 106,
+    "scan_score": 60.32614963339809,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.8824074074074073,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 116700.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 60.32614963339809,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.8824074074074073,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 116700.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "006260",
+    "strategy": "SWING",
+    "rank_in_scan": 291,
+    "scan_score": 29.483235535271383,
+    "scan_band": "SELL_AVOID",
+    "scan_band_label": "매도·회피 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.925,
+    "scan_input_coverage": 0.925,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 168300.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 29.483235535271383,
+    "direct_band": "SELL_AVOID",
+    "direct_band_label": "매도·회피 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.925,
+    "direct_input_coverage": 0.925,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 168300.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "006260",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 252,
+    "scan_score": 36.862029702951716,
+    "scan_band": "SELL_AVOID",
+    "scan_band_label": "매도·회피 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.8824074074074073,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 168300.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 36.862029702951716,
+    "direct_band": "SELL_AVOID",
+    "direct_band_label": "매도·회피 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.8824074074074073,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 168300.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "192080",
+    "strategy": "SWING",
+    "rank_in_scan": 66,
+    "scan_score": 53.080758848515956,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.925,
+    "scan_input_coverage": 0.925,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 56100.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 53.080758848515956,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.925,
+    "direct_input_coverage": 0.925,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 56100.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.77
+      ],
+      "direct": [
+       "REAL",
+       0.7733333333333333
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "192080",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 2,
+    "scan_score": 81.28310514165358,
+    "scan_band": "STRONG_BUY_CANDIDATE",
+    "scan_band_label": "강력 매수 후보",
+    "scan_action": "BUY",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.8231481481481481,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 56100.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 81.29421625276468,
+    "direct_band": "STRONG_BUY_CANDIDATE",
+    "direct_band_label": "강력 매수 후보",
+    "direct_action": "BUY",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.8231481481481481,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 56100.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.011111111111105743,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.77
+      ],
+      "direct": [
+       "REAL",
+       0.7733333333333333
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "047050",
+    "strategy": "SWING",
+    "rank_in_scan": 149,
+    "scan_score": 46.35699606936553,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.925,
+    "scan_input_coverage": 0.925,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 46550.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 46.356994754365836,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.925,
+    "direct_input_coverage": 0.925,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 46550.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -1.3149996931360874e-06,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "atr_risk",
+      "scan": [
+       "REAL",
+       0.28599314563256406
+      ],
+      "direct": [
+       "REAL",
+       0.285993048322587
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.4666666666666667
+      ],
+      "direct": [
+       "REAL",
+       0.47
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "047050",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 179,
+    "scan_score": 51.147161662489864,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.8824074074074073,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 46550.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 51.15827245320304,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.8824074074074073,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 46550.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.011110790713175334,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "downside_drawdown",
+      "scan": [
+       "REAL",
+       0.14102294330959747
+      ],
+      "direct": [
+       "REAL",
+       0.1410228450569936
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "momentum_persistence",
+      "scan": [
+       "REAL",
+       0.4368895340738343
+      ],
+      "direct": [
+       "REAL",
+       0.4368896355262677
+      ],
+      "raw_same": false
+     },
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.4666666666666667
+      ],
+      "direct": [
+       "REAL",
+       0.47
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "007070",
+    "strategy": "SWING",
+    "rank_in_scan": 156,
+    "scan_score": 45.7931133409727,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.925,
+    "scan_input_coverage": 0.925,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 21950.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 45.7931133409727,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.925,
+    "direct_input_coverage": 0.925,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 21950.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.5866666666666667
+      ],
+      "direct": [
+       "REAL",
+       0.5933333333333334
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "007070",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 185,
+    "scan_score": 50.354073868483205,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.8824074074074073,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 21950.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 50.37629609070542,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.8824074074074073,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 21950.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.022222222222211485,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.5866666666666667
+      ],
+      "direct": [
+       "REAL",
+       0.5933333333333334
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "003380",
+    "strategy": "SWING",
+    "rank_in_scan": 235,
+    "scan_score": 37.640110364312775,
+    "scan_band": "SELL_AVOID",
+    "scan_band_label": "매도·회피 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.925,
+    "scan_input_coverage": 0.9,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 10220.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 37.640110364312775,
+    "direct_band": "SELL_AVOID",
+    "direct_band_label": "매도·회피 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.925,
+    "direct_input_coverage": 0.9,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 10220.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.66
+      ],
+      "direct": [
+       "REAL",
+       0.6666666666666666
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "003380",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 161,
+    "scan_score": 53.327666432775246,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.8527777777777777,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 10220.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 53.34988865499747,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.8527777777777777,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 10220.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.022222222222225696,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.66
+      ],
+      "direct": [
+       "REAL",
+       0.6666666666666666
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "052690",
+    "strategy": "SWING",
+    "rank_in_scan": 39,
+    "scan_score": 56.20612243853105,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "BLOCKED",
+    "scan_coverage": 0.925,
+    "scan_input_coverage": 0.925,
+    "scan_confidence": "HIGH",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 63000.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 56.20612243853105,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "BLOCKED",
+    "direct_coverage": 0.925,
+    "direct_input_coverage": 0.925,
+    "direct_confidence": "HIGH",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 63000.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [
+     "SEVERE_EVENT"
+    ],
+    "gates_direct": [
+     "SEVERE_EVENT"
+    ],
+    "factor_differences": [],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "052690",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 158,
+    "scan_score": 53.513360009707945,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "BLOCKED",
+    "scan_coverage": 1.0,
+    "scan_input_coverage": 0.8824074074074073,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 63000.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 53.513360009707945,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "BLOCKED",
+    "direct_coverage": 1.0,
+    "direct_input_coverage": 0.8824074074074073,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 63000.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [
+     "SEVERE_EVENT"
+    ],
+    "gates_direct": [
+     "SEVERE_EVENT"
+    ],
+    "factor_differences": [],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "086450",
+    "strategy": "SWING",
+    "rank_in_scan": 166,
+    "scan_score": 44.47607542554844,
+    "scan_band": "WEAK_REDUCE",
+    "scan_band_label": "약세·축소 후보",
+    "scan_action": "AVOID",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.825,
+    "scan_input_coverage": 0.825,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "NO_VALID_ENTRY_SETUP",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 25250.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 44.47607542554844,
+    "direct_band": "WEAK_REDUCE",
+    "direct_band_label": "약세·축소 후보",
+    "direct_action": "AVOID",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.825,
+    "direct_input_coverage": 0.825,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "NO_VALID_ENTRY_SETUP",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 25250.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": 0.0,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.9433333333333334
+      ],
+      "direct": [
+       "REAL",
+       0.94
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   },
+   {
+    "ticker": "086450",
+    "strategy": "LONG_TERM",
+    "rank_in_scan": 57,
+    "scan_score": 67.55941216298508,
+    "scan_band": "HOLD_WATCH",
+    "scan_band_label": "보유·관찰",
+    "scan_action": "WATCH",
+    "scan_actionability": "ACTIONABLE",
+    "scan_coverage": 0.9777777777777777,
+    "scan_input_coverage": 0.8712962962962962,
+    "scan_confidence": "MEDIUM",
+    "scan_entry_status": "ENTRY_NOW",
+    "scan_data_date": "2026-11-20",
+    "scan_price": 25250.0,
+    "scan_model_version": "QSF-1.5.1",
+    "direct_score": 67.54804852662144,
+    "direct_band": "HOLD_WATCH",
+    "direct_band_label": "보유·관찰",
+    "direct_action": "WATCH",
+    "direct_actionability": "ACTIONABLE",
+    "direct_coverage": 0.9777777777777777,
+    "direct_input_coverage": 0.8712962962962962,
+    "direct_confidence": "MEDIUM",
+    "direct_entry_status": "ENTRY_NOW",
+    "direct_data_date": "2026-11-20",
+    "direct_price": 25250.0,
+    "direct_model_version": "QSF-1.5.1",
+    "score_diff": -0.01136363636364024,
+    "same_words": true,
+    "gates_scan": [],
+    "gates_direct": [],
+    "factor_differences": [
+     {
+      "factor": "relative_strength",
+      "scan": [
+       "REAL",
+       0.9433333333333334
+      ],
+      "direct": [
+       "REAL",
+       0.94
+      ],
+      "raw_same": false
+     }
+    ],
+    "rank_basis": "UNIVERSE"
+   }
+  ]
+ }
+}

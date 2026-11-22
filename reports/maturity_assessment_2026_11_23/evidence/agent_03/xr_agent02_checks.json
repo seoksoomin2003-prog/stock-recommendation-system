@@ -1,0 +1,214 @@
+{
+ "PHM": {
+  "recorded": 75.95012422448491,
+  "recomputed": 75.95012422448492,
+  "debt_as_total_liabilities": 71.19738799819227,
+  "assumed_1_6bn_notes": 75.95012422448492,
+  "debt_factors_missing": 70.750151083833,
+  "debt_factors_at_0_5": 67.06123533559602
+ },
+ "low_debt_nine": {
+  "CME": {
+   "score": 72.4,
+   "band": "BUY_CANDIDATE",
+   "interest_cover": 24.391580161476355,
+   "liab_over_equity": 5.91,
+   "score_debt_factors_at_0_5": 67.2,
+   "score_debt_factors_missing": 70.9
+  },
+  "CMG": {
+   "score": 64.5,
+   "band": "HOLD_WATCH",
+   "interest_cover": null,
+   "liab_over_equity": 2.18,
+   "score_debt_factors_at_0_5": 60.6,
+   "score_debt_factors_missing": 62.9
+  },
+  "GEV": {
+   "score": 51.0,
+   "band": "WEAK_REDUCE",
+   "interest_cover": null,
+   "liab_over_equity": 4.64,
+   "score_debt_factors_at_0_5": 45.6,
+   "score_debt_factors_missing": 44.6
+  },
+  "JKHY": {
+   "score": 70.4,
+   "band": "BUY_CANDIDATE",
+   "interest_cover": null,
+   "liab_over_equity": 0.53,
+   "score_debt_factors_at_0_5": 66.8,
+   "score_debt_factors_missing": 70.4
+  },
+  "LULU": {
+   "score": 75.1,
+   "band": "BUY_CANDIDATE",
+   "interest_cover": null,
+   "liab_over_equity": 0.7,
+   "score_debt_factors_at_0_5": 66.2,
+   "score_debt_factors_missing": 69.7
+  },
+  "ODFL": {
+   "score": 63.1,
+   "band": "HOLD_WATCH",
+   "interest_cover": 4598.125,
+   "liab_over_equity": 0.27,
+   "score_debt_factors_at_0_5": 55.4,
+   "score_debt_factors_missing": 56.5
+  },
+  "P": {
+   "score": 62.7,
+   "band": "HOLD_WATCH",
+   "interest_cover": 34.019555555555556,
+   "liab_over_equity": 2.23,
+   "score_debt_factors_at_0_5": 55.6,
+   "score_debt_factors_missing": 56.8
+  },
+  "PHM": {
+   "score": 76.0,
+   "band": "BUY_CANDIDATE",
+   "interest_cover": null,
+   "liab_over_equity": 0.39,
+   "score_debt_factors_at_0_5": 67.1,
+   "score_debt_factors_missing": 70.8
+  },
+  "SNDK": {
+   "score": 70.5,
+   "band": "BUY_CANDIDATE",
+   "interest_cover": 169.7123287671233,
+   "liab_over_equity": 0.43,
+   "score_debt_factors_at_0_5": 64.4,
+   "score_debt_factors_missing": 67.5
+  }
+ },
+ "ocf_US_SWING": {
+  "cards_with_ratio_gt3": 48,
+  "scores_changed": 48,
+  "max_down": -2.51,
+  "max_up": 0.0,
+  "median_change_of_changed": -1.54,
+  "rho": 0.99935,
+  "cross_70": 0,
+  "cross_55": 0
+ },
+ "ocf_US_LONG_TERM": {
+  "cards_with_ratio_gt3": 48,
+  "scores_changed": 0,
+  "max_down": -0.0,
+  "max_up": 0.0,
+  "median_change_of_changed": null,
+  "rho": 1.0,
+  "cross_70": 0,
+  "cross_55": 0
+ },
+ "ocf_KR_SWING": {
+  "cards_with_ratio_gt3": 43,
+  "scores_changed": 43,
+  "max_down": -8.36,
+  "max_up": 0.0,
+  "median_change_of_changed": -4.12,
+  "rho": 0.98669,
+  "cross_70": 0,
+  "cross_55": 1
+ },
+ "ocf_KR_LONG_TERM": {
+  "cards_with_ratio_gt3": 43,
+  "scores_changed": 0,
+  "max_down": -0.0,
+  "max_up": 0.0,
+  "median_change_of_changed": null,
+  "rho": 1.0,
+  "cross_70": 0,
+  "cross_55": 0
+ },
+ "entry_US": {
+  "long_cards": 504,
+  "enter_now": 307,
+  "loss_now": {
+   "all": 25,
+   "enter_now": 3,
+   "enter_now_ge70": 0
+  },
+  "rev_growth<0": {
+   "all": 72,
+   "enter_now": 41,
+   "enter_now_ge70": 9
+  },
+  "eps_growth<0": {
+   "all": 162,
+   "enter_now": 89,
+   "enter_now_ge70": 15
+  },
+  "rev_growth<0 and eps_growth<0": {
+   "all": 43,
+   "enter_now": 24,
+   "enter_now_ge70": 6
+  },
+  "rev_cagr3<0 and rev_growth<0": {
+   "all": 48,
+   "enter_now": 24,
+   "enter_now_ge70": 5
+  },
+  "rev_cagr3<0 and rev_growth<0 and (loss or eps_growth<0)": {
+   "all": 38,
+   "enter_now": 18,
+   "enter_now_ge70": 5
+  },
+  "growth_quality_mean_enter_now": 0.499
+ },
+ "cheap_shrinking_US": {
+  "score_ge70": 78,
+  "valuation_ge_0_8": 24,
+  "of_which_eps_growth_lt0": 7,
+  "of_which_eps_and_rev_lt0": [
+   "EOG",
+   "GPN",
+   "MO",
+   "NVR",
+   "PHM"
+  ]
+ },
+ "entry_KR": {
+  "long_cards": 300,
+  "enter_now": 129,
+  "loss_now": {
+   "all": 50,
+   "enter_now": 1,
+   "enter_now_ge70": 0
+  },
+  "rev_growth<0": {
+   "all": 65,
+   "enter_now": 12,
+   "enter_now_ge70": 2
+  },
+  "eps_growth<0": {
+   "all": 85,
+   "enter_now": 34,
+   "enter_now_ge70": 9
+  },
+  "rev_growth<0 and eps_growth<0": {
+   "all": 30,
+   "enter_now": 5,
+   "enter_now_ge70": 1
+  },
+  "rev_cagr3<0 and rev_growth<0": {
+   "all": 43,
+   "enter_now": 9,
+   "enter_now_ge70": 1
+  },
+  "rev_cagr3<0 and rev_growth<0 and (loss or eps_growth<0)": {
+   "all": 28,
+   "enter_now": 5,
+   "enter_now_ge70": 1
+  },
+  "growth_quality_mean_enter_now": 0.428
+ },
+ "cheap_shrinking_KR": {
+  "score_ge70": 34,
+  "valuation_ge_0_8": 24,
+  "of_which_eps_growth_lt0": 9,
+  "of_which_eps_and_rev_lt0": [
+   "011200"
+  ]
+ }
+}

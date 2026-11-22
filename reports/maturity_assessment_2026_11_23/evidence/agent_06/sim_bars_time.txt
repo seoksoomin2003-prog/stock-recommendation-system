@@ -1,0 +1,1 @@
+.venv/bin/python  >  2>&1  11.10s user 0.10s system 99% cpu 11.237 total

@@ -1,0 +1,78 @@
+AGENT 8 scratch notes (2026-11-23, commit 02aed81). GET only. Saved replies are in big/ (kept out of the repository).
+
+== GET timings against http://127.0.0.1:8765 (warm server, one run each) ==
+/api/assistant/today?market=US          5,115 B   0.51 s
+/api/assistant/today?market=KR          3,925 B   0.48 s
+/api/qsf/latest?market=US             623,361 B   0.016 s
+/api/qsf/latest?market=KR             359,172 B   0.013 s
+/api/account                            3,522 B   0.087 s
+/api/health                               189 B   0.001 s
+/api/record                             8,199 B   0.074 s
+/api/automation/status                  2,703 B   0.016 s
+/api/qsf/stance?market=US               1,604 B   0.001 s
+/api/qsf/market-state?market=US         1,844 B   0.007 s
+/api/overview?market=US                17,503 B   0.004 s
+/api/qsf/screen?market=US              67,626 B   0.009 s
+/api/qsf/top3?market=US                63,267 B   0.003 s
+/api/watchlist?market=US                4,668 B   1.05 s
+/api/qsf/evaluate?t=AAPL&market=US     61,304 B   1.06 s
+/api/qsf/evaluate?t=TECH&market=US     62,883 B   1.07 s
+/api/qsf/evaluate?t=005930&market=KR   60,916 B   5.06 s
+/api/committee/portfolios?market=US    78,126 B   0.037 s   (called once)
+/api/committee/dashboard?market=US      7,629 B   0.017 s
+/api/qsf/readings                      12,265 B   0.028 s
+/api/qsf/order-plan?market=US           2,515 B   0.53 s
+/api/qsf/paper-book?market=US          16,281 B   0.005 s
+/api/qsf/track-record?market=US         7,899 B   0.004 s
+/api/qsf/validation                    27,664 B   5.95 s
+/api/qsf/changes?market=US&strategy=SWING  10,787 B  0.098 s
+/api/qsf/heatmap?market=US&strategy=SWING 147,490 B  0.33 s
+/api/qsf/forecast-stock?market=US&t=AAPL   13,940 B  0.013 s
+/api/qsf/history?t=AAPL&market=US      12,765 B   0.085 s
+/api/symbols?q=appl&market=US             403 B   0.028 s
+/api/symbols?q=삼성&market=KR              774 B   0.013 s
+/api/coin/latest                       17,234 B   0.16 s
+index.html 5,289 B 0.001 s; qsf.js 110,633 B 0.001 s (static files total 424,555 B)
+Not called: /api/phone/status (could show the pairing code), /api/committee/place, any POST.
+
+== Error replies ==
+/api/chart?t=$$$            -> 400 {"error": "INVALID_TICKER"}
+/api/qsf/screen?min_score=abc -> 400 {"error": "INVALID_MIN_SCORE"}
+/api/nope                   -> 404 {"error": "NOT_FOUND"}
+ERR_KO (app.js:78-103) has 64 codes. A regex over terminal/**/*.py, utils, markets found 52 raised or returned error codes: all 52 are in ERR_KO.
+
+== Counts from the screen code ==
+groups 7 (one of them, coin, shows only in the coin market), tabs 16
+views inside tabs: score tab 4 (qsf.js:37), committee tab 4 (committee.js:6)
+.fold sections 9 (qsf.js:166-171), <details> 18 (qsf.js 11, committee.js 3, forecast.js 2, coin.js 1, portfolio.js 1)
+title attributes 109 in the screen code (qsf.js 46, forecast.js 21, paper.js 10, app.js 8, ...); about 92 carry an explanation
+Numeric tokens (dates included) shown before anything is pressed, counted from the real replies with the fields qsfCard prints:
+  AAPL   swing card 88, long card 83 (plan open, as in the stock view); 49 and 44 in a ranking row (plan folded); factor table (folded) 97 and 89
+  005930 swing card 80, long card 75; 39 and 40 in a ranking row; factor table 90 and 87
+  committee panel: 19 score numbers + 42 to 52 numbers inside its sentences
+  two cards + committee: AAPL about 242, 005930 about 216 (today check, FC-1 range and risk-grade line not counted)
+Today tab: US 11 items, 1,565 characters, 61 numbers, longest item 301 characters; KR 9 items, 974 characters, 48 numbers.
+Readings list: 30 readings, all WAITING.
+
+== Rank list (recorded, QSF-1.4.1) against a card computed now (QSF-1.5.1) ==
+/api/qsf/latest: model_version QSF-1.4.1, live_model_version QSF-1.5.1 (both markets) -> the notice of qsf.js:448 is drawn.
+AAPL swing 69.83 / 69.83, long 69.37 / 69.37: same band, action, entry status, confidence.
+TECH swing 76.42 / 76.41: same.
+005930 swing 53.88 / 53.88 same; long 64.21 / 64.21, confidence HIGH in the rank row, MEDIUM on the card.
+
+== Entry validation run offline (portfolio.normalize, a pure function; nothing written) ==
+COIN + AAPL    -> accepted as a coin named AAPL
+COIN + 005930  -> accepted as a coin named 005930
+US + BTC       -> accepted as a US stock BTC
+US + 005930    -> market corrected to KR
+KR + AAPL      -> market corrected to US
+US + 삼성전자   -> "종목 코드 형식이 올바르지 않습니다."
+US + apple     -> accepted as ticker APPLE (existence is not checked at entry)
+
+== Plain explanation of the top-ranked US swing stock (TECH, merger proxy filed) ==
+"100점 만점에 76점입니다. 이 프로그램의 기준에 잘 맞는 편입니다." / good points include "요즘 가격이 출렁이는 폭이 평소보다 좁습니다." /
+stop 0.4% below, target 0.3% above. The merger filing (deals: DEFM14A 2026-08-20, PREM14A 2026-08-10) is not in the plain text.
+AAPL swing: score 69.83 is spoken as "70점" with the watch band (plain.py:124 rounds to a whole number; the buy band starts at 70).
+
+== Tests run ==
+tests/test_stance_plain.py tests/test_account.py tests/test_phone_view.py tests/test_portfolio_interrupts.py: 37 passed.

@@ -1,0 +1,22 @@
+== US AAPL status REAL rank_basis UNIVERSE keys ['committee', 'committee_note', 'deals', 'filing_events', 'held_strategy', 'high_risk', 'market', 'name', 'p6_reference', 'price_audit', 'rank_basis', 'risk_grade', 'status', 'ticker']
+SWING | live: QSF-1.5.1 69.8327 HOLD_WATCH WATCH ACTIONABLE HIGH cov 1.0 in_cov 1.0 data_date 2026-11-20 entry WAIT_FOR_PULLBACK held_back False kept False
+      | record: QSF-1.4.1 69.8333 HOLD_WATCH WATCH ACTIONABLE HIGH cov 1.0 data_date 2026-11-20 entry WAIT_FOR_PULLBACK
+      | price source live: Yahoo Finance 일봉 | record: Yahoo Finance 일봉
+      | factors that differ (record, live): {'atr_risk': (0.8136, 0.8135)}
+      | plain parts: ['한 줄로', '좋게 본 점', '걱정되는 점', '지금 사도 되나', '짧게 산다면 미리 정해 둘 가격', '꼭 알아 둘 것']
+LONG_TERM | live: QSF-1.5.1 69.366 HOLD_WATCH WATCH ACTIONABLE HIGH cov 1.0 in_cov 0.974 data_date 2026-11-20 entry OVERVALUED_AT_CURRENT_PRICE held_back False kept False
+      | record: QSF-1.4.1 69.366 HOLD_WATCH WATCH ACTIONABLE HIGH cov 1.0 data_date 2026-11-20 entry OVERVALUED_AT_CURRENT_PRICE
+      | price source live: Yahoo Finance 일봉 | record: Yahoo Finance 일봉
+      | factors that differ (record, live): {}
+      | plain parts: ['한 줄로', '좋게 본 점', '걱정되는 점', '지금 사도 되나', '꼭 알아 둘 것']
+== KR 005930 status REAL rank_basis UNIVERSE keys ['committee', 'committee_note', 'deals', 'filing_events', 'held_strategy', 'high_risk', 'market', 'name', 'p6_reference', 'price_audit', 'rank_basis', 'risk_grade', 'status', 'ticker']
+SWING | live: QSF-1.5.1 53.8825 WEAK_REDUCE AVOID ACTIONABLE HIGH cov 0.925 in_cov 0.925 data_date 2026-11-20 entry NO_VALID_ENTRY_SETUP held_back False kept False
+      | record: QSF-1.4.1 53.8825 WEAK_REDUCE AVOID ACTIONABLE HIGH cov 0.925 data_date 2026-11-20 entry NO_VALID_ENTRY_SETUP
+      | price source live: KRX 일별 시세로 만든 일봉 | record: Yahoo Finance 일봉
+      | factors that differ (record, live): {'breakout_volume': (0.2681, 0.2681), 'credit_liquidity': (0.3316, 0.3318), 'momentum': (0.1905, 0.1904), 'usdkrw_regime': (0.9385, 0.9449)}
+      | plain parts: ['한 줄로', '좋게 본 점', '걱정되는 점', '지금 사도 되나', '짧게 산다면 미리 정해 둘 가격', '꼭 알아 둘 것']
+LONG_TERM | live: QSF-1.5.1 64.2083 HOLD_WATCH WATCH ACTIONABLE MEDIUM cov 1.0 in_cov 0.882 data_date 2026-11-20 entry ENTRY_NOW held_back False kept False
+      | record: QSF-1.4.1 64.2083 HOLD_WATCH WATCH ACTIONABLE HIGH cov 1.0 data_date 2026-11-20 entry ENTRY_NOW
+      | price source live: KRX 일별 시세로 만든 일봉 | record: Yahoo Finance 일봉
+      | factors that differ (record, live): {'credit_liquidity': (0.3316, 0.3318), 'downside_drawdown': (0.0068, 0.0068), 'usdkrw_regime': (0.9385, 0.9449)}
+      | plain parts: ['한 줄로', '좋게 본 점', '걱정되는 점', '말하지 않은 것', '지금 사도 되나', '꼭 알아 둘 것']

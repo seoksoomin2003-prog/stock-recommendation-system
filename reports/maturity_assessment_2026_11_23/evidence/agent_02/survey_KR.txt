@@ -1,0 +1,23 @@
+session 2026-11-20 file 2026-11-20_KR_000033.jsonl.gz snaps 600 version QSF-1.4.1
+long 300 swing 300
+snapshot keys: ['action', 'actionability', 'band', 'benchmark', 'confidence', 'coverage', 'data_date', 'domains', 'entry_session', 'entry_status', 'factors', 'gates', 'held', 'holding', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+--- LONG: status counts / partial inputs / raw None counts
+  valuation                  {'REAL': 299, 'MISSING': 1} partial=0 rawNone={'fcf_yield': 11}
+  business_quality           {'REAL': 300} partial=0 rawNone={'gross_margin': 300, 'op_margin': 30}
+  growth_quality             {'REAL': 261, 'MISSING': 39} partial=0 rawNone={'eps_cagr3': 115, 'rev_cagr3': 23, 'rev_growth': 5}
+  free_cash_flow             {'REAL': 261, 'MISSING': 11, 'NOT_APPLICABLE': 28} partial=0 rawNone={}
+  balance_dilution           {'REAL': 300} partial=0 rawNone={'share_change': 300}
+  financial_resilience       {'REAL': 300} partial=0 rawNone={'interest_cover': 272, 'cash_debt': 1}
+  leverage                   {'REAL': 272, 'NOT_APPLICABLE': 28} partial=0 rawNone={}
+  capital_allocation         {'REAL': 231, 'MISSING': 69} partial=0 rawNone={'share_change': 231}
+  insider_ownership          {'REAL': 272, 'MISSING': 28} partial=0 rawNone={}
+--- SWING: status counts / partial inputs / raw None counts
+  earnings_revenue_quality   {'REAL': 293, 'MISSING': 7} partial=0 rawNone={'eps_growth': 74, 'ocf_to_ni': 69, 'rev_growth': 37}
+  profitability              {'REAL': 300} partial=0 rawNone={'op_margin': 30}
+  balance_sheet              {'REAL': 300} partial=0 rawNone={}
+  cash_flow_quality          {'REAL': 267, 'MISSING': 5, 'NOT_APPLICABLE': 28} partial=0 rawNone={'ocf_to_ni': 43, 'fcf_margin': 6}
+financial (leverage N/A): 28
+pe<=0 (loss) : 48 ['373220', '006400', '096770', '051910', '086520', '352820', '009830', '047040', '222800', '004020', '051900', '028300', '011790', '454910', '010060', '018880', '302440', '066970', '009420', '097950', '004990', '010170', '298380', '141080', '087010', '178320', '020150', '310210', '011170', '140410', '226950', '263750', '020560', '347850', '336260', '440110', '006280', '008770', '036540', '323280']
+no equity (99): 0 []
+long bands: {('HOLD_WATCH', 'ACTIONABLE'): 108, ('BUY_CANDIDATE', 'ACTIONABLE'): 32, ('SELL_AVOID', 'BLOCKED'): 2, ('WEAK_REDUCE', 'ACTIONABLE'): 97, ('SELL_AVOID', 'ACTIONABLE'): 52, ('STRONG_BUY_CANDIDATE', 'ACTIONABLE'): 3, ('WEAK_REDUCE', 'BLOCKED'): 3, ('HOLD_WATCH', 'BLOCKED'): 2, ('BUY_CANDIDATE', 'BLOCKED'): 1}
+long entry: {'ENTRY_NOW': 132, 'NO_VALID_ENTRY_SETUP': 157, 'OVERVALUED_AT_CURRENT_PRICE': 11}

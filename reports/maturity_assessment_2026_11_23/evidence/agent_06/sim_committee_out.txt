@@ -1,0 +1,7 @@
+A portfolio decided once and never traded again; 240 paper days; program's performance() against the convention held honestly.
+rho = how much of a stock's own daily move carries into the next day (negative: reversal).
+rho +0.00: program minus honest, per day +0.008 bp (se 0.007); over 240 days +0.019% (se 0.016, sd between paths 0.28%); booked cost 0.160% (first purchase 0.160%), booked turnover/day 0.330%, turnover the return series assumes but does not book 1.89%/day = 0.90% of cost over 240 days
+rho -0.05: program minus honest, per day +0.170 bp (se 0.006); over 240 days +0.410% (se 0.016, sd between paths 0.28%); booked cost 0.160% (first purchase 0.160%), booked turnover/day 0.330%, turnover the return series assumes but does not book 1.93%/day = 0.93% of cost over 240 days
+rho -0.10: program minus honest, per day +0.359 bp (se 0.006); over 240 days +0.854% (se 0.016, sd between paths 0.28%); booked cost 0.160% (first purchase 0.160%), booked turnover/day 0.330%, turnover the return series assumes but does not book 1.99%/day = 0.95% of cost over 240 days
+rho +0.05: program minus honest, per day -0.165 bp (se 0.007); over 240 days -0.413% (se 0.019, sd between paths 0.32%); booked cost 0.160% (first purchase 0.160%), booked turnover/day 0.330%, turnover the return series assumes but does not book 1.84%/day = 0.89% of cost over 240 days
+sanity, one sale of a ~8% holding on day 100: booked cost 0.1860% (first purchase 0.1600% + sale about 0.016%)

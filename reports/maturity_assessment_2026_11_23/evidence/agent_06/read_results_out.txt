@@ -1,0 +1,366 @@
+== QSF_1_1_HISTORICAL_PRICE_ONLY.json (18 KB) {'status': 'REAL', 'first': '2022-02-14', 'last': '2026-09-01', 'dates': 58, 'cost_round_trip_pct': 0.2}
+    dates = 58
+== QSF_1_2_VALIDATION.json (68 KB) {'status': 'REAL', 'protocol': 'reports/QSF_1_2_VALIDATION_PROTOCOL.md'}
+    tables.SWING|A|5.dates = 154
+    tables.SWING|A|5.ic = 0.0137
+    tables.SWING|A|5.t = 0.7291
+    tables.SWING|A|5.spread_net = -0.0023
+    tables.SWING|A|5.buy_excess = -0.0012
+    tables.SWING|A|5.early.ic = 0.0201
+    tables.SWING|A|5.early.spread_net = -0.0008
+    tables.SWING|A|5.early.dates = 77
+    tables.SWING|A|5.late.ic = 0.0073
+    tables.SWING|A|5.late.spread_net = -0.0038
+    tables.SWING|A|5.late.dates = 77
+    tables.SWING|B|5.dates = 154
+== QSF_CORRECTED_OOS.json (31 KB) {'status': 'REAL', 'protocol': 'reports/QSF_CORRECTED_RECHECK_PROTOCOL.md'}
+    primary.dates = 22
+    primary.ic = 0.0133
+    primary.t = 0.3133
+    primary.spread_net = -0.0271
+    primary.buy_excess = -0.004
+    primary.early.ic = 0.0708
+    primary.early.spread_net = 0.0301
+    primary.early.dates = 11
+    primary.late.ic = -0.0443
+    primary.late.spread_net = -0.0843
+    primary.late.dates = 11
+    primary.verdict = NO_EVIDENCE
+== QSF_CORRECTED_OOS_RUN1.json (31 KB) {'status': 'REAL', 'protocol': 'reports/QSF_CORRECTED_RECHECK_PROTOCOL.md'}
+    primary.dates = 22
+    primary.ic = 0.0142
+    primary.t = 0.3321
+    primary.spread_net = -0.0264
+    primary.buy_excess = -0.0042
+    primary.early.ic = 0.0741
+    primary.early.spread_net = 0.0339
+    primary.early.dates = 11
+    primary.late.ic = -0.0458
+    primary.late.spread_net = -0.0866
+    primary.late.dates = 11
+    primary.verdict = NO_EVIDENCE
+== QSF_CORRECTED_OPEN.json (67 KB) {'status': 'REAL', 'protocol': 'reports/QSF_CORRECTED_RECHECK_PROTOCOL.md'}
+    tables.SWING|A|5.dates = 152
+    tables.SWING|A|5.ic = 0.0222
+    tables.SWING|A|5.t = 1.1467
+    tables.SWING|A|5.spread_net = -0.0013
+    tables.SWING|A|5.buy_excess = -0.0006
+    tables.SWING|A|5.early.ic = 0.0284
+    tables.SWING|A|5.early.spread_net = -0.0001
+    tables.SWING|A|5.early.dates = 76
+    tables.SWING|A|5.late.ic = 0.0159
+    tables.SWING|A|5.late.spread_net = -0.0026
+    tables.SWING|A|5.late.dates = 76
+    tables.SWING|B|5.dates = 152
+== QSF_CORRECTED_OPEN_RUN1.json (67 KB) {'status': 'REAL', 'protocol': 'reports/QSF_CORRECTED_RECHECK_PROTOCOL.md'}
+    tables.SWING|A|5.dates = 152
+    tables.SWING|A|5.ic = 0.0223
+    tables.SWING|A|5.t = 1.1569
+    tables.SWING|A|5.spread_net = -0.0013
+    tables.SWING|A|5.buy_excess = -0.0006
+    tables.SWING|A|5.early.ic = 0.0279
+    tables.SWING|A|5.early.spread_net = -0.0
+    tables.SWING|A|5.early.dates = 76
+    tables.SWING|A|5.late.ic = 0.0167
+    tables.SWING|A|5.late.spread_net = -0.0026
+    tables.SWING|A|5.late.dates = 76
+    tables.SWING|B|5.dates = 152
+== QSF_CORRECTED_RESEARCH.json (7 KB) {'status': 'DEVELOPED', 'protocol': 'reports/QSF_CORRECTED_RECHECK_PROTOCOL.md'}
+== QSF_CORRECTED_RESEARCH_RUN1.json (7 KB) {'status': 'DEVELOPED', 'protocol': 'reports/QSF_CORRECTED_RECHECK_PROTOCOL.md'}
+== QSF_CORRECTED_SUE_TEST.json (2 KB) {'verdict': 'NO_EVIDENCE', 'status': 'TESTED', 'protocol': 'reports/QSF_SUE_TEST_PROTOCOL.md', 'first': '2022-01-06', 'last': '2026-08-17', 'dates': 232}
+    dates = 232
+    ic = 0.0055
+    t = 0.7073
+    spread_net = -0.0006
+    buy_excess = 0.0005
+    early.ic = 0.005
+    early.spread_net = -0.0011
+    early.dates = 116
+    late.ic = 0.0059
+    late.spread_net = -0.0
+    late.dates = 116
+    ic_spy_above_200d.ic = -0.0009
+== QSF_CORRECTED_SWING.json (11 KB) {'status': 'DEVELOPED', 'protocol': 'reports/QSF_CORRECTED_RECHECK_PROTOCOL.md'}
+== QSF_CORRECTED_SWING_RUN1.json (11 KB) {'status': 'DEVELOPED', 'protocol': 'reports/QSF_CORRECTED_RECHECK_PROTOCOL.md'}
+== QSF_ENSEMBLE.json (19 KB) {'status': 'TESTED', 'protocol': 'reports/QSF_ENSEMBLE_PROTOCOL.md'}
+    strategies.SWING_20.dates = 232
+    strategies.SWING_20.ic = 0.0006
+    strategies.SWING_20.t = 0.0487
+    strategies.SWING_20.spread_net = -0.0041
+    strategies.SWING_20.buy_excess = 0.0031
+    strategies.SWING_20.early.ic = 0.0081
+    strategies.SWING_20.early.spread_net = -0.0015
+    strategies.SWING_20.early.dates = 116
+    strategies.SWING_20.late.ic = -0.0069
+    strategies.SWING_20.late.spread_net = -0.0066
+    strategies.SWING_20.late.dates = 116
+    strategies.SWING_20.ic_spy_above_200d.ic = 0.0023
+== QSF_FORECAST_TEST.json (5 KB) {'status': 'REAL', 'protocol': 'reports/QSF_FORECAST_PROTOCOL.md', 'ran_at': '2026-11-14T19:23:06.790596+00:00'}
+    markets.KR.verdict = RANGE_CALIBRATED
+    markets.US.verdict = RANGE_CALIBRATED
+== QSF_FORECAST_TOUCH_TEST.json (42 KB) {'status': 'REAL', 'protocol': 'reports/QSF_FORECAST_TOUCH_PROTOCOL.md', 'ran_at': '2026-11-15T08:41:42.833162+00:00'}
+    markets.KR.verdict = TOUCH_CALIBRATED
+    markets.US.verdict = TOUCH_CALIBRATED
+== QSF_INSIDER_CIK_ALIASES.json (0 KB) {}
+== QSF_INSIDER_DEV.json (5 KB) {'status': 'DEVELOPED', 'protocol': 'reports/QSF_INSIDER_RESEARCH_PROTOCOL.md'}
+== QSF_KR.json (15 KB) {'status': 'TESTED', 'protocol': 'reports/QSF_KR_RESEARCH_PROTOCOL.md'}
+    strategies.SWING_20.dates = 232
+    strategies.SWING_20.ic = 0.1209
+    strategies.SWING_20.t = 13.4289
+    strategies.SWING_20.spread_net = 0.0186
+    strategies.SWING_20.buy_excess = 0.0075
+    strategies.SWING_20.early.ic = 0.1187
+    strategies.SWING_20.early.spread_net = 0.016
+    strategies.SWING_20.early.dates = 116
+    strategies.SWING_20.late.ic = 0.1231
+    strategies.SWING_20.late.spread_net = 0.0212
+    strategies.SWING_20.late.dates = 116
+    strategies.SWING_20.ic_spy_above_200d.ic = 0.1111
+== QSF_KR_DIAGNOSTICS.json (20 KB) {'status': 'CHECKED'}
+== QSF_KR_EVENTS.json (57 KB) {'status': 'TESTED', 'protocol': 'reports/QSF_KR_EVENTS_PROTOCOL.md'}
+    scores.EVENTS.SWING_20.dates = 232
+    scores.EVENTS.SWING_20.ic = 0.0727
+    scores.EVENTS.SWING_20.t = 10.6701
+    scores.EVENTS.SWING_20.spread_net = 0.0111
+    scores.EVENTS.SWING_20.buy_excess = 0.006
+    scores.EVENTS.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    scores.EVENTS.LONG_252.dates = 186
+    scores.EVENTS.LONG_252.ic = 0.1842
+    scores.EVENTS.LONG_252.t = 14.6072
+    scores.EVENTS.LONG_252.spread_net = 0.2008
+    scores.EVENTS.LONG_252.buy_excess = 0.1074
+    scores.EVENTS.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+== QSF_KR_FUND.json (47 KB) {'status': 'TESTED', 'protocol': 'reports/QSF_KR_FUND_PROTOCOL.md'}
+    scores.FUNDAMENTALS.SWING_20.dates = 232
+    scores.FUNDAMENTALS.SWING_20.ic = 0.0588
+    scores.FUNDAMENTALS.SWING_20.t = 7.8113
+    scores.FUNDAMENTALS.SWING_20.spread_net = 0.0074
+    scores.FUNDAMENTALS.SWING_20.buy_excess = 0.006
+    scores.FUNDAMENTALS.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    scores.FUNDAMENTALS.LONG_252.dates = 186
+    scores.FUNDAMENTALS.LONG_252.ic = 0.1685
+    scores.FUNDAMENTALS.LONG_252.t = 7.3291
+    scores.FUNDAMENTALS.LONG_252.spread_net = 0.1434
+    scores.FUNDAMENTALS.LONG_252.buy_excess = 0.149
+    scores.FUNDAMENTALS.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+== QSF_KR_HOLDER.json (61 KB) {'status': 'TESTED', 'protocol': 'reports/QSF_KR_HOLDER_PROTOCOL.md'}
+    scores.HOLDER.SWING_20.dates = 232
+    scores.HOLDER.SWING_20.ic = 0.0342
+    scores.HOLDER.SWING_20.t = 4.713
+    scores.HOLDER.SWING_20.spread_net = 0.002
+    scores.HOLDER.SWING_20.buy_excess = 0.0045
+    scores.HOLDER.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    scores.HOLDER.LONG_252.dates = 186
+    scores.HOLDER.LONG_252.ic = 0.0739
+    scores.HOLDER.LONG_252.t = 6.7827
+    scores.HOLDER.LONG_252.spread_net = 0.0437
+    scores.HOLDER.LONG_252.buy_excess = 0.0192
+    scores.HOLDER.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+== QSF_KR_LIVE_REPLAY.json (23 KB) {'status': 'REAL', 'protocol': 'reports/QSF_KR_LIVE_REPLAY_PROTOCOL.md', 'first': '2019-04-01', 'last': '2026-10-13'}
+    fidelity.passed = True
+    tables.SWING|5.dates = 89
+    tables.SWING|5.ic = 0.0181
+    tables.SWING|5.t = 1.0981
+    tables.SWING|5.spread_net = -0.0002
+    tables.SWING|5.buy_excess = 0.0038
+    tables.SWING|5.early.ic = 0.0244
+    tables.SWING|5.early.spread_net = 0.0021
+    tables.SWING|5.early.dates = 44
+    tables.SWING|5.late.ic = 0.0119
+    tables.SWING|5.late.spread_net = -0.0024
+    tables.SWING|5.late.dates = 45
+== QSF_KR_LIVE_REPLAY_FIDELITY.json (1 KB) {'status': 'REAL'}
+    passed = True
+== QSF_KR_LONG_EARLY.json (13 KB) {'status': 'REAL', 'protocol': 'reports/QSF_KR_LONG_EARLY_PROTOCOL.md', 'first': '2016-04-01', 'last': '2019-03-06'}
+    primary.dates = 23
+    primary.ic = 0.0935
+    primary.t = 2.0464
+    primary.spread_net = 0.0846
+    primary.buy_excess = 0.0461
+    primary.early.ic = 0.171
+    primary.early.spread_net = 0.1868
+    primary.early.dates = 11
+    primary.late.ic = 0.0224
+    primary.late.spread_net = -0.009
+    primary.late.dates = 12
+    primary.condition_a.verdict = NO_EVIDENCE
+== QSF_KR_METHOD_SELECTION.json (19 KB) {'verdict': 'NO_PRIMARY', 'status': 'REAL', 'protocol': 'reports/QSF_KR_METHOD_PROTOCOL.md', 'first': '2019-04-01', 'ran_at': '2026-11-11T08:42:44.518962+00:00'}
+    readings.R1.vs_b0.t = -0.6182
+    readings.R2.vs_b0.t = 2.224
+    readings.R3.vs_b0.t = 2.2881
+    readings.T1.vs_b0.t = -2.3075
+    readings.T2.vs_b0.t = -2.4943
+    readings.T3.vs_b0.t = -1.0351
+    readings.T4.vs_b0.t = -0.611
+    readings.B00.vs_b0.t = -0.5685
+    checks.R1.t = 0
+    checks.R2.t = 0
+    checks.R3.t = 0
+    checks.T1.t = 0
+== QSF_KR_RISK_GRADE.json (3 KB) {'verdict': 'RISK_GRADE_SUPPORTED', 'status': 'REAL', 'protocol': 'reports/QSF_KR_RISK_GRADE_PROTOCOL.md', 'ran_at': '2026-11-11T08:34:32.212865+00:00'}
+    verdict = RISK_GRADE_SUPPORTED
+    primary.volatility.t = 61.4646
+    primary.big_loss.t = 13.7192
+    primary.drawdown.t = -20.3769
+    primary.return_ic.t = -4.4876
+    reference.volatility.t = 46.1155
+    reference.big_loss.t = 19.0424
+    reference.drawdown.t = -28.8723
+    reference.return_ic.t = -7.7624
+== QSF_KR_SUE.json (103 KB) {'status': 'TESTED', 'protocol': 'reports/QSF_KR_SUE_PROTOCOL.md'}
+    scores.SUE.SWING_20.dates = 232
+    scores.SUE.SWING_20.ic = 0.0341
+    scores.SUE.SWING_20.t = 5.3215
+    scores.SUE.SWING_20.spread_net = 0.0059
+    scores.SUE.SWING_20.buy_excess = 0.0056
+    scores.SUE.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    scores.SUE.LONG_252.dates = 186
+    scores.SUE.LONG_252.ic = 0.0921
+    scores.SUE.LONG_252.t = 14.6707
+    scores.SUE.LONG_252.spread_net = 0.109
+    scores.SUE.LONG_252.buy_excess = 0.0656
+    scores.SUE.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+== QSF_KR_TECH_EARLY.json (4 KB) {'status': 'REAL', 'protocol': 'reports/QSF_KR_TECH_EARLY_PROTOCOL.md', 'first': '2012-04-02', 'last': '2019-01-31'}
+    technical.dates = 81
+    technical.t = -2.4168
+    technical.reading = NEGATIVE_AGAIN
+    risk.dates = 81
+    risk.t = 6.8653
+    composite.dates = 81
+    composite.t = 0.289
+    risk_minus_composite.dates = 81
+    risk_minus_composite.t = 5.7382
+    risk_minus_composite.reading = DROPPING_HELPED_AGAIN
+    technical_factors.breakout_volume.dates = 81
+    technical_factors.breakout_volume.t = 1.8657
+== QSF_KR_UNIVERSE_TEST.json (18 KB) {'status': 'REAL', 'protocol': 'reports/QSF_KR_UNIVERSE_TEST_PROTOCOL.md', 'first': '2019-04-01', 'last': '2026-10-13'}
+    universe.reading = FITS_THE_HYPOTHESIS
+    tables.SWING|5.dates = 89
+    tables.SWING|5.ic = 0.0052
+    tables.SWING|5.t = 0.2731
+    tables.SWING|5.spread_net = -0.0031
+    tables.SWING|5.buy_excess = 0.0029
+    tables.SWING|5.early.ic = 0.0092
+    tables.SWING|5.early.spread_net = -0.0043
+    tables.SWING|5.early.dates = 44
+    tables.SWING|5.late.ic = 0.0013
+    tables.SWING|5.late.spread_net = -0.002
+    tables.SWING|5.late.dates = 45
+== QSF_MARKET_STATE.json (9 KB) {'status': 'REAL', 'protocol': 'reports/QSF_MARKET_STATE_PROTOCOL.md', 'run_at': '2026-11-16T03:43:25.504958+00:00'}
+== QSF_NEWS_DEV.json (2 KB) {'status': 'DEVELOPED', 'protocol': 'reports/QSF_NEWS_RESEARCH_PROTOCOL.md'}
+== QSF_NEWS_TEST.json (6 KB) {'status': 'TESTED', 'protocol': 'reports/QSF_NEWS_RESEARCH_PROTOCOL.md'}
+    strategies.SWING_10.dates = 171
+    strategies.SWING_10.ic = 0.0079
+    strategies.SWING_10.t = 1.0535
+    strategies.SWING_10.spread_net = -0.0016
+    strategies.SWING_10.buy_excess = 0.0004
+    strategies.SWING_10.early.ic = 0.0042
+    strategies.SWING_10.early.spread_net = -0.0023
+    strategies.SWING_10.early.dates = 85
+    strategies.SWING_10.late.ic = 0.0116
+    strategies.SWING_10.late.spread_net = -0.0009
+    strategies.SWING_10.late.dates = 86
+    strategies.SWING_10.ic_spy_above_200d.ic = 0.0056
+== QSF_OOS_TEST.json (135 KB) {'status': 'REAL', 'protocol': 'reports/QSF_OOS_TEST_PROTOCOL.md'}
+    primary.dates = 22
+    primary.ic = 0.0039
+    primary.t = 0.0996
+    primary.spread_net = -0.0287
+    primary.buy_excess = -0.0058
+    primary.early.ic = 0.0533
+    primary.early.spread_net = 0.029
+    primary.early.dates = 11
+    primary.late.ic = -0.0455
+    primary.late.spread_net = -0.0864
+    primary.late.dates = 11
+    primary.verdict = NO_EVIDENCE
+== QSF_OOS_UNIVERSE.json (2 KB) {}
+== QSF_OPEN_UNIVERSE.json (12 KB) {}
+== QSF_OPEN_VALIDATION.json (175 KB) {'status': 'REAL', 'protocol': 'reports/QSF_OPEN_VALIDATION_PROTOCOL.md'}
+    tables.SWING|A|5.dates = 152
+    tables.SWING|A|5.ic = 0.0219
+    tables.SWING|A|5.t = 1.1332
+    tables.SWING|A|5.spread_net = -0.0013
+    tables.SWING|A|5.buy_excess = -0.0008
+    tables.SWING|A|5.early.ic = 0.0278
+    tables.SWING|A|5.early.spread_net = 0.0001
+    tables.SWING|A|5.early.dates = 76
+    tables.SWING|A|5.late.ic = 0.016
+    tables.SWING|A|5.late.spread_net = -0.0027
+    tables.SWING|A|5.late.dates = 76
+    tables.SWING|B|5.dates = 152
+== QSF_PICKS_SIMULATION.json (16 KB) {'status': 'REAL', 'protocol': 'reports/QSF_PICKS_SIMULATION_PROTOCOL.md'}
+    picks.tables.SWING|1.t = -2.8556
+    picks.tables.SWING|1.reading = NOT_DISTINCT_FROM_RANDOM
+    picks.tables.SWING|5.t = -0.1246
+    picks.tables.SWING|5.reading = NOT_DISTINCT_FROM_RANDOM
+    picks.tables.SWING|10.t = 0.7582
+    picks.tables.SWING|10.reading = NOT_DISTINCT_FROM_RANDOM
+    picks.tables.SWING|20.t = 0.2858
+    picks.tables.SWING|20.reading = NOT_DISTINCT_FROM_RANDOM
+    picks.tables.LONG_TERM|5.t = -0.389
+    picks.tables.LONG_TERM|5.reading = NOT_DISTINCT_FROM_RANDOM
+    picks.tables.LONG_TERM|21.t = -0.138
+    picks.tables.LONG_TERM|21.reading = NOT_DISTINCT_FROM_RANDOM
+== QSF_PIT_VALIDATION.json (104 KB) {'status': 'REAL', 'protocol': 'reports/QSF_PIT_VALIDATION_PROTOCOL.md'}
+    tables.SWING|A|5.dates = 152
+    tables.SWING|A|5.ic = 0.0199
+    tables.SWING|A|5.t = 1.028
+    tables.SWING|A|5.spread_net = -0.0015
+    tables.SWING|A|5.buy_excess = -0.0009
+    tables.SWING|A|5.early.ic = 0.0238
+    tables.SWING|A|5.early.spread_net = -0.0004
+    tables.SWING|A|5.early.dates = 76
+    tables.SWING|A|5.late.ic = 0.016
+    tables.SWING|A|5.late.spread_net = -0.0027
+    tables.SWING|A|5.late.dates = 76
+    tables.SWING|B|5.dates = 152
+== QSF_REGIME_WEIGHTS.json (8 KB) {'status': 'REAL', 'protocol': 'reports/QSF_REGIME_WEIGHTS_PROTOCOL.md', 'run_at': '2026-11-12T01:53:03.787874+00:00'}
+    markets.KR.verdict = NOT_SUPPORTED
+    markets.US.verdict = NOT_SUPPORTED
+== QSF_RESEARCH_SCORE_DEV.json (7 KB) {'status': 'DEVELOPED', 'protocol': 'reports/QSF_RESEARCH_SCORE_PROTOCOL.md'}
+== QSF_SENTIMENT.json (11 KB) {'status': 'TESTED', 'protocol': 'reports/QSF_SENTIMENT_PROTOCOL.md'}
+    strategies.SWING_20.dates = 232
+    strategies.SWING_20.ic = 0.0143
+    strategies.SWING_20.t = 0.7183
+    strategies.SWING_20.spread_net = 0.0035
+    strategies.SWING_20.buy_excess = 0.0033
+    strategies.SWING_20.early.ic = -0.0158
+    strategies.SWING_20.early.spread_net = -0.0068
+    strategies.SWING_20.early.dates = 116
+    strategies.SWING_20.late.ic = 0.0444
+    strategies.SWING_20.late.spread_net = 0.0139
+    strategies.SWING_20.late.dates = 116
+    strategies.SWING_20.ic_spy_above_200d.ic = 0.0117
+== QSF_SHORT_DEV.json (2 KB) {'status': 'DEVELOPED', 'protocol': 'reports/QSF_SHORT_RESEARCH_PROTOCOL.md'}
+== QSF_SURVIVORSHIP_SURVEY.json (2 KB) {}
+== QSF_SWING_DEV.json (12 KB) {'status': 'DEVELOPED', 'protocol': 'reports/QSF_SWING_RESEARCH_PROTOCOL.md'}
+== QSF_SWING_TEST.json (6 KB) {'status': 'TESTED', 'protocol': 'reports/QSF_SWING_RESEARCH_PROTOCOL.md'}
+    strategies.SWING_10.dates = 232
+    strategies.SWING_10.ic = -0.0033
+    strategies.SWING_10.t = -0.314
+    strategies.SWING_10.spread_net = -0.0027
+    strategies.SWING_10.buy_excess = -0.0004
+    strategies.SWING_10.early.ic = -0.01
+    strategies.SWING_10.early.spread_net = -0.0033
+    strategies.SWING_10.early.dates = 116
+    strategies.SWING_10.late.ic = 0.0035
+    strategies.SWING_10.late.spread_net = -0.002
+    strategies.SWING_10.late.dates = 116
+    strategies.SWING_10.ic_spy_above_200d.ic = -0.0088
+== QSF_US_13F.json (24 KB) {'status': 'TESTED', 'protocol': 'reports/QSF_US_13F_PROTOCOL.md'}
+    scores.BREADTH.SWING_20.dates = 641
+    scores.BREADTH.SWING_20.ic = 0.0063
+    scores.BREADTH.SWING_20.t = 0.6262
+    scores.BREADTH.SWING_20.spread_net = -0.0019
+    scores.BREADTH.SWING_20.buy_excess = 0.0008
+    scores.BREADTH.SWING_20.verdict = NO_EVIDENCE
+    scores.BREADTH.QUARTER_63.dates = 639
+    scores.BREADTH.QUARTER_63.ic = 0.0174
+    scores.BREADTH.QUARTER_63.t = 1.1157
+    scores.BREADTH.QUARTER_63.spread_net = 0.0053
+    scores.BREADTH.QUARTER_63.buy_excess = 0.0045
+    scores.BREADTH.QUARTER_63.verdict = NO_EVIDENCE
+== QSF_US_13F_PREPARE.json (18 KB) {'status': 'PREPARED_OK', 'protocol': 'reports/QSF_US_13F_PROTOCOL.md'}
+== frozen_core_after.json (1 KB) {}
+== frozen_core_before.json (1 KB) {}

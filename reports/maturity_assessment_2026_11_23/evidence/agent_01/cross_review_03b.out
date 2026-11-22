@@ -1,0 +1,6 @@
+adverse US day as the market state gives it: {'size_factor': 0.5, 'new_exposure_cap': 0.5}
+   DEFENSIVE : size factor 0.25, cap on new orders 0.5
+   NORMAL    : size factor 0.5, cap on new orders 0.5
+   AGGRESSIVE: size factor 0.75, cap on new orders 0.5
+US swing risk_reward: cards 504, exactly 0: 68%, mean 0.08 | actionable buy-band cards by entry status: {'WAIT_FOR_PULLBACK': 12, 'ENTRY_NOW': 1}
+KR swing risk_reward: cards 300, exactly 0: 60%, mean 0.13 | actionable buy-band cards by entry status: {}

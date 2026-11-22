@@ -1,0 +1,10 @@
+KR swing, 297 stocks: rank correlation 0.9051; moves over 3 points 22.2%
+   with risk_reward                held at its 11-19 value: rank correlation 0.9990; moves over 3 points 0.7%; stocks whose factor value moved by 0.5 or more in the day: 16
+   with atr_risk                   held at its 11-19 value: rank correlation 0.9059; moves over 3 points 21.9%; stocks whose factor value moved by 0.5 or more in the day: 0
+   with material_disclosures       held at its 11-19 value: rank correlation 0.9053; moves over 3 points 21.9%; stocks whose factor value moved by 0.5 or more in the day: 1
+   with earnings_calendar          held at its 11-19 value: rank correlation 0.9052; moves over 3 points 21.9%; stocks whose factor value moved by 0.5 or more in the day: 1
+US swing, 503 stocks: rank correlation 0.9775; moves over 3 points 25.0%
+   with trend_structure            held at its 11-19 value: rank correlation 0.9847; moves over 3 points 19.5%; stocks whose factor value moved by 0.5 or more in the day: 0
+   with momentum                   held at its 11-19 value: rank correlation 0.9836; moves over 3 points 16.7%; stocks whose factor value moved by 0.5 or more in the day: 2
+   with breakout_volume            held at its 11-19 value: rank correlation 0.9833; moves over 3 points 19.1%; stocks whose factor value moved by 0.5 or more in the day: 0
+   with relative_strength          held at its 11-19 value: rank correlation 0.9833; moves over 3 points 23.1%; stocks whose factor value moved by 0.5 or more in the day: 0
