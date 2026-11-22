@@ -10,7 +10,7 @@ alone: a part that could not be read is named, never left out silently.
 """
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Iterable, Any, Callable, Dict, List, Optional
 
 LEVELS = ("ACT", "DUE", "INFO")
 LEVEL_KO = {"ACT": "먼저 볼 것", "DUE": "오늘 챙길 것", "INFO": "참고"}
@@ -109,15 +109,26 @@ def plan_items(plan: Dict[str, Any], market: str) -> List[Dict[str, Any]]:
 
 def market_items(state: Optional[Dict[str, Any]], market: str) -> List[Dict[str, Any]]:
     """``state``: the day's market state (the regime factors, apart from every score)."""
-    if not state or state.get("score_100") is None:
+    if not state:
         return []
-    score, factor, where = state["score_100"], float(state.get("size_factor") or 1.0), MARKET_KO[market]
+    score, factor, where = state.get("score_100"), float(state.get("size_factor") or 1.0), MARKET_KO[market]
+    cap = state.get("new_exposure_cap")
+    capped = f" 새 주문의 합계도 계좌의 {cap * 100:.0f}%까지만 잡습니다." if cap else ""
+    if state.get("state") == "UNKNOWN" and factor < 1:
+        # an unknown state is planned like an adverse one where the market has a brake; the line used to say "order size unchanged"
+        seen = "값이 없습니다" if score is None else f"요인의 절반 이상이 비어 {score:.0f}/100이라는 값을 읽지 않습니다"
+        return [item("DUE", "MARKET_UNKNOWN", f"{where} 시장 상태를 읽을 수 없습니다({seen}). 나쁜 날과 같게 새 주문의 위험 한도와 비중 한도를 {factor:g}배로 줄여 계산했습니다.{capped}",
+                     tab="qsf", short=f"읽을 수 없음(나쁜 날로 취급, 새 주문 크기 {factor:g}배)")]
+    if score is None:
+        return [item("INFO", "MARKET_UNKNOWN", f"{where} 시장 상태를 읽을 수 없습니다(자료 없음). 이 시장은 주문 크기를 바꾸지 않습니다.", tab="qsf", short="읽을 수 없음")] if state.get("state") == "UNKNOWN" else []
     if state.get("state") == "ADVERSE" and factor < 1:
-        return [item("DUE", "MARKET_ADVERSE", f"{where} 시장 상태 {score:.0f}/100({state.get('label')}): 새 주문의 위험 한도와 비중 한도를 {factor:g}배로 줄여 계산했습니다. "
+        return [item("DUE", "MARKET_ADVERSE", f"{where} 시장 상태 {score:.0f}/100({state.get('label')}): 새 주문의 위험 한도와 비중 한도를 {factor:g}배로 줄여 계산했습니다.{capped} "
                      "과거에 이런 날 뒤에는 변동성이 컸습니다.", tab="qsf", short=f"{score:.0f}/100({state.get('label')}, 새 주문 크기 {factor:g}배)")]
     if state.get("state") == "ADVERSE":
         return [item("INFO", "MARKET_ADVERSE", f"{where} 시장 상태 {score:.0f}/100({state.get('label')}). 이 시장은 과거 시험에서 이 값이 이후 수익이나 변동성을 가르지 못해 주문 크기는 그대로입니다.",
                      tab="qsf", short=f"{score:.0f}/100({state.get('label')})")]
+    if state.get("state") == "UNKNOWN":
+        return [item("INFO", "MARKET_UNKNOWN", f"{where} 시장 상태는 요인의 절반 이상이 비어 읽지 않습니다({score:.0f}/100은 참고 값). 이 시장은 주문 크기를 바꾸지 않습니다.", tab="qsf", short="읽을 수 없음")]
     return [item("INFO", "MARKET_STATE", f"{where} 시장 상태 {score:.0f}/100({state.get('label')}). 주문 크기는 그대로입니다.", tab="qsf",
                  short=f"{score:.0f}/100({state.get('label')})")]
 
@@ -172,16 +183,19 @@ def job_items(status: Dict[str, Any], labels: Dict[str, str]) -> List[Dict[str, 
     return out
 
 
-def top_items(top3: Dict[str, Any], market: str) -> List[Dict[str, Any]]:
-    """The frozen top three of the newest session, and whether they were written before the market opened."""
+def top_items(top3: Dict[str, Any], market: str, deals: Iterable[str] = ()) -> List[Dict[str, Any]]:
+    """The frozen top three of the newest session, and whether they were written before the market opened.  ``deals``: tickers with
+    a merger or tender-offer filing on record; they are marked in the line, which also goes out in the daily message."""
+    pinned = set(deals)
+    tag = lambda t: " [합병 절차 공시]" if t in pinned else ""          # noqa: E731
     days = (((top3.get("strategies") or {}).get("SWING") or {}).get("days")) or []
     if not days:
         return []
     day = max(days, key=lambda d: d.get("session") or "")
-    names = ", ".join(f"{x.get('name') or x['ticker']}({x['ticker']}) {x['score']:.1f}점" for x in day.get("top") or [])
+    names = ", ".join(f"{x.get('name') or x['ticker']}({x['ticker']}) {x['score']:.1f}점{tag(x['ticker'])}" for x in day.get("top") or [])
     if not names:
         return []
-    brief = ", ".join(f"{(x.get('name') if market == 'KR' else None) or x['ticker']} {x['score']:.1f}" for x in day.get("top") or [])
+    brief = ", ".join(f"{(x.get('name') if market == 'KR' else None) or x['ticker']} {x['score']:.1f}{tag(x['ticker'])}" for x in day.get("top") or [])
     out = [item("INFO", "TOP3", f"{MARKET_KO[market]} 스윙 점수 상위 3종목({day['session']} 기록): {names}. 진입 거래일은 {day.get('entry_session')}입니다. 순위일 뿐 매수 신호가 아닙니다.", tab="qsf",
                 short=f"{brief} (진입 {day.get('entry_session')})")]
     if day.get("before_open") is False:
@@ -380,7 +394,18 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
     part("earnings", lambda: earnings_items(terminal.qsf.earnings_upcoming(market, 14)))
     part("alerts", lambda: alert_items(terminal.alerts_view().get("log") or [], at))
     part("job", lambda: job_items(automation.status(base), automation.STEP_NAMES))
-    part("top", lambda: top_items(terminal.qsf.top3(market), market))
+    part("top", lambda: top_items(terminal.qsf.top3(market), market, {r["ticker"] for r in terminal.qsf.latest(market).get("rows") or [] if r.get("deal")}))
+
+    def records() -> List[Dict[str, Any]]:
+        # what stopped or is behind (a record, the backup, the Telegram send): it was shown on the lab tab only
+        from terminal import record_status
+        try:
+            found = record_status.build(terminal).get("alerts") or []
+        except AttributeError:          # a terminal that cannot report its records (the tests' stand-ins): nothing to add, the lab tab is unchanged
+            return []
+        return [item("DUE" if a.get("level") == "bad" else "INFO", "RECORD_ALERT", a["text"], tab="lab") for a in found]
+
+    part("job", records)
     def top_still() -> List[Dict[str, Any]]:
         days = (((terminal.qsf.top3(market).get("strategies") or {}).get("SWING") or {}).get("days")) or []
         day = max(days, key=lambda d: d.get("session") or "") if days else {}

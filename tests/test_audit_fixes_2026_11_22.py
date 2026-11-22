@@ -191,10 +191,12 @@ def test_a_stored_company_record_that_stood_in_is_said_and_a_very_old_one_gives_
 
 # ---------------------------------------------------------------------- 14, 21, 25: what the screens say
 def test_each_order_row_says_its_band_and_carries_the_merger_mark():
-    orders = [{"ticker": "AAA", "score": 82.0}, {"ticker": "BBB", "score": 61.5}, {"ticker": "CCC", "score": 70.0}]
-    got = order_plan.annotate(orders, {"BBB": {"form": "DEFM14A", "date": "2026-10-01", "label": "합병 주주총회 위임장"}})
-    assert [o["band_label"] for o in orders] == ["강력 매수 후보", "보유·관찰", "매수 후보"] and orders[1]["deal"]["form"] == "DEFM14A" and "deal" not in orders[0]
-    assert got["under_buy_band"] == 1 and "1종목은 점수 구간이 매수 후보" in got["note"] and order_plan.annotate([{"ticker": "AAA", "score": 90.0}])["note"] is None
+    orders = [{"ticker": "AAA", "style": "SWING", "score": 82.0}, {"ticker": "BBB", "style": "LONG", "score": 61.5}, {"ticker": "CCC", "style": "SWING", "score": 70.0},
+              {"ticker": "DDD", "style": "LONG", "score": 68.2}]
+    got = order_plan.annotate(orders, {"BBB": {"form": "DEFM14A", "date": "2026-10-01", "label": "합병 주주총회 위임장"}}, bands={("DDD", "LONG"): "BUY_CANDIDATE"})
+    # a row without a recorded band reads its score; one recorded in the buy band by the buffer says so (the plan and the card no longer part)
+    assert [o["band_label"] for o in orders] == ["강력 매수 후보", "보유·관찰", "매수 후보", "매수 후보(완충 구간)"] and orders[1]["deal"]["form"] == "DEFM14A" and "deal" not in orders[0]
+    assert got["under_buy_band"] == 1 and "1종목은 점수 구간이 매수 후보" in got["note"] and order_plan.annotate([{"ticker": "AAA", "style": "SWING", "score": 90.0}])["note"] is None
 
 
 def test_a_card_says_when_its_band_and_its_entry_status_point_different_ways():

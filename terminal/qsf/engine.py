@@ -71,6 +71,8 @@ def hard_gates(ctx: Dict[str, Any], strategy: str) -> List[Dict[str, str]]:
         add("DATA_ANOMALY", f"최근 1년 안에 하루 {t['max_move_252'] * 100:.0f}% 변동이 있습니다. 조정되지 않은 분할·병합이나 자료 오류일 수 있어 확인이 필요합니다.")
     if t.get("row_defects"):
         add("DATA_ANOMALY", f"일봉에 날짜가 겹치거나 순서가 어긋난 행이 {t['row_defects']}개 있어 데이터 확인이 필요합니다.")
+    if t.get("bad_rows"):
+        add("DATA_ANOMALY", f"일봉에 고가가 저가보다 낮거나 거래량이 음수인 행이 {t['bad_rows']}개 있어 데이터 확인이 필요합니다.")
     if t.get("last_volume") == 0:
         add("NO_TRADING", "최근 거래일 거래량이 0입니다 (거래 정지 가능성).")
     if t.get("adv_value") is None or t["adv_value"] < g["min_adv_value"]:

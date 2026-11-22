@@ -93,6 +93,11 @@ class ScreenViews:
                     r["filing_events"] = mark
                 elif not (filed["session"] and r.get("ticker") in filed["known"]):
                     r["filing_unknown"] = True      # not on the record, or no record at all: unknown, not a no
+            deals = self._deal_marks(market, out)   # merger and tender-offer filings: on every list that shows the scan (the rank view had none)
+            for r in out.get("rows") or []:
+                if r.get("ticker") in deals:
+                    r["deal"] = deals[r["ticker"]]
+            out["live_model_version"] = config.MODEL_VERSION          # the rank list is as recorded; a card is computed now
             return out
         except (OSError, ValueError):
             return {"status": "UNAVAILABLE", "market": market, "rows": [], "reason": "아직 스캔 기록이 없습니다."}
@@ -150,7 +155,9 @@ class ScreenViews:
                          if "LONG_TERM" in v and v["LONG_TERM"].get("model_version") == config.MODEL_VERSION] for r in shards]
             days = [d for ds in dates_of for d in ds]
             if not days:
-                return {"session": None, "rows": {}}
+                # An older model's record is not used (its inputs may differ).  After a version change the comparison is empty until
+                # the first record of the new version; ``waiting`` lets the screen say so instead of showing nothing.
+                return {"session": None, "rows": {}, "waiting": bool(shards)}
             session = max(days)
             snaps = [s for r, ds in zip(shards, dates_of) if session in ds for s in self.ledger._load(r) if mine(s) and s["data_date"] == session]
             rows = {}
@@ -335,12 +342,9 @@ class ScreenViews:
         if not memo or memo[0] != out.get("generated_at"):
             kr = (self._kr_industries() or None) if market == "KR" else None     # no stored master: Yahoo sectors, as before
             memo = self._sector_memo[market] = (out.get("generated_at"), {t: self._sector_of(market, t, kr) for t in {r.get("ticker") for r in out.get("rows") or []}})
-        deals = self._deal_marks(market, out)
         for r in out.get("rows") or []:
             got = memo[1].get(r.get("ticker")) or {}
             r["sector"], r["industry"] = got.get("sector"), got.get("industry")
-            if r.get("ticker") in deals:
-                r["deal"] = deals[r["ticker"]]
         return out
 
     def _deal_marks(self, market: str, out: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:

@@ -78,8 +78,10 @@ def entry_status(res: Dict, ctx: Dict) -> Dict[str, Any]:
                 "zone": None}
     if rr is None or rr < need:
         pull = t.get("ma20") or (t["close"] - atr)
-        return {"status": "WAIT_FOR_PULLBACK", "reason": f"현재 가격의 손익비 {0 if rr is None else rr:.2f}가 기준 {need:g} 미만입니다. 20일선 부근이면 손익비가 개선됩니다.",
-                "zone": _zone(pull, atr, 0.5)}
+        why = (f"위에 저항선이 없어 목표가를 {config.SWING['projection_atr']:g} ATR 위로 잡는데, 그러면 지금 가격에서의 손익비({0 if rr is None else rr:.2f})는 계산상 기준 {need:g}에 닿지 않습니다. "
+               "신고가 근처를 따라가지 않고 20일선 부근의 눌림을 기다리는 규칙입니다." if not t.get("resistance") else
+               f"현재 가격의 손익비 {0 if rr is None else rr:.2f}가 기준 {need:g} 미만입니다. 20일선 부근이면 손익비가 개선됩니다.")
+        return {"status": "WAIT_FOR_PULLBACK", "reason": why, "zone": _zone(pull, atr, 0.5)}
     return {"status": "ENTRY_NOW", "reason": f"점수 {res['score']:.1f}점, 비용 반영 손익비 {rr:.2f}, 추세 요인 {(_factor(res, 'trend_structure') or 0) * 100:.0f}/100입니다.",
             "zone": _zone(t["close"], atr, 0.5)}
 
@@ -275,7 +277,10 @@ def what_would_change(res: Dict) -> List[str]:
         lo, label = min(above)
         out.append(f"{lo - s:.1f}점 오르면 '{label}' 구간입니다.")
     floor = max((lo for lo, _, _ in config.BANDS if lo <= s), default=0.0)
-    if floor > 0:
+    if res.get("band") == "BUY_CANDIDATE" and s >= config.BUY_BAND_EXIT:
+        # in at 70, out under 67: the next record keeps the band down to the buffer's floor
+        out.append(f"{s - config.BUY_BAND_EXIT:.1f}점 넘게 내려가 {config.BUY_BAND_EXIT:g}점 아래가 되면 매수 후보 구간을 벗어납니다({config.BANDS[1][0]:g}점에 들어가고 {config.BUY_BAND_EXIT:g}점 아래에서 나가는 완충).")
+    elif floor > 0:
         out.append(f"{s - floor:.1f}점 내려가면 현재 구간을 벗어납니다.")
     for g in res["gates"]:
         out.append(f"게이트 해제 필요: {g['text']}")

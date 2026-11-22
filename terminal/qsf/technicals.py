@@ -100,6 +100,10 @@ def compute(bars: List[Dict[str, Any]], bench: Optional[List[Dict[str, Any]]] = 
         # rows whose date repeats the row before or goes back: a provider's doubled or late-corrected row (audit 2026-11-22, ENG-06:
         # a doubled last row moved RSI from 62.4 to 66.0 and nothing said so)
         "row_defects": sum(1 for i in range(1, n) if bars[i]["date"] <= bars[i - 1]["date"]),
+        # rows that cannot be a day's trading: the high under the low, or a negative volume (the last 252 rows)
+        "bad_rows": sum(1 for b in bars[-252:] if (b.get("high") is not None and b.get("low") is not None and b["high"] < b["low"]) or (b.get("volume") is not None and b["volume"] < 0)),
+        # the longest run of weekdays with no row between two rows of the last year: a holiday week is 5 to 7, a missing stretch is more
+        "max_gap_weekdays": _max_gap([b["date"] for b in bars[-253:]]),
         "support_60": float(lo[-60:].min()), "low_20": float(lo[-20:].min()),
         "resistance": _resistance(h, c[-1], atr),
     }
@@ -120,6 +124,17 @@ def _resistance(h: np.ndarray, close: float, atr: Optional[float]) -> Optional[f
     w = h[-252:]
     pivots = [w[i] for i in range(5, len(w) - 5) if w[i] == w[i - 5:i + 6].max() and w[i] >= close + atr]
     return float(min(pivots)) if pivots else None
+
+
+def _max_gap(dates: List[str]) -> int:
+    """Weekdays strictly between consecutive dates, the largest such count.  Dates that are not ISO days count as no gap."""
+    try:
+        d = np.array(dates, dtype="datetime64[D]")
+    except (ValueError, TypeError):
+        return 0
+    if len(d) < 2:
+        return 0
+    return int(max(0, int(np.busday_count(d[:-1] + np.timedelta64(1, "D"), d[1:]).max())))
 
 
 def levels(t: Dict[str, Any], market: str) -> Dict[str, Any]:

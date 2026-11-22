@@ -835,7 +835,8 @@ class Terminal(ModelViews):
         rank = rank_book.active_rules(self.base, market)             # the same for the rank rules: an entry only inside the day's top share
         outside = op.outside_top(cands, op.ahead_share(snaps, session), rank["entry_top"]) if rank else None
         plan = op.build(cands, account, market, st, mstate, blocked=blocked, outside=outside)
-        bands = op.annotate(plan["orders"], {r["ticker"]: r["deal"] for r in latest.get("rows") or [] if r.get("deal")})          # display only
+        bands = op.annotate(plan["orders"], {r["ticker"]: r["deal"] for r in latest.get("rows") or [] if r.get("deal")},
+                            bands={(c["ticker"], c["style"]): c.get("band") for c in cands})          # display only
         return {"status": "REAL", "session": session, "equity": equity, "cash": state["cash"], "integrity": integ["status"], "note": note, "turnover_rules": bool(rules),
                 "rank_rules": bool(rank), "reentry_wait": blocked or {}, "bands": bands, **plan}
 

@@ -1157,6 +1157,10 @@ def _why(c: Dict[str, Any]) -> str:
     bad = c["top_negative"][0]["text"] if c["top_negative"] else "뚜렷한 약점 요인 없음"
     if c["actionability"] == "BLOCKED":
         return f"{head}이지만 위험 게이트로 차단: {c['gates'][0]['text']}"
+    if c["action"] == "BUY" and c.get("entry_status", "ENTRY_NOW") != "ENTRY_NOW":
+        # the band says buy candidate and the entry rule says not now: the sentence used to open "why enter now" and then quote
+        # the reason not to (assessment 2026-11-22: 20 US cards on 2026-11-20)
+        return f"{head}. 다만 지금은 진입 조건이 아닙니다: {c['entry']['reason']} 강점: {good}"
     if c["action"] == "BUY":
         return f"{head}. 지금 진입을 보는 이유: {c['entry']['reason']} 강점: {good}"
     if c["action"] in ("HOLD", "WATCH"):

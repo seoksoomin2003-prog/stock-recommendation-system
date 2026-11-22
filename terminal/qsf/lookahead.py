@@ -125,7 +125,9 @@ def functions(d: Dict[str, Any]) -> List[Dict[str, Any]]:
             out[str(z["symbols"][j])] = [[r["score"], r["coverage"], [g["code"] for g in r["gates"]], [f["normalized"] for f in r["factors"]]] for r in res]
         return out
     return [
-        {"id": "engine.score", "label": "점수 엔진(스윙·장기 점수, 요인 값, 위험 게이트)", "fn": engine_scores},
+        # This item hands the engine the rows up to the day and nothing else, so it cannot catch a caller that passes later rows:
+        # it shows that the engine and what it calls keep no state between calls and read nothing but what they are given.
+        {"id": "engine.score", "label": "점수 엔진의 재현성(그날까지의 행만 받았을 때 뒤의 값에 좌우되지 않음. 엔진에 넘기는 쪽이 미래 행을 넘기지 않는다는 증명은 아님)", "fn": engine_scores},
         {"id": "kr_method.signals", "label": "독자 매매법의 진입 신호 7종", "fn": lambda z, i: kr_method.signals(z, i, cols)},
         {"id": "kr_method.atr", "label": "독자 매매법의 ATR(손절·목표 폭)", "fn": lambda z, i: kr_method.atr(z, i, cols)},
         {"id": "kr_risk_grade.inputs", "label": "위험 등급의 입력 4종", "fn": kr_risk_grade.inputs},
