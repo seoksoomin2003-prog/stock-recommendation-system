@@ -16,7 +16,7 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 
-from terminal.qsf import config, ledger as lg
+from terminal.qsf import calibrate, config, ledger as lg
 from terminal.qsf.validate import rank
 from utils import durable
 
@@ -234,7 +234,8 @@ def summarize(days: List[Dict[str, Any]], strategy: str) -> Dict[str, Any]:
                 if indep < config.MIN_INDEPENDENT:
                     row["verdict"] = f"판단 보류 (독립 표본 {indep:.1f}/{config.MIN_INDEPENDENT})"
                 else:
-                    good = row["mean_rank_corr"] is not None and row["mean_rank_corr"] > 0 and t is not None and t >= MIN_T
+                    row["t_bar"] = calibrate.plain_bar(MIN_T, len(spaced))          # a few separate samples: the table's value is passed too often (2026-11-22)
+                    good = row["mean_rank_corr"] is not None and row["mean_rank_corr"] > 0 and t is not None and t >= row["t_bar"]
                     row["verdict"] = "점수 순위에 증거 있음" if good else "증거 없음"
             per_h[str(h)] = row
         out[version] = {"days": len(mine), "horizons": per_h}

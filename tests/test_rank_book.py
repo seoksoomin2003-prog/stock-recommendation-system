@@ -138,14 +138,23 @@ def test_the_paper_book_runs_under_whatever_rule_sets_are_in_force(tmp_path, mon
     p = tmp_path / rk.REPORTS["US"]
     p.parent.mkdir(parents=True)
     p.write_text(json.dumps({"status": "REAL", "decision": "ADOPT"}), encoding="utf-8")
-    assert rk.active_rules(tmp_path, "US") == rk.RULES and rk.active_rules(tmp_path, "KR") is None
+    # user decision 2026-11-22: the reading reports and switches nothing on; the button on the screen does
+    assert rk.active_rules(tmp_path, "US") is None and rk.status(tmp_path, "US")["can_switch"] is True
+    assert rk.set_switch(tmp_path, "KR", True)["status"] == "REFUSED" and rk.active_rules(tmp_path, "KR") is None      # no reading yet for Korea
+    got = rk.set_switch(tmp_path, "US", True)
+    assert got["status"] == "OK" and got["active"] is True and rk.active_rules(tmp_path, "US") == rk.RULES and rk.status(tmp_path, "US")["switch"] == "on"
+    assert rk.paper_rules(tmp_path, "US") == (rk.RULES, "PB-4") and tb.stored_switch(tmp_path, "US") is None             # its own file: the turnover button is untouched
     p.write_text(json.dumps({"status": "REAL", "decision": "KEEP"}), encoding="utf-8")
-    assert rk.active_rules(tmp_path, "US") is None
+    assert rk.active_rules(tmp_path, "US") == rk.RULES                                                                   # the button decides, whatever the reading said
+    monkeypatch.setenv(rk.ENV, "off")
+    assert rk.active_rules(tmp_path, "US") is None and "QSF_RANK_RULES=off" in rk.set_switch(tmp_path, "US", True)["note"]   # .env is read first
+    monkeypatch.setenv(rk.ENV, "auto")
+    assert rk.set_switch(tmp_path, "US", False)["active"] is False and rk.active_rules(tmp_path, "US") is None
 
 
 # ---------------------------------------------------------------------- the decision and the reading
 @pytest.mark.parametrize("mean, t, decision, evidence, words", [
-    (0.0004, 2.0, "ADOPT", "DISTINCT", "순위 규칙을 적용합니다"),
+    (0.0004, 2.0, "ADOPT", "DISTINCT", "자동으로 적용하지는 않습니다"),
     (0.0004, 1.99, "KEEP", "NOT_DISTINCT", "낫다는 근거가 없었다는 뜻"),
     (0.0, None, "KEEP", "NOT_DISTINCT", "계산할 수 없음"),
     (-0.0004, -2.6, "KEEP", "DISTINCT", "순위 규칙 쪽이 낮아"),
@@ -168,7 +177,7 @@ def test_the_reading_is_made_once_by_the_daily_job_and_ends_the_record(tmp_path,
     rk.record(tmp_path, "KR", load, now=lambda: AT)
     got = d._rank_reading(st := {})
     rep = json.loads((tmp_path / rk.REPORTS["KR"]).read_text(encoding="utf-8"))
-    assert got["KR"]["delivered"] is True and st["rank_reading"] == got and len(sent) == 1 and "[순위 규칙 판정 · 한국] 결정:" in sent[0] and "QSF_RANK_RULES" in sent[0]
+    assert got["KR"]["delivered"] is True and st["rank_reading"] == got and len(sent) == 1 and "[순위 규칙 판정 · 한국] 결정:" in sent[0] and "아무것도 바뀌지 않습니다" in sent[0]
     assert rep["decision"] == "KEEP" and rep["difference"]["days"] == 5 and rep["first"] == days[2] and rep["seed_session"] == days[1] and rep["rule_counts"] == {"RANK_ENTRY": 0, "RANK_EXIT": 0}
     assert d._rank_reading(st)["KR"]["delivered"] is True and len(sent) == 1
     with pytest.raises(RuntimeError, match="이미 읽었습니다"):

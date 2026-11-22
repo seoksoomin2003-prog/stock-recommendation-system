@@ -215,10 +215,10 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
     for book, label in ((turnover_book, "회전율 규칙 비교"), (rank_book, "순위 규칙 비교")):
         for m, ko in (("KR", "한국"), ("US", "미국")):
             s = book.status(base, m)
-            itself = book is rank_book                    # the turnover reading reports and applies nothing (user decision 2026-11-22)
+            itself = False                                # both readings report and apply nothing by themselves (user decisions 2026-11-22)
             row = {"key": f"{book.VERSION}_{m}", "label": f"{label}({ko})", "protocol": book.PROTOCOL, "records": s["records"], "wanted": s["read_at"], "applies_itself": itself, "primary": False,
                    "after": "적용으로 정해지면 프로그램이 스스로 규칙을 바꿉니다. .env로 뒤집을 수 있습니다." if itself else
-                   "조건을 채워도 프로그램이 스스로 규칙을 바꾸지 않습니다. 결과를 알리고, 쓰려면 점수 탭 모의 장부의 회전율 규칙 칸에서 '이 규칙 쓰기'를 누릅니다.", "attempts": 0}
+                   "조건을 채워도 프로그램이 스스로 규칙을 바꾸지 않습니다. 결과를 알리고, 쓰려면 점수 탭 모의 장부의 그 규칙 칸에서 '이 규칙 쓰기'를 누릅니다.", "attempts": 0}
             if s["status"] == "DECIDED":
                 adopt = s["decision"]["decision"] == "ADOPT"
                 row.update(state="READ", verdict=s["decision"]["decision"], meaning=("규칙 적용" if itself else "적용 조건 충족(자동 적용 안 함)") if adopt else "기존 규칙 유지", report=str(book.REPORTS[m]))

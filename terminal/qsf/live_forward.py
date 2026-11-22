@@ -171,16 +171,19 @@ def status(base: Path, calendars: Dict[str, Sequence[str]]) -> Dict[str, Any]:
 
 
 def _pooled(base: Path, strategy: str) -> Optional[Dict[str, Any]]:
-    got = {}
+    got, bars = {}, {}
     for market in config.MARKETS:
         p = report_path(base, market, strategy)
         if not p.exists():
             return None
-        got[market] = json.loads(p.read_text(encoding="utf-8"))["primary"]["t"]
+        primary = json.loads(p.read_text(encoding="utf-8"))["primary"]
+        got[market], bars[market] = primary["t"], primary.get("t_bar") or validate.MIN_T
     if any(v is None for v in got.values()):
         return None
     z = sum(got.values()) / math.sqrt(len(got))
-    return {"t": got, "combined": z, "engine_level_reference": z >= validate.MIN_T, "note": "참고 근거입니다. 시장별 판정을 바꾸지 않습니다."}
+    # two independent statistics of the same inflated spread combine into one of that spread: the reference uses the markets' own bar
+    bar = max(bars.values())
+    return {"t": got, "combined": z, "t_bar": bar, "engine_level_reference": z >= bar, "note": "참고 근거입니다. 시장별 판정을 바꾸지 않습니다."}
 
 
 def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str], List[Dict]], bench: List[Dict], log=print,

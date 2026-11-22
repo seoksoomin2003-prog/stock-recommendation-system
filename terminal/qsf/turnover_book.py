@@ -57,10 +57,11 @@ def switch_of(env: str) -> Dict[str, Any]:
 SWITCH_FILE = Path("data") / "qsf" / "turnover_switch.json"          # the screen's button, one entry per market
 
 
-def stored_switch(base: Path, market: str) -> Optional[str]:
-    """What the screen's button was last set to for ``market``: "on", "off" or None (never pressed, or the file cannot be read)."""
+def stored_switch(base: Path, market: str, file: Path = SWITCH_FILE) -> Optional[str]:
+    """What the screen's button was last set to for ``market``: "on", "off" or None (never pressed, or the file cannot be read).
+    ``file``: the rule set's own switch file (the rank rules keep theirs beside this one)."""
     try:
-        got = (json.loads((Path(base) / SWITCH_FILE).read_text(encoding="utf-8")).get(market) or {}).get("mode")
+        got = (json.loads((Path(base) / file).read_text(encoding="utf-8")).get(market) or {}).get("mode")
     except (OSError, ValueError, AttributeError):
         return None
     return got if got in ("on", "off") else None
@@ -75,16 +76,11 @@ def mode(base: Optional[Path] = None, market: Optional[str] = None) -> str:
     return stored_switch(base, market) or "auto"
 
 
-def set_switch(base: Path, market: str, on: bool, now: Callable[[], datetime] = _utcnow) -> Dict[str, Any]:
-    """The screen's button (user decision 2026-11-22: a button, not a line in a file).  Turning the rules on is refused until the
-    market's reading exists: before it, the paper book would run under the rules it is being compared with, and the comparison
-    would measure nothing.  Turning them off is always allowed."""
-    if market not in REPORTS:
-        raise ValueError(market)
-    rep = report(base, market)
-    if on and (not rep or rep.get("status") == "DAMAGED"):
-        return {"status": "REFUSED", "market": market, "reason": "240거래일 판정이 나온 뒤에 켤 수 있습니다. 그 전에 켜면 비교하려는 두 장부가 같은 규칙을 쓰게 되어 비교가 뜻을 잃습니다."}
-    path = Path(base) / SWITCH_FILE
+REFUSED_EARLY = "240거래일 판정이 나온 뒤에 켤 수 있습니다. 그 전에 켜면 비교하려는 두 장부가 같은 규칙을 쓰게 되어 비교가 뜻을 잃습니다."
+
+
+def write_switch(base: Path, market: str, on: bool, now: Callable[[], datetime], file: Path) -> None:
+    path = Path(base) / file
     try:
         doc = json.loads(path.read_text(encoding="utf-8"))
         doc = doc if isinstance(doc, dict) else {}
@@ -93,6 +89,19 @@ def set_switch(base: Path, market: str, on: bool, now: Callable[[], datetime] = 
     doc[market] = {"mode": "on" if on else "off", "at": now().isoformat()}
     path.parent.mkdir(parents=True, exist_ok=True)
     durable.write_text(path, json.dumps(doc, ensure_ascii=False, indent=1))
+
+
+def set_switch(base: Path, market: str, on: bool, now: Callable[[], datetime] = _utcnow) -> Dict[str, Any]:
+    """The screen's button (user decision 2026-11-22: a button, not a line in a file).  Turning the rules on is refused until the
+    market's reading exists: before it, the paper book would run under the rules it is being compared with, and the comparison
+    would measure nothing.  Turning them off is always allowed."""
+    if market not in REPORTS:
+        raise ValueError(market)
+    rep = report(base, market)
+    if on and (not rep or rep.get("status") == "DAMAGED"):
+        return {"status": "REFUSED", "market": market, "reason": REFUSED_EARLY}
+    write_switch(base, market, on, now, SWITCH_FILE)
+    doc = {market: {"mode": "on" if on else "off"}}
     env = switch_of(ENV)["mode"]
     return {"status": "OK", "market": market, "mode": doc[market]["mode"], "active": active_rules(base, market) is not None, "env": env,
             "note": f".env의 {ENV}={env} 가 이 버튼보다 먼저 읽힙니다. 버튼대로 하려면 .env의 그 줄을 지우세요." if env != "auto" else None}

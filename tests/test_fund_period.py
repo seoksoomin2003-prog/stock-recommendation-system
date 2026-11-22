@@ -378,7 +378,7 @@ def test_the_daily_job_the_backup_the_readings_and_the_documents_know_the_record
     assert 'f"periods1:' in src and 'f"krq1:' in src and "fund_period.live_period(self.base, market)" in src
     proto = (ROOT / fp.PROTOCOL).read_text(encoding="utf-8")
     assert "나란히 기록" in proto and "TRAILING_BETTER" in proto and "QSF_FUND_PERIOD=ANNUAL" in proto and "IC가 A -0.002, B -0.014" in proto
-    assert config.MODEL_VERSION == "QSF-1.5.0"                                                         # the live formula and its inputs did not change
+    assert config.MODEL_VERSION == "QSF-1.5.1"                                                         # the live formula and its inputs did not change
 
 
 def test_the_pass_bar_keeps_a_chance_pass_rare_and_two_episodes_do_not_decide():

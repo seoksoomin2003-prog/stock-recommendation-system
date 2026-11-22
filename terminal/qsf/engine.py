@@ -71,6 +71,8 @@ def hard_gates(ctx: Dict[str, Any], strategy: str) -> List[Dict[str, str]]:
         add("DATA_ANOMALY", f"최근 1년 안에 하루 {t['max_move_252'] * 100:.0f}% 변동이 있습니다. 조정되지 않은 분할·병합이나 자료 오류일 수 있어 확인이 필요합니다.")
     if t.get("row_defects"):
         add("DATA_ANOMALY", f"일봉에 날짜가 겹치거나 순서가 어긋난 행이 {t['row_defects']}개 있어 데이터 확인이 필요합니다.")
+    if (t.get("max_gap_weekdays") or 0) > config.MAX_HISTORY_GAP:
+        add("DATA_ANOMALY", f"최근 1년 일봉에 평일 {t['max_gap_weekdays']}일이 연속으로 비어 있어 데이터 확인이 필요합니다(거래정지였거나 자료가 빠진 것).")
     if t.get("bad_rows"):
         add("DATA_ANOMALY", f"일봉에 고가가 저가보다 낮거나 거래량이 음수인 행이 {t['bad_rows']}개 있어 데이터 확인이 필요합니다.")
     if t.get("last_volume") == 0:
@@ -193,6 +195,7 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
         ctx["levels"] = technicals.levels(ctx["tech"], market)
     rows, domains = [], {}
     tot_w, tot_c, tot_app, tot_eff, tot_in = 0.0, 0.0, 0.0, 0.0, 0.0
+    miss_w = 0.0                    # weight of the scored factors that should have data and have none
     missing_names, stale_names, partial_names = [], [], []
     for domain in config.DOMAINS:
         w_av, c_sum, app, eff = 0.0, 0.0, 0.0, 0.0
@@ -219,6 +222,7 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
                 row["normalized"] = None
                 if o["status"] == "MISSING":
                     missing_names.append(fid)
+                    miss_w += weight
             rows.append(row)
         domains[domain] = {"label": config.DOMAIN_LABELS[domain], "max_points": sum(profile["domains"][domain].values()),
                            "points": c_sum, "available_weight": w_av,
@@ -245,6 +249,20 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
     gates = hard_gates(ctx, strategy)
     prev_band = ctx.get("prev_band")            # the live card's previous record; absent in research and replays
     action = action_for(composite if sufficient else None, held, prev_band)
+    shown = band_shown(composite, sufficient, prev_band)
+    kept = bool(sufficient and kept_in_buy_band(composite, prev_band))
+    # The score with every missing factor read at the middle.  It decides nothing but this: a buy band the score reaches only
+    # because a factor is absent is not given.  Bands under the buy line, the entry rules and a held stock's words read the score.
+    conservative = None if composite is None or not (tot_w + miss_w) else 100 * (tot_c + config.MISSING_NEUTRAL * miss_w) / (tot_w + miss_w)
+    held_back = False
+    if sufficient and miss_w > 0 and conservative is not None and conservative < composite and shown["band"] in BUY_CODES:
+        low = classify(conservative, prev_band)
+        kept = bool(low["band"] in BUY_CODES and kept_in_buy_band(conservative, prev_band))
+        if low["band"] != shown["band"]:
+            shown = {"band": low["band"], "band_label": f"{low['band_label']} · 빠진 요인을 중간값으로 보면 {conservative:.1f}점"}
+            held_back = True
+            if action == "BUY" and low["band"] not in BUY_CODES:
+                action = "WATCH"
     actionability = "INSUFFICIENT_DATA" if not sufficient else "BLOCKED" if gates else "ACTIONABLE"
     display = action
     if actionability == "BLOCKED" and action == "BUY":
@@ -255,7 +273,7 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
     neg = sorted((r for r in ranked if r["normalized"] <= 0.4), key=weighted)[:3]
     return {"model_version": config.MODEL_VERSION, "spec_version": config.SPEC_VERSION, "profile": profile["id"],
             "market": market, "strategy": strategy, "held": held, "score": composite,
-            "diagnostic_only": not sufficient, **band_shown(composite, sufficient, prev_band), "band_kept": bool(sufficient and kept_in_buy_band(composite, prev_band)),
+            "diagnostic_only": not sufficient, **shown, "band_kept": kept, "conservative_score": conservative, "band_held_back": held_back,
             "action": display, "raw_action": action,
             "action_label": config.ACTION_LABELS[display], "color": _color(display, composite), "actionability": actionability,
             "coverage": coverage, "input_coverage": input_coverage, "partial": partial_names, "confidence": confidence, "domains": domains, "market_state": market_state(rows, market), "factors": rows, "gates": gates,

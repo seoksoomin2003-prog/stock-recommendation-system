@@ -5,7 +5,12 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.5.0"     # 1.5.0 (user decisions 2026-11-22 after the audit of that day, reports/QSF_1_5_0_2026_11_22.md):
+MODEL_VERSION = "QSF-1.5.1"     # 1.5.1 (user decisions 2026-11-22 after the maturity assessment, reports/QSF_1_5_1_2026_11_22.md; no record
+                                # was written under 1.5.0): the score is unchanged.  (1) the buy band is not given when the score would
+                                # fall under it with every missing factor read at the middle; (2) long-term entry: a valuation under 25
+                                # reads "overvalued" whatever the business quality; (3) the buffer reads only a record of the last five
+                                # sessions under the same version; (4) gate: more than ten weekdays missing in a row in the last year.
+                                # 1.5.0 (user decisions 2026-11-22 after the audit of that day, reports/QSF_1_5_0_2026_11_22.md):
                                 # (1) a company losing money now gets 0 for the earnings-growth figures it cannot have, and 0 for cash
                                 # conversion when both profit and operating cash flow are at or below zero; they were "missing", which
                                 # left the factor to its better figures (27 US loss-makers, 6 with a growth factor of 0.7 or more).
@@ -106,6 +111,12 @@ def profile_for(market: str, strategy: str) -> Dict:
 # The buy band's buffer (QSF-1.5.0): a stock recorded in the buy band at its previous session stays in it down to this score.
 # The line of 70 made a stock change its label on a move of 0.01 point; it now enters at 70 and leaves under 67.
 BUY_BAND_EXIT = 67.0
+BUFFER_SESSIONS = 5          # the buffer reads the stock's record only when it is one of the last five recorded sessions, under the live version
+# A factor with no data leaves both sums of the score, so a card can stand higher for a figure it lacks (assessment 2026-11-22: an
+# expensive stock without its valuation figures read 90 "strong buy" instead of 75).  The score is kept; the buy bands are given
+# only if the score still reaches them with every missing factor read at this value (user decision 2026-11-22, "매수 표시만 막기").
+MISSING_NEUTRAL = 0.5
+MAX_HISTORY_GAP = 10         # weekdays missing in a row between two bars of the last year before the history counts as broken
 MARKET_STATE_WEIGHTS = {"US": dict(_US_REGIME_SWING), "KR": dict(_KR_REGIME_SWING)}
 MARKET_STATE_MID = 50.0
 MARKET_STATE_LABELS = {"FAVOURABLE": "좋음", "ADVERSE": "나쁨", "UNKNOWN": "알 수 없음(자료 부족)"}

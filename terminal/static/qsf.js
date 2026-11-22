@@ -798,7 +798,7 @@ function qsfTurnoverHtml(tb) {
   }
   // The button that puts the rules in force (user decision 2026-11-22).  It appears once the reading exists; .env, when set, decides first.
   const sw = tb.status !== "DECIDED" ? `<div class="meta">규칙을 켜는 버튼은 ${tb.read_at}거래일 판정이 나온 뒤 여기에 생깁니다. 그 전에 켜면 비교가 뜻을 잃습니다.</div>`
-    : tb.mode !== "auto" ? "" : `<div class="meta"><button type="button" class="qsf-turnover-switch" data-on="${tb.active ? "0" : "1"}">${tb.active ? "이 규칙 쓰지 않기" : "이 규칙 쓰기"}</button>
+    : tb.mode !== "auto" ? "" : `<div class="meta"><button type="button" class="qsf-turnover-switch qsf-rule-switch" data-route="/api/qsf/turnover-rules" data-on="${tb.active ? "0" : "1"}">${tb.active ? "이 규칙 쓰지 않기" : "이 규칙 쓰기"}</button>
       <span class="qsf-turnover-said">지금: ${tb.active ? "규칙을 쓰는 중" : "쓰지 않음"}. 누르면 다음 기록부터 모의 장부, 주문 계획, 보유 종목 판단에 반영됩니다.</span></div>`;
   return `<h3>회전율 규칙 비교 <span class="meta">(TO-1${tb.active ? ` · 규칙 적용 중, ${esc(tb.adopted_version)}` : ""})</span></h3>${body}${sw}${qsfBookWarn(tb, "QSF_TURNOVER_RULES")}${force}${own}${what}`;
 }
@@ -807,12 +807,12 @@ function qsfRankBookHtml(rb) {
   if (!rb) return "";
   const r = rb.rules || {}, c = rb.rule_counts || {}, top = (v) => Math.round(v * 100);
   const what = `<div class="meta"><b>두 규칙</b>: 진입 후보는 그날 그 시장·스타일 점수의 상위 ${top(r.entry_top)}% 안일 때만 삽니다. 장기 보유는 순위가 상위 ${top(r.long_exit_top)}% 밖으로 밀리면 팝니다(40점 미만 규칙 대신).
-    적용 기준은 하루 수익률 차이의 평균이 0보다 크고 t가 기준(표의 2.0을 이 표본 구조에 맞춰 고친 값, 약 2.2) 이상일 때뿐이고, 그 밖에는 지금 규칙이 남습니다. 규칙: ${esc(rb.protocol)}</div>`;
+    240거래일 뒤 하루 수익률 차이의 평균이 0보다 크고 t가 기준(표의 2.0을 이 표본 구조에 맞춰 고친 값, 약 2.2) 이상이면 "적용 조건 충족"이라고 알립니다. 스스로 적용하지는 않습니다. 규칙: ${esc(rb.protocol)}</div>`;
   const force = rb.mode !== "auto" ? `<div class="meta"><span class="badge risk-note">.env의 QSF_RANK_RULES=${esc(rb.mode)}</span> 판정과 상관없이 규칙을 ${rb.mode === "on" ? "항상 적용" : "적용하지 않음"}으로 두셨습니다.</div>` : "";
   let body;
   if (rb.status === "DECIDED") {
     const d = rb.decision;
-    body = `<div class="meta"><span class="badge ${d.decision === "ADOPT" ? "ok" : ""}">결정: ${d.decision === "ADOPT" ? "규칙 적용" : "기존 규칙 유지"}</span> <span class="badge">${d.evidence === "DISTINCT" ? "수익 차이가 통계로 구분됨" : "수익 차이가 통계로 구분되지 않음"}</span>
+    body = `<div class="meta"><span class="badge ${d.decision === "ADOPT" ? "ok" : ""}">읽은 결과: ${d.decision === "ADOPT" ? "적용 조건 충족 · 자동 적용 안 함" : "기존 규칙 유지"}</span> <span class="badge">${d.evidence === "DISTINCT" ? "수익 차이가 통계로 구분됨" : "수익 차이가 통계로 구분되지 않음"}</span>
       구간 ${esc(d.first)} ~ ${esc(d.last)}</div><ul class="meta">${(d.why || []).map((w) => `<li>${esc(w)}</li>`).join("")}</ul><div class="meta">${esc(d.consequence || "")} ${esc(d.note || "")}</div>`;
   } else if (rb.status === "RECORDING") {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 기록 ${rb.records} / ${rb.read_at}거래일 (${esc(rb.started)} ~ ${esc(rb.last)}) · 판정까지 ${rb.left}거래일.
@@ -822,7 +822,10 @@ function qsfRankBookHtml(rb) {
   } else {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 장부의 첫 기록은 ${esc(rb.first)} 거래일입니다. ${esc(rb.note)}</div>`;
   }
-  return `<h3>순위 규칙 비교 <span class="meta">(RK-1${rb.active ? " · 규칙 적용 중" : ""})</span></h3>${body}${qsfBookWarn(rb, "QSF_RANK_RULES")}${force}${what}`;
+  const sw = rb.status !== "DECIDED" ? `<div class="meta">규칙을 켜는 버튼은 ${rb.read_at}거래일 판정이 나온 뒤 여기에 생깁니다. 그 전에 켜면 비교가 뜻을 잃습니다.</div>`
+    : rb.mode !== "auto" ? "" : `<div class="meta"><button type="button" class="qsf-rule-switch" data-route="/api/qsf/rank-rules" data-on="${rb.active ? "0" : "1"}">${rb.active ? "이 규칙 쓰지 않기" : "이 규칙 쓰기"}</button>
+      <span class="qsf-turnover-said">지금: ${rb.active ? "규칙을 쓰는 중" : "쓰지 않음"}. 누르면 다음 기록부터 모의 장부, 주문 계획, 보유 종목 판단에 반영됩니다.</span></div>`;
+  return `<h3>순위 규칙 비교 <span class="meta">(RK-1${rb.active ? " · 규칙 적용 중" : ""})</span></h3>${body}${sw}${qsfBookWarn(rb, "QSF_RANK_RULES")}${force}${what}`;
 }
 function qsfPaperHtml(d, tb, rb) {
   const title = `<h2>모의 체결 장부 <span class="badge">판정 전 참고</span> <span class="badge risk-note">가상의 금액 · 주문을 보내지 않습니다</span></h2>`;
@@ -864,11 +867,11 @@ async function qsfPaper() {
     api(`/api/qsf/rank-book?market=${mk}`).catch(() => null)]);
   if (mk !== state.market) return;
   box.innerHTML = d ? qsfPaperHtml(d, tb, rb) : "";
-  box.querySelectorAll(".qsf-turnover-switch").forEach((b) => { b.onclick = async () => {
+  box.querySelectorAll(".qsf-rule-switch").forEach((b) => { b.onclick = async () => {
     const said = b.parentElement.querySelector(".qsf-turnover-said");
     b.disabled = true;
     try {
-      const r = await api("/api/qsf/turnover-rules", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ market: mk, on: b.dataset.on === "1" }) });
+      const r = await api(b.dataset.route, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ market: mk, on: b.dataset.on === "1" }) });
       if (r.status !== "OK") { said.textContent = r.reason || "바꾸지 못했습니다."; b.disabled = false; return; }
       if (r.note) alert(r.note);
       qsfPaper();

@@ -17,7 +17,7 @@ import numpy as np
 
 from terminal.qsf import config, kr_forward as kf, validate
 from terminal.qsf.ledger import Ledger
-from terminal.qsf.score_split import _band, _ic, _mean
+from terminal.qsf.score_split import TOP_FIFTH, _band, _ic, _mean
 from utils import durable
 
 PROTOCOL = "reports/QSF_FUND_PERIOD_PROTOCOL.md"
@@ -152,7 +152,8 @@ def measure(docs: List[Dict[str, Any]], px: Any, market: str, strategy: str = "S
         ret = np.array([fwd[px.col[r["ticker"]]] if r["ticker"] in px.col else np.nan for r in rows], dtype=float)
         col = lambda key: np.array([np.nan if r.get(key) is None else r[key] for r in rows], dtype=float)      # noqa: E731
         able = np.array([r.get("actionability") == "ACTIONABLE" for r in rows], dtype=bool)
-        annual, trailing = _band(col("annual"), able, ret, cost), _band(col("trailing"), able, ret, cost)
+        top = (market, strategy) in TOP_FIFTH          # Korea, swing: the day's top fifth (the band of 70 is empty there)
+        annual, trailing = _band(col("annual"), able, ret, cost, top), _band(col("trailing"), able, ret, cost, top)
         out.append({"session": doc["session"], "annual": annual, "trailing": trailing, "diff": trailing["ret"] - annual["ret"],
                     "ic_annual": _ic(col("annual"), ret), "ic_trailing": _ic(col("trailing"), ret), "late": bool(doc.get("late"))})
     return out
@@ -181,9 +182,10 @@ def verdict(diff: Dict[str, Any]) -> str:
     return "TRAILING_BETTER" if m > 0 and t >= bar else "ANNUAL_BETTER" if m < 0 and t <= -bar else "NOT_DISTINGUISHED"
 
 
-def reasons(s: Dict[str, Any], code: str) -> List[str]:
+def reasons(s: Dict[str, Any], code: str, top: bool = False) -> List[str]:
     d, t = s["difference"], s["difference"]["t"]
-    return [f"잰 것: 점수 70 이상이고 실행 가능한 종목을 같은 비중으로 20거래일 보유한 수익(비용 차감), {s['days']}거래일.",
+    what = "그날 실행 가능한 종목 가운데 점수 상위 20%를" if top else "점수 70 이상이고 실행 가능한 종목을"
+    return [f"잰 것: {what} 같은 비중으로 20거래일 보유한 수익(비용 차감), {s['days']}거래일.",
             f"하루 평균: 최근 4분기 {s['trailing']['mean'] * 100:+.2f}%, 연간 {s['annual']['mean'] * 100:+.2f}%. 차이 {d['mean'] * 100:+.2f}%p, t {'없음' if t is None else format(t, '+.2f')} (기준: 차이가 양수이고 t {(d.get('t_bar') or MIN_T):g} 이상).",
             f"두 점수가 다른 종목을 고른 날: {d.get('days_with_difference', 0)}일 (기준: {MIN_DIFF_DAYS}일 이상). 기준 t {(d.get('t_bar') or MIN_T):g}은 표의 값 {MIN_T:g}을 이 표본 구조(겹치는 20거래일 수익의 하루 값)에서 우연히 넘는 비율이 표와 같아지도록 모의실험으로 고친 값입니다.",
             f"후보가 없던 날의 비율: 최근 4분기 {s['trailing']['empty_share'] * 100:.0f}%, 연간 {s['annual']['empty_share'] * 100:.0f}%.",
@@ -207,8 +209,10 @@ def evaluate_once(base: Path, market: str, px: Any, log=print) -> Dict[str, Any]
     long_days = [d for d in measure(docs, px, market, "LONG_TERM") if d["session"] <= last]
     s = summarize(swing, HORIZONS["SWING"])
     code = verdict(s["difference"])
+    top = (market, "SWING") in TOP_FIFTH
     res = {"status": "REAL", "protocol": PROTOCOL, "market": market, "records": len(docs), "first": swing[0]["session"], "last": last, "band": 70.0,
-           "verdict": code, "applies": "TRAILING" if code == ADOPT else "ANNUAL", "reasons": reasons(s, code), "swing": s,
+           "selection": "TOP_FIFTH" if top else "BAND",          # Korea: no swing score has reached 70, so the band could never differ (amendment 2026-11-22)
+           "verdict": code, "applies": "TRAILING" if code == ADOPT else "ANNUAL", "reasons": reasons(s, code, top), "swing": s,
            "long": {**summarize(long_days, HORIZONS["LONG_TERM"]), "reading": "FIGURES_ONLY"} if long_days else {"days": 0},
            "late_share": float(np.mean([d["late"] for d in swing])),
            "note": f"NOT_DISTINGUISHED는 '차이 없음'이 아니라 '아직 모름'입니다. 뒤집으려면 .env에 {SWITCH}=ANNUAL 또는 TRAILING을 적습니다."}

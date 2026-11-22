@@ -107,9 +107,17 @@ def _ic(score: np.ndarray, ret: np.ndarray) -> Optional[float]:
     return float(np.corrcoef(validate.rank(score[ok]), validate.rank(ret[ok]))[0, 1])
 
 
-def _band(score: np.ndarray, able: np.ndarray, ret: np.ndarray, cost: float) -> Dict[str, Any]:
-    """Equal weight in every actionable stock at or over the band, net of a round trip; nothing held (0) when there is none."""
-    pick = np.isfinite(score) & (score >= BAND) & able & np.isfinite(ret)
+TOP_FIFTH = (("KR", "SWING"),)          # read on the day's top fifth instead of the band (user decision 2026-11-22): the band is empty there
+
+
+def _band(score: np.ndarray, able: np.ndarray, ret: np.ndarray, cost: float, top: bool = False) -> Dict[str, Any]:
+    """Equal weight in every actionable stock at or over the band, net of a round trip; nothing held (0) when there is none.
+    ``top``: the day's top fifth of the actionable stocks by this score, for a market and strategy whose scores never reach the band."""
+    ok = np.isfinite(score) & able & np.isfinite(ret)
+    if top:
+        pick = ok & (score >= np.quantile(score[ok], 0.8)) if ok.sum() >= 5 else np.zeros_like(ok)
+    else:
+        pick = ok & (score >= BAND)
     return {"names": int(pick.sum()), "ret": float(ret[pick].mean() - cost) if pick.any() else 0.0}
 
 
@@ -128,7 +136,8 @@ def measure(docs: List[Dict[str, Any]], px: Any, market: str, strategy: str = "S
         ret = np.array([fwd[px.col[r["ticker"]]] if r["ticker"] in px.col else np.nan for r in rows], dtype=float)
         col = lambda key: np.array([np.nan if r.get(key) is None else r[key] for r in rows], dtype=float)      # noqa: E731
         able = np.array([r.get("actionability") == "ACTIONABLE" for r in rows], dtype=bool)
-        live, prior = _band(col("live"), able, ret, cost), _band(col("with_regime"), able, ret, cost)
+        top = (market, strategy) in TOP_FIFTH
+        live, prior = _band(col("live"), able, ret, cost, top), _band(col("with_regime"), able, ret, cost, top)
         out.append({"session": doc["session"], "state": (doc.get("market_state") or {}).get("state"), "live": live, "with_regime": prior, "diff": live["ret"] - prior["ret"],
                     "ic_live": _ic(col("live"), ret), "ic_with_regime": _ic(col("with_regime"), ret), "late": bool(doc.get("late"))})
     return out
@@ -176,10 +185,13 @@ def evaluate_once(base: Path, market: str, px: Any, log=print) -> Dict[str, Any]
     last = swing[-1]["session"]
     long_days = [d for d in measure(docs, px, market, "LONG_TERM") if d["session"] <= last]
     s = summarize(swing, HORIZONS["SWING"])
+    top = (market, "SWING") in TOP_FIFTH
     res = {"status": "REAL", "protocol": PROTOCOL, "market": market, "records": len(docs), "first": swing[0]["session"], "last": last, "band": BAND,
+           "selection": "TOP_FIFTH" if top else "BAND",          # Korea: no swing score has reached 70 (amendment 2026-11-22)
            "verdict": verdict(s["difference"]), "swing": s, "long": {**summarize(long_days, HORIZONS["LONG_TERM"]), "reading": "FIGURES_ONLY"} if long_days else {"days": 0},
            "late_share": float(np.mean([d["late"] for d in swing])),
-           "note": "NOT_DISTINGUISHED는 '차이 없음'이 아니라 '아직 모름'입니다. 두 점수는 종목 순위가 거의 같고, 차이는 어느 날에 몇 종목이 70을 넘는가에서 나옵니다."}
+           "note": "NOT_DISTINGUISHED는 '차이 없음'이 아니라 '아직 모름'입니다. 두 점수는 종목 순위가 거의 같고, 차이는 "
+                   + ("그날 상위 20%에 드는 종목이 서로 다른 데서 나옵니다(한국 스윙 점수는 70에 닿은 적이 없어 상위 20%로 읽습니다)." if top else "어느 날에 몇 종목이 70을 넘는가에서 나옵니다.")}
     target.parent.mkdir(parents=True, exist_ok=True)
     durable.write_text(target, json.dumps(res, ensure_ascii=False, indent=1))
     return res

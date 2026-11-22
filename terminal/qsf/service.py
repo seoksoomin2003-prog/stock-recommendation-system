@@ -756,7 +756,11 @@ class QSF(ScreenViews):
         market, session = ctx["market"], ctx["expected_session"]
         prev = self.ledger.previous(market, ctx["ticker"], strategy, session)
         # the buy band's buffer (QSF-1.5.0): a stock recorded in the band stays in it down to config.BUY_BAND_EXIT
-        ctx["prev_band"] = prev.get("band") if prev and prev.get("actionability") == "ACTIONABLE" else None
+        # ... and only from a record of the last few sessions under the live version: a band of weeks ago, or of another formula,
+        # is not this stock's band (user decision 2026-11-22)
+        fresh = bool(prev) and prev.get("actionability") == "ACTIONABLE" and prev.get("model_version") == config.MODEL_VERSION \
+            and prev.get("data_date") in self.ledger.recent_sessions(market, session, config.BUFFER_SESSIONS)     # an actionable record's data date is its session
+        ctx["prev_band"] = prev.get("band") if fresh else None
         res = engine.score(ctx, strategy, held=bool(position))
         entry_day = self._entry_date(market, session)
         entry = holding.entry_status(res, ctx)
@@ -1150,6 +1154,14 @@ def committee_note(cards: Dict[str, Any], committee: Optional[Dict[str, Any]]) -
 
 def _why(c: Dict[str, Any]) -> str:
     """One traceable sentence per action, built only from fields of this card (spec 17)."""
+    said = _why_of(c)
+    if c.get("band_held_back") and c["actionability"] == "ACTIONABLE":
+        # QSF-1.5.1: the score stands, the buy label does not, and the card says which factors made the difference
+        said += f" 자료가 없는 요인({', '.join(c.get('missing') or [])[:80]})을 빼고 계산한 점수라서, 그 자리를 중간값으로 읽은 점수로 구간을 정했습니다."
+    return said
+
+
+def _why_of(c: Dict[str, Any]) -> str:
     if c["actionability"] == "INSUFFICIENT_DATA":
         return f"데이터 반영률 {c['coverage'] * 100:.0f}%로 기준에 못 미쳐 판단하지 않습니다. 빠진 요인: {', '.join(c['missing'][:4])}"
     head = f"{c['score']:.1f}점 ({c['band_label']})"

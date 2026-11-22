@@ -62,8 +62,13 @@ def entry_status(res: Dict, ctx: Dict) -> Dict[str, Any]:
         return {"status": "NO_VALID_ENTRY_SETUP", "reason": f"점수 {res['score']:.1f}점이 관찰 기준 55점 미만입니다.", "zone": None}
     if strategy == "LONG_TERM":
         v = _factor(res, "valuation")
-        if v is not None and v < 0.25 and (_factor(res, "business_quality") or 0) >= 0.6:
-            return {"status": "OVERVALUED_AT_CURRENT_PRICE", "reason": f"사업 품질은 좋지만 밸류에이션 점수가 {v * 100:.0f}/100으로 낮습니다.", "zone": None}
+        if v is not None and v < 0.25:
+            # Until 2026-11-22 this stopped only a good business at a poor valuation: a poor valuation with a poor business went
+            # through as "the valuation does not block entry" (assessment 2026-11-22; user decision "구멍만 막기").
+            q = _factor(res, "business_quality")
+            why = (f"사업 품질은 좋지만 밸류에이션 점수가 {v * 100:.0f}/100으로 낮습니다." if (q or 0) >= 0.6 else
+                   f"밸류에이션 점수가 {v * 100:.0f}/100으로 낮고, 사업 품질 점수도 {'없음' if q is None else f'{q * 100:.0f}/100'}입니다.")
+            return {"status": "OVERVALUED_AT_CURRENT_PRICE", "reason": why, "zone": None}
         if e.get("sessions") is not None and e["sessions"] <= config.EARNINGS_BLOCK_SESSIONS:
             return {"status": "WAIT_FOR_EARNINGS", "reason": f"실적 발표 {e['date']} 이후 숫자를 확인하고 판단합니다.", "zone": None}
         zone = _zone(t["close"], atr, 1.0)

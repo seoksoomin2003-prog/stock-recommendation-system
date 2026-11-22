@@ -595,7 +595,7 @@ def evaluate_once(base: Path, n: int, log=print) -> Dict[str, Any]:
     verdicts = {}
     for m in prim:
         r, v = readings[m], readings[m].get("vs_b0") or {}
-        ok = r["trades"] > 0 and r["mean_net"] > 0 and (r.get("mean_net_minus_b0") or 0) > 0 and v.get("t") is not None and v["t"] >= VERDICT_T
+        ok = r["trades"] > 0 and r["mean_net"] > 0 and (r.get("mean_net_minus_b0") or 0) > 0 and v.get("t") is not None and v["t"] >= calibrate.bar(VERDICT_T, v.get("blocks") or 0, 1, 1, 1)
         verdicts[m] = "METHOD_SUPPORTED" if ok else "NOT_DISTINGUISHED"
     versions: Dict[str, int] = {}
     for d in used:

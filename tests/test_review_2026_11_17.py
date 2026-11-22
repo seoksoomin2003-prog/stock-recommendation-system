@@ -231,7 +231,7 @@ def test_damage_after_the_verdict_was_told_is_told_once_and_clears_when_restored
     p = verdict_file(tmp_path, book, "US", whole)
     daily, sent, _, _ = job(tmp_path)
     st = {}
-    in_force = book is rb                    # the turnover reading reports and switches nothing on (user decision 2026-11-22); the rank reading still applies itself
+    in_force = False                         # both readings report and switch nothing on (user decisions 2026-11-22): the button on the screen does
     assert getattr(daily, run)(st)["US"]["delivered"] is True and len(sent) == 1 and (book.active_rules(tmp_path, "US") is not None) is in_force
     getattr(daily, run)(st)
     assert len(sent) == 1                                           # told once

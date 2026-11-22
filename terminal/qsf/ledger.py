@@ -286,6 +286,11 @@ class Ledger:
         """The newest recorded session earlier than ``session``."""
         return max((r["session"] for r in self._live_rows() if r["market"] == market and r["session"] < session), default=None)
 
+    def recent_sessions(self, market: str, before: str, n: int) -> List[str]:
+        """The last ``n`` recorded sessions of the market earlier than ``before``, oldest first (read from the kept index rows)."""
+        with self._guard:
+            return sorted({r["session"] for r in self._rows() if r["market"] == market and r["session"] < before})[-n:]
+
     def of_session(self, market: str, session: str, strategy: str) -> List[Dict[str, Any]]:
         return [s for r in self._live_rows() if r["market"] == market and r["session"] == session for s in self._load(r) if s["strategy"] == strategy]
 

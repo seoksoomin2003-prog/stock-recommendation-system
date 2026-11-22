@@ -406,7 +406,7 @@ def test_a_loss_maker_gets_zero_for_the_earnings_growth_it_cannot_have_and_a_tur
     assert burn["normalized"] == pytest.approx(1 / 3) and "현금 전환을 0점" in burn["explanation"] and only_loss["normalized"] == pytest.approx(0.5)          # profit down, cash still coming in: cash conversion stays missing
     whole = engine.score(ctx(), "LONG_TERM")
     assert whole["score"] == pytest.approx(engine.score(ctx(fund={**GOOD_FUND, "loss_now": False, "cash_burn": False}), "LONG_TERM")["score"])          # a profitable company: nothing changes
-    assert config.MODEL_VERSION == "QSF-1.5.0" and (ROOT / "reports" / "QSF_1_5_0_2026_11_22.md").exists()
+    assert config.MODEL_VERSION == "QSF-1.5.1" and (ROOT / "reports" / "QSF_1_5_0_2026_11_22.md").exists()
 
 
 def test_the_statement_reader_marks_a_loss_and_a_cash_burn_and_computes_no_figure_for_them():
@@ -433,6 +433,7 @@ def test_the_buy_band_is_entered_at_seventy_and_left_under_sixty_seven():
 
 
 def test_the_live_card_reads_the_band_the_stock_was_recorded_in(tmp_path):
+    from terminal.qsf import config
     from tests.test_qsf import service
     q = service(tmp_path)
     seen = {}
@@ -440,15 +441,28 @@ def test_the_live_card_reads_the_band_the_stock_was_recorded_in(tmp_path):
     def score(c, strategy, held=False):
         seen[strategy] = c.get("prev_band")
         return real(c, strategy, held=held)
+
+    def rec(version, swing="ACTIONABLE"):
+        return lambda market, ticker, strategy, before: {"score": 71.0, "band": "BUY_CANDIDATE", "actionability": swing if strategy == "SWING" else "BLOCKED", "factors": [],
+                                                         "model_version": version, "data_date": "2026-11-03"}
     real, engine_score = engine.score, engine.score
     try:
         qsf_service.engine.score = score
-        q.ledger.previous = lambda market, ticker, strategy, before: {"score": 71.0, "band": "BUY_CANDIDATE", "actionability": "ACTIONABLE", "factors": [], "model_version": "x", "data_date": "2026-11-03"} \
-            if strategy == "SWING" else {"score": 71.0, "band": "BUY_CANDIDATE", "actionability": "BLOCKED", "factors": [], "model_version": "x", "data_date": "2026-11-03"}
+        q.ledger.previous = rec(config.MODEL_VERSION)
+        q.ledger.recent_sessions = lambda market, before, n: ["2026-10-30", "2026-11-02", "2026-11-03"][-n:]
         q.evaluate("AAA")
+        first = dict(seen)
+        q.ledger.recent_sessions = lambda market, before, n: ["2026-11-04", "2026-11-05", "2026-11-06", "2026-11-09", "2026-11-10"][-n:]
+        q.evaluate("AAA")                                                                                        # recorded before the last five sessions
+        old = dict(seen)
+        q.ledger.recent_sessions = lambda market, before, n: ["2026-11-03"]
+        q.ledger.previous = rec("QSF-0")
+        q.evaluate("AAA")                                                                                        # recorded under another formula
     finally:
         qsf_service.engine.score = engine_score
-    assert seen == {"SWING": "BUY_CANDIDATE", "LONG_TERM": None}                                                 # a blocked or unjudged record gives no buffer
+    assert first == {"SWING": "BUY_CANDIDATE", "LONG_TERM": None}                                                # a blocked or unjudged record gives no buffer
+    assert old == {"SWING": None, "LONG_TERM": None} and seen == {"SWING": None, "LONG_TERM": None}              # user decision 2026-11-22: last five sessions, same formula
+    assert config.BUFFER_SESSIONS == 5
 
 
 # ---------------------------------------------------------------------- second round of decisions, 2026-11-22

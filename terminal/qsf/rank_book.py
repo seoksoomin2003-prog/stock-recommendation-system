@@ -28,7 +28,8 @@ LAG = 20
 MIN_T = 2.0
 ENV = "QSF_RANK_RULES"
 PAPER_VERSIONS = {(True, False): tb.ADOPTED_VERSION, (False, True): "PB-4", (True, True): "PB-5"}     # (turnover rules, rank rules) in force
-DECISION_KO = {"ADOPT": "적용", "KEEP": "유지"}
+DECISION_KO = {"ADOPT": "적용 조건 충족(자동 적용 안 함)", "KEEP": "유지"}
+SWITCH_FILE = Path("data") / "qsf" / "rank_switch.json"          # the screen's button, one entry per market
 RULE_KO = {"RANK_ENTRY": "순위 규칙 때문에 빠진 주문(종목·날)", "RANK_EXIT": "순위로 정한 장기 매도"}
 NotDue = tb.NotDue
 
@@ -38,8 +39,25 @@ def _utcnow() -> datetime:
 
 
 # ---------------------------------------------------------------------- which rules are in force
-def mode() -> str:
-    return tb.switch_of(ENV)["mode"]
+def mode(base: Optional[Path] = None, market: Optional[str] = None) -> str:
+    """auto, on or off: ``.env`` when it says on or off, else the screen's button for that market, else auto (not in force)."""
+    env = tb.switch_of(ENV)["mode"]
+    if env != "auto" or base is None or market is None:
+        return env
+    return tb.stored_switch(base, market, SWITCH_FILE) or "auto"
+
+
+def set_switch(base: Path, market: str, on: bool, now: Callable[[], datetime] = _utcnow) -> Dict[str, Any]:
+    """The screen's button.  Refused until the market's reading exists, like the turnover rules' (``turnover_book.set_switch``)."""
+    if market not in REPORTS:
+        raise ValueError(market)
+    rep = report(base, market)
+    if on and (not rep or rep.get("status") == "DAMAGED"):
+        return {"status": "REFUSED", "market": market, "reason": tb.REFUSED_EARLY}
+    tb.write_switch(base, market, on, now, SWITCH_FILE)
+    env = tb.switch_of(ENV)["mode"]
+    return {"status": "OK", "market": market, "mode": "on" if on else "off", "active": active_rules(base, market) is not None, "env": env,
+            "note": f".env의 {ENV}={env} 가 이 버튼보다 먼저 읽힙니다. 버튼대로 하려면 .env의 그 줄을 지우세요." if env != "auto" else None}
 
 
 def report(base: Path, market: str) -> Optional[Dict[str, Any]]:
@@ -48,13 +66,15 @@ def report(base: Path, market: str) -> Optional[Dict[str, Any]]:
 
 def active_rules(base: Path, market: str) -> Optional[Dict[str, Any]]:
     """The rank rules when they are in force for the paper book, the real order plan and the holding reading of ``market``."""
-    m = mode()
+    m = mode(base, market)
     if m == "off":
         return None
     if m == "on":
         return dict(RULES)
-    rep = report(base, market)
-    return dict(RULES) if rep and rep.get("decision") == "ADOPT" else None
+    # "auto": the reading no longer switches the rules on (user decision 2026-11-22).  It compares two books that hold different
+    # amounts of stock, so in a falling market the rules win without any skill (simulated: adopted 6-27% of the time).  The
+    # reading reports; the button on the screen (``set_switch``) or QSF_RANK_RULES=on puts the rules in force.
+    return None
 
 
 def paper_rules(base: Path, market: str) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
@@ -98,7 +118,7 @@ def decide(base_fig: Dict[str, Any], rule_fig: Dict[str, Any], mean_diff: float,
            f"기간 수익률: 순위 규칙 {rule_fig['return_pct']:+.2f}%, 기존 {base_fig['return_pct']:+.2f}%. 최대 낙폭: {rule_fig['max_drawdown_pct']:.2f}%, {base_fig['max_drawdown_pct']:.2f}%.",
            f"비용(수수료·세금 + 슬리피지 추정 ÷ 평균 평가액): 순위 규칙 {rule_fig['cost_pct']:.2f}%, 기존 {base_fig['cost_pct']:.2f}%."]
     if decision == "ADOPT":
-        why.append("수익 차이가 0보다 크고 통계로 구분되어 순위 규칙을 적용합니다.")
+        why.append("수익 차이가 0보다 크고 통계로 구분되어 적용 조건을 채웠습니다. 자동으로 적용하지는 않습니다.")
     elif distinct:
         why.append("수익 차이가 통계로 구분되지만 순위 규칙 쪽이 낮아 기존 규칙을 유지합니다.")
     else:
@@ -140,9 +160,11 @@ def evaluate_once(base: Path, market: str, now: Callable[[], datetime] = _utcnow
     base_docs = [kf._read_day(base / paper_book.FOLDERS[market], s) for s in sessions]
     res = {"status": "REAL", "protocol": PROTOCOL, "version": VERSION, "market": market, "first": sessions[0], "last": sessions[-1], "seed_session": seed["session"],
            "read_at": now().isoformat(), "rules": dict(RULES), **measure(base_docs, rule_docs, seed),
-           "note": "계좌 하나의 경로를 나란히 본 비교입니다. 점수가 맞는지의 근거가 아니며 투자 자문이 아닙니다. .env의 QSF_RANK_RULES(auto/on/off)로 이 결정을 뒤집을 수 있습니다."}
-    res["consequence"] = ("이 뒤의 기록부터 기존 모의 장부, 실제 계좌의 주문 계획, 보유 종목 판단이 순위 규칙을 씁니다." if res["decision"] == "ADOPT"
+           "note": "계좌 하나의 경로를 나란히 본 비교입니다. 점수가 맞는지의 근거가 아니며 투자 자문이 아닙니다. 규칙은 화면의 '이 규칙 쓰기' 버튼을 누르거나 .env의 QSF_RANK_RULES=on 일 때만 쓰입니다."}
+    res["consequence"] = ("자동으로 바뀌는 것은 없습니다(2026-11-22 결정). 이 비교는 두 장부의 투자 비중이 달라서, 시장이 내린 구간이면 규칙에 실력이 없어도 조건이 채워질 수 있습니다. "
+                          "두 장부의 평균 현금 비중과 구간의 지수 수익을 함께 보고 정하세요. 규칙을 쓰려면 점수 탭 모의 장부의 순위 규칙 칸에서 '이 규칙 쓰기'를 누릅니다." if res["decision"] == "ADOPT"
                           else "아무것도 바뀌지 않습니다. 비교 장부는 더 적지 않습니다.")
+    res["applies_itself"] = False
     target.parent.mkdir(parents=True, exist_ok=True)
     durable.write_text(target, json.dumps(res, ensure_ascii=False, indent=1))        # whole and on the disk: this file switches rules on
     return res
@@ -168,7 +190,7 @@ def text(rep: Dict[str, Any]) -> str:
         return f"[순위 규칙 판정 · {name}] 읽지 못했습니다: {rep.get('reason')} 기록을 확인해야 합니다. 규칙: {PROTOCOL}"
     lines = [f"[순위 규칙 판정 · {name}] 결정: {DECISION_KO[rep['decision']]}", f"구간 {rep['first']} ~ {rep['last']} ({rep['difference']['days']}거래일)"]
     lines += [f"- {w}" for w in rep["why"]]
-    lines += [rep["consequence"], "터미널 점수 탭의 모의 장부에서 수치를 볼 수 있습니다. 뒤집으려면 .env의 QSF_RANK_RULES를 on 또는 off로 두세요."]
+    lines += [rep["consequence"], "터미널 점수 탭의 모의 장부에서 수치를 볼 수 있습니다."]
     return "\n".join(lines)
 
 
@@ -187,10 +209,11 @@ def status(base: Path, market: str) -> Dict[str, Any]:
     rep = None if damaged else rep
     out: Dict[str, Any] = {"status": "DAMAGED" if damaged else "DECIDED" if rep else "RECORDING" if index else "NO_RECORD", "market": market, "protocol": PROTOCOL, "version": VERSION, "rules": dict(RULES),
                            "switch_unknown": tb.switch_of(ENV)["unknown"], "damaged": damaged,
-                           "read_at": READ_AT, "first": FIRST, "mode": mode(), "active": active_rules(base, market) is not None, "paper_version": paper_rules(base, market)[1],
+                           "read_at": READ_AT, "first": FIRST, "mode": mode(), "active": active_rules(base, market) is not None,
+                           "switch": tb.stored_switch(base, market, SWITCH_FILE), "can_switch": bool(rep) and mode() == "auto", "paper_version": paper_rules(base, market)[1],
                            "rule_labels": RULE_KO, "records": len(index), "left": max(READ_AT - len(index), 0),
                            "started": index[0]["session"] if index else None, "last": index[-1]["session"] if index else None,
-                           "note": "판정 전에는 비교 장부의 평가액·수익률·비용을 보여 주지 않습니다. 240거래일이 되면 프로그램이 스스로 읽고 정합니다."}
+                           "note": "판정 전에는 비교 장부의 평가액·수익률·비용을 보여 주지 않습니다. 240거래일이 되면 프로그램이 스스로 읽고 알립니다. 규칙을 스스로 바꾸지는 않습니다(2026-11-22 결정)."}
     if index:
         out["rule_counts"] = rule_counts([kf._read_day(base / FOLDERS[market], r["session"]) for r in index])
     if rep:
