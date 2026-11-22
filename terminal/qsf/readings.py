@@ -193,8 +193,12 @@ def damaged_text(e: Dict[str, Any]) -> str:
             f"백업 폴더의 reports_qsf/ 안에 같은 이름의 파일이 있으면 그것으로 바꾸세요. 안내: {GUIDE}")
 
 
+SESSIONS_A_YEAR = 250          # about 252 in New York and 245 in Seoul: weekdays less some ten holidays
+
+
 def _eta(left: int, today: date) -> str:
-    return (today + timedelta(days=round(left * 7 / 5))).isoformat()[:7]
+    """The month ``left`` sessions from now.  Until 2026-11-22 this counted weekdays only and came out about two weeks early a year."""
+    return (today + timedelta(days=round(left * 365 / SESSIONS_A_YEAR))).isoformat()[:7]
 
 
 def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -226,4 +230,4 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
                 row.update(state="DUE" if s["left"] == 0 else "WAITING", left=s["left"], expected=_eta(s["left"], today))
             rows.append(row)
     return {"status": "REAL", "guide": GUIDE, "readings": rows, "read": sum(1 for r in rows if r["state"] == "READ"), "total": len(rows),
-            "note": "판정은 때가 되면 매일 작업이 스스로 읽고 텔레그램으로 알립니다. 사람이 할 일은 없습니다. 예상 시점은 기록이 하루도 빠지지 않는다고 본 어림입니다."}
+            "note": "판정은 때가 되면 매일 작업이 스스로 읽고 텔레그램으로 알립니다. 사람이 할 일은 없습니다. 예상 시점은 기록이 하루도 빠지지 않고 휴장일이 한 해 열흘쯤이라고 본 어림입니다."}

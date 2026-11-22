@@ -61,7 +61,7 @@ async function renderCompare() {
     $("#cmp-meta").innerHTML = d.status === "REAL"
       ? meta(d.source, d.fetched_at, `${esc(d.dates[0])} ~ ${esc(d.dates[d.dates.length - 1])} · ${esc(d.basis)}${d.mixed_markets ? " 미국과 한국을 섞으면 두 시장이 모두 연 날만 남습니다." : ""}${miss}`)
       : `<div class="empty">${badge("UNAVAILABLE")} 비교할 가격을 받지 못했습니다.${miss}</div>`;
-  } catch (e) { $("#cmp-meta").innerHTML = `<span class="err">${esc(ERR_KO[e.message] || e.message)}</span>`; }
+  } catch (e) { $("#cmp-meta").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; }
 }
 function cmpChips() {
   const box = $("#cmp-chips");

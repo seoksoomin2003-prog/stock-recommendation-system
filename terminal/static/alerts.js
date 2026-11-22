@@ -34,7 +34,7 @@ async function renderAlerts(box) {
     if (AL_VALUE[t]) { const n = Number(f.value.value.replace(/,/g, "")); body.value = t === "EARNINGS_SOON" ? Math.round(n) : n; }
     if (t === "BAND_CHANGE") body.strategy = f.strategy.value;
     try { await alPost("/api/alerts/add", body); $("#al-msg").className = "msg ok"; $("#al-msg").textContent = "추가했습니다."; f.value.value = ""; loadAlerts(); }
-    catch (err) { $("#al-msg").className = "msg err"; $("#al-msg").textContent = AL_ERR[err.message] || err.message; }
+    catch (err) { $("#al-msg").className = "msg err"; $("#al-msg").textContent = AL_ERR[err.message] || errKo(err); }
   };
   $("#al-check").onclick = checkAlerts;
   loadAlerts();

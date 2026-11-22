@@ -72,9 +72,38 @@ async function api(path, opts) {
   if (!r.ok) throw new Error(j.error || `HTTP_${r.status}`);
   return j;
 }
+// What the server's error codes mean, in Korean.  A code that is not here is shown as it is, marked as a code.
 const ERR_KO = { INVALID_TICKER: "종목 코드 형식이 올바르지 않습니다.", WATCHLIST_FULL: "관심종목은 최대 100개입니다.", SERVER_UNREACHABLE: "터미널 서버에 연결되지 않습니다.",
-  INTERNAL_ERROR: "서버 내부 오류가 발생했습니다.", INVALID_RANGE: "기간 값이 올바르지 않습니다." };
-const errBox = (e) => `<div class="panel err">불러오지 못했습니다: ${esc(ERR_KO[e.message] || e.message)}</div>`;
+  INTERNAL_ERROR: "서버 내부 오류가 발생했습니다. 잠시 뒤 다시 해 보고, 계속되면 '서버 다시 시작'을 누르세요.", INVALID_RANGE: "기간 값이 올바르지 않습니다.",
+  BAD_RESPONSE: "서버의 답을 읽지 못했습니다. 화면을 새로 고쳐 보세요.", BAD_JSON: "보낸 내용을 서버가 읽지 못했습니다. 화면을 새로 고친 뒤 다시 해 보세요.",
+  BAD_LENGTH: "보낸 내용이 너무 길거나 길이가 맞지 않습니다.", METHOD_NOT_ALLOWED: "이 주소는 그 방식의 요청을 받지 않습니다.", NOT_FOUND: "그런 주소가 없습니다. 화면을 새로 고쳐 보세요.",
+  FORBIDDEN_HOST: "이 주소로는 터미널을 열 수 없습니다. 터미널을 띄운 기기에서 127.0.0.1 주소로 여세요.", FORBIDDEN_ORIGIN: "다른 사이트에서 온 요청이라 받지 않았습니다.",
+  FORBIDDEN_SITE: "다른 사이트에서 온 요청이라 받지 않았습니다.",
+  INVALID_MARKET: "시장 값이 올바르지 않습니다(미국 또는 한국).", BAD_MARKET: "시장 값이 올바르지 않습니다(미국 또는 한국).",
+  INVALID_STRATEGY: "구분 값이 올바르지 않습니다(스윙 또는 장기).", BAD_STRATEGY: "구분 값이 올바르지 않습니다(스윙 또는 장기).",
+  INVALID_DAYS: "기간(일수) 값이 올바르지 않습니다.", INVALID_SORT: "정렬 기준이 올바르지 않습니다.", INVALID_ORDER: "정렬 방향이 올바르지 않습니다.",
+  INVALID_ACTION: "판단 조건 값이 올바르지 않습니다.", INVALID_CONFIDENCE: "신뢰도 조건 값이 올바르지 않습니다.", INVALID_ENTRY: "진입 상태 조건 값이 올바르지 않습니다.",
+  INVALID_MIN_SCORE: "최소 점수가 숫자가 아니거나 0~100을 벗어났습니다.", INVALID_LIMIT: "줄 수 값이 올바르지 않습니다.", INVALID_OFFSET: "시작 위치 값이 올바르지 않습니다.",
+  INVALID_ACTIONABLE: "'실행 가능만' 조건 값이 올바르지 않습니다.", INVALID_BUYBACK: "'자사주 매입' 조건 값이 올바르지 않습니다.",
+  INVALID_NO_FINANCING: "'자금 조달 제외' 조건 값이 올바르지 않습니다.", INVALID_NO_HIGH_RISK: "'고위험 제외' 조건 값이 올바르지 않습니다.",
+  BAD_TYPE: "조건의 종류를 고르세요.", BAD_VALUE: "값이 올바르지 않습니다.", TICKER_REQUIRED: "종목 코드가 필요합니다.", TOO_MANY_RULES: "알림 조건은 최대 200개입니다.",
+  KEEP_AT_LEAST_ONE: "적어도 하나는 남겨 두어야 합니다.", TOO_FEW_SYMBOLS: "비교하려면 종목이 둘 이상 필요합니다.", NO_HOLDINGS: "보유 종목이 없습니다.",
+  UNKNOWN_FUND: "목록에 없는 펀드입니다.", MISSING_FUNDS: "펀드 구성 자료가 없습니다.", FUND_MISMATCH: "받은 펀드 구성이 요청한 펀드와 다릅니다.", UNKNOWN_MODEL: "그런 모델이 없습니다.",
+  UNKNOWN_SECURITY: "한국 거래소 종목 목록에서 찾을 수 없는 종목입니다.", MASTER_UNAVAILABLE: "한국 종목 목록을 받지 못했습니다. 잠시 뒤 다시 해 보세요.",
+  NO_PRICE: "가격 이력을 받지 못했습니다.", SHORT_HISTORY: "거래 이력이 30거래일이 안 돼 점수를 내지 않습니다.", NO_NAME: "종목명을 찾지 못했습니다.",
+  NO_LEDGER_SESSION: "그 날짜의 점수 기록이 없습니다.", NO_PRICES_FOR_DAY: "그날의 가격 자료가 아직 없습니다.", TOO_FEW_STOCKS: "그날 자료가 있는 종목이 너무 적어 계산하지 않았습니다.",
+  TOO_FEW_SCORES: "그날 점수가 있는 종목이 너무 적어 계산하지 않았습니다.", ROWS_DIFFER: "기록의 줄이 서로 맞지 않습니다. 기록 파일을 확인해야 합니다.",
+  ROWS_NOT_IN_ORDER: "기록의 줄 순서가 맞지 않습니다. 기록 파일을 확인해야 합니다.", FORMER_COMPOSITION: "예전 구성으로 만든 기록이라 지금 방식으로 읽지 않습니다.",
+  TEST_DATA_IN_DEVELOPMENT: "시험용 자료가 섞여 있어 처리하지 않았습니다.", RSS_WITH_DTD: "뉴스 제공처의 답이 허용하지 않는 형식이라 읽지 않았습니다." };
+// The sentence for a failed request: the code's Korean text, else the server's own sentence, else the code marked as one.
+function errKo(e) {
+  const m = (e && e.message) || String(e);
+  if (ERR_KO[m]) return ERR_KO[m];
+  const h = /^HTTP_(\d+)$/.exec(m);
+  if (h) return `서버가 요청을 처리하지 못했습니다(HTTP ${h[1]}).`;
+  return /^[A-Z][A-Z0-9_]+$/.test(m) ? `오류 코드 ${m}` : m;
+}
+const errBox = (e) => `<div class="panel err">불러오지 못했습니다: ${esc(errKo(e))}</div>`;
 const loading = '<div class="panel empty">불러오는 중…</div>';
 function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 
@@ -334,9 +363,9 @@ async function renderStock() {
   loadChart(t);
   if (typeof loadPeers === "function") loadPeers(t);
   api(`/api/company?t=${encodeURIComponent(t)}`).then((c) => { if (state.ticker === t) { renderProfile(c); renderFund(c.fundamentals); } })
-    .catch((e) => { if (state.ticker === t) { $("#s-fund").innerHTML = `<span class="err">${esc(ERR_KO[e.message] || e.message)}</span>`; $("#s-head").innerHTML = `<div class="err">${esc(ERR_KO[e.message] || e.message)}</div>`; } });
+    .catch((e) => { if (state.ticker === t) { $("#s-fund").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; $("#s-head").innerHTML = `<div class="err">${esc(errKo(e))}</div>`; } });
   api(`/api/filings?t=${encodeURIComponent(t)}`).then((f) => state.ticker === t && renderFilings(f))
-    .catch((e) => state.ticker === t && ($("#s-fil").innerHTML = `<span class="err">${esc(ERR_KO[e.message] || e.message)}</span>`));
+    .catch((e) => state.ticker === t && ($("#s-fil").innerHTML = `<span class="err">${esc(errKo(e))}</span>`));
 }
 let lastChart = null;
 async function loadChart(t) {
@@ -350,7 +379,7 @@ async function loadChart(t) {
     $("#c-meta").innerHTML = c.bars.length ? meta(c.source, c.cache.fetched_at, `${badge(c.status)} ${liveBadge(L.intraday)} 마지막 일봉 ${esc(L.date)}`) :
       `<div class="empty">${badge("UNAVAILABLE")} 가격 데이터를 받지 못했습니다. 종목 코드를 확인하세요.</div>`;
     state.lastQuote = L; renderHeadPrice();
-  } catch (e) { $("#c-meta").innerHTML = `<span class="err">${esc(ERR_KO[e.message] || e.message)}</span>`; }
+  } catch (e) { $("#c-meta").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; }
 }
 function renderHeadPrice() {
   const L = state.lastQuote, h = $("#s-price");
@@ -375,7 +404,7 @@ function renderProfile(c) {
   const s = $("#sum"); if (s) s.onclick = () => s.classList.toggle("open");
   $("#addc").onclick = () => compareWith([c.ticker]);
   $("#addq").onclick = () => { if (typeof qsfOpenCard === "function") qsfOpenCard(c.ticker); };
-  $("#addw").onclick = async () => { try { await api("/api/watchlist/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: c.ticker }) }); $("#addw").textContent = "✓ 추가됨"; state.loaded.watch = false; } catch (e) { alert(ERR_KO[e.message] || e.message); } };
+  $("#addw").onclick = async () => { try { await api("/api/watchlist/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: c.ticker }) }); $("#addw").textContent = "✓ 추가됨"; state.loaded.watch = false; } catch (e) { alert(errKo(e)); } };
 }
 function renderFund(f) {
   const el = $("#s-fund");
@@ -527,7 +556,7 @@ function watchScore(q, strategy, scan) {
 async function watchOp(op, t) {
   t = (t || "").trim(); if (!t) return;
   try { await api(`/api/watchlist/${op}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: t }) }); setMarket(marketOf(t.toUpperCase()), false); renderWatch(); }
-  catch (e) { alert(ERR_KO[e.message] || e.message); }
+  catch (e) { alert(errKo(e)); }
 }
 
 // ------------------------------------------------------------------ 모델 (읽기 전용)
@@ -562,7 +591,7 @@ function wireCapital(el, cap, b, mk) {
       const r = await api("/api/capital", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ market: mk, amount: parse() === null ? "" : parse() }) });
       saved = isNum(r.amount) ? r.amount : null;
       refresh(saved === null ? "지웠습니다." : `저장했습니다. ${nextScan}`);
-    } catch (e) { refresh(esc(ERR_KO[e.message] || e.message)); }
+    } catch (e) { refresh(esc(errKo(e))); }
   };
   refresh();
   // The Korean model scan is a hand-run command, not a step of the daily job; this button starts that same command.
@@ -595,7 +624,7 @@ function wireCapital(el, cap, b, mk) {
       if (r.status === "NO_CAPITAL") { refresh("먼저 금액을 저장하세요. 스캔은 저장된 금액으로 실행합니다."); return; }
       wasRunning = true;
       show({ status: "RUNNING", started_at: r.started_at, by: r.by }, false);
-    } catch (e) { runNote.innerHTML = esc(ERR_KO[e.message] || e.message); }
+    } catch (e) { runNote.innerHTML = esc(errKo(e)); }
   };
   poll();
 }

@@ -19,7 +19,7 @@ RENDER.model = async function () {
 async function renderComparison() {
   const el = $("#cmp"); if (!el) return;
   let d;
-  try { d = await api("/api/lab/compare"); } catch (e) { el.innerHTML = `<h2>도전자 모델 비교</h2><div class="msg err">${esc(e.message)}</div>`; return; }
+  try { d = await api("/api/lab/compare"); } catch (e) { el.innerHTML = `<h2>도전자 모델 비교</h2><div class="msg err">${esc(errKo(e))}</div>`; return; }
   const H = d.horizons;
   const cell = (a) => {
     if (!a || !a.matured) return `<td class="num"><span class="missing">${a && a.pending ? "대기 " + a.pending : "—"}</span></td>`;
@@ -57,7 +57,7 @@ async function automationLine() {
   return `${run} · ${srv ? srv + " · " : ""}${tg} · ${last}${gaps}`;
 }
 async function startLabRun() {
-  try { await post("/api/lab/run", {}); pollLab(); } catch (e) { $("#labmsg").textContent = e.message; }
+  try { await post("/api/lab/run", {}); pollLab(); } catch (e) { $("#labmsg").textContent = errKo(e); }
 }
 async function pollLab() {
   const msg = $("#labmsg"), btn = $("#labrun");

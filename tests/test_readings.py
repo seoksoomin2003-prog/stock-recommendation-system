@@ -173,7 +173,7 @@ def test_the_schedule_lists_every_reading_with_its_progress_and_its_verdict(tmp_
     rows = {r["key"]: r for r in got["readings"]}
     assert got["total"] == 30 and rows["committee_paper_us"]["state"] == "WAITING" and rows["committee_paper_us"]["left"] == 242 and got["read"] == 1 and got["guide"] == "reports/RUNBOOK.md" and "사람이 할 일은 없습니다" in got["note"]
     assert rows["kr_method_120"]["state"] == "DUE" and rows["kr_method_120"]["attempts"] == 2 and rows["kr_method_240"]["state"] == "WAITING" and rows["kr_method_240"]["left"] == 120
-    assert rows["kr_cap_universe"]["left"] == 160 and rows["kr_cap_universe"]["expected"] == "2027-06" and rows["kr_cap_universe"]["applies_itself"] is False
+    assert rows["kr_cap_universe"]["left"] == 160 and rows["kr_cap_universe"]["expected"] == "2027-07" and rows["kr_cap_universe"]["applies_itself"] is False
     assert rows["kr_swing_challenger"]["state"] == "READ" and rows["kr_swing_challenger"]["verdict"] == "CHALLENGER_BETTER" and "도전자 공식이 지금 공식보다 나았습니다" in rows["kr_swing_challenger"]["meaning"]
     assert rows["TO-1_KR"]["applies_itself"] is False and rows["RK-1_KR"]["applies_itself"] is False and rows["live_swing_kr"]["primary"] is True and rows["kr_cap_universe"]["primary"] is False and rows["RK-1_US"]["wanted"] == 240 and rows["TO-1_US"]["state"] == "WAITING" and rows["RK-1_KR"]["left"] == 240
 

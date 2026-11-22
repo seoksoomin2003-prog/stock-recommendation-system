@@ -1,4 +1,4 @@
-// QSF 1.1 score tab.  Every colour comes with a text label; score and confidence are always shown separately.
+// QSF score tab.  Every colour comes with a text label; score and confidence are always shown separately.
 const QSF_ACTION_CLASS = { BUY: "act-buy", SELL: "act-sell", AVOID: "act-sell", REDUCE: "act-reduce", HOLD: "act-hold", WATCH: "act-hold", INSUFFICIENT_DATA: "act-hold", BLOCKED: "act-hold" };
 const QSF_STRAT = { SWING: "스윙", LONG_TERM: "장기" };
 const QSF_ENTRY = { ENTRY_NOW: "지금 진입 가능 구간", WAIT_FOR_PULLBACK: "눌림 대기", WAIT_FOR_BREAKOUT_CONFIRMATION: "돌파 확인 대기", WAIT_FOR_EARNINGS: "실적 발표 대기", OVERVALUED_AT_CURRENT_PRICE: "현재 가격 고평가", NO_VALID_ENTRY_SETUP: "유효한 진입 근거 없음" };
@@ -207,7 +207,7 @@ async function qsfEvaluate(t, market, push = true) {
     if (token !== qsfState.evalToken || !$("#qsfmsg")) return;          // 그 사이 다른 종목을 평가했습니다
     $("#qsfmsg").textContent = d.status === "REAL" ? "" : `평가할 수 없습니다: ${d.reason}`;
     if (d.status === "REAL") { qsfState.detail = d; if (d.market === state.market) qsfDrawDetail(d); }
-  } catch (e) { if (token === qsfState.evalToken && $("#qsfmsg")) $("#qsfmsg").textContent = "평가 실패: " + e.message; }
+  } catch (e) { if (token === qsfState.evalToken && $("#qsfmsg")) $("#qsfmsg").textContent = "평가 실패: " + errKo(e); }
 }
 // 종목 화면의 '점수 카드' 버튼과 #qsf/코드 주소가 부릅니다: 점수 탭의 오늘 순위 보기에서 그 종목을 평가합니다.
 function qsfOpenCard(ticker, push = true) {
@@ -331,7 +331,7 @@ function qsfCard(c, planOpen = false) {
   return `<article class="qsf-card"><header><div><div class="meta" style="margin:0">${QSF_STRAT[c.strategy]} · ${esc(c.profile)}${c.position ? " · <b>보유 중</b>" : ""}</div>
       <div class="qsf-score num">${c.score === null ? "-" : c.score.toFixed(1)}<small>/100</small></div></div>
       <div>${qsfLabel(c)}<div class="meta" style="margin:4px 0 0">구간: ${esc(c.band_label)}${c.diagnostic_only ? " · 진단용 점수" : ""}</div></div></header>
-    <div class="qsf-meta"><span title="자료가 얼마나 있는지를 말합니다. 맞을 확률이 아닙니다.">신뢰도(자료의 양) <b>${QSF_CONF[c.confidence]}</b></span><span>데이터 반영률 <b>${(c.coverage * 100).toFixed(0)}%</b></span>${isNum(c.input_coverage) && c.input_coverage < c.coverage - 0.005 ? `<span title="요인은 계산됐지만 그 안의 수치 일부가 비어 있습니다. 신뢰도는 이 값도 함께 봅니다.">요인 안 수치 반영률 <b>${(c.input_coverage * 100).toFixed(0)}%</b></span>` : ""}<span>시세 <b>${esc(c.data_date)}</b> ${qsfPrice(c.price, m)}</span><span>${esc(c.model_version)}</span></div>
+    <div class="qsf-meta"><span title="자료가 얼마나 있는지를 말합니다. 맞을 확률이 아닙니다.">신뢰도(자료의 양) <b>${QSF_CONF[c.confidence]}</b></span><span>데이터 반영률 <b>${(c.coverage * 100).toFixed(0)}%</b></span>${isNum(c.input_coverage) && c.input_coverage < c.coverage - 0.005 ? `<span title="요인은 계산됐지만 그 안의 수치 일부가 비어 있습니다. 신뢰도는 이 값도 함께 봅니다.">요인 안 수치 반영률 <b>${(c.input_coverage * 100).toFixed(0)}%</b></span>` : ""}<span title="${esc((c.provenance && c.provenance.price) || "")}">시세 <b>${esc(c.data_date)}</b> ${qsfPrice(c.price, m)}</span><span>${esc(c.model_version)}</span></div>
     <p>${esc(c.why_summary)}</p>
     ${c.surface_note ? `<div class="meta"><b>엇갈림</b> ${esc(c.surface_note)}</div>` : ""}
     ${qsfStaleNote(c)}${qsfFundPeriodNote(c)}
@@ -374,7 +374,7 @@ async function qsfFillRow(box, r, market) {
       <details class="qsf-today-fold"><summary>당일 점검 (시세·공시·뉴스)</summary><div class="qsf-today-slot"></div></details>`;
     const fold = box.querySelector(".qsf-today-fold");
     fold.addEventListener("toggle", () => { if (fold.open && !fold.dataset.done) { fold.dataset.done = "1"; qsfToday(fold.querySelector(".qsf-today-slot"), r.ticker, market); } });
-  } catch (e) { if (box.isConnected) box.innerHTML = `<div class="err">불러오지 못했습니다: ${esc(e.message)}</div>`; }
+  } catch (e) { if (box.isConnected) box.innerHTML = `<div class="err">불러오지 못했습니다: ${esc(errKo(e))}</div>`; }
 }
 const qsfTopPct = (r) => (isNum(r.pct) ? ` <span class="meta" style="margin:0" title="그날 점수가 나온 종목 가운데의 순위">상위 ${r.pct}%</span>` : "");
 function qsfRowHtml(r) {
@@ -394,7 +394,7 @@ async function qsfRank() {
   const [d, ms] = await Promise.all([qsfLatest(mk).catch((e) => { failed = e; return null; }), api(`/api/qsf/market-state?market=${mk}`).catch(() => null)]);
   if (token !== qsfState.rankToken || mk !== state.market) return;
   if (failed || !d || d.status !== "REAL") state.loaded.qsf = false;          // 순위를 받지 못했습니다: 다음에 탭을 열 때 다시 그립니다
-  if (failed) { box.innerHTML = `<div class="panel"><h2>순위</h2><div class="empty">순위를 불러오지 못했습니다: ${esc(ERR_KO[failed.message] || failed.message)} 스캔 기록이 없다는 뜻이 아닙니다.</div></div>`; return; }
+  if (failed) { box.innerHTML = `<div class="panel"><h2>순위</h2><div class="empty">순위를 불러오지 못했습니다: ${esc(errKo(failed))} 스캔 기록이 없다는 뜻이 아닙니다.</div></div>`; return; }
   if (!d || d.status !== "REAL") { box.innerHTML = `<div class="panel"><h2>순위</h2><div class="empty">아직 스캔 기록이 없습니다. <code>python app.py qsf scan</code> 또는 매일 자동 실행 후 표시됩니다.</div></div>`; return; }
   // 카드는 페이지가 열려 있는 동안 기억된다. 스캔이 새로 기록되면 그 시장의 카드를 버려, 새 순위 아래에 이전 스캔의 카드가 나오지 않게 한다.
   const scanMark = `${d.session}|${d.generated_at}`;
@@ -535,7 +535,7 @@ async function qsfScreenRun(fresh) {
   const token = ++qsfScreenState.token, mk = state.market;
   let d;
   try { d = await api(`/api/qsf/screen?${qsfScreenQuery(qsfScreenState.shown, 0)}`); }
-  catch (e) { if (token === qsfScreenState.token) body.innerHTML = `<div class="empty">조건을 읽지 못했습니다: ${esc(e.message)}</div>`; return; }
+  catch (e) { if (token === qsfScreenState.token) body.innerHTML = `<div class="empty">조건을 읽지 못했습니다: ${esc(errKo(e))}</div>`; return; }
   if (token !== qsfScreenState.token || mk !== state.market) return;
   if (d.status !== "REAL") { $("#qsfscreencount").textContent = ""; body.innerHTML = `<div class="empty">아직 스캔 기록이 없습니다.</div>`; return; }
   $("#qsfscreencount").textContent = `${QSF_STRAT[d.strategy]} ${d.total}개 중 ${d.matched}개 · 기준 ${d.session}${d.missing_value ? ` · 값이 없어 뺀 종목 ${d.missing_value}개` : ""}${isKR() && d.strategy === "SWING" ? " · 기술 열은 참고(점수 미반영)" : ""}`;
@@ -572,7 +572,7 @@ function qsfCsvCell(v) {
 async function qsfScreenCsv() {
   const msg = $("#qsfscreencount");
   let d;
-  try { d = await api(`/api/qsf/screen?${qsfScreenQuery(2000, 0)}`); } catch (e) { msg.textContent = "저장 실패: " + e.message; return; }
+  try { d = await api(`/api/qsf/screen?${qsfScreenQuery(2000, 0)}`); } catch (e) { msg.textContent = "저장 실패: " + errKo(e); return; }
   if (d.status !== "REAL") { msg.textContent = "저장할 스캔 기록이 없습니다."; return; }
   const round = (v) => (typeof v === "number" ? Math.round(v * 10) / 10 : v);
   const lines = [["기준일", "전략", "코드", "이름", "업종", "점수", "기술", "재무", "위험", "이벤트", "판단", "신뢰도", "진입", "게이트", "가격", "자금조달 결정", "자사주 취득", "변동성 높음"].join(",")];
@@ -597,7 +597,7 @@ async function qsfToday(el, t, market) {
   } catch (e) {
     if (!el.isConnected) return;
     const offline = e instanceof TypeError;      // fetch rejects this way when the local server does not answer
-    el.innerHTML = `<div class="err">${offline ? "터미널 서버가 응답하지 않아 당일 점검을 불러오지 못했습니다. 서버가 켜져 있는지 확인한 뒤 다시 시도하세요." : `당일 점검을 불러오지 못했습니다: ${esc(ERR_KO[e.message] || e.message)}`}</div>
+    el.innerHTML = `<div class="err">${offline ? "터미널 서버가 응답하지 않아 당일 점검을 불러오지 못했습니다. 서버가 켜져 있는지 확인한 뒤 다시 시도하세요." : `당일 점검을 불러오지 못했습니다: ${esc(errKo(e))}`}</div>
       <button type="button" class="qsf-retry" style="margin-top:6px">다시 시도</button>`;
     el.querySelector(".qsf-retry").onclick = () => qsfToday(el, t, market);
   }
@@ -766,7 +766,7 @@ async function qsfPlan() {
   let failed = null;
   const d = await api(`/api/qsf/order-plan?market=${mk}`).catch((e) => { failed = e; return null; });
   if (mk !== state.market) return;
-  box.innerHTML = failed ? `<div class="panel"><h2>오늘 진입 후보의 주문 계획</h2><div class="empty">불러오지 못했습니다: ${esc(ERR_KO[failed.message] || failed.message)}</div></div>` : qsfPlanHtml(d);
+  box.innerHTML = failed ? `<div class="panel"><h2>오늘 진입 후보의 주문 계획</h2><div class="empty">불러오지 못했습니다: ${esc(errKo(failed))}</div></div>` : qsfPlanHtml(d);
 }
 // The turnover rules beside the paper book (TO-1).  Before the reading only counts are shown, never the comparison book's value or return.
 // A verdict file that cannot be read, or a switch value that is none of the words: said on the panel, never passed over.
@@ -875,7 +875,7 @@ async function qsfPaper() {
       if (r.status !== "OK") { said.textContent = r.reason || "바꾸지 못했습니다."; b.disabled = false; return; }
       if (r.note) alert(r.note);
       qsfPaper();
-    } catch (e) { said.textContent = "바꾸지 못했습니다: " + (ERR_KO[e.message] || e.message); b.disabled = false; }
+    } catch (e) { said.textContent = "바꾸지 못했습니다: " + (errKo(e)); b.disabled = false; }
   }; });
 }
 // Every one-time reading: how far its record is, about when it will be read, and the verdict once the daily job has read it.

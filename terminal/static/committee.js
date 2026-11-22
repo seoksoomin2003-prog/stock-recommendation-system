@@ -100,7 +100,7 @@ async function icPlace(btn) {
     if (d.status === "OK") icState.ports[btn.dataset.m] = null;          // 탭의 포트폴리오는 그 탭의 버튼으로 따로 받습니다
     btn.textContent = "다시 받아보기";
   } catch (e) {
-    out.innerHTML = `<div class="notice">포트폴리오를 만들지 못했습니다: ${esc((e && e.message) || String(e))}</div>`;
+    out.innerHTML = `<div class="notice">포트폴리오를 만들지 못했습니다: ${esc(errKo(e))}</div>`;
     btn.textContent = "포트폴리오 받아보기";
   }
   btn.disabled = false;

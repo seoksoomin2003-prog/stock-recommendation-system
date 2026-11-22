@@ -118,6 +118,7 @@ class QSF(ScreenViews):
         self._regime_at: Dict[str, datetime] = {}
         self._regime_hold = False
         self._krx_share_cache: Dict[str, Dict[str, float]] = {}
+        self._kr_bar_infos: Dict[str, Dict[str, Any]] = {}       # code -> where its bars came from at the last rebuild (kr_bars.rebuild's info)
 
     # ------------------------------------------------------------------ helpers
     @property
@@ -699,10 +700,12 @@ class QSF(ScreenViews):
         try:
             pan = kr_bars.panel(self.base, self.now().date())
         except Exception as exc:                                   # a broken cache must not stop scoring; the summary names it
+            self._kr_bar_infos.update({code: {"source": "YAHOO", "reason": "KRX 일별 자료를 읽지 못함"} for code in bars})
             return bars, {"stocks": len(bars), "by_source": {"YAHOO": len(bars)}, "error": type(exc).__name__}
         out, infos = {}, {}
         for code, rows in bars.items():
             out[code], infos[code] = kr_bars.rebuild(code, rows, pan)
+        self._kr_bar_infos.update(infos)
         return out, kr_bars.summary(infos)
 
     def context(self, ticker: str, market: str, prefetched: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -736,7 +739,8 @@ class QSF(ScreenViews):
         # A scan brings its own rank.  The stock screen and held signals take theirs from the last scan of the same session.
         rs_rank, rank_basis = (pre.get("rs_rank"), None) if scanning else self._stored_rank(ticker, market, session, bars)
         ctx = {"market": market, "ticker": ticker, "symbol": sym, "bars": bars, "bench": bench, "bench_name": "SPY" if market == "US" else ("코스닥" if bench_sym == "^KQ11" else "코스피"),
-               "benchmark": bench_sym, "regime": regime, "rs_rank": rs_rank, "rank_basis": rank_basis, "expected_session": session, "price_fresh": bars[-1]["date"] == session, "name": name, "identity_ok": True}
+               "benchmark": bench_sym, "regime": regime, "rs_rank": rs_rank, "rank_basis": rank_basis, "expected_session": session, "price_fresh": bars[-1]["date"] == session, "name": name, "identity_ok": True,
+               "price_source": price_label(market, self._kr_bar_infos.get(ticker))}
         ctx["tech"] = technicals.compute(bars, bench)
         ctx["levels"] = technicals.levels(ctx["tech"], market)
         if market == "US":
@@ -767,7 +771,7 @@ class QSF(ScreenViews):
         plan = holding.swing_plan(res, ctx, entry_day) if strategy == "SWING" else holding.long_plan(res, ctx, entry_day)
         out = {**res, "ticker": ctx["ticker"], "name": ctx.get("name"), "benchmark": ctx.get("benchmark"), "entry": entry, "entry_status": entry["status"], "entry_session": entry_day.isoformat(),
                "holding": plan, "what_would_change": holding.what_would_change(res), "recorded_at": self.now().isoformat(),
-               "provenance": {"price": "Yahoo Finance 일봉", "price_date": res["data_date"], "fund": (ctx.get("fund") or {}).get("source"), "fund_filed": (ctx.get("fund") or {}).get("filed"),
+               "provenance": {"price": ctx.get("price_source") or price_label(market, None), "price_date": res["data_date"], "fund": (ctx.get("fund") or {}).get("source"), "fund_filed": (ctx.get("fund") or {}).get("filed"),
                               "events": (ctx.get("events") or {}).get("source"), "regime": {k: (v or {}).get("date") for k, v in (ctx.get("regime") or {}).items() if isinstance(v, dict)}},
                "not_advice": "규칙에 따른 계산 결과입니다. 주문을 실행하지 않으며 투자 자문이 아닙니다."}
         if (ctx.get("fund") or {}).get("cik"):
@@ -1150,6 +1154,20 @@ def committee_note(cards: Dict[str, Any], committee: Optional[Dict[str, Any]]) -
         return (f"투자위원회 판정은 '{ko}'인데 장기 점수 구간은 '{long_['band_label']}'입니다. 점수는 요인의 가중합이고 위원회는 다섯 관점의 규칙이라 서로 다른 답을 낼 수 있습니다. "
                 "둘 다 수익으로 검증되지 않았습니다.")
     return None
+
+
+def price_label(market: str, info: Optional[Dict[str, Any]]) -> str:
+    """Where a card's daily bars came from, as its record says it.  Until 2026-11-22 every record said "Yahoo Finance 일봉",
+    also the Korean ones, whose bars are built from the KRX daily data since QSF-1.1.8 (assessment 2026-11-22)."""
+    if market != "KR":
+        return "Yahoo Finance 일봉"
+    src = (info or {}).get("source")
+    if src == "KRX":
+        return "KRX 일별 시세로 만든 일봉"
+    if src == "KRX+YAHOO":
+        return f"KRX 일별 시세로 만든 일봉 (KRX가 아직 내지 않은 최근 {info.get('tail_days')}거래일은 Yahoo)"
+    why = (info or {}).get("reason")
+    return f"Yahoo Finance 일봉 (KRX 일별 자료를 쓰지 못함{': ' + why if why else ''})"
 
 
 def _why(c: Dict[str, Any]) -> str:

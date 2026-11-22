@@ -74,7 +74,7 @@ async function renderPortfolio() {
   el.querySelectorAll("[data-void]").forEach((b) => (b.onclick = async (e) => {
     e.stopPropagation();
     if (!confirm("이 기록을 취소할까요? 원래 기록은 남고, 취소 기록이 추가됩니다.")) return;
-    try { await post("/api/journal/void", { ref: b.dataset.void }); renderPortfolio(); } catch (err) { alert(err.message); }
+    try { await post("/api/journal/void", { ref: b.dataset.void }); renderPortfolio(); } catch (err) { alert(errKo(err)); }
   }));
   loadEquity();
   if (d.holdings.length) loadRisk();
@@ -132,7 +132,7 @@ async function loadSignals() {
     const noRank = d.items.filter((s) => s.rank_basis === "NO_SCAN").map((s) => s.ticker);
     const financed = d.items.filter((s) => s.filing_events && s.filing_events.financing).map((s) => s.ticker);
     out.innerHTML = `${notes.length ? `<ul class="alerts">${notes.join("")}</ul>` : "조치가 필요한 종목이 없습니다."}<div class="meta">${esc(d.note)}</div>${financed.length ? `<div class="meta">${esc(financed.join(", "))}: 최근 252거래일 안에 자금조달 결정 공시가 있습니다. 참고용이며 판정과 점수에 반영되지 않습니다.</div>` : ""}${noRank.length ? `<div class="meta">${esc(noRank.join(", "))}: ${QSF_RANK_NOTE.NO_SCAN}</div>` : ""}`;
-  } catch (e) { out.innerHTML = `<span class="err">판정을 계산하지 못했습니다: ${esc(e.message)}</span>`; }
+  } catch (e) { out.innerHTML = `<span class="err">판정을 계산하지 못했습니다: ${esc(errKo(e))}</span>`; }
 }
 function styleStatsHtml(by) {
   const row = (s) => { const x = by[s]; return `<tr><td class="l">${STYLE_KO[s]}</td><td class="num">${x.count}</td><td class="num">${x.count ? fmt(x.win_rate_pct, 1) + "%" : DASH}</td><td class="num">${x.count ? fmt(x.payoff, 2) : DASH}</td><td>${x.count ? pnl(x.total) : DASH}</td></tr>`; };
@@ -181,7 +181,7 @@ function bindForm(d) {
       $("#jmsg").className = "msg err"; $("#jmsg").textContent = "장기 또는 스윙을 선택하세요."; f.style.focus(); return;
     }
     try { await post("/api/journal/add", body); prefill = null; $("#jmsg").className = "msg ok"; $("#jmsg").textContent = "기록했습니다. 시세를 다시 불러오는 중…"; renderPortfolio(); }
-    catch (err) { $("#jmsg").className = "msg err"; $("#jmsg").textContent = ERR_KO[err.message] || err.message; }
+    catch (err) { $("#jmsg").className = "msg err"; $("#jmsg").textContent = errKo(err); }
   };
   if (prefill) { $("#jform-panel").scrollIntoView({ behavior: "smooth" }); }
 }
@@ -195,7 +195,7 @@ async function loadEquity() {
     $("#eq-sum").innerHTML = `시작 ${esc(d.start)} 이후 · 내 계좌(TWR) ${pct(d.twr_pct)} · ${esc(d.benchmark)} ${pct(d.bench_pct)}`;
     $("#eq-meta").innerHTML = meta(d.source, d.fetched_at, esc(d.method));
     drawEquity(); redrawers.add(drawEquity);
-  } catch (e) { $("#eq-sum").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+  } catch (e) { $("#eq-sum").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; }
 }
 function drawEquity() {
   const cv = $("#eqc"), d = eqData;
@@ -261,7 +261,7 @@ async function renderAssist() {
     e.preventDefault(); const f = e.target, body = {};
     ["risk_long_pct", "max_position_long_pct", "stop_atr_long", "risk_swing_pct", "max_position_swing_pct", "stop_atr_swing", "target_long_pct", "risk_long_kr_pct", "max_position_long_kr_pct", "risk_swing_kr_pct", "max_position_swing_kr_pct", "target_long_kr_pct", "style_drift_pct", "risk_per_trade_pct", "max_position_pct", "max_sector_pct", "near_stop_pct"].forEach((k) => (body[k] = f[k].value));
     try { await post("/api/settings", body); $("#stmsg").className = "msg ok"; $("#stmsg").textContent = "저장했습니다."; }
-    catch (err) { $("#stmsg").className = "msg err"; $("#stmsg").textContent = err.message; }
+    catch (err) { $("#stmsg").className = "msg err"; $("#stmsg").textContent = errKo(err); }
   };
   loadPlan();
   loadEarnings();
@@ -303,7 +303,7 @@ async function runSizing() {
       ${r.shares > 0 && d.ticker ? '<button id="tojournal" style="margin-top:8px">이 수량으로 매수 기록 작성</button> <span class="meta">체결된 뒤에 기록하세요.</span>' : ""}`;
     const b = $("#tojournal");
     if (b) b.onclick = () => { prefill = { kind: "BUY", ticker: d.ticker, style: d.style || "", qty: r.shares, price: r.entry.toFixed(isKR() ? 0 : 2), stop: r.stop.toFixed(isKR() ? 0 : 2) }; show("portfolio"); };
-  } catch (e) { out.innerHTML = `<div class="msg err">${esc(ERR_KO[e.message] || e.message)}</div>`; }
+  } catch (e) { out.innerHTML = `<div class="msg err">${esc(errKo(e))}</div>`; }
 }
 async function loadPlan() {
   const el = $("#plan");
@@ -326,7 +326,7 @@ async function loadPlan() {
       el.querySelector(".tbl-wrap").scrollLeft = 0;
       runSizing(); f.scrollIntoView({ behavior: "smooth" });
     }));
-  } catch (e) { el.innerHTML = `<h2>P6-11B 계획 대조</h2><div class="msg err">${esc(e.message)}</div>`; }
+  } catch (e) { el.innerHTML = `<h2>P6-11B 계획 대조</h2><div class="msg err">${esc(errKo(e))}</div>`; }
 }
 
 RENDER.portfolio = renderPortfolio;

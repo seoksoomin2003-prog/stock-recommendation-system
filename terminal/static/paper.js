@@ -69,7 +69,7 @@ function ptWireForm(d, mk) {
       ptPrefill = null;
       if (body.ticker) setMarket(marketOf(body.ticker), false);
       renderPaper();
-    } catch (err) { msg.innerHTML = `<span class="down">${esc(ERR_KO[err.message] || err.message)}</span>`; }
+    } catch (err) { msg.innerHTML = `<span class="down">${esc(errKo(err))}</span>`; }
   };
   fields(); show();
 }
@@ -77,7 +77,7 @@ function ptWireForm(d, mk) {
 async function ptVoid(id) {
   if (!confirm("이 기록을 취소할까요? 기록은 지워지지 않고 '취소됨'으로 남습니다.")) return;
   try { await api("/api/paper-trade/void", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ref: id }) }); renderPaper(); }
-  catch (e) { alert(ERR_KO[e.message] || e.message); }
+  catch (e) { alert(errKo(e)); }
 }
 
 async function renderPaper() {

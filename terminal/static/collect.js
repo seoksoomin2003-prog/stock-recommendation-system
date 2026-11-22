@@ -81,7 +81,7 @@ async function collectStart() {
     collectPoll();
   } catch (e) {
     btn.disabled = false;
-    collectPaint(`<span class="err">수집을 시작하지 못했습니다: ${esc(ERR_KO[e.message] || e.message)}</span>`, true);
+    collectPaint(`<span class="err">수집을 시작하지 못했습니다: ${esc(errKo(e))}</span>`, true);
   }
 }
 

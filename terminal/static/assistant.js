@@ -33,7 +33,7 @@ async function asstAsk(q) {
   try {
     const a = await api("/api/assistant/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q, market: state.market }) });
     out.innerHTML = asstAnswer(a);
-  } catch (e) { out.innerHTML = `<div class="msg err">${esc(ERR_KO[e.message] || e.message)}</div>`; }
+  } catch (e) { out.innerHTML = `<div class="msg err">${esc(errKo(e))}</div>`; }
 }
 // 명령창이나 다른 탭에서: 오늘 탭으로 옮긴 뒤 묻습니다.
 function askAssistant(q) {
@@ -71,7 +71,7 @@ async function renderToday() {
     const unread = (d.unread_parts || []).length ? `<div class="msg err">읽지 못한 부분: ${d.unread_parts.map((p) => esc(p.label)).join(", ")}. 이 부분의 항목은 위 목록에 빠져 있습니다.</div>` : "";
     brief.innerHTML = `<h2>${esc(d.headline)}</h2><div class="meta" style="margin-top:0">${mk} 시장 · 기준 거래일 ${esc(d.session || "기록 없음")} · ${when(d.generated_at)} 기준</div>
       ${unread}${groups || '<div class="meta">보여 줄 항목이 없습니다.</div>'}<div class="meta">${esc(d.note)}</div>`;
-  } catch (e) { brief.innerHTML = `<div class="msg err">오늘 목록을 만들지 못했습니다: ${esc(ERR_KO[e.message] || e.message)}</div>`; }
+  } catch (e) { brief.innerHTML = `<div class="msg err">오늘 목록을 만들지 못했습니다: ${esc(errKo(e))}</div>`; }
 }
 RENDER.today = renderToday;
 ALWAYS_FRESH.add("today");

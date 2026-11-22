@@ -116,3 +116,45 @@ def test_the_top_three_and_own_method_verdicts_take_their_bar_from_the_design():
     assert calibrate.plain_bar(top_picks.MIN_T, 12) > top_picks.MIN_T
     assert "calibrate.plain_bar(MIN_T, len(spaced))" in inspect.getsource(top_picks) and "t >= row[\"t_bar\"]" in inspect.getsource(top_picks)
     assert "calibrate.bar(VERDICT_T" in inspect.getsource(kr_method.evaluate) if hasattr(kr_method, "evaluate") else "calibrate.bar(VERDICT_T" in inspect.getsource(kr_method)
+
+
+# ---------------------------------------------------------------------- roadmap P2: price source, error texts, expected month
+def test_a_korean_record_says_its_bars_came_from_krx(tmp_path):
+    from tests.test_qsf import service
+    label = qsf_service.price_label
+    assert label("US", None) == "Yahoo Finance 일봉" and label("KR", {"source": "KRX"}) == "KRX 일별 시세로 만든 일봉"
+    assert "최근 2거래일은 Yahoo" in label("KR", {"source": "KRX+YAHOO", "tail_days": 2})
+    assert label("KR", {"source": "YAHOO", "reason": "KRX 일별 자료에 없는 종목"}) == "Yahoo Finance 일봉 (KRX 일별 자료를 쓰지 못함: KRX 일별 자료에 없는 종목)"
+    assert label("KR", None) == "Yahoo Finance 일봉 (KRX 일별 자료를 쓰지 못함)"                      # never "KRX" without knowing it
+    q = service(tmp_path)
+    assert q.evaluate("AAA")["cards"]["SWING"]["provenance"]["price"] == "Yahoo Finance 일봉"
+    c = {**ctx(), "price_source": label("KR", {"source": "KRX"})}
+    assert q.card(c, "SWING")["provenance"]["price"] == "KRX 일별 시세로 만든 일봉"                    # the record carries what the context was built from
+
+
+def test_every_error_code_the_server_can_answer_has_a_korean_sentence():
+    import re
+    from pathlib import Path
+    root = Path(qsf_service.__file__).parent.parent
+    app_js = (root / "static" / "app.js").read_text(encoding="utf-8")
+    known = set(re.findall(r"\b([A-Z][A-Z0-9_]{3,}): \"", app_js[app_js.index("const ERR_KO = {"):app_js.index("function errKo")]))
+    codes = set()
+    for p in root.rglob("*.py"):
+        text = p.read_text(encoding="utf-8")
+        codes |= set(re.findall(r"raise ValueError\(\"([A-Z][A-Z0-9_]{3,})\"\)", text))
+        codes |= set(re.findall(r"\{\"error\": \"([A-Z][A-Z0-9_]{3,})\"", text))
+    screen = (root / "qsf" / "screen.py").read_text(encoding="utf-8")
+    codes |= {f"INVALID_{n.upper()}" for n in re.findall(r"_(?:number|flag)\([^,\n]+, \"([a-z_]+)\"", screen)}
+    assert len(codes) > 40 and not sorted(codes - known), sorted(codes - known)
+    for name in ("app.js", "qsf.js", "portfolio.js", "lab.js", "paper.js", "committee.js", "compare.js", "assistant.js", "collect.js"):
+        js = (root / "static" / name).read_text(encoding="utf-8")
+        raw = [m for m in re.findall(r"[^\n]*\b(?:e|err|failed)\.message[^\n]*", js) if "errKo" not in m and "const m = " not in m and "=== \"" not in m]
+        assert not raw, (name, raw[:2])                                                             # no screen prints a bare code any more
+
+
+def test_the_expected_month_of_a_reading_counts_holidays():
+    from datetime import date
+
+    from terminal.qsf import readings as rd
+    assert rd._eta(240, date(2026, 11, 23)) == "2027-11" and rd._eta(0, date(2026, 11, 23)) == "2026-11" and rd.SESSIONS_A_YEAR == 250
+    assert rd._eta(756, date(2026, 11, 23)) == "2029-12"                                             # weekdays only said 2029-10
