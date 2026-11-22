@@ -145,6 +145,18 @@ def test_a_card_is_told_in_everyday_words(tmp_path):
     assert "plain" not in __import__("terminal.qsf.ledger", fromlist=["FIELDS"]).FIELDS                      # shown, never recorded
 
 
+def test_a_factor_computed_from_part_of_its_figures_is_not_spoken_for():
+    full = {"factor": "balance_dilution", "normalized": 1.0, "weight": 5, "status": "REAL", "inputs": {"have": 2, "total": 2}}
+    part = {**full, "inputs": {"have": 1, "total": 2}}                                                  # Korea: the debt is known, the share count is not
+    plainly = {"factor": "liquidity", "normalized": 0.9, "weight": 4, "status": "REAL"}
+    good, bad, unsaid = plain._sides({"factors": [full, plainly]})
+    assert good == [plain.FACTOR["balance_dilution"][0], plain.FACTOR["liquidity"][0]] and unsaid == 0
+    good, bad, unsaid = plain._sides({"factors": [part, plainly, {**part, "factor": "leverage", "normalized": 0.5}]})
+    assert good == [plain.FACTOR["liquidity"][0]] and unsaid == 1                                       # the middling partial factor had nothing to say anyway
+    doc = plain.card_plain({"actionability": "ACTIONABLE", "score": 64.0, "band": "HOLD_WATCH", "strategy": "LONG_TERM", "market": "KR", "entry_status": "ENTRY_NOW", "factors": [part, plainly]})
+    assert "말하지 않은 것" in [p["h"] for p in doc["parts"]] and "주식 수" not in " ".join(plain.texts(doc)) and _clean(doc) == []
+
+
 def test_a_blocked_or_unjudged_card_says_so_first():
     b = [dict(x) for x in bars()]
     b[-30]["high"] = b[-30]["low"] * 0.9

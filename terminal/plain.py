@@ -21,18 +21,18 @@ BAND = {"STRONG_BUY_CANDIDATE": "이 프로그램의 기준에 아주 잘 맞는
 # factor -> (when it reads well, when it reads badly)
 FACTOR = {
     "trend_structure": ("주가가 최근 몇 달 동안 오르는 흐름을 지키고 있습니다.", "주가 흐름이 내려가는 쪽이거나 방향이 뚜렷하지 않습니다."),
-    "relative_strength": ("같은 기간에 시장 전체보다 더 많이 올랐습니다.", "같은 기간에 시장 전체보다 덜 올랐거나 더 많이 내렸습니다."),
+    "relative_strength": ("지난 여섯 달 동안 다른 종목들보다 더 많이 올랐습니다.", "지난 여섯 달 동안 다른 종목들보다 덜 올랐거나 더 많이 내렸습니다."),
     "momentum": ("최근 들어 오르는 힘이 붙어 있습니다.", "최근 들어 오르는 힘이 약합니다."),
-    "breakout_volume": ("전에 못 넘던 가격대를 넘어섰고 거래도 늘었습니다.", "전에 못 넘던 가격대를 넘어서는 움직임이 없거나, 넘었어도 거래가 따라붙지 않았습니다."),
-    "volatility_structure": ("가격이 출렁이는 폭이 차분해지고 있습니다.", "가격이 출렁이는 폭이 커지고 있습니다."),
+    "breakout_volume": ("지난 1년 가운데 가장 높았던 가격 가까이에 있고 거래도 늘었습니다.", "지난 1년 가운데 가장 높았던 가격에서 멀리 떨어져 있거나, 오를 때 거래가 따라붙지 않았습니다."),
+    "volatility_structure": ("요즘 가격이 출렁이는 폭이 평소보다 좁습니다.", "요즘 가격이 출렁이는 폭이 평소보다 넓습니다."),
     "earnings_revenue_quality": ("회사의 매출과 이익이 늘고 있습니다.", "회사의 매출이나 이익이 줄고 있거나 늘지 않습니다."),
     "profitability": ("장사해서 남기는 비율이 좋습니다.", "장사해서 남기는 비율이 낮습니다."),
     "balance_sheet": ("빚이 많지 않고 살림이 튼튼한 편입니다.", "빚이 많거나, 곧 갚아야 할 돈에 비해 가진 돈이 빠듯합니다."),
-    "cash_flow_quality": ("장부에 적힌 이익만큼 실제 현금도 들어오고 있습니다.", "장부에 적힌 이익에 비해 실제로 들어오는 현금이 적습니다."),
+    "cash_flow_quality": ("장부에 적힌 이익만큼 실제 현금도 들어오고, 쓰고 남는 현금도 있습니다.", "장부에 적힌 이익에 비해 실제로 들어오는 현금이 적거나, 쓰고 나면 남는 현금이 적습니다."),
     "risk_reward": ("지금 가격에서는 기대할 이익이 감수할 손실보다 넉넉히 큽니다.", "지금 가격에서는 기대할 이익에 비해 감수할 손실이 큰 편입니다."),
     "atr_risk": ("하루하루 가격이 움직이는 폭이 크지 않습니다.", "하루하루 가격이 크게 움직여서 짧은 기간에도 손실이 커질 수 있습니다."),
     "liquidity": ("거래가 활발해서 사고팔기 쉽습니다.", "거래가 많지 않아 원하는 값에 사고팔기 어려울 수 있습니다."),
-    "drawdown_gap": ("최근에 크게 떨어지거나 하루 사이에 값이 뚝 떨어진 날이 드뭅니다.", "최근에 크게 떨어졌거나 하루 사이에 값이 뚝 떨어진 적이 있습니다."),
+    "drawdown_gap": ("지난 1년 동안 크게 떨어진 적이 없고, 최근 하루 사이에 값이 뚝 끊겨 움직인 날도 없습니다.", "지난 1년 사이에 크게 떨어졌거나, 최근 하루 사이에 값이 뚝 끊겨 움직인 날이 있습니다."),
     "earnings_calendar": ("실적 발표가 코앞은 아닙니다.", "곧 실적 발표가 있어 발표 직후 가격이 크게 움직일 수 있습니다."),
     "material_disclosures": ("최근 회사가 낸 공시에 걱정스러운 내용이 보이지 않습니다.", "최근 공시에 주주에게 불리할 수 있는 내용(예: 새 주식 발행)이 있습니다."),
     "insider_activity": ("회사 임원들이 자기 회사 주식을 사고 있습니다.", "회사 임원들이 자기 회사 주식을 팔고 있습니다."),
@@ -42,14 +42,14 @@ FACTOR = {
     "business_quality": ("꾸준히 돈을 잘 버는 사업입니다.", "돈을 버는 힘이 약하거나 해마다 들쭉날쭉합니다."),
     "growth_quality": ("매출과 이익이 몇 해에 걸쳐 꾸준히 늘었습니다.", "매출과 이익이 몇 해 동안 잘 늘지 않았습니다."),
     "free_cash_flow": ("사업에 쓸 돈을 다 쓰고도 현금이 남습니다.", "사업에 쓸 돈을 쓰고 나면 남는 현금이 적거나 없습니다."),
-    "balance_dilution": ("주식 수를 늘리지 않아 기존 주주의 몫이 줄지 않았습니다.", "주식 수가 늘어 기존 주주의 몫이 줄었습니다."),
+    "balance_dilution": ("빚이 많지 않고, 주식 수를 늘리지 않아 기존 주주의 몫이 줄지 않았습니다.", "빚이 많거나, 주식 수가 늘어 기존 주주의 몫이 줄었습니다."),
     "financial_resilience": ("어려운 시기가 와도 버틸 여력이 있습니다.", "어려운 시기에 버틸 여력이 넉넉하지 않습니다."),
-    "downside_drawdown": ("과거에 떨어질 때도 떨어진 폭이 크지 않았습니다.", "과거에 크게 떨어진 적이 있습니다."),
+    "downside_drawdown": ("지난 1년 동안 떨어질 때도 떨어진 폭이 크지 않았습니다.", "지난 1년 사이에 크게 떨어진 적이 있습니다."),
     "leverage": ("빚이 적습니다.", "빚이 많습니다."),
     "governance": ("회사 운영에서 걱정스러운 신호가 보이지 않습니다.", "회사 운영과 관련해 걱정스러운 공시가 있습니다."),
     "material_events": ("최근 큰 사건을 알리는 공시가 없습니다.", "최근 주가를 크게 움직일 수 있는 사건 공시가 있습니다."),
     "insider_ownership": ("경영진이 자기 회사 주식을 많이 갖고 있어 주주와 같은 배를 탔습니다.", "경영진이 가진 자기 회사 주식이 적습니다."),
-    "capital_allocation": ("번 돈을 배당이나 자기 주식 사들이기로 주주에게 돌려줍니다.", "번 돈을 주주에게 돌려주는 모습이 뚜렷하지 않습니다."),
+    "capital_allocation": ("번 돈을 배당이나 자기 주식 사들이기로 주주에게 돌려주고, 주식 수를 늘리지 않습니다.", "번 돈을 주주에게 돌려주는 모습이 뚜렷하지 않거나 주식 수가 늘고 있습니다."),
 }
 
 ENTRY = {
@@ -88,18 +88,25 @@ def _pct(v: float) -> str:
     return f"{abs(v):.1f}" if abs(v) < 1 else f"{abs(v):.0f}"
 
 
-def _sides(card: Dict[str, Any], n: int = 3) -> Tuple[List[str], List[str]]:
-    """The scored factors that read clearly well or clearly badly, the heaviest first."""
-    rows = []
+def _sides(card: Dict[str, Any], n: int = 3) -> Tuple[List[str], List[str], int]:
+    """The scored factors that read clearly well or clearly badly, the heaviest first, and how many were left unsaid.
+    A factor computed from part of its figures is not spoken for: a sentence here names every figure the factor reads, and a
+    Korean stock's "debt and share count" factor is computed from the debt alone (2026-11-22: it read "has not issued shares"
+    for a company whose share count this program does not know)."""
+    rows, unsaid = [], 0
     for f in card.get("factors") or []:
         v = f.get("normalized")
         if f.get("scored") is False or f.get("status") == "MISSING" or v is None or f.get("factor") not in FACTOR:
+            continue
+        got = f.get("inputs") or {}
+        if got.get("total") and (got.get("have") or 0) < got["total"]:
+            unsaid += v >= 0.65 or v <= 0.35
             continue
         rows.append((float(f.get("weight") or 0) * abs(v - 0.5), v, f["factor"]))
     rows.sort(key=lambda r: (-r[0], r[2]))
     good = [FACTOR[k][0] for _, v, k in rows if v >= 0.65][:n]
     bad = [FACTOR[k][1] for _, v, k in rows if v <= 0.35][:n]
-    return good, bad
+    return good, bad, int(unsaid)
 
 
 def card_plain(card: Dict[str, Any]) -> Dict[str, Any]:
@@ -123,9 +130,11 @@ def card_plain(card: Dict[str, Any]) -> Dict[str, Any]:
     if card.get("band_held_back") and card.get("conservative_score") is not None:
         head.append(f"일부 자료가 없어서, 없는 부분을 '보통'으로 치면 {float(card['conservative_score']):.0f}점쯤입니다. 그래서 더 낮은 구간으로 보여 줍니다.")
     parts.append({"h": "한 줄로", "lines": head})
-    good, bad = _sides(card)
+    good, bad, unsaid = _sides(card)
     parts.append({"h": "좋게 본 점", "lines": good or ["뚜렷하게 좋게 본 점이 없습니다."]})
     parts.append({"h": "걱정되는 점", "lines": bad or ["뚜렷하게 걱정되는 점이 없습니다."]})
+    if unsaid:
+        parts.append({"h": "말하지 않은 것", "lines": [f"자료가 일부만 있는 항목 {unsaid}개는 좋다 나쁘다를 여기서 말하지 않았습니다. 점수에는 있는 자료만으로 들어가 있습니다."]})
     if any("실적 발표" in s for s in good + bad):
         used.append("실적 발표")
     if any("공시" in s for s in good + bad):
