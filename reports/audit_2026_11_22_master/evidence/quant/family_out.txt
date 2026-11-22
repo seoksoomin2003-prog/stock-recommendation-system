@@ -1,0 +1,10 @@
+registry readings: 26
+expected count of chance non-null verdicts: 1.56 ; of chance 'positive' verdicts: 1.09
+P(at least one non-null) if independent: 80.5% ; P(at least one positive): 67.6%
+self-applying:
+  fund period x2  TRAILING_BETTER by chance: 3.65% (each 1.84)
+  rank book x2    ADOPT by chance: 7.44% (each 3.79)
+  turnover x2     ADOPT by chance given cheaper: 74.43% (each 49.43)
+  any of the six self-applying readings changes a rule by chance: 77.2%
+  same without turnover: 10.8%
+historical primary tests at nominal one-sided 1.25%% (t>=2.24): 2 (QSF1.2) + 2 (PIT) + 2 (open) + 1 (OOS) ... see report; at the measured 5.5%% for h252 n142: family of the 3 US long reruns is one sample, not three

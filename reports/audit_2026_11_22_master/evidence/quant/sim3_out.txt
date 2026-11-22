@@ -1,0 +1,54 @@
+## (a) remaining null designs: step 5 sampling with lag ceil(h/5)  [research_swing.py:353; us_challenger.py:215,238; kr_challenger.py:220]
+{"label": "US/KR challenger swing forward: 240 matured /5 = 48 samples, h20", "n": 48, "h": 20, "step": 5, "lag": 4, "one_sided_2.0": 7.0, "two_sided_2.0": 13.73, "one_sided_2.24": 5.11, "one_sided_2.86": 2.33}
+{"label": "challenger long forward: 756/5 = 151 samples, h63", "n": 151, "h": 63, "step": 5, "lag": 13, "one_sided_2.0": 7.22, "two_sided_2.0": 14.54, "one_sided_2.24": 5.34, "one_sided_2.86": 2.23}
+{"label": "historical swing test 2022-2026, 232 dates, h20", "n": 232, "h": 20, "step": 5, "lag": 4, "one_sided_2.0": 4.61, "two_sided_2.0": 9.36, "one_sided_2.24": 3.04, "one_sided_2.86": 1.0}
+{"label": "historical SUE test, 232 dates, h10", "n": 232, "h": 10, "step": 5, "lag": 2, "one_sided_2.0": 3.69, "two_sided_2.0": 7.27, "one_sided_2.24": 2.21, "one_sided_2.86": 0.51}
+{"label": "kr_swing_challenger / kr_swing_prior: 12 separate samples, plain t (kr_swing_challenger.py:103,144)", "one_sided_2.0": 3.52, "two_sided_2.0": 7.18}
+## (b) null quantiles of the repo's t: the threshold that would really give 2.5% / 1.25% / 0.5% one-sided
+{"label": "daily h20 n240 lag20", "q97.5": 2.89, "q98.75": 3.44, "q99.5": 4.02, "q99.9": 5.08}
+{"label": "daily h63 n756 lag63", "q97.5": 2.9, "q98.75": 3.36, "q99.5": 4.18, "q99.9": 5.2}
+{"label": "monthly h252 n142 lag12 (US 2014-2025)", "q97.5": 2.86, "q98.75": 3.36, "q99.5": 4.06, "q99.9": 5.23, "P(t>=2.00)_pct": 7.54, "P(t>=1.4468)_pct": 14.42}
+{"label": "monthly h252 n77 lag12 (KR replay)", "q97.5": 3.38, "q98.75": 4.11, "q99.5": 5.1, "q99.9": 7.01, "P(t>=8.2029)_pct": 0.037, "P(t>=2.4569)_pct": 6.3, "sims": 100000, "max_t_seen": 15.14}
+{"label": "monthly h252 n23 lag12 (KR long early)", "q97.5": 8.33, "q98.75": 10.97, "q99.5": 15.26, "q99.9": 24.71, "P(t>=2.0464)_pct": 21.83}
+{"label": "monthly h252 n22 lag12 (US OOS 2011-12)", "q97.5": 8.81, "q98.75": 11.75, "q99.5": 16.21, "q99.9": 26.6}
+## (c) power of the live forward verdict's t condition: daily IC = mu + sd * (overlapping noise), pass = t>=2.24 & mean>=0.02 & both halves>0
+#     sd values are the project's own recorded figures (reports/QSF_LIVE_FORWARD_POWER_2026_11_11.md); 0.058 is the pure-noise floor of 300 names (SIM 1)
+{"label": "KR swing 20d, 240 sessions", "sd": 0.138, "power_pct_at_IC": {"0.0": 5.47, "0.02": 12.94, "0.03": 18.5, "0.05": 34.01, "0.08": 62.35, "0.1": 78.26, "0.15": 97.72, "0.2": 99.93}, "IC_for_50pct": 0.067, "IC_for_80pct": 0.103}
+{"label": "US swing 20d, 240 sessions", "sd": 0.197, "power_pct_at_IC": {"0.0": 5.46, "0.02": 10.27, "0.03": 13.65, "0.05": 21.5, "0.08": 38.49, "0.1": 51.98, "0.15": 80.98, "0.2": 95.61}, "IC_for_50pct": 0.097, "IC_for_80pct": 0.148}
+{"label": "pure-noise floor swing", "sd": 0.058, "power_pct_at_IC": {"0.0": 5.57, "0.02": 32.01, "0.03": 54.15, "0.05": 89.2, "0.08": 99.78, "0.1": 99.97, "0.15": 100.0, "0.2": 100.0}, "IC_for_50pct": 0.028, "IC_for_80pct": 0.043}
+{"label": "KR long 63d, 756 sessions", "sd": 0.107, "power_pct_at_IC": {"0.0": 5.62, "0.02": 16.48, "0.03": 25.68, "0.05": 48.54, "0.08": 80.21, "0.1": 92.46, "0.15": 99.78, "0.2": 100.0}, "IC_for_50pct": 0.051, "IC_for_80pct": 0.08}
+{"label": "US long 63d, 756 sessions", "sd": 0.14, "power_pct_at_IC": {"0.0": 5.56, "0.02": 12.77, "0.03": 18.6, "0.05": 33.64, "0.08": 61.59, "0.1": 77.66, "0.15": 97.14, "0.2": 99.88}, "IC_for_50pct": 0.068, "IC_for_80pct": 0.104}
+## (d1) committee paper reading: 240 daily excess returns, NW lag 5, |t| >= 3.0  (terminal/committee/reading.py:18,25,48)
+{"null": "normal", "P(t>=3)": 0.19, "P(t<=-3)": 0.24, "P(|t|>=3)": 0.43}
+{"null": "t3", "P(t>=3)": 0.19, "P(t<=-3)": 0.19, "P(|t|>=3)": 0.38}
+{"null": "garch(0.08,0.90)", "P(t>=3)": 0.19, "P(|t|>=3)": 0.38}
+#   power: tracking error TE (annual sd of the daily excess), true annual excess alpha; daily mean = alpha/252, daily sd = TE/sqrt(252)
+{"TE_annual": 0.05, "alpha_for_50pct": 0.15, "alpha_for_80pct": 0.196, "power_at_alpha": {"0.02": 0.69, "0.06": 4.31, "0.1": 16.9, "0.2": 82.47, "0.3": 99.79, "0.4": 100.0}}
+{"TE_annual": 0.1, "alpha_for_50pct": 0.302, "alpha_for_80pct": 0.391, "power_at_alpha": {"0.02": 0.35, "0.06": 1.08, "0.1": 2.59, "0.2": 16.28, "0.3": 49.11, "0.4": 82.44}}
+{"TE_annual": 0.15, "alpha_for_50pct": 0.45, "alpha_for_80pct": 0.585, "power_at_alpha": {"0.02": 0.42, "0.06": 0.75, "0.1": 1.53, "0.2": 6.03, "0.3": 17.7, "0.4": 37.7}}
+{"TE_annual": 0.2, "alpha_for_50pct": 0.605, "alpha_for_80pct": 0.784, "power_at_alpha": {"0.02": 0.3, "0.06": 0.5, "0.1": 0.82, "0.2": 2.89, "0.3": 7.73, "0.4": 16.9}}
+#   cash drag: a portfolio that holds a fraction w of stocks with zero selection skill (stock part = index), excess = -(1-w) * index return
+#   index: daily mean m/252, daily sd 16%/sqrt(252); the reading says BETTER when the index FELL enough, WORSE when it rose enough
+{"invested": 0.3, "index_annual_drift": -0.3, "P(BETTER)": 14.34, "P(WORSE)": 0.0}
+{"invested": 0.3, "index_annual_drift": -0.15, "P(BETTER)": 2.72, "P(WORSE)": 0.0}
+{"invested": 0.3, "index_annual_drift": 0.0, "P(BETTER)": 0.22, "P(WORSE)": 0.17}
+{"invested": 0.3, "index_annual_drift": 0.15, "P(BETTER)": 0.02, "P(WORSE)": 2.52}
+{"invested": 0.3, "index_annual_drift": 0.3, "P(BETTER)": 0.0, "P(WORSE)": 13.86}
+{"invested": 0.5, "index_annual_drift": -0.3, "P(BETTER)": 13.95, "P(WORSE)": 0.0}
+{"invested": 0.5, "index_annual_drift": -0.15, "P(BETTER)": 2.49, "P(WORSE)": 0.0}
+{"invested": 0.5, "index_annual_drift": 0.0, "P(BETTER)": 0.25, "P(WORSE)": 0.21}
+{"invested": 0.5, "index_annual_drift": 0.15, "P(BETTER)": 0.0, "P(WORSE)": 2.29}
+{"invested": 0.5, "index_annual_drift": 0.3, "P(BETTER)": 0.0, "P(WORSE)": 14.31}
+{"invested": 0.7, "index_annual_drift": -0.3, "P(BETTER)": 14.22, "P(WORSE)": 0.0}
+{"invested": 0.7, "index_annual_drift": -0.15, "P(BETTER)": 2.35, "P(WORSE)": 0.01}
+{"invested": 0.7, "index_annual_drift": 0.0, "P(BETTER)": 0.14, "P(WORSE)": 0.15}
+{"invested": 0.7, "index_annual_drift": 0.15, "P(BETTER)": 0.0, "P(WORSE)": 2.51}
+{"invested": 0.7, "index_annual_drift": 0.3, "P(BETTER)": 0.0, "P(WORSE)": 14.12}
+## (d2) rank book RK-1: 240 daily differences, NW lag 20, ADOPT at mean>0 & t>=2.0 (rank_book.py:26-27,84)
+{"null": "iid normal", "P(ADOPT)": 3.79}
+{"null": "2 episodes of 30 sessions, zero elsewhere", "P(ADOPT)": 0.87}
+{"null": "4 episodes of 30 sessions, zero elsewhere", "P(ADOPT)": 2.61}
+{"null": "AR(1) rho 0.1", "P(ADOPT)": 3.72}
+{"null": "AR(1) rho 0.3", "P(ADOPT)": 3.86}
+## (d3) turnover book TO-1: ADOPT at cheaper & mean difference >= 0, no t (turnover_book.py:146-147)
+{"null": "iid, cost condition taken as met", "P(mean>=0)": 49.43}

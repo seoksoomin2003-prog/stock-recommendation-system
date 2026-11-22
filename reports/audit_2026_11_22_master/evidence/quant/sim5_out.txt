@@ -1,0 +1,22 @@
+## (a)
+{"arm_A_empty_share": 0.25, "market_annual_drift": -0.2, "P(TRAILING_BETTER: t>=3 & >=120 days)": 0.0, "P(t>=3) without the day rule": 0.0, "P(SPLIT-style: t>=2.0)": 1.13, "P(t<=-2.0)": 13.31}
+{"arm_A_empty_share": 0.25, "market_annual_drift": 0.0, "P(TRAILING_BETTER: t>=3 & >=120 days)": 0.0, "P(t>=3) without the day rule": 0.0, "P(SPLIT-style: t>=2.0)": 4.55, "P(t<=-2.0)": 4.79}
+{"arm_A_empty_share": 0.25, "market_annual_drift": 0.1, "P(TRAILING_BETTER: t>=3 & >=120 days)": 0.0, "P(t>=3) without the day rule": 0.0, "P(SPLIT-style: t>=2.0)": 8.01, "P(t<=-2.0)": 2.26}
+{"arm_A_empty_share": 0.25, "market_annual_drift": 0.2, "P(TRAILING_BETTER: t>=3 & >=120 days)": 0.0, "P(t>=3) without the day rule": 0.0, "P(SPLIT-style: t>=2.0)": 13.64, "P(t<=-2.0)": 0.98}
+{"arm_A_empty_share": 0.25, "market_annual_drift": 0.3, "P(TRAILING_BETTER: t>=3 & >=120 days)": 0.0, "P(t>=3) without the day rule": 0.0, "P(SPLIT-style: t>=2.0)": 22.27, "P(t<=-2.0)": 0.33}
+{"arm_A_empty_share": 0.5, "market_annual_drift": -0.2, "P(TRAILING_BETTER: t>=3 & >=120 days)": 0.09, "P(t>=3) without the day rule": 0.09, "P(SPLIT-style: t>=2.0)": 0.85, "P(t<=-2.0)": 26.84}
+{"arm_A_empty_share": 0.5, "market_annual_drift": 0.0, "P(TRAILING_BETTER: t>=3 & >=120 days)": 0.86, "P(t>=3) without the day rule": 0.86, "P(SPLIT-style: t>=2.0)": 6.77, "P(t<=-2.0)": 6.35}
+{"arm_A_empty_share": 0.5, "market_annual_drift": 0.1, "P(TRAILING_BETTER: t>=3 & >=120 days)": 2.34, "P(t>=3) without the day rule": 2.34, "P(SPLIT-style: t>=2.0)": 14.38, "P(t<=-2.0)": 2.5}
+{"arm_A_empty_share": 0.5, "market_annual_drift": 0.2, "P(TRAILING_BETTER: t>=3 & >=120 days)": 5.17, "P(t>=3) without the day rule": 5.17, "P(SPLIT-style: t>=2.0)": 26.92, "P(t<=-2.0)": 0.86}
+{"arm_A_empty_share": 0.5, "market_annual_drift": 0.3, "P(TRAILING_BETTER: t>=3 & >=120 days)": 11.07, "P(t>=3) without the day rule": 11.07, "P(SPLIT-style: t>=2.0)": 43.62, "P(t<=-2.0)": 0.21}
+{"arm_A_empty_share": 0.75, "market_annual_drift": -0.2, "P(TRAILING_BETTER: t>=3 & >=120 days)": 0.04, "P(t>=3) without the day rule": 0.04, "P(SPLIT-style: t>=2.0)": 0.61, "P(t<=-2.0)": 35.03}
+{"arm_A_empty_share": 0.75, "market_annual_drift": 0.0, "P(TRAILING_BETTER: t>=3 & >=120 days)": 1.7, "P(t>=3) without the day rule": 1.7, "P(SPLIT-style: t>=2.0)": 7.25, "P(t<=-2.0)": 7.08}
+{"arm_A_empty_share": 0.75, "market_annual_drift": 0.1, "P(TRAILING_BETTER: t>=3 & >=120 days)": 4.69, "P(t>=3) without the day rule": 4.69, "P(SPLIT-style: t>=2.0)": 17.36, "P(t<=-2.0)": 2.3}
+{"arm_A_empty_share": 0.75, "market_annual_drift": 0.2, "P(TRAILING_BETTER: t>=3 & >=120 days)": 12.84, "P(t>=3) without the day rule": 12.84, "P(SPLIT-style: t>=2.0)": 34.4, "P(t<=-2.0)": 0.54}
+{"arm_A_empty_share": 0.75, "market_annual_drift": 0.3, "P(TRAILING_BETTER: t>=3 & >=120 days)": 25.35, "P(t>=3) without the day rule": 25.35, "P(SPLIT-style: t>=2.0)": 55.64, "P(t<=-2.0)": 0.09}
+## (b)
+{"market_annual_drift": -0.3, "P(rank ADOPT: mean>0 & t>=2.0)": 48.85, "P(turnover ADOPT if cheaper: mean>=0)": 96.65}
+{"market_annual_drift": -0.15, "P(rank ADOPT: mean>0 & t>=2.0)": 18.42, "P(turnover ADOPT if cheaper: mean>=0)": 82.19}
+{"market_annual_drift": 0.0, "P(rank ADOPT: mean>0 & t>=2.0)": 3.79, "P(turnover ADOPT if cheaper: mean>=0)": 50.34}
+{"market_annual_drift": 0.15, "P(rank ADOPT: mean>0 & t>=2.0)": 0.48, "P(turnover ADOPT if cheaper: mean>=0)": 17.64}
+{"market_annual_drift": 0.3, "P(rank ADOPT: mean>0 & t>=2.0)": 0.0, "P(turnover ADOPT if cheaper: mean>=0)": 3.36}

@@ -1,0 +1,12 @@
+    ret = ret.dtype.type(ret / rcount)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_p6_17_5_live_pipeline.py:26: live provider test: set QPP_PROVIDER_TESTS=1
+SKIPPED [1] tests/test_p6_17_5_live_pipeline.py:32: live provider test: set QPP_PROVIDER_TESTS=1
+SKIPPED [1] tests/test_p6_17_5_live_pipeline.py:39: live provider test: set QPP_PROVIDER_TESTS=1
+SKIPPED [1] tests/test_p6_17_5_live_pipeline.py:45: live provider test: set QPP_PROVIDER_TESTS=1
+SKIPPED [1] tests/test_p6_17_5_live_pipeline.py:52: live provider test: set QPP_PROVIDER_TESTS=1
+SKIPPED [1] tests/test_p6_20_prospective_tracking.py:595: live provider test (set QPP_PROVIDER_TESTS=1)
+1981 passed, 6 skipped, 3 xfailed, 12 warnings in 259.53s (0:04:19)
+exit 0

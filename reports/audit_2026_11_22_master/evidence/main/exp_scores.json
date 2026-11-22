@@ -1,0 +1,2812 @@
+{
+ "US_SWING": {
+  "session": "2026-11-20",
+  "n": 503,
+  "model": "QSF-1.4.1",
+  "profile": "US_SWING_V2",
+  "factors": 16,
+  "reference_factors": 4,
+  "total_weight": 80,
+  "domain_weight_share": {
+   "TECHNICAL": 0.5,
+   "FUNDAMENTAL": 0.125,
+   "RISK": 0.25,
+   "EVENTS": 0.125
+  },
+  "largest_factor_weight_share": {
+   "trend_structure": 0.125,
+   "relative_strength": 0.125,
+   "breakout_volume": 0.125,
+   "risk_reward": 0.075
+  },
+  "inventory": {
+   "trend_structure": {
+    "domain": "TECHNICAL",
+    "weight_share": 0.125,
+    "available": 0.994,
+    "mean": 0.537,
+    "sd": 0.32,
+    "at_zero": 0.076,
+    "at_one": 0.166,
+    "rho_with_score": 0.883
+   },
+   "relative_strength": {
+    "domain": "TECHNICAL",
+    "weight_share": 0.125,
+    "available": 0.994,
+    "mean": 0.501,
+    "sd": 0.289,
+    "at_zero": 0.0,
+    "at_one": 0.002,
+    "rho_with_score": 0.836
+   },
+   "momentum": {
+    "domain": "TECHNICAL",
+    "weight_share": 0.062,
+    "available": 1.0,
+    "mean": 0.324,
+    "sd": 0.252,
+    "at_zero": 0.129,
+    "at_one": 0.0,
+    "rho_with_score": 0.459
+   },
+   "breakout_volume": {
+    "domain": "TECHNICAL",
+    "weight_share": 0.125,
+    "available": 1.0,
+    "mean": 0.392,
+    "sd": 0.162,
+    "at_zero": 0.0,
+    "at_one": 0.0,
+    "rho_with_score": 0.88
+   },
+   "volatility_structure": {
+    "domain": "TECHNICAL",
+    "weight_share": 0.062,
+    "available": 0.998,
+    "mean": 0.37,
+    "sd": 0.242,
+    "at_zero": 0.022,
+    "at_one": 0.0,
+    "rho_with_score": 0.382
+   },
+   "earnings_revenue_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.037,
+    "available": 0.994,
+    "mean": 0.63,
+    "sd": 0.223,
+    "at_zero": 0.016,
+    "at_one": 0.044,
+    "rho_with_score": -0.021
+   },
+   "profitability": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.025,
+    "available": 0.99,
+    "mean": 0.699,
+    "sd": 0.298,
+    "at_zero": 0.036,
+    "at_one": 0.255,
+    "rho_with_score": 0.181
+   },
+   "balance_sheet": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.037,
+    "available": 0.994,
+    "mean": 0.547,
+    "sd": 0.329,
+    "at_zero": 0.072,
+    "at_one": 0.13,
+    "rho_with_score": -0.115
+   },
+   "cash_flow_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.025,
+    "available": 0.887,
+    "mean": 0.825,
+    "sd": 0.222,
+    "at_zero": 0.018,
+    "at_one": 0.368,
+    "rho_with_score": 0.159
+   },
+   "risk_reward": {
+    "domain": "RISK",
+    "weight_share": 0.075,
+    "available": 1.0,
+    "mean": 0.083,
+    "sd": 0.185,
+    "at_zero": 0.678,
+    "at_one": 0.008,
+    "rho_with_score": -0.161
+   },
+   "atr_risk": {
+    "domain": "RISK",
+    "weight_share": 0.062,
+    "available": 1.0,
+    "mean": 0.594,
+    "sd": 0.268,
+    "at_zero": 0.05,
+    "at_one": 0.0,
+    "rho_with_score": 0.664
+   },
+   "liquidity": {
+    "domain": "RISK",
+    "weight_share": 0.062,
+    "available": 1.0,
+    "mean": 0.884,
+    "sd": 0.145,
+    "at_zero": 0.0,
+    "at_one": 0.433,
+    "rho_with_score": -0.116
+   },
+   "drawdown_gap": {
+    "domain": "RISK",
+    "weight_share": 0.05,
+    "available": 1.0,
+    "mean": 0.555,
+    "sd": 0.259,
+    "at_zero": 0.032,
+    "at_one": 0.0,
+    "rho_with_score": 0.609
+   },
+   "earnings_calendar": {
+    "domain": "EVENTS",
+    "weight_share": 0.05,
+    "available": 0.978,
+    "mean": 0.956,
+    "sd": 0.179,
+    "at_zero": 0.016,
+    "at_one": 0.929,
+    "rho_with_score": 0.047
+   },
+   "material_disclosures": {
+    "domain": "EVENTS",
+    "weight_share": 0.037,
+    "available": 1.0,
+    "mean": 0.587,
+    "sd": 0.061,
+    "at_zero": 0.0,
+    "at_one": 0.0,
+    "rho_with_score": 0.013
+   },
+   "insider_activity": {
+    "domain": "EVENTS",
+    "weight_share": 0.037,
+    "available": 1.0,
+    "mean": 0.26,
+    "sd": 0.32,
+    "at_zero": 0.541,
+    "at_one": 0.072,
+    "rho_with_score": -0.075
+   }
+  },
+  "pairs_abs_rho_ge_0.5": [
+   [
+    "trend_structure",
+    "relative_strength",
+    0.8
+   ],
+   [
+    "trend_structure",
+    "breakout_volume",
+    0.78
+   ],
+   [
+    "atr_risk",
+    "drawdown_gap",
+    0.77
+   ],
+   [
+    "relative_strength",
+    "breakout_volume",
+    0.69
+   ],
+   [
+    "breakout_volume",
+    "atr_risk",
+    0.67
+   ],
+   [
+    "breakout_volume",
+    "drawdown_gap",
+    0.65
+   ]
+  ],
+  "effective_factors_participation": 9.03,
+  "eigen_top3_share": [
+   0.25,
+   0.111,
+   0.081
+  ],
+  "complete_rows": 432,
+  "variance_share_top": {
+   "trend_structure": 0.311,
+   "relative_strength": 0.277,
+   "breakout_volume": 0.162,
+   "atr_risk": 0.104,
+   "drawdown_gap": 0.076,
+   "momentum": 0.055
+  },
+  "variance_share_domain": {
+   "TECHNICAL": 0.858,
+   "FUNDAMENTAL": -0.0,
+   "RISK": 0.149,
+   "EVENTS": -0.007
+  },
+  "buy_band": 13,
+  "near_70_within_1": 13,
+  "near_70_within_2": 28,
+  "near_55_within_1": 28,
+  "score_quantiles": [
+   33.1,
+   41.3,
+   50.7,
+   60.4,
+   68.6,
+   76.4
+  ],
+  "ablation": {
+   "trend_structure": {
+    "rho": 0.972,
+    "top20_kept": 15,
+    "buy_before_after": [
+     13,
+     2
+    ],
+    "max_abs_change": 7.5
+   },
+   "relative_strength": {
+    "rho": 0.972,
+    "top20_kept": 16,
+    "buy_before_after": [
+     13,
+     4
+    ],
+    "max_abs_change": 7.3
+   },
+   "momentum": {
+    "rho": 0.991,
+    "top20_kept": 15,
+    "buy_before_after": [
+     13,
+     24
+    ],
+    "max_abs_change": 4.8
+   },
+   "volatility_structure": {
+    "rho": 0.993,
+    "top20_kept": 14,
+    "buy_before_after": [
+     13,
+     27
+    ],
+    "max_abs_change": 4.5
+   },
+   "atr_risk": {
+    "rho": 0.993,
+    "top20_kept": 19,
+    "buy_before_after": [
+     13,
+     8
+    ],
+    "max_abs_change": 3.7
+   },
+   "balance_sheet": {
+    "rho": 0.994,
+    "top20_kept": 16,
+    "buy_before_after": [
+     13,
+     19
+    ],
+    "max_abs_change": 2.8
+   },
+   "insider_activity": {
+    "rho": 0.994,
+    "top20_kept": 16,
+    "buy_before_after": [
+     13,
+     29
+    ],
+    "max_abs_change": 3.6
+   },
+   "breakout_volume": {
+    "rho": 0.995,
+    "top20_kept": 16,
+    "buy_before_after": [
+     13,
+     21
+    ],
+    "max_abs_change": 5.0
+   }
+  },
+  "ablation_domain": {
+   "TECHNICAL": {
+    "rho": 0.467,
+    "top20_kept": 6,
+    "buy_after": 12
+   },
+   "FUNDAMENTAL": {
+    "rho": 0.985,
+    "top20_kept": 14,
+    "buy_after": 15
+   },
+   "RISK": {
+    "rho": 0.975,
+    "top20_kept": 12,
+    "buy_after": 43
+   },
+   "EVENTS": {
+    "rho": 0.99,
+    "top20_kept": 16,
+    "buy_after": 20
+   }
+  },
+  "weight_perturb_20pct": {
+   "rho_p5_median": [
+    0.998,
+    0.999
+   ],
+   "top20_kept_p5_median": [
+    17,
+    18
+   ],
+   "buy_band_kept_p5_median": [
+    0.54,
+    0.92
+   ]
+  },
+  "weight_perturb_50pct": {
+   "rho_p5_median": [
+    0.982,
+    0.992
+   ],
+   "top20_kept_p5_median": [
+    14,
+    16
+   ],
+   "buy_band_kept_p5_median": [
+    0.15,
+    0.77
+   ]
+  },
+  "rank_normalised_rho": 0.987,
+  "rank_normalised_top20_kept": 16,
+  "missing": {
+   "stocks_with_missing": 19,
+   "stocks_with_not_applicable": 53,
+   "rho_missing_count_vs_score": -0.007,
+   "mean_score_by_gaps": {
+    "0": 50.9,
+    "1": 52.0
+   },
+   "truly_missing_only": {
+    "n": 19
+   },
+   "if_gaps_were_median": {
+    "n": 71,
+    "mean_change": 0.64,
+    "p5_p95": [
+     -0.0,
+     3.6
+    ],
+    "buy_now": 5,
+    "buy_if_median": 5
+   },
+   "if_gaps_were_neutral_0.5": {
+    "mean_change": 0.13,
+    "buy_if_neutral": 5
+   },
+   "if_worst_factor_went_missing": {
+    "median_gain": 4.34,
+    "p95_gain": 5.7,
+    "max_gain": 7.48,
+    "new_buy_band": 45
+   }
+  },
+  "coverage": {
+   "min": 0.562,
+   "p5": 1.0,
+   "confidence": {
+    "HIGH": 498,
+    "MEDIUM": 2,
+    "INSUFFICIENT": 3
+   },
+   "buy_band_min_coverage": 0.95,
+   "buy_band_confidence": {
+    "HIGH": 13
+   }
+  },
+  "actions": {
+   "WATCH": 177,
+   "AVOID": 310,
+   "BUY": 13,
+   "INSUFFICIENT_DATA": 3
+  },
+  "actionability": {
+   "BLOCKED": 10,
+   "ACTIONABLE": 490,
+   "INSUFFICIENT_DATA": 3
+  },
+  "entry_status_in_buy_band": {
+   "WAIT_FOR_PULLBACK": 12,
+   "ENTRY_NOW": 1
+  },
+  "gates": {
+   "EARNINGS_IMMINENT": 8,
+   "SEVERE_EVENT": 2,
+   "SHORT_HISTORY": 3
+  },
+  "sector": {
+   "헬스케어": {
+    "n": 60,
+    "mean_minus_all": 8.0,
+    "share_universe": 0.119,
+    "share_top_quintile": 0.28,
+    "share_buy_band": 0.308
+   },
+   "필수소비재": {
+    "n": 31,
+    "mean_minus_all": 6.3,
+    "share_universe": 0.062,
+    "share_top_quintile": 0.11,
+    "share_buy_band": 0.077
+   },
+   "유틸리티": {
+    "n": 31,
+    "mean_minus_all": 3.7,
+    "share_universe": 0.062,
+    "share_top_quintile": 0.07,
+    "share_buy_band": 0.077
+   },
+   "금융": {
+    "n": 71,
+    "mean_minus_all": 3.5,
+    "share_universe": 0.141,
+    "share_top_quintile": 0.22,
+    "share_buy_band": 0.308
+   },
+   "부동산": {
+    "n": 30,
+    "mean_minus_all": 0.1,
+    "share_universe": 0.06,
+    "share_top_quintile": 0.07,
+    "share_buy_band": 0.077
+   },
+   "산업재": {
+    "n": 76,
+    "mean_minus_all": -1.4,
+    "share_universe": 0.151,
+    "share_top_quintile": 0.11,
+    "share_buy_band": 0.077
+   },
+   "경기소비재": {
+    "n": 54,
+    "mean_minus_all": -1.5,
+    "share_universe": 0.107,
+    "share_top_quintile": 0.04,
+    "share_buy_band": 0.0
+   },
+   "소재": {
+    "n": 19,
+    "mean_minus_all": -2.7,
+    "share_universe": 0.038,
+    "share_top_quintile": 0.01,
+    "share_buy_band": 0.0
+   },
+   "에너지": {
+    "n": 21,
+    "mean_minus_all": -3.9,
+    "share_universe": 0.042,
+    "share_top_quintile": 0.0,
+    "share_buy_band": 0.0
+   },
+   "커뮤니케이션": {
+    "n": 22,
+    "mean_minus_all": -5.6,
+    "share_universe": 0.044,
+    "share_top_quintile": 0.01,
+    "share_buy_band": 0.0
+   },
+   "기술": {
+    "n": 87,
+    "mean_minus_all": -6.8,
+    "share_universe": 0.173,
+    "share_top_quintile": 0.08,
+    "share_buy_band": 0.077
+   }
+  },
+  "sector_eta_squared": 0.186,
+  "rho_score_vs_market_cap": 0.088,
+  "cap_known": 503,
+  "day_to_day": [
+   {
+    "from": "2026-11-04",
+    "to": "2026-11-05",
+    "same_version": false,
+    "rho": 0.95,
+    "top20_kept": 14,
+    "buy": [
+     10,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 6.62
+   },
+   {
+    "from": "2026-11-05",
+    "to": "2026-11-06",
+    "same_version": false,
+    "rho": 0.981,
+    "top20_kept": 14,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 1.39
+   },
+   {
+    "from": "2026-11-06",
+    "to": "2026-11-09",
+    "same_version": false,
+    "rho": 0.976,
+    "top20_kept": 19,
+    "buy": [
+     0,
+     8
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 4.76
+   },
+   {
+    "from": "2026-11-09",
+    "to": "2026-11-10",
+    "same_version": true,
+    "rho": 0.991,
+    "top20_kept": 18,
+    "buy": [
+     8,
+     12
+    ],
+    "buy_kept": 7,
+    "mean_abs_change": 1.1
+   },
+   {
+    "from": "2026-11-10",
+    "to": "2026-11-11",
+    "same_version": false,
+    "rho": 0.98,
+    "top20_kept": 16,
+    "buy": [
+     12,
+     21
+    ],
+    "buy_kept": 12,
+    "mean_abs_change": 2.51
+   },
+   {
+    "from": "2026-11-11",
+    "to": "2026-11-12",
+    "same_version": false,
+    "rho": 0.987,
+    "top20_kept": 16,
+    "buy": [
+     21,
+     9
+    ],
+    "buy_kept": 7,
+    "mean_abs_change": 1.39
+   },
+   {
+    "from": "2026-11-12",
+    "to": "2026-11-13",
+    "same_version": true,
+    "rho": 0.99,
+    "top20_kept": 17,
+    "buy": [
+     9,
+     15
+    ],
+    "buy_kept": 9,
+    "mean_abs_change": 0.9
+   },
+   {
+    "from": "2026-11-13",
+    "to": "2026-11-16",
+    "same_version": false,
+    "rho": 0.985,
+    "top20_kept": 17,
+    "buy": [
+     15,
+     25
+    ],
+    "buy_kept": 12,
+    "mean_abs_change": 2.8
+   },
+   {
+    "from": "2026-11-16",
+    "to": "2026-11-17",
+    "same_version": true,
+    "rho": 0.986,
+    "top20_kept": 16,
+    "buy": [
+     25,
+     22
+    ],
+    "buy_kept": 18,
+    "mean_abs_change": 1.37
+   },
+   {
+    "from": "2026-11-17",
+    "to": "2026-11-18",
+    "same_version": true,
+    "rho": 0.975,
+    "top20_kept": 14,
+    "buy": [
+     22,
+     28
+    ],
+    "buy_kept": 18,
+    "mean_abs_change": 1.61
+   },
+   {
+    "from": "2026-11-18",
+    "to": "2026-11-19",
+    "same_version": true,
+    "rho": 0.984,
+    "top20_kept": 15,
+    "buy": [
+     28,
+     22
+    ],
+    "buy_kept": 20,
+    "mean_abs_change": 1.65
+   },
+   {
+    "from": "2026-11-19",
+    "to": "2026-11-20",
+    "same_version": true,
+    "rho": 0.978,
+    "top20_kept": 16,
+    "buy": [
+     22,
+     13
+    ],
+    "buy_kept": 13,
+    "mean_abs_change": 2.1
+   }
+  ],
+  "versions": [
+   [
+    "2026-11-04",
+    "QSF-1.1.1"
+   ],
+   [
+    "2026-11-05",
+    "QSF-1.1.2"
+   ],
+   [
+    "2026-11-06",
+    "QSF-1.1.3"
+   ],
+   [
+    "2026-11-09",
+    "QSF-1.1.8"
+   ],
+   [
+    "2026-11-10",
+    "QSF-1.1.8"
+   ],
+   [
+    "2026-11-11",
+    "QSF-1.3.1"
+   ],
+   [
+    "2026-11-12",
+    "QSF-1.3.2"
+   ],
+   [
+    "2026-11-13",
+    "QSF-1.3.2"
+   ],
+   [
+    "2026-11-16",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-17",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-18",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-19",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-20",
+    "QSF-1.4.1"
+   ]
+  ]
+ },
+ "US_LONG_TERM": {
+  "session": "2026-11-20",
+  "n": 503,
+  "model": "QSF-1.4.1",
+  "profile": "US_LONG_TERM_V2",
+  "factors": 16,
+  "reference_factors": 4,
+  "total_weight": 90,
+  "domain_weight_share": {
+   "TECHNICAL": 0.111,
+   "FUNDAMENTAL": 0.556,
+   "RISK": 0.222,
+   "EVENTS": 0.111
+  },
+  "largest_factor_weight_share": {
+   "valuation": 0.167,
+   "business_quality": 0.167,
+   "growth_quality": 0.089,
+   "free_cash_flow": 0.078
+  },
+  "inventory": {
+   "long_trend": {
+    "domain": "TECHNICAL",
+    "weight_share": 0.056,
+    "available": 0.994,
+    "mean": 0.533,
+    "sd": 0.291,
+    "at_zero": 0.058,
+    "at_one": 0.072,
+    "rho_with_score": 0.251
+   },
+   "relative_strength": {
+    "domain": "TECHNICAL",
+    "weight_share": 0.033,
+    "available": 0.994,
+    "mean": 0.501,
+    "sd": 0.289,
+    "at_zero": 0.0,
+    "at_one": 0.002,
+    "rho_with_score": 0.285
+   },
+   "momentum_persistence": {
+    "domain": "TECHNICAL",
+    "weight_share": 0.022,
+    "available": 0.994,
+    "mean": 0.561,
+    "sd": 0.229,
+    "at_zero": 0.0,
+    "at_one": 0.0,
+    "rho_with_score": 0.114
+   },
+   "valuation": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.167,
+    "available": 0.996,
+    "mean": 0.492,
+    "sd": 0.257,
+    "at_zero": 0.014,
+    "at_one": 0.012,
+    "rho_with_score": 0.285
+   },
+   "business_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.167,
+    "available": 0.994,
+    "mean": 0.721,
+    "sd": 0.209,
+    "at_zero": 0.0,
+    "at_one": 0.108,
+    "rho_with_score": 0.543
+   },
+   "growth_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.089,
+    "available": 0.994,
+    "mean": 0.499,
+    "sd": 0.283,
+    "at_zero": 0.032,
+    "at_one": 0.064,
+    "rho_with_score": 0.275
+   },
+   "free_cash_flow": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.078,
+    "available": 0.815,
+    "mean": 0.785,
+    "sd": 0.261,
+    "at_zero": 0.029,
+    "at_one": 0.315,
+    "rho_with_score": 0.614
+   },
+   "balance_dilution": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.056,
+    "available": 0.996,
+    "mean": 0.717,
+    "sd": 0.232,
+    "at_zero": 0.004,
+    "at_one": 0.1,
+    "rho_with_score": 0.568
+   },
+   "financial_resilience": {
+    "domain": "RISK",
+    "weight_share": 0.078,
+    "available": 0.994,
+    "mean": 0.469,
+    "sd": 0.32,
+    "at_zero": 0.05,
+    "at_one": 0.116,
+    "rho_with_score": 0.498
+   },
+   "downside_drawdown": {
+    "domain": "RISK",
+    "weight_share": 0.056,
+    "available": 1.0,
+    "mean": 0.594,
+    "sd": 0.276,
+    "at_zero": 0.052,
+    "at_one": 0.01,
+    "rho_with_score": 0.19
+   },
+   "liquidity": {
+    "domain": "RISK",
+    "weight_share": 0.044,
+    "available": 1.0,
+    "mean": 0.884,
+    "sd": 0.145,
+    "at_zero": 0.0,
+    "at_one": 0.433,
+    "rho_with_score": 0.081
+   },
+   "leverage": {
+    "domain": "RISK",
+    "weight_share": 0.044,
+    "available": 0.873,
+    "mean": 0.624,
+    "sd": 0.349,
+    "at_zero": 0.159,
+    "at_one": 0.109,
+    "rho_with_score": 0.398
+   },
+   "governance": {
+    "domain": "EVENTS",
+    "weight_share": 0.033,
+    "available": 1.0,
+    "mean": 0.783,
+    "sd": 0.074,
+    "at_zero": 0.0,
+    "at_one": 0.0,
+    "rho_with_score": 0.092
+   },
+   "material_events": {
+    "domain": "EVENTS",
+    "weight_share": 0.033,
+    "available": 1.0,
+    "mean": 0.584,
+    "sd": 0.073,
+    "at_zero": 0.004,
+    "at_one": 0.0,
+    "rho_with_score": 0.118
+   },
+   "insider_ownership": {
+    "domain": "EVENTS",
+    "weight_share": 0.022,
+    "available": 0.996,
+    "mean": 0.192,
+    "sd": 0.279,
+    "at_zero": 0.0,
+    "at_one": 0.062,
+    "rho_with_score": -0.052
+   },
+   "capital_allocation": {
+    "domain": "EVENTS",
+    "weight_share": 0.022,
+    "available": 0.988,
+    "mean": 0.874,
+    "sd": 0.18,
+    "at_zero": 0.008,
+    "at_one": 0.356,
+    "rho_with_score": 0.274
+   }
+  },
+  "pairs_abs_rho_ge_0.5": [
+   [
+    "long_trend",
+    "momentum_persistence",
+    0.78
+   ],
+   [
+    "balance_dilution",
+    "leverage",
+    0.78
+   ],
+   [
+    "long_trend",
+    "relative_strength",
+    0.69
+   ],
+   [
+    "balance_dilution",
+    "financial_resilience",
+    0.59
+   ],
+   [
+    "financial_resilience",
+    "leverage",
+    0.58
+   ],
+   [
+    "business_quality",
+    "free_cash_flow",
+    0.54
+   ]
+  ],
+  "effective_factors_participation": 9.83,
+  "eigen_top3_share": [
+   0.174,
+   0.163,
+   0.117
+  ],
+  "complete_rows": 398,
+  "variance_share_top": {
+   "business_quality": 0.246,
+   "free_cash_flow": 0.145,
+   "valuation": 0.141,
+   "financial_resilience": 0.116,
+   "balance_dilution": 0.081,
+   "growth_quality": 0.078
+  },
+  "variance_share_domain": {
+   "TECHNICAL": 0.077,
+   "FUNDAMENTAL": 0.691,
+   "RISK": 0.216,
+   "EVENTS": 0.018
+  },
+  "buy_band": 79,
+  "near_70_within_1": 33,
+  "near_70_within_2": 65,
+  "near_55_within_1": 29,
+  "score_quantiles": [
+   44.0,
+   55.6,
+   62.1,
+   67.1,
+   74.5,
+   82.8
+  ],
+  "ablation": {
+   "valuation": {
+    "rho": 0.865,
+    "top20_kept": 9,
+    "buy_before_after": [
+     79,
+     148
+    ],
+    "max_abs_change": 14.9
+   },
+   "business_quality": {
+    "rho": 0.911,
+    "top20_kept": 13,
+    "buy_before_after": [
+     79,
+     52
+    ],
+    "max_abs_change": 10.2
+   },
+   "growth_quality": {
+    "rho": 0.953,
+    "top20_kept": 14,
+    "buy_before_after": [
+     79,
+     108
+    ],
+    "max_abs_change": 7.8
+   },
+   "financial_resilience": {
+    "rho": 0.954,
+    "top20_kept": 13,
+    "buy_before_after": [
+     79,
+     94
+    ],
+    "max_abs_change": 5.8
+   },
+   "downside_drawdown": {
+    "rho": 0.976,
+    "top20_kept": 15,
+    "buy_before_after": [
+     79,
+     83
+    ],
+    "max_abs_change": 22.9
+   },
+   "long_trend": {
+    "rho": 0.98,
+    "top20_kept": 16,
+    "buy_before_after": [
+     79,
+     83
+    ],
+    "max_abs_change": 4.6
+   },
+   "free_cash_flow": {
+    "rho": 0.982,
+    "top20_kept": 17,
+    "buy_before_after": [
+     79,
+     58
+    ],
+    "max_abs_change": 4.8
+   },
+   "leverage": {
+    "rho": 0.983,
+    "top20_kept": 19,
+    "buy_before_after": [
+     79,
+     76
+    ],
+    "max_abs_change": 3.3
+   }
+  },
+  "ablation_domain": {
+   "TECHNICAL": {
+    "rho": 0.943,
+    "top20_kept": 14,
+    "buy_after": 98
+   },
+   "FUNDAMENTAL": {
+    "rho": 0.638,
+    "top20_kept": 6,
+    "buy_after": 77
+   },
+   "RISK": {
+    "rho": 0.903,
+    "top20_kept": 8,
+    "buy_after": 84
+   },
+   "EVENTS": {
+    "rho": 0.994,
+    "top20_kept": 18,
+    "buy_after": 92
+   }
+  },
+  "weight_perturb_20pct": {
+   "rho_p5_median": [
+    0.99,
+    0.995
+   ],
+   "top20_kept_p5_median": [
+    17,
+    18
+   ],
+   "buy_band_kept_p5_median": [
+    0.84,
+    0.95
+   ]
+  },
+  "weight_perturb_50pct": {
+   "rho_p5_median": [
+    0.941,
+    0.972
+   ],
+   "top20_kept_p5_median": [
+    13,
+    16
+   ],
+   "buy_band_kept_p5_median": [
+    0.66,
+    0.87
+   ]
+  },
+  "rank_normalised_rho": 0.97,
+  "rank_normalised_top20_kept": 15,
+  "missing": {
+   "stocks_with_missing": 54,
+   "stocks_with_not_applicable": 53,
+   "rho_missing_count_vs_score": 0.115,
+   "mean_score_by_gaps": {
+    "0": 60.4,
+    "1": 61.7,
+    "2": 65.2
+   },
+   "truly_missing_only": {
+    "n": 54
+   },
+   "if_gaps_were_median": {
+    "n": 105,
+    "mean_change": 0.78,
+    "p5_p95": [
+     -0.0,
+     2.5
+    ],
+    "buy_now": 26,
+    "buy_if_median": 26
+   },
+   "if_gaps_were_neutral_0.5": {
+    "mean_change": -0.61,
+    "buy_if_neutral": 22
+   },
+   "if_worst_factor_went_missing": {
+    "median_gain": 4.76,
+    "p95_gain": 10.86,
+    "max_gain": 22.9,
+    "new_buy_band": 113
+   }
+  },
+  "coverage": {
+   "min": 0.167,
+   "p5": 0.922,
+   "confidence": {
+    "HIGH": 496,
+    "INSUFFICIENT": 5,
+    "MEDIUM": 2
+   },
+   "buy_band_min_coverage": 0.167,
+   "buy_band_confidence": {
+    "HIGH": 78,
+    "INSUFFICIENT": 1
+   }
+  },
+  "actions": {
+   "WATCH": 302,
+   "BUY": 78,
+   "AVOID": 118,
+   "INSUFFICIENT_DATA": 5
+  },
+  "actionability": {
+   "ACTIONABLE": 496,
+   "INSUFFICIENT_DATA": 5,
+   "BLOCKED": 2
+  },
+  "entry_status_in_buy_band": {
+   "ENTRY_NOW": 70,
+   "OVERVALUED_AT_CURRENT_PRICE": 8,
+   "NO_VALID_ENTRY_SETUP": 1
+  },
+  "gates": {
+   "SEVERE_EVENT": 2,
+   "SHORT_HISTORY": 3
+  },
+  "sector": {
+   "금융": {
+    "n": 71,
+    "mean_minus_all": 5.3,
+    "share_universe": 0.141,
+    "share_top_quintile": 0.29,
+    "share_buy_band": 0.304
+   },
+   "헬스케어": {
+    "n": 60,
+    "mean_minus_all": 3.4,
+    "share_universe": 0.119,
+    "share_top_quintile": 0.15,
+    "share_buy_band": 0.165
+   },
+   "기술": {
+    "n": 87,
+    "mean_minus_all": 1.6,
+    "share_universe": 0.173,
+    "share_top_quintile": 0.21,
+    "share_buy_band": 0.241
+   },
+   "에너지": {
+    "n": 21,
+    "mean_minus_all": 1.5,
+    "share_universe": 0.042,
+    "share_top_quintile": 0.02,
+    "share_buy_band": 0.013
+   },
+   "커뮤니케이션": {
+    "n": 22,
+    "mean_minus_all": -0.4,
+    "share_universe": 0.044,
+    "share_top_quintile": 0.07,
+    "share_buy_band": 0.063
+   },
+   "산업재": {
+    "n": 76,
+    "mean_minus_all": -0.4,
+    "share_universe": 0.151,
+    "share_top_quintile": 0.1,
+    "share_buy_band": 0.076
+   },
+   "필수소비재": {
+    "n": 31,
+    "mean_minus_all": -1.9,
+    "share_universe": 0.062,
+    "share_top_quintile": 0.05,
+    "share_buy_band": 0.038
+   },
+   "경기소비재": {
+    "n": 54,
+    "mean_minus_all": -2.2,
+    "share_universe": 0.107,
+    "share_top_quintile": 0.06,
+    "share_buy_band": 0.063
+   },
+   "소재": {
+    "n": 19,
+    "mean_minus_all": -4.0,
+    "share_universe": 0.038,
+    "share_top_quintile": 0.03,
+    "share_buy_band": 0.025
+   },
+   "부동산": {
+    "n": 30,
+    "mean_minus_all": -5.5,
+    "share_universe": 0.06,
+    "share_top_quintile": 0.01,
+    "share_buy_band": 0.0
+   },
+   "유틸리티": {
+    "n": 31,
+    "mean_minus_all": -9.7,
+    "share_universe": 0.062,
+    "share_top_quintile": 0.0,
+    "share_buy_band": 0.0
+   }
+  },
+  "sector_eta_squared": 0.179,
+  "rho_score_vs_market_cap": 0.177,
+  "cap_known": 503,
+  "day_to_day": [
+   {
+    "from": "2026-11-04",
+    "to": "2026-11-05",
+    "same_version": false,
+    "rho": 0.996,
+    "top20_kept": 18,
+    "buy": [
+     65,
+     33
+    ],
+    "buy_kept": 33,
+    "mean_abs_change": 2.5
+   },
+   {
+    "from": "2026-11-05",
+    "to": "2026-11-06",
+    "same_version": false,
+    "rho": 0.935,
+    "top20_kept": 16,
+    "buy": [
+     33,
+     30
+    ],
+    "buy_kept": 25,
+    "mean_abs_change": 1.76
+   },
+   {
+    "from": "2026-11-06",
+    "to": "2026-11-09",
+    "same_version": false,
+    "rho": 0.997,
+    "top20_kept": 17,
+    "buy": [
+     30,
+     44
+    ],
+    "buy_kept": 26,
+    "mean_abs_change": 1.76
+   },
+   {
+    "from": "2026-11-09",
+    "to": "2026-11-10",
+    "same_version": true,
+    "rho": 1.0,
+    "top20_kept": 20,
+    "buy": [
+     44,
+     50
+    ],
+    "buy_kept": 44,
+    "mean_abs_change": 0.26
+   },
+   {
+    "from": "2026-11-10",
+    "to": "2026-11-11",
+    "same_version": false,
+    "rho": 0.982,
+    "top20_kept": 18,
+    "buy": [
+     50,
+     60
+    ],
+    "buy_kept": 48,
+    "mean_abs_change": 0.88
+   },
+   {
+    "from": "2026-11-11",
+    "to": "2026-11-12",
+    "same_version": false,
+    "rho": 0.999,
+    "top20_kept": 20,
+    "buy": [
+     60,
+     54
+    ],
+    "buy_kept": 54,
+    "mean_abs_change": 0.39
+   },
+   {
+    "from": "2026-11-12",
+    "to": "2026-11-13",
+    "same_version": true,
+    "rho": 1.0,
+    "top20_kept": 20,
+    "buy": [
+     54,
+     58
+    ],
+    "buy_kept": 54,
+    "mean_abs_change": 0.28
+   },
+   {
+    "from": "2026-11-13",
+    "to": "2026-11-16",
+    "same_version": false,
+    "rho": 0.999,
+    "top20_kept": 19,
+    "buy": [
+     58,
+     76
+    ],
+    "buy_kept": 58,
+    "mean_abs_change": 0.87
+   },
+   {
+    "from": "2026-11-16",
+    "to": "2026-11-17",
+    "same_version": true,
+    "rho": 0.999,
+    "top20_kept": 20,
+    "buy": [
+     76,
+     79
+    ],
+    "buy_kept": 76,
+    "mean_abs_change": 0.19
+   },
+   {
+    "from": "2026-11-17",
+    "to": "2026-11-18",
+    "same_version": true,
+    "rho": 0.999,
+    "top20_kept": 19,
+    "buy": [
+     79,
+     79
+    ],
+    "buy_kept": 78,
+    "mean_abs_change": 0.18
+   },
+   {
+    "from": "2026-11-18",
+    "to": "2026-11-19",
+    "same_version": true,
+    "rho": 1.0,
+    "top20_kept": 20,
+    "buy": [
+     79,
+     79
+    ],
+    "buy_kept": 78,
+    "mean_abs_change": 0.18
+   },
+   {
+    "from": "2026-11-19",
+    "to": "2026-11-20",
+    "same_version": true,
+    "rho": 0.998,
+    "top20_kept": 19,
+    "buy": [
+     79,
+     80
+    ],
+    "buy_kept": 78,
+    "mean_abs_change": 0.31
+   }
+  ],
+  "versions": [
+   [
+    "2026-11-04",
+    "QSF-1.1.1"
+   ],
+   [
+    "2026-11-05",
+    "QSF-1.1.2"
+   ],
+   [
+    "2026-11-06",
+    "QSF-1.1.3"
+   ],
+   [
+    "2026-11-09",
+    "QSF-1.1.8"
+   ],
+   [
+    "2026-11-10",
+    "QSF-1.1.8"
+   ],
+   [
+    "2026-11-11",
+    "QSF-1.3.1"
+   ],
+   [
+    "2026-11-12",
+    "QSF-1.3.2"
+   ],
+   [
+    "2026-11-13",
+    "QSF-1.3.2"
+   ],
+   [
+    "2026-11-16",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-17",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-18",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-19",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-20",
+    "QSF-1.4.1"
+   ]
+  ]
+ },
+ "KR_SWING": {
+  "session": "2026-11-20",
+  "n": 300,
+  "model": "QSF-1.4.1",
+  "profile": "KR_SWING_V3",
+  "factors": 11,
+  "reference_factors": 10,
+  "total_weight": 40,
+  "domain_weight_share": {
+   "FUNDAMENTAL": 0.25,
+   "RISK": 0.5,
+   "EVENTS": 0.25
+  },
+  "largest_factor_weight_share": {
+   "risk_reward": 0.15,
+   "atr_risk": 0.125,
+   "liquidity": 0.125,
+   "drawdown_gap": 0.1
+  },
+  "inventory": {
+   "earnings_revenue_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.075,
+    "available": 0.977,
+    "mean": 0.565,
+    "sd": 0.295,
+    "at_zero": 0.096,
+    "at_one": 0.106,
+    "rho_with_score": 0.39
+   },
+   "profitability": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.05,
+    "available": 1.0,
+    "mean": 0.419,
+    "sd": 0.31,
+    "at_zero": 0.107,
+    "at_one": 0.06,
+    "rho_with_score": 0.547
+   },
+   "balance_sheet": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.075,
+    "available": 1.0,
+    "mean": 0.605,
+    "sd": 0.35,
+    "at_zero": 0.037,
+    "at_one": 0.203,
+    "rho_with_score": 0.362
+   },
+   "cash_flow_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.05,
+    "available": 0.89,
+    "mean": 0.509,
+    "sd": 0.358,
+    "at_zero": 0.225,
+    "at_one": 0.094,
+    "rho_with_score": 0.632
+   },
+   "risk_reward": {
+    "domain": "RISK",
+    "weight_share": 0.15,
+    "available": 1.0,
+    "mean": 0.128,
+    "sd": 0.238,
+    "at_zero": 0.6,
+    "at_one": 0.027,
+    "rho_with_score": 0.299
+   },
+   "atr_risk": {
+    "domain": "RISK",
+    "weight_share": 0.125,
+    "available": 1.0,
+    "mean": 0.158,
+    "sd": 0.22,
+    "at_zero": 0.467,
+    "at_one": 0.0,
+    "rho_with_score": 0.404
+   },
+   "liquidity": {
+    "domain": "RISK",
+    "weight_share": 0.125,
+    "available": 1.0,
+    "mean": 0.672,
+    "sd": 0.282,
+    "at_zero": 0.01,
+    "at_one": 0.22,
+    "rho_with_score": 0.215
+   },
+   "drawdown_gap": {
+    "domain": "RISK",
+    "weight_share": 0.1,
+    "available": 1.0,
+    "mean": 0.259,
+    "sd": 0.202,
+    "at_zero": 0.147,
+    "at_one": 0.0,
+    "rho_with_score": 0.277
+   },
+   "earnings_calendar": {
+    "domain": "EVENTS",
+    "weight_share": 0.1,
+    "available": 0.993,
+    "mean": 0.997,
+    "sd": 0.058,
+    "at_zero": 0.003,
+    "at_one": 0.997,
+    "rho_with_score": 0.093
+   },
+   "material_disclosures": {
+    "domain": "EVENTS",
+    "weight_share": 0.075,
+    "available": 1.0,
+    "mean": 0.574,
+    "sd": 0.178,
+    "at_zero": 0.037,
+    "at_one": 0.013,
+    "rho_with_score": 0.384
+   },
+   "insider_activity": {
+    "domain": "EVENTS",
+    "weight_share": 0.075,
+    "available": 0.0,
+    "mean": NaN,
+    "sd": NaN,
+    "at_zero": NaN,
+    "at_one": NaN,
+    "rho_with_score": NaN
+   }
+  },
+  "pairs_abs_rho_ge_0.5": [
+   [
+    "atr_risk",
+    "drawdown_gap",
+    0.82
+   ]
+  ],
+  "effective_factors_participation": 8.15,
+  "eigen_top3_share": [
+   0.203,
+   0.179,
+   0.102
+  ],
+  "complete_rows": 0,
+  "buy_band": 0,
+  "near_70_within_1": 0,
+  "near_70_within_2": 0,
+  "near_55_within_1": 16,
+  "score_quantiles": [
+   31.0,
+   39.9,
+   46.6,
+   52.2,
+   59.3,
+   67.9
+  ],
+  "ablation": {
+   "risk_reward": {
+    "rho": 0.899,
+    "top20_kept": 8,
+    "buy_before_after": [
+     0,
+     8
+    ],
+    "max_abs_change": 12.6
+   },
+   "liquidity": {
+    "rho": 0.901,
+    "top20_kept": 9,
+    "buy_before_after": [
+     0,
+     0
+    ],
+    "max_abs_change": 11.1
+   },
+   "atr_risk": {
+    "rho": 0.934,
+    "top20_kept": 13,
+    "buy_before_after": [
+     0,
+     6
+    ],
+    "max_abs_change": 10.3
+   },
+   "balance_sheet": {
+    "rho": 0.941,
+    "top20_kept": 16,
+    "buy_before_after": [
+     0,
+     2
+    ],
+    "max_abs_change": 6.2
+   },
+   "earnings_revenue_quality": {
+    "rho": 0.963,
+    "top20_kept": 16,
+    "buy_before_after": [
+     0,
+     0
+    ],
+    "max_abs_change": 5.7
+   },
+   "drawdown_gap": {
+    "rho": 0.965,
+    "top20_kept": 12,
+    "buy_before_after": [
+     0,
+     3
+    ],
+    "max_abs_change": 7.6
+   },
+   "cash_flow_quality": {
+    "rho": 0.98,
+    "top20_kept": 18,
+    "buy_before_after": [
+     0,
+     0
+    ],
+    "max_abs_change": 3.9
+   },
+   "profitability": {
+    "rho": 0.982,
+    "top20_kept": 18,
+    "buy_before_after": [
+     0,
+     0
+    ],
+    "max_abs_change": 4.3
+   }
+  },
+  "ablation_domain": {
+   "FUNDAMENTAL": {
+    "rho": 0.719,
+    "top20_kept": 15,
+    "buy_after": 1
+   },
+   "RISK": {
+    "rho": 0.737,
+    "top20_kept": 0,
+    "buy_after": 122
+   },
+   "EVENTS": {
+    "rho": 0.984,
+    "top20_kept": 17,
+    "buy_after": 0
+   }
+  },
+  "weight_perturb_20pct": {
+   "rho_p5_median": [
+    0.989,
+    0.995
+   ],
+   "top20_kept_p5_median": [
+    16,
+    18
+   ],
+   "buy_band_kept_p5_median": null
+  },
+  "weight_perturb_50pct": {
+   "rho_p5_median": [
+    0.934,
+    0.972
+   ],
+   "top20_kept_p5_median": [
+    12,
+    15
+   ],
+   "buy_band_kept_p5_median": null
+  },
+  "rank_normalised_rho": 0.92,
+  "rank_normalised_top20_kept": 12,
+  "missing": {
+   "stocks_with_missing": 300,
+   "stocks_with_not_applicable": 28,
+   "rho_missing_count_vs_score": 0.107,
+   "mean_score_by_gaps": {
+    "1": 45.6,
+    "2": 48.5,
+    "3": 46.5
+   },
+   "truly_missing_only": {
+    "n": 300
+   },
+   "if_gaps_were_median": {
+    "n": 300,
+    "mean_change": NaN,
+    "p5_p95": [
+     NaN,
+     NaN
+    ],
+    "buy_now": 0,
+    "buy_if_median": 0
+   },
+   "if_gaps_were_neutral_0.5": {
+    "mean_change": 0.33,
+    "buy_if_neutral": 0
+   },
+   "if_worst_factor_went_missing": {
+    "median_gain": 7.95,
+    "p95_gain": 11.08,
+    "max_gain": 12.56,
+    "new_buy_band": 14
+   }
+  },
+  "coverage": {
+   "min": 0.8,
+   "p5": 0.921,
+   "confidence": {
+    "HIGH": 288,
+    "MEDIUM": 12
+   },
+   "buy_band_min_coverage": null,
+   "buy_band_confidence": {}
+  },
+  "actions": {
+   "AVOID": 256,
+   "WATCH": 44
+  },
+  "actionability": {
+   "ACTIONABLE": 291,
+   "BLOCKED": 9
+  },
+  "entry_status_in_buy_band": {},
+  "gates": {
+   "SEVERE_EVENT": 7,
+   "SHORT_HISTORY": 1,
+   "LOW_LIQUIDITY": 3,
+   "EARNINGS_IMMINENT": 1
+  },
+  "sector": {
+   "필수소비재": {
+    "n": 18,
+    "mean_minus_all": 5.2,
+    "share_universe": 0.06,
+    "share_top_quintile": 0.117,
+    "share_buy_band": 0.0
+   },
+   "금융": {
+    "n": 27,
+    "mean_minus_all": 5.0,
+    "share_universe": 0.09,
+    "share_top_quintile": 0.167,
+    "share_buy_band": 0.0
+   },
+   "경기소비재": {
+    "n": 20,
+    "mean_minus_all": 4.0,
+    "share_universe": 0.067,
+    "share_top_quintile": 0.067,
+    "share_buy_band": 0.0
+   },
+   "커뮤니케이션": {
+    "n": 13,
+    "mean_minus_all": 3.4,
+    "share_universe": 0.043,
+    "share_top_quintile": 0.1,
+    "share_buy_band": 0.0
+   },
+   "기술": {
+    "n": 44,
+    "mean_minus_all": -0.2,
+    "share_universe": 0.147,
+    "share_top_quintile": 0.133,
+    "share_buy_band": 0.0
+   },
+   "헬스케어": {
+    "n": 34,
+    "mean_minus_all": -0.3,
+    "share_universe": 0.113,
+    "share_top_quintile": 0.117,
+    "share_buy_band": 0.0
+   },
+   "지주회사": {
+    "n": 26,
+    "mean_minus_all": -1.2,
+    "share_universe": 0.087,
+    "share_top_quintile": 0.05,
+    "share_buy_band": 0.0
+   },
+   "산업재": {
+    "n": 88,
+    "mean_minus_all": -2.0,
+    "share_universe": 0.293,
+    "share_top_quintile": 0.217,
+    "share_buy_band": 0.0
+   },
+   "소재": {
+    "n": 26,
+    "mean_minus_all": -4.4,
+    "share_universe": 0.087,
+    "share_top_quintile": 0.033,
+    "share_buy_band": 0.0
+   }
+  },
+  "sector_eta_squared": 0.112,
+  "rho_score_vs_market_cap": 0.342,
+  "cap_known": 300,
+  "day_to_day": [
+   {
+    "from": "2026-11-04",
+    "to": "2026-11-05",
+    "same_version": false,
+    "rho": 0.944,
+    "top20_kept": 15,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 2.2
+   },
+   {
+    "from": "2026-11-05",
+    "to": "2026-11-06",
+    "same_version": false,
+    "rho": 0.956,
+    "top20_kept": 15,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 1.92
+   },
+   {
+    "from": "2026-11-06",
+    "to": "2026-11-09",
+    "same_version": false,
+    "rho": 0.971,
+    "top20_kept": 15,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 1.38
+   },
+   {
+    "from": "2026-11-09",
+    "to": "2026-11-10",
+    "same_version": true,
+    "rho": 0.975,
+    "top20_kept": 16,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 1.54
+   },
+   {
+    "from": "2026-11-10",
+    "to": "2026-11-11",
+    "same_version": false,
+    "rho": 0.471,
+    "top20_kept": 3,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 7.02
+   },
+   {
+    "from": "2026-11-11",
+    "to": "2026-11-12",
+    "same_version": false,
+    "rho": 0.921,
+    "top20_kept": 17,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 1.33
+   },
+   {
+    "from": "2026-11-12",
+    "to": "2026-11-13",
+    "same_version": true,
+    "rho": 0.932,
+    "top20_kept": 16,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 1.26
+   },
+   {
+    "from": "2026-11-13",
+    "to": "2026-11-16",
+    "same_version": false,
+    "rho": 0.911,
+    "top20_kept": 16,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 6.63
+   },
+   {
+    "from": "2026-11-16",
+    "to": "2026-11-17",
+    "same_version": true,
+    "rho": 0.972,
+    "top20_kept": 17,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 1.02
+   },
+   {
+    "from": "2026-11-17",
+    "to": "2026-11-18",
+    "same_version": true,
+    "rho": 0.979,
+    "top20_kept": 19,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 0.83
+   },
+   {
+    "from": "2026-11-18",
+    "to": "2026-11-19",
+    "same_version": true,
+    "rho": 0.955,
+    "top20_kept": 18,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 1.11
+   },
+   {
+    "from": "2026-11-19",
+    "to": "2026-11-20",
+    "same_version": true,
+    "rho": 0.905,
+    "top20_kept": 14,
+    "buy": [
+     0,
+     0
+    ],
+    "buy_kept": 0,
+    "mean_abs_change": 2.0
+   }
+  ],
+  "versions": [
+   [
+    "2026-11-04",
+    "QSF-1.1.1"
+   ],
+   [
+    "2026-11-05",
+    "QSF-1.1.2"
+   ],
+   [
+    "2026-11-06",
+    "QSF-1.1.3"
+   ],
+   [
+    "2026-11-09",
+    "QSF-1.1.8"
+   ],
+   [
+    "2026-11-10",
+    "QSF-1.1.8"
+   ],
+   [
+    "2026-11-11",
+    "QSF-1.3.1"
+   ],
+   [
+    "2026-11-12",
+    "QSF-1.3.2"
+   ],
+   [
+    "2026-11-13",
+    "QSF-1.3.2"
+   ],
+   [
+    "2026-11-16",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-17",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-18",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-19",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-20",
+    "QSF-1.4.1"
+   ]
+  ]
+ },
+ "KR_LONG_TERM": {
+  "session": "2026-11-20",
+  "n": 300,
+  "model": "QSF-1.4.1",
+  "profile": "KR_LONG_TERM_V2",
+  "factors": 16,
+  "reference_factors": 5,
+  "total_weight": 90,
+  "domain_weight_share": {
+   "TECHNICAL": 0.111,
+   "FUNDAMENTAL": 0.556,
+   "RISK": 0.222,
+   "EVENTS": 0.111
+  },
+  "largest_factor_weight_share": {
+   "valuation": 0.167,
+   "business_quality": 0.167,
+   "growth_quality": 0.089,
+   "free_cash_flow": 0.078
+  },
+  "inventory": {
+   "long_trend": {
+    "domain": "TECHNICAL",
+    "weight_share": 0.056,
+    "available": 0.997,
+    "mean": 0.365,
+    "sd": 0.292,
+    "at_zero": 0.191,
+    "at_one": 0.054,
+    "rho_with_score": 0.267
+   },
+   "relative_strength": {
+    "domain": "TECHNICAL",
+    "weight_share": 0.033,
+    "available": 1.0,
+    "mean": 0.502,
+    "sd": 0.289,
+    "at_zero": 0.0,
+    "at_one": 0.003,
+    "rho_with_score": 0.322
+   },
+   "momentum_persistence": {
+    "domain": "TECHNICAL",
+    "weight_share": 0.022,
+    "available": 1.0,
+    "mean": 0.467,
+    "sd": 0.255,
+    "at_zero": 0.0,
+    "at_one": 0.0,
+    "rho_with_score": 0.192
+   },
+   "valuation": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.167,
+    "available": 0.997,
+    "mean": 0.575,
+    "sd": 0.341,
+    "at_zero": 0.07,
+    "at_one": 0.147,
+    "rho_with_score": 0.57
+   },
+   "business_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.167,
+    "available": 1.0,
+    "mean": 0.497,
+    "sd": 0.251,
+    "at_zero": 0.05,
+    "at_one": 0.01,
+    "rho_with_score": 0.802
+   },
+   "growth_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.089,
+    "available": 0.87,
+    "mean": 0.472,
+    "sd": 0.338,
+    "at_zero": 0.119,
+    "at_one": 0.123,
+    "rho_with_score": 0.356
+   },
+   "free_cash_flow": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.078,
+    "available": 0.87,
+    "mean": 0.512,
+    "sd": 0.318,
+    "at_zero": 0.142,
+    "at_one": 0.08,
+    "rho_with_score": 0.791
+   },
+   "balance_dilution": {
+    "domain": "FUNDAMENTAL",
+    "weight_share": 0.056,
+    "available": 1.0,
+    "mean": 0.623,
+    "sd": 0.355,
+    "at_zero": 0.103,
+    "at_one": 0.217,
+    "rho_with_score": 0.48
+   },
+   "financial_resilience": {
+    "domain": "RISK",
+    "weight_share": 0.078,
+    "available": 1.0,
+    "mean": 0.477,
+    "sd": 0.327,
+    "at_zero": 0.02,
+    "at_one": 0.117,
+    "rho_with_score": 0.519
+   },
+   "downside_drawdown": {
+    "domain": "RISK",
+    "weight_share": 0.056,
+    "available": 1.0,
+    "mean": 0.148,
+    "sd": 0.213,
+    "at_zero": 0.477,
+    "at_one": 0.0,
+    "rho_with_score": 0.41
+   },
+   "liquidity": {
+    "domain": "RISK",
+    "weight_share": 0.044,
+    "available": 1.0,
+    "mean": 0.672,
+    "sd": 0.282,
+    "at_zero": 0.01,
+    "at_one": 0.22,
+    "rho_with_score": -0.005
+   },
+   "leverage": {
+    "domain": "RISK",
+    "weight_share": 0.044,
+    "available": 0.907,
+    "mean": 0.669,
+    "sd": 0.31,
+    "at_zero": 0.062,
+    "at_one": 0.118,
+    "rho_with_score": 0.532
+   },
+   "governance": {
+    "domain": "EVENTS",
+    "weight_share": 0.033,
+    "available": 1.0,
+    "mean": 0.762,
+    "sd": 0.144,
+    "at_zero": 0.0,
+    "at_one": 0.0,
+    "rho_with_score": 0.099
+   },
+   "material_events": {
+    "domain": "EVENTS",
+    "weight_share": 0.033,
+    "available": 1.0,
+    "mean": 0.566,
+    "sd": 0.193,
+    "at_zero": 0.06,
+    "at_one": 0.013,
+    "rho_with_score": 0.297
+   },
+   "insider_ownership": {
+    "domain": "EVENTS",
+    "weight_share": 0.022,
+    "available": 0.907,
+    "mean": 0.967,
+    "sd": 0.155,
+    "at_zero": 0.0,
+    "at_one": 0.941,
+    "rho_with_score": -0.135
+   },
+   "capital_allocation": {
+    "domain": "EVENTS",
+    "weight_share": 0.022,
+    "available": 0.77,
+    "mean": 0.974,
+    "sd": 0.122,
+    "at_zero": 0.0,
+    "at_one": 0.957,
+    "rho_with_score": 0.115
+   }
+  },
+  "pairs_abs_rho_ge_0.5": [
+   [
+    "balance_dilution",
+    "leverage",
+    1.0
+   ],
+   [
+    "long_trend",
+    "momentum_persistence",
+    0.8
+   ],
+   [
+    "financial_resilience",
+    "leverage",
+    0.8
+   ],
+   [
+    "balance_dilution",
+    "financial_resilience",
+    0.79
+   ],
+   [
+    "relative_strength",
+    "downside_drawdown",
+    0.66
+   ],
+   [
+    "business_quality",
+    "free_cash_flow",
+    0.62
+   ],
+   [
+    "valuation",
+    "downside_drawdown",
+    0.54
+   ],
+   [
+    "business_quality",
+    "growth_quality",
+    0.51
+   ]
+  ],
+  "effective_factors_participation": 8.65,
+  "eigen_top3_share": [
+   0.214,
+   0.146,
+   0.131
+  ],
+  "complete_rows": 179,
+  "variance_share_top": {
+   "business_quality": 0.223,
+   "valuation": 0.187,
+   "free_cash_flow": 0.131,
+   "financial_resilience": 0.119,
+   "balance_dilution": 0.097,
+   "growth_quality": 0.085
+  },
+  "variance_share_domain": {
+   "TECHNICAL": 0.05,
+   "FUNDAMENTAL": 0.723,
+   "RISK": 0.209,
+   "EVENTS": 0.022
+  },
+  "buy_band": 36,
+  "near_70_within_1": 13,
+  "near_70_within_2": 30,
+  "near_55_within_1": 19,
+  "score_quantiles": [
+   27.2,
+   43.4,
+   54.5,
+   64.3,
+   74.5,
+   83.5
+  ],
+  "ablation": {
+   "valuation": {
+    "rho": 0.91,
+    "top20_kept": 11,
+    "buy_before_after": [
+     36,
+     36
+    ],
+    "max_abs_change": 12.9
+   },
+   "business_quality": {
+    "rho": 0.973,
+    "top20_kept": 14,
+    "buy_before_after": [
+     36,
+     40
+    ],
+    "max_abs_change": 8.6
+   },
+   "growth_quality": {
+    "rho": 0.98,
+    "top20_kept": 17,
+    "buy_before_after": [
+     36,
+     43
+    ],
+    "max_abs_change": 7.3
+   },
+   "financial_resilience": {
+    "rho": 0.983,
+    "top20_kept": 15,
+    "buy_before_after": [
+     36,
+     37
+    ],
+    "max_abs_change": 6.4
+   },
+   "balance_dilution": {
+    "rho": 0.99,
+    "top20_kept": 16,
+    "buy_before_after": [
+     36,
+     29
+    ],
+    "max_abs_change": 5.1
+   },
+   "long_trend": {
+    "rho": 0.992,
+    "top20_kept": 19,
+    "buy_before_after": [
+     36,
+     42
+    ],
+    "max_abs_change": 5.2
+   },
+   "free_cash_flow": {
+    "rho": 0.992,
+    "top20_kept": 19,
+    "buy_before_after": [
+     36,
+     34
+    ],
+    "max_abs_change": 5.0
+   },
+   "liquidity": {
+    "rho": 0.995,
+    "top20_kept": 18,
+    "buy_before_after": [
+     36,
+     37
+    ],
+    "max_abs_change": 3.8
+   }
+  },
+  "ablation_domain": {
+   "TECHNICAL": {
+    "rho": 0.979,
+    "top20_kept": 17,
+    "buy_after": 52
+   },
+   "FUNDAMENTAL": {
+    "rho": 0.648,
+    "top20_kept": 7,
+    "buy_after": 29
+   },
+   "RISK": {
+    "rho": 0.964,
+    "top20_kept": 15,
+    "buy_after": 56
+   },
+   "EVENTS": {
+    "rho": 0.997,
+    "top20_kept": 19,
+    "buy_after": 29
+   }
+  },
+  "weight_perturb_20pct": {
+   "rho_p5_median": [
+    0.995,
+    0.998
+   ],
+   "top20_kept_p5_median": [
+    18,
+    19
+   ],
+   "buy_band_kept_p5_median": [
+    0.81,
+    0.94
+   ]
+  },
+  "weight_perturb_50pct": {
+   "rho_p5_median": [
+    0.971,
+    0.988
+   ],
+   "top20_kept_p5_median": [
+    15,
+    17
+   ],
+   "buy_band_kept_p5_median": [
+    0.67,
+    0.86
+   ]
+  },
+  "rank_normalised_rho": 0.992,
+  "rank_normalised_top20_kept": 15,
+  "missing": {
+   "stocks_with_missing": 121,
+   "stocks_with_not_applicable": 28,
+   "rho_missing_count_vs_score": 0.0,
+   "mean_score_by_gaps": {
+    "0": 54.3,
+    "1": 49.0,
+    "2": 46.6,
+    "3": 63.0
+   },
+   "truly_missing_only": {
+    "n": 121
+   },
+   "if_gaps_were_median": {
+    "n": 121,
+    "mean_change": 0.54,
+    "p5_p95": [
+     -2.5,
+     3.0
+    ],
+    "buy_now": 15,
+    "buy_if_median": 11
+   },
+   "if_gaps_were_neutral_0.5": {
+    "mean_change": -0.29,
+    "buy_if_neutral": 10
+   },
+   "if_worst_factor_went_missing": {
+    "median_gain": 4.22,
+    "p95_gain": 8.6,
+    "max_gain": 12.7,
+    "new_buy_band": 35
+   }
+  },
+  "coverage": {
+   "min": 0.789,
+   "p5": 0.899,
+   "confidence": {
+    "HIGH": 262,
+    "MEDIUM": 37,
+    "LOW": 1
+   },
+   "buy_band_min_coverage": 0.889,
+   "buy_band_confidence": {
+    "HIGH": 26,
+    "MEDIUM": 10
+   }
+  },
+  "actions": {
+   "WATCH": 110,
+   "BUY": 35,
+   "AVOID": 154,
+   "BLOCKED": 1
+  },
+  "actionability": {
+   "ACTIONABLE": 292,
+   "BLOCKED": 8
+  },
+  "entry_status_in_buy_band": {
+   "ENTRY_NOW": 35,
+   "NO_VALID_ENTRY_SETUP": 1
+  },
+  "gates": {
+   "SEVERE_EVENT": 7,
+   "SHORT_HISTORY": 1,
+   "LOW_LIQUIDITY": 3
+  },
+  "sector": {
+   "금융": {
+    "n": 27,
+    "mean_minus_all": 11.8,
+    "share_universe": 0.09,
+    "share_top_quintile": 0.2,
+    "share_buy_band": 0.222
+   },
+   "필수소비재": {
+    "n": 18,
+    "mean_minus_all": 7.2,
+    "share_universe": 0.06,
+    "share_top_quintile": 0.1,
+    "share_buy_band": 0.056
+   },
+   "커뮤니케이션": {
+    "n": 13,
+    "mean_minus_all": 6.6,
+    "share_universe": 0.043,
+    "share_top_quintile": 0.067,
+    "share_buy_band": 0.083
+   },
+   "경기소비재": {
+    "n": 20,
+    "mean_minus_all": 2.8,
+    "share_universe": 0.067,
+    "share_top_quintile": 0.05,
+    "share_buy_band": 0.056
+   },
+   "지주회사": {
+    "n": 26,
+    "mean_minus_all": 1.9,
+    "share_universe": 0.087,
+    "share_top_quintile": 0.117,
+    "share_buy_band": 0.083
+   },
+   "기술": {
+    "n": 44,
+    "mean_minus_all": 0.4,
+    "share_universe": 0.147,
+    "share_top_quintile": 0.15,
+    "share_buy_band": 0.194
+   },
+   "산업재": {
+    "n": 88,
+    "mean_minus_all": -2.9,
+    "share_universe": 0.293,
+    "share_top_quintile": 0.167,
+    "share_buy_band": 0.194
+   },
+   "헬스케어": {
+    "n": 34,
+    "mean_minus_all": -4.8,
+    "share_universe": 0.113,
+    "share_top_quintile": 0.117,
+    "share_buy_band": 0.111
+   },
+   "소재": {
+    "n": 26,
+    "mean_minus_all": -7.3,
+    "share_universe": 0.087,
+    "share_top_quintile": 0.033,
+    "share_buy_band": 0.0
+   }
+  },
+  "sector_eta_squared": 0.136,
+  "rho_score_vs_market_cap": 0.124,
+  "cap_known": 300,
+  "day_to_day": [
+   {
+    "from": "2026-11-04",
+    "to": "2026-11-05",
+    "same_version": false,
+    "rho": 0.998,
+    "top20_kept": 17,
+    "buy": [
+     13,
+     14
+    ],
+    "buy_kept": 12,
+    "mean_abs_change": 0.49
+   },
+   {
+    "from": "2026-11-05",
+    "to": "2026-11-06",
+    "same_version": false,
+    "rho": 0.999,
+    "top20_kept": 19,
+    "buy": [
+     14,
+     15
+    ],
+    "buy_kept": 14,
+    "mean_abs_change": 0.39
+   },
+   {
+    "from": "2026-11-06",
+    "to": "2026-11-09",
+    "same_version": false,
+    "rho": 0.971,
+    "top20_kept": 15,
+    "buy": [
+     15,
+     14
+    ],
+    "buy_kept": 11,
+    "mean_abs_change": 2.52
+   },
+   {
+    "from": "2026-11-09",
+    "to": "2026-11-10",
+    "same_version": true,
+    "rho": 0.999,
+    "top20_kept": 18,
+    "buy": [
+     14,
+     12
+    ],
+    "buy_kept": 12,
+    "mean_abs_change": 0.34
+   },
+   {
+    "from": "2026-11-10",
+    "to": "2026-11-11",
+    "same_version": false,
+    "rho": 0.977,
+    "top20_kept": 12,
+    "buy": [
+     12,
+     15
+    ],
+    "buy_kept": 10,
+    "mean_abs_change": 1.22
+   },
+   {
+    "from": "2026-11-11",
+    "to": "2026-11-12",
+    "same_version": false,
+    "rho": 1.0,
+    "top20_kept": 20,
+    "buy": [
+     15,
+     16
+    ],
+    "buy_kept": 15,
+    "mean_abs_change": 0.19
+   },
+   {
+    "from": "2026-11-12",
+    "to": "2026-11-13",
+    "same_version": true,
+    "rho": 1.0,
+    "top20_kept": 20,
+    "buy": [
+     16,
+     16
+    ],
+    "buy_kept": 16,
+    "mean_abs_change": 0.21
+   },
+   {
+    "from": "2026-11-13",
+    "to": "2026-11-16",
+    "same_version": false,
+    "rho": 0.999,
+    "top20_kept": 19,
+    "buy": [
+     16,
+     38
+    ],
+    "buy_kept": 16,
+    "mean_abs_change": 2.22
+   },
+   {
+    "from": "2026-11-16",
+    "to": "2026-11-17",
+    "same_version": true,
+    "rho": 1.0,
+    "top20_kept": 19,
+    "buy": [
+     38,
+     36
+    ],
+    "buy_kept": 36,
+    "mean_abs_change": 0.25
+   },
+   {
+    "from": "2026-11-17",
+    "to": "2026-11-18",
+    "same_version": true,
+    "rho": 1.0,
+    "top20_kept": 20,
+    "buy": [
+     36,
+     37
+    ],
+    "buy_kept": 36,
+    "mean_abs_change": 0.26
+   },
+   {
+    "from": "2026-11-18",
+    "to": "2026-11-19",
+    "same_version": true,
+    "rho": 1.0,
+    "top20_kept": 20,
+    "buy": [
+     37,
+     36
+    ],
+    "buy_kept": 36,
+    "mean_abs_change": 0.25
+   },
+   {
+    "from": "2026-11-19",
+    "to": "2026-11-20",
+    "same_version": true,
+    "rho": 0.999,
+    "top20_kept": 20,
+    "buy": [
+     36,
+     36
+    ],
+    "buy_kept": 36,
+    "mean_abs_change": 0.33
+   }
+  ],
+  "versions": [
+   [
+    "2026-11-04",
+    "QSF-1.1.1"
+   ],
+   [
+    "2026-11-05",
+    "QSF-1.1.2"
+   ],
+   [
+    "2026-11-06",
+    "QSF-1.1.3"
+   ],
+   [
+    "2026-11-09",
+    "QSF-1.1.8"
+   ],
+   [
+    "2026-11-10",
+    "QSF-1.1.8"
+   ],
+   [
+    "2026-11-11",
+    "QSF-1.3.1"
+   ],
+   [
+    "2026-11-12",
+    "QSF-1.3.2"
+   ],
+   [
+    "2026-11-13",
+    "QSF-1.3.2"
+   ],
+   [
+    "2026-11-16",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-17",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-18",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-19",
+    "QSF-1.4.1"
+   ],
+   [
+    "2026-11-20",
+    "QSF-1.4.1"
+   ]
+  ]
+ }
+}

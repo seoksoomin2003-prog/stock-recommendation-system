@@ -1,0 +1,1253 @@
+[
+ {
+  "m": "US",
+  "t": "SMCI",
+  "sec": 1.0,
+  "SWING": {
+   "scan": 34.454,
+   "direct": 34.446,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "breakout_volume",
+     0.254,
+     0.254
+    ],
+    [
+     "risk_reward",
+     0.308,
+     0.308
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 58.94,
+   "direct": 58.94,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": []
+  }
+ },
+ {
+  "m": "US",
+  "t": "MAR",
+  "sec": 1.1,
+  "SWING": {
+   "scan": 63.12,
+   "direct": 63.108,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "breakout_volume",
+     0.605,
+     0.604
+    ],
+    [
+     "risk_reward",
+     0.05,
+     0.05
+    ],
+    [
+     "atr_risk",
+     0.824,
+     0.824
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 57.848,
+   "direct": 57.848,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": []
+  }
+ },
+ {
+  "m": "US",
+  "t": "SW",
+  "sec": 1.0,
+  "SWING": {
+   "scan": 40.103,
+   "direct": 40.103,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": []
+  },
+  "LONG_TERM": {
+   "scan": 54.439,
+   "direct": 54.439,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": []
+  }
+ },
+ {
+  "m": "US",
+  "t": "ARE",
+  "sec": 1.1,
+  "SWING": {
+   "scan": 33.148,
+   "direct": 33.148,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": []
+  },
+  "LONG_TERM": {
+   "scan": 41.912,
+   "direct": 41.912,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": []
+  }
+ },
+ {
+  "m": "US",
+  "t": "IQV",
+  "sec": 1.1,
+  "SWING": {
+   "scan": 58.853,
+   "direct": 58.852,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "risk_reward",
+     0.201,
+     0.201
+    ],
+    [
+     "atr_risk",
+     0.578,
+     0.578
+    ],
+    [
+     "breakout_volume",
+     0.518,
+     0.518
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 59.195,
+   "direct": 59.195,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": []
+  }
+ },
+ {
+  "m": "US",
+  "t": "RL",
+  "sec": 1.0,
+  "SWING": {
+   "scan": 58.107,
+   "direct": 58.101,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "atr_risk",
+     0.575,
+     0.574
+    ],
+    [
+     "breakout_volume",
+     0.48,
+     0.48
+    ],
+    [
+     "liquidity",
+     0.791,
+     0.791
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 70.228,
+   "direct": 70.228,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "BUY",
+    "BUY"
+   ],
+   "differing_factors": [
+    [
+     "liquidity",
+     0.791,
+     0.791
+    ]
+   ]
+  }
+ },
+ {
+  "m": "US",
+  "t": "DGX",
+  "sec": 1.1,
+  "SWING": {
+   "scan": 70.822,
+   "direct": 70.821,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "BUY",
+    "BUY"
+   ],
+   "differing_factors": [
+    [
+     "breakout_volume",
+     0.643,
+     0.643
+    ],
+    [
+     "liquidity",
+     0.775,
+     0.775
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 65.788,
+   "direct": 65.788,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "liquidity",
+     0.775,
+     0.775
+    ]
+   ]
+  }
+ },
+ {
+  "m": "US",
+  "t": "AJG",
+  "sec": 1.1,
+  "SWING": {
+   "scan": 68.23,
+   "direct": 68.23,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": []
+  },
+  "LONG_TERM": {
+   "scan": 62.959,
+   "direct": 62.959,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": []
+  }
+ },
+ {
+  "m": "US",
+  "t": "A",
+  "sec": 0.9,
+  "SWING": {
+   "scan": 67.607,
+   "direct": 67.607,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "breakout_volume",
+     0.639,
+     0.639
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 68.674,
+   "direct": 68.674,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": []
+  }
+ },
+ {
+  "m": "US",
+  "t": "CARR",
+  "sec": 1.0,
+  "SWING": {
+   "scan": 37.427,
+   "direct": 37.426,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "breakout_volume",
+     0.224,
+     0.224
+    ],
+    [
+     "liquidity",
+     0.924,
+     0.924
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 56.458,
+   "direct": 56.458,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "liquidity",
+     0.924,
+     0.924
+    ]
+   ]
+  }
+ },
+ {
+  "m": "US",
+  "t": "NVR",
+  "sec": 3.2,
+  "SWING": {
+   "scan": 35.698,
+   "direct": 35.689,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "breakout_volume",
+     0.119,
+     0.118
+    ],
+    [
+     "risk_reward",
+     0.172,
+     0.172
+    ],
+    [
+     "atr_risk",
+     0.613,
+     0.613
+    ],
+    [
+     "liquidity",
+     0.788,
+     0.788
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 71.102,
+   "direct": 71.102,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "BUY",
+    "BUY"
+   ],
+   "differing_factors": [
+    [
+     "liquidity",
+     0.788,
+     0.788
+    ]
+   ]
+  }
+ },
+ {
+  "m": "US",
+  "t": "MDT",
+  "sec": 1.0,
+  "SWING": {
+   "scan": 61.794,
+   "direct": 61.758,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "breakout_volume",
+     0.603,
+     0.6
+    ],
+    [
+     "atr_risk",
+     0.823,
+     0.823
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 69.197,
+   "direct": 69.197,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": []
+  }
+ },
+ {
+  "m": "US",
+  "t": "IEX",
+  "sec": 1.2,
+  "SWING": {
+   "scan": 62.105,
+   "direct": 62.076,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "breakout_volume",
+     0.576,
+     0.574
+    ],
+    [
+     "liquidity",
+     0.692,
+     0.692
+    ],
+    [
+     "atr_risk",
+     0.79,
+     0.79
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 66.866,
+   "direct": 66.867,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "liquidity",
+     0.692,
+     0.692
+    ]
+   ]
+  }
+ },
+ {
+  "m": "US",
+  "t": "WYNN",
+  "sec": 1.2,
+  "SWING": {
+   "scan": 40.601,
+   "direct": 40.6,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "breakout_volume",
+     0.287,
+     0.287
+    ],
+    [
+     "liquidity",
+     0.71,
+     0.71
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 52.905,
+   "direct": 52.905,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "liquidity",
+     0.71,
+     0.71
+    ]
+   ]
+  }
+ },
+ {
+  "m": "KR",
+  "t": "103140",
+  "sec": 2.1,
+  "SWING": {
+   "scan": 36.771,
+   "direct": 36.772,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "risk_reward",
+     0.121,
+     0.121
+    ],
+    [
+     "momentum",
+     0.235,
+     0.235
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 47.694,
+   "direct": 47.694,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "downside_drawdown",
+     0.044,
+     0.044
+    ]
+   ]
+  }
+ },
+ {
+  "m": "KR",
+  "t": "078600",
+  "sec": 2.0,
+  "SWING": {
+   "scan": 32.113,
+   "direct": 32.113,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "momentum",
+     0.253,
+     0.253
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 39.03,
+   "direct": 39.03,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ]
+   ]
+  }
+ },
+ {
+  "m": "KR",
+  "t": "000880",
+  "sec": 1.7,
+  "SWING": {
+   "scan": 53.601,
+   "direct": 53.6,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "risk_reward",
+     0.923,
+     0.923
+    ],
+    [
+     "momentum",
+     0.066,
+     0.066
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 47.888,
+   "direct": 47.888,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ]
+   ]
+  }
+ },
+ {
+  "m": "KR",
+  "t": "047810",
+  "sec": 2.1,
+  "SWING": {
+   "scan": 36.672,
+   "direct": 36.672,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "momentum",
+     0.863,
+     0.863
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 35.386,
+   "direct": 35.386,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ]
+   ]
+  }
+ },
+ {
+  "m": "KR",
+  "t": "278470",
+  "sec": 1.2,
+  "SWING": {
+   "scan": 57.308,
+   "direct": 57.308,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "momentum",
+     0.604,
+     0.604
+    ],
+    [
+     "atr_risk",
+     0.049,
+     0.049
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 68.542,
+   "direct": 68.542,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ]
+   ]
+  }
+ },
+ {
+  "m": "KR",
+  "t": "026960",
+  "sec": 1.8,
+  "SWING": {
+   "scan": 50.141,
+   "direct": 50.142,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "momentum",
+     0.391,
+     0.391
+    ],
+    [
+     "breakout_volume",
+     0.568,
+     0.568
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 68.457,
+   "direct": 68.457,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "long_trend",
+     0.54,
+     0.54
+    ],
+    [
+     "downside_drawdown",
+     0.695,
+     0.695
+    ]
+   ]
+  }
+ },
+ {
+  "m": "KR",
+  "t": "175330",
+  "sec": 1.7,
+  "SWING": {
+   "scan": 48.208,
+   "direct": 48.204,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "risk_reward",
+     0.126,
+     0.126
+    ],
+    [
+     "momentum",
+     0.748,
+     0.748
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 69.138,
+   "direct": 69.139,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "long_trend",
+     0.586,
+     0.586
+    ]
+   ]
+  }
+ },
+ {
+  "m": "KR",
+  "t": "352820",
+  "sec": 1.6,
+  "SWING": {
+   "scan": 52.404,
+   "direct": 52.403,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "momentum",
+     1.0,
+     1.0
+    ],
+    [
+     "risk_reward",
+     0.505,
+     0.505
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 51.432,
+   "direct": 51.432,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "downside_drawdown",
+     0.042,
+     0.042
+    ]
+   ]
+  }
+ },
+ {
+  "m": "KR",
+  "t": "353200",
+  "sec": 1.8,
+  "SWING": {
+   "scan": 50.185,
+   "direct": 50.185,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 52.27,
+   "direct": 52.27,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ]
+   ]
+  }
+ },
+ {
+  "m": "KR",
+  "t": "005940",
+  "sec": 9.0,
+  "SWING": {
+   "scan": 50.521,
+   "direct": 50.521,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "AVOID",
+    "AVOID"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ],
+    [
+     "momentum",
+     0.513,
+     0.513
+    ],
+    [
+     "atr_risk",
+     0.298,
+     0.298
+    ]
+   ]
+  },
+  "LONG_TERM": {
+   "scan": 69.358,
+   "direct": 69.358,
+   "date": [
+    "2026-11-20",
+    "2026-11-20"
+   ],
+   "action": [
+    "WATCH",
+    "WATCH"
+   ],
+   "differing_factors": [
+    [
+     "usdkrw_regime",
+     0.939,
+     1.0
+    ],
+    [
+     "credit_liquidity",
+     0.332,
+     0.332
+    ]
+   ]
+  }
+ }
+]
