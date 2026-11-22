@@ -5,16 +5,17 @@ from pathlib import Path
 
 STATIC = Path(__file__).resolve().parents[1] / "terminal" / "static"
 read = lambda name: (STATIC / name).read_text(encoding="utf-8")      # noqa: E731
-GROUPS = ["today", "market", "stock", "account", "score", "verify"]
+GROUPS = ["today", "market", "stock", "chart", "account", "score", "verify"]
 
 
 def test_every_tab_belongs_to_one_of_six_groups_and_keeps_its_section():
     html = read("index.html")
     nav = html[html.index('<nav class="groups"'):html.index('<nav class="tabs"')]
-    assert re.findall(r'data-group="(\w+)"', nav) == GROUPS + ["coin"] and re.findall(r">([^<]+)</button>", nav) == ["오늘", "시장", "종목", "내 계좌", "점수", "검증·기록", "코인"]
+    assert re.findall(r'data-group="(\w+)"', nav) == GROUPS + ["coin"] and re.findall(r">([^<]+)</button>", nav) == ["오늘", "시장", "종목", "차트", "내 계좌", "점수", "검증·기록", "코인"]
     assert '<button type="button" data-group="coin" hidden>코인</button>' in nav                 # the coin group shows only in the coin market
     tabs = [x for x in re.findall(r'<button data-tab="(\w+)" data-group="(\w+)"', html) if x[1] != "coin"]
-    assert len(tabs) == 15 and {g for _, g in tabs} == set(GROUPS) and len({t for t, _ in tabs}) == 15
+    assert len(tabs) == 16 and {g for _, g in tabs} == set(GROUPS) and len({t for t, _ in tabs}) == 16
+    assert [t for t, g in tabs if g == "chart"] == ["chart", "compare"] and [t for t, g in tabs if g == "stock"] == ["stock", "watch"]      # 2026-11-23: the chart group
     assert [t for t, g in tabs if g == "score"] == ["qsf", "committee"]                    # the investment committee sits beside the score (2026-11-22)
     assert [g for _, g in tabs] == sorted((g for _, g in tabs), key=GROUPS.index)          # the tabs of a group sit together, in the groups' order
     assert dict(tabs)["qsf"] == "score" and dict(tabs)["today"] == "today" and [t for t, g in tabs if g == "market"] == ["overview", "map", "macro"]

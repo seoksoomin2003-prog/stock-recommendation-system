@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
-from terminal import TERMINAL_VERSION, alert_rules, portfolio as pf, sources
+from terminal import TERMINAL_VERSION, alert_rules, chart_analysis, portfolio as pf, sources
 from terminal.cache import FileCache
 from terminal.services_model import ModelViews
 
@@ -76,6 +76,18 @@ def clean_ticker(t: str) -> str:
     if not TICKER_RE.match(t):
         raise ValueError("INVALID_TICKER")
     return t
+
+
+def _rolling_corr(a: List[float], b: List[float], n: int) -> List[Optional[float]]:
+    """Correlation of the last n daily returns at each day, aligned to the compare dates (the first date has no return: None)."""
+    out: List[Optional[float]] = [None] * (len(a) + 1)
+    for i in range(n, len(a) + 1):
+        x, y = a[i - n:i], b[i - n:i]
+        mx, my = sum(x) / n, sum(y) / n
+        sx = math.sqrt(sum((p - mx) ** 2 for p in x))
+        sy = math.sqrt(sum((q - my) ** 2 for q in y))
+        out[i] = sum((p - mx) * (q - my) for p, q in zip(x, y)) / (sx * sy) if sx and sy else None
+    return out
 
 
 def _sma(values: List[float], n: int) -> List[Optional[float]]:
@@ -248,6 +260,44 @@ class Terminal(ModelViews):
 
     COMPARE_INDEX = {"^GSPC": "S&P 500", "^IXIC": "나스닥 종합", "^KS11": "코스피", "^KQ11": "코스닥"}
     COMPARE_MAX = 8
+    ROLLING_WINDOW, ROLLING_SHORT = 60, 20          # sessions in the moving correlation; the short one for a three-month view
+
+    def chart_analysis(self, ticker: str, rng: str = "1y", ma: str = "") -> Dict[str, Any]:
+        """The chart-analysis tab (CHART-1): classic indicators and signals on one stock or index.  Reference only, never a score."""
+        ticker = clean_ticker(ticker)
+        period, keep = chart_analysis.RANGES.get(rng, (None, None))
+        if not period:
+            raise ValueError("INVALID_RANGE")
+        sym = ticker if ticker in self.COMPARE_INDEX else self._sym(ticker)
+        market = "KR" if ticker in ("^KS11", "^KQ11") else "US" if ticker in self.COMPARE_INDEX else pf.market_of(ticker)
+        periods = chart_analysis.ma_periods(ma, market)
+        res = self.cache.cached(f"chart:{sym}:{period}", TTL["chart"], lambda: self.src.yahoo_history([sym], period))
+        rows, source = (res["data"] or {}).get(sym) or [], "Yahoo Finance (분할 조정 일봉, 지연)"
+        if market == "KR" and ticker not in self.COMPARE_INDEX and rows:
+            rows, source = self._kr_chart_rows(ticker, rows, period)
+        out = chart_analysis.analyse(rows, market, keep, periods)
+        bars = out["bars"]
+        status = self._bar_status(bars[-1]["date"], res["status"]) if bars else "UNAVAILABLE"
+        return {**out, "ticker": ticker, "name": self.COMPARE_INDEX.get(ticker), "market": market, "range": rng, "status": status,
+                "intraday": self._intraday(bars[-1]["date"], market) if bars else None, "short_history": bool(bars) and len(bars) < keep,
+                "settings": chart_analysis.settings(), "cache": {k: res.get(k) for k in ("status", "fetched_at", "error")}, "source": source}
+
+    def _kr_chart_rows(self, ticker: str, rows: List[Dict[str, Any]], period: str) -> Any:
+        """A Korean stock's bars rebuilt from the KRX daily copy the score uses (QSF-1.1.8: Yahoo's Korean history has missing days and
+        bad prints).  The copy holds about two years, so only the ranges fetched as two years use it; a longer range, a stock the copy
+        does not list, or a copy that cannot be read keeps Yahoo's bars, and the source line says which."""
+        yahoo = "Yahoo Finance (분할 조정 일봉, 지연)"
+        if period != "2y":
+            return rows, yahoo + " · 한국 거래소 일별 자료는 약 2년치뿐이라 3년 이상은 Yahoo 일봉입니다"
+        from terminal.qsf import kr_bars
+        try:
+            rebuilt, info = kr_bars.rebuild(ticker, rows, kr_bars.panel(self.base, self.now().date()))
+        except Exception as exc:                       # a broken copy never stops the chart; the line names the kind of failure only
+            return rows, f"{yahoo} · 한국 거래소 일별 자료를 읽지 못함({type(exc).__name__})"
+        if not str(info.get("source", "")).startswith("KRX"):
+            return rows, f"{yahoo} · {info.get('reason') or '한국 거래소 일별 자료 없음'}"
+        tail = f", 그 뒤 {info['tail_days']}일은 Yahoo로 이음" if info.get("tail_days") else ""
+        return rebuilt, f"한국 거래소 일별 시세로 다시 만든 일봉(점수와 같은 자료, {info.get('krx_last')}까지{tail})"
 
     def compare(self, tickers: str, rng: str = "1y") -> Dict[str, Any]:
         """Several stocks and indices from one common start, as total return (dividend-adjusted closes) in each one's own currency.
@@ -303,10 +353,13 @@ class Terminal(ModelViews):
                 sx, sy = math.sqrt(sum((p - mx) ** 2 for p in x)), math.sqrt(sum((q - my) ** 2 for q in y))
                 row.append(sxy / (sx * sy) if sx and sy else None)
             corr.append(row)
+        window = self.ROLLING_WINDOW if len(common) - 1 >= 2 * self.ROLLING_WINDOW else self.ROLLING_SHORT
+        rolling = [{"ticker": o["ticker"], "points": _rolling_corr(out[0]["_rets"], o["_rets"], window)} for o in out[1:]] if len(common) - 1 > window else []
         for o in out:
             o.pop("_rets")
         mixed = len({o["market"] for o in out}) > 1
         return {"status": "REAL", "range": rng, "dates": common, "series": out, "correlation": corr, "missing": missing, "mixed_markets": mixed,
+                "rolling": rolling, "rolling_window": window, "rolling_base": out[0]["ticker"],
                 "fetched_at": min((f for f in fetched if f), default=None), "source": "Yahoo Finance 일봉 (배당 조정 종가, 지연)",
                 "basis": "모두가 거래한 날만 씁니다. 수익률은 각 종목의 통화 기준이며 환율은 반영하지 않습니다."}
 

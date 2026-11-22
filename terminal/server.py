@@ -153,6 +153,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[pho
         ("GET", "/api/overview"): lambda q, b: t.overview(_market(q.get("market", "US"))),
         ("GET", "/api/chart"): lambda q, b: t.chart(q.get("t", ""), q.get("range", "1y")),
         ("GET", "/api/compare"): lambda q, b: t.compare(q.get("t", ""), q.get("range", "1y")),
+        ("GET", "/api/chart/analysis"): lambda q, b: t.chart_analysis(q.get("t", ""), q.get("range", "1y"), q.get("ma", "")),
         ("GET", "/api/rotation"): lambda q, b: t.rotation(_market(q.get("market", "US"))),
         ("GET", "/api/company"): lambda q, b: t.company(q.get("t", "")),
         ("GET", "/api/filings"): lambda q, b: t.filings(q.get("t", "")),

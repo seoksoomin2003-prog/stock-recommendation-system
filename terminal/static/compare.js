@@ -45,7 +45,8 @@ async function renderCompare() {
       <span class="meta" style="margin:0">지수: ${Object.entries(CMP_INDEX).map(([s, n]) => `<button type="button" class="chip" data-add="${esc(s)}">${esc(n)}</button>`).join(" ")}</span></form>
     <canvas id="cmp-cv" class="chart" aria-label="수익률 비교 차트"></canvas><div class="legend" id="cmp-legend"></div><div id="cmp-meta"></div></div>
     <div class="panel"><h2>기간 성과</h2><div id="cmp-stats"></div></div>
-    <div class="panel"><h2>일간 수익률 상관계수</h2><div id="cmp-corr"></div></div>`;
+    <div class="panel"><h2>일간 수익률 상관계수</h2><div id="cmp-corr"></div></div>
+    <div class="panel"><h2>상관계수의 변화 <span class="meta" style="margin:0" id="cmp-roll-h"></span></h2><canvas id="cmp-roll" class="chart" aria-label="이동 상관계수 차트"></canvas><div class="legend" id="cmp-roll-legend"></div><div id="cmp-roll-meta"></div></div>`;
   $("#cmp-rng").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; cmp.range = b.dataset.r; renderCompare(); };
   $("#cmp-add").onsubmit = (e) => { e.preventDefault(); cmpAdd($("#cmp-q").value); renderCompare(); };
   el.querySelectorAll("[data-add]").forEach((b) => (b.onclick = () => { cmpAdd(b.dataset.add); renderCompare(); }));
@@ -56,7 +57,7 @@ async function renderCompare() {
   try {
     const d = await api(`/api/compare?t=${encodeURIComponent(cmp.list.join(","))}&range=${cmp.range}`);
     if (want !== cmp.list.join(",") + "|" + cmp.range) return;
-    cmp.data = d; cmpDraw(); redrawers.add(cmpDraw); cmpTables(d);
+    cmp.data = d; cmpDraw(); redrawers.add(cmpDraw); cmpTables(d); cmpRoll(); redrawers.add(cmpRoll);
     const miss = d.missing && d.missing.length ? ` · <span class="err">가격 없음: ${esc(d.missing.join(", "))}</span>` : "";
     $("#cmp-meta").innerHTML = d.status === "REAL"
       ? meta(d.source, d.fetched_at, `${esc(d.dates[0])} ~ ${esc(d.dates[d.dates.length - 1])} · ${esc(d.basis)}${d.mixed_markets ? " 미국과 한국을 섞으면 두 시장이 모두 연 날만 남습니다." : ""}${miss}`)
@@ -105,6 +106,37 @@ function cmpDraw() {
     const rows = d.series.map((s) => [s, s.points[i]]).sort((a, b) => b[1] - a[1]);
     const tip = $("#tip"); tip.hidden = false;
     tip.innerHTML = `<b>${esc(d.dates[i])}</b><br>${rows.map(([s, v]) => `<span class="swatch" style="background:${cmpColor(s.ticker)}"></span>${esc(cmpName(s.ticker))} ${pct(v * 100, 1)}`).join("<br>")}`;
+    const tx = e.clientX + 14 + tip.offsetWidth > window.innerWidth ? e.clientX - tip.offsetWidth - 14 : e.clientX + 14;
+    tip.style.left = tx + "px"; tip.style.top = e.clientY + 14 + "px";
+  };
+  cv.onmouseleave = () => ($("#tip").hidden = true);
+}
+// How the correlation with the first item moved: each day, the correlation of the last N daily returns (N from the server).
+function cmpRoll() {
+  const cv = $("#cmp-roll"), d = cmp.data;
+  if (!cv || !cv.isConnected || !d || d.status !== "REAL") return;
+  if (!d.rolling || !d.rolling.length) {
+    $("#cmp-roll-h").textContent = ""; cv.hidden = true; $("#cmp-roll-legend").innerHTML = "";
+    $("#cmp-roll-meta").innerHTML = '<div class="empty">두 개 이상이고 기간이 상관을 잴 만큼 길 때 보입니다.</div>'; return;
+  }
+  cv.hidden = false;
+  $("#cmp-roll-h").textContent = `${cmpName(d.rolling_base)} 기준 · 최근 ${d.rolling_window}거래일씩`;
+  const { ctx, w, h } = setupCanvas(cv, window.innerWidth < 600 ? 200 : 240), n = d.dates.length, padR = 40, pw = w - padR, ph = h - 22;
+  const x = (i) => (n > 1 ? (i / (n - 1)) * pw : 0), y = (v) => 6 + (1 - (v + 1) / 2) * (ph - 6), grid = cssVar("--grid"), muted = cssVar("--muted");
+  ctx.font = "11px -apple-system, sans-serif"; ctx.textBaseline = "middle";
+  [-1, -0.5, 0, 0.5, 1].forEach((v) => { ctx.strokeStyle = v === 0 ? muted : grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(pw, y(v)); ctx.stroke(); ctx.fillStyle = muted; ctx.fillText(v.toFixed(1), pw + 6, y(v)); });
+  ctx.textBaseline = "top"; ctx.textAlign = "center"; ctx.fillStyle = muted;
+  const step = Math.max(1, Math.round(n / (w < 600 ? 4 : 7)));
+  for (let i = step; i < n - step / 3; i += step) ctx.fillText(d.dates[i].slice(2, 7).replace("-", "."), x(i), h - 14);
+  ctx.textAlign = "left";
+  d.rolling.forEach((r) => line(ctx, r.points, x, y, cmpColor(r.ticker), 2));
+  const last = (r) => [...r.points].reverse().find(isNum);
+  $("#cmp-roll-legend").innerHTML = d.rolling.map((r) => `<span><span class="swatch" style="background:${cmpColor(r.ticker)}"></span>${esc(cmpName(r.ticker))} 마지막 ${fmt(last(r), 2)}</span>`).join("");
+  $("#cmp-roll-meta").innerHTML = '<div class="meta">1에 가까울수록 그 기간에 같이 움직였고, 0 근처면 따로, -1에 가까우면 반대로 움직였습니다. 상관이 크게 흔들리면 "함께 움직인다"는 관계를 믿기 어렵습니다.</div>';
+  cv.onmousemove = (e) => {
+    const r = cv.getBoundingClientRect(), i = Math.min(n - 1, Math.max(0, Math.round(((e.clientX - r.left) / pw) * (n - 1))));
+    const tip = $("#tip"); tip.hidden = false;
+    tip.innerHTML = `<b>${esc(d.dates[i])}</b><br>${d.rolling.map((s) => `<span class="swatch" style="background:${cmpColor(s.ticker)}"></span>${esc(cmpName(s.ticker))} ${fmt(s.points[i], 2)}`).join("<br>")}`;
     const tx = e.clientX + 14 + tip.offsetWidth > window.innerWidth ? e.clientX - tip.offsetWidth - 14 : e.clientX + 14;
     tip.style.left = tx + "px"; tip.style.top = e.clientY + 14 + "px";
   };

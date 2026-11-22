@@ -4,6 +4,7 @@ const CMD_ALIASES = {
   today: ["오늘", "비서", "할일", "today", "brief"], coin: ["코인 순위", "coin rank"],
   overview: ["개요", "시장", "overview", "ov"], stock: ["종목", "stock", "des"], qsf: ["점수", "score", "qsf", "순위", "rank"],
   map: ["지도", "히트맵", "heatmap", "map", "imap", "rrg", "순환"], compare: ["비교", "compare", "comp"],
+  chart: ["차트", "차트분석", "chart", "rsi", "macd", "볼린저", "bollinger", "이평", "이동평균"],
   macro: ["거시", "macro", "eco", "일정", "캘린더", "calendar"], watch: ["관심", "관심종목", "watch", "watchlist"],
   portfolio: ["포트폴리오", "포트", "portfolio", "port", "위험", "risk"], assist: ["보조", "매매", "assist", "알림", "alert", "alrt"],
   model: ["모델", "model"], lab: ["연구", "연구실", "lab", "기록"],
@@ -35,6 +36,7 @@ function cmdParse(raw) {
     const target = tabs.find((t) => rest && [t.label, ...(CMD_ALIASES[t.tab] || [])].some((n) => n.toLowerCase() === rest));
     const item = target && target.tab === "compare" && typeof compareWith === "function"
       ? { label: `${code} 비교 차트`, hint: "비교", run: () => compareWith([code]) }
+      : target && target.tab === "chart" && typeof chartWith === "function" ? { label: `${code} 차트분석`, hint: "차트", run: () => chartWith(code) }
       : { label: `${code} 종목 화면`, hint: "종목", ticker: code, run: () => findSymbol(code) };      // 스캔한 종목의 코드가 아니면 가까운 종목을 먼저 묻습니다
     // a word that is exactly a tab or market name (port, kr, map) goes there first; the ticker of the same letters comes second
     const exact = words.length === 1 && (Object.values(CMD_MARKETS).flat().includes(low) || tabs.some((t) => [t.label, ...(CMD_ALIASES[t.tab] || [])].some((n) => n.toLowerCase() === low)));

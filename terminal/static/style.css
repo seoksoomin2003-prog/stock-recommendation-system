@@ -3,6 +3,7 @@
   --up: #0a8f5a; --down: #d0363c; --accent: #2457d6; --warn: #b26b00; --bad: #b3261e;
   --chip: #eef1f5; --sma20: #d68a00; --sma50: #2457d6; --sma200: #8a3ffc; --grid: #edf0f3;
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+  --ma5: #d6457f; --ma10: #8c5a2b; --ma20: #d68a00; --ma50: #2457d6; --ma60: #0f8c9e; --ma120: #5d6673; --ma200: #8a3ffc;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -11,6 +12,7 @@
     --up: #2fbf7f; --down: #ff6369; --accent: #6d9bff; --warn: #f0a531; --bad: #ff7b72;
     --chip: #1f2630; --sma20: #f0a531; --sma50: #6d9bff; --sma200: #b98bff; --grid: #1d232c;
     --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  --ma5: #f07aa8; --ma10: #c08a5a; --ma20: #f0a531; --ma50: #6d9bff; --ma60: #3cc2d4; --ma120: #a3acb9; --ma200: #b98bff;
     color-scheme: dark;
   }
 }
@@ -19,6 +21,7 @@
   --up: #2fbf7f; --down: #ff6369; --accent: #6d9bff; --warn: #f0a531; --bad: #ff7b72;
   --chip: #1f2630; --sma20: #f0a531; --sma50: #6d9bff; --sma200: #b98bff; --grid: #1d232c;
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  --ma5: #f07aa8; --ma10: #c08a5a; --ma20: #f0a531; --ma50: #6d9bff; --ma60: #3cc2d4; --ma120: #a3acb9; --ma200: #b98bff;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -390,3 +393,14 @@ details[open] > summary .fold-hint { display: none; }
 .plain-box dl { margin: 0; } .plain-box dt { font-weight: 600; margin-top: 6px; } .plain-box dd { margin: 0; }
 .qsf-stance { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 0; }
 .qsf-stance details { flex-basis: 100%; }
+/* 차트분석 (CHART-1) */
+.cha-ctl { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 6px 0; }
+.cha-opt { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer; }
+.cha-stack { position: relative; width: 100%; touch-action: pan-y; }
+.cha-stack canvas { display: block; width: 100%; }
+.cha-pane { font-size: 11px; color: var(--muted); margin: 6px 0 0; }
+.cha-xline { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--muted); opacity: 0.6; pointer-events: none; }
+.chip.on { outline: 2px solid var(--accent); }
+.cha-line { margin: 6px 0; line-height: 1.55; }
+.cha-line b { display: inline-block; min-width: 76px; }
+.cha-line b { margin-right: 6px; }
