@@ -24,6 +24,7 @@ DECISION_KO = {**iv.REC_KO, CONDITIONAL_BUY: "조건부 매수"}
 CRITICAL, MAJOR = "CRITICAL", "MAJOR"
 MIN_VALID = 3                     # fewer engines with a view than this: the committee does not decide
 COMPELLING_SCORE, COMPELLING_CONFIDENCE, COMPELLING_DOWNSIDE = 75.0, 70, 55.0       # when one or two views are enough
+MANY_AGAINST = 3                  # this many views saying avoid, reduce or sell: one or two buying views do not carry the decision
 DATA_FLOOR, CONFIDENCE_CAP_DATA, CONFIDENCE_CAP_RISK = 60.0, 50.0, 60.0
 KIND_KO = {"PHILOSOPHICAL": "철학의 차이", "FUNDAMENTAL": "사업에 대한 판단의 차이", "MARKET": "시장을 보는 차이", "DATA": "자료의 차이"}
 LONG_TERM = ("BUFFETT", "MUNGER", "GRAHAM", "LYNCH")
@@ -165,14 +166,16 @@ def decide(f: Dict[str, Any], opinions: List[Dict[str, Any]], held: bool = False
         why.append(f"세 관점({names(buyers)})이 매수 조건입니다." + (" 주요 위험이나 큰 하방 위험이 있어 조건을 붙였습니다." if decision == CONDITIONAL_BUY else ""))
     elif buyers:
         leads = [o for o in buyers if o["recommendation"] == STRONG_BUY and o["score"] >= COMPELLING_SCORE and o["confidence"] >= COMPELLING_CONFIDENCE]
-        compelling = bool(leads) and not major and (sc["downside"] or 0) <= COMPELLING_DOWNSIDE
+        # one or two views can carry the decision, but not against three or more that say avoid (user decision 2026-11-22, after
+        # the audit found 17 of 66 US buy-side decisions were one view over three or four): the test for three against comes first
+        compelling = bool(leads) and not major and (sc["downside"] or 0) <= COMPELLING_DOWNSIDE and len(against) < MANY_AGAINST
         lead = max(leads or buyers, key=lambda o: o["score"])
         if compelling:
             decision = CONDITIONAL_BUY
             why.append(f"찬성은 {len(buyers)}개 관점({names(buyers)})뿐이지만 {lead['name']}의 근거가 강하고(점수 {lead['score']:.0f}, 신뢰 {lead['confidence']}) 주요 위험이 없어 조건부 매수로 정했습니다. 다수결이 아닙니다.")
-        elif len(against) >= 3:
+        elif len(against) >= MANY_AGAINST:
             decision = REDUCE if held else AVOID
-            why.append(f"찬성은 {names(buyers)}뿐이고 세 관점 이상({names(against)})이 회피입니다.")
+            why.append(f"찬성은 {names(buyers)}뿐이고 세 관점 이상({names(against)})이 회피입니다." + (f" {lead['name']}의 근거가 강해도(점수 {lead['score']:.0f}) 한두 관점이 세 관점 이상의 반대를 이기지는 못합니다." if leads else ""))
         else:
             decision = HOLD if held else WAIT
             why.append(f"찬성은 {len(buyers)}개 관점({names(buyers)})뿐이고 근거가 위원회의 기준(적극 매수 조건, 점수 {COMPELLING_SCORE:.0f} 이상, 신뢰 {COMPELLING_CONFIDENCE} 이상, 주요 위험 없음)에 못 미칩니다.")

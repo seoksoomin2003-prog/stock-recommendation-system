@@ -5,7 +5,9 @@ letters, the scores, and the six portfolios with their weights.  The next day's 
 portfolio holds (a held stock is kept until its engine says sell).  Nothing is rewritten.
 
 Paper performance is read from this record alone, forward from the day it started: no return before the first line is ever
-computed, and none is shown as if it were a track record.  A day's weights are the ones recorded two sessions before its
+computed, and none is shown as if it were a track record.  A day's fall of more than half is booked as the loss it is; a day's
+rise of more than half is left out until explained; a holding whose price is gone is carried at its last close (user decision
+2026-11-22, before the first line was written: the first rule left out both, so a crash and a delisting cost nothing).  A day's weights are the ones recorded two sessions before its
 close: a portfolio made after the close of day D is taken to be bought at the close of D+1 and earns from D+1 to D+2.  That
 is one day slower than the record and never looks ahead.  Costs are the program's Toss fee table on what changed hands.
 Ratios that need a history (annualised return, Sharpe, Sortino, Calmar, alpha, beta) are not given before ``MIN_RATIO_DAYS``.
@@ -131,6 +133,8 @@ def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional
         daily, costs, turns, unpriced, jumps, stays = [], 0.0, [], set(), [], {}
         ended: List[int] = []
         last: Dict[str, float] = {}
+        known: Dict[str, float] = {}                      # each holding's last close on file
+        carried: Dict[str, str] = {}                      # holdings valued at that close because the day's price was gone: ticker -> first such session
         for i in range(len(rows) - 2):
             w = dict(((rows[i].get("portfolios") or {}).get(key) or {}).get("holdings") or {})
             traded = sum(abs(w.get(t, 0.0) - last.get(t, 0.0)) for t in set(w) | set(last))
@@ -140,14 +144,21 @@ def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional
                 stays[t] = stays.get(t, 0) + 1
             r = 0.0
             for t, weight in w.items():
-                p0, p1 = price(t, sessions[i + 1]), price(t, sessions[i + 2])
+                p0, p1 = price(t, sessions[i + 1]) or known.get(t), price(t, sessions[i + 2])
+                if p0 and not p1:                         # the price is gone (halted, delisted): carried at its last close, and said
+                    known[t] = p0
+                    carried.setdefault(t, sessions[i + 2])
+                    continue
                 if not p0 or not p1:
-                    unpriced.add(t)
+                    unpriced.add(t)                       # never priced since it was bought: nothing to value it by
                     continue
+                known[t] = p1
                 move = p1 / p0 - 1.0
-                if abs(move) > JUMP:                      # a jump this size in a day is a break in the price series until shown otherwise
-                    jumps.append({"ticker": t, "session": sessions[i + 2], "move": round(move, 4)})
-                    continue
+                if abs(move) > JUMP:
+                    booked = move < 0                     # a fall is taken as real (prices are split-adjusted); an unexplained rise is not counted
+                    jumps.append({"ticker": t, "session": sessions[i + 2], "move": round(move, 4), "booked": booked})
+                    if not booked:
+                        continue
                 r += weight * move
             cost = traded * one_way_cost
             daily.append(r - cost)
@@ -157,7 +168,7 @@ def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional
         stats = _stats(daily, bench)
         stats.update({"cost_total": round(costs, 5), "turnover_per_day": round(sum(turns) / len(turns), 4) if turns else None,
                       "average_holding_sessions": round(sum(ended) / len(ended), 1) if ended else None, "positions_closed": len(ended),
-                      "unpriced": sorted(unpriced), "price_breaks": jumps[:10]})
+                      "unpriced": sorted(unpriced), "price_breaks": jumps[:10], "carried_at_last_close": dict(sorted(carried.items())[:20])})
         if keep_daily:
             stats["daily"] = daily
         out["portfolios"][key] = stats

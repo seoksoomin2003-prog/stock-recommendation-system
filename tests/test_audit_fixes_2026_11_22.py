@@ -4,6 +4,7 @@ import inspect
 import json
 from argparse import Namespace
 from datetime import date
+from pathlib import Path
 
 import pytest
 
@@ -17,6 +18,8 @@ from terminal.qsf.service import QSF
 from tests import committee_cases as cc
 from tests.test_qsf import GOOD_FUND, bars, ctx
 from utils import durable
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 # ---------------------------------------------------------------------- 1: the worst market state is not "no reading"
@@ -216,3 +219,42 @@ def test_the_no_equity_mark_is_not_shown_or_ranked_as_a_ratio():
 def test_the_assistant_says_the_risk_grade_told_volatility_and_not_returns():
     src = inspect.getsource(assistant)
     assert "위험 등급이 나쁜 종목은 이후 변동성과 손실 크기가 더 컸습니다(수익을 맞힌 것은 아닙니다)" in src and "위험 등급이 나쁜 종목은 이후 수익이 부진" not in src
+
+
+# ---------------------------------------------------------------------- decisions of 2026-11-22 on the committee (roadmap 4 and 7)
+def _views(recs):
+    """The five opinions of the sound base stock, with the recommendations set by hand: the committee's rule is what is tested."""
+    f = cc.figures()
+    out = []
+    for o, rec in zip(iv.evaluate(f), recs):
+        out.append({**o, "recommendation": rec, "recommendation_ko": iv.REC_KO[rec], "score": 90.0 if rec == iv.STRONG_BUY else 30.0 if rec == iv.AVOID else 55.0, "confidence": 90})
+    return f, out
+
+
+def test_one_strong_view_does_not_carry_the_committee_against_three_that_say_avoid():
+    f, ops = _views([iv.STRONG_BUY, iv.AVOID, iv.AVOID, iv.AVOID, iv.HOLD])
+    d = council.decide(f, ops)
+    assert d["decision"] == iv.AVOID and "이기지는 못합니다" in d["reasons"][0]                       # was CONDITIONAL_BUY: 17 of 66 US buy-side decisions on 2026-11-20
+    f, ops = _views([iv.STRONG_BUY, iv.AVOID, iv.AVOID, iv.HOLD, iv.HOLD])
+    assert council.decide(f, ops)["decision"] == council.CONDITIONAL_BUY                           # one or two views can still carry it against two
+    f, ops = _views([iv.STRONG_BUY, iv.AVOID, iv.AVOID, iv.AVOID, iv.AVOID])
+    assert council.decide(f, ops, held=True)["decision"] in (iv.REDUCE, iv.SELL)
+
+
+def test_the_paper_record_books_a_crash_and_carries_a_vanished_holding_at_its_last_close():
+    days = [f"2026-12-{d:02d}" for d in range(1, 8)]
+    lines = [{"session": d, "portfolios": {"X": {"cash": 0.5, "holdings": {"AAA": 0.5}}}} for d in days]
+    crash = {days[0]: 100.0, days[1]: 100.0, days[2]: 45.0, days[3]: 45.0, days[4]: 45.0, days[5]: 45.0, days[6]: 45.0}
+    x = record.performance(lines, lambda t, s: crash[s], lambda s: None, 0.0)["portfolios"]["X"]
+    assert x["total_return"] == pytest.approx(-0.275, abs=1e-6) and x["price_breaks"] == [{"ticker": "AAA", "session": days[2], "move": -0.55, "booked": True}]          # was 0.0
+    spike = {**crash, days[2]: 300.0, days[3]: 300.0, days[4]: 300.0, days[5]: 300.0, days[6]: 300.0}
+    up = record.performance(lines, lambda t, s: spike[s], lambda s: None, 0.0)["portfolios"]["X"]
+    assert up["total_return"] == 0.0 and up["price_breaks"][0]["booked"] is False                  # an unexplained rise of more than half is still not counted
+    gone = {days[0]: 100.0, days[1]: 100.0, days[2]: 90.0, days[3]: None, days[4]: None, days[5]: 60.0, days[6]: 60.0}
+    g = record.performance(lines, lambda t, s: gone[s], lambda s: None, 0.0)["portfolios"]["X"]
+    # 100 -> 90 booked; two days carried at 90 (return 0, and said); back at 60: booked from the last close 90
+    assert g["carried_at_last_close"] == {"AAA": days[3]} and g["unpriced"] == [] and g["total_return"] == pytest.approx((1 - 0.05) * (1 + 0.5 * (60 / 90 - 1)) - 1, abs=1e-5)
+    never = record.performance(lines, lambda t, s: None, lambda s: None, 0.0)["portfolios"]["X"]
+    assert never["unpriced"] == ["AAA"] and never["total_return"] == 0.0 and never["carried_at_last_close"] == {}
+    text = (ROOT / "reports" / "IC1_PAPER_READING_PROTOCOL.md").read_text(encoding="utf-8")
+    assert "## 수정 이력" in text and "50%를 넘는 하락은 손실로 반영" in text and "마지막 종가로 평가" in text and "세 관점 이상이 회피" in text
