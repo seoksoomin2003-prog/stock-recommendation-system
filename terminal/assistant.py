@@ -49,7 +49,7 @@ def holding_items(portfolio: Dict[str, Any], signals: List[Dict[str, Any]], mark
     """``portfolio``: Terminal.portfolio(market).  ``signals``: the items of Terminal.portfolio_signals(market)."""
     from terminal.automation import exit_alerts
     if (portfolio.get("integrity") or {}).get("status") != "OK":
-        return [item("ACT", "JOURNAL_BROKEN", "거래 기록 검증에 실패해 보유 종목을 점검하지 못했습니다. 포트폴리오 탭의 안내를 확인하세요.", tab="portfolio")]
+        return [item("ACT", "JOURNAL_BROKEN", "거래 기록 검증에 실패해 보유 종목을 점검하지 못했습니다. '내 계좌'의 안내를 확인하세요.", tab="portfolio")]
     rows = portfolio.get("holdings") or []
     if not rows:
         return [item("INFO", "NO_HOLDINGS", f"{MARKET_KO[market]} 계좌에 기록된 보유 종목이 없습니다. 점검할 손절선이나 매도 조건이 없습니다.", tab="portfolio")]
@@ -88,7 +88,7 @@ def plan_items(plan: Dict[str, Any], market: str) -> List[Dict[str, Any]]:
     if status == "NO_ACCOUNT":
         return [item("INFO", "NO_ACCOUNT", f"{MARKET_KO[market]} 계좌가 기록돼 있지 않아 주문 수량·손절·한도를 계산하지 못했습니다. 지금 진입 가능 구간으로 읽힌 후보는 스윙·장기 합쳐 {n}건입니다. "
                      + candidate_split(plan.get("candidates_by")) +
-                     "포트폴리오 탭에 입금과 거래를 기록하면 계좌 기준 계획과 보유 종목 점검이 만들어집니다.", tab="portfolio",
+                     "'내 계좌'에 입금과 거래를 기록하면 계좌 기준 계획과 보유 종목 점검이 만들어집니다.", tab="account",
                      short=f"계좌 미기록(진입 가능 후보 {n}건)")]
     if status != "REAL":
         return [item("DUE", "PLAN_UNAVAILABLE", "주문 계획을 만들지 못했습니다.", tab="qsf")]
@@ -1351,7 +1351,7 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
             would = [f"{x}." for x in (hold.get("exit_triggers") or hold.get("invalidation") or [])[:7]]
             return reply(f"{head} 매도 점검", f"{josa(name, '은는')} 보유 기록이 없어 매도 조건을 계산하지 않았습니다. 매도 조건은 매수가, 매수일, 손절선이 있어야 읽을 수 있습니다.",
                          [{"title": f"보유했다면 보는 조건({kind})", "lines": would}, {"title": "지금의 점수", "lines": [f"{kind} 점수 {score:.1f}점('{row.get('band_label')}'), 판단 '{row.get('action_label')}'.", other_line]},
-                          {"title": "할 수 있는 것", "lines": ["포트폴리오 탭에 거래를 기록하면 이 종목의 손절·기한·청산 조건을 매일 점검해 '오늘' 탭에 올립니다."]}], "portfolio", follow, basis)
+                          {"title": "할 수 있는 것", "lines": ["'내 계좌'에 거래를 기록하면 이 종목의 손절·기한·청산 조건을 매일 점검해 '오늘' 탭에 올립니다."]}], "portfolio", follow, basis)
         sig = next((s for s in terminal.portfolio_signals(market)["items"] if s.get("ticker") == ticker), None)
         if not sig or sig.get("status") != "REAL":
             return reply(f"{head} 매도 점검", f"{name}의 자료를 읽지 못해 매도 조건을 점검하지 못했습니다.", [], "portfolio", follow)
@@ -1381,7 +1381,7 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
     return reply(f"{head} 매수 전 점검표({kind})", summary,
                  [{"title": "점검표 (○ 통과 · ✕ 걸림 · – 확인 못 함)", "lines": [f"{mark(ok)} {label}: {text}" for label, ok, text in checks]},
                   {"title": "참고", "lines": ([still] if still else []) + notes + unknown},
-                  {"title": "다음에 볼 것", "lines": ["수량, 지정가 상한, 손절은 포트폴리오 탭에 계좌를 기록하면 '주문 계획'에 계좌 기준으로 나옵니다.",
+                  {"title": "다음에 볼 것", "lines": ["수량, 지정가 상한, 손절은 '내 계좌'에 계좌를 기록하면 '주문 계획'에 계좌 기준으로 나옵니다.",
                                                 "점수 구간의 수익 근거는 아직 확인되지 않았습니다. 점검표는 프로그램의 규칙에 걸리는 것이 있는지 보는 용도입니다."]}], "stock", follow, basis)
 
 
@@ -1522,7 +1522,7 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
         n = len(book.get("holdings") or [])
         summary = (f"{where} 계좌에 기록된 보유 종목이 없습니다." if not n else f"{where} 보유 {n}종목 가운데 먼저 볼 것이 {len(act)}건 있습니다." if act else f"{where} 보유 {n}종목에 손실과 관련해 먼저 볼 것은 없습니다.")
         return reply(f"{where} 보유 종목 점검", summary, [{"title": LEVEL_KO[lv], "lines": [i["text"] for i in items if i["level"] == lv and n]} for lv in LEVELS]
-                     + ([{"title": "할 수 있는 것", "lines": ["포트폴리오 탭에 입금과 거래(매수가, 손절가, 장기·스윙 구분)를 기록하면 손절선, 보유 기한, 청산 조건을 매일 점검합니다.", switch]}] if not n else []), "portfolio")
+                     + ([{"title": "할 수 있는 것", "lines": ["'내 계좌'에 입금과 거래(매수가, 손절가, 장기·스윙 구분)를 기록하면 손절선, 보유 기한, 청산 조건을 매일 점검합니다.", switch]}] if not n else []), "portfolio")
     plan, top3 = terminal.order_plan(market), terminal.qsf.top3(market)                     # TOP
     days = (((top3.get("strategies") or {}).get("SWING") or {}).get("days")) or []
     day = max(days, key=lambda d: d.get("session") or "") if days else {}

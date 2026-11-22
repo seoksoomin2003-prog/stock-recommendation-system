@@ -177,6 +177,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[pho
         ("POST", "/api/paper-trade/add"): lambda q, b: t.paper_add(b),
         ("POST", "/api/paper-trade/void"): lambda q, b: t.paper_void(b.get("ref", "")),
         ("POST", "/api/journal/void"): lambda q, b: t.journal_void(b.get("ref", "")),
+        ("GET", "/api/account"): lambda q, b: t.account(),
         ("GET", "/api/capital"): lambda q, b: t.capital(_market(q.get("market", "US"))),
         ("POST", "/api/capital"): lambda q, b: t.capital_set(b),
         ("GET", "/api/model/scan"): lambda q, b: model_scan.status(t.base),

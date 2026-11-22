@@ -624,11 +624,13 @@ class Terminal(ModelViews):
         return self.now().astimezone(ZoneInfo("America/New_York")).date()
 
     def _today(self, market: str):
-        return self.now().astimezone(ZoneInfo("Asia/Seoul")).date() if market == "KR" else self._today_et()
+        return self.now().astimezone(ZoneInfo("Asia/Seoul")).date() if market in ("KR", "COIN") else self._today_et()
 
     def journal_add(self, raw: Dict[str, Any]) -> Dict[str, Any]:
         raw = raw or {}
-        market = pf.market_of(str(raw.get("ticker") or "").strip().upper()) if raw.get("ticker") else str(raw.get("market") or "US").upper()
+        asked = str(raw.get("market") or "").upper()
+        # a coin entry says so itself (BTC, SOL and LINK are not told apart from stock tickers by their look)
+        market = "COIN" if asked == "COIN" else pf.market_of(str(raw.get("ticker") or "").strip().upper()) if raw.get("ticker") else asked or "US"
         entry = pf.normalize(raw, self._today(market), clean_ticker)
         return {"entry": self.journal.append(entry, self.now())}
 
@@ -647,7 +649,7 @@ class Terminal(ModelViews):
         from terminal import paper_trade
         raw = raw or {}
         market = pf.market_of(str(raw.get("ticker") or "").strip().upper()) if raw.get("ticker") else str(raw.get("market") or "US").upper()
-        return {"entry": self.paper.append(paper_trade.prepare(raw, self._today(market if market in pf.MARKETS else "US"), clean_ticker), self.now())}
+        return {"entry": self.paper.append(paper_trade.prepare(raw, self._today(market if market in pf.STOCK_MARKETS else "US"), clean_ticker), self.now())}
 
     def paper_void(self, ref: str) -> Dict[str, Any]:
         return {"entry": self.paper.append({"kind": "VOID", "ref": str(ref or "")}, self.now())}
@@ -657,7 +659,7 @@ class Terminal(ModelViews):
         from terminal import paper_trade
         side = str(q.get("side") or "BUY").upper()
         market = str(q.get("market") or "US").upper()
-        if side not in ("BUY", "SELL") or market not in pf.MARKETS:
+        if side not in ("BUY", "SELL") or market not in pf.STOCK_MARKETS:
             raise ValueError("매수 또는 매도, 시장은 US 또는 KR이어야 합니다.")
         value = pf._pos(q.get("qty"), "수량") * pf._pos(q.get("price"), "가격")
         return {"market": market, "side": side, "value": value, **paper_trade.toss_fee(market, value, side)}
@@ -697,9 +699,43 @@ class Terminal(ModelViews):
             integ, state = {"status": "BROKEN", "reason": str(exc)}, pf.replay([])
         return recs, integ, state
 
+    def _coin_quotes(self, coins: List[str]) -> Dict[str, Any]:
+        """A won price per coin: the Binance USDT close of the last four-hour bar times the day's won per dollar.  It is not a
+        Korean exchange's price (those run a few per cent apart), and only the thirty most traded coins have one."""
+        from terminal import coin_bridge, coin_source
+        fx = (self._quotes(["KRW=X"], "pf:fx", "US")["items"].get("KRW=X") or {})
+        try:
+            doc = coin_source.load(self.base)
+        except Exception as exc:                                   # the coin part never stops the stock accounts
+            doc = {"error": type(exc).__name__}
+        bars = (doc.get("arrays") or {}).get("bars") or {}
+        by = {coin_bridge.coin_of(s): s for s in bars}
+        rate, out = fx.get("close"), {}
+        for c in coins:
+            s = by.get(c)
+            rows = bars.get(s) if s else None
+            if rows is None or not len(rows) or not rate:
+                out[c] = {"close": None, "status": "UNAVAILABLE", "reason": "NO_RATE" if s and not rate else "NOT_COVERED"}
+                continue
+            unit = 1000.0 if s.startswith("1000") else 1.0
+            usd = float(rows[-1, 4]) / unit
+            day = float(rows[-7, 4]) / unit if len(rows) >= 7 else None          # six four-hour bars back: a day
+            when = datetime.fromtimestamp((float(rows[-1, 0]) + coin_bridge.BAR_MS) / 1000, tz=timezone.utc)
+            out[c] = {"close": usd * rate, "usd": usd, "date": when.astimezone(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d"), "status": "STALE" if doc.get("error") else "REAL",
+                      "change_pct": (usd / day - 1) * 100 if day else None}
+        return {"items": out, "fx": fx, "covered": sorted(by), "names": {c: coin_bridge.NAMES_KO.get(c) for c in by}, "error": doc.get("error")}
+
     def _valued(self, market: str = "US"):
         recs, integ, state = self._book(market)
         held = sorted(state["positions"])
+        if market == "COIN":
+            got = self._coin_quotes(held)
+            val = pf.valuation(state, got["items"], {t: None for t in held}, self.settings(), market)
+            val["alerts"], val["sectors"] = [], {}                 # no limit of this program is defined for coins
+            for h in val["holdings"]:
+                h["name"] = got["names"].get(h["ticker"])
+                h["usd"] = (got["items"].get(h["ticker"]) or {}).get("usd")
+            return recs, integ, state, val, got["fx"], None
         sym = {t: self._sym(t) for t in held}
         q = self._quotes(list(sym.values()) + ["KRW=X"], "pf:" + ",".join(sym.values()), market)
         quotes = {t: q["items"][sym[t]] for t in held}
@@ -717,6 +753,50 @@ class Terminal(ModelViews):
         total = eq["KR"] + eq["US"] * rate if None not in (eq["KR"], eq["US"], rate) else None
         return {"krw": total, "us_equity": eq["US"], "kr_equity": eq["KR"], "usdkrw": rate, "fx_date": fx.get("date"),
                 "us_krw": eq["US"] * rate if eq["US"] is not None and rate else None}
+
+    ACCOUNTS = (("US", "미국 주식", "USD"), ("KR", "한국 주식", "KRW"), ("COIN", "코인", "KRW"))
+
+    def account(self) -> Dict[str, Any]:
+        """The three accounts on one page (user request 2026-11-23).  Each keeps its own currency, cash and limits; this view adds
+        them up in won (and in dollars) at the day's rate.  A missing price or rate leaves a total empty rather than understated."""
+        all_recs, integ = self.journal.read()
+        gone = pf.voided_ids(all_recs)
+        parts, rows, rate, fx_date = [], [], None, None
+        keys = ("equity", "equity_known", "cash", "market_value", "market_value_known", "complete", "missing_prices", "unrealized", "realized", "day_pnl", "net_deposits", "total_pnl")
+        for market, label, cur in self.ACCOUNTS:
+            recs, integ_m, _, val, fx, _ = self._valued(market)
+            if fx.get("close"):
+                rate, fx_date = fx["close"], fx.get("date")
+            parts.append({"market": market, "label": label, "currency": cur, "records": len(recs), "integrity": integ_m["status"], **{k: val["summary"].get(k) for k in keys}})
+            rows += [{**h, "market": market, "currency": cur} for h in val["holdings"]]
+
+        def won(v: Optional[float], cur: str) -> Optional[float]:
+            return None if v is None else v if cur == "KRW" else v * rate if rate else None
+        for p in parts:
+            for k in ("equity", "cash", "market_value", "total_pnl", "net_deposits", "day_pnl"):
+                p[f"{k}_krw"] = won(p[k], p["currency"])
+        used = [p for p in parts if p["records"]]
+        def total(key: str) -> Optional[float]:
+            vals = [p[f"{key}_krw"] for p in used]
+            return sum(vals) if vals and None not in vals else None if vals else 0.0
+        krw = total("equity")
+        for h in rows:
+            h["value_krw"] = won(h["value"], h["currency"])
+            h["weight_total_pct"] = h["value_krw"] / krw * 100 if krw and h["value_krw"] is not None else None
+        rows.sort(key=lambda h: (-(h["value_krw"] or 0.0), h["market"], h["ticker"]))
+        journal = [{**r, "market": r.get("market", "US"), "voided": r["id"] in gone}
+                   for r in sorted(all_recs, key=lambda r: (r.get("date") or r["recorded_at"][:10], r["seq"]), reverse=True)]
+        coins = self._coin_quotes([])
+        sums = {k: total(k) for k in ("equity", "cash", "market_value", "total_pnl", "net_deposits", "day_pnl")}
+        return {"integrity": integ, "accounts": parts, "holdings": rows, "journal": journal[:300], "journal_count": len(journal),
+                "total": {"krw": krw, "usd": krw / rate if krw is not None and rate else None, "usdkrw": rate, "fx_date": fx_date, **{f"{k}_krw": v for k, v in sums.items() if k != "equity"},
+                          "missing": [f"{p['label']}: {', '.join(p['missing_prices'])}" for p in used if p["missing_prices"]]},
+                "coins": [{"coin": c, "name": coins["names"].get(c)} for c in coins["covered"]], "coin_error": coins["error"],
+                "notes": ["미국 계좌는 달러, 한국 계좌와 코인은 원화로 적습니다. 합계는 그날 환율로 바꿔 더한 값입니다.",
+                          "달러 계좌의 손익은 달러로 계산한 손익을 오늘 환율로 바꾼 값입니다. 환율이 움직여 생긴 손익은 들어 있지 않습니다.",
+                          "코인의 지금 가격은 바이낸스의 달러(USDT) 가격에 환율을 곱한 값입니다. 국내 거래소 가격과 몇 % 다를 수 있고, 거래가 많은 30종만 가격이 있습니다.",
+                          "위험 한도와 주문 계획은 시장별로 따로 계산합니다(한국이 더 엄격). 코인에는 이 프로그램의 한도와 점검이 없습니다.",
+                          "주문 기능은 없습니다. 보유 현황은 직접 적은 기록으로만 계산합니다."]}
 
     def portfolio(self, market: str = "US") -> Dict[str, Any]:
         recs, integ, state, val, fx, cache = self._valued(market)
@@ -761,7 +841,7 @@ class Terminal(ModelViews):
             return {"points": [], "twr_pct": None, "bench_pct": None, "status": "UNAVAILABLE"}
         days = (self._today_et() - datetime.strptime(eff[0]["date"], "%Y-%m-%d").date()).days
         period = "1y" if days < 330 else "2y" if days < 700 else "5y" if days < 1800 else "10y"
-        tickers = sorted({r["ticker"] for r in eff if r["kind"] in ("BUY", "SELL")})
+        tickers = sorted({r["ticker"] for r in eff if r["kind"] in ("BUY", "SELL", "HOLD")})
         sym = {t: self._sym(t) for t in tickers}
         bench, bench_name = BENCH[market]
         syms = list(sym.values()) + ([bench] if bench not in sym.values() else [])
@@ -831,7 +911,7 @@ class Terminal(ModelViews):
         equity = val["summary"]["equity"]
         if not equity or equity <= 0:
             return {"status": "NO_ACCOUNT", "market": market, "session": session, "candidates": len(cands), "candidates_by": op.count_by(cands), "note": note, "market_state": mstate, "stance": stance_shown,
-                    "reason": "계좌 평가액이 없습니다. 포트폴리오 탭에 입금·거래를 기록하면 그 계좌 기준으로 계획을 보여 줍니다."}
+                    "reason": "계좌 평가액이 없습니다. '내 계좌'에 입금·거래를 기록하면 그 계좌 기준으로 계획을 보여 줍니다."}
         account = {"equity": equity, "cash": state["cash"],
                    "positions": {h["ticker"]: {"style": h.get("style"), "value": h.get("value") or 0.0, "sector": h.get("sector")} for h in val["holdings"]}}
         from terminal.qsf import holding, rank_book, turnover_book

@@ -1,9 +1,9 @@
 // TERMINAL-2: 포트폴리오 · 매매 보조.  Uses helpers from app.js.  No orders are ever placed.
 "use strict";
-const KIND_KO = { DEPOSIT: "입금", WITHDRAW: "출금", BUY: "매수", SELL: "매도", DIVIDEND: "배당", FEE: "비용", PLAN: "손절·목표 설정", STYLE: "구분 변경", VOID: "취소" };
+const KIND_KO = { HOLD: "이미 가지고 있는 종목 추가", DEPOSIT: "입금", WITHDRAW: "출금", BUY: "매수", SELL: "매도", DIVIDEND: "배당", FEE: "비용", PLAN: "손절·목표 설정", STYLE: "구분 변경", VOID: "취소" };
 const STYLE_KO = { LONG: "장기", SWING: "스윙" };
 const KIND_FIELDS = { DEPOSIT: ["amount"], WITHDRAW: ["amount"], FEE: ["amount"], DIVIDEND: ["ticker", "amount"],
-  BUY: ["ticker", "style", "qty", "price", "fee", "stop", "target"], SELL: ["ticker", "qty", "price", "fee"], PLAN: ["ticker", "stop", "target"], STYLE: ["ticker", "style"] };
+  BUY: ["ticker", "style", "qty", "price", "fee", "stop", "target"], HOLD: ["ticker", "style", "qty", "price", "stop", "target"], SELL: ["ticker", "qty", "price", "fee"], PLAN: ["ticker", "stop", "target"], STYLE: ["ticker", "style"] };
 const FIELD_KO = { ticker: "종목 코드", style: "구분", qty: "수량(주)", price: "가격($)", fee: "수수료($)", amount: "금액($)", stop: "손절가($, 선택)", target: "목표가($, 선택)" };
 const BIND_KO = { RISK: "1회 거래 위험 한도", WEIGHT: "종목당 최대 비중", CASH: "보유 현금" };
 let prefill = null;
@@ -82,7 +82,7 @@ async function renderPortfolio() {
 function totalHtml(t) {
   if (!t) return "";
   const won = (v) => (isNum(v) ? `₩${Math.round(v).toLocaleString("ko-KR")}` : DASH);
-  return `<div class="panel"><h2>전체 자산 <span class="meta" style="margin:0">원화 환산</span></h2>
+  return `<div class="panel"><h2>주식 두 계좌 합계 <span class="meta" style="margin:0">원화 환산 · 코인은 빠져 있습니다. 세 계좌 전체는 위의 '내 계좌'에서 봅니다.</span></h2>
     <div class="head"><span class="big num">${won(t.krw)}</span></div>
     ${isNum(t.krw) ? "" : '<div class="notice">시세나 환율이 없는 항목이 있어 합계를 확정할 수 없습니다.</div>'}
     <div class="kv"><div><span>한국 계좌</span><b class="num">${won(t.kr_equity)}</b></div>
@@ -148,11 +148,11 @@ function statsHtml(st) {
 function journalRow(r) {
   const amt = isNum(r.amount) ? money(r.amount) : isNum(r.qty) && isNum(r.price) ? money(r.qty * r.price) : DASH;
   const styleText = r.style ? `${STYLE_KO[r.style]} ` : "";
-  const extra = r.kind === "STYLE" ? `${styleText}으로 변경` : r.kind === "PLAN" || (r.kind === "BUY" && (r.stop || r.target)) ? ` 손절 ${r.stop ? money(r.stop) : "—"} · 목표 ${r.target ? money(r.target) : "—"}` : "";
+  const extra = r.kind === "STYLE" ? `${styleText}으로 변경` : r.kind === "PLAN" || ((r.kind === "BUY" || r.kind === "HOLD") && (r.stop || r.target)) ? ` 손절 ${r.stop ? money(r.stop) : "—"} · 목표 ${r.target ? money(r.target) : "—"}` : "";
   const ref = r.kind === "VOID" ? ` (기록 ${esc(r.ref)} 취소)` : "";
   return `<tr class="${r.voided ? "voided" : ""}"><td>${esc(r.date || r.recorded_at.slice(0, 10))}</td><td class="l">${esc(KIND_KO[r.kind] || r.kind)}${r.voided ? " · 취소됨" : ""}</td>
     <td class="l">${esc(r.ticker || "")}</td><td class="num">${isNum(r.qty) ? qtyFmt(r.qty) : ""}</td><td class="num">${isNum(r.price) ? money(r.price) : ""}</td><td class="num">${amt}</td>
-    <td class="l meta" style="margin:0;white-space:normal;min-width:120px">${esc((r.note || "") + (r.kind === "BUY" ? ` ${styleText}` : "") + extra + ref)}</td>
+    <td class="l meta" style="margin:0;white-space:normal;min-width:120px">${esc((r.note || "") + (r.kind === "BUY" || r.kind === "HOLD" ? ` ${styleText}` : "") + extra + ref)}</td>
     <td>${r.kind !== "VOID" && !r.voided ? `<button class="x" data-void="${esc(r.id)}" title="이 기록 취소">취소</button>` : ""}</td></tr>`;
 }
 function formHtml() {
@@ -177,7 +177,7 @@ function bindForm(d) {
     const body = { kind: f.kind.value, date: f.date.value, note: f.note.value, market: state.market };
     KIND_FIELDS[body.kind].forEach((k) => { const v = f[k].value.trim().replace(/,/g, ""); if (v) body[k] = k === "ticker" ? v.toUpperCase() : v; });
     if (body.ticker && marketOf(body.ticker) !== state.market) { $("#jmsg").className = "msg err"; $("#jmsg").textContent = wrongMarket(body.ticker); f.ticker.focus(); return; }
-    if ((body.kind === "BUY" && !held.has(body.ticker) && !body.style) || (body.kind === "STYLE" && !body.style)) {
+    if (((body.kind === "BUY" || body.kind === "HOLD") && !held.has(body.ticker) && !body.style) || (body.kind === "STYLE" && !body.style)) {
       $("#jmsg").className = "msg err"; $("#jmsg").textContent = "장기 또는 스윙을 선택하세요."; f.style.focus(); return;
     }
     try { await post("/api/journal/add", body); prefill = null; $("#jmsg").className = "msg ok"; $("#jmsg").textContent = "기록했습니다. 시세를 다시 불러오는 중…"; renderPortfolio(); }

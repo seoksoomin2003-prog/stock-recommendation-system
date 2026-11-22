@@ -14,11 +14,12 @@ def test_every_tab_belongs_to_one_of_six_groups_and_keeps_its_section():
     assert re.findall(r'data-group="(\w+)"', nav) == GROUPS + ["coin"] and re.findall(r">([^<]+)</button>", nav) == ["오늘", "시장", "종목", "내 계좌", "점수", "검증·기록", "코인"]
     assert '<button type="button" data-group="coin" hidden>코인</button>' in nav                 # the coin group shows only in the coin market
     tabs = [x for x in re.findall(r'<button data-tab="(\w+)" data-group="(\w+)"', html) if x[1] != "coin"]
-    assert len(tabs) == 14 and {g for _, g in tabs} == set(GROUPS) and len({t for t, _ in tabs}) == 14
+    assert len(tabs) == 15 and {g for _, g in tabs} == set(GROUPS) and len({t for t, _ in tabs}) == 15
     assert [t for t, g in tabs if g == "score"] == ["qsf", "committee"]                    # the investment committee sits beside the score (2026-11-22)
     assert [g for _, g in tabs] == sorted((g for _, g in tabs), key=GROUPS.index)          # the tabs of a group sit together, in the groups' order
     assert dict(tabs)["qsf"] == "score" and dict(tabs)["today"] == "today" and [t for t, g in tabs if g == "market"] == ["overview", "map", "macro"]
-    assert [t for t, g in tabs if g == "account"] == ["portfolio", "assist", "paper"] and [t for t, g in tabs if g == "verify"] == ["model", "lab"]
+    # 2026-11-23: the unified account page comes first; the per-market page stays as its details
+    assert [t for t, g in tabs if g == "account"] == ["account", "portfolio", "assist", "paper"] and '<button id="acctbtn"' in html and [t for t, g in tabs if g == "verify"] == ["model", "lab"]
     for tab, _ in tabs:
         assert f'id="tab-{tab}"' in html, tab
 

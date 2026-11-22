@@ -16,10 +16,24 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-KINDS = ("DEPOSIT", "WITHDRAW", "BUY", "SELL", "DIVIDEND", "FEE", "PLAN", "STYLE", "VOID")
+# HOLD (2026-11-23): a position the user already owned before recording here.  It enters at its own buy date and price without a
+# deposit: the cash is untouched and its cost counts as money put in, so it is neither a profit nor a hole in the cash.
+KINDS = ("DEPOSIT", "WITHDRAW", "BUY", "SELL", "DIVIDEND", "FEE", "PLAN", "STYLE", "VOID", "HOLD")
+POSITION_KINDS = ("BUY", "HOLD")          # the kinds that open or add to a position
 STYLES = ("LONG", "SWING")
 STYLE_KO = {"LONG": "장기", "SWING": "스윙"}
-MARKETS = ("US", "KR")
+MARKETS = ("US", "KR", "COIN")          # three accounts in one journal: dollars, won, and coins kept in won (user decision 2026-11-23)
+STOCK_MARKETS = ("US", "KR")
+COIN_CODE = re.compile(r"^[A-Z0-9]{2,12}$")
+
+
+def coin_code(raw: Any) -> str:
+    """A coin's short name as the user types it (BTC, ETH).  The market is never guessed from it: SOL and LINK are also stock tickers."""
+    code = str(raw or "").strip().upper()
+    if not COIN_CODE.match(code):
+        raise ValueError("INVALID_TICKER")
+    return code
+
 KR_TICKER = re.compile(r"^[0-9][0-9A-Z]{5}$")      # 005930, 0035S0; a US ticker never has this shape
 
 
@@ -28,7 +42,7 @@ def market_of(ticker: str) -> str:
 
 
 def for_market(recs: List[Dict[str, Any]], market: str) -> List[Dict[str, Any]]:
-    """One journal, two accounts: dollars and won never mix.  A record without a market field is US."""
+    """One journal, three accounts: dollars, won and coins never mix.  A record without a market field is US."""
     return [r for r in recs if r.get("market", "US") == market]
 GENESIS = "0" * 64
 EPS = 1e-9
@@ -111,12 +125,23 @@ def normalize(raw: Dict[str, Any], today: date, clean_ticker) -> Dict[str, Any]:
         if d > today:
             raise JournalError("미래 날짜는 기록할 수 없습니다.")
         e["date"] = d.isoformat()
-    if kind in ("BUY", "SELL", "DIVIDEND", "PLAN", "STYLE"):
+    if kind in ("BUY", "SELL", "DIVIDEND", "PLAN", "STYLE", "HOLD"):
         try:
-            e["ticker"] = clean_ticker(raw.get("ticker", ""))
+            e["ticker"] = coin_code(raw.get("ticker")) if market == "COIN" else clean_ticker(raw.get("ticker", ""))
         except ValueError:
             raise JournalError("종목 코드 형식이 올바르지 않습니다.")
-        market = market_of(e["ticker"])
+        if market != "COIN":                       # a coin is a coin because the user said so, never by the look of its name
+            market = market_of(e["ticker"])
+    if kind == "HOLD":
+        e["qty"] = _pos(raw.get("qty"), "수량")
+        e["price"] = _pos(raw.get("price"), "산 가격")
+        e["fee"] = 0.0
+        if _style(raw.get("style")):
+            e["style"] = _style(raw.get("style"))
+        e["stop"] = _opt_pos(raw.get("stop"), "손절가")          # may stand above the old buy price: the stock has moved since
+        e["target"] = _opt_pos(raw.get("target"), "목표가")
+        if e["stop"] and e["target"] and e["target"] <= e["stop"]:
+            raise JournalError("목표가는 손절가보다 높아야 합니다.")
     if kind in ("BUY", "SELL"):
         e["qty"] = _pos(raw.get("qty"), "수량")
         e["price"] = _pos(raw.get("price"), "가격")
@@ -150,8 +175,8 @@ def normalize(raw: Dict[str, Any], today: date, clean_ticker) -> Dict[str, Any]:
         if not ref:
             raise JournalError("취소할 기록을 지정하세요.")
         e["ref"] = ref
-    if market == "KR" and kind != "VOID":
-        e["market"] = "KR"
+    if market in ("KR", "COIN") and kind != "VOID":
+        e["market"] = market
     note = str(raw.get("note") or "").strip()
     if note:
         e["note"] = note[:500]
@@ -241,9 +266,12 @@ def replay(recs: List[Dict[str, Any]], until: Optional[str] = None) -> Dict[str,
             cash += r["amount"]; dividends += r["amount"]
             if r["ticker"] in pos:
                 pos[r["ticker"]]["dividends"] += r["amount"]
-        elif k == "BUY":
+        elif k in POSITION_KINDS:
             cost = r["qty"] * r["price"] + r["fee"]
-            cash -= cost; fees += r["fee"]
+            if k == "HOLD":                        # brought in as it is: no cash leaves, and its cost is money put in
+                deposits += cost; flows.append((r["date"], cost))
+            else:
+                cash -= cost; fees += r["fee"]
             p = pos.setdefault(r["ticker"], {"qty": 0.0, "cost": 0.0, "opened": r["date"], "dividends": 0.0,
                                              "realized": 0.0, "style": None, "style_since": r["date"]})
             if r.get("style"):

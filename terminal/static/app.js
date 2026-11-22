@@ -7,6 +7,7 @@ try { const m = localStorage.getItem("qse-market"); if (m === "KR" || m === "COI
 // 코인 시장은 주식 탭을 쓰지 않습니다: '오늘'과 '코인' 묶음만 보입니다.  주식 시장에서는 '코인' 묶음이 숨습니다.
 const isCoin = () => state.market === "COIN";
 const groupShown = (g) => (isCoin() ? g === "today" || g === "coin" : g !== "coin");
+const ANY_MARKET = new Set(["account"]);        // 시장 스위치와 상관없이 열리는 탭: 통합 '내 계좌'는 세 계좌를 한꺼번에 봅니다
 const KR_RE = /^[0-9][0-9A-Z]{5}$/;
 const marketOf = (t) => (KR_RE.test(String(t).toUpperCase()) ? "KR" : "US");
 const isKR = () => state.market === "KR";
@@ -154,7 +155,7 @@ function paintGroups(tab) {
   if (!g) return;
   groupTab[g] = tab;
   document.querySelectorAll(".groups button").forEach((b) => { b.classList.toggle("on", b.dataset.group === g); b.hidden = !groupShown(b.dataset.group); });
-  const mine = [...document.querySelectorAll(".tabs button")].filter((b) => { b.hidden = b.dataset.group !== g; return !b.hidden; });
+  const mine = [...document.querySelectorAll(".tabs button")].filter((b) => { b.hidden = b.dataset.group !== g || (!groupShown(g) && !ANY_MARKET.has(b.dataset.tab)); return !b.hidden; });
   document.querySelector(".tabs").hidden = mine.length < 2;
 }
 function showGroup(g) {
@@ -169,7 +170,7 @@ function tabHash(tab) {
   return tab;
 }
 function show(tab, push = true) {
-  if (!groupShown(groupOf(tab) || "today")) tab = isCoin() ? "coin" : "today";       // 지금 시장에 없는 탭이면 그 시장의 첫 화면으로
+  if (!ANY_MARKET.has(tab) && !groupShown(groupOf(tab) || "today")) tab = isCoin() ? "coin" : "today";       // 지금 시장에 없는 탭이면 그 시장의 첫 화면으로
   if (tab !== state.tab) tabScroll[state.tab] = window.scrollY;
   state.tab = tab;
   if (healthAt && Date.now() - healthAt > 30000) loadHealth();      // 탭을 옮길 때도 화면이 업데이트됐는지 확인합니다
@@ -674,7 +675,7 @@ async function renderModel() {
   } catch (e) { el.innerHTML = errBox(e); }
 }
 
-const ALWAYS_FRESH = new Set(["watch", "portfolio", "assist", "paper", "model"]);
+const ALWAYS_FRESH = new Set(["watch", "account", "portfolio", "assist", "paper", "model"]);
 const RENDER = { overview: renderOverview, macro: renderMacro, watch: renderWatch, model: renderModel, stock: renderStock };
 const RETURN = {};          // 다시 그리지 않고 돌아온 탭이 할 일 (탭 이름 -> 함수(떠날 때의 스크롤 위치)).  점수 탭이 씁니다 (qsf.js).
 

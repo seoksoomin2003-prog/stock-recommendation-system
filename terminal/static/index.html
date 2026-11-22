@@ -14,6 +14,7 @@
     <input id="q" name="q" placeholder="종목 코드 또는 회사명" maxlength="30" aria-label="종목 코드 또는 회사명">
     <button type="submit">조회</button>
   </form>
+  <button id="acctbtn" class="ghost" type="button" title="미국·한국 주식과 코인을 한 페이지에서 봅니다.">내 계좌</button>
   <button id="collect" class="ghost" type="button" title="최신 자료 수집: 매일 자동 실행과 같은 작업을 지금 시작합니다. 이미 끝난 단계는 건너뜁니다.">지금 수집</button>
   <button id="phonebtn" class="ghost" type="button" title="같은 와이파이의 휴대폰에서 이 화면을 엽니다. 기본은 꺼져 있습니다." hidden>폰 연결</button>
   <button id="cmdbtn" class="ghost" type="button" title="명령창 (/ 또는 ⌘K)" aria-label="명령창 열기">⌘K</button>
@@ -40,7 +41,8 @@
   <button data-tab="stock" data-group="stock">종목</button>
   <button data-tab="compare" data-group="stock">비교</button>
   <button data-tab="watch" data-group="stock">관심종목</button>
-  <button data-tab="portfolio" data-group="account">포트폴리오</button>
+  <button data-tab="account" data-group="account">내 계좌</button>
+  <button data-tab="portfolio" data-group="account">시장별 자세히</button>
   <button data-tab="assist" data-group="account">매매 보조</button>
   <button data-tab="paper" data-group="account">모의 매매</button>
   <button data-tab="qsf" data-group="score">점수</button>
@@ -57,6 +59,7 @@
   <section id="tab-compare" class="tab"></section>
   <section id="tab-macro" class="tab"></section>
   <section id="tab-watch" class="tab"></section>
+  <section id="tab-account" class="tab"></section>
   <section id="tab-portfolio" class="tab"></section>
   <section id="tab-assist" class="tab"></section>
   <section id="tab-paper" class="tab"></section>
@@ -73,6 +76,7 @@
 <div id="tip" class="tip" hidden></div>
 <script src="app.js"></script>
 <script src="portfolio.js"></script>
+<script src="account.js"></script>
 <script src="paper.js"></script>
 <script src="alerts.js"></script>
 <script src="calendar.js"></script>
