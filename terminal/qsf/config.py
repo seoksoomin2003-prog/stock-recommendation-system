@@ -65,7 +65,7 @@ _KR_REGIME_LONG = {"vkospi_regime": 2, "index_trend": 3, "breadth": 2, "usdkrw_r
 
 
 # Domains a profile computes and stores but does not count in the score.  Korea, swing: the technical domain ranked stocks the
-# wrong way round in three past windows (2012-2019, 2016-2019, 2019-2026), so its 40 points left the score on 2026-11-11.
+# wrong way round in past windows (2012-2019 and 2019-2026; the 2016-2019 check lies inside the first, so it is not a third), so its 40 points left the score on 2026-11-11.
 # Every profile: the regime domain is one value for every stock of a day, so it cannot move a rank; it moved all scores together.  In the
 # index test of 2026-11-16 (MKT-1) a low value was not followed by a worse market (US: by a better one, at about 1.9 times the
 # volatility), so it left the score on 2026-11-16 and is shown apart as the market state, a risk reading.

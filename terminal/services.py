@@ -834,8 +834,10 @@ class Terminal(ModelViews):
         blocked = turnover_book.loss_sales(state.get("closed") or [], market, session, holding.stepper(market), rules["reentry_wait"]) if rules else None
         rank = rank_book.active_rules(self.base, market)             # the same for the rank rules: an entry only inside the day's top share
         outside = op.outside_top(cands, op.ahead_share(snaps, session), rank["entry_top"]) if rank else None
+        plan = op.build(cands, account, market, st, mstate, blocked=blocked, outside=outside)
+        bands = op.annotate(plan["orders"], {r["ticker"]: r["deal"] for r in latest.get("rows") or [] if r.get("deal")})          # display only
         return {"status": "REAL", "session": session, "equity": equity, "cash": state["cash"], "integrity": integ["status"], "note": note, "turnover_rules": bool(rules),
-                "rank_rules": bool(rank), "reentry_wait": blocked or {}, **op.build(cands, account, market, st, mstate, blocked=blocked, outside=outside)}
+                "rank_rules": bool(rank), "reentry_wait": blocked or {}, "bands": bands, **plan}
 
     def market_state(self, market: str = "US") -> Dict[str, Any]:
         """The market state of the newest recorded scan: the regime factors, apart from every score.  Read only."""

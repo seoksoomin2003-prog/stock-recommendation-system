@@ -19,6 +19,8 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
+from utils import durable
+
 from terminal.sources import EXPECT_FIELDS
 
 FOLDERS = {"KR": "expectations_kr", "US": "expectations_us"}
@@ -69,9 +71,8 @@ def record(base: Path, market: str, session: str, tickers: Iterable[str], read: 
         held += 1
         if row["fetched"] > seen.get(t, ""):
             rows.append(row)
-    if rows:
-        with open(folder / f"{session[:7]}.jsonl", "a", encoding="utf-8") as fh:
-            fh.write("".join(json.dumps(r, ensure_ascii=False, sort_keys=True) + "\n" for r in rows))
+    if rows:          # written like the other forward records: locked, chained, on the disk, and never after a cut line (audit 2026-11-22, ENG-05)
+        durable.append_chained(folder, f"{session[:7]}.jsonl", rows)
     return {"status": "OK", "market": market, "session": session, "written": len(rows), "with_expectations": held}
 
 

@@ -69,6 +69,21 @@ def test_sqlite_side_files_and_folder_contents_count_as_the_tests_own():
     assert not guard._is_own("data/y.db", {"data/x.db"})
 
 
+def test_a_write_to_the_forward_record_folder_is_noticed_and_an_empty_folder_there_is_not(tmp_path, monkeypatch):
+    """Audit 2026-11-22 (ENG-11): research_data/ holds the forward records and nothing watched it."""
+    root = tmp_path / "root"
+    (root / "research_data" / "krx_live").mkdir(parents=True)
+    monkeypatch.setattr(guard, "ROOT", root)
+    monkeypatch.setitem(guard._OWN, "touched", set())
+    assert guard._protected_rel(root / "research_data" / "krx_live" / "index.jsonl", root) == os.path.join("research_data", "krx_live", "index.jsonl")
+    with open(root / "research_data" / "krx_live" / "index.jsonl", "a") as fh:          # the audit hook sees the real open
+        fh.write("{}")
+    os.mkdir(root / "research_data" / "new_store")
+    assert guard._watched(guard._OWN["touched"]) == [os.path.join("research_data", "krx_live", "index.jsonl")]
+    guard._OWN["touched"].clear()                      # this test's own write is to a temporary folder: it must not fail itself
+    assert guard._watched({os.path.join("data", "x.json")}) == []
+
+
 def test_only_protected_folders_are_noted_and_links_are_followed(tmp_path):
     root = tmp_path / "root"
     (root / "data").mkdir(parents=True)

@@ -11,12 +11,16 @@ import time
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
+from utils import durable
+
 from terminal.qsf import kr_forward as kf
 
 LAG = 3                 # sessions behind the market's newest record before a record counts as stopped (a day's lag is ordinary)
 ARCHIVE_DAYS = 6        # days without a write before the price archive counts as stopped (a long weekend is four)
 STORES = Path("research_data")
 ARCHIVE = Path("data") / "qsf" / "price_archive"
+# records kept as chained lines (utils/durable.append_chained), not as day files with an index
+LINE_STORES = {"committee_kr": "투자위원회 기록(한국)", "committee_us": "투자위원회 기록(미국)", "expectations_kr": "기대치 기록(한국)", "expectations_us": "기대치 기록(미국)"}
 LABELS = {"krx_forward": "한국 결합 점수", "krx_forward_fund": "한국 재무 점수", "krx_forward_events": "한국 공시 사건", "us_challenger": "미국 도전자 점수",
           "kr_swing_challenger": "한국 스윙 도전자", "kr_swing_prior": "한국 이전 스윙 공식", "kr_challenger": "한국 묶음 도전자 점수", "kr_cap_universe": "한국 시가총액 대상", "kr_traded_universe": "한국 거래대금 대상",
           "kr_method": "한국 독자 매매법", "regime_weights_kr": "국면 가중치(한국)", "regime_weights_us": "국면 가중치(미국)", "paper_book_kr": "모의 장부(한국)",
@@ -47,6 +51,9 @@ def look(base: Path, stores: Iterable[str], finished: Iterable[str] = (), now: O
             out.append({"store": name, "label": LABELS.get(name, name), "problem": "INDEX_TORN"})
         if rows:
             sessions[name] = sorted({r["session"] for r in rows})
+    for name, label in LINE_STORES.items():          # a cut or altered line stops that record until a person looks: say so
+        if name not in done and durable.verify_chained(base / STORES / name)["status"] in ("TORN", "BROKEN"):
+            out.append({"store": name, "label": label, "problem": "INDEX_TORN"})
     for market in ("KR", "US"):
         mine = {n: s for n, s in sessions.items() if market_of(n) == market}
         newest = max(mine.values(), key=lambda s: s[-1], default=[])
@@ -67,7 +74,7 @@ def phrase(item: Dict[str, Any]) -> str:
         return f"{item['label']}(마지막 {item['last']}, {item['behind']}거래일 뒤처짐)"
     if item["problem"] == "STALE":
         return f"{item['label']}({item['days']}일째 갱신 없음)"
-    return f"{item['label']}(색인 파일 손상)"
+    return f"{item['label']}({'기록 파일' if item['store'] in LINE_STORES else '색인 파일'} 손상)"
 
 
 def text(items: List[Dict[str, Any]]) -> Optional[str]:

@@ -46,6 +46,10 @@ ASSET_LIGHT = ("Technology", "Communication Services", "기술", "커뮤니케�
 CYCLICAL = ("Energy", "Basic Materials", "에너지", "소재")
 CYCLICAL_WORDS = ("semiconductor", "auto", "airline", "steel", "chemical", "homebuilding", "residential construction", "oil", "mining", "shipping", "marine", "building materials")
 # a bank's or an insurer's balance sheet is its business: these figures do not describe it
+# the score engine's own answer to "is this a bank or an insurer": it marks these factors not applicable for one (SIC code
+# in the US, statement layout in Korea).  The Yahoo sector label "Financial Services" also holds card networks, exchanges
+# and rating agencies, which earn margins like any other company (audit 2026-11-22, RED-06: 18 such stocks).
+FINANCIAL_FACTORS = ("free_cash_flow", "leverage", "cash_flow_quality")
 NOT_FOR_FINANCIALS = ("op_margin", "gross_margin", "fcf_margin", "fcf_years", "fcf_yield", "current_ratio", "debt_equity", "cash_debt", "interest_cover", "ocf_to_ni")
 
 
@@ -53,13 +57,17 @@ def read(long_snap: Optional[Dict[str, Any]], swing_snap: Optional[Dict[str, Any
          sector: Optional[str] = None, marks: Iterable[str] = (), deals: Iterable[Any] = ()) -> Dict[str, Any]:
     """{figure: value or None} with ``_status`` {figure: CONFIRMED | MISSING | NOT_APPLICABLE} and ``_source`` {figure: factor}."""
     raws: Dict[str, Dict[str, Any]] = {}
+    told: List[bool] = []                       # what the score engine said about each factor that tells a financial apart
     for snap in (long_snap, swing_snap):
         for f in (snap or {}).get("factors") or []:
             if isinstance(f.get("raw"), dict) and f.get("factor") not in raws:
                 raws[f["factor"]] = f["raw"]
+            if f.get("factor") in FINANCIAL_FACTORS and f.get("status"):
+                told.append(f["status"] == NOT_APPLICABLE)
     base = long_snap or swing_snap or {}
     d = info or {}
-    kind = "FINANCIAL" if sector in FINANCIAL else "REAL_ESTATE" if sector in REAL_ESTATE else "ASSET_LIGHT" if sector in ASSET_LIGHT else "GENERAL"
+    financial = any(told) if told else sector in FINANCIAL          # the sector label only when the scan said nothing
+    kind = "FINANCIAL" if financial else "REAL_ESTATE" if sector in REAL_ESTATE else "ASSET_LIGHT" if sector in ASSET_LIGHT else "GENERAL"
     out: Dict[str, Any] = {"ticker": base.get("ticker"), "market": base.get("market"), "as_of": base.get("data_date"), "sector": sector, "kind": kind,
                            "price": base.get("price"), "marks": list(marks), "deals": list(deals),
                            "stop": (swing_snap or base).get("stop"), "target": (swing_snap or base).get("target")}

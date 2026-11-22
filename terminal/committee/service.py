@@ -18,7 +18,7 @@ BENCHMARKS = frozenset(("SPY", "^KS11", "^KQ11"))       # terminal/qsf/config.py
 RETURN_DAYS = 126
 CARD_KEYS = ("investor", "name", "philosophy", "question", "score", "confidence", "coverage", "recommendation", "recommendation_ko", "held", "horizon", "valuation", "expected_return",
              "downside_risk", "positives", "negatives", "opinion", "thesis", "conditions", "suggested_weight", "action", "components", "missing", "evidence", "category_ko", "loss_risk",
-             "regimes", "regimes_not_told", "profile", "method", "margin_of_safety", "fair_pe", "insufficient", "other_profile")
+             "regimes", "regimes_not_told", "profile", "method", "margin_of_safety", "fair_pe", "insufficient", "other_profile", "unchecked", "capped_from")
 
 
 def _session_figures(terminal: Any, market: str, session: str) -> Dict[str, Dict[str, Any]]:

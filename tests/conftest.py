@@ -26,6 +26,9 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 PROTECTED_DIRS = ("data", "reports", "runs", "tracking")
+# The forward records and research stores.  33,000 files and 4.5 GB (2026-11-22): too much to copy for every run, so this folder
+# is watched, not copied: a test's own write there fails the test and is NOT undone (audit 2026-11-22, ENG-11: nothing noticed it).
+WATCHED_DIRS = ("research_data",)
 ALLOWED_WRITES = {
     # The test-results artifacts are written by the test runners themselves.
     "reports/P6-19_pytest_junit.xml",
@@ -141,13 +144,18 @@ def _protected_rel(path, root=None):
         rel = os.path.relpath(os.path.realpath(os.fspath(path)), os.path.realpath(root or ROOT))
     except (OSError, ValueError):
         return None
-    return rel if rel.split(os.sep, 1)[0] in PROTECTED_DIRS else None
+    return rel if rel.split(os.sep, 1)[0] in PROTECTED_DIRS + WATCHED_DIRS else None
 
 
 def _note(path):
     rel = _protected_rel(path)
     if rel:
         _OWN["touched"].add(rel)
+
+
+def _watched(touched):
+    """This process's own writes under a watched folder."""
+    return sorted(t for t in touched if t.split(os.sep, 1)[0] in WATCHED_DIRS)
 
 
 def _audit(event, args):
@@ -158,7 +166,8 @@ def _audit(event, args):
             if (isinstance(flags, int) and flags & _WRITING) or (isinstance(mode, str) and any(c in mode for c in "wax+")):
                 _note(path)
         elif event in _ONE_PATH:
-            _note(args[0])
+            if not (event == "os.mkdir" and (_protected_rel(args[0]) or "").split(os.sep, 1)[0] in WATCHED_DIRS):
+                _note(args[0])                        # an empty folder made in a watched place harms no record
         elif event in _TWO_PATHS:
             _note(args[0])
             _note(args[1])
@@ -215,6 +224,9 @@ def _guard_protected_files(request, _protected_snapshot):
     _OWN["touched"], _OWN["children"] = set(), 0
     yield
     touched, children = set(_OWN["touched"]), _OWN["children"]
+    if _watched(touched):
+        pytest.fail(f"Test wrote to the forward-record folder (research_data/). It was NOT undone: the folder is too large to copy for "
+                    f"every run. Look before deleting: {_watched(touched)[:5]}", pytrace=False)
     after = _stat_map()
     changed = sorted(k for k in after if k in before and before[k] != after[k])
     created = sorted(k for k in after if k not in before)

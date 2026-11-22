@@ -19,6 +19,7 @@ WINDOW_WEEKDAYS = 400           # price rows read back: enough for the longest w
 SAMPLE_BACK, SAMPLE_GAP, SAMPLE_STEP = 82, 22, 6        # sampled days: from 82 rows before the end to 22 before it, every sixth
 MODES = ("WIPED", "MULTIPLIED")
 UNIVERSE = 300
+ENGINE_STOCKS, ENGINE_HISTORY = 12, 320          # the score engine is run on this many of the most traded stocks, on this many rows back
 
 
 def poison(d: Dict[str, Any], i: int, mode: str) -> Dict[str, Any]:
@@ -97,7 +98,34 @@ def functions(d: Dict[str, Any]) -> List[Dict[str, Any]]:
         have = np.isfinite(move)
         r = np.where(have.any(axis=1), np.where(have, move, 0.0).sum(axis=1) / np.maximum(have.sum(axis=1), 1), 0.0)
         return regime_weights.state(100.0 * np.concatenate([[1.0], np.cumprod(1 + r)]), i)
+    def engine_scores(z: Dict[str, Any], i: int) -> Dict[str, Any]:
+        """The live score engine itself (both strategies; the price factors, the gates and the levels) on each day's bars.  Added
+        after the audit of 2026-11-22: the engine and everything it calls had not been among the audited functions."""
+        from terminal.qsf import engine
+        i0 = max(0, i - ENGINE_HISTORY + 1)
+        adj = z.get("adj_close", z["close"])
+
+        def bars(j: int) -> List[Dict[str, Any]]:
+            rows = []
+            for n in range(i0, i + 1):
+                c = float(z["close"][n, j])
+                if c == c and c > 0:
+                    rows.append({"date": str(z["dates"][n]), "open": float(z["open"][n, j]), "high": float(z["high"][n, j]), "low": float(z["low"][n, j]), "close": c,
+                                 "adj_close": float(adj[n, j]), "volume": float(z["volume"][n, j])})
+            return rows
+        bench = bars(int(cols[0]))
+        out: Dict[str, Any] = {}
+        for j in cols[1:ENGINE_STOCKS + 1]:
+            b = bars(int(j))
+            if len(b) < 60 or b[-1]["date"] != str(z["dates"][i]):
+                continue
+            base = {"market": "KR", "ticker": str(z["symbols"][j]), "bars": b, "bench": bench, "bench_name": "점검용 지수", "events": None, "regime": None, "earnings": None, "fund": None,
+                    "expected_session": str(z["dates"][i])}
+            res = [engine.score(dict(base), s) for s in ("SWING", "LONG_TERM")]
+            out[str(z["symbols"][j])] = [[r["score"], r["coverage"], [g["code"] for g in r["gates"]], [f["normalized"] for f in r["factors"]]] for r in res]
+        return out
     return [
+        {"id": "engine.score", "label": "점수 엔진(스윙·장기 점수, 요인 값, 위험 게이트)", "fn": engine_scores},
         {"id": "kr_method.signals", "label": "독자 매매법의 진입 신호 7종", "fn": lambda z, i: kr_method.signals(z, i, cols)},
         {"id": "kr_method.atr", "label": "독자 매매법의 ATR(손절·목표 폭)", "fn": lambda z, i: kr_method.atr(z, i, cols)},
         {"id": "kr_risk_grade.inputs", "label": "위험 등급의 입력 4종", "fn": kr_risk_grade.inputs},

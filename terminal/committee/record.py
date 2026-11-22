@@ -16,6 +16,8 @@ import json
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from utils import durable
+
 from terminal.committee import council
 from terminal.committee import investors as iv
 
@@ -65,12 +67,12 @@ def line(market: str, session: str, book: Dict[str, Dict[str, Any]], ports: Dict
 
 
 def append(base: Path, market: str, session: str, book: Dict[str, Dict[str, Any]], ports: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
-    if any(r["session"] == session for r in read(base, market)):
-        return {"status": "ALREADY", "session": session}
+    """Written like the other forward records (audit 2026-11-22, ENG-05): one writer at a time, never after a cut line, each line
+    chained to the one before, on the disk before it counts.  A cut line stops the record (``durable.TornFile``) until a person looks."""
     folder = Path(base) / "research_data" / FOLDERS[market]
-    folder.mkdir(parents=True, exist_ok=True)
-    with open(folder / f"{session[:7]}.jsonl", "a", encoding="utf-8") as fh:
-        fh.write(json.dumps(line(market, session, book, ports), ensure_ascii=False, sort_keys=True) + "\n")
+    wrote = durable.append_chained(folder, f"{session[:7]}.jsonl", [line(market, session, book, ports)], skip=lambda: any(r["session"] == session for r in read(base, market)))
+    if not wrote:
+        return {"status": "ALREADY", "session": session}
     return {"status": "OK", "session": session, "stocks": len(book), "holdings": {key: p["count"] for key, p in ports.items()}}
 
 

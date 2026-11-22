@@ -223,6 +223,8 @@ function qsfOpenCard(ticker, push = true) {
 }
 
 const QSF_RISK_NOTE = "참고용 표시입니다. 점수와 순위에 반영되지 않으며, 이 종목을 피하면 수익이 난다는 검증은 아직 없습니다. 한국 시장 변동성 상위 20%입니다.";
+const QSF_DEAL_NOTE = "SEC에 인수·합병 절차 공시가 있는 종목입니다. 인수 가격이 정해지면 주가가 그 값에 묶여 더 오를 여지가 작고, 거래가 깨지면 크게 내릴 수 있습니다. 인수하는 쪽이 낸 공시일 수도 있습니다. 점수에는 들어가지 않습니다.";
+const qsfDealTag = (d) => !d ? "" : ` <span class="badge risk-note" title="${QSF_DEAL_NOTE} ${esc(d.label || "")}(${esc(d.form || "")}, ${esc(d.date || "")})">합병 절차 공시 · 참고</span>`;
 const qsfRiskTag = () => `<span class="badge risk-note" title="${QSF_RISK_NOTE}">변동성 높음 · 참고</span>`;
 const QSF_FILING_NOTE = "참고용 표시입니다. 점수와 순위에 반영되지 않습니다. 최근 252거래일 안의 첫 공시를 제목으로 읽었고, 취소 여부와 규모는 보지 않습니다. 과거 시험에서 자금조달 결정 종목의 평균 수익은 낮았지만, 앞으로의 자료로는 아직 확인되지 않았습니다. 자사주 묶음은 과거에도 시장을 이기지 못했습니다.";
 const qsfFilingTags = (f) => !f ? "" : (f.financing ? ` <span class="badge risk-note" title="${QSF_FILING_NOTE}">자금조달 결정 · 참고</span>` : "") + (f.buyback ? ` <span class="badge" title="${QSF_FILING_NOTE}">자사주 취득 · 참고</span>` : "");
@@ -256,6 +258,7 @@ function qsfDrawDetail(d) {
     ${d.filing_events ? `<div class="meta">${QSF_FILING_NOTE} 기준일 ${esc(d.filing_events.session)}.</div>` : ""}
     ${(d.deals || []).length ? `<div class="notice">SEC에 인수·합병 절차 공시가 있습니다: ${d.deals.slice(0, 3).map((x) => `${esc(x.label)}(${esc(x.form)}, ${esc(x.date)})`).join(", ")}. 인수 가격이 정해진 종목은 더 오를 여지가 작고 거래가 깨지면 크게 내릴 수 있습니다. 인수하는 쪽이 내는 경우도 있으니 공시 원문을 확인하세요. 점수는 이 공시를 읽지 않습니다.</div>` : ""}
     ${icCardHtml(d.committee, d.ticker, d.market)}
+    ${d.committee_note ? `<div class="meta"><b>엇갈림</b> ${esc(d.committee_note)}</div>` : ""}
     ${qsfRiskGradeLine(d.risk_grade)}
     ${QSF_RANK_NOTE[d.rank_basis] ? `<div class="meta">${QSF_RANK_NOTE[d.rank_basis]}</div>` : ""}
     ${qsfAuditLine(d.price_audit)}
@@ -328,8 +331,9 @@ function qsfCard(c, planOpen = false) {
   return `<article class="qsf-card"><header><div><div class="meta" style="margin:0">${QSF_STRAT[c.strategy]} · ${esc(c.profile)}${c.position ? " · <b>보유 중</b>" : ""}</div>
       <div class="qsf-score num">${c.score === null ? "-" : c.score.toFixed(1)}<small>/100</small></div></div>
       <div>${qsfLabel(c)}<div class="meta" style="margin:4px 0 0">구간: ${esc(c.band_label)}${c.diagnostic_only ? " · 진단용 점수" : ""}</div></div></header>
-    <div class="qsf-meta"><span>신뢰도 <b>${QSF_CONF[c.confidence]}</b></span><span>데이터 반영률 <b>${(c.coverage * 100).toFixed(0)}%</b></span><span>시세 <b>${esc(c.data_date)}</b> ${qsfPrice(c.price, m)}</span><span>${esc(c.model_version)}</span></div>
+    <div class="qsf-meta"><span>신뢰도 <b>${QSF_CONF[c.confidence]}</b></span><span>데이터 반영률 <b>${(c.coverage * 100).toFixed(0)}%</b></span>${isNum(c.input_coverage) && c.input_coverage < c.coverage - 0.005 ? `<span title="요인은 계산됐지만 그 안의 수치 일부가 비어 있습니다. 신뢰도는 이 값도 함께 봅니다.">요인 안 수치 반영률 <b>${(c.input_coverage * 100).toFixed(0)}%</b></span>` : ""}<span>시세 <b>${esc(c.data_date)}</b> ${qsfPrice(c.price, m)}</span><span>${esc(c.model_version)}</span></div>
     <p>${esc(c.why_summary)}</p>
+    ${c.surface_note ? `<div class="meta"><b>엇갈림</b> ${esc(c.surface_note)}</div>` : ""}
     ${qsfStaleNote(c)}${qsfFundPeriodNote(c)}
     ${c.gates.length ? `<div class="notice"><b>위험 게이트 ${c.gates.length}건</b>: ${c.gates.map((g) => esc(g.text)).join(" ")} 점수는 진단용으로 남기지만 실행 대상이 아닙니다.</div>` : ""}
     <h3>영역별 점수</h3><div class="qsf-domains">${Object.entries(c.domains).filter(([k]) => k !== "REGIME").map(([, v]) => `<div><span>${esc(v.label)} <small class="meta" style="margin:0">${v.reference ? "참고 · 점수 미반영" : v.max_points + "점"}</small></span>${qsfBar(v.score_100)}</div>`).join("")}</div>
@@ -543,7 +547,7 @@ async function qsfScreenRun(fresh) {
   const spread = Object.entries(d.matched_sectors).slice(0, 6).map(([k, n]) => `${esc(qsfSector(k))} ${n}`).join(" · ");
   const head = QSF_SCREEN_COLS.map(([k, label]) => { const on = qsfScreenState.sort === k;
     return `<th aria-sort="${on ? (qsfScreenState.order === "desc" ? "descending" : "ascending") : "none"}"><button type="button" class="qs-sort" data-sort="${k}">${label}${on ? (qsfScreenState.order === "desc" ? " ▼" : " ▲") : ""}</button></th>`; }).join("");
-  const rows = d.rows.map((r) => `<tr><td class="l"><button type="button" class="qs-open" data-t="${esc(r.ticker)}"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span></button>${r.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(r.filing_events)}</td>
+  const rows = d.rows.map((r) => `<tr><td class="l"><button type="button" class="qs-open" data-t="${esc(r.ticker)}"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span></button>${r.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(r.filing_events)}${qsfDealTag(r.deal)}</td>
       <td class="l"${r.industry ? ` title="${esc(r.industry)}"` : ""}>${r.sector ? esc(qsfSector(r.sector)) : '<span class="missing">없음</span>'}</td><td class="num">${qsfNum(r.score)}</td>${Object.values(QSF_SCREEN_DOMAIN).map((k) => `<td class="num">${qsfNum((r.domains || {})[k], 0)}</td>`).join("")}
       <td class="l">${qsfLabel(r)}</td><td class="l">${esc(QSF_CONF[r.confidence] || "")}</td><td class="l">${esc(QSF_ENTRY[r.entry_status] || "")}${r.gates.length ? `<div class="meta" style="margin:0">${r.gates.map((g) => esc(QSF_GATE[g] || g)).join(", ")}</div>` : ""}</td></tr>`).join("");
   body.innerHTML = `${spread ? `<div class="meta">결과의 업종 분포: ${spread}</div>` : ""}<div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">종목</th><th class="l">업종</th>${head}<th class="l">판단</th><th class="l">신뢰도</th><th class="l">진입과 게이트</th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -724,7 +728,7 @@ async function qsfLookahead() {
 
 // ------------------------------------------------------------------ order plan (real account) and the paper book
 function qsfOrderRows(orders, binding) {
-  return orders.map((o) => `<tr><td class="l"><b>${esc(o.name || o.ticker)}</b> <span class="meta">${esc(o.ticker)}</span></td><td>${o.style === "LONG" ? "장기" : "스윙"}</td><td class="num">${o.score.toFixed(1)}</td>
+  return orders.map((o) => `<tr><td class="l"><b>${esc(o.name || o.ticker)}</b> <span class="meta">${esc(o.ticker)}</span>${qsfDealTag(o.deal)}</td><td>${o.style === "LONG" ? "장기" : "스윙"}</td><td class="num">${o.score.toFixed(1)}${o.band_label ? `<div class="meta" style="margin:0">${esc(o.band_label)}</div>` : ""}</td>
     <td class="num">${fmt(o.shares, 0)}</td><td class="num">${money(o.ref_close)}</td><td class="num">${money(o.limit)}</td><td class="num">${money(o.stop)}</td><td class="num">${isNum(o.target) ? money(o.target) : DASH}</td>
     <td class="num">${money(o.notional, 0)} <span class="meta">(${o.weight_pct.toFixed(1)}%)</span></td><td class="num">${o.risk_pct.toFixed(2)}%</td><td class="l">${esc((binding || {})[o.binding] || o.binding_label || o.binding)}</td>
     <td class="num" title="스프레드 가정 ${o.slippage_bps.spread}bp + 주문 크기 충격 ${isNum(o.slippage_bps.impact) ? o.slippage_bps.impact.toFixed(1) : "?"}bp">${o.slippage_bps.total.toFixed(1)}bp</td>
@@ -749,7 +753,7 @@ function qsfPlanHtml(d) {
   return `<div class="panel">${title}${how}
     <div class="meta">기준 거래일 ${esc(d.session)} · 계좌 평가액 ${money(d.equity, 0)} · 현금 ${money(d.cash, 0)} · 진입 후보 ${d.candidates}종목 중 ${d.orders.length}종목 계획 · 계획 후 남는 현금 ${money(d.cash_after, 0)}</div>
     ${d.market_state ? qsfMarketState(d.market_state) : ""}${d.size_factor < 1 ? `<div class="notice">시장 상태가 나쁜 날이라 새 주문의 거래당 위험 한도와 종목 비중 한도를 ${(d.size_factor * 100).toFixed(0)}%로 계산했습니다.</div>` : ""}
-    ${body}${qsfSkipLine(d.skipped_counts, Object.fromEntries((d.skipped || []).map((s) => [s.code, s.reason])))}
+    ${body}${d.bands && d.bands.note ? `<div class="notice">${esc(d.bands.note)}</div>` : ""}${qsfSkipLine(d.skipped_counts, Object.fromEntries((d.skipped || []).map((s) => [s.code, s.reason])))}
     <div class="meta">비용: ${esc(a.cost_basis)}. ${esc(a.slippage_note)} 주문은 종목의 20일 평균 거래대금의 ${a.max_participation_pct}%를 넘지 않게 줄이고, 계좌의 ${a.min_weight_pct}% 미만인 주문은 만들지 않습니다. 지정가 상한은 기준 종가 + ${a.limit_atr} ATR입니다.</div>
     <div class="meta">${esc(d.note)}</div></div>`;
 }

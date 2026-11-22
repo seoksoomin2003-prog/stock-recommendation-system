@@ -335,10 +335,32 @@ class ScreenViews:
         if not memo or memo[0] != out.get("generated_at"):
             kr = (self._kr_industries() or None) if market == "KR" else None     # no stored master: Yahoo sectors, as before
             memo = self._sector_memo[market] = (out.get("generated_at"), {t: self._sector_of(market, t, kr) for t in {r.get("ticker") for r in out.get("rows") or []}})
+        deals = self._deal_marks(market, out)
         for r in out.get("rows") or []:
             got = memo[1].get(r.get("ticker")) or {}
             r["sector"], r["industry"] = got.get("sector"), got.get("industry")
+            if r.get("ticker") in deals:
+                r["deal"] = deals[r["ticker"]]
         return out
+
+    def _deal_marks(self, market: str, out: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
+        """{ticker: newest merger or tender-offer filing} of the scanned US stocks, from the stored SEC lists: a fact shown beside
+        the row, never scored (the stock's own page has said it since 2026-11-22; the screener and the order plan did not)."""
+        if market != "US" or not out.get("session"):
+            return {}
+        memo = getattr(self, "_deal_memo", None)
+        if memo and memo[0] == out.get("generated_at"):
+            return memo[1]
+        found: Dict[str, Dict[str, Any]] = {}
+        try:
+            for s in self.ledger.of_session("US", out["session"], "LONG_TERM"):
+                got = self.stored_deals(s.get("cik"), out["session"]) if s.get("cik") else []
+                if got:
+                    found[s["ticker"]] = got[0]
+        except Exception:
+            found = {}
+        self._deal_memo = (out.get("generated_at"), found)
+        return found
 
     def _loader(self, market: str, longest: bool = False) -> Callable[[str], List[Dict]]:
         """The scan's prices, with the archived prices of recorded stocks that have left the scan (``price_archive``).

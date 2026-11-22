@@ -52,8 +52,8 @@ def test_a_function_that_reads_the_next_row_is_caught_and_one_that_does_not_pass
 
 def test_the_audited_functions_read_nothing_after_their_day_and_the_control_is_caught():
     got = {f["id"]: f for f in la.audit_functions(world())}
-    assert set(got) == {"kr_method.signals", "kr_method.atr", "kr_risk_grade.inputs", "regime_weights.state", "kr_risk_grade.targets"}
-    for name in ("kr_method.signals", "kr_method.atr", "kr_risk_grade.inputs", "regime_weights.state"):
+    assert set(got) == {"engine.score", "kr_method.signals", "kr_method.atr", "kr_risk_grade.inputs", "regime_weights.state", "kr_risk_grade.targets"}
+    for name in ("engine.score", "kr_method.signals", "kr_method.atr", "kr_risk_grade.inputs", "regime_weights.state"):          # the score engine since the audit of 2026-11-22
         assert got[name]["ok"] and got[name]["moved"] == 0 and got[name]["filled"] > 0 and got[name]["days"] == 10 and not got[name]["control"], name
     control = got["kr_risk_grade.targets"]
     assert control["control"] and control["ok"] and control["moved"] == control["days"] == 10
@@ -73,7 +73,7 @@ def test_the_run_writes_one_view_file_and_a_broken_chain_or_a_missed_control_is_
     store(tmp_path, "kr_method", ["2026-11-11", "2026-11-12"])
     at = datetime(2026, 11, 13, 1, tzinfo=timezone.utc)
     doc = la.run(tmp_path, prices=world(), now=lambda: at)
-    assert doc["status"] == "OK" and doc["problems"] == [] and doc["sampled_days"] == 10 and doc["control"]["ok"] and len(doc["functions"]) == 4
+    assert doc["status"] == "OK" and doc["problems"] == [] and doc["sampled_days"] == 10 and doc["control"]["ok"] and len(doc["functions"]) == 5
     assert doc["records"] == [{"store": "kr_method", "sessions": 2, "first": "2026-11-11", "last": "2026-11-12", "chain": "OK", "bad": [], "before_next_open": 0, "late": 1}]
     assert la.status(tmp_path) == json.loads((tmp_path / la.VIEW).read_text()) and doc["walk_forward"] is None and la.status(tmp_path / "x")["status"] == "NO_RECORD"
     store(tmp_path, "kr_swing_prior", ["2026-11-11", "2026-11-12"], tamper=True)

@@ -2,6 +2,10 @@
 
 composite = 100 * sum(weight * normalized) / sum(weight of factors with data).  A missing factor leaves both sums
 (it is never zero) and lowers coverage instead.  Not-applicable factors also leave the coverage denominator.
+``input_coverage`` counts a factor computed from part of its inputs only for the part that was there.  It decides the
+confidence label together with coverage, and nothing else: the score, the 70% sufficiency rule and the gates read coverage
+as before.  Until 2026-11-22 a factor built from one figure of four read as fully covered, and the figures that go missing
+are mostly the bad ones (growth off a loss), so "confidence HIGH" could rest on half the figures (audit RED-01).
 Confidence is reported separately and never multiplies the score.  Gates override actionability, not the score.
 A profile's reference domains are computed and kept on the card with ``scored: False`` and weight 0: they enter neither sum.
 """
@@ -50,6 +54,8 @@ def hard_gates(ctx: Dict[str, Any], strategy: str) -> List[Dict[str, str]]:
         add("SHORT_HISTORY", f"가격 이력이 {t['n']}일로 최소 {config.MIN_BARS}일에 못 미칩니다.")
     if t.get("max_move_5") is not None and t["max_move_5"] > config.EXTREME_MOVE:
         add("DATA_ANOMALY", f"최근 5일 안에 하루 {t['max_move_5'] * 100:.0f}% 변동이 있어 데이터 확인이 필요합니다.")
+    if t.get("row_defects"):
+        add("DATA_ANOMALY", f"일봉에 날짜가 겹치거나 순서가 어긋난 행이 {t['row_defects']}개 있어 데이터 확인이 필요합니다.")
     if t.get("last_volume") == 0:
         add("NO_TRADING", "최근 거래일 거래량이 0입니다 (거래 정지 가능성).")
     if t.get("adv_value") is None or t["adv_value"] < g["min_adv_value"]:
@@ -84,6 +90,22 @@ def _reference_row(fid: str, domain: str, weight: float, ctx: Dict[str, Any]) ->
     if o["status"] not in _QUALITY:
         row["normalized"] = None
     return row
+
+
+def band_shown(score: Optional[float], sufficient: bool) -> Dict[str, str]:
+    """The band code is the score's, as recorded.  Its label is not shown as a verdict on a card that could not be judged: the
+    index fund SPY, with 28% of its data, read "매수 후보" beside "판단 불가" (audit 2026-11-22)."""
+    out = classify(score)
+    return out if sufficient or score is None else {**out, "band_label": INSUFFICIENT_BAND_LABEL}
+
+
+INSUFFICIENT_BAND_LABEL = "판단 불가(자료 부족)"
+
+
+def input_share(o: Dict[str, Any]) -> float:
+    """The share of a factor's own inputs that were there (1.0 when it says nothing about them)."""
+    got = o.get("inputs") or {}
+    return got["have"] / got["total"] if got.get("total") else 1.0
 
 
 def _reference_domain(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -148,8 +170,8 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
     if "levels" not in ctx:
         ctx["levels"] = technicals.levels(ctx["tech"], market)
     rows, domains = [], {}
-    tot_w, tot_c, tot_app, tot_eff = 0.0, 0.0, 0.0, 0.0
-    missing_names, stale_names = [], []
+    tot_w, tot_c, tot_app, tot_eff, tot_in = 0.0, 0.0, 0.0, 0.0, 0.0
+    missing_names, stale_names, partial_names = [], [], []
     for domain in config.DOMAINS:
         w_av, c_sum, app, eff = 0.0, 0.0, 0.0, 0.0
         for fid, weight in profile["domains"][domain].items():
@@ -165,6 +187,9 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
                 w_av += weight
                 c_sum += row["contribution"]
                 eff += weight * _QUALITY[o["status"]]
+                tot_in += weight * _QUALITY[o["status"]] * input_share(o)
+                if input_share(o) < 1.0:
+                    partial_names.append(fid)
                 if o["status"] == "STALE":
                     stale_names.append(fid)
             else:
@@ -185,12 +210,14 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
             domains[domain] = {**domains[domain], **_reference_domain(ref_rows), "reference": True}
     composite = 100 * tot_c / tot_w if tot_w else None
     coverage = tot_eff / tot_app if tot_app else 0.0
+    input_coverage = tot_in / tot_app if tot_app else 0.0
 
     short = [d for d, m in config.MIN_DOMAIN_COVERAGE[strategy].items() if profile["domains"][d] and (domains[d]["coverage"] or 0) < m]
     sufficient = coverage >= config.MIN_TOTAL_COVERAGE and not short
     confidence = "INSUFFICIENT"
     if sufficient:
-        confidence = next((lab for lo, lab in config.CONFIDENCE_BANDS if coverage >= lo), "INSUFFICIENT")
+        # the label follows the figures actually there; a stock that passed the sufficiency rule stays judged (LOW at worst)
+        confidence = next((lab for lo, lab in config.CONFIDENCE_BANDS if min(coverage, input_coverage) >= lo), config.CONFIDENCE_BANDS[-1][1])
         if stale_names and confidence == "HIGH":
             confidence = "MEDIUM"
     gates = hard_gates(ctx, strategy)
@@ -205,9 +232,9 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
     neg = sorted((r for r in ranked if r["normalized"] <= 0.4), key=weighted)[:3]
     return {"model_version": config.MODEL_VERSION, "spec_version": config.SPEC_VERSION, "profile": profile["id"],
             "market": market, "strategy": strategy, "held": held, "score": composite,
-            "diagnostic_only": not sufficient, **classify(composite), "action": display, "raw_action": action,
+            "diagnostic_only": not sufficient, **band_shown(composite, sufficient), "action": display, "raw_action": action,
             "action_label": config.ACTION_LABELS[display], "color": _color(display, composite), "actionability": actionability,
-            "coverage": coverage, "confidence": confidence, "domains": domains, "market_state": market_state(rows, market), "factors": rows, "gates": gates,
+            "coverage": coverage, "input_coverage": input_coverage, "partial": partial_names, "confidence": confidence, "domains": domains, "market_state": market_state(rows, market), "factors": rows, "gates": gates,
             "short_domains": short, "missing": missing_names, "stale": stale_names,
             "top_positive": [{"factor": r["factor"], "text": r["explanation"]} for r in pos],
             "top_negative": [{"factor": r["factor"], "text": r["explanation"]} for r in neg],

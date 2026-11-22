@@ -36,6 +36,7 @@ TTL = {"bars": 1800, "regime": 3600, "facts": 20 * 3600, "kr_facts": 7 * 86400, 
 MASTER_DOWN = "한국 거래소 종목 목록을 받지 못했습니다. 인터넷 연결을 확인하세요. 기기에 저장된 목록이 없거나 7일보다 오래돼 대신 쓰지 못했습니다."
 QUARTER_TTL = {"new": 30 * 86400, "old": 3650 * 86400, "none": 20 * 3600, "none_old": 90 * 86400}
 USABLE = ("REAL", "STALE")
+INFO_MAX_STALE_DAYS = 45          # an older stored Yahoo company record still names the company; its share count is not used
 REGIME_FRESH_DAYS = 5
 EARN_NONE_TTL = 6 * 3600           # "the provider lists no date" is kept this long: each morning's scan still asks, a lookup or a retry an hour later does not
 EARN_PAUSE_S = 15 * 60             # after the provider refuses for too many requests, earnings dates are not asked for this long
@@ -299,7 +300,7 @@ class QSF(ScreenViews):
         fin = fundamentals.is_financial_sic((subm or {}).get("sic"))
         kw = dict(is_financial=fin, shares=fundamentals.us_total_shares(info, bars[-1]["close"], res["data"]), insider_pct=info.get("heldPercentInsiders"), count_unknown=moved)
         m = self._with_other_period("US", fundamentals.metrics(res["data"], bars[-1]["close"], as_of, **kw), self._us_trailing(ticker, cik, bars[-1]["close"], as_of, kw))
-        old = _stale("SEC 재무제표", res)
+        old = _stale("SEC 재무제표", res) + getattr(self, "_info_stale", {}).get(ticker, [])
         return {**m, "cik": cik, "name": fundamentals.us_display_name(info.get("longName"), info.get("shortName"), (subm or {}).get("name")), "sector": info.get("sector"),
                 **({"stale_inputs": old} if old else {})}
 
@@ -310,11 +311,17 @@ class QSF(ScreenViews):
         price it was stored with; when today's close is far from it the record is asked again, and when it is still far (the
         request failed, or the provider is behind) the count is not used at all: unknown, never wrong by a factor."""
         fetch = lambda: self.src.yahoo_info(ticker)                                              # noqa: E731
-        info = self.cache.cached(f"info:{ticker}", TTL["info"], fetch)["data"] or {}
-        if not fundamentals.price_basis_moved(info, close):
-            return info, False
-        info = self.cache.cached(f"info:{ticker}", 0, fetch)["data"] or {}
-        return info, fundamentals.price_basis_moved(info, close)
+        res = self.cache.cached(f"info:{ticker}", TTL["info"], fetch)
+        info = res["data"] or {}
+        if fundamentals.price_basis_moved(info, close):
+            res = self.cache.cached(f"info:{ticker}", 0, fetch)
+            info = res["data"] or {}
+        # A stored copy that stood in for a failed request is said on the card like a stored statement, and past
+        # INFO_MAX_STALE_DAYS its share count is not used at all (audit 2026-11-22, RED-15: a 400-day-old count read as "REAL").
+        old = _stale("야후 종목 정보(주식 수·시가총액)", res)
+        self._info_stale = {**getattr(self, "_info_stale", {}), ticker: old}
+        too_old = bool(old) and (old[0]["age_days"] or 0) > INFO_MAX_STALE_DAYS
+        return info, fundamentals.price_basis_moved(info, close) or too_old
 
     def _annual(self, ticker: str, cik: str) -> Dict[str, Any]:
         facts = default_sources.facts_with_predecessors(ticker, cik, self.src.sec_companyfacts)
@@ -773,6 +780,7 @@ class QSF(ScreenViews):
                     other_score = None
             out["fund_period"] = fund_period.card_field(fund["live_period"], res["score"], fund, other_score, other)
         out["why_summary"] = _why(out)
+        out["surface_note"] = _surface_note(out)            # display only: not a ledger field
         if position:
             if position.get("rank_rules") and strategy == "LONG_TERM":
                 position = {**position, "ahead_share": self._ahead_share(market, strategy, res["score"])}
@@ -792,7 +800,7 @@ class QSF(ScreenViews):
         risky = self._high_risk(market)
         deals = self.stored_deals((ctx.get("fund") or {}).get("cik"), ctx["expected_session"]) if market == "US" else []     # a stated fact beside the cards, never scored
         committee = self._committee(ticker, market, cards)
-        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "deals": deals, "committee": committee, "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None,
+        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "deals": deals, "committee": committee, "committee_note": committee_note(cards, committee), "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None,
                 "risk_grade": self._risk_grade(ticker, market), "filing_events": self._filing_mark(self._filing_marks(market), ticker), "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
 
     def signal(self, ticker: str, weight_pct: Optional[float] = None, max_weight_pct: Optional[float] = None, market: str = "US") -> Dict[str, Any]:
@@ -1085,6 +1093,41 @@ class QSF(ScreenViews):
                         keep_empty_before=(day - timedelta(days=7)).isoformat())
         except Exception:
             pass
+
+
+BUY_BANDS = ("STRONG_BUY_CANDIDATE", "BUY_CANDIDATE")
+
+
+def _surface_note(c: Dict[str, Any]) -> Optional[str]:
+    """One line when the card's score band and its entry status point different ways, and what the order plan follows
+    (audit 2026-11-22, RED-08: the screens said different things about one stock and nothing said why)."""
+    if c.get("actionability") != "ACTIONABLE" or c.get("score") is None:
+        return None
+    buy, now = c.get("band") in BUY_BANDS, c.get("entry_status") == "ENTRY_NOW"
+    if buy and not now:
+        return (f"점수 구간은 '{c['band_label']}'이지만 진입 상태는 '지금 진입 가능'이 아닙니다({(c.get('entry') or {}).get('reason') or '진입 근거 없음'}). 구간은 점수만 보고, 진입 상태는 가격 위치와 "
+                "손익비까지 봅니다. 주문 계획은 진입 상태를 따르므로 이 종목은 계획에 나오지 않습니다.")
+    if now and not buy:
+        return (f"진입 상태는 '지금 진입 가능'이지만 점수 구간은 '{c['band_label']}'입니다(매수 후보는 {config.BANDS[1][0]:g}점 이상). 주문 계획은 구간이 아니라 진입 상태로 후보를 고르므로 "
+                "이 종목이 계획에 나올 수 있습니다.")
+    return None
+
+
+def committee_note(cards: Dict[str, Any], committee: Optional[Dict[str, Any]]) -> Optional[str]:
+    """One line when the long-term score band and the committee's decision point different ways: they are two sets of rules."""
+    long_ = (cards or {}).get("LONG_TERM") or {}
+    decision = ((committee or {}).get("committee") or {}).get("decision")
+    if not decision or long_.get("actionability") != "ACTIONABLE" or long_.get("score") is None:
+        return None
+    buy = long_.get("band") in BUY_BANDS
+    ko = ((committee or {}).get("committee") or {}).get("decision_ko") or decision
+    if buy and decision in ("AVOID", "SELL", "REDUCE", "WAIT"):
+        return (f"장기 점수 구간은 '{long_['band_label']}'인데 투자위원회 판정은 '{ko}'입니다. 점수는 요인의 가중합이고 위원회는 다섯 관점의 규칙이라 서로 다른 답을 낼 수 있습니다. "
+                "둘 다 수익으로 검증되지 않았고, 주문 계획은 위원회 판정을 읽지 않습니다.")
+    if not buy and decision in ("STRONG_BUY", "BUY", "CONDITIONAL_BUY"):
+        return (f"투자위원회 판정은 '{ko}'인데 장기 점수 구간은 '{long_['band_label']}'입니다. 점수는 요인의 가중합이고 위원회는 다섯 관점의 규칙이라 서로 다른 답을 낼 수 있습니다. "
+                "둘 다 수익으로 검증되지 않았습니다.")
+    return None
 
 
 def _why(c: Dict[str, Any]) -> str:

@@ -228,8 +228,9 @@ def evaluate_exit(res: Dict, ctx: Dict, position: Dict[str, Any], today: date) -
                                                   f"계속 보유로 읽습니다(최대 {hr['hold_cap']}거래일, 회전율 규칙).")
             elif today >= ts:
                 hit("TIME_STOP", "TIME_STOP_REVIEW", f"보유 {config.SWING['time_stop']}거래일이 지나 재평가 대상입니다 ({ts}). 자동 매도는 아닙니다.")
-        if (res["domains"]["REGIME"]["score_100"] or 100) < 25:
-            hit("REGIME_SEVERE", "REDUCE", f"시장 국면 점수가 {res['domains']['REGIME']['score_100']:.0f}/100으로 급악화했습니다.")
+        regime = res["domains"]["REGIME"].get("score_100")           # 0.0 is the worst reading there is, not a missing one (audit 2026-11-22, RED-04)
+        if regime is not None and regime < 25:
+            hit("REGIME_SEVERE", "REDUCE", f"시장 국면 점수가 {regime:.0f}/100으로 급악화했습니다.")
     else:
         # Price alone is not a long-term exit rule.  This one exists because the user requires a stop and chose this reading of it.
         if stop and close <= stop:

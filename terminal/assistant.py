@@ -687,6 +687,13 @@ def _x(v: Optional[float], digits: int = 2) -> str:
     return "자료 없음" if v is None else f"{v:,.{digits}f}배"
 
 
+NO_EQUITY = 99.0          # terminal/qsf/fundamentals.py stores this as debt over equity when equity is zero or negative: a mark, not a ratio
+
+
+def _de(v: Optional[float]) -> str:
+    return "계산 안 됨(자본이 0 이하)" if v == NO_EQUITY else _x(v)
+
+
 def _money(v: Optional[float], market: str) -> str:
     if v is None:
         return "자료 없음"
@@ -723,7 +730,7 @@ def figures(f: Dict[str, Any], snap: Dict[str, Any], market: str) -> str:
     if name == "profitability":
         return f"ROE {_pc(g('roe'))}, 영업이익률 {_pc(g('op_margin'))}"
     if name == "balance_sheet":
-        return f"자기자본/자산 {_pc(g('equity_assets'))}" if "equity_assets" in r else f"부채/자본 {_x(g('debt_equity'))}, 유동비율 {_x(g('current_ratio'))}"
+        return f"자기자본/자산 {_pc(g('equity_assets'))}" if "equity_assets" in r else f"부채/자본 {_de(g('debt_equity'))}, 유동비율 {_x(g('current_ratio'))}"
     if name == "cash_flow_quality":
         return f"영업현금/순이익 {_x(g('ocf_to_ni'))}, 잉여현금흐름 마진 {_pc(g('fcf_margin'))}"
     if name == "trend_structure":
@@ -751,14 +758,14 @@ def figures(f: Dict[str, Any], snap: Dict[str, Any], market: str) -> str:
     if name == "free_cash_flow":
         return f"잉여현금흐름 마진 {_pc(g('fcf_margin'))}, 흑자 연도 비율 {_pc(g('fcf_years_positive'), 0)}"
     if name == "balance_dilution":
-        first = f"자기자본/자산 {_pc(g('equity_assets'))}" if "equity_assets" in r else f"부채/자본 {_x(g('debt_equity'))}"
+        first = f"자기자본/자산 {_pc(g('equity_assets'))}" if "equity_assets" in r else f"부채/자본 {_de(g('debt_equity'))}"
         return f"{first}, 주식 수 변화 {_pc(g('share_change'), sign=True)}"
     if name == "financial_resilience":
         return f"자기자본/자산 {_pc(g('equity_assets'))}" if "equity_assets" in r else f"유동비율 {_x(g('current_ratio'))}, 이자보상배율 {_x(g('interest_cover'), 1)}, 현금/부채 {_x(g('cash_debt'))}"
     if name == "downside_drawdown":
         return f"하방 변동성 {_pc(g('downside_vol'), 0)}, 최근 1년 최대 낙폭 {_pc(g('max_drawdown_252'))}"
     if name == "leverage":
-        return f"부채/자본 {_x(g('debt_equity'))}"
+        return f"부채/자본 {_de(g('debt_equity'))}"
     if name == "governance":
         return "지배구조 경고 공시 없음" if not g("issues") else "경고 공시: " + ", ".join(g("issues")[:3])
     if name == "insider_ownership":
@@ -872,8 +879,12 @@ def sector_lines(peers: Dict[str, Any], ticker: str) -> List[str]:
     out = []
     for key, (label, unit, digits, high) in RATIO_INFO.items():
         mine = (me.get("ratios") or {}).get(key)
-        vals = sorted(v for v in ((p.get("ratios") or {}).get(key) for p in rows) if v is not None and not (key == "pe" and v <= 0))
+        # a company with no equity carries the mark 99 for debt over equity: it is not a ratio, so it enters neither the median nor the rank
+        vals = sorted(v for v in ((p.get("ratios") or {}).get(key) for p in rows) if v is not None and not (key == "pe" and v <= 0) and not (key == "debt_equity" and v == NO_EQUITY))
         if mine is None or len(vals) < MIN_PEERS:
+            continue
+        if key == "debt_equity" and mine == NO_EQUITY:
+            out.append(f"{label}: 자본이 0 이하라 계산되지 않습니다(업종 중앙값 {_middle(vals):.{digits}f}배). 빚이 자본보다 많다는 뜻이라 좋은 쪽이 아닙니다.")
             continue
         if key == "pe" and mine <= 0:
             out.append(f"{label}: 적자라 계산되지 않습니다(업종 중앙값 {_middle(vals):.{digits}f}배).")
@@ -1372,7 +1383,7 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
     if intent == "TRUST":
         return reply("이 점수를 얼마나 믿을 수 있나", "점수가 높은 종목의 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다. 지금은 순위와 위험을 정리해 보는 도구로 쓰는 것이 맞습니다.",
                      [{"title": "과거 자료로 확인한 것", "lines": [config.VALIDATION_NOTICE]},
-                      {"title": "근거가 나온 쪽", "lines": ["한국의 회피 쪽입니다: 자금 조달 공시가 있는 종목과 위험 등급이 나쁜 종목은 이후 수익이 부진했습니다.", "가격 범위의 폭입니다: 5·20거래일 뒤 종가가 범위 안에 든 비율이 과거 자료와 맞았습니다.",
+                      {"title": "근거가 나온 쪽", "lines": ["한국의 회피 쪽입니다: 자금 조달 공시가 있는 종목은 이후 수익이 부진했습니다. 위험 등급이 나쁜 종목은 이후 변동성과 손실 크기가 더 컸습니다(수익을 맞힌 것은 아닙니다).", "가격 범위의 폭입니다: 5·20거래일 뒤 종가가 범위 안에 든 비율이 과거 자료와 맞았습니다.",
                                                   "살 종목을 고르는 힘은 확인되지 않았습니다."]},
                       {"title": "앞으로", "lines": ["매일의 기록으로 한 번씩 판정합니다(스윙 2027년 말, 장기 2030년쯤). 때가 되면 스스로 읽고 텔레그램으로 알립니다.",
                                                 "1년 기록으로는 꽤 큰 효과만 확인됩니다. '근거 없음'이 나와도 작은 효과가 없다는 뜻은 아닙니다."]}], "qsf", ["판정은 언제 나와?", "오늘 상위 종목은?"])

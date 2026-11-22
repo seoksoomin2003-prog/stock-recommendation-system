@@ -6,9 +6,11 @@ only hands the bytes to the drive; ``F_FULLFSYNC`` asks the drive to put them on
 is for records, verdicts and state, not for caches that can be fetched again.
 """
 import fcntl
+import hashlib
+import json
 import os
 from pathlib import Path
-from typing import Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 PathLike = Union[str, Path]
 
@@ -37,3 +39,73 @@ def write_text(target: PathLike, text: str) -> None:
     tmp = target.with_name(target.name + ".tmp")
     tmp.write_text(text, encoding="utf-8")
     replace(tmp, target)
+
+
+# ------------------------------------------------------------------------------------------------- line records
+class TornFile(RuntimeError):
+    """A line record ends in a cut line.  Appending after it would weld two lines into one for good, so nothing is appended
+    until a person has looked (the cut line is never repaired by the program)."""
+
+
+def _lines(path: Path) -> List[str]:
+    text = path.read_text(encoding="utf-8")
+    if text and not text.endswith("\n"):
+        raise TornFile(f"LINES_TORN: {path.parent.name}/{path.name} ends in a cut line; it must be repaired before any new record")
+    return [x for x in text.splitlines() if x.strip()]
+
+
+def _link(prev: str, row: Dict[str, Any]) -> str:
+    body = json.dumps({k: v for k, v in row.items() if k != "chain"}, ensure_ascii=False, sort_keys=True)
+    return hashlib.sha256((prev + hashlib.sha256(body.encode("utf-8")).hexdigest()).encode()).hexdigest()
+
+
+def append_chained(folder: PathLike, name: str, rows: Iterable[Dict[str, Any]], skip: Optional[Callable[[], bool]] = None) -> int:
+    """Append ``rows`` to ``folder/name`` (a ``*.jsonl`` file of a store whose files sort by time) the way the forward records
+    are written: one writer at a time, never after a cut line, every line chained to the one before it (``chain``: the hash of
+    the previous line's chain and this line), and on the disk before this returns.  ``skip`` is asked under the lock: True
+    means another writer has already written it.  Returns the number of lines written."""
+    folder = Path(folder)
+    folder.mkdir(parents=True, exist_ok=True)
+    with open(folder / "write.lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        files = sorted(folder.glob("*.jsonl"))
+        if files and name < files[-1].name:
+            raise ValueError(f"{folder.name}/{name} is older than the store's newest file {files[-1].name}: lines are appended in order only")
+        prev = ""
+        for p in files:                               # every file must end whole, not only the one written to
+            lines = _lines(p)
+            if lines:
+                try:
+                    prev = json.loads(lines[-1]).get("chain") or ""
+                except ValueError as exc:
+                    raise TornFile(f"LINES_TORN: {folder.name}/{p.name} ends in a line that cannot be read") from exc
+        if skip is not None and skip():
+            return 0
+        out = []
+        for row in rows:
+            prev = _link(prev, row)
+            out.append(json.dumps({**row, "chain": prev}, ensure_ascii=False, sort_keys=True) + "\n")
+        if not out:
+            return 0
+        with open(folder / name, "a", encoding="utf-8") as fh:
+            fh.write("".join(out))
+            fh.flush()
+            os.fsync(fh.fileno())
+        sync(folder / name)
+        return len(out)
+
+
+def verify_chained(folder: PathLike) -> Dict[str, Any]:
+    """{"status": OK | TORN | BROKEN | EMPTY, "lines": n}: whether every line of the store is whole and follows the one before."""
+    folder, prev, n = Path(folder), "", 0
+    try:
+        for p in sorted(folder.glob("*.jsonl")) if folder.is_dir() else []:
+            for line in _lines(p):
+                row = json.loads(line)
+                prev = _link(prev, row)
+                n += 1
+                if row.get("chain") != prev:
+                    return {"status": "BROKEN", "lines": n, "file": p.name}
+    except (TornFile, ValueError):
+        return {"status": "TORN", "lines": n}
+    return {"status": "OK" if n else "EMPTY", "lines": n}

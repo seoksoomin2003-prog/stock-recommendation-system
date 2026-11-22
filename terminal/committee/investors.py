@@ -27,6 +27,7 @@ STRONG_BUY, BUY, HOLD, WAIT, REDUCE, SELL, AVOID, NO_DATA = "STRONG_BUY", "BUY",
 REC_KO = {STRONG_BUY: "적극 매수 조건 충족", BUY: "매수 조건 충족", HOLD: "보유(새로 사지 않음)", WAIT: "대기", REDUCE: "축소 조건", SELL: "매도 조건", AVOID: "회피", NO_DATA: "자료 부족"}
 BUY_SIDE, SELL_SIDE = (STRONG_BUY, BUY), (REDUCE, SELL, AVOID)
 MIN_COVERAGE = 0.5
+STRONG_MIN_CONFIDENCE = 60          # under it "적극 매수" is said one step lower: thin data lowers the verdict too, not only the number
 NOTE = ("실존 투자자의 실제 의견이 아닙니다. 책과 주주서한 등으로 알려진 원칙을 이 프로그램이 규칙으로 옮긴 것이고, 기준값은 프로그램이 정했습니다. "
         "수익으로 검증하지 않았고 점수에 들어가지 않으며, 주문을 내지 않습니다.")
 PCT = {"roe", "roic", "op_margin", "gross_margin", "eps_cagr3", "rev_cagr3", "rev_growth", "eps_growth", "fcf_margin", "fcf_yield", "share_change", "ma200_slope", "ma50_slope", "rs",
@@ -71,13 +72,27 @@ def groups_score(f: Dict[str, Any], groups: Dict[str, Tuple[float, List[Any]]]) 
 
 def finish(key: str, f: Dict[str, Any], g: Dict[str, Any], rec: str, held: bool, horizon: str, valuation: str, expected: Dict[str, Any], downside: Dict[str, Any],
            opinion: str, thesis: str, conditions: Dict[str, str], weight: float, extra: Optional[Dict[str, Any]] = None, flags: Tuple[str, ...] = (),
-           gaps: Tuple[str, ...] = ()) -> Dict[str, Any]:
-    """``flags``: named dangers the engine found (they lead the negatives).  ``gaps``: what the engine would read and the data does not carry."""
+           gaps: Tuple[str, ...] = (), checks: Tuple[str, ...] = ()) -> Dict[str, Any]:
+    """``flags``: named dangers the engine found (they lead the negatives).  ``gaps``: what the engine would read and the data does not carry.
+    ``checks``: the figures this engine's safety conditions read.  One that should be there and is not is not a pass: a buying
+    verdict then becomes waiting, and says so (audit 2026-11-22, RED-07: with the weak figures removed "회피" became "적극 매수").
+    A figure that does not describe the company (a bank's debt ratio) or a stated "no equity" is an answer, not a gap."""
     name, philosophy, question = PEOPLE[key]
+    unchecked = [n for n in checks if f.get(n) is None and f["_status"].get(n, MISSING) == MISSING and not (n == "debt_equity" and f.get("no_equity"))]
+    sure_now = round(100 * g.get("sure", g["coverage"]) * (0.85 if f.get("marks") or f.get("deals") else 1.0))
+    capped = None
+    if rec in BUY_SIDE and unchecked:
+        capped, rec = rec, HOLD if held else WAIT
+        opinion = (f"점수와 가격 조건은 '{REC_KO[capped]}'이지만, 안전 조건이 읽는 수치({', '.join(fg.label(n) for n in unchecked)})가 없습니다. 없는 수치를 통과로 치지 않으므로 "
+                   f"{'새로 사지 않습니다' if held else '기다립니다'}. 그 수치가 채워지면 다시 판단합니다.")
+    elif rec == STRONG_BUY and sure_now < STRONG_MIN_CONFIDENCE:
+        capped, rec = rec, BUY
+        opinion += f" 다만 판단에 쓴 수치가 적어(신뢰 {sure_now}, 기준 {STRONG_MIN_CONFIDENCE}) '적극 매수'가 아니라 '매수 조건'으로 한 단계 낮췄습니다."
+    extra = {**(extra or {}), "unchecked": [fg.label(n) for n in unchecked], "capped_from": capped}
     # what moved the score most, for and against: how far a figure is from the middle, times its weight in the score
     positives = [e["text"] for e in sorted(g["evidence"], key=lambda e: -e["value"] * e["weight"]) if e["value"] >= 0.7][:3]
     negatives = list(flags) + [e["text"] for e in sorted(g["evidence"], key=lambda e: -(1.0 - e["value"]) * e["weight"]) if e["value"] <= 0.3][:3]
-    confidence = round(100 * g.get("sure", g["coverage"]) * (0.85 if f.get("marks") or f.get("deals") else 1.0))
+    confidence = sure_now
     action = {STRONG_BUY: "추가 매수 조건" if held else "매수 조건 충족(비중 크게)", BUY: "보유 유지(추가 매수 가능)" if held else "매수 조건 충족", HOLD: "보유 유지" if held else "새로 사지 않음",
               WAIT: "보유 유지, 추가 매수 보류" if held else "조건이 될 때까지 기다림", REDUCE: "비중 축소", SELL: "전량 매도 조건", AVOID: "매도 조건" if held else "사지 않음", NO_DATA: "판단 보류"}[rec]
     return {"investor": key, "name": name, "philosophy": philosophy, "question": question, "ticker": f.get("ticker"), "as_of": f.get("as_of"), "rules": RULES,
@@ -179,7 +194,8 @@ def buffett(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]]
     weight = 0.04 + 0.08 * max(0.0, min((g["score"] - 60.0) / 30.0, 1.0))
     return finish("BUFFETT", f, g, rec, held, "5년 이상", f"보수적 적정 PER {fair:.1f}배(사업의 질과 성장으로 정한 프로그램 규칙) 대비 지금 PER {pe:.1f}배" + ("" if mos is None else f", 안전마진 {mos * 100:+.0f}%"),
                   _growth_yield(f), _drawdown(f), opinion, f"좋은 사업을 적정한 값에: 사업의 질 {q:.0f}, 가격 {('적정 이하' if mos is not None and mos >= 0 else '적정 초과')}.", cond, weight,
-                  {"fair_pe": round(fair, 1), "margin_of_safety": None if mos is None else round(mos, 3), "business_ok": ok}, (), ("경쟁 우위 자체(점유율, 가격 결정력의 직접 자료 없음)", "경영진의 질(직접 자료 없음)"))
+                  {"fair_pe": round(fair, 1), "margin_of_safety": None if mos is None else round(mos, 3), "business_ok": ok}, (), ("경쟁 우위 자체(점유율, 가격 결정력의 직접 자료 없음)", "경영진의 질(직접 자료 없음)"),
+                  ("debt_equity", "profit_years"))
 
 
 # ------------------------------------------------------------------------------------------------- Munger
@@ -252,7 +268,8 @@ def munger(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] 
     return finish("MUNGER", f, g, rec, held, "5년 이상", f"탁월한 사업에 줄 수 있는 PER {fair:.1f}배(프로그램 규칙) 대비 지금 {times(pe)}", _growth_yield(f),
                   {"value": lr, "basis": "영구 손실 위험 점수(0 없음 ~ 100 최악): 거꾸로 따져 본 일곱 질문의 합"}, opinion,
                   f"탁월한 사업만, 그리고 큰 실수를 피한다: 탁월함 {ex:.0f}, 영구 손실 위험 {lr:.0f}.", cond, weight, {"fair_pe": round(fair, 1), "loss_risk": risk, "exceptional": exceptional},
-                  tuple(w["text"] for w in sorted(risk["ways"], key=lambda w: -w["points"])[:2]), ("고객 유지율, 전환 비용, 네트워크 효과(자료 없음)", "이익률의 여러 해 안정성(자료 없음)"))
+                  tuple(w["text"] for w in sorted(risk["ways"], key=lambda w: -w["points"])[:2]), ("고객 유지율, 전환 비용, 네트워크 효과(자료 없음)", "이익률의 여러 해 안정성(자료 없음)"),
+                  ("debt_equity", "profit_years", "fcf_margin", "ocf_to_ni"))
 
 
 # ------------------------------------------------------------------------------------------------- Graham
@@ -342,7 +359,8 @@ def _graham(f: Dict[str, Any], held: bool, p: Dict[str, Any]) -> Dict[str, Any]:
     return finish("GRAHAM", f, g, rec, held, "값이 가치에 닿을 때까지(대개 2~3년)", f"{val['method']}: 안전마진 {'계산 안 됨' if mos is None else f'{mos * 100:+.0f}%'}",
                   {"value": None if mos is None or mos >= 1 else round(mos / (1.0 - mos), 4), "basis": "값이 보수적 가치까지 오를 때의 차이. 예측이 아니며 언제 닿는지 말하지 않습니다"}, _drawdown(f), opinion,
                   f"안전마진: {val['method']}.", cond, 0.05, {"margin_of_safety": None if mos is None else round(mos, 3), "method": val["method"], "profile": p["label"], "value_trap": bool(trap), "sound": sound},
-                  ("가치 함정 가능성",) if trap else (), ("순유동자산 가치와 유형 장부가(자료 없음)", "배당의 여러 해 이력(자료 없음)"))
+                  ("가치 함정 가능성",) if trap else (), ("순유동자산 가치와 유형 장부가(자료 없음)", "배당의 여러 해 이력(자료 없음)"),
+                  ("current_ratio", "debt_equity", "fcf_margin", "ocf_to_ni"))
 
 
 # ------------------------------------------------------------------------------------------------- Lynch
@@ -399,7 +417,10 @@ def lynch(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] =
     s = g["score"]
     story_broken = (kind == FAST and (f.get("eps_growth") or 0) < 0 and (f.get("rev_growth") or 0) < 0.05) or (kind == TURNAROUND and (f.get("eps_growth") or 0) <= 0 and (f.get("rev_growth") or 0) <= 0)
     # whatever the kind (a cyclical apart, whose earnings fall in every down-leg): earnings down by a fifth with sales falling is no story
-    story_broken = story_broken or (kind != CYCLICAL and (f.get("eps_growth") or 0) < -0.2 and (f.get("rev_growth") or 0) < 0)
+    # a bank or an insurer reports no revenue line: its earnings alone tell the story, and the check below reads them instead
+    fin = f["kind"] == "FINANCIAL"
+    sales_down = (f.get("rev_growth") or 0) < 0 or (fin and f.get("rev_growth") is None)
+    story_broken = story_broken or (kind != CYCLICAL and (f.get("eps_growth") or 0) < -0.2 and sales_down)
     dear = peg is not None and peg > 2.5
     leveraged = (f.get("debt_equity") or 0) > 2.0 or f.get("no_equity")
     quality_ok = not leveraged and (f.get("ocf_to_ni") is None or f["ocf_to_ni"] >= 0.6)
@@ -449,7 +470,8 @@ def lynch(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] =
     weight = 0.05 + 0.05 * max(0.0, min((s - L_BUY) / 25.0, 1.0))
     return finish("LYNCH", f, g, rec, held, "성장 이야기가 이어지는 동안(대개 2~5년)", f"{peg_text}(PER ÷ (3년 이익 성장률[상한 {L_PEG_GROWTH * 100:.0f}%] + 배당수익률)), PER {times(pe)}", _growth_yield(f), _drawdown(f), opinion,
                   f"{KIND_KO[kind]}: {basis}.", cond, weight, {"category": kind, "category_ko": KIND_KO[kind], "peg": None if peg is None else round(peg, 2), "story_broken": story_broken},
-                  ("부채 과다",) if leveraged else (), ("재고와 매출의 비율(자료 없음)", "시장 점유율과 고객 증가(자료 없음)"))
+                  ("부채 과다",) if leveraged else (), ("재고와 매출의 비율(자료 없음)", "시장 점유율과 고객 증가(자료 없음)"),
+                  ("debt_equity", "ocf_to_ni", "eps_growth" if fin and f.get("rev_growth") is None else "rev_growth"))
 
 
 # ------------------------------------------------------------------------------------------------- Druckenmiller
@@ -532,7 +554,8 @@ def druckenmiller(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str,
                   {"value": None if upside is None else round(upside, 4), "basis": "스캔이 저장한 목표가까지의 거리. 예측이 아닙니다"},
                   {"value": None if down is None else round(down, 4), "basis": "스캔이 저장한 손절가까지의 거리"}, opinion, f"시장 '{names}', 종목 추세 {'살아 있음' if trend_ok else '꺾임'}.", cond, weight,
                   {"regimes": now, "regimes_not_told": ["물가 상승·둔화 국면", "성장률과 정책 금리 국면"], "trend_ok": bool(trend_ok), "risk_off": risk_off},
-                  (f"가격이 200일선 아래({(price / ma200 - 1) * 100:+.1f}%)",) if not above200 else (), ("이익 추정치의 변화(기록이 쌓이기 전)", "물가·성장률·정책 금리 국면(스캔 기록에 없음)"))
+                  (f"가격이 200일선 아래({(price / ma200 - 1) * 100:+.1f}%)",) if not above200 else (), ("이익 추정치의 변화(기록이 쌓이기 전)", "물가·성장률·정책 금리 국면(스캔 기록에 없음)"),
+                  ("market_state",) + (("eps_growth",) if g["components"]["이익의 방향"] is None else ()))
 
 
 PEOPLE: Dict[str, Tuple[str, str, str]] = {

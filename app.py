@@ -904,8 +904,13 @@ def _qsf_us_challenger_record(args) -> int:
 
 
 def _qsf_scan(args, q, market) -> int:
-    res = q.scan(market, tickers=args.tickers or None, record=not args.dry_run, progress=lambda st, d, t: print(f"  {st} {d}/{t}", flush=True),
-                 publish=not args.tickers)          # named stocks are scored (and recorded) without replacing the whole-universe scan on file
+    # Named stocks are ranked among themselves, and a day's record of a stock cannot be replaced: such a scan is not recorded
+    # unless --record says so, so that a scan run by hand cannot fix that day's record on another basis (audit 2026-11-22, ENG-04).
+    record = not args.dry_run and (not args.tickers or bool(getattr(args, "record", False)))
+    if args.tickers and not record and not args.dry_run:
+        print("종목을 지정한 스캔은 기록하지 않습니다(지정한 종목끼리만 순위를 매기므로). 기록하려면 --record를 붙이세요.")
+    res = q.scan(market, tickers=args.tickers or None, record=record, progress=lambda st, d, t: print(f"  {st} {d}/{t}", flush=True),
+                 publish=not args.tickers)          # named stocks are scored without replacing the whole-universe scan on file
     print(json.dumps({k: v for k, v in res.items() if k != "rows"} | {"errors": len(res["errors"])}, ensure_ascii=False, indent=1, default=str))
     if res["status"] == "REAL" and not args.dry_run and not args.tickers:
         try:                    # the top three are frozen right after a full scan; a failure here never fails the scan
@@ -1190,6 +1195,7 @@ def build_parser() -> argparse.ArgumentParser:
     qs.add_argument("action", choices=QSF_ACTIONS)
     qs.add_argument("tickers", nargs="*")
     qs.add_argument("--dry-run", action="store_true", help="Scan without writing to the ledger")
+    qs.add_argument("--record", action="store_true", help="scan of named tickers only: write it to the ledger too (a whole scan always records)")
     qs.add_argument("--apply", action="store_true", help="cache-prune only: remove the files instead of listing them")
     au = sub.add_parser("automation", help="Daily job: record, tracking, backup, Telegram/macOS alerts (TERMINAL-4)")
     au.add_argument("action", choices=["status", "run", "install", "uninstall", "test-notify", "telegram-chat"], nargs="?", default="status")

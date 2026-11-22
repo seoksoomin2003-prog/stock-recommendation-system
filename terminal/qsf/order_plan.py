@@ -116,6 +116,21 @@ def candidates(snaps: Iterable[Dict[str, Any]], session: str, info: Optional[Dic
     return sorted(out, key=lambda c: (-c["score"], c["ticker"], c["style"]))
 
 
+def annotate(orders: List[Dict[str, Any]], deals: Optional[Dict[str, Any]] = None, buy: float = 70.0) -> Dict[str, Any]:
+    """Display only: each order row gets the label of its score band and, where there is one, the merger filing on record.
+    The plan takes candidates by entry status, not by band, so a row can be a "보유·관찰" stock: the row now says so
+    (audit 2026-11-22, RED-08: 251 of 322 US candidates were under the buy band and nothing on the plan showed it)."""
+    from terminal.qsf import engine
+    for o in orders:
+        o.update(engine.classify(o["score"]))
+        if (deals or {}).get(o["ticker"]):
+            o["deal"] = deals[o["ticker"]]
+    under = sum(1 for o in orders if o["score"] < buy)
+    return {"orders": len(orders), "under_buy_band": under, "buy_line": buy,
+            "note": (f"계획 {len(orders)}종목 가운데 {under}종목은 점수 구간이 매수 후보({buy:g}점 이상)가 아닙니다. 주문 계획은 구간이 아니라 '지금 진입 가능' 상태로 후보를 고르기 때문입니다. "
+                     "각 줄의 점수 아래에 구간을 적었습니다.") if under else None}
+
+
 def count_by(cands: List[Dict[str, Any]], buy: float = 70.0) -> Dict[str, Dict[str, int]]:
     """Per style, how many candidates there are and how many of them score inside the buy band.  Display only."""
     out: Dict[str, Dict[str, int]] = {}

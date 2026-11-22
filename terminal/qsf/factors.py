@@ -17,9 +17,21 @@ def ramp(x: Optional[float], lo: float, hi: float) -> Optional[float]:
     return max(0.0, min(1.0, (x - lo) / (hi - lo)))
 
 
+class Mean(float):
+    """A mean that remembers how many of its inputs were there, so that coverage can tell a factor built from one figure of
+    four from a factor built from all four (audit 2026-11-22: such a factor counted as fully covered)."""
+    have: int
+    total: int
+
+    def __new__(cls, value: float, have: int, total: int) -> "Mean":
+        out = float.__new__(cls, value)
+        out.have, out.total = have, total
+        return out
+
+
 def mean(vals: List[Optional[float]]) -> Optional[float]:
     v = [x for x in vals if x is not None]
-    return sum(v) / len(v) if v else None
+    return Mean(sum(v) / len(v), len(v), len(vals)) if v else None
 
 
 def pct(x: Optional[float], d: int = 1) -> str:
@@ -41,7 +53,10 @@ def not_applicable(reason: str) -> Dict[str, Any]:
 def obs(norm: Optional[float], raw: Dict, text: str, source: str, as_of: Optional[str], status: str = "REAL") -> Dict:
     if norm is None:
         return missing(f"{text}: 계산 값 없음")
-    return {"status": status, "normalized": norm, "raw": raw, "explanation": text, "source": source, "as_of": as_of}
+    out = {"status": status, "normalized": float(norm), "raw": raw, "explanation": text, "source": source, "as_of": as_of}
+    if isinstance(norm, Mean) and norm.have < norm.total:
+        out["inputs"] = {"have": norm.have, "total": norm.total}        # only when something was missing: a full factor stays as it was
+    return out
 
 
 PRICE = "일봉 가격 (Yahoo Finance, 지연)"

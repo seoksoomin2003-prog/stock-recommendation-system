@@ -96,6 +96,10 @@ def compute(bars: List[Dict[str, Any]], bench: Optional[List[Dict[str, Any]]] = 
         "downside_vol": float(np.sqrt((neg ** 2).sum() / max(len(r[-252:]), 1)) * np.sqrt(252)) if len(r) >= 60 else None,
         "pos_month_share": float(np.mean([m > 0 for m in months])) if len(months) >= 6 else None,
         "max_move_5": float(np.abs(c[-5:] / c[-6:-1] - 1).max()) if n > 5 else None,
+        "max_move_252": float(np.abs(c[-252:] / c[-253:-1] - 1).max()) if n > 252 else float(np.abs(c[1:] / c[:-1] - 1).max()) if n > 1 else None,
+        # rows whose date repeats the row before or goes back: a provider's doubled or late-corrected row (audit 2026-11-22, ENG-06:
+        # a doubled last row moved RSI from 62.4 to 66.0 and nothing said so)
+        "row_defects": sum(1 for i in range(1, n) if bars[i]["date"] <= bars[i - 1]["date"]),
         "support_60": float(lo[-60:].min()), "low_20": float(lo[-20:].min()),
         "resistance": _resistance(h, c[-1], atr),
     }

@@ -280,6 +280,7 @@ def test_the_daily_job_the_backup_the_routes_and_the_page_know_the_split():
 def test_a_held_position_still_reads_a_severe_market(monkeypatch):
     from terminal.qsf import holding
     src = (ROOT / "terminal" / "qsf" / "holding.py").read_text(encoding="utf-8")
-    assert 'res["domains"]["REGIME"]["score_100"] or 100) < 25' in src                                  # the reference domain still carries its reading
+    # the reference domain still carries its reading; since 2026-11-22 the worst reading (0.0) is not taken for a missing one
+    assert 'regime = res["domains"]["REGIME"].get("score_100")' in src and "if regime is not None and regime < 25:" in src and "or 100) < 25" not in src
     fixed_regime(monkeypatch, "US", 0.1)
     assert engine.score(ctx(), "SWING")["domains"]["REGIME"]["score_100"] == pytest.approx(10.0) and hasattr(holding, "entry_status")

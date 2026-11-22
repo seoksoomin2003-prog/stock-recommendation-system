@@ -1,12 +1,15 @@
 """The six reference readings of the third audit: expectations kept and recorded, merger filings, ex-dividend dates, moves
 around results, valuation against the stock's own past, and the wording for financial companies.  None enters a score."""
 import json
+
+import pytest
+from utils import durable
 from datetime import date, datetime, timedelta, timezone
 from types import SimpleNamespace
 
 from terminal import analyst_more as am
 from terminal import assistant as A
-from terminal import sources
+from terminal import sources, store_watch
 from terminal.qsf import events, expectations, service, views
 
 EX_DAY = datetime(2026, 12, 10, tzinfo=timezone.utc).timestamp()
@@ -44,13 +47,18 @@ def test_a_stock_is_written_once_per_download_and_korean_records_are_found_by_ei
     store["info:AAA"] = {"stored_at": 1795600000.0, "data": {"targetMeanPrice": 125.0, "currentPrice": 101.0}}
     assert expectations.record(tmp_path, "US", "2026-12-01", ["AAA"], store.get)["written"] == 1
     folder = tmp_path / "research_data" / "expectations_us"
-    assert sorted(p.name for p in folder.iterdir()) == ["2026-11.jsonl", "2026-12.jsonl"]
+    assert sorted(p.name for p in folder.glob("*.jsonl")) == ["2026-11.jsonl", "2026-12.jsonl"]
+    assert durable.verify_chained(folder) == {"status": "OK", "lines": 2}                                # each line follows the one before (audit 2026-11-22)
     first = json.loads((folder / "2026-11.jsonl").read_text().splitlines()[0])
     assert first["ticker"] == "AAA" and first["targetMeanPrice"] == 120.0 and first["price"] == 100.0 and first["session"] == "2026-11-23" and first["fetched"].endswith("Z")
     with open(folder / "2026-12.jsonl", "a") as fh:
         fh.write('{"ticker": "AAA", "fetch')                                                               # a torn last line is skipped, not repaired
     st = expectations.status(tmp_path, "US")
     assert (st["market"], st["lines"], st["stocks"], st["first"]) == ("US", 2, 1, first["fetched"][:10]) and st["last"] > st["first"]
+    store["info:AAA"] = {"stored_at": 1796000000.0, "data": {"targetMeanPrice": 130.0, "currentPrice": 102.0}}
+    with pytest.raises(durable.TornFile):                                                                # and nothing is appended after it
+        expectations.record(tmp_path, "US", "2026-12-02", ["AAA"], store.get)
+    assert durable.verify_chained(folder)["status"] == "TORN" and store_watch.look(tmp_path, [])[0]["store"] == "expectations_us"
     assert expectations.record(tmp_path, "KR", "2026-11-23", ["005930", "035720", "000660"], store.get)["written"] == 2
     assert expectations.status(tmp_path, "KR")["stocks"] == 2 and expectations.status(tmp_path / "nothing", "US")["lines"] == 0
 

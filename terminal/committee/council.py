@@ -60,6 +60,21 @@ def material_risks(f: Dict[str, Any], by: Dict[str, Dict[str, Any]]) -> List[Dic
     return out
 
 
+def unchecked_risks(f: Dict[str, Any]) -> List[str]:
+    """The risk reviews above that could not run because their figure is not there (not: does not apply)."""
+    gone = lambda n: f.get(n) is None and (f.get("_status") or {}).get(n) == iv.MISSING          # noqa: E731
+    out = []
+    if gone("debt_equity") and not f.get("no_equity"):
+        out.append("과도한 부채")
+    if gone("ocf_to_ni"):
+        out.append("이익의 질")
+    if gone("profit_years"):
+        out.append("사업의 구조적 악화")
+    if f.get("governance_issues") is None and gone("events_negative"):
+        out.append("공시·지배구조 경고")
+    return out
+
+
 def scores(f: Dict[str, Any], opinions: List[Dict[str, Any]], risks: List[Dict[str, Any]]) -> Dict[str, Optional[float]]:
     by = {o["investor"]: o for o in opinions}
     valid = [o for o in opinions if o["recommendation"] != NO_DATA]
@@ -170,6 +185,13 @@ def decide(f: Dict[str, Any], opinions: List[Dict[str, Any]], held: bool = False
     else:
         decision = HOLD
         why.append("매수 조건으로 본 관점도, 뚜렷이 반대하는 다수도 없습니다.")
+    if decision in BUY_SIDE + (CONDITIONAL_BUY,) and sc["data"] is not None and sc["data"] < DATA_FLOOR:
+        # thin data lowers the decision, not only the confidence number (audit 2026-11-22, RED-07)
+        decision = HOLD if held else WAIT
+        why.append(f"자료 신뢰도가 {sc['data']:.0f}으로 기준 {DATA_FLOOR:.0f}에 못 미쳐 매수 쪽 판정을 내리지 않고 {'보유로' if held else '기다립니다'}. 자료가 적은 높은 점수는 근거로 삼지 않습니다.")
+    unseen = unchecked_risks(f)
+    if unseen:
+        why.append(f"자료가 없어 확인하지 못한 위험 검사: {', '.join(unseen)}. 확인하지 못한 것이지 위험이 없다는 뜻이 아닙니다.")
     if major and decision not in (CONDITIONAL_BUY, NO_DATA) and not critical:
         why.append(f"주요 위험으로 적어 둔 것: {', '.join(r['name'] for r in major)}.")
     followed = BUY_SIDE + (CONDITIONAL_BUY,) if decision in BUY_SIDE + (CONDITIONAL_BUY,) else SELL_SIDE if decision in SELL_SIDE else (HOLD, WAIT)
@@ -199,7 +221,7 @@ def decide(f: Dict[str, Any], opinions: List[Dict[str, Any]], held: bool = False
     thesis = _thesis(name, sc, decision, buyers, minority, risks, entry)
     return {"rules": iv.RULES, "decision": decision, "decision_ko": DECISION_KO[decision], "held": held, "scores": sc, "score_labels": SCORE_KO, "valid": len(valid),
             "buyers": [o["name"] for o in buyers], "against": [o["name"] for o in against], "waiting": [o["name"] for o in waiting],
-            "agreement": {"positives": shared("positives"), "negatives": shared("negatives")}, "disagreements": parts, "material_risks": risks,
+            "agreement": {"positives": shared("positives"), "negatives": shared("negatives")}, "disagreements": parts, "material_risks": risks, "unchecked_risks": unseen,
             "strongest_for": strongest_for, "strongest_against": strongest_against, "reasons": why, "minority": [{"investor": o["name"], "recommendation_ko": o["recommendation_ko"], "opinion": o["opinion"]} for o in minority],
             "entry_conditions": entry, "exit_conditions": exit_, "horizon": horizon, "thesis": thesis, "note": iv.NOTE}
 
