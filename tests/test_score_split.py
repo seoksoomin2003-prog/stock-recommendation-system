@@ -73,7 +73,14 @@ def test_an_adverse_day_halves_the_size_in_the_us_only_and_missing_is_not_zero(m
     assert engine.score(ctx(), "SWING")["market_state"]["state"] == "FAVOURABLE"       # the middle itself is not adverse
     fixed_regime(monkeypatch, "US", 0.5, missing=REGIME["US"])
     none = engine.score(ctx(), "SWING")["market_state"]
-    assert none["score_100"] is None and none["state"] is None and none["size_factor"] == 1.0 and none["label"] == "자료 없음"
+    # no reading is not an ordinary day: unknown, and treated as adverse where the market has a brake (user decision 2026-11-22)
+    assert none["score_100"] is None and none["state"] == "UNKNOWN" and none["size_factor"] == 0.5 and none["new_exposure_cap"] == 0.5 and none["label"] == "알 수 없음(자료 부족)"
+    fixed_regime(monkeypatch, "US", 1.0, missing=REGIME["US"][1:])                      # one factor of four: was "100, favourable"
+    one = engine.score(ctx(), "SWING")["market_state"]
+    assert one["score_100"] == pytest.approx(100.0) and one["coverage"] < 0.5 and one["state"] == "UNKNOWN" and one["size_factor"] == 0.5
+    fixed_regime(monkeypatch, "KR", 0.5, missing=REGIME["KR"])
+    kr_none = engine.score(ctx("KR"), "SWING")["market_state"]
+    assert kr_none["state"] == "UNKNOWN" and kr_none["size_factor"] == 1.0 and kr_none["new_exposure_cap"] is None          # Korea has no brake: nothing changes there
     assert config.ADVERSE_SIZE_FACTOR == {"US": 0.5} and config.MARKET_STATE_MID == 50.0
 
 

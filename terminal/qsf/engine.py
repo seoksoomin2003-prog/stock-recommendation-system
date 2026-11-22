@@ -54,6 +54,8 @@ def hard_gates(ctx: Dict[str, Any], strategy: str) -> List[Dict[str, str]]:
         add("SHORT_HISTORY", f"가격 이력이 {t['n']}일로 최소 {config.MIN_BARS}일에 못 미칩니다.")
     if t.get("max_move_5") is not None and t["max_move_5"] > config.EXTREME_MOVE:
         add("DATA_ANOMALY", f"최근 5일 안에 하루 {t['max_move_5'] * 100:.0f}% 변동이 있어 데이터 확인이 필요합니다.")
+    elif t.get("max_move_252") is not None and t["max_move_252"] > config.EXTREME_MOVE_YEAR:
+        add("DATA_ANOMALY", f"최근 1년 안에 하루 {t['max_move_252'] * 100:.0f}% 변동이 있습니다. 조정되지 않은 분할·병합이나 자료 오류일 수 있어 확인이 필요합니다.")
     if t.get("row_defects"):
         add("DATA_ANOMALY", f"일봉에 날짜가 겹치거나 순서가 어긋난 행이 {t['row_defects']}개 있어 데이터 확인이 필요합니다.")
     if t.get("last_volume") == 0:
@@ -154,10 +156,15 @@ def market_state(rows: List[Dict[str, Any]], market: str) -> Dict[str, Any]:
         parts.append({"factor": fid, "weight": weight, "status": r.get("status"), "normalized": float(r["normalized"]) if ok else None, "raw": r.get("raw"),
                       "explanation": r.get("explanation"), "reason": r.get("reason"), "as_of": r.get("as_of")})
     value = 100 * c / w if w else None
-    state = None if value is None else "ADVERSE" if value < config.MARKET_STATE_MID else "FAVOURABLE"
-    factor = config.ADVERSE_SIZE_FACTOR.get(market, 1.0) if state == "ADVERSE" else 1.0
-    return {"market": market, "score_100": value, "coverage": eff / app if app else None, "state": state, "label": config.MARKET_STATE_LABELS.get(state, "자료 없음"),
-            "mid": config.MARKET_STATE_MID, "size_factor": factor, "note": config.MARKET_STATE_NOTES[market], "factors": parts}
+    cover = eff / app if app else None
+    # no value, or one read from under half of its factors, is not a reading: unknown, and treated as adverse where there is a brake
+    unknown = value is None or cover is None or cover < config.MARKET_STATE_MIN_COVERAGE
+    state = "UNKNOWN" if unknown else "ADVERSE" if value < config.MARKET_STATE_MID else "FAVOURABLE"
+    cautious = state != "FAVOURABLE"
+    factor = config.ADVERSE_SIZE_FACTOR.get(market, 1.0) if cautious else 1.0
+    return {"market": market, "score_100": value, "coverage": cover, "state": state, "label": config.MARKET_STATE_LABELS[state],
+            "mid": config.MARKET_STATE_MID, "size_factor": factor, "new_exposure_cap": config.ADVERSE_NEW_EXPOSURE_CAP.get(market) if cautious else None,
+            "note": config.MARKET_STATE_NOTES[market], "factors": parts}
 
 
 def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, Any]:

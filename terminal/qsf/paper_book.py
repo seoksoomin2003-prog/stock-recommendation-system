@@ -212,7 +212,7 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
     if len({s["ticker"] for s in scored}) >= MIN_ROWS:
         cands = order_plan.candidates(scored, day, info)
         account = {"equity": equity, "cash": st["cash"], "positions": {t: {"style": p["style"], "value": p["qty"] * p["last_close"], "sector": p.get("sector")} for t, p in pos.items()}}
-        mstate, outside = order_plan.market_state(scored, market, day), order_plan.outside_top(cands, ahead, entry_top) if entry_top is not None else None
+        mstate, outside = order_plan.state_for_plan(scored, market, day), order_plan.outside_top(cands, ahead, entry_top) if entry_top is not None else None
         built = order_plan.build(cands, account, market, state=mstate, blocked=wait if waits else None, outside=outside)
         if outside:             # what the rank rule cost today: orders the plan would have made without it (not every candidate it passed over)
             plain = order_plan.build(cands, account, market, state=mstate, blocked=wait if waits else None)

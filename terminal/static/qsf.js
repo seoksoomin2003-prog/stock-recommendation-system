@@ -19,12 +19,12 @@ function qsfLabel(c) {
 const QSF_STATE_FACTOR = { vix_regime: "VIX", vix_term: "VIX 기간 구조", credit_spread: "하이일드 스프레드", index_trend_breadth: "지수 추세·시장 폭", vkospi_regime: "VKOSPI",
   index_trend: "지수 추세", breadth: "시장 폭", usdkrw_regime: "원/달러", credit_liquidity: "신용 스프레드" };
 function qsfMarketState(ms) {
-  if (!ms || ms.score_100 === null || ms.score_100 === undefined) return `<div class="qsf-state meta"><b>시장 상태</b>: 자료 없음 · 종목 점수에는 들어가지 않습니다.</div>`;
-  const bad = ms.state === "ADVERSE";
+  if (!ms || ms.score_100 === null || ms.score_100 === undefined) return `<div class="qsf-state meta"><b>시장 상태</b>: 자료 없음 · 종목 점수에는 들어가지 않습니다.${ms && ms.size_factor < 1 ? ` <span class="badge risk-note">읽을 수 없어 나쁜 날로 취급 · 새 주문 크기 ${(ms.size_factor * 100).toFixed(0)}%</span>` : ""}</div>`;
+  const bad = ms.state !== "FAVOURABLE";
   const parts = (ms.factors || []).map((f) => `${QSF_STATE_FACTOR[f.factor] || esc(f.factor)} ${f.normalized === null || f.normalized === undefined ? "없음" : (f.normalized * 100).toFixed(0)}`).join(" · ");
   const cut = bad && ms.size_factor < 1 ? ` <span class="badge risk-note">새 주문 크기 ${(ms.size_factor * 100).toFixed(0)}%</span>` : "";
   return `<div class="qsf-state" style="margin:8px 0"><div><b>시장 상태</b> <b class="num">${ms.score_100.toFixed(0)}</b><small>/100</small> <span class="badge${bad ? " risk-note" : ""}">${esc(ms.label)}</span>${cut}
-    <span class="meta" style="margin:0">점수 미반영 · ${ms.mid} 미만이면 나쁨${ms.session ? ` · ${esc(ms.session)} 기록` : ""}</span></div>
+    <span class="meta" style="margin:0">점수 미반영 · ${ms.mid} 미만이면 나쁨${ms.state === "UNKNOWN" ? " · 요인의 절반 이상이 비어 이 값은 읽지 않습니다" : ""}${ms.session ? ` · ${esc(ms.session)} 기록` : ""}</span></div>
     ${parts ? `<div class="meta" style="margin:2px 0 0">요인(0~100): ${parts}</div>` : ""}<div class="meta" style="margin:2px 0 0">${esc(ms.note || "")}</div></div>`;
 }
 function qsfBar(v) {
@@ -752,7 +752,7 @@ function qsfPlanHtml(d) {
     : `<div class="empty">한도 안에서 새로 살 수 있는 후보가 없습니다 (후보 ${d.candidates}종목).</div>`;
   return `<div class="panel">${title}${how}
     <div class="meta">기준 거래일 ${esc(d.session)} · 계좌 평가액 ${money(d.equity, 0)} · 현금 ${money(d.cash, 0)} · 진입 후보 ${d.candidates}종목 중 ${d.orders.length}종목 계획 · 계획 후 남는 현금 ${money(d.cash_after, 0)}</div>
-    ${d.market_state ? qsfMarketState(d.market_state) : ""}${d.size_factor < 1 ? `<div class="notice">시장 상태가 나쁜 날이라 새 주문의 거래당 위험 한도와 종목 비중 한도를 ${(d.size_factor * 100).toFixed(0)}%로 계산했습니다.</div>` : ""}
+    ${d.market_state ? qsfMarketState(d.market_state) : ""}${d.size_factor < 1 ? `<div class="notice">시장 상태가 나쁘거나 읽을 수 없는 날이라 새 주문의 거래당 위험 한도와 종목 비중 한도를 ${(d.size_factor * 100).toFixed(0)}%로 계산했습니다.${d.new_exposure_cap ? ` 새 주문의 합계도 계좌의 ${(d.new_exposure_cap * 100).toFixed(0)}%까지만 잡았습니다(이 계획의 합계 ${isNum(d.new_exposure_pct) ? d.new_exposure_pct.toFixed(1) : "?"}%).` : ""}</div>` : ""}
     ${body}${d.bands && d.bands.note ? `<div class="notice">${esc(d.bands.note)}</div>` : ""}${qsfSkipLine(d.skipped_counts, Object.fromEntries((d.skipped || []).map((s) => [s.code, s.reason])))}
     <div class="meta">비용: ${esc(a.cost_basis)}. ${esc(a.slippage_note)} 주문은 종목의 20일 평균 거래대금의 ${a.max_participation_pct}%를 넘지 않게 줄이고, 계좌의 ${a.min_weight_pct}% 미만인 주문은 만들지 않습니다. 지정가 상한은 기준 종가 + ${a.limit_atr} ATR입니다.</div>
     <div class="meta">${esc(d.note)}</div></div>`;

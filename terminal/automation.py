@@ -44,6 +44,7 @@ SLEPT_NOTE_S = 120                                  # a step during which the Ma
 HOLDINGS_EVERY_DAYS, HOLDINGS_FRESH_DAYS = 7, 90     # KODEX holdings: retry cadence while missing, and refresh age
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
+NO_STATEMENTS = "재무 자료 미준비(재무가 있는 종목이 80% 미만이라 그날을 기록하지 않음, 다음 시각에 다시 시도)"
 FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger", "kr_swing_challenger", "kr_swing_prior", "kr_challenger", "kr_cap_universe", "kr_traded_universe", "kr_method", "regime_weights_kr", "regime_weights_us", "paper_book_kr", "paper_book_us", "forecast_kr", "forecast_us", "score_split_kr", "score_split_us", "turnover_book_kr", "turnover_book_us", "rank_book_kr", "rank_book_us", "fund_period_kr", "fund_period_us")
 KR_STEPS = ("QSF_KR", "NEWS_KR", "KR_FORWARD", "SCAN_KR")     # Korea trades on some days the US does not, and these must not wait for a US session
 KST = timezone(timedelta(hours=9))
@@ -294,12 +295,12 @@ class Daily:
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else f"코드 {rc}"}
             if name == "QSF":
                 rc = self.runner(name, ["qsf", "scan"])
-                return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else "다운로드 끊김" if rc == 4 else f"코드 {rc}"}
+                return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else "다운로드 끊김" if rc == 4 else NO_STATEMENTS if rc == 7 else f"코드 {rc}"}
             if name == "QSF_KR":
                 rc = self.runner(name, ["--market", "KR", "qsf", "scan"])
                 if rc == 5:             # the morning after a Korean holiday: no new session, and the last one is in the ledger.  Not a failure
                     return {"status": WAITING, "at": at, "detail": "새 거래일 자료 없음(휴장일이거나 자료가 늦음) · 직전 거래일은 기록되어 있음"}
-                return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else "다운로드 끊김" if rc == 4 else f"코드 {rc}"}
+                return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else "다운로드 끊김" if rc == 4 else NO_STATEMENTS if rc == 7 else f"코드 {rc}"}
             if name in ("NEWS", "NEWS_KR"):
                 from terminal import news
                 if news.switched_off("US" if name == "NEWS" else "KR"):      # the user's switch for a feed that refuses for good

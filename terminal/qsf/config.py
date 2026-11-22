@@ -98,15 +98,22 @@ def profile_for(market: str, strategy: str) -> Dict:
 # It is in no score.  Under the middle of its scale a day is ADVERSE.
 MARKET_STATE_WEIGHTS = {"US": dict(_US_REGIME_SWING), "KR": dict(_KR_REGIME_SWING)}
 MARKET_STATE_MID = 50.0
-MARKET_STATE_LABELS = {"FAVOURABLE": "좋음", "ADVERSE": "나쁨"}
+MARKET_STATE_LABELS = {"FAVOURABLE": "좋음", "ADVERSE": "나쁨", "UNKNOWN": "알 수 없음(자료 부족)"}
+# Under this share of its factors the state is not read at all.  Until 2026-11-22 one factor of four was enough: the fear index
+# alone gave "100, favourable" (audit RED-03).  An unknown state is treated as an adverse one where the market has a brake.
+MARKET_STATE_MIN_COVERAGE = 0.5
 # What an adverse day does to the order plan: the risk per trade and the weight limit of a new order are both multiplied by this, so
 # the order is at most half its usual size whichever limit binds (with a 1% risk and a 10% weight limit the weight usually binds,
 # and halving the risk alone would change almost nothing).  US only (user decision 2026-11-16, "미국만 크기 절반"): the index test
 # found about 1.9 times the volatility after such days in the US and no difference in Korea.
 ADVERSE_SIZE_FACTOR = {"US": 0.5}
+# The most the new orders of one plan may add up to on an adverse (or unknown) day, as a share of the account.  Halving each order
+# did not bound the plan: on 2026-11-20 the state was 15/100 and an all-cash account was planned 98% invested (audit RED-03).
+# US only, like the size factor: the index test found nothing for Korea (user decision 2026-11-22, "한도와 표시").
+ADVERSE_NEW_EXPOSURE_CAP = {"US": 0.5}
 MARKET_STATE_NOTES = {
     "US": "종목 점수에 들어가지 않는 위험 표시입니다. 과거 시험(2009~2026, 지수 기준)에서 이 값이 50 미만인 날 뒤 20거래일은 변동성이 약 1.9배였고, 지수 수익은 낮지 않았습니다. "
-          "50 미만인 날에는 주문 계획이 새 주문의 거래당 위험 한도와 종목 비중 한도를 절반으로 계산합니다.",
+          "50 미만이거나 요인의 절반 이상이 비어 값을 읽을 수 없는 날에는 주문 계획이 새 주문의 거래당 위험 한도와 종목 비중 한도를 절반으로 계산하고, 새 주문의 합계를 계좌의 50%까지만 잡습니다.",
     "KR": "종목 점수에 들어가지 않는 참고 표시입니다. 과거 시험(2010~2026, 지수 기준)에서 한국은 이 값으로 이후 수익도 변동성도 구분되지 않았습니다. "
           "VKOSPI는 받을 수 없어 들어 있지 않습니다. 주문 계획의 크기는 바꾸지 않습니다."}
 
@@ -130,6 +137,13 @@ GATES = {"US": {"min_price": 5.0, "min_adv_value": 20_000_000.0},
          "KR": {"min_price": None, "min_adv_value": 1_000_000_000.0}}
 MIN_BARS = 200
 EXTREME_MOVE = 0.60        # |1-day move| above this on the last 5 bars is a data anomaly until explained
+EXTREME_MOVE_YEAR = 0.45   # and above this anywhere in the last year (252 bars): a 2-for-1 split left unadjusted is a 50% day, which
+#                            the line above never saw, and five bars later nothing saw it (audit ENG-06; user decision 2026-11-22).
+#                            On 2026-11-20 one scanned stock of 804 had such a day.
+# A whole scan is recorded as the day only when this share of its stocks has usable statements: prices alone used to decide, so a
+# day on which the statement sources were down would have been stored for good with the fundamental domain empty (audit ENG-02;
+# user decision 2026-11-22).  The share has been 99% or more on every recorded day.
+FUND_RECORD_SHARE = 0.80
 EARNINGS_BLOCK_SESSIONS = 2
 EARNINGS_BLOCK_SESSIONS_ESTIMATE = 5     # an estimated date: five weekdays either side held 96% of the actual Korean dates (2026-11-11 check)
 

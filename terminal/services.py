@@ -821,7 +821,7 @@ class Terminal(ModelViews):
         info = {r["ticker"]: {"name": r.get("name"), "sector": r.get("sector")} for r in latest.get("rows") or []}
         st = self.settings()
         snaps = op.session_snaps(self.qsf.ledger, market, session)
-        cands, mstate = op.candidates(snaps, session, info, st), op.market_state(snaps, market, session)
+        cands, mstate = op.candidates(snaps, session, info, st), op.state_for_plan(snaps, market, session)
         _, integ, state, val, _, _ = self._valued(market)
         equity = val["summary"]["equity"]
         if not equity or equity <= 0:

@@ -938,12 +938,18 @@ class QSF(ScreenViews):
                 progress("scores", k, len(tickers))
         session = self._session("US") if market == "US" else self.regime("KR").get("session")
         rec = None
+        fund = fund_share(cards)
+        if record and whole_universe and cards and fund["share"] < config.FUND_RECORD_SHARE:
+            # The prices are there and the statements are not (a source down, a key refused): recording would store the day for good
+            # with the fundamental domain empty.  Not recorded; the next slot tries again.
+            return {"status": "DATA_NOT_READY", "reason": FUNDAMENTALS_NOT_READY, "market": market, "session": session, "tickers": len(tickers), "asked": asked, "at_session": at_session,
+                    "fundamentals": fund, "rows": [], "errors": errors, "recorded_before": self.ledger.has_session(day, market)}
         if record and cards:
             rec = self.ledger.append(session, market, cards)
         aged = {c["ticker"]: max((x.get("age_days") or 0) for x in c["provenance"]["stale"]) for c in cards if c["provenance"].get("stale")}
         summary = {"status": "REAL" if cards else "UNAVAILABLE", "market": market, "session": session, "model_version": config.MODEL_VERSION, "tickers": len(tickers), "scored": len(cards), "errors": errors,
                    **({"stale_inputs": {"stocks": len(aged), "oldest_days": max(aged.values()), "tickers": sorted(aged)[:20]}} if aged else {}),
-                   "elapsed_seconds": round(time.time() - started, 1), "ledger": rec, "generated_at": self.now().isoformat(),
+                   "elapsed_seconds": round(time.time() - started, 1), "ledger": rec, "fundamentals": fund, "generated_at": self.now().isoformat(),
                    **({"price_source": self._kr_bars_info} if market == "KR" and getattr(self, "_kr_bars_info", None) else {}),
                    **({"universe": self._kr_universe_info} if market == "KR" and getattr(self, "_kr_universe_info", None) else {}), "rows": sorted(rows, key=lambda r: -(r["score"] or -1))}
         if not record or not publish:
@@ -1093,6 +1099,16 @@ class QSF(ScreenViews):
                         keep_empty_before=(day - timedelta(days=7)).isoformat())
         except Exception:
             pass
+
+
+FUNDAMENTALS_NOT_READY = "FUNDAMENTALS_NOT_READY"          # prices arrived, statements did not, for too many stocks
+
+
+def fund_share(cards: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Of the scanned stocks, how many have any usable figure in the fundamental domain (read from the long-term card)."""
+    long_ = [c for c in cards if c.get("strategy") == "LONG_TERM"]
+    have = sum(1 for c in long_ if ((c.get("domains") or {}).get("FUNDAMENTAL") or {}).get("coverage"))
+    return {"stocks": len(long_), "with_statements": have, "share": have / len(long_) if long_ else 0.0}
 
 
 BUY_BANDS = ("STRONG_BUY_CANDIDATE", "BUY_CANDIDATE")

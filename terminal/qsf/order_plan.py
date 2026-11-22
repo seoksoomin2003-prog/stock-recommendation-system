@@ -23,8 +23,11 @@ IMPACT_Y = 1.0                  # square-root impact: daily range share x sqrt(o
 STYLE_OF = {"SWING": "SWING", "LONG_TERM": "LONG"}
 STRATEGY_OF = {v: k for k, v in STYLE_OF.items()}
 REASONS = {"RANK_OUT": "그날 점수 순위가 진입 기준 밖", "REENTRY_WAIT": "손절 뒤 재진입 대기", "ALREADY_HELD": "이미 보유 중", "ALREADY_PLANNED": "같은 날 이미 계획됨", "NO_STOP": "손절 기준(ATR) 없음", "NO_LIQUIDITY": "거래대금 자료 없음",
-           "SLEEVE_FULL": "스타일 비중 한도 도달", "SECTOR_FULL": "섹터 한도 도달", "NO_CASH": "현금 부족", "TOO_SMALL": "주문이 계좌의 1% 미만이거나 한 주도 안 됨"}
-BINDING = {"RISK": "거래당 위험 한도", "WEIGHT": "종목 비중 한도", "CASH": "현금", "SLEEVE": "스타일 비중 한도", "SECTOR": "섹터 한도", "LIQUIDITY": "거래대금 대비 주문 크기 한도"}
+           "EXPOSURE_FULL": "시장 상태가 나쁜 날의 새 주문 합계 한도 도달", "SLEEVE_FULL": "스타일 비중 한도 도달", "SECTOR_FULL": "섹터 한도 도달", "NO_CASH": "현금 부족", "TOO_SMALL": "주문이 계좌의 1% 미만이거나 한 주도 안 됨"}
+BINDING = {"RISK": "거래당 위험 한도", "WEIGHT": "종목 비중 한도", "CASH": "현금", "SLEEVE": "스타일 비중 한도", "SECTOR": "섹터 한도", "LIQUIDITY": "거래대금 대비 주문 크기 한도", "EXPOSURE": "나쁜 날의 새 주문 합계 한도"}
+# What changed in the plan's rules after the paper book's versions were named (reports/PAPER_BOOK_RULES.md, section 8).  It is written
+# into every plan, so a record says which rules made it.
+PLAN_AMENDMENT = "A1 (2026-11-22): 시장 상태가 나쁘거나 알 수 없는 날, 새 주문의 합계는 계좌의 50% 이하(미국). 시장 상태를 읽을 수 없으면 나쁜 날로 취급."
 
 
 def slippage_bps(market: str, order_value: float, adv_value: Optional[float], atr_pct: Optional[float]) -> Dict[str, Optional[float]]:
@@ -77,6 +80,12 @@ def market_state(snaps: Iterable[Dict[str, Any]], market: str, session: str) -> 
             if s.get("strategy") == want and any(f.get("domain") == "REGIME" for f in s.get("factors") or []):
                 return {**engine.market_state(s["factors"], market), "session": session}
     return None
+
+
+def state_for_plan(snaps: Iterable[Dict[str, Any]], market: str, session: str) -> Dict[str, Any]:
+    """The state a plan is made under.  When no snapshot of the session carries the regime factors the state is unknown, not
+    absent: until 2026-11-22 "no reading" meant "an ordinary day" and the plan ran at full size (audit RED-03)."""
+    return market_state(snaps, market, session) or {**engine.market_state([], market), "session": session}
 
 
 def ahead_share(snaps: Iterable[Dict[str, Any]], session: str) -> Dict[Any, float]:
@@ -151,6 +160,7 @@ def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, set
     ``outside``: (ticker, style) pairs outside the rank rules' entry share (``outside_top``); None when those rules are not in force."""
     st = settings or pf.DEFAULT_SETTINGS
     factor = float((state or {}).get("size_factor") or 1.0)
+    cap = (state or {}).get("new_exposure_cap")           # adverse or unknown day in a market with a brake: what all new orders may add up to
     equity, cash = float(account.get("equity") or 0.0), float(account.get("cash") or 0.0)
     held = dict(account.get("positions") or {})
     kr = "_kr" if market == "KR" else ""
@@ -162,6 +172,7 @@ def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, set
         if p.get("sector"):
             sector[p["sector"]] = sector.get(p["sector"], 0.0) + float(p.get("value") or 0.0)
     orders, skipped, planned = [], [], set()
+    new_total = 0.0
     commission = config.COSTS[market]["commission_bps"] / 1e4
 
     def skip(c: Dict[str, Any], code: str) -> None:
@@ -198,10 +209,12 @@ def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, set
         if c.get("sector"):
             caps["SECTOR"] = math.floor(max(equity * st["max_sector_pct"] / 100 - sector.get(c["sector"], 0.0), 0.0) / close + pf.EPS)
         caps["LIQUIDITY"] = math.floor(MAX_PARTICIPATION * c["adv_value"] / close + pf.EPS)
+        if cap:
+            caps["EXPOSURE"] = math.floor(max(equity * cap - new_total, 0.0) / close + pf.EPS)
         binding = min(caps, key=lambda k: (caps[k], list(BINDING).index(k)))
         shares = caps[binding]
         if shares < 1 or shares * close < equity * MIN_WEIGHT_PCT / 100:
-            skip(c, {"CASH": "NO_CASH", "SLEEVE": "SLEEVE_FULL", "SECTOR": "SECTOR_FULL"}.get(binding, "TOO_SMALL"))
+            skip(c, {"CASH": "NO_CASH", "SLEEVE": "SLEEVE_FULL", "SECTOR": "SECTOR_FULL", "EXPOSURE": "EXPOSURE_FULL"}.get(binding, "TOO_SMALL"))
             continue
         value = shares * close
         slip = slippage_bps(market, value, c["adv_value"], c["atr"] / close)
@@ -212,6 +225,7 @@ def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, set
                        "participation_pct": value / c["adv_value"] * 100, "slippage_bps": slip, "fee_buy": fee_buy, "fee_sell": fee_sell,
                        "est_round_trip_pct": (fee_buy + fee_sell) / value * 100 + 2 * slip["total"] / 100, "adv_value": c["adv_value"]})
         cash -= shares * unit
+        new_total += value
         sleeve[style] += value
         if c.get("sector"):
             sector[c["sector"]] = sector.get(c["sector"], 0.0) + value
@@ -219,8 +233,9 @@ def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, set
     by_code: Dict[str, int] = {}
     for s in skipped:
         by_code[s["code"]] = by_code.get(s["code"], 0) + 1
-    shown = None if state is None else {k: state.get(k) for k in ("score_100", "state", "label", "mid", "size_factor", "note", "session", "coverage")}
+    shown = None if state is None else {k: state.get(k) for k in ("score_100", "state", "label", "mid", "size_factor", "new_exposure_cap", "note", "session", "coverage")}
     return {"market": market, "orders": orders, "skipped": skipped, "skipped_counts": by_code, "candidates": len(cands), "cash_after": cash, "market_state": shown, "size_factor": factor,
+            "new_exposure_cap": cap, "new_exposure_pct": new_total / equity * 100 if equity > 0 else None, "rules_note": PLAN_AMENDMENT,
             "sleeve": {s: {"value": sleeve[s], "cap": sleeve_cap[s]} for s in sleeve},
             "assumptions": {"limit_atr": LIMIT_ATR, "min_weight_pct": MIN_WEIGHT_PCT, "max_participation_pct": MAX_PARTICIPATION * 100, "commission_bps": config.COSTS[market]["commission_bps"],
                             "sell_bps": config.COSTS[market]["sell_tax_bps"] + config.COSTS[market].get("sell_fee_bps", 0.0), "spread_bps": config.COSTS[market]["spread_slippage_bps"],

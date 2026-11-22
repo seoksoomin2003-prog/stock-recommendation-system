@@ -330,3 +330,60 @@ def test_every_protocol_whose_reading_has_not_run_carries_the_amendment():
     assert "상위 20%" in live and "코스닥 종목은 코스닥" in live and "주된 판정" in live
     turn = (ROOT / "reports" / "QSF_TURNOVER_RULES_PROTOCOL.md").read_text(encoding="utf-8")
     assert "스스로 규칙을 적용하지 않는다" in turn and "QSF_TURNOVER_RULES=on" in turn
+
+
+# ---------------------------------------------------------------------- decisions of 2026-11-22 on the order plan and the record (roadmap 8, 10, 16, 17)
+def test_on_an_adverse_or_unknown_us_day_the_new_orders_add_up_to_half_the_account_at_most():
+    from terminal.qsf import config
+    from tests.test_order_plan_paper_book import account, cand
+    cands = [cand(f"S{k:02d}", "SWING", score=90 - k, sector=f"sec{k}") for k in range(12)] + [cand(f"L{k:02d}", "LONG", score=80 - k, sector=f"lsec{k}") for k in range(8)]
+    free = order_plan.build(cands, account(), "US")
+    assert free["new_exposure_cap"] is None and free["new_exposure_pct"] > 80 and "EXPOSURE_FULL" not in free["skipped_counts"]          # the old plan: nearly all of the account
+    adverse = {"state": "ADVERSE", "size_factor": 0.5, "new_exposure_cap": 0.5, "score_100": 15.0}
+    held = order_plan.build(cands, account(), "US", state=adverse)
+    assert held["new_exposure_cap"] == 0.5 and held["new_exposure_pct"] <= 50.0 + 1e-9 and held["new_exposure_pct"] > 40 and held["skipped_counts"].get("EXPOSURE_FULL", 0) >= 1
+    assert sum(o["notional"] for o in held["orders"]) <= 0.5 * 10_000_000.0 + 1e-6 and held["rules_note"].startswith("A1 (2026-11-22)")
+    assert any(o["binding"] == "EXPOSURE" for o in held["orders"]) or held["skipped_counts"]["EXPOSURE_FULL"] >= 1
+    # no reading at all is unknown, and in the US an unknown day is planned as an adverse one; Korea has no brake
+    us, kr = order_plan.state_for_plan([], "US", "2026-11-20"), order_plan.state_for_plan([], "KR", "2026-11-20")
+    assert us["state"] == "UNKNOWN" and us["size_factor"] == 0.5 and us["new_exposure_cap"] == 0.5 and us["session"] == "2026-11-20"
+    assert kr["state"] == "UNKNOWN" and kr["size_factor"] == 1.0 and kr["new_exposure_cap"] is None
+    assert order_plan.market_state([], "US", "2026-11-20") is None and config.ADVERSE_NEW_EXPOSURE_CAP == {"US": 0.5} and config.MARKET_STATE_MIN_COVERAGE == 0.5
+    assert "## 8. 수정 A1 (2026-11-22" in (ROOT / "reports" / "PAPER_BOOK_RULES.md").read_text(encoding="utf-8")
+
+
+def test_a_day_of_more_than_45_per_cent_anywhere_in_the_last_year_blocks_the_card():
+    from terminal.qsf import config
+    b = bars()
+    split = [dict(x) for x in b]
+    for x in split[-120:]:                                        # an unadjusted 2-for-1 split 120 sessions ago: a 50% day the five-day check never saw
+        for k in ("open", "high", "low", "close", "adj_close"):
+            x[k] = x[k] / 2
+    r = engine.score(ctx(bars=split), "SWING")
+    assert r["tech"]["max_move_252"] > config.EXTREME_MOVE_YEAR and r["tech"]["max_move_5"] < 0.1
+    assert any(g["code"] == "DATA_ANOMALY" and "최근 1년" in g["text"] for g in r["gates"]) and r["actionability"] == "BLOCKED"
+    clean = engine.score(ctx(), "SWING")
+    assert clean["tech"]["max_move_252"] < 0.1 and not any(g["code"] == "DATA_ANOMALY" for g in clean["gates"]) and config.EXTREME_MOVE_YEAR == 0.45 and config.EXTREME_MOVE == 0.60
+
+
+def test_a_whole_scan_without_statements_for_most_stocks_is_not_recorded(tmp_path):
+    from terminal.qsf import config
+    from tests.test_qsf import NOW, FakeSrc, FakeTerm, SESSION
+
+    class NoStatements(FakeSrc):
+        def sec_cik(self, t):
+            raise OSError("SEC is down")
+    q = QSF(tmp_path, src=NoStatements(), now=lambda: NOW, terminal=FakeTerm())
+    res = q.scan("US")
+    assert res["status"] == "DATA_NOT_READY" and res["reason"] == qsf_service.FUNDAMENTALS_NOT_READY and res["fundamentals"]["share"] == 0.0 and res["fundamentals"]["stocks"] >= 25
+    assert not q.ledger.has_session(SESSION, "US") and not (q.dir / "latest_US.json").exists()                  # the day is not stored with an empty fundamental domain
+    ok = QSF(tmp_path / "ok", src=FakeSrc(), now=lambda: NOW, terminal=FakeTerm()).scan("US")
+    assert ok["status"] == "REAL" and ok["fundamentals"]["share"] == 1.0 and config.FUND_RECORD_SHARE == 0.80
+    named = QSF(tmp_path / "named", src=NoStatements(), now=lambda: NOW, terminal=FakeTerm()).scan("US", tickers=["T0", "T1"])
+    assert named["status"] == "REAL"                                                                            # a scan of named stocks is not the day's record of the universe
+    cards = [{"strategy": "LONG_TERM", "domains": {"FUNDAMENTAL": {"coverage": 0.9}}}, {"strategy": "LONG_TERM", "domains": {"FUNDAMENTAL": {"coverage": 0.0}}}, {"strategy": "SWING", "domains": {}}]
+    assert qsf_service.fund_share(cards) == {"stocks": 2, "with_statements": 1, "share": 0.5} and qsf_service.fund_share([])["share"] == 0.0
+    src = inspect.getsource(app._qsf_scan)
+    assert 'res.get("reason") == "FUNDAMENTALS_NOT_READY"' in src and "return 7" in src
+    from terminal import automation
+    assert "재무 자료 미준비" in automation.NO_STATEMENTS and inspect.getsource(automation).count("NO_STATEMENTS if rc == 7") == 2
