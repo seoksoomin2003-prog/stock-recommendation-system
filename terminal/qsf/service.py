@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import numpy as np
 
 from markets import session_data
+from terminal import plain
 from terminal import sources as default_sources
 from terminal.cache import FileCache
 from terminal.qsf import config, earnings_estimate, engine, events, fund_period, fund_trailing, fundamentals, holding, ledger, technicals
@@ -792,6 +793,7 @@ class QSF(ScreenViews):
             out["fund_period"] = fund_period.card_field(fund["live_period"], res["score"], fund, other_score, other)
         out["why_summary"] = _why(out)
         out["surface_note"] = _surface_note(out)            # display only: not a ledger field
+        out["plain"] = plain.card_plain(out)                # '쉽게 설명해줘': the same card in everyday words; display only
         if position:
             if position.get("rank_rules") and strategy == "LONG_TERM":
                 position = {**position, "ahead_share": self._ahead_share(market, strategy, res["score"])}

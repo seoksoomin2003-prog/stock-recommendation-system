@@ -185,4 +185,5 @@ def test_every_changing_request_is_either_a_phone_entry_or_named_as_computer_onl
     posts = {path for (method, path) in server.routes(object()) if method == "POST"}
     assert pv.PHONE_WRITES <= posts
     assert posts - pv.PHONE_WRITES == {"/api/settings", "/api/capital", "/api/qsf/rank-rules", "/api/qsf/turnover-rules", "/api/automation/run", "/api/lab/run",
-                                       "/api/model/scan", "/api/phone/switch", "/api/phone/code", "/api/phone/unpair"}      # a new changing request must be put on one side
+                                       "/api/model/scan", "/api/phone/switch", "/api/phone/code", "/api/phone/unpair",
+                                       "/api/qsf/stance"}      # a new changing request must be put on one side (the stance sizes orders: a setting)

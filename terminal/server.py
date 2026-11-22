@@ -29,7 +29,7 @@ STATIC = Path(__file__).resolve().parent / "static"
 from terminal import assistant, automation, coin_bridge, model_scan, record_status, server_agent, symbols, today  # noqa: E402
 from terminal.committee import service as committee_service  # noqa: E402
 from terminal.qsf import changes as qsf_changes, forecast as qsf_forecast, kr_cap_view as qsf_cap_view, kr_method as qsf_kr_method, lookahead as qsf_lookahead, paper_book as qsf_paper_book, regime_weights as qsf_regime_weights, screen as qsf_screen, track_record as qsf_track_record, turnover_book as qsf_turnover_book  # noqa: E402
-from terminal.qsf import rank_book as qsf_rank_book, readings as qsf_readings  # noqa: E402
+from terminal.qsf import rank_book as qsf_rank_book, readings as qsf_readings, stance as qsf_stance  # noqa: E402
 
 HOST = "127.0.0.1"
 log = logging.getLogger("terminal")
@@ -210,6 +210,8 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[pho
         ("GET", "/api/qsf/forecast"): lambda q, b: qsf_forecast.view(t.base, _market(q.get("market", "US"))),
         ("GET", "/api/qsf/forecast-stock"): lambda q, b: qsf_forecast.stock(t.base, _market(q.get("market", "US")), _code(q.get("t", ""), _market(q.get("market", "US")))),
         ("GET", "/api/qsf/paper-book"): lambda q, b: qsf_paper_book.status(t.base, _market(q.get("market", "US"))),
+        ("GET", "/api/qsf/stance"): lambda q, b: qsf_stance.view(t.base, _market(q.get("market", "US"))),
+        ("POST", "/api/qsf/stance"): lambda q, b: qsf_stance.set_level(t.base, _market(b.get("market", "US")), str(b.get("level") or "")),
         ("POST", "/api/qsf/rank-rules"): lambda q, b: qsf_rank_book.set_switch(t.base, _market(b.get("market", "US")), b.get("on") is True),
         ("POST", "/api/qsf/turnover-rules"): lambda q, b: qsf_turnover_book.set_switch(t.base, _market(b.get("market", "US")), b.get("on") is True),
         ("GET", "/api/qsf/turnover-book"): lambda q, b: qsf_turnover_book.status(t.base, _market(q.get("market", "US"))),

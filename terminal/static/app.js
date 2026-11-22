@@ -85,7 +85,7 @@ const ERR_KO = { INVALID_TICKER: "종목 코드 형식이 올바르지 않습니
   PHONE_CODE_LOCKED: "틀린 횟수가 많아 이 코드는 더 쓸 수 없습니다. 새 코드를 만드세요.", PHONE_TOO_MANY: "연결된 기기가 이미 다섯 대입니다. 하나를 끊은 뒤 다시 하세요.", FORBIDDEN_ORIGIN: "다른 사이트에서 온 요청이라 받지 않았습니다.",
   FORBIDDEN_SITE: "다른 사이트에서 온 요청이라 받지 않았습니다.",
   INVALID_MARKET: "시장 값이 올바르지 않습니다(미국 또는 한국).", BAD_MARKET: "시장 값이 올바르지 않습니다(미국 또는 한국).",
-  INVALID_STRATEGY: "구분 값이 올바르지 않습니다(스윙 또는 장기).", BAD_STRATEGY: "구분 값이 올바르지 않습니다(스윙 또는 장기).",
+  INVALID_STANCE: "성향 값이 올바르지 않습니다(방어적, 기본, 공격적).", INVALID_STRATEGY: "구분 값이 올바르지 않습니다(스윙 또는 장기).", BAD_STRATEGY: "구분 값이 올바르지 않습니다(스윙 또는 장기).",
   INVALID_DAYS: "기간(일수) 값이 올바르지 않습니다.", INVALID_SORT: "정렬 기준이 올바르지 않습니다.", INVALID_ORDER: "정렬 방향이 올바르지 않습니다.",
   INVALID_ACTION: "판단 조건 값이 올바르지 않습니다.", INVALID_CONFIDENCE: "신뢰도 조건 값이 올바르지 않습니다.", INVALID_ENTRY: "진입 상태 조건 값이 올바르지 않습니다.",
   INVALID_MIN_SCORE: "최소 점수가 숫자가 아니거나 0~100을 벗어났습니다.", INVALID_LIMIT: "줄 수 값이 올바르지 않습니다.", INVALID_OFFSET: "시작 위치 값이 올바르지 않습니다.",
@@ -108,6 +108,22 @@ function errKo(e) {
   if (h) return `서버가 요청을 처리하지 못했습니다(HTTP ${h[1]}).`;
   return /^[A-Z][A-Z0-9_]+$/.test(m) ? `오류 코드 ${m}` : m;
 }
+// '쉽게 설명해줘': a stock card or a portfolio in everyday words.  terminal/plain.py writes the text; nothing is fetched here.
+function plainBlock(doc) {
+  if (!doc || !doc.parts) return "";
+  const parts = doc.parts.map((p) => `<h4>${esc(p.h)}</h4><ul>${p.lines.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`).join("");
+  const words = (doc.words || []).length ? `<h4>낱말 풀이</h4><dl>${doc.words.map((w) => `<dt>${esc(w.word)}</dt><dd>${esc(w.means)}</dd>`).join("")}</dl>` : "";
+  return `<div class="plain"><button type="button" class="ghost plain-btn" aria-expanded="false">쉽게 설명해줘</button>
+    <div class="plain-box" hidden><b>${esc(doc.title)}</b>${parts}${words}</div></div>`;
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest ? e.target.closest(".plain-btn") : null;
+  if (!b) return;
+  const box = b.parentElement.querySelector(".plain-box");
+  box.hidden = !box.hidden;
+  b.setAttribute("aria-expanded", String(!box.hidden));
+  b.textContent = box.hidden ? "쉽게 설명해줘" : "쉬운 설명 닫기";
+});
 const errBox = (e) => `<div class="panel err">불러오지 못했습니다: ${esc(errKo(e))}</div>`;
 const loading = '<div class="panel empty">불러오는 중…</div>';
 function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }

@@ -171,7 +171,8 @@ def stock_in_portfolios(terminal: Any, ticker: str, market: str) -> Dict[str, An
 
 
 def _ports_out(work: Dict[str, Any]) -> List[Dict[str, Any]]:
-    return [work["portfolios"][k] for k in portfolios.ORDER]
+    from terminal import plain
+    return [{**work["portfolios"][k], "plain": plain.portfolio_plain(work["portfolios"][k])} for k in portfolios.ORDER]      # the copy shown; the recorded one is untouched
 
 
 def six_view(terminal: Any, market: str) -> Dict[str, Any]:

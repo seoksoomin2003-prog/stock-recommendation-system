@@ -82,6 +82,9 @@ def market_state(snaps: Iterable[Dict[str, Any]], market: str, session: str) -> 
     return None
 
 
+STATE_SHOWN = ("score_100", "state", "label", "mid", "size_factor", "new_exposure_cap", "note", "session", "coverage")          # what a plan shows of its market state
+
+
 def state_for_plan(snaps: Iterable[Dict[str, Any]], market: str, session: str) -> Dict[str, Any]:
     """The state a plan is made under.  When no snapshot of the session carries the regime factors the state is unknown, not
     absent: until 2026-11-22 "no reading" meant "an ordinary day" and the plan ran at full size (audit RED-03)."""
@@ -236,7 +239,7 @@ def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, set
     by_code: Dict[str, int] = {}
     for s in skipped:
         by_code[s["code"]] = by_code.get(s["code"], 0) + 1
-    shown = None if state is None else {k: state.get(k) for k in ("score_100", "state", "label", "mid", "size_factor", "new_exposure_cap", "note", "session", "coverage")}
+    shown = None if state is None else {k: state.get(k) for k in STATE_SHOWN}
     return {"market": market, "orders": orders, "skipped": skipped, "skipped_counts": by_code, "candidates": len(cands), "cash_after": cash, "market_state": shown, "size_factor": factor,
             "new_exposure_cap": cap, "new_exposure_pct": new_total / equity * 100 if equity > 0 else None, "rules_note": PLAN_AMENDMENT,
             "sleeve": {s: {"value": sleeve[s], "cap": sleeve_cap[s]} for s in sleeve},

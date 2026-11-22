@@ -72,6 +72,25 @@ class ScreenViews:
         financing, buyback = ticker in found["financing"], ticker in found["buyback"]
         return {"session": found["session"], "financing": financing, "buyback": buyback} if financing or buyback else None
 
+    def _stance_rows(self, market: str, out: Dict[str, Any]) -> None:
+        """Marks each row as a candidate of the market's stance or not, with the reason (display only; terminal/qsf/stance.py).
+        NORMAL marks nothing: the rows are as they always were."""
+        from terminal.qsf import order_plan as op, stance
+        lvl = stance.level(self.base, market)
+        out["stance"] = {"level": lvl, "label": stance.LABELS[lvl], "line": stance.PRESETS[lvl]["line"]}
+        if lvl == "NORMAL" or not out.get("session"):
+            return
+        memo = getattr(self, "_stance_memo", None)
+        key = (market, out["session"], lvl, out.get("generated_at"))
+        if not memo or memo[0] != key:
+            snaps = op.session_snaps(self.ledger, market, out["session"])
+            # a scan that was not recorded has no snapshots: judged from the rows themselves, without the daily-range reading
+            memo = self._stance_memo = (key, stance.marks(snaps or [dict(r) for r in out.get("rows") or []], lvl), bool(snaps))
+        out["stance"]["from_record"] = memo[2]
+        for r in out.get("rows") or []:
+            why = memo[1].get((r.get("ticker"), r.get("strategy")), "NOT_ACTIONABLE")
+            r["stance"] = {"ok": why is None, "why": stance.REASONS.get(why)}
+
     def latest(self, market: str = "US") -> Dict[str, Any]:
         try:
             out = json.loads((self.dir / f"latest_{market}.json").read_text(encoding="utf-8"))
@@ -98,6 +117,7 @@ class ScreenViews:
                 if r.get("ticker") in deals:
                     r["deal"] = deals[r["ticker"]]
             out["live_model_version"] = config.MODEL_VERSION          # the rank list is as recorded; a card is computed now
+            self._stance_rows(market, out)
             return out
         except (OSError, ValueError):
             return {"status": "UNAVAILABLE", "market": market, "rows": [], "reason": "아직 스캔 기록이 없습니다."}

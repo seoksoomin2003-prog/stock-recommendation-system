@@ -380,3 +380,13 @@ details[open] > summary .fold-hint { display: none; }
 #taptip[hidden] { display: none; }
 .on-phone #collect, .on-phone .qsf-rule-switch { display: none; }        /* computer-only controls */
 @media (max-width: 600px) { .top { position: static; } }                  /* the wrapped header would cover a fifth of a phone screen */
+
+/* '쉽게 설명해줘' and the stance selector */
+.plain { margin: 8px 0; }
+.plain-box { margin-top: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); font-size: 15px; line-height: 1.7; }
+.plain-box[hidden] { display: none; }
+.plain-box h4 { margin: 12px 0 2px; font-size: 14px; color: var(--muted); }
+.plain-box ul { margin: 0; padding-left: 18px; }
+.plain-box dl { margin: 0; } .plain-box dt { font-weight: 600; margin-top: 6px; } .plain-box dd { margin: 0; }
+.qsf-stance { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 0; }
+.qsf-stance details { flex-basis: 100%; }

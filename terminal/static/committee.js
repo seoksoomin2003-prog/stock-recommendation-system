@@ -159,6 +159,7 @@ function icPortHtml(p) {
       <div class="meta">기준일 ${esc(r.as_of || "")}</div></details></td></tr>`).join("");
   const sectors = Object.entries(p.sectors || {}).map(([k, w]) => `${esc(k)} ${icPct(w, 0)}`).join(" · ");
   return `<div class="panel"><h2>${esc(p.name)} <span class="meta" style="margin:0">${esc(p.objective)}</span></h2>
+    ${plainBlock(p.plain)}
     <div class="ic-scores"><span><i>종목 수</i><b class="num">${p.count}</b></span><span><i>투자 비중</i><b class="num">${icPct(p.invested, 0)}</b></span><span><i>현금</i><b class="num">${icPct(p.cash, 0)}</b></span>
       <span><i>가장 큰 종목</i><b class="num">${icPct(p.largest)}</b></span><span><i>집중도(HHI)</i><b class="num">${icNum(p.concentration, 3)}</b></span><span><i>이번 교체</i><b class="num">${icPct(p.turnover, 0)}</b></span></div>
     <div class="meta"><b>비중 규칙</b> ${esc(p.sizing)} · 최대 ${p.limits.max}종목, 한 업종 ${p.limits.per_sector}종목, 한 종목 ${icPct(p.limits.per_stock, 0)}까지 · 후보 ${p.candidates}종목 중 한도로 빠진 종목 ${p.left_out_by_limits}</div>

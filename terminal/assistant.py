@@ -107,6 +107,13 @@ def plan_items(plan: Dict[str, Any], market: str) -> List[Dict[str, Any]]:
     return out
 
 
+def stance_items(stance: Optional[Dict[str, Any]], market: str) -> List[Dict[str, Any]]:
+    """The market's stance, when it is not the normal one: the day's plan was made under it."""
+    if not stance or stance.get("level") in (None, "NORMAL") or not stance.get("note"):
+        return []
+    return [item("INFO", "STANCE", f"{MARKET_KO[market]} {stance['note']} 점수와 기록은 그대로입니다.", tab="qsf")]
+
+
 def market_items(state: Optional[Dict[str, Any]], market: str) -> List[Dict[str, Any]]:
     """``state``: the day's market state (the regime factors, apart from every score)."""
     if not state:
@@ -370,7 +377,7 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
 
     def plan() -> List[Dict[str, Any]]:
         got = seen["plan"] = terminal.order_plan(market)
-        return plan_items(got, market)
+        return plan_items(got, market) + stance_items(got.get("stance"), market)
 
     def market_state() -> List[Dict[str, Any]]:
         state = (seen.get("plan") or {}).get("market_state") or terminal.market_state(market)
