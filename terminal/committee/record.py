@@ -20,7 +20,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from utils import durable
 
-from terminal.committee import council
+from terminal.committee import council, portfolios
 from terminal.committee import investors as iv
 
 FOLDERS = {"KR": "committee_kr", "US": "committee_us"}
@@ -65,7 +65,11 @@ def line(market: str, session: str, book: Dict[str, Dict[str, Any]], ports: Dict
     scores = {t: [None if e["opinions"][k]["score"] is None else round(e["opinions"][k]["score"]) for k in iv.ORDER] + [None if e["committee"]["scores"]["attractiveness"] is None else round(e["committee"]["scores"]["attractiveness"])]
               for t, e in book.items()}
     return {"session": session, "market": market, "rules": iv.RULES, "order": list(iv.ORDER) + ["COMMITTEE"], "codes": CODES, "stocks": stocks, "scores": scores,
-            "portfolios": {key: {"cash": p["cash"], "holdings": {r["ticker"]: r["weight"] for r in p["holdings"]}} for key, p in ports.items()}}
+            "portfolios": {key: {"cash": p["cash"], "holdings": {r["ticker"]: r["weight"] for r in p["holdings"]},
+                                 # the day's interrupts (2026-11-23): overweight notices (nothing traded) and fatal exits
+                                 **({"overweight": [{k: n[k] for k in ("ticker", "name", "weight", "cap", "new", "text")} for n in p["overweight"]]} if p.get("overweight") else {}),
+                                 **({"fatal": [{k: n[k] for k in ("ticker", "name", "weight", "why")} for n in p["fatal"]]} if p.get("fatal") else {})}
+                           for key, p in ports.items()}}
 
 
 def append(base: Path, market: str, session: str, book: Dict[str, Dict[str, Any]], ports: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
@@ -113,6 +117,11 @@ def _stats(daily: List[float], bench: List[Optional[float]]) -> Dict[str, Any]:
     return out
 
 
+def _move(price: Callable[[str, str], Optional[float]], ticker: str, a: str, b: str) -> Optional[float]:
+    p0, p1 = price(ticker, a), price(ticker, b)
+    return p1 / p0 - 1.0 if p0 and p1 else None
+
+
 def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional[float]], benchmark: Callable[[str], Optional[float]], one_way_cost: float,
                 keep_daily: bool = False) -> Dict[str, Any]:
     """Paper results of each recorded portfolio.  ``price(ticker, session)`` and ``benchmark(session)`` give a close or None.
@@ -137,7 +146,10 @@ def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional
         carried: Dict[str, str] = {}                      # holdings valued at that close because the day's price was gone: ticker -> first such session
         for i in range(len(rows) - 2):
             w = dict(((rows[i].get("portfolios") or {}).get(key) or {}).get("holdings") or {})
-            traded = sum(abs(w.get(t, 0.0) - last.get(t, 0.0)) for t in set(w) | set(last))
+            # Recorded weights follow prices since 2026-11-23: a weight that only moved with its price was not traded.  What was
+            # traded is the gap between today's weights and yesterday's after the same price moves.
+            was = portfolios.drift(last, (lambda t, a=sessions[i - 1], b=sessions[i]: _move(price, t, a, b)) if i else None)
+            traded = sum(abs(w.get(t, 0.0) - was.get(t, 0.0)) for t in set(w) | set(was))
             for t in set(last) - set(w):
                 ended.append(stays.pop(t, 1))
             for t in w:

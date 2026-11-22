@@ -1,7 +1,7 @@
 // 오늘(비서): 프로그램이 이미 계산한 것을 정해진 규칙으로 정리해 보여 줍니다.  외부 AI를 쓰지 않고, 주문을 실행하지 않으며, 매수·매도를 권하지 않습니다.
 "use strict";
 const ASST_LEVELS = ["ACT", "DUE", "INFO"];
-const ASST_TAB_KO = { account: "내 계좌", portfolio: "시장별 자세히", qsf: "점수", assist: "매매 보조", lab: "연구실", stock: "종목", today: "오늘", coin: "코인", overview: "시장 개요", macro: "거시" };
+const ASST_TAB_KO = { account: "내 계좌", portfolio: "시장별 자세히", committee: "투자위원회", qsf: "점수", assist: "매매 보조", lab: "연구실", stock: "종목", today: "오늘", coin: "코인", overview: "시장 개요", macro: "거시" };
 let asstPending = null;       // 명령창에서 넘어온 질문
 
 function asstGo(tab, ticker) {

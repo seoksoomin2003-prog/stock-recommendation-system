@@ -211,7 +211,9 @@ def test_the_record_is_one_line_a_session_and_paper_results_never_look_back(tmp_
     # weights recorded on day i earn from day i+1 to i+2: five days, never the day they were made on
     assert out["status"] == "OK" and out["kind"] == "PAPER" and x["days"] == 5 and x["benchmark_days"] == 5 and abs(x["benchmark_return"] - (1.005 ** 5 - 1)) < 1e-4
     assert abs(x["total_return"] - ((1 + 0.005 - 0.001) * 1.005 ** 3 * (1 - 0.005 - 0.002) - 1)) < 1e-4 and x["positions_closed"] == 1 and x["average_holding_sessions"] == 4.0
-    assert "60거래일부터" in x["ratios"] and "sharpe" not in x and "cagr" not in x and x["unpriced"] == [] and abs(x["cost_total"] - 0.003) < 1e-9
+    assert "60거래일부터" in x["ratios"] and "sharpe" not in x and "cagr" not in x and x["unpriced"] == []
+    # 2026-11-23: a recorded weight that stays at 0.5 while its price moves is a small trade back to 0.5 every day (weights follow prices now)
+    assert 0.003 < x["cost_total"] < 0.00305
     assert record.performance(lines[:2], price, lambda s: None, 0.002)["status"] == "TOO_SHORT"
     jump = record.performance(lines[:4], lambda t, s: 100.0 if s != days[3] else 300.0, lambda s: None, 0.0)["portfolios"]["X"]
     assert jump["price_breaks"] and jump["total_return"] == 0.0                              # a 200% day is a break in the series, not a gain

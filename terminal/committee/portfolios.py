@@ -15,6 +15,13 @@ one stock, one sector and stocks that move together.  What does not fit the limi
 
 A position already held is kept until its engine says sell: a small change in a score is not a trade.  Nothing here is an
 order; no amount or share count is computed.  None of it has been tested on returns.
+
+Since 2026-11-23 (user decisions, before the first record line):
+  - a held position's weight follows its price (``drift``); it is no longer pulled back to a target or to the cap;
+  - OVERWEIGHT: a held position grown to ``OVERWEIGHT_FACTOR`` times the cap or more is left as it is, and the portfolio
+    says so with the rule's own answer (cut to the cap, the rest to cash).  A notice, not a trade;
+  - FATAL: a stock with a severe filing, or whose permanent-loss risk (the Munger engine's inversion) is at that engine's
+    avoid line or over, is in none of the six: not admitted, and taken out whole when held.  What it held stays in cash.
 """
 from __future__ import annotations
 
@@ -24,7 +31,7 @@ from terminal.committee import council
 from terminal.committee import investors as iv
 from terminal.committee.investors import BUY_SIDE, HOLD, SELL_SIDE, WAIT
 
-REBALANCE_STEP = 0.02               # a held position's weight moves only when the new one differs by more than this
+OVERWEIGHT_FACTOR = 1.5             # a held position at this many times the cap or more raises the overweight notice
 SPEC: Dict[str, Dict[str, Any]] = {
     "BUFFETT": {"name": "버핏식 포트폴리오", "objective": "좋은 사업을 오래 보유해 복리로 불린다", "max": 12, "sector": 3, "cap": 0.12, "sizing": "사업 점수에 비례(4~12%)"},
     "MUNGER": {"name": "멍거식 포트폴리오", "objective": "탁월한 사업 몇 개에 집중한다", "max": 6, "sector": 2, "cap": 0.18, "sizing": "확신에 비례(8~18%), 자리를 채우려고 사지 않음"},
@@ -58,16 +65,63 @@ def correlation(a: Optional[List[float]], b: Optional[List[float]]) -> Optional[
     return None if sx <= 0 or sy <= 0 else sum((p - mx) * (q - my) for p, q in zip(x, y)) / (sx * sy) ** 0.5
 
 
-def _steady(weights: Dict[str, float], previous: Dict[str, float]) -> Dict[str, float]:
-    """A held position keeps its weight unless the new one is more than ``REBALANCE_STEP`` away."""
-    return {t: (previous[t] if t in previous and abs(previous[t] - w) <= REBALANCE_STEP else w) for t, w in weights.items()}
+def drift(previous: Optional[Dict[str, float]], move: Optional[Callable[[str], Optional[float]]]) -> Dict[str, float]:
+    """Yesterday's weights after the prices moved: each holding grows or shrinks with its own price and the whole is measured
+    again, cash included.  ``move(ticker)``: the price change since those weights were recorded, or None when unknown (the
+    holding is then taken as unmoved).  Nothing is bought or sold here."""
+    prev = dict(previous or {})
+    if not prev or move is None:
+        return prev
+    grown = {}
+    for t, w in prev.items():
+        m = move(t)
+        grown[t] = w * (1.0 + m) if m is not None and m > -1.0 else w
+    whole = max(0.0, 1.0 - sum(prev.values())) + sum(grown.values())
+    return {t: round(v / whole, 4) for t, v in grown.items()} if whole > 0 else prev
 
 
-def _fit(weights: Dict[str, float], cap: float, total: float) -> Dict[str, float]:
-    """No weight over ``cap`` and no more than ``total`` in all; what is cut is not handed to the others, it stays in cash."""
-    out = {t: min(w, cap) for t, w in weights.items()}
-    s = sum(out.values())
-    return {t: round(w * total / s, 4) for t, w in out.items()} if s > total and s > 0 else {t: round(w, 4) for t, w in out.items()}
+def fatal(e: Dict[str, Any]) -> Optional[str]:
+    """Why this stock is in none of the six, or None.  A severe filing (bankruptcy, a delisting notice, embezzlement and the
+    like, as the score engine's gate reads them), or the Munger engine's permanent-loss risk at its avoid line or over."""
+    severe = (e.get("figures") or {}).get("severe") or []
+    if severe:
+        return f"심각 공시: {severe[0]}"
+    risk = (((e.get("opinions") or {}).get("MUNGER") or {}).get("downside_risk") or {}).get("value")
+    if risk is not None and risk >= iv.M_RISK_AVOID:
+        return f"거꾸로 따져 본 영구 손실 위험 {risk:.0f}/100 (기준 {iv.M_RISK_AVOID:.0f} 이상)"
+    return None
+
+
+def _fit(weights: Dict[str, float], cap: float, total: float, held: Optional[Dict[str, float]] = None) -> Dict[str, float]:
+    """A new position gets no more than ``cap`` and only what room is left under ``total``; a held one keeps the weight its
+    price gave it (it is not pulled back to the cap: that is the overweight notice's business).  When the held ones alone are
+    over ``total`` (the market's regime lowered it) they shrink together and nothing new is bought.  What is cut stays in cash."""
+    held = held or {}
+    old = {t: weights[t] for t in weights if t in held}
+    new = {t: min(w, cap) for t, w in weights.items() if t not in held}
+    s_old, s_new = sum(old.values()), sum(new.values())
+    if s_old > total and s_old > 0:
+        return {**{t: round(w * total / s_old, 4) for t, w in old.items()}, **{t: 0.0 for t in new}}
+    room = max(0.0, total - s_old)
+    scale = room / s_new if s_new > room and s_new > 0 else 1.0
+    return {**{t: round(w, 4) for t, w in old.items()}, **{t: round(w * scale, 4) for t, w in new.items()}}
+
+
+def _notices(key: str, rows: List[Dict[str, Any]], before: Dict[str, float]) -> List[Dict[str, Any]]:
+    """The overweight notices of one portfolio.  ``before``: the weights as they were recorded (not yet moved by prices), to tell
+    a holding that crossed the line today from one that has been over it."""
+    cap, name = SPEC[key]["cap"], SPEC[key]["name"].replace(" 포트폴리오", "")
+    line = OVERWEIGHT_FACTOR * cap
+    out = []
+    for r in rows:
+        if r["status"] != "보유 유지" or r["weight"] < line:
+            continue
+        r["overweight"] = True
+        out.append({"ticker": r["ticker"], "name": r["name"], "weight": r["weight"], "cap": cap, "line": round(line, 4), "to_cash": round(r["weight"] - cap, 4),
+                    "new": before.get(r["ticker"], 0.0) < line,
+                    "text": f"{name}: {r['name']}의 비중이 {r['weight'] * 100:.1f}%까지 커졌습니다(한 종목 한도 {cap * 100:.0f}%의 {OVERWEIGHT_FACTOR:g}배 이상). "
+                            f"이 포트폴리오의 규칙은 {cap * 100:.0f}%로 줄이고 나머지 {(r['weight'] - cap) * 100:.1f}%p를 현금으로 두는 것입니다. 모의 포트폴리오는 그대로 두고 알리기만 합니다."})
+    return out
 
 
 def _row(key: str, e: Dict[str, Any], o: Dict[str, Any], weight: float, status: str) -> Dict[str, Any]:
@@ -79,12 +133,20 @@ def _row(key: str, e: Dict[str, Any], o: Dict[str, Any], weight: float, status: 
 
 
 def investor_portfolio(key: str, book: Dict[str, Dict[str, Any]], previous: Optional[Dict[str, float]] = None, state: Optional[float] = None,
-                       returns: Optional[Callable[[str], Optional[List[float]]]] = None) -> Dict[str, Any]:
-    """One engine's portfolio.  ``book``: {ticker: {ticker, name, sector, as_of, opinions: {investor: result}}}.  ``previous``: {ticker: weight}."""
-    spec, prev = SPEC[key], previous or {}
-    cands, exits = [], []
+                       returns: Optional[Callable[[str], Optional[List[float]]]] = None, move: Optional[Callable[[str], Optional[float]]] = None) -> Dict[str, Any]:
+    """One engine's portfolio.  ``book``: {ticker: {ticker, name, sector, as_of, opinions: {investor: result}}}.  ``previous``: {ticker: weight}.
+    ``move``: each holding's price change since ``previous`` was recorded (``drift``)."""
+    spec, before = SPEC[key], dict(previous or {})
+    prev = drift(before, move)
+    cands, exits, gone = [], [], []
     for t, e in book.items():
         o = e["opinions"][key]
+        why = fatal(e)
+        if why:                                         # in none of the six, whatever this engine says
+            if t in prev:
+                gone.append({"ticker": t, "name": e.get("name") or t, "weight": prev[t], "why": why})
+                exits.append({"ticker": t, "name": e.get("name") or t, "why": f"치명적 훼손으로 전량 제외: {why}"})
+            continue
         if o["recommendation"] in BUY_SIDE or (t in prev and o["recommendation"] in (HOLD, WAIT)):
             cands.append((t, e, o))
         elif t in prev:
@@ -109,21 +171,28 @@ def investor_portfolio(key: str, book: Dict[str, Dict[str, Any]], previous: Opti
             kinds[kind] = kinds.get(kind, 0) + 1
     raw = {t: (0.05 if key == "GRAHAM" else (o["suggested_weight"] or prev.get(t) or 0.05)) for t, e, o in picked}
     invest = exposure(state, D_EXPOSURE) if key == "DRUCKENMILLER" else 1.0
-    weights = _fit(_steady(raw, prev), spec["cap"], invest)
+    weights = _fit({t: prev.get(t, w) for t, w in raw.items()}, spec["cap"], invest, prev)
     rows = [_row(key, e, o, weights[t], "보유 유지" if t in prev else "새로 편입") for t, e, o in picked]
     rows.sort(key=lambda r: (-r["weight"], r["ticker"]))
-    return _wrap(key, rows, exits, skipped, {"exposure_limit": invest, "candidates": len(cands)}, prev)
+    return _wrap(key, rows, exits, skipped, {"exposure_limit": invest, "candidates": len(cands), "overweight": _notices(key, rows, before), "fatal": gone}, prev)
 
 
 def committee_portfolio(book: Dict[str, Dict[str, Any]], previous: Optional[Dict[str, float]] = None, state: Optional[float] = None,
-                        returns: Optional[Callable[[str], Optional[List[float]]]] = None) -> Dict[str, Any]:
+                        returns: Optional[Callable[[str], Optional[List[float]]]] = None, move: Optional[Callable[[str], Optional[float]]] = None) -> Dict[str, Any]:
     """The committee's own construction: its decisions, attractiveness after risk and data quality, volatility-sized, under limits."""
-    spec, prev = SPEC["COMMITTEE"], previous or {}
-    cands, exits = [], []
+    spec, before = SPEC["COMMITTEE"], dict(previous or {})
+    prev = drift(before, move)
+    cands, exits, gone = [], [], []
     vols = sorted(e["figures"].get("hist_vol") for e in book.values() if e["figures"].get("hist_vol"))
     typical = vols[len(vols) // 2] if vols else 0.3
     for t, e in book.items():
         c = e["committee"]
+        why = fatal(e)
+        if why:
+            if t in prev:
+                gone.append({"ticker": t, "name": e.get("name") or t, "weight": prev[t], "why": why})
+                exits.append({"ticker": t, "name": e.get("name") or t, "why": f"치명적 훼손으로 전량 제외: {why}"})
+            continue
         buy = c["decision"] in BUY_SIDE + (council.CONDITIONAL_BUY,)
         if buy or (t in prev and c["decision"] in (HOLD, WAIT)):
             sc = c["scores"]
@@ -158,14 +227,19 @@ def committee_portfolio(book: Dict[str, Dict[str, Any]], previous: Optional[Dict
     score = {t: u / max(vol, 0.05) for t, _e, _c, u, vol in picked}
     total = sum(score.values())
     raw = {t: invest * s / total for t, s in score.items()} if total else {}
-    weights = _fit(_steady(raw, prev), spec["cap"], invest)
+    weights = _fit({t: prev.get(t, w) for t, w in raw.items()}, spec["cap"], invest, prev)
     by_sector: Dict[str, float] = {}
+    fresh: Dict[str, float] = {}
     for t, e, _c, _u, _v in picked:                       # one sector's share of the whole is limited too; the cut stays in cash
-        by_sector[e.get("sector") or ""] = by_sector.get(e.get("sector") or "", 0.0) + weights[t]
-    for t, e, _c, _u, _v in picked:
-        over = by_sector.get(e.get("sector") or "", 0.0)
-        if e.get("sector") and over > spec["sector_weight"]:
-            weights[t] = round(weights[t] * spec["sector_weight"] / over, 4)
+        sec = e.get("sector") or ""
+        by_sector[sec] = by_sector.get(sec, 0.0) + weights[t]
+        if t not in prev:
+            fresh[sec] = fresh.get(sec, 0.0) + weights[t]
+    for t, e, _c, _u, _v in picked:                       # only what is bought now gives way: a held position is not sold for the limit
+        sec = e.get("sector") or ""
+        over = by_sector.get(sec, 0.0) - spec["sector_weight"]
+        if e.get("sector") and over > 0 and t not in prev and fresh.get(sec):
+            weights[t] = round(weights[t] * max(0.0, fresh[sec] - over) / fresh[sec], 4)
     rows = []
     for t, e, c, u, vol in picked:
         row = _row("COMMITTEE", e, c, weights[t], "보유 유지" if t in prev else "새로 편입")
@@ -173,7 +247,8 @@ def committee_portfolio(book: Dict[str, Dict[str, Any]], previous: Optional[Dict
                     "downside_risk": {"value": c["scores"]["downside"], "basis": "위원회의 하방 위험 점수(0~100, 높을수록 위험)"}, "expected_return": {"value": None, "basis": "위원회는 기대수익률을 추정하지 않습니다"}})
         rows.append(row)
     rows.sort(key=lambda r: (-r["weight"], r["ticker"]))
-    return _wrap("COMMITTEE", rows, exits, skipped, {"exposure_limit": invest, "candidates": len(cands), "moves_together": together[:10], "correlation_checked": returns is not None}, prev)
+    return _wrap("COMMITTEE", rows, exits, skipped, {"exposure_limit": invest, "candidates": len(cands), "moves_together": together[:10], "correlation_checked": returns is not None,
+                                                     "overweight": _notices("COMMITTEE", rows, before), "fatal": gone}, prev)
 
 
 def _wrap(key: str, rows: List[Dict[str, Any]], exits: List[Dict[str, Any]], skipped: int, extra: Dict[str, Any], prev: Dict[str, float]) -> Dict[str, Any]:
@@ -196,12 +271,18 @@ def _wrap(key: str, rows: List[Dict[str, Any]], exits: List[Dict[str, Any]], ski
 
 
 def build(book: Dict[str, Dict[str, Any]], previous: Optional[Dict[str, Dict[str, float]]] = None, state: Optional[float] = None,
-          returns: Optional[Callable[[str], Optional[List[float]]]] = None) -> Dict[str, Dict[str, Any]]:
-    """All six, each from its own rule.  ``previous``: {portfolio: {ticker: weight}} of the last record, or nothing."""
+          returns: Optional[Callable[[str], Optional[List[float]]]] = None, move: Optional[Callable[[str], Optional[float]]] = None) -> Dict[str, Dict[str, Any]]:
+    """All six, each from its own rule.  ``previous``: {portfolio: {ticker: weight}} of the last record, or nothing.
+    ``move``: each stock's price change since that record, so the held weights follow their prices."""
     prev = previous or {}
-    out = {key: investor_portfolio(key, book, prev.get(key), state, returns) for key in iv.ORDER}
-    out["COMMITTEE"] = committee_portfolio(book, prev.get("COMMITTEE"), state, returns)
+    out = {key: investor_portfolio(key, book, prev.get(key), state, returns, move) for key in iv.ORDER}
+    out["COMMITTEE"] = committee_portfolio(book, prev.get("COMMITTEE"), state, returns, move)
     return out
+
+
+def interrupts(ports: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    """{portfolio: {overweight: [...], fatal: [...]}} for the portfolios where one fired."""
+    return {key: {"overweight": p.get("overweight") or [], "fatal": p.get("fatal") or []} for key, p in ports.items() if p.get("overweight") or p.get("fatal")}
 
 
 def overlap(ports: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:

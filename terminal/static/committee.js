@@ -152,17 +152,22 @@ async function icDash() {
 }
 
 function icPortHtml(p) {
-  const rows = p.holdings.map((r) => `<tr><td class="l">${icTicker(r.ticker, r.name)}</td><td class="l">${esc(r.sector || "")}${r.category ? ` · ${esc(r.category)}` : ""}</td><td class="num"><b>${icPct(r.weight)}</b></td>
+  const rows = p.holdings.map((r) => `<tr><td class="l">${icTicker(r.ticker, r.name)}</td><td class="l">${esc(r.sector || "")}${r.category ? ` · ${esc(r.category)}` : ""}</td><td class="num"><b>${icPct(r.weight)}</b>${r.overweight ? ' <span class="badge risk-note" title="한 종목 한도의 1.5배 이상입니다. 알리기만 하고 그대로 둡니다.">비중 과다</span>' : ""}</td>
     <td class="l">${icBadge(r.recommendation, r.recommendation_ko)}</td><td class="num">${icNum(r.score)}</td><td class="num">${icNum(r.confidence)}</td><td class="l">${esc(r.status)}</td>
     <td class="l"><details><summary>${esc(r.thesis || "")}</summary><div class="meta">들어갈 조건: ${esc(r.entry || "")}</div><div class="meta">나올 조건: ${esc(r.exit || "")}</div>
       <div class="meta">비중을 정한 방법: ${esc(r.sizing)}${r.supporters ? ` · 찬성한 관점: ${esc(r.supporters.join(", ") || "없음")}` : ""}${r.volatility ? ` · 변동성 ${icPct(r.volatility, 0)}` : ""}</div>
       <div class="meta">기준일 ${esc(r.as_of || "")}</div></details></td></tr>`).join("");
   const sectors = Object.entries(p.sectors || {}).map(([k, w]) => `${esc(k)} ${icPct(w, 0)}`).join(" · ");
+  // 예외 두 가지(2026-11-23): 비중 과다는 알리기만 하고 그대로 두며, 치명적 훼손은 여섯 포트폴리오 모두에서 전부 뺍니다
+  const interrupts = (p.fatal || []).map((n) => `<div class="notice"><b>치명적 훼손으로 전량 제외</b> ${esc(n.name)}(${esc(n.ticker)}): ${esc(n.why)}. 빠진 비중 ${icPct(n.weight)}는 현금으로 둡니다.</div>`).join("")
+    + (p.overweight || []).map((n) => `<div class="notice"><b>비중 과다 알림${n.new ? " · 오늘 처음" : ""}</b> ${esc(n.text)}</div>`).join("");
   return `<div class="panel"><h2>${esc(p.name)} <span class="meta" style="margin:0">${esc(p.objective)}</span></h2>
     ${plainBlock(p.plain)}
+    ${interrupts}
     <div class="ic-scores"><span><i>종목 수</i><b class="num">${p.count}</b></span><span><i>투자 비중</i><b class="num">${icPct(p.invested, 0)}</b></span><span><i>현금</i><b class="num">${icPct(p.cash, 0)}</b></span>
       <span><i>가장 큰 종목</i><b class="num">${icPct(p.largest)}</b></span><span><i>집중도(HHI)</i><b class="num">${icNum(p.concentration, 3)}</b></span><span><i>이번 교체</i><b class="num">${icPct(p.turnover, 0)}</b></span></div>
     <div class="meta"><b>비중 규칙</b> ${esc(p.sizing)} · 최대 ${p.limits.max}종목, 한 업종 ${p.limits.per_sector}종목, 한 종목 ${icPct(p.limits.per_stock, 0)}까지 · 후보 ${p.candidates}종목 중 한도로 빠진 종목 ${p.left_out_by_limits}</div>
+    <div class="meta"><b>보유 중인 종목</b>의 비중은 가격에 따라 저절로 변합니다(한도로 되돌리지 않습니다). 한도의 1.5배 이상이 되면 알리고, 심각 공시가 뜨거나 멍거식 영구 손실 위험이 50 이상이면 전부 뺍니다.</div>
     ${(p.cash_reasons || []).map((x) => `<div class="meta"><b>현금</b> ${esc(x)}</div>`).join("")}
     ${sectors ? `<div class="meta"><b>업종</b> ${sectors}</div>` : ""}
     ${rows ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th class="l">업종</th><th>비중</th><th class="l">판정</th><th>점수</th><th>신뢰</th><th class="l">상태</th><th class="l">논지(누르면 조건)</th></tr></thead><tbody>${rows}</tbody></table></div>`

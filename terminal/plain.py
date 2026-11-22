@@ -201,6 +201,11 @@ def portfolio_plain(p: Dict[str, Any]) -> Dict[str, Any]:
     if cash >= 0.3 and rows:
         parts.append({"h": "현금이 많은 이유", "lines": ["이 방식의 규칙에 따라 다 채우지 않았습니다. 조건에 맞는 종목이 적거나, 한 종목과 한 업종에 담을 수 있는 한도에 걸렸거나, 시장이 나쁠 때 현금을 늘리는 규칙 때문입니다. "
                                                          "정확한 이유는 이 화면의 '현금' 줄에 적혀 있습니다. 현금으로 두는 것도 이 바구니의 선택입니다."]})
+    notes = [f"{n.get('name') or n['ticker']}의 값이 많이 올라 이 바구니의 {n['weight'] * 100:.0f}%를 차지합니다. 한 종목에 담기로 한 몫({n['cap'] * 100:.0f}%)보다 훨씬 큽니다. "
+             f"이 바구니의 규칙은 {n['cap'] * 100:.0f}%로 줄이고 나머지를 현금으로 두는 것입니다. 여기서는 알리기만 하고 그대로 둡니다." for n in p.get("overweight") or []]
+    notes += [f"{n.get('name') or n['ticker']}에 큰 문제가 드러나 이 바구니에서 전부 뺐습니다. 뺀 몫은 현금으로 둡니다. 이유: {n['why']}." for n in p.get("fatal") or []]
+    if notes:
+        parts.append({"h": "오늘의 알림", "lines": notes})
     if p.get("exits"):
         parts.append({"h": "빠진 종목", "lines": [f"어제까지 있다가 오늘 빠진 종목이 {len(p['exits'])}개 있습니다. 그 방식의 조건에서 벗어났기 때문입니다."]})
     parts.append({"h": "꼭 알아 둘 것", "lines": [PORTFOLIO_CAVEAT]})

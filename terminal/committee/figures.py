@@ -70,6 +70,9 @@ def read(long_snap: Optional[Dict[str, Any]], swing_snap: Optional[Dict[str, Any
     kind = "FINANCIAL" if financial else "REAL_ESTATE" if sector in REAL_ESTATE else "ASSET_LIGHT" if sector in ASSET_LIGHT else "GENERAL"
     out: Dict[str, Any] = {"ticker": base.get("ticker"), "market": base.get("market"), "as_of": base.get("data_date"), "sector": sector, "kind": kind,
                            "price": base.get("price"), "marks": list(marks), "deals": list(deals),
+                           # the score engine's gate for a severe filing (bankruptcy, a delisting notice, embezzlement ...): the fatal rule of the portfolios reads it
+                           "severe": list(dict.fromkeys(str(g.get("text") or g.get("code")) for snap in (long_snap, swing_snap) for g in (snap or {}).get("gates") or []
+                                                        if isinstance(g, dict) and g.get("code") == "SEVERE_EVENT")),
                            "stop": (swing_snap or base).get("stop"), "target": (swing_snap or base).get("target")}
     status: Dict[str, str] = {}
     source: Dict[str, str] = {}

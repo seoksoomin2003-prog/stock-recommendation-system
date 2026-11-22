@@ -86,6 +86,32 @@ def _returns(terminal: Any, market: str) -> Callable[[str], Optional[List[float]
     return of
 
 
+def _moves(terminal: Any, market: str, since: Optional[str]) -> Optional[Callable[[str], Optional[float]]]:
+    """Each stock's price change from the close of ``since`` (the session of the last record) to its newest close, on today's own
+    adjusted series (a split in between does not look like a fall).  None when there is no earlier record."""
+    if not since:
+        return None
+    try:
+        load = terminal.qsf._loader(market)
+    except Exception:
+        return None
+    kept: Dict[str, Optional[float]] = {}
+
+    def of(t: str) -> Optional[float]:
+        if t not in kept:
+            kept[t] = None
+            try:
+                bars = load(t) or []
+                then = next((b.get("adj_close") or b.get("close") for b in reversed(bars) if b.get("date") == since), None)
+                now = (bars[-1].get("adj_close") or bars[-1].get("close")) if bars else None
+                if then and now and bars[-1].get("date") > since:
+                    kept[t] = now / then - 1.0
+            except Exception:
+                kept[t] = None
+        return kept[t]
+    return of
+
+
 def session_work(terminal: Any, market: str) -> Optional[Dict[str, Any]]:
     """The newest session judged once: every stock's five opinions and the committee's decision.  No portfolio yet."""
     session = terminal.qsf.latest(market).get("session")
@@ -112,7 +138,7 @@ def six(terminal: Any, market: str) -> Optional[Dict[str, Any]]:
     if work is None:
         return None
     if "portfolios" not in work:
-        work["portfolios"] = portfolios.build(work["book"], work["holds"], work["state"], _returns(terminal, market))
+        work["portfolios"] = portfolios.build(work["book"], work["holds"], work["state"], _returns(terminal, market), _moves(terminal, market, work["previous_session"]))
     return work
 
 
@@ -180,7 +206,7 @@ def six_view(terminal: Any, market: str) -> Dict[str, Any]:
     if work is None:
         return {"status": "NO_SCAN", "market": market, "reason": "저장된 스캔 기록이 없습니다.", "portfolios": []}
     return {"status": "OK", "rules": iv.RULES, "market": market, "session": work["session"], "previous_session": work["previous_session"], "market_state": work["state"], "regimes": work["regimes"],
-            "portfolios": _ports_out(work), "overlap": portfolios.overlap(work["portfolios"]), "note": iv.NOTE,
+            "portfolios": _ports_out(work), "overlap": portfolios.overlap(work["portfolios"]), "note": iv.NOTE, "interrupts": portfolios.interrupts(work["portfolios"]),
             "made": "지금 만들었습니다. 매일 작업이 그날의 여섯 포트폴리오를 기록하고, 다음 날은 그 기록을 보유 상태로 읽습니다." if work["previous_session"] else
             "지금 만들었습니다. 아직 매일 기록이 없어 모든 종목이 '새로 편입'입니다. 첫 기록 뒤부터 보유를 이어 갑니다."}
 

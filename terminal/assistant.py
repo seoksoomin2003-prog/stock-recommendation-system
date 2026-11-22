@@ -24,7 +24,7 @@ FRESH_ALERT_HOURS = 36     # the user's own alert conditions that fired since ab
 SHOWN_ORDERS = 3
 SWING_DAYS_LEFT = 3
 EX_DIVIDEND_DAYS = 5       # an ex-dividend date of a holding or a watched stock within this many days is listed
-PART_KO = {"context": "지수와 거시 일정", "account": "보유 종목 점검", "plan": "주문 계획", "market": "시장 상태", "earnings": "실적 일정", "alerts": "내 알림 조건", "job": "자료 수집 상태",
+PART_KO = {"committee": "모의 포트폴리오 알림", "context": "지수와 거시 일정", "account": "보유 종목 점검", "plan": "주문 계획", "market": "시장 상태", "earnings": "실적 일정", "alerts": "내 알림 조건", "job": "자료 수집 상태",
            "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시", "gaps": "재무 기준에 따른 점수 차이", "dividends": "배당락일"}
 # the portfolio's own alert codes (terminal.portfolio.alerts) and the exit readings (automation.exit_alerts)
 ALERT_LEVEL = {"STOP_HIT": "ACT", "NEAR_STOP": "ACT", "QSF_EXIT": "ACT", "QSF_THESIS_INVALIDATED": "ACT", "QSF_REDUCE": "ACT",
@@ -291,10 +291,34 @@ def headline(items: List[Dict[str, Any]]) -> str:
     return "오늘 따로 챙길 것이 없습니다."
 
 
+def committee_items(row: Optional[Dict[str, Any]], market: str, session: Optional[str]) -> List[Dict[str, Any]]:
+    """The interrupts of the six paper portfolios on the newest recorded session, read from the record's last line (nothing is
+    built here: the portfolios are made only by their button and by the daily record).  A fatal exit is told once per stock with
+    the portfolios it left; an overweight notice on the day the holding crossed the line."""
+    if not row or not session or row.get("session") != session:
+        return []
+    from terminal.committee import portfolios as cpf
+    name = {k: v["name"].replace(" 포트폴리오", "") for k, v in cpf.SPEC.items()}
+    gone: Dict[str, Dict[str, Any]] = {}
+    out: List[Dict[str, Any]] = []
+    for key, p in (row.get("portfolios") or {}).items():
+        for n in p.get("fatal") or []:
+            g = gone.setdefault(n["ticker"], {"name": n.get("name") or n["ticker"], "why": n.get("why"), "from": []})
+            g["from"].append(name.get(key, key))
+        for n in p.get("overweight") or []:
+            if n.get("new"):
+                out.append(item("DUE", "IC_INTERRUPT", f"모의 포트폴리오 알림 · {n['text']}", n["ticker"], tab="committee",
+                                short=f"{name.get(key, key)} {n['ticker']} 비중 {n['weight'] * 100:.0f}%(규칙은 {n['cap'] * 100:.0f}%로 축소)"))
+    for t, g in gone.items():
+        out.insert(0, item("DUE", "IC_INTERRUPT", f"모의 포트폴리오 알림 · {g['name']}({t})을 {', '.join(g['from'])} 포트폴리오에서 전부 뺐습니다. 이유: {g['why']}. 빠진 몫은 현금으로 둡니다. "
+                                                  "모의 포트폴리오의 규칙이 한 일이고 주문이 아닙니다.", t, tab="committee", short=f"{t} 전량 제외({', '.join(g['from'])})"))
+    return out
+
+
 def daily_lines(briefs: List[Dict[str, Any]]) -> List[str]:
-    """Three lines for the daily message, both markets on each: market state, the top three, the order plan.
-    Tickers and counts only: no amount and no quantity leaves the machine."""
-    rows: Dict[str, List[str]] = {"시장 상태": [], "스윙 상위 3": [], "주문 계획": []}
+    """Three lines for the daily message, both markets on each: market state, the top three, the order plan; and a fourth on
+    the days an interrupt of the six paper portfolios fired.  Tickers and counts only: no amount and no quantity leaves the machine."""
+    rows: Dict[str, List[str]] = {"시장 상태": [], "스윙 상위 3": [], "주문 계획": [], "모의 포트폴리오 알림": []}
     for brief in briefs:
         if brief.get("status") != "REAL":
             continue
@@ -305,7 +329,9 @@ def daily_lines(briefs: List[Dict[str, Any]]) -> List[str]:
         orders = [i["ticker"] for i in brief["items"] if i["kind"] == "ORDER"]
         plan = f"{brief.get('orders') or len(orders)}건({', '.join(orders)}{' 등' if (brief.get('orders') or 0) > len(orders) else ''})" if orders else \
             (by.get("NO_ACCOUNT") or {}).get("short") or ("새 주문 없음" if "NO_ORDERS" in by else None)
-        for label, text in (("시장 상태", (by.get("MARKET_ADVERSE") or by.get("MARKET_STATE") or {}).get("short")), ("스윙 상위 3", (by.get("TOP3") or {}).get("short")), ("주문 계획", plan)):
+        fired = [i["short"] for i in brief["items"] if i["kind"] == "IC_INTERRUPT" and i.get("short")]
+        for label, text in (("시장 상태", (by.get("MARKET_ADVERSE") or by.get("MARKET_STATE") or {}).get("short")), ("스윙 상위 3", (by.get("TOP3") or {}).get("short")), ("주문 계획", plan),
+                            ("모의 포트폴리오 알림", ", ".join(fired[:4]) + (f" 외 {len(fired) - 4}건" if len(fired) > 4 else "") if fired else None)):
             if text:
                 rows[label].append(f"{where} {text}")
     return [f"{label}: " + " · ".join(parts) for label, parts in rows.items() if parts]
@@ -396,6 +422,12 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
 
     part("account", account)
     part("plan", plan)
+
+    def committee_alerts() -> List[Dict[str, Any]]:
+        from terminal.committee import record as crec
+        rows = crec.read(base, market)
+        return committee_items(rows[-1] if rows else None, market, terminal.qsf.latest(market).get("session"))
+    part("committee", committee_alerts)
     part("market", market_state)
     part("context", lambda: context_items(terminal.overview(market), terminal.econ_calendar(market, 7), market))
     part("earnings", lambda: earnings_items(terminal.qsf.earnings_upcoming(market, 14)))
