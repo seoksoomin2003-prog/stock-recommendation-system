@@ -170,7 +170,7 @@ def test_six_portfolios_are_built_six_different_ways():
     assert {"ticker", "name", "weight", "score", "confidence", "recommendation", "expected_return", "downside_risk", "thesis", "entry", "exit", "sizing", "as_of", "status"} <= set(one) and one["status"] == "새로 편입"
     storm = pf.build(b, None, 20.0)                                                         # the market's regime sets how much is invested
     assert storm["DRUCKENMILLER"]["invested"] <= 0.4 + 1e-9 and storm["COMMITTEE"]["invested"] <= 0.6 + 1e-9 and storm["GRAHAM"]["invested"] == ports["GRAHAM"]["invested"]
-    assert "시장 국면 때문에" in storm["COMMITTEE"]["cash_reasons"][0] and pf.exposure(None, pf.D_EXPOSURE) == 1.0
+    assert "시장 국면 때문에" in storm["COMMITTEE"]["cash_reasons"][0] and pf.exposure(None, pf.D_EXPOSURE) == 0.7 and pf.exposure(None, pf.C_EXPOSURE) == 0.8 and pf.exposure(60.0, pf.D_EXPOSURE) == 1.0          # unknown: one step down (2026-11-23)
     over = pf.overlap(ports)
     assert len(over) == 15 and all(o["count"] == len(o["shared"]) for o in over)
     assert pf.build({}, None, 60.0)["BUFFETT"]["count"] == 0 and "매수 조건을 채운 종목이 없습니다" in pf.build({}, None, 60.0)["BUFFETT"]["cash_reasons"][0]

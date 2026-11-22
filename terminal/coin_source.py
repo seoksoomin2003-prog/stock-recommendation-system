@@ -2,7 +2,8 @@
 
 Used only when the predictor's files are absent (terminal/coin_bridge.py decides).  It asks Binance's documented public futures
 endpoints for the thirty most traded USDT perpetuals: four-hour bars and funding rates.  No key, no account, no order.  One refresh
-is about sixty requests, made at most once per four-hour close and only when someone opens the coin screen; the reply is kept on disk.
+is about sixty requests, made at most once per four-hour close and only when someone opens the coin screen or the account page
+of a user who holds coins (``stored`` reads the reply on file and asks nobody); the reply is kept on disk.
 
 Checked 2026-11-21: the host's robots.txt names search-engine crawlers only; the exchange publishes a limit of 2,400 request weight
 a minute (a refresh uses about 350); its data terms allow personal use and restrict commercial redistribution.  If the exchange
@@ -102,6 +103,12 @@ def load(base: Path, now_ms: Optional[int] = None, get: Optional[Callable[[str, 
                 _write(path, got)
                 return {**got, "arrays": _arrays(got)}
         return {**have, "arrays": _arrays(have), "error": failed[1]} if have else {"error": failed[1]}
+
+
+def stored(base: Path) -> Dict[str, Any]:
+    """The reply on file, whatever its age, and no request to anyone.  Empty when there is none."""
+    have = _read(Path(base) / CACHE)
+    return {**have, "arrays": _arrays(have)} if have else {}
 
 
 def _write(path: Path, doc: Dict[str, Any]) -> None:

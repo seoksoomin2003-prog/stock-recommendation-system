@@ -93,6 +93,15 @@ def _pct(a, b) -> Optional[float]:
     return (a / b - 1) * 100 if a is not None and b not in (None, 0) else None
 
 
+def to_krw(value: Optional[float], currency: str, rate: Optional[float]) -> Optional[float]:
+    """An amount in won: itself when it is won, times the day's rate when it is dollars; None when either is unknown (never 0)."""
+    if value is None:
+        return None
+    if currency == "KRW":
+        return value
+    return value * rate if rate else None
+
+
 class Terminal(ModelViews):
     def __init__(self, base_dir: Path = Path("."), src=sources, clock=None, now: Callable[[], datetime] = None):
         self.base = Path(base_dir)
@@ -705,7 +714,9 @@ class Terminal(ModelViews):
         from terminal import coin_bridge, coin_source
         fx = (self._quotes(["KRW=X"], "pf:fx", "US")["items"].get("KRW=X") or {})
         try:
-            doc = coin_source.load(self.base)
+            # Coins on file: ask for the newest bars.  None: read what is stored and ask nobody (the account page of a user
+            # without coins asked Binance some sixty times inside the request, assessment 2026-11-23).
+            doc = coin_source.load(self.base) if coins else coin_source.stored(self.base)
         except Exception as exc:                                   # the coin part never stops the stock accounts
             doc = {"error": type(exc).__name__}
         bars = (doc.get("arrays") or {}).get("bars") or {}
@@ -717,19 +728,22 @@ class Terminal(ModelViews):
             if rows is None or not len(rows) or not rate:
                 out[c] = {"close": None, "status": "UNAVAILABLE", "reason": "NO_RATE" if s and not rate else "NOT_COVERED"}
                 continue
-            unit = 1000.0 if s.startswith("1000") else 1.0
+            unit = coin_bridge.unit_of(s)
             usd = float(rows[-1, 4]) / unit
-            day = float(rows[-7, 4]) / unit if len(rows) >= 7 else None          # six four-hour bars back: a day
+            if not math.isfinite(usd) or usd <= 0:                 # a value that is not a price is no price
+                out[c] = {"close": None, "status": "UNAVAILABLE", "reason": "BAD_VALUE"}
+                continue
+            day = float(rows[-7, 4]) / unit if len(rows) >= 7 and math.isfinite(float(rows[-7, 4])) and float(rows[-7, 4]) > 0 else None          # six four-hour bars back: a day
             when = datetime.fromtimestamp((float(rows[-1, 0]) + coin_bridge.BAR_MS) / 1000, tz=timezone.utc)
             out[c] = {"close": usd * rate, "usd": usd, "date": when.astimezone(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d"), "status": "STALE" if doc.get("error") else "REAL",
                       "change_pct": (usd / day - 1) * 100 if day else None}
         return {"items": out, "fx": fx, "covered": sorted(by), "names": {c: coin_bridge.NAMES_KO.get(c) for c in by}, "error": doc.get("error")}
 
-    def _valued(self, market: str = "US"):
+    def _valued(self, market: str = "US", coin_got: Optional[Dict[str, Any]] = None):
         recs, integ, state = self._book(market)
         held = sorted(state["positions"])
         if market == "COIN":
-            got = self._coin_quotes(held)
+            got = coin_got or self._coin_quotes(held)
             val = pf.valuation(state, got["items"], {t: None for t in held}, self.settings(), market)
             val["alerts"], val["sectors"] = [], {}                 # no limit of this program is defined for coins
             for h in val["holdings"]:
@@ -750,9 +764,9 @@ class Terminal(ModelViews):
         other = "KR" if market == "US" else "US"
         eq = {market: val["summary"]["equity"], other: self._valued(other)[3]["summary"]["equity"]}
         rate = fx.get("close")
-        total = eq["KR"] + eq["US"] * rate if None not in (eq["KR"], eq["US"], rate) else None
-        return {"krw": total, "us_equity": eq["US"], "kr_equity": eq["KR"], "usdkrw": rate, "fx_date": fx.get("date"),
-                "us_krw": eq["US"] * rate if eq["US"] is not None and rate else None}
+        us = to_krw(eq["US"], "USD", rate)
+        total = eq["KR"] + us if None not in (eq["KR"], us) else None
+        return {"krw": total, "us_equity": eq["US"], "kr_equity": eq["KR"], "usdkrw": rate, "fx_date": fx.get("date"), "us_krw": us}
 
     ACCOUNTS = (("US", "미국 주식", "USD"), ("KR", "한국 주식", "KRW"), ("COIN", "코인", "KRW"))
 
@@ -763,15 +777,16 @@ class Terminal(ModelViews):
         gone = pf.voided_ids(all_recs)
         parts, rows, rate, fx_date = [], [], None, None
         keys = ("equity", "equity_known", "cash", "market_value", "market_value_known", "complete", "missing_prices", "unrealized", "realized", "day_pnl", "net_deposits", "total_pnl")
+        coins = self._coin_quotes(sorted(self._book("COIN")[2]["positions"]))          # one reading for the page: prices, covered list, error
         for market, label, cur in self.ACCOUNTS:
-            recs, integ_m, _, val, fx, _ = self._valued(market)
+            recs, integ_m, _, val, fx, _ = self._valued(market, coins)
             if fx.get("close"):
                 rate, fx_date = fx["close"], fx.get("date")
             parts.append({"market": market, "label": label, "currency": cur, "records": len(recs), "integrity": integ_m["status"], **{k: val["summary"].get(k) for k in keys}})
             rows += [{**h, "market": market, "currency": cur} for h in val["holdings"]]
 
         def won(v: Optional[float], cur: str) -> Optional[float]:
-            return None if v is None else v if cur == "KRW" else v * rate if rate else None
+            return to_krw(v, cur, rate)
         for p in parts:
             for k in ("equity", "cash", "market_value", "total_pnl", "net_deposits", "day_pnl"):
                 p[f"{k}_krw"] = won(p[k], p["currency"])
@@ -786,7 +801,6 @@ class Terminal(ModelViews):
         rows.sort(key=lambda h: (-(h["value_krw"] or 0.0), h["market"], h["ticker"]))
         journal = [{**r, "market": r.get("market", "US"), "voided": r["id"] in gone}
                    for r in sorted(all_recs, key=lambda r: (r.get("date") or r["recorded_at"][:10], r["seq"]), reverse=True)]
-        coins = self._coin_quotes([])
         sums = {k: total(k) for k in ("equity", "cash", "market_value", "total_pnl", "net_deposits", "day_pnl")}
         return {"integrity": integ, "accounts": parts, "holdings": rows, "journal": journal[:300], "journal_count": len(journal),
                 "total": {"krw": krw, "usd": krw / rate if krw is not None and rate else None, "usdkrw": rate, "fx_date": fx_date, **{f"{k}_krw": v for k, v in sums.items() if k != "equity"},

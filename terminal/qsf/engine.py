@@ -71,6 +71,8 @@ def hard_gates(ctx: Dict[str, Any], strategy: str) -> List[Dict[str, str]]:
         add("DATA_ANOMALY", f"최근 1년 안에 하루 {t['max_move_252'] * 100:.0f}% 변동이 있습니다. 조정되지 않은 분할·병합이나 자료 오류일 수 있어 확인이 필요합니다.")
     if t.get("row_defects"):
         add("DATA_ANOMALY", f"일봉에 날짜가 겹치거나 순서가 어긋난 행이 {t['row_defects']}개 있어 데이터 확인이 필요합니다.")
+    if (t.get("max_halt_run") or 0) > config.MAX_HALT_RUN:
+        add("DATA_ANOMALY", f"최근 1년에 거래가 없던 날이 {t['max_halt_run']}거래일 이어져 있어(거래정지) 그 기간이 든 지표를 믿기 어렵습니다.")
     if (t.get("max_gap_weekdays") or 0) > config.MAX_HISTORY_GAP:
         add("DATA_ANOMALY", f"최근 1년 일봉에 평일 {t['max_gap_weekdays']}일이 연속으로 비어 있어 데이터 확인이 필요합니다(거래정지였거나 자료가 빠진 것).")
     if t.get("bad_rows"):
@@ -222,7 +224,8 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
                 row["normalized"] = None
                 if o["status"] == "MISSING":
                     missing_names.append(fid)
-                    miss_w += weight
+                    if fid not in config.NEVER_AVAILABLE.get((market, strategy), ()):      # a factor nobody has judges nobody
+                        miss_w += weight
             rows.append(row)
         domains[domain] = {"label": config.DOMAIN_LABELS[domain], "max_points": sum(profile["domains"][domain].values()),
                            "points": c_sum, "available_weight": w_av,

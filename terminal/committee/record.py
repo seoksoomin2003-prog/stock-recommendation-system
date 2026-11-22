@@ -129,7 +129,8 @@ def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional
     sessions = [r["session"] for r in rows]
     out: Dict[str, Any] = {"kind": "PAPER", "kind_ko": "모의 기록(기록을 시작한 날부터, 과거로 거슬러 계산한 값 없음)", "first_session": sessions[0] if sessions else None,
                            "last_session": sessions[-1] if sessions else None, "records": len(rows), "portfolios": {}, "one_way_cost": one_way_cost,
-                           "method": "D일 장 마감 뒤 만든 포트폴리오를 D+1일 종가에 산 것으로 보고 D+1일에서 D+2일까지의 수익부터 셉니다. 배당은 수정 종가에 든 만큼만 반영됩니다."}
+                           "method": "D일 장 마감 뒤 정한 매매를 D+1일 종가에 한 것으로 보고 D+1일에서 D+2일까지의 수익부터 셉니다. 모의 계좌의 비중은 그 하루 동안 가격을 따라 움직인 뒤의 값입니다. "
+                                     "배당은 수정 종가에 든 만큼만 반영됩니다."}
     if len(rows) < 3:
         out["status"], out["reason"] = "TOO_SHORT", f"기록이 {len(rows)}거래일입니다. 사흘째 기록부터 첫 하루 수익이 계산됩니다."
         return out
@@ -142,6 +143,8 @@ def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional
         daily, costs, turns, unpriced, jumps, stays = [], 0.0, [], set(), [], {}
         ended: List[int] = []
         last: Dict[str, float] = {}
+        held: Dict[str, float] = {}                       # what the paper book holds after the last trade
+        moved: Dict[str, Optional[float]] = {}            # how each of those moved over the day it was just held
         known: Dict[str, float] = {}                      # each holding's last close on file
         carried: Dict[str, str] = {}                      # holdings valued at that close because the day's price was gone: ticker -> first such session
         for i in range(len(rows) - 2):
@@ -149,13 +152,22 @@ def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional
             # Recorded weights follow prices since 2026-11-23: a weight that only moved with its price was not traded.  What was
             # traded is the gap between today's weights and yesterday's after the same price moves.
             was = portfolios.drift(last, (lambda t, a=sessions[i - 1], b=sessions[i]: _move(price, t, a, b)) if i else None)
-            traded = sum(abs(w.get(t, 0.0) - was.get(t, 0.0)) for t in set(w) | set(was))
+            # The trade decided on day D is done at the close of D+1, a day later.  By then the book's own holdings have moved
+            # with D+1's prices, so the book ends up holding "what it held, moved, plus the decided change", not the recorded
+            # weights.  Until 2026-11-23 the recorded weights were multiplied by the next day's returns as they stood
+            # (assessment 2026-11-23: about +-0.4-0.9% over 240 days; fixed before the first record line existed).
+            before = portfolios.drift(held, moved.get) if i else {}
+            now = {t: v if t not in last else max(0.0, before.get(t, 0.0) + v - was.get(t, 0.0)) for t, v in w.items()}
+            whole = sum(now.values())
+            if whole > 1.0:                               # never more than the book has
+                now = {t: v / whole for t, v in now.items()}
+            traded = sum(abs(now.get(t, 0.0) - before.get(t, 0.0)) for t in set(now) | set(before))
             for t in set(last) - set(w):
                 ended.append(stays.pop(t, 1))
             for t in w:
                 stays[t] = stays.get(t, 0) + 1
-            r = 0.0
-            for t, weight in w.items():
+            r, moved = 0.0, {}
+            for t, weight in now.items():
                 p0, p1 = price(t, sessions[i + 1]) or known.get(t), price(t, sessions[i + 2])
                 if p0 and not p1:                         # the price is gone (halted, delisted): carried at its last close, and said
                     known[t] = p0
@@ -172,11 +184,12 @@ def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional
                     if not booked:
                         continue
                 r += weight * move
+                moved[t] = move
             cost = traded * one_way_cost
             daily.append(r - cost)
             costs += cost
             turns.append(traded)
-            last = w
+            last, held = w, now
         stats = _stats(daily, bench)
         stats.update({"cost_total": round(costs, 5), "turnover_per_day": round(sum(turns) / len(turns), 4) if turns else None,
                       "average_holding_sessions": round(sum(ended) / len(ended), 1) if ended else None, "positions_closed": len(ended),

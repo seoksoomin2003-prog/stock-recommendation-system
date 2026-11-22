@@ -62,6 +62,10 @@ def entry_status(res: Dict, ctx: Dict) -> Dict[str, Any]:
         return {"status": "NO_VALID_ENTRY_SETUP", "reason": f"점수 {res['score']:.1f}점이 관찰 기준 55점 미만입니다.", "zone": None}
     if strategy == "LONG_TERM":
         v = _factor(res, "valuation")
+        if v is None:
+            # The rule below reads the valuation.  Without one it used to say "the valuation does not block entry": the same stock
+            # read "overvalued" with its figures and "enter now" without them (assessment 2026-11-23; user decision).
+            return {"status": "NO_VALID_ENTRY_SETUP", "reason": "밸류에이션 자료가 없어 진입을 판단하지 않습니다. 자료가 없다는 것은 값이 적당하다는 뜻이 아닙니다.", "zone": None}
         if v is not None and v < 0.25:
             # Until 2026-11-22 this stopped only a good business at a poor valuation: a poor valuation with a poor business went
             # through as "the valuation does not block entry" (assessment 2026-11-22; user decision "구멍만 막기").

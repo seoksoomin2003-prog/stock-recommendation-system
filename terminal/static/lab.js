@@ -70,7 +70,7 @@ async function pollLab() {
     setTimeout(pollLab, 3000); return;
   }
   if (btn) btn.disabled = false;
-  if (j.state === "FAILED" && msg) { msg.className = "msg err"; msg.textContent = "실패: " + j.error; return; }
+  if (j.state === "FAILED" && msg) { msg.className = "msg err"; msg.textContent = "실패: " + errKo({ message: j.error || "" }); return; }
   if (j.state === "DONE") {
     const r = j.result.record;
     if (msg) { msg.className = "msg ok"; msg.textContent = r.recorded.length ? `${r.signal_session} 신호 ${r.recorded.length}개 모델 기록 완료 (진입 ${r.entry_session}).` : `${r.signal_session} 신호는 이미 기록되어 있습니다.`; }

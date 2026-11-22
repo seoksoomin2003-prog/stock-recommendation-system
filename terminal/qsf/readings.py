@@ -52,8 +52,8 @@ REGISTRY: List[Dict[str, Any]] = [
        after="AVOID_RULE_SUPPORTED가 나와도 매수 후보에서 자동으로 빼지 않습니다. 화면의 회피 표시를 보고 직접 판단합니다."),
     *_per_market("score_split", "점수 분리 비교", "score-split-evaluate", "QSF_SCORE_SPLIT_{m}.json", "QSF_SCORE_SPLIT_PROTOCOL.md", 240, 20, store="score_split_{m}",
                  after="WITH_REGIME_BETTER가 나와도 점수를 자동으로 되돌리지 않습니다."),
-    *_per_market("fund_period", "재무 기준 기간 비교", "fund-period-evaluate", "QSF_FUND_PERIOD_{m}.json", "QSF_FUND_PERIOD_PROTOCOL.md", 240, 20, store="fund_period_{m}", applies=True,
-                 after="TRAILING_BETTER가 나오면 다음 스캔부터 그 시장의 라이브 점수가 최근 4분기 재무를 씁니다. 그 밖에는 연간 재무 그대로입니다. .env의 QSF_FUND_PERIOD로 뒤집을 수 있습니다."),
+    *_per_market("fund_period", "재무 기준 기간 비교", "fund-period-evaluate", "QSF_FUND_PERIOD_{m}.json", "QSF_FUND_PERIOD_PROTOCOL.md", 240, 20, store="fund_period_{m}", applies=False,
+                 after="TRAILING_BETTER가 나와도 프로그램이 스스로 바꾸지 않습니다(2026-11-23 결정). 결과를 알리고, 바꾸려면 이 표의 그 줄에 생기는 버튼을 누릅니다. .env의 QSF_FUND_PERIOD가 있으면 그 값이 먼저입니다."),
     *_per_market("regime_weights", "국면 가중치 기록 읽기", "regime-weights-evaluate", "QSF_REGIME_WEIGHTS_FORWARD_{m}.json", "QSF_REGIME_WEIGHTS_PROTOCOL.md", 240, 20,
                  store="regime_weights_{m}", verdict=("reading",), after="판정 없이 수치만 적는 읽기입니다. 아무것도 바뀌지 않습니다."),
     _e("us_challenger_swing", "미국 도전자 점수 · 스윙", ["qsf", "us-challenger-evaluate-swing"], "QSF_US_CHALLENGER_SWING.json", "QSF_US_CHALLENGER_PROTOCOL.md", 240, 20,
@@ -215,6 +215,11 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
         else:
             left = None if n is None else max(wanted(e) - n, 0)
             row.update(state="DUE" if left == 0 else "WAITING", left=left, expected=None if left is None else _eta(left, today))
+        if e["key"].startswith("fund_period_"):           # the one reading with a button of its own on this table
+            from terminal.qsf import fund_period
+            m = e["key"].rsplit("_", 1)[1].upper()
+            st = fund_period.status(base)["markets"][m]
+            row["switch"] = {"market": m, "live_period": st["live_period"], "can_switch": st["can_switch"]}
         rows.append(row)
     for book, label in ((turnover_book, "회전율 규칙 비교"), (rank_book, "순위 규칙 비교")):
         for m, ko in (("KR", "한국"), ("US", "미국")):
@@ -230,4 +235,4 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
                 row.update(state="DUE" if s["left"] == 0 else "WAITING", left=s["left"], expected=_eta(s["left"], today))
             rows.append(row)
     return {"status": "REAL", "guide": GUIDE, "readings": rows, "read": sum(1 for r in rows if r["state"] == "READ"), "total": len(rows),
-            "note": "판정은 때가 되면 매일 작업이 스스로 읽고 텔레그램으로 알립니다. 사람이 할 일은 없습니다. 예상 시점은 기록이 하루도 빠지지 않고 휴장일이 한 해 열흘쯤이라고 본 어림입니다."}
+            "note": "판정은 때가 되면 매일 작업이 스스로 읽고 텔레그램으로 알립니다. 읽는 데 사람이 할 일은 없고, 어느 판정도 규칙이나 점수를 스스로 바꾸지 않습니다(바꾸려면 버튼). 예상 시점은 기록이 하루도 빠지지 않고 휴장일이 한 해 열흘쯤이라고 본 어림입니다."}

@@ -60,13 +60,49 @@ def read_report(base: Path, market: str) -> Optional[Dict[str, Any]]:
     return got if isinstance(got, dict) and got.get("verdict") else None
 
 
+SWITCH_FILE = Path("data") / "qsf" / "fund_period_switch.json"          # the screen's button, one entry per market
+
+
+def stored_switch(base: Path, market: str) -> Optional[str]:
+    try:
+        got = (json.loads((Path(base) / SWITCH_FILE).read_text(encoding="utf-8")).get(market) or {}).get("period")
+    except (OSError, ValueError, AttributeError):
+        return None
+    return got if got in PERIODS else None
+
+
 def live_period(base: Path, market: str) -> str:
-    """ANNUAL until the market's one reading says TRAILING_BETTER.  The switch in .env overrides either way."""
+    """ANNUAL unless the user switched it: .env first, then the screen's button.  Since 2026-11-23 the reading only reports
+    (user decision): its verdict rested on swing results and would have changed the long score's input too, under the same
+    model version."""
     forced = os.environ.get(SWITCH, "").strip().upper()
     if forced in PERIODS:
         return forced
-    rep = read_report(base, market)
-    return "TRAILING" if rep and rep.get("verdict") == ADOPT else DEFAULT
+    return stored_switch(base, market) or DEFAULT
+
+
+def set_period(base: Path, market: str, period: str, now: Optional[Any] = None) -> Dict[str, Any]:
+    """The screen's button.  Trailing statements can be switched on only after the market's reading exists; back to annual always."""
+    from datetime import datetime, timezone
+    from utils import durable
+    period = str(period or "").upper()
+    if market not in REPORTS or period not in PERIODS:
+        raise ValueError("BAD_VALUE")
+    if period == "TRAILING" and read_report(base, market) is None:
+        return {"status": "REFUSED", "market": market, "reason": "240거래일 판정이 나온 뒤에 바꿀 수 있습니다. 그 전에 바꾸면 비교하려는 두 점수 가운데 하나가 실전 점수가 되어 비교가 뜻을 잃습니다."}
+    path = Path(base) / SWITCH_FILE
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        doc = doc if isinstance(doc, dict) else {}
+    except (OSError, ValueError):
+        doc = {}
+    doc[market] = {"period": period, "at": (now or (lambda: datetime.now(timezone.utc)))().isoformat()}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    durable.write_text(path, json.dumps(doc, ensure_ascii=False, indent=1))
+    forced = os.environ.get(SWITCH, "").strip().upper()
+    return {"status": "OK", "market": market, "period": period, "live_period": live_period(base, market),
+            "note": f".env의 {SWITCH}={forced} 가 이 버튼보다 먼저 읽힙니다." if forced in PERIODS else
+                    "다음 스캔부터 이 시장의 점수가 이 재무 기준을 읽습니다. 공식 버전은 그대로이고, 기록의 각 줄에 어느 기준이 실전이었는지 남습니다."}
 
 
 def card_field(live: str, live_score: Optional[float], live_fund: Dict[str, Any], other_score: Optional[float], other_fund: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -132,7 +168,8 @@ def status(base: Path) -> Dict[str, Any]:
         rows = kf.read_index(base, folder)
         rep = read_report(base, market)
         out["markets"][market] = {"records": len(rows), "first": rows[0]["session"] if rows else None, "last": rows[-1]["session"] if rows else None,
-                                  "late": sum(1 for r in rows if r.get("late")), "evaluated": rep is not None, "verdict": (rep or {}).get("verdict"), "live_period": live_period(base, market)}
+                                  "late": sum(1 for r in rows if r.get("late")), "evaluated": rep is not None, "verdict": (rep or {}).get("verdict"), "live_period": live_period(base, market),
+                                  "switch": stored_switch(base, market), "can_switch": rep is not None and os.environ.get(SWITCH, "").strip().upper() not in PERIODS}
     return out
 
 
@@ -189,7 +226,7 @@ def reasons(s: Dict[str, Any], code: str, top: bool = False) -> List[str]:
             f"하루 평균: 최근 4분기 {s['trailing']['mean'] * 100:+.2f}%, 연간 {s['annual']['mean'] * 100:+.2f}%. 차이 {d['mean'] * 100:+.2f}%p, t {'없음' if t is None else format(t, '+.2f')} (기준: 차이가 양수이고 t {(d.get('t_bar') or MIN_T):g} 이상).",
             f"두 점수가 다른 종목을 고른 날: {d.get('days_with_difference', 0)}일 (기준: {MIN_DIFF_DAYS}일 이상). 기준 t {(d.get('t_bar') or MIN_T):g}은 표의 값 {MIN_T:g}을 이 표본 구조(겹치는 20거래일 수익의 하루 값)에서 우연히 넘는 비율이 표와 같아지도록 모의실험으로 고친 값입니다.",
             f"후보가 없던 날의 비율: 최근 4분기 {s['trailing']['empty_share'] * 100:.0f}%, 연간 {s['annual']['empty_share'] * 100:.0f}%.",
-            "최근 4분기 쪽이 나았으므로 다음 스캔부터 이 시장의 라이브 점수가 최근 4분기 재무를 씁니다." if code == ADOPT else "라이브 점수는 연간 재무 그대로입니다."]
+            "최근 4분기 쪽이 나았습니다. 자동으로 바꾸지는 않습니다(2026-11-23 결정). 바꾸려면 점수 탭 '추적·검증'의 재무 기준 칸에서 버튼을 누릅니다." if code == ADOPT else "라이브 점수는 연간 재무 그대로입니다."]
 
 
 def evaluate_once(base: Path, market: str, px: Any, log=print) -> Dict[str, Any]:
@@ -212,7 +249,7 @@ def evaluate_once(base: Path, market: str, px: Any, log=print) -> Dict[str, Any]
     top = (market, "SWING") in TOP_FIFTH
     res = {"status": "REAL", "protocol": PROTOCOL, "market": market, "records": len(docs), "first": swing[0]["session"], "last": last, "band": 70.0,
            "selection": "TOP_FIFTH" if top else "BAND",          # Korea: no swing score has reached 70, so the band could never differ (amendment 2026-11-22)
-           "verdict": code, "applies": "TRAILING" if code == ADOPT else "ANNUAL", "reasons": reasons(s, code, top), "swing": s,
+           "verdict": code, "applies": "ANNUAL", "applies_itself": False, "reasons": reasons(s, code, top), "swing": s,
            "long": {**summarize(long_days, HORIZONS["LONG_TERM"]), "reading": "FIGURES_ONLY"} if long_days else {"days": 0},
            "late_share": float(np.mean([d["late"] for d in swing])),
            "note": f"NOT_DISTINGUISHED는 '차이 없음'이 아니라 '아직 모름'입니다. 뒤집으려면 .env에 {SWITCH}=ANNUAL 또는 TRAILING을 적습니다."}

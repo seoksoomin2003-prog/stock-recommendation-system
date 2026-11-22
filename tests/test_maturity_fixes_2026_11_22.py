@@ -114,7 +114,7 @@ def test_the_top_three_and_own_method_verdicts_take_their_bar_from_the_design():
 
     from terminal.qsf import calibrate, kr_method, top_picks
     assert calibrate.plain_bar(top_picks.MIN_T, 12) > top_picks.MIN_T
-    assert "calibrate.plain_bar(MIN_T, len(spaced))" in inspect.getsource(top_picks) and "t >= row[\"t_bar\"]" in inspect.getsource(top_picks)
+    assert "calibrate.plain_bar(MIN_T, len(sp1))" in inspect.getsource(top_picks) and "t1 >= row[\"t_bar\"]" in inspect.getsource(top_picks)
     assert "calibrate.bar(VERDICT_T" in inspect.getsource(kr_method.evaluate) if hasattr(kr_method, "evaluate") else "calibrate.bar(VERDICT_T" in inspect.getsource(kr_method)
 
 

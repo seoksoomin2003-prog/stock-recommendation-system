@@ -75,6 +75,7 @@ function icCardHtml(v, ticker, market) {
   return `<div class="panel"><h3>다섯 투자자와 투자위원회 <span class="meta" style="margin:0">알려진 원칙을 규칙으로 옮긴 참고 · 점수와 무관 · 주문 없음</span></h3>
     <div class="ic-grid">${v.investors.map(icInvestorHtml).join("")}</div>
     ${icCommitteeHtml(v.committee)}
+    ${plainBlock(v.plain)}
     <div style="margin:10px 0 0"><button type="button" class="ic-place" data-t="${esc(ticker || v.ticker || "")}" data-m="${esc(market || v.market || "")}" title="여섯 포트폴리오를 지금 만들고 이 종목이 어디에 드는지 보여 줍니다. 누르기 전에는 만들지 않습니다.">포트폴리오 받아보기</button>
       <span class="meta" style="margin:0 0 0 8px">다섯 투자자와 위원회의 여섯 포트폴리오 · 누를 때 작성</span></div>
     <div class="ic-out"></div>

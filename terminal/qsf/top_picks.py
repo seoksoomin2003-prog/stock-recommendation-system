@@ -234,9 +234,17 @@ def summarize(days: List[Dict[str, Any]], strategy: str) -> Dict[str, Any]:
                 if indep < config.MIN_INDEPENDENT:
                     row["verdict"] = f"판단 보류 (독립 표본 {indep:.1f}/{config.MIN_INDEPENDENT})"
                 else:
-                    row["t_bar"] = calibrate.plain_bar(MIN_T, len(spaced))          # a few separate samples: the table's value is passed too often (2026-11-22)
-                    good = row["mean_rank_corr"] is not None and row["mean_rank_corr"] > 0 and t is not None and t >= row["t_bar"]
+                    # Read once (user decision 2026-11-23): on the first sessions that make up the required sample and no others.
+                    # Recomputed on every look over a growing sample, noise alone showed "evidence" at least once a year 6.9% of the time.
+                    first = done[:int(config.MIN_INDEPENDENT * h)]
+                    ic1 = [d["horizons"][str(h)]["rank_corr"] for d in first if d["horizons"][str(h)]["rank_corr"] is not None]
+                    sp1 = [d["horizons"][str(h)]["rank_corr"] for d in first[::h] if d["horizons"][str(h)]["rank_corr"] is not None]
+                    t1 = statistics.mean(sp1) / (statistics.stdev(sp1) / len(sp1) ** 0.5) if len(sp1) >= 2 and statistics.stdev(sp1) > 0 else None
+                    row["t_bar"] = calibrate.plain_bar(MIN_T, len(sp1))          # a few separate samples: the table's value is passed too often (2026-11-22)
+                    good = bool(ic1) and statistics.mean(ic1) > 0 and t1 is not None and t1 >= row["t_bar"]
                     row["verdict"] = "점수 순위에 증거 있음" if good else "증거 없음"
+                    row["verdict_window"] = {"sessions": len(first), "last": first[-1].get("session") or first[-1].get("entry_session"), "t": t1, "mean_rank_corr": statistics.mean(ic1) if ic1 else None,
+                                             "note": f"처음 {len(first)}거래일의 기록으로 한 번 읽은 판정입니다. 그 뒤의 기록은 이 판정을 바꾸지 않습니다."}
             per_h[str(h)] = row
         out[version] = {"days": len(mine), "horizons": per_h}
     return out

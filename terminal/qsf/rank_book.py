@@ -166,7 +166,7 @@ def evaluate_once(base: Path, market: str, now: Callable[[], datetime] = _utcnow
                           else "아무것도 바뀌지 않습니다. 비교 장부는 더 적지 않습니다.")
     res["applies_itself"] = False
     target.parent.mkdir(parents=True, exist_ok=True)
-    durable.write_text(target, json.dumps(res, ensure_ascii=False, indent=1))        # whole and on the disk: this file switches rules on
+    durable.write_text(target, json.dumps(res, ensure_ascii=False, indent=1))        # whole and on the disk: the screen's button reads this file before it lets the rules be switched on
     return res
 
 

@@ -64,9 +64,10 @@ def test_the_plan_is_untouched_at_normal_smaller_when_defensive_and_larger_when_
     big = op.build(kept, account(), "KR", state=sized)
     share = lambda plan: next(o["shares"] for o in plan["orders"] if o["ticker"] == "A")                   # noqa: E731
     assert share(small) < share(plain_plan) < share(big) and [o["ticker"] for o in small["orders"]] == ["A"]
-    # the market's own brake stays: the factors multiply and the smaller cap holds
+    # the market's own brake stays, and an aggressive stance never loosens it (user decision 2026-11-23: it made 0.5 into 0.75)
     bad = {"size_factor": 0.5, "new_exposure_cap": 0.5, "state": "ADVERSE"}
-    assert stance.for_plan(cands, bad, marks, "AGGRESSIVE", op.STRATEGY_OF)[1]["size_factor"] == 0.75
+    loose = stance.for_plan(cands, bad, marks, "AGGRESSIVE", op.STRATEGY_OF)
+    assert loose[1]["size_factor"] == 0.5 and loose[2]["size_used"] == 1.0 and "1.5배를 쓰지 않습니다" in loose[2]["note"]
     assert stance.for_plan(cands, bad, marks, "AGGRESSIVE", op.STRATEGY_OF)[1]["new_exposure_cap"] == 0.5
     assert stance.for_plan(cands, bad, marks, "DEFENSIVE", op.STRATEGY_OF)[1]["size_factor"] == 0.25
 
@@ -138,7 +139,7 @@ def test_a_card_is_told_in_everyday_words(tmp_path):
         doc = cards[strategy]["plain"]
         heads = [p["h"] for p in doc["parts"]]
         assert heads[:3] == ["한 줄로", "좋게 본 점", "걱정되는 점"] and heads[-1] == "꼭 알아 둘 것" and "지금 사도 되나" in heads and _clean(doc) == []
-        assert f"100점 만점에 {cards[strategy]['score']:.0f}점" in doc["parts"][0]["lines"][0] and "아직 확인되지 않았고" in doc["parts"][-1]["lines"][0]
+        assert f"100점 만점에 {cards[strategy][chr(115)+"core"]:.1f}점" in doc["parts"][0]["lines"][0] and "아직 확인되지 않았고" in doc["parts"][-1]["lines"][0]
     swing = cards["SWING"]["plain"]
     assert any(p["h"].endswith("미리 정해 둘 가격") for p in swing["parts"]) and {w["word"] for w in swing["words"]} >= {"손절 가격", "목표 가격"}
     assert not any(p["h"].endswith("미리 정해 둘 가격") for p in cards["LONG_TERM"]["plain"]["parts"])

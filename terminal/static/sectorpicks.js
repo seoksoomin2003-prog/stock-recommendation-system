@@ -47,7 +47,7 @@ async function loadPickPlan(t) {
   if (d.status && d.status !== "REAL" && !d.cards) { box.innerHTML = `<div class="empty">${esc(d.reason || d.error || "평가할 수 없습니다.")}</div>`; return; }
   const card = (c) => {
     const h = c.holding || {}, e = c.entry || {}, px = c.price;
-    const buy = `<b>${esc(QSF_ENTRY[e.status] || e.status || "")}</b> · ${esc(e.reason || "")}
+    const buy = `<b>${esc(qsfEntry(e.status, c.strategy) || e.status || "")}</b> · ${esc(e.reason || "")}
       <br>진입 예정일 ${esc(h.entry_date || "-")}${e.zone ? ` · 기준 구간 ${qsfPrice(e.zone.low, mk)}~${qsfPrice(e.zone.high, mk)}` : ""}`;
     let sell, ret;
     if (c.strategy === "SWING") {

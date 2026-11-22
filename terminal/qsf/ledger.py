@@ -24,7 +24,9 @@ from utils import durable
 
 GENESIS = "0" * 64
 FIELDS = ("market", "ticker", "strategy", "model_version", "spec_version", "profile", "score", "band", "action", "actionability", "coverage",
-          "confidence", "held", "data_date", "price", "benchmark", "recorded_at", "entry_session", "entry_status", "holding", "gates", "provenance")
+          "confidence", "held", "data_date", "price", "benchmark", "recorded_at", "entry_session", "entry_status", "holding", "gates", "provenance",
+          # from QSF-1.5.2 on (earlier lines do not have them and are not rewritten): why a band or a confidence is what it is
+          "input_coverage", "conservative_score", "band_held_back")
 
 
 def snapshot(card: Dict[str, Any]) -> Dict[str, Any]:

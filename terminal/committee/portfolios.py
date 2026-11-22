@@ -48,8 +48,10 @@ C_EXPOSURE = ((35.0, 0.6), (50.0, 0.8))
 
 
 def exposure(state: Optional[float], steps: Any) -> float:
+    """The share that may be invested at this market state.  A state that cannot be read is taken as "under 50", the step the
+    order plan's own rule for an unknown day corresponds to (user decision 2026-11-23); until then it meant fully invested."""
     if state is None:
-        return 1.0
+        return steps[-1][1]
     return next((share for limit, share in steps if state < limit), 1.0)
 
 

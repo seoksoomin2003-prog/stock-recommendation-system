@@ -5,7 +5,12 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-MODEL_VERSION = "QSF-1.5.1"     # 1.5.1 (user decisions 2026-11-22 after the maturity assessment, reports/QSF_1_5_1_2026_11_22.md; no record
+# 1.5.2 (user decisions 2026-11-23 after the second maturity assessment, reports/QSF_1_5_2_2026_11_23.md; no record was written under
+# 1.5.1): (1) a long-term stock whose valuation factor has no data gets no entry reading; (2) a factor no stock of a market ever has
+# (NEVER_AVAILABLE) no longer counts against the buy band; (3) more than MAX_HALT_RUN sessions without a trade in a row block the
+# card; (4) a statement copy older than STALE_FUND_DAYS reads confidence LOW; (5) US debt is read from more of the tags companies
+# file it under.  Only (5) moves a score.
+MODEL_VERSION = "QSF-1.5.2"     # 1.5.1 (user decisions 2026-11-22 after the maturity assessment, reports/QSF_1_5_1_2026_11_22.md; no record
                                 # was written under 1.5.0): the score is unchanged.  (1) the buy band is not given when the score would
                                 # fall under it with every missing factor read at the middle; (2) long-term entry: a valuation under 25
                                 # reads "overvalued" whatever the business quality; (3) the buffer reads only a record of the last five
@@ -45,6 +50,8 @@ STYLE_TO_STRATEGY = {"LONG": "LONG_TERM", "SWING": "SWING"}
 # still scored every day as a separate record (reports/QSF_KR_TRADED_UNIVERSE_PROTOCOL.md).  Setting TRADED_VALUE here goes back.
 KR_UNIVERSE = "MARKET_CAP"
 KR_UNIVERSE_MAX_AGE_DAYS = 10      # the newest KRX day on file may be this many calendar days before the session; older is no universe
+# The document the first version was built from.  The live settings have moved since (reports/QSF_1_*.md, one file per version);
+# the name stays because records carry it.
 SPEC_VERSION = "QSF_1_1_MASTER_SPECIFICATION"
 
 MARKETS = ("US", "KR")
@@ -117,6 +124,12 @@ BUFFER_SESSIONS = 5          # the buffer reads the stock's record only when it 
 # only if the score still reaches them with every missing factor read at this value (user decision 2026-11-22, "매수 표시만 막기").
 MISSING_NEUTRAL = 0.5
 MAX_HISTORY_GAP = 10         # weekdays missing in a row between two bars of the last year before the history counts as broken
+MAX_HALT_RUN = 10              # sessions in a row without a trade (volume zero) in the last year: more than this blocks the card.
+                               # Korean bars are built from KRX days, which keep a halted day as a flat row: the gap check never saw them
+STALE_FUND_DAYS = 30           # a stored statement copy that stood in for a failed request and is older than this: confidence LOW
+# Factors no stock of a market has (counted on the 2026-11-20 session: Korean insider trades are not collected at all).  Reading
+# them at the middle would lower every stock's conservative score by the same amount and move the buy line, not judge a stock.
+NEVER_AVAILABLE = {("KR", "SWING"): ("insider_activity",)}
 MARKET_STATE_WEIGHTS = {"US": dict(_US_REGIME_SWING), "KR": dict(_KR_REGIME_SWING)}
 MARKET_STATE_MID = 50.0
 MARKET_STATE_LABELS = {"FAVOURABLE": "좋음", "ADVERSE": "나쁨", "UNKNOWN": "알 수 없음(자료 부족)"}

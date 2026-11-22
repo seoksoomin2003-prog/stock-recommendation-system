@@ -57,7 +57,8 @@ STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-2
 BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/paper_journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json", "data/terminal/alerts.json", "data/terminal/alerts_log.jsonl",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
                 "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl", "research_data/kr_swing_challenger/index.jsonl", "research_data/kr_swing_prior/index.jsonl", "research_data/kr_challenger/index.jsonl", "research_data/kr_cap_universe/index.jsonl", "research_data/kr_traded_universe/index.jsonl", "research_data/kr_method/index.jsonl", "research_data/regime_weights_kr/index.jsonl", "research_data/regime_weights_us/index.jsonl", "research_data/paper_book_kr/index.jsonl", "research_data/paper_book_us/index.jsonl", "research_data/forecast_kr/index.jsonl", "research_data/forecast_us/index.jsonl", "research_data/score_split_kr/index.jsonl", "research_data/score_split_us/index.jsonl", "research_data/fund_period_kr/index.jsonl", "research_data/fund_period_us/index.jsonl", "research_data/turnover_book_kr/index.jsonl", "research_data/turnover_book_us/index.jsonl", "reports/qsf/QSF_TURNOVER_*.json", "research_data/rank_book_kr/index.jsonl", "research_data/rank_book_us/index.jsonl", "reports/qsf/QSF_RANK_RULES_*.json", "data/qsf/top3/index.jsonl", "data/qsf/top3/*.json.gz",
-                "data/qsf/price_archive/*.json.gz", "research_data/expectations_kr/*.jsonl", "research_data/expectations_us/*.jsonl", "research_data/committee_kr/*.jsonl", "research_data/committee_us/*.jsonl")
+                "data/qsf/price_archive/*.json.gz", "research_data/expectations_kr/*.jsonl", "research_data/expectations_us/*.jsonl", "research_data/committee_kr/*.jsonl", "research_data/committee_us/*.jsonl",
+                "data/qsf/stance.json", "data/qsf/*_switch.json")          # the user's own choices on the screen (stance, the three reading buttons)
 
 
 def backup_root() -> Path:
@@ -610,8 +611,11 @@ class Daily:
             if not book["holdings"]:
                 continue
             try:
-                got = exit_alerts(self._terminal.portfolio_signals(market)["items"])
+                sigs = self._terminal.portfolio_signals(market)["items"]
+                got = exit_alerts(sigs)
                 out["items"] += [{**a, "text": "[한국] " + a["text"]} for a in got] if market == "KR" else got
+                # one holding whose reading failed was left out without a word (assessment 2026-11-23, S1)
+                out.setdefault("unread", []).extend(str(s.get("ticker")) for s in sigs if s.get("status") != "REAL")
             except Exception:
                 out["signals_failed"] = True
         out["items"].sort(key=lambda a: {"bad": 0, "warn": 1, "info": 2}[a["level"]])
@@ -669,6 +673,8 @@ class Daily:
                 lines += [f"  · {a['text']}" for a in old]
         if alerts.get("signals_failed"):
             lines.append("⚠️ 보유 종목 판정을 계산하지 못했습니다.")
+        if alerts.get("unread"):
+            lines.append("⚠️ 오늘 점검하지 못한 보유 종목: " + ", ".join(alerts["unread"][:10]) + ". 자료를 읽지 못해 손절·청산 조건을 보지 못했습니다. 경고가 없다는 뜻이 아닙니다.")
         if alerts.get("stale"):
             lines.append("오래되었거나 없는 시세로 계산: " + ", ".join(alerts["stale"]))
         if rules and rules.get("status") == "OK" and rules["alerts"]:

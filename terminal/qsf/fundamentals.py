@@ -42,6 +42,11 @@ US_INSTANT = {
                   "ConvertibleLongTermNotesPayable", "ConvertibleDebtNoncurrent"],
     "debt_short": ["LongTermDebtCurrent", "LongTermDebtAndCapitalLeaseObligationsCurrent", "DebtCurrent", "ConvertibleNotesPayableCurrent", "ConvertibleDebtCurrent"],
     "debt_borrow": ["ShortTermBorrowings", "CommercialPaper"],
+    # Notes a company tags on their own.  Its borrowings cannot be less than these, so they are a floor under the figure read
+    # from the tags above, and never a reason to lower it (QSF-1.5.2, user decision 2026-11-23).  Seen on the newest 10-K:
+    # CME tags its 3.4 billion of notes only as UnsecuredLongTermDebt and read as debt-free; PHM's LongTermDebt tag holds the
+    # 44 million of its lending arm beside 1.6 billion of NotesPayable.
+    "debt_notes": ["NotesPayable", "SeniorNotes", "UnsecuredLongTermDebt"],
 }
 # Checked on the newest 10-K of every scanned company (2026-11-11): LongTermDebt equals its noncurrent and current parts together in 119
 # of 136 companies that tag all three, so the current part is not added to it again.
@@ -398,6 +403,9 @@ def metrics(annual: Dict[str, Any], close: Optional[float], as_of: str, *, is_fi
         debt, debt_basis = parts, "PARTS"
     elif at("liabilities") is not None:
         debt, debt_basis = at("liabilities"), "TOTAL_LIABILITIES"
+    notes = at("debt_notes")
+    if notes is not None and debt is not None and debt_basis != "TOTAL_LIABILITIES" and notes > debt:
+        debt, debt_basis = notes, "NOTES_FLOOR"             # the company's own notes exceed what the debt tags gave: the tags missed them
     sec_shares, eps_reported = at("shares_avg"), at("eps")
     # Net income / EPS is the company's own share count in whole shares, so it tells a wrong scale from a real change.
     implied = abs(ni / eps_reported) if ni and eps_reported and abs(eps_reported) >= 0.1 else None

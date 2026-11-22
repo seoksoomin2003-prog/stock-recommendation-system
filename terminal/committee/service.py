@@ -146,6 +146,11 @@ def _card(o: Dict[str, Any]) -> Dict[str, Any]:
     return {k: o[k] for k in CARD_KEYS if k in o}
 
 
+def _plain(committee: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    from terminal import plain
+    return plain.committee_plain(committee)
+
+
 def stock(terminal: Any, ticker: str, market: str, cards: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Five opinions and the committee's decision on one stock.  A scanned stock is read from the session's record; another one
     from the cards the score evaluation just made (``cards``: {LONG_TERM, SWING}), against the session's sector strengths."""
@@ -169,7 +174,8 @@ def stock(terminal: Any, ticker: str, market: str, cards: Optional[Dict[str, Any
     if entry is None:
         return {"status": "NO_VIEW", "ticker": ticker, "market": market, "reason": "이 종목은 저장된 스캔 기록에 없어 다섯 관점이 읽을 수치가 없습니다."}
     return {"status": "OK", "rules": iv.RULES, "ticker": ticker, "market": market, "name": entry["name"], "sector": entry["sector"], "as_of": entry["as_of"], "source": source,
-            "session": (work or {}).get("session"), "investors": [_card(entry["opinions"][k]) for k in iv.ORDER], "committee": entry["committee"], "note": iv.NOTE}
+            "session": (work or {}).get("session"), "investors": [_card(entry["opinions"][k]) for k in iv.ORDER], "committee": entry["committee"], "note": iv.NOTE,
+            "plain": _plain(entry["committee"])}
 
 
 def stock_in_portfolios(terminal: Any, ticker: str, market: str) -> Dict[str, Any]:

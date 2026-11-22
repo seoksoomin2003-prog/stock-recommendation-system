@@ -108,7 +108,9 @@ def test_the_today_tab_and_the_daily_message_tell_an_interrupt_once():
         "GRAHAM": {"fatal": [{"ticker": "FILED", "name": "파일드", "weight": 0.05, "why": "심각 공시: 관리종목"}],
                    "overweight": [{"ticker": "OLD", "name": "올드", "weight": 0.09, "cap": 0.05, "new": False, "text": "그레이엄식: 올드"}]}}}
     items = assistant.committee_items(row, "US", "2026-11-24")
-    assert [i["kind"] for i in items] == ["IC_INTERRUPT", "IC_INTERRUPT"] and [i["ticker"] for i in items] == ["FILED", "KEEP"]      # the old overweight is not news again
+    # an overweight that lasts stays on the Today tab as a reference line (user decision 2026-11-23); only the crossing day is news
+    assert [i["kind"] for i in items] == ["IC_INTERRUPT", "IC_INTERRUPT", "IC_OVERWEIGHT"] and [i["ticker"] for i in items] == ["FILED", "KEEP", "OLD"]
+    assert items[2]["level"] == "INFO" and items[2]["short"] is None and "이 한 종목에 크게 좌우됩니다" in items[2]["text"] and "이 한 종목에 크게 좌우됩니다" in items[1]["text"]
     assert "버핏식, 그레이엄식 포트폴리오에서 전부 뺐습니다" in items[0]["text"] and "주문이 아닙니다" in items[0]["text"] and items[0]["tab"] == "committee"
     assert items[1]["short"] == "버핏식 KEEP 비중 20%(규칙은 12%로 축소)" and assistant.committee_items(row, "US", "2026-11-25") == [] and assistant.committee_items(None, "US", "2026-11-24") == []
     lines = assistant.daily_lines([{"status": "REAL", "market": "US", "items": items}])

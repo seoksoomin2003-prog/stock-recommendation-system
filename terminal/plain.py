@@ -88,15 +88,26 @@ def _pct(v: float) -> str:
     return f"{abs(v):.1f}" if abs(v) < 1 else f"{abs(v):.0f}"
 
 
-def _sides(card: Dict[str, Any], n: int = 3) -> Tuple[List[str], List[str], int]:
+DEBT = ("balance_sheet", "balance_dilution", "leverage")      # sentences about debt: not said of a bank, whose deposits are its debt
+LOSS_VALUE = "회사가 가진 재산에 비하면 주가가 낮은 편이지만, 지금은 적자라 '버는 돈에 비해 싸다'고 말할 수는 없습니다."
+LOSS_WORRY = "지금 적자입니다. 버는 돈이 없어 주가가 싼지 따질 수 없고, 이 프로그램은 이런 경우를 비싼 것으로 봅니다."
+NO_VALUE = "회사가 버는 돈에 비해 주가가 싼지 비싼지 따질 자료가 없어서, 지금 사도 되는지를 판단하지 않았습니다. 자료가 없다는 것은 값이 적당하다는 뜻이 아닙니다."
+MARKET = {"ADVERSE": "지금 시장 전체의 상태가 좋지 않은 쪽으로 읽힙니다.", "UNKNOWN": "시장 전체의 상태를 읽을 자료가 모자라, 좋은지 나쁜지 알지 못합니다."}
+
+
+def _sides(card: Dict[str, Any], n: int = 3, facts: Optional[Dict[str, Any]] = None) -> Tuple[List[str], List[str], int]:
     """The scored factors that read clearly well or clearly badly, the heaviest first, and how many were left unsaid.
     A factor computed from part of its figures is not spoken for: a sentence here names every figure the factor reads, and a
     Korean stock's "debt and share count" factor is computed from the debt alone (2026-11-22: it read "has not issued shares"
     for a company whose share count this program does not know)."""
     rows, unsaid = [], 0
+    facts = facts or {}
     for f in card.get("factors") or []:
         v = f.get("normalized")
         if f.get("scored") is False or f.get("status") == "MISSING" or v is None or f.get("factor") not in FACTOR:
+            continue
+        if facts.get("financial") and f["factor"] in DEBT:      # a bank's "debt" is mostly its customers' deposits
+            unsaid += v >= 0.65 or v <= 0.35
             continue
         got = f.get("inputs") or {}
         if got.get("total") and (got.get("have") or 0) < got["total"]:
@@ -104,13 +115,18 @@ def _sides(card: Dict[str, Any], n: int = 3) -> Tuple[List[str], List[str], int]
             continue
         rows.append((float(f.get("weight") or 0) * abs(v - 0.5), v, f["factor"]))
     rows.sort(key=lambda r: (-r[0], r[2]))
-    good = [FACTOR[k][0] for _, v, k in rows if v >= 0.65][:n]
-    bad = [FACTOR[k][1] for _, v, k in rows if v <= 0.35][:n]
+    loss = bool(facts.get("loss"))
+    good = [LOSS_VALUE if loss and k == "valuation" else FACTOR[k][0] for _, v, k in rows if v >= 0.65][:n]
+    bad = [LOSS_WORRY if loss and k == "valuation" else FACTOR[k][1] for _, v, k in rows if v <= 0.35][:n]
     return good, bad, int(unsaid)
 
 
-def card_plain(card: Dict[str, Any]) -> Dict[str, Any]:
-    """One strategy's card in everyday words: ``{"title", "parts": [{"h", "lines"}], "words": [{"word", "means"}]}``."""
+def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """One strategy's card in everyday words: ``{"title", "parts": [{"h", "lines"}], "words": [{"word", "means"}]}``.
+    ``facts``: what the card's own fields do not say but its sentences depend on: ``loss`` (the company loses money now),
+    ``financial`` (a bank or insurer), ``deals`` (merger or tender-offer filings).  Until 2026-11-23 a merger target read
+    "fits the criteria well" and nothing else, and a loss-maker could read "not expensive for what it earns"."""
+    facts = facts or {}
     market, strategy = card.get("market") or "US", card.get("strategy") or "SWING"
     view, short = STYLE.get(strategy, STYLE["SWING"])
     parts: List[Dict[str, Any]] = []
@@ -121,20 +137,35 @@ def card_plain(card: Dict[str, Any]) -> Dict[str, Any]:
         parts.append({"h": "꼭 알아 둘 것", "lines": [CAVEAT]})
         return {"title": f"{view}에서 본 설명", "parts": parts, "words": []}
     score = float(card["score"])
-    head = [f"{view}에서 100점 만점에 {score:.0f}점입니다. {BAND.get(card.get('band'), '')}".strip(),
+    # one decimal: 69.83 read "70점" beside a band that starts at 70
+    head = [f"{view}에서 100점 만점에 {score:.1f}점입니다. {BAND.get(card.get('band'), '')}".strip(),
             "점수는 주가 흐름, 회사의 살림과 벌이, 위험, 최근 공시를 정해진 규칙으로 따져 더한 값입니다."]
     if state == "BLOCKED":
         why = [GATE.get(g.get("code"), "") for g in card.get("gates") or []]
         head = [f"프로그램이 '지금은 다루지 않는다'고 막아 둔 종목입니다. 이유: {' '.join(w for w in why if w) or '확인이 필요한 문제가 있습니다.'}",
-                f"참고로 점수는 100점 만점에 {score:.0f}점이지만, 막힌 종목의 점수는 사거나 팔 근거로 쓰지 않습니다."]
+                f"참고로 점수는 100점 만점에 {score:.1f}점이지만, 막힌 종목의 점수는 사거나 팔 근거로 쓰지 않습니다."]
     if card.get("band_held_back") and card.get("conservative_score") is not None:
-        head.append(f"일부 자료가 없어서, 없는 부분을 '보통'으로 치면 {float(card['conservative_score']):.0f}점쯤입니다. 그래서 더 낮은 구간으로 보여 줍니다.")
+        head.append(f"일부 자료가 없어서, 없는 부분을 '보통'으로 치면 {float(card['conservative_score']):.1f}점쯤입니다. 그래서 더 낮은 구간으로 보여 줍니다.")
+    if card.get("stale_fund_days"):
+        head.append(f"회사 살림 자료를 새로 받지 못해 {float(card['stale_fund_days']):.0f}일 전에 받아 둔 자료로 계산했습니다. 그래서 이 점수를 믿는 정도를 낮게 봅니다.")
+    deals = facts.get("deals") or []
+    if deals:
+        head.append("다만 이 회사는 다른 회사와 합치거나 팔리는 절차에 관한 서류를 냈습니다. 아래 '먼저 알아 둘 사건'을 보세요.")
     parts.append({"h": "한 줄로", "lines": head})
-    good, bad, unsaid = _sides(card)
+    if deals:
+        used.append("공시")
+        parts.append({"h": "먼저 알아 둘 사건", "lines": [
+            f"{deals[0].get('date')}에 합병이나 공개 매수(회사를 통째로 사겠다는 제안)에 관한 공시가 있었습니다({deals[0].get('label') or deals[0].get('form')}).",
+            "이런 회사의 주가는 사겠다고 한 값 가까이에 묶여 잘 움직이지 않는 일이 많습니다. 그러면 점수가 높아도 더 오를 자리가 거의 없고, 거래가 깨지면 크게 떨어질 수 있습니다. "
+            "점수는 이 사정을 따지지 않습니다."]})
+    good, bad, unsaid = _sides(card, facts=facts)
+    if card.get("entry_status") == "OVERVALUED_AT_CURRENT_PRICE" and not any(s in bad for s in (FACTOR["valuation"][1], LOSS_WORRY)):
+        bad = [LOSS_WORRY if facts.get("loss") else FACTOR["valuation"][1]] + bad[:2]      # the entry rule says so: the worries must too
     parts.append({"h": "좋게 본 점", "lines": good or ["뚜렷하게 좋게 본 점이 없습니다."]})
     parts.append({"h": "걱정되는 점", "lines": bad or ["뚜렷하게 걱정되는 점이 없습니다."]})
     if unsaid:
-        parts.append({"h": "말하지 않은 것", "lines": [f"자료가 일부만 있는 항목 {unsaid}개는 좋다 나쁘다를 여기서 말하지 않았습니다. 점수에는 있는 자료만으로 들어가 있습니다."]})
+        parts.append({"h": "말하지 않은 것", "lines": [
+            f"{'자료가 일부만 있거나, 금융 회사라 빚의 뜻이 다른' if facts.get('financial') else '자료가 일부만 있는'} 항목 {unsaid}개는 좋다 나쁘다를 여기서 말하지 않았습니다. 점수에는 있는 자료만으로 들어가 있습니다."]})
     if any("실적 발표" in s for s in good + bad):
         used.append("실적 발표")
     if any("공시" in s for s in good + bad):
@@ -142,16 +173,27 @@ def card_plain(card: Dict[str, Any]) -> Dict[str, Any]:
     if state != "BLOCKED":
         status = card.get("entry_status")
         now = ENTRY_NOW.get(strategy) if status == "ENTRY_NOW" else ENTRY.get(status) or "지금 살 조건인지는 이 프로그램의 규칙으로 정해지지 않았습니다."
+        if status == "NO_VALID_ENTRY_SETUP" and "자료가 없어" in str((card.get("entry") or {}).get("reason") or ""):
+            now = NO_VALUE
         if status == "WAIT_FOR_EARNINGS":
             used.append("실적 발표")
-        parts.append({"h": "지금 사도 되나", "lines": [now]})
+        lines = [now]
+        if card.get("earnings_unknown"):
+            lines.append("실적 발표 날짜를 받지 못했습니다. 발표가 코앞인지를 이 프로그램이 오늘은 확인하지 못했습니다.")
+            used.append("실적 발표")
+        ms = card.get("market_state") or {}
+        if ms.get("state") in MARKET:
+            cut = ms.get("size_factor")
+            lines.append(MARKET[ms["state"]] + (f" 이런 날에는 새로 사는 크기를 {cut * 100:.0f}%로 줄이는 것이 이 프로그램의 규칙입니다." if cut is not None and cut < 1
+                                                else " 이 시장에는 그런 날 크기를 줄이는 규칙이 없습니다. 참고로만 보세요."))
+        parts.append({"h": "지금 사도 되나", "lines": lines})
     lv, price = card.get("levels") or {}, card.get("price")
     if strategy == "SWING" and price and lv.get("stop") and lv.get("target") and state != "BLOCKED":
         down, up = (1 - lv["stop"] / price) * 100, (lv["target"] / price - 1) * 100
         parts.append({"h": f"{short} 산다면 미리 정해 둘 가격", "lines": [
-            f"지금 가격은 {money(price, market)}입니다.",
-            f"손절 가격은 {money(lv['stop'], market)}입니다(지금보다 약 {_pct(down)}% 아래). 여기까지 내려가면 손해를 더 키우지 않으려고 파는 선입니다.",
-            f"목표 가격은 {money(lv['target'], market)}입니다(지금보다 약 {_pct(up)}% {'위' if up >= 0 else '아래'}). 거기까지 오른다는 약속이 아니라, 규칙이 잡은 기준입니다."]})
+            f"계산에 쓴 가격은 {card.get('data_date') or '기준일'} 장을 마칠 때의 값 {money(price, market)}입니다. 지금 가격은 이와 다를 수 있습니다.",
+            f"손절 가격은 {money(lv['stop'], market)}입니다(그 값보다 약 {_pct(down)}% 아래). 여기까지 내려가면 손해를 더 키우지 않으려고 파는 선입니다.",
+            f"목표 가격은 {money(lv['target'], market)}입니다(그 값보다 약 {_pct(up)}% {'위' if up >= 0 else '아래'}). 거기까지 오른다는 약속이 아니라, 규칙이 잡은 기준입니다."]})
         used += ["손절 가격", "목표 가격"]
     parts.append({"h": "꼭 알아 둘 것", "lines": [CAVEAT]})
     return {"title": f"{view}에서 본 설명", "parts": parts, "words": [{"word": w, "means": WORDS[w]} for w in dict.fromkeys(used)]}
@@ -210,6 +252,45 @@ def portfolio_plain(p: Dict[str, Any]) -> Dict[str, Any]:
         parts.append({"h": "빠진 종목", "lines": [f"어제까지 있다가 오늘 빠진 종목이 {len(p['exits'])}개 있습니다. 그 방식의 조건에서 벗어났기 때문입니다."]})
     parts.append({"h": "꼭 알아 둘 것", "lines": [PORTFOLIO_CAVEAT]})
     return {"title": f"{str(p.get('name') or '포트폴리오').replace(' 포트폴리오', '')} 바구니를 쉽게", "parts": parts, "words": [{"word": "현금 비중", "means": WORDS["현금 비중"]}]}
+
+
+COMMITTEE_WORD = {"STRONG_BUY": "사는 쪽으로 뚜렷하게 기울었습니다", "BUY": "사는 쪽입니다", "CONDITIONAL_BUY": "조건이 맞으면 사는 쪽입니다", "HOLD": "갖고 있다면 그대로 두는 쪽입니다",
+                  "WAIT": "아직 사지 않고 기다리는 쪽입니다", "REDUCE": "갖고 있다면 줄이는 쪽입니다", "SELL": "갖고 있다면 파는 쪽입니다", "AVOID": "사지 않고 피하는 쪽입니다",
+                  "INSUFFICIENT_DATA": "자료가 모자라 정하지 않았습니다"}
+COMMITTEE_CAVEAT = ("이 결론은 점수와 따로 계산한 참고 자료입니다. 이름에 붙은 투자자의 실제 의견이 아니라 그 사람의 방식을 본뜬 규칙의 결과입니다. "
+                    "이대로 했을 때 돈을 벌었는지는 확인된 적이 없고, 사라는 권유가 아닙니다.")
+
+
+def committee_plain(c: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """The five views' decision on one stock in everyday words (user choice 2026-11-23).  Restates counts and names the
+    decision already has; names of risks are quoted as they stand."""
+    if not c or not c.get("decision"):
+        return None
+    buyers, against, waiting = c.get("buyers") or [], c.get("against") or [], c.get("waiting") or []
+    parts: List[Dict[str, Any]] = [{"h": "이게 뭔가요", "lines": ["이름난 투자자 다섯 명의 방식을 본뜬 규칙 다섯 개가 이 종목을 각자 따져 본 결과를 하나로 모은 것입니다."]}]
+    rest = int(c.get("valid") or 0) - len(buyers) - len(against) - len(waiting)
+    head = [f"다섯 가운데 {c.get('valid', 0)}개가 판단했습니다. 사는 쪽 {len(buyers)}개, 피하거나 파는 쪽 {len(against)}개, 조건을 기다리는 쪽 {len(waiting)}개"
+            + (f", 그대로 두는 쪽 {rest}개" if rest > 0 else "") + "입니다.",
+            f"모아서 낸 결론: {COMMITTEE_WORD.get(c['decision'], c.get('decision_ko') or '')}."]
+    parts.append({"h": "결론", "lines": head})
+    risks = c.get("material_risks") or []
+    big = [r["name"] for r in risks if r.get("level") == "CRITICAL"]
+    other = [r["name"] for r in risks if r.get("level") != "CRITICAL"]
+    lines = []
+    if big:
+        lines.append(f"아주 큰 문제가 발견되었습니다: {', '.join(big)}. 이런 문제가 하나라도 있으면 찬성이 몇 개든 피하는 쪽으로 정합니다.")
+    if other:
+        lines.append(f"적어 둔 걱정: {', '.join(other[:4])}.")
+    if lines:
+        parts.append({"h": "걱정되는 점", "lines": lines})
+    if buyers and against:
+        parts.append({"h": "의견이 갈린 곳", "lines": [f"사는 쪽({', '.join(buyers)})과 피하는 쪽({', '.join(against)})이 갈렸습니다. 따지는 방식이 다르면 같은 회사를 다르게 봅니다. "
+                                                 "어느 쪽이 맞는지는 이 프로그램이 알지 못합니다."]})
+    unseen = c.get("unchecked_risks") or []
+    if unseen:
+        parts.append({"h": "살펴보지 못한 것", "lines": [f"자료가 없어 살펴보지 못한 위험 검사가 {len(unseen)}개 있습니다. 살펴보지 못한 것이지, 문제가 없다는 뜻이 아닙니다."]})
+    parts.append({"h": "꼭 알아 둘 것", "lines": [COMMITTEE_CAVEAT]})
+    return {"title": "다섯 관점의 판정을 쉽게", "parts": parts, "words": []}
 
 
 def texts(doc: Dict[str, Any]) -> List[str]:

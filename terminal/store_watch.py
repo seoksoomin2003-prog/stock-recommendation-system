@@ -29,6 +29,18 @@ LABELS = {"krx_forward": "한국 결합 점수", "krx_forward_fund": "한국 재
           "rank_book_kr": "순위 규칙 비교 장부(한국)", "rank_book_us": "순위 규칙 비교 장부(미국)"}
 
 
+def _line_sessions(folder: Path) -> List[str]:
+    """Sessions in the newest month file of a chained-line record (enough to tell whether it is behind)."""
+    import json
+    files = sorted(Path(folder).glob("*.jsonl"))
+    if not files:
+        return []
+    try:
+        return sorted({str(json.loads(line).get("session")) for line in durable._lines(files[-1]) if line.strip()} - {"None"})
+    except (OSError, ValueError, durable.TornFile):
+        return []
+
+
 def market_of(store: str) -> str:
     return "US" if store.endswith("_us") or store.startswith("us_") else "KR"
 
@@ -52,15 +64,22 @@ def look(base: Path, stores: Iterable[str], finished: Iterable[str] = (), now: O
         if rows:
             sessions[name] = sorted({r["session"] for r in rows})
     for name, label in LINE_STORES.items():          # a cut or altered line stops that record until a person looks: say so
-        if name not in done and durable.verify_chained(base / STORES / name)["status"] in ("TORN", "BROKEN"):
+        if name in done:
+            continue
+        state = durable.verify_chained(base / STORES / name)["status"]
+        if state in ("TORN", "BROKEN"):
             out.append({"store": name, "label": label, "problem": "INDEX_TORN"})
+        elif state == "OK":                          # ... and a whole record that stopped is seen like the others (S3)
+            days = _line_sessions(base / STORES / name)
+            if days:
+                sessions[name] = days
     for market in ("KR", "US"):
         mine = {n: s for n, s in sessions.items() if market_of(n) == market}
         newest = max(mine.values(), key=lambda s: s[-1], default=[])
         for name, days in sorted(mine.items()):
             behind = sum(1 for d in newest if d > days[-1])
             if behind >= LAG and not any(o["store"] == name for o in out):
-                out.append({"store": name, "label": LABELS.get(name, name), "problem": "BEHIND", "last": days[-1], "behind": behind})
+                out.append({"store": name, "label": LABELS.get(name) or LINE_STORES.get(name, name), "problem": "BEHIND", "last": days[-1], "behind": behind})
     stamp = time.time() if now is None else now
     for market, ko in (("KR", "한국"), ("US", "미국")):
         p = base / ARCHIVE / f"{market}.json.gz"
@@ -87,6 +106,7 @@ def text(items: List[Dict[str, Any]]) -> Optional[str]:
 
 # ---------------------------------------------------------------------- a scan that ran, on inputs that were not what they should be
 ERROR_SHARE = 0.10      # stocks dropped by an error, of the stocks asked for
+ERROR_COUNT = 3         # ... or this many: thirty of 503 dropped without a word under the share alone (assessment 2026-11-23, S2)
 STALE_SHARE = 0.20      # stocks scored from a stored copy of their filings because the source did not answer
 YAHOO_SHARE = 0.10      # Korean stocks on Yahoo bars alone because the KRX-built bars could not be made
 LATEST = Path("data") / "qsf"
@@ -106,7 +126,7 @@ def quality(base: Path) -> List[str]:
         if not asked:
             continue
         errors = d.get("errors") or {}
-        if len(errors) / asked >= ERROR_SHARE:
+        if len(errors) / asked >= ERROR_SHARE or len(errors) >= ERROR_COUNT:
             kinds = sorted(set(errors.values()), key=lambda k: -list(errors.values()).count(k))
             out.append(f"{ko} 점수 스캔({d.get('session')}): {asked}종목 중 {len(errors)}종목이 오류로 빠졌습니다({', '.join(kinds[:2])}).")
         stale = (d.get("stale_inputs") or {}).get("stocks") or 0

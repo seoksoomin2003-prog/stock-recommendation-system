@@ -24,7 +24,7 @@ function collectPaint(html, closable) {
 function collectResult(a) {
   const la = a.last_attempt || {};
   if (la.status === "UP_TO_DATE") return `이미 최신입니다 · 기준 거래일 ${esc(la.session || "")}. 새 자료는 미국 장 마감(한국 시간 오전 6~7시) 뒤, 한국은 다음 날 아침에 나옵니다.`;
-  if (la.status === "ERROR") return `<span class="err">수집 중 오류가 났습니다 (${esc(la.type || "")}).</span> 기록 파일: data/automation/manual_run.log`;
+  if (la.status === "ERROR") return `<span class="err">수집 중 오류가 났습니다${la.type ? ` (오류 종류 ${esc(la.type)})` : ""}.</span> 기록 파일: data/automation/manual_run.log`;
   const steps = Object.entries(a.steps || {});
   const named = (st) => steps.filter(([, v]) => v && v.status === st).map(([k, v]) => `${esc(a.step_names[k] || k)}${v.detail ? ` (${esc(v.detail)})` : ""}`);
   const failed = named("FAILED"), waiting = named("WAITING");

@@ -753,8 +753,8 @@ class QSF(ScreenViews):
             ctx["fund"], ctx["events"] = fe["fund"], fe["events"]
         try:
             ctx["earnings"] = self._earnings(sym, market, session, code=ticker, cik=(ctx.get("fund") or {}).get("cik"))
-        except Exception:
-            ctx["earnings"] = {"sessions": None}
+        except Exception as exc:
+            ctx["earnings"] = {"sessions": None, "unavailable": type(exc).__name__}      # the entry gate before earnings cannot work today: the card says so
         return ctx
 
     def card(self, ctx: Dict[str, Any], strategy: str, position: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -791,9 +791,18 @@ class QSF(ScreenViews):
                 except Exception:
                     other_score = None
             out["fund_period"] = fund_period.card_field(fund["live_period"], res["score"], fund, other_score, other)
+        _stale_statements(out, ctx)
         out["why_summary"] = _why(out)
+        if (ctx.get("earnings") or {}).get("unavailable"):
+            out["earnings_unknown"] = "실적 발표일을 받지 못했습니다. 실적 직전의 진입을 막는 조건이 오늘은 작동하지 않습니다."
         out["surface_note"] = _surface_note(out)            # display only: not a ledger field
-        out["plain"] = plain.card_plain(out)                # '쉽게 설명해줘': the same card in everyday words; display only
+        if "deals" not in ctx:                              # read once per stock: both strategies' explanations name the same filing
+            try:
+                ctx["deals"] = self.stored_deals(fund.get("cik"), session) if market == "US" else []
+            except Exception:
+                ctx["deals"] = []
+        m = fund if isinstance(fund, dict) else {}
+        out["plain"] = plain.card_plain(out, {"loss": bool(m.get("loss_now")), "financial": bool(m.get("is_financial")), "deals": ctx["deals"]})      # '쉽게 설명해줘'; display only
         if position:
             if position.get("rank_rules") and strategy == "LONG_TERM":
                 position = {**position, "ahead_share": self._ahead_share(market, strategy, res["score"])}
@@ -939,13 +948,17 @@ class QSF(ScreenViews):
                     errors[t] = ctx["error"]
                     continue
                 pos = self._position(t, market)
+                own = config.STYLE_TO_STRATEGY.get((pos or {}).get("style"))
                 for s in config.STRATEGIES:
-                    c = self.card(ctx, s, pos)
+                    c = self.card(ctx, s, pos if own in (None, s) else None)      # as the single evaluation does: held under its own style only
                     cards.append(c)
                     rows.append({k2: c.get(k2) for k2 in ("ticker", "name", "strategy", "score", "band", "band_label", "action", "action_label", "color", "actionability", "coverage", "confidence", "entry_status", "price", "data_date")}
-                                | {"domains": {d: v["score_100"] for d, v in c["domains"].items()}, "gates": [g["code"] for g in c["gates"]]})
+                                | {"domains": {d: v["score_100"] for d, v in c["domains"].items()}, "gates": [g["code"] for g in c["gates"]],
+                                   "missing_factors": len([x for x in c.get("missing") or [] if x not in config.NEVER_AVAILABLE.get((market, s), ())]),
+                                   "band_held_back": bool(c.get("band_held_back"))})
             except Exception as exc:                     # one bad ticker never stops a scan; the type is recorded
                 errors[t] = type(exc).__name__
+                _log_scan_error(self.base, market, t, exc)
             if progress and k % 25 == 0:
                 progress("scores", k, len(tickers))
         session = self._session("US") if market == "US" else self.regime("KR").get("session")
@@ -1132,11 +1145,12 @@ def _surface_note(c: Dict[str, Any]) -> Optional[str]:
     if c.get("actionability") != "ACTIONABLE" or c.get("score") is None:
         return None
     buy, now = c.get("band") in BUY_BANDS, c.get("entry_status") == "ENTRY_NOW"
+    ready = "진입을 막는 조건 없음" if c.get("strategy") == "LONG_TERM" else "지금 진입 가능"      # the long card's name for it (2026-11-23)
     if buy and not now:
-        return (f"점수 구간은 '{c['band_label']}'이지만 진입 상태는 '지금 진입 가능'이 아닙니다({(c.get('entry') or {}).get('reason') or '진입 근거 없음'}). 구간은 점수만 보고, 진입 상태는 가격 위치와 "
+        return (f"점수 구간은 '{c['band_label']}'이지만 진입 상태는 '{ready}'이 아닙니다({(c.get('entry') or {}).get('reason') or '진입 근거 없음'}). 구간은 점수만 보고, 진입 상태는 가격 위치와 "
                 "손익비까지 봅니다. 주문 계획은 진입 상태를 따르므로 이 종목은 계획에 나오지 않습니다.")
     if now and not buy:
-        return (f"진입 상태는 '지금 진입 가능'이지만 점수 구간은 '{c['band_label']}'입니다(매수 후보는 {config.BANDS[1][0]:g}점 이상). 주문 계획은 구간이 아니라 진입 상태로 후보를 고르므로 "
+        return (f"진입 상태는 '{ready}'이지만 점수 구간은 '{c['band_label']}'입니다(매수 후보는 {config.BANDS[1][0]:g}점 이상). 주문 계획은 구간이 아니라 진입 상태로 후보를 고르므로 "
                 "이 종목이 계획에 나올 수 있습니다.")
     return None
 
@@ -1175,6 +1189,8 @@ def price_label(market: str, info: Optional[Dict[str, Any]]) -> str:
 def _why(c: Dict[str, Any]) -> str:
     """One traceable sentence per action, built only from fields of this card (spec 17)."""
     said = _why_of(c)
+    if c.get("stale_fund_note"):
+        said = f"{c['stale_fund_note']} {said}"
     if c.get("band_held_back") and c["actionability"] == "ACTIONABLE":
         # QSF-1.5.1: the score stands, the buy label does not, and the card says which factors made the difference
         from terminal.assistant import FACTOR_KO          # the Korean factor names live with the assistant's answers; imported here to avoid a cycle
@@ -1183,9 +1199,45 @@ def _why(c: Dict[str, Any]) -> str:
     return said
 
 
+SCAN_ERROR_LOG = Path("data") / "qsf" / "logs" / "scan_errors.log"
+SCAN_ERROR_LOG_MAX = 512 * 1024
+
+
+def _log_scan_error(base: Path, market: str, ticker: str, exc: BaseException) -> None:
+    """One line per stock a scan dropped: when, which stock, the exception's type and where in this program it was raised.
+    The exception's message is not written: it can hold a request address.  Until 2026-11-23 only the type survived, in the
+    scan's summary, and where it came from could not be found afterwards.  Never raises."""
+    try:
+        import traceback
+        here = str(Path(__file__).resolve().parents[2])
+        frames = [f for f in traceback.extract_tb(exc.__traceback__) if f.filename.startswith(here)] or traceback.extract_tb(exc.__traceback__)
+        where = f"{Path(frames[-1].filename).name}:{frames[-1].lineno} {frames[-1].name}" if frames else "?"
+        path = Path(base) / SCAN_ERROR_LOG
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists() and path.stat().st_size > SCAN_ERROR_LOG_MAX:          # keep the newer half
+            keep = path.read_text(encoding="utf-8", errors="replace")[-SCAN_ERROR_LOG_MAX // 2:]
+            path.write_text(keep[keep.find("\n") + 1:], encoding="utf-8")
+        with path.open("a", encoding="utf-8") as f:
+            f.write(f"{datetime.now(timezone.utc).isoformat(timespec='seconds')} {market} {ticker} {type(exc).__name__} at {where}\n")
+    except Exception:
+        pass
+
+
+def _stale_statements(out: Dict[str, Any], ctx: Dict[str, Any]) -> None:
+    """A statement copy that stood in for a failed request and is older than ``config.STALE_FUND_DAYS``: the score still reads it,
+    the confidence does not stay high (user decision 2026-11-23; a 400-day-old copy was recorded BUY, HIGH)."""
+    old = [x for x in ((ctx.get("fund") or {}).get("stale_inputs") or []) if "재무" in str(x.get("what")) and (x.get("age_days") or 0) > config.STALE_FUND_DAYS]
+    if not old or out.get("confidence") in (None, "INSUFFICIENT"):
+        return
+    days = max(x["age_days"] for x in old)
+    out["confidence"], out["stale_fund_days"] = "LOW", days
+    out["stale_fund_note"] = f"재무 자료를 새로 받지 못해 {days:.0f}일 전에 받아 둔 사본으로 계산했습니다. 신뢰도를 '낮음'으로 봅니다."
+
+
 def _why_of(c: Dict[str, Any]) -> str:
     if c["actionability"] == "INSUFFICIENT_DATA":
-        return f"데이터 반영률 {c['coverage'] * 100:.0f}%로 기준에 못 미쳐 판단하지 않습니다. 빠진 요인: {', '.join(c['missing'][:4])}"
+        gone = ", ".join(c["missing"][:4]) or "빠진 요인은 없고, 요인 안의 수치가 모자랍니다"
+        return f"데이터 반영률 {c['coverage'] * 100:.0f}%로 기준에 못 미쳐 판단하지 않습니다. 빠진 요인: {gone}"
     head = f"{c['score']:.1f}점 ({c['band_label']})"
     good = c["top_positive"][0]["text"] if c["top_positive"] else "뚜렷한 강점 요인 없음"
     bad = c["top_negative"][0]["text"] if c["top_negative"] else "뚜렷한 약점 요인 없음"
@@ -1196,8 +1248,11 @@ def _why_of(c: Dict[str, Any]) -> str:
         # the reason not to (assessment 2026-11-22: 20 US cards on 2026-11-20)
         return f"{head}. 다만 지금은 진입 조건이 아닙니다: {c['entry']['reason']} 강점: {good}"
     if c["action"] == "BUY":
-        return f"{head}. 지금 진입을 보는 이유: {c['entry']['reason']} 강점: {good}"
+        lead = "진입을 막는 조건이 없다고 본 이유" if c.get("strategy") == "LONG_TERM" else "지금 진입을 보는 이유"      # the long card's entry reading is not a timing signal
+        return f"{head}. {lead}: {c['entry']['reason']} 강점: {good}"
     if c["action"] in ("HOLD", "WATCH"):
+        # ``invalidation`` lists what would break the reading.  Until 2026-11-23 it was printed under "the condition that must
+        # hold": "유지되어야 할 조건: 수익성 지속 악화" (assessment 2026-11-23; on every hold and watch card since 2026-11-05).
         inv = c["holding"].get("invalidation") or []
-        return f"{head}. 유지되어야 할 조건: {inv[0] if inv else '없음'}. 약점: {bad}"
+        return f"{head}. 이 판단이 깨지는 조건: {inv[0] if inv else '정해 둔 것 없음'}. 약점: {bad}"
     return f"{head}. 주요 감점: {bad}"

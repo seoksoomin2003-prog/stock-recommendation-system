@@ -55,10 +55,18 @@ def root() -> Path:
     return Path(os.environ.get(ENV) or DEFAULT) / FILES
 
 
-def coin_of(symbol: str) -> str:
-    """BTCUSDT -> BTC, 1000SHIBUSDT -> SHIB (the contract is quoted per thousand)."""
+def unit_of(symbol: str) -> float:
+    """How many coins one unit of the contract stands for: 1000SHIBUSDT is quoted per thousand, 1000000MOGUSDT per million."""
     base = symbol[:-4] if symbol.endswith("USDT") else symbol
-    return base[4:] if base.startswith("1000") else base
+    digits = len(base) - len(base.lstrip("0123456789"))
+    lead = base[:digits]
+    return float(lead) if lead and lead.startswith("1") and set(lead[1:]) <= {"0"} and len(lead) >= 4 else 1.0
+
+
+def coin_of(symbol: str) -> str:
+    """BTCUSDT -> BTC, 1000SHIBUSDT -> SHIB, 1000000MOGUSDT -> MOG (the leading 1000... is the contract's unit, not the name)."""
+    base = symbol[:-4] if symbol.endswith("USDT") else symbol
+    return base[len(str(int(unit_of(symbol)))):] if unit_of(symbol) > 1 else base
 
 
 def _alpha_rows(path: Path) -> List[Dict[str, Any]]:

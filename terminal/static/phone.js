@@ -66,7 +66,10 @@ if (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) {
   document.body.appendChild(tip);
   document.addEventListener("click", (e) => {
     const el = e.target.closest ? e.target.closest("[title]") : null;
-    const busy = e.target.closest && e.target.closest("button, a, input, select, textarea, summary, label");
+    const ctl = e.target.closest && e.target.closest("button, a, input, select, textarea, summary, label");
+    // A marked word inside a button (a badge on a rank row) is read too; the button still does what it does.  A control's own
+    // title is not shown: the tap is for the control.
+    const busy = ctl && (!el || el === ctl || !ctl.contains(el));
     if (!el || busy || !el.getAttribute("title") || el === tip) { tip.hidden = true; return; }
     tip.textContent = el.getAttribute("title");
     tip.hidden = false;

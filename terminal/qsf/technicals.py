@@ -104,6 +104,8 @@ def compute(bars: List[Dict[str, Any]], bench: Optional[List[Dict[str, Any]]] = 
         "bad_rows": sum(1 for b in bars[-252:] if (b.get("high") is not None and b.get("low") is not None and b["high"] < b["low"]) or (b.get("volume") is not None and b["volume"] < 0)),
         # the longest run of weekdays with no row between two rows of the last year: a holiday week is 5 to 7, a missing stretch is more
         "max_gap_weekdays": _max_gap([b["date"] for b in bars[-253:]]),
+        # the longest run of sessions without a trade in the last year (a halted stock's rows are there but flat)
+        "max_halt_run": _halt_run(bars[-253:]),
         "support_60": float(lo[-60:].min()), "low_20": float(lo[-20:].min()),
         "resistance": _resistance(h, c[-1], atr),
     }
@@ -124,6 +126,17 @@ def _resistance(h: np.ndarray, close: float, atr: Optional[float]) -> Optional[f
     w = h[-252:]
     pivots = [w[i] for i in range(5, len(w) - 5) if w[i] == w[i - 5:i + 6].max() and w[i] >= close + atr]
     return float(min(pivots)) if pivots else None
+
+
+def _halt_run(rows: List[Dict]) -> int:
+    """The longest run of rows without a trade: volume zero, or no volume and the close unchanged from the row before."""
+    best = run = 0
+    for prev, b in zip(rows, rows[1:]):
+        v = b.get("volume")
+        still = v == 0 or (v is None and b.get("close") == prev.get("close"))
+        run = run + 1 if still else 0
+        best = max(best, run)
+    return best
 
 
 def _max_gap(dates: List[str]) -> int:

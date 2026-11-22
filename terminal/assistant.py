@@ -306,9 +306,11 @@ def committee_items(row: Optional[Dict[str, Any]], market: str, session: Optiona
             g = gone.setdefault(n["ticker"], {"name": n.get("name") or n["ticker"], "why": n.get("why"), "from": []})
             g["from"].append(name.get(key, key))
         for n in p.get("overweight") or []:
-            if n.get("new"):
-                out.append(item("DUE", "IC_INTERRUPT", f"모의 포트폴리오 알림 · {n['text']}", n["ticker"], tab="committee",
-                                short=f"{name.get(key, key)} {n['ticker']} 비중 {n['weight'] * 100:.0f}%(규칙은 {n['cap'] * 100:.0f}%로 축소)"))
+            # shown as long as it lasts (user decision 2026-11-23): the position is not cut, so the notice must not vanish after a day.
+            # The daily message tells it on the day it crossed the line only.
+            risk = " 줄이지 않기로 했으므로 이 포트폴리오의 결과가 이 한 종목에 크게 좌우됩니다."
+            out.append(item("DUE" if n.get("new") else "INFO", "IC_INTERRUPT" if n.get("new") else "IC_OVERWEIGHT", f"모의 포트폴리오 알림 · {n['text']}{risk}", n["ticker"], tab="committee",
+                            short=f"{name.get(key, key)} {n['ticker']} 비중 {n['weight'] * 100:.0f}%(규칙은 {n['cap'] * 100:.0f}%로 축소)" if n.get("new") else None))
     for t, g in gone.items():
         out.insert(0, item("DUE", "IC_INTERRUPT", f"모의 포트폴리오 알림 · {g['name']}({t})을 {', '.join(g['from'])} 포트폴리오에서 전부 뺐습니다. 이유: {g['why']}. 빠진 몫은 현금으로 둡니다. "
                                                   "모의 포트폴리오의 규칙이 한 일이고 주문이 아닙니다.", t, tab="committee", short=f"{t} 전량 제외({', '.join(g['from'])})"))
@@ -330,7 +332,7 @@ def daily_lines(briefs: List[Dict[str, Any]]) -> List[str]:
         plan = f"{brief.get('orders') or len(orders)}건({', '.join(orders)}{' 등' if (brief.get('orders') or 0) > len(orders) else ''})" if orders else \
             (by.get("NO_ACCOUNT") or {}).get("short") or ("새 주문 없음" if "NO_ORDERS" in by else None)
         fired = [i["short"] for i in brief["items"] if i["kind"] == "IC_INTERRUPT" and i.get("short")]
-        for label, text in (("시장 상태", (by.get("MARKET_ADVERSE") or by.get("MARKET_STATE") or {}).get("short")), ("스윙 상위 3", (by.get("TOP3") or {}).get("short")), ("주문 계획", plan),
+        for label, text in (("시장 상태", (by.get("MARKET_ADVERSE") or by.get("MARKET_UNKNOWN") or by.get("MARKET_STATE") or {}).get("short")), ("스윙 상위 3", (by.get("TOP3") or {}).get("short")), ("주문 계획", plan),
                             ("모의 포트폴리오 알림", ", ".join(fired[:4]) + (f" 외 {len(fired) - 4}건" if len(fired) > 4 else "") if fired else None)):
             if text:
                 rows[label].append(f"{where} {text}")
@@ -522,6 +524,20 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
 STRATEGY_KO = {"SWING": "스윙", "LONG_TERM": "장기"}
 ENTRY_KO = {"ENTRY_NOW": "지금 진입 가능 구간", "WAIT_FOR_PULLBACK": "눌림 대기", "WAIT_FOR_BREAKOUT_CONFIRMATION": "돌파 확인 대기", "WAIT_FOR_EARNINGS": "실적 발표 대기",
             "OVERVALUED_AT_CURRENT_PRICE": "현재 가격 고평가", "NO_VALID_ENTRY_SETUP": "유효한 진입 근거 없음"}
+LONG_READY = "진입을 막는 조건 없음"
+
+
+def entry_ko(entry: Optional[str], strategy: Optional[str] = None) -> str:
+    """The entry status in Korean.  A long-term ENTRY_NOW is named for what it is: no rule blocks entry (user decision 2026-11-23)."""
+    return LONG_READY if entry == "ENTRY_NOW" and strategy == "LONG_TERM" else ENTRY_KO.get(entry, entry or "")
+
+
+def entry_meaning(entry: Optional[str], strategy: Optional[str] = None) -> str:
+    if entry == "ENTRY_NOW" and strategy == "LONG_TERM":
+        return "장기 점수가 기준을 넘고 가격이 진입을 막을 만큼 비싸게 읽히지 않는다는 뜻입니다. '지금이 좋은 때'라는 뜻은 아닙니다."
+    return ENTRY_MEANING.get(entry, "")
+
+
 EXIT_KO = {"HOLD": "보유", "HOLD_AND_REVIEW": "보유하며 재검토", "PARTIAL_TAKE_PROFIT": "일부 차익 실현 검토", "REDUCE": "비중 축소 검토", "EXIT": "청산 검토",
            "THESIS_INVALIDATED": "투자 논리 무효", "TIME_STOP_REVIEW": "시간 손절 재평가"}
 FACTOR_KO = {"trend_structure": "추세 구조", "relative_strength": "상대 강도", "momentum": "모멘텀", "breakout_volume": "돌파·거래량", "volatility_structure": "변동성 구조",
@@ -1250,7 +1266,7 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
     standing = f"{st['of']}종목 중 {st['place']}위({_share(st['share'])})"
     gates = [g.get("text") or g.get("code") for g in snap.get("gates") or []]
     entry = snap.get("entry_status")
-    entry_line = f"진입 판단은 '{ENTRY_KO.get(entry, entry)}'입니다. {ENTRY_MEANING.get(entry, '')}".strip()
+    entry_line = f"진입 판단은 '{entry_ko(entry, strategy)}'입니다. {entry_meaning(entry, strategy)}".strip()
     hold = snap.get("holding") or {}
     close = snap.get("price")
 
@@ -1396,7 +1412,7 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
     state = terminal.market_state(market)
     soon = raw.get("sessions") is not None and raw["sessions"] <= block
     checks = [("점수 구간", score >= BUY_LINE, f"{kind} {score:.1f}점('{row.get('band_label')}'), {standing}. 매수 후보 구간은 {BUY_LINE:g}점 이상입니다."),
-              ("진입 판단", entry == "ENTRY_NOW", f"'{ENTRY_KO.get(entry, entry)}'. {ENTRY_MEANING.get(entry, '')}" + (f" 지금 손익비는 {hold['reward_risk']:.2f}입니다." if hold.get("reward_risk") is not None else "")),
+              ("진입 판단", entry == "ENTRY_NOW", f"'{entry_ko(entry, strategy)}'. {entry_meaning(entry, strategy)}" + (f" 지금 손익비는 {hold['reward_risk']:.2f}입니다." if hold.get("reward_risk") is not None else "")),
               ("차단 조건", not gates, ("; ".join(gates) + ". 점수와 상관없이 매수 후보에서 빠집니다.") if gates else "없음."),
               ("실적 발표", (not soon) if raw.get("next_earnings") else None, (f"{raw['next_earnings']}({raw.get('sessions')}거래일 뒤)" + ("로 임박했습니다. 발표 전후에는 가격이 크게 움직일 수 있습니다." if soon else "로 임박하지 않았습니다."))
                if raw.get("next_earnings") else "저장된 날짜가 없습니다. 직접 확인하세요."),

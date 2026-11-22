@@ -24,7 +24,11 @@ def bars_of(*closes):
 def coins(monkeypatch):
     def use(prices, error=None):
         doc = {"arrays": {"bars": {s: bars_of(*v) for s, v in prices.items()}}, **({"error": error} if error else {})}
-        monkeypatch.setattr(coin_source, "load", lambda base, *a, **k: doc)
+        asked.append(0)
+        monkeypatch.setattr(coin_source, "load", lambda base, *a, **k: asked.append(1) or doc)
+        monkeypatch.setattr(coin_source, "stored", lambda base: {k: v for k, v in doc.items() if k != "error"})
+    asked = []
+    use.asked = asked
     use({"BTCUSDT": [90_000.0] * 6 + [100_000.0], "1000SHIBUSDT": [0.02] * 7})
     return use
 
@@ -122,3 +126,27 @@ def test_a_voided_coin_entry_stays_in_its_account_and_the_chain_holds(term, coin
 def test_the_account_page_is_one_request_and_a_phone_may_make_its_entries():
     posts = {path for (method, path) in server.routes(object()) if method == "POST"}
     assert ("GET", "/api/account") in server.routes(object()) and "/api/journal/add" in phone_view.PHONE_WRITES and "/api/journal/add" in posts
+
+
+def test_the_account_page_asks_binance_only_when_coins_are_held_and_then_once(term, coins):  # noqa: F811
+    """Assessment 2026-11-23: the page of a user without coins asked Binance about sixty times inside the request."""
+    t = term({"KRW=X": 1400.0, "AAPL": 200.0})
+    add(t, kind="HOLD", ticker="AAPL", qty=1, price=100, style="LONG")
+    d = t.account()
+    assert sum(coins.asked) == 0 and [c["coin"] for c in d["coins"]] == ["BTC", "SHIB"] and d["coin_error"] is None      # the list of covered coins comes from the copy on file
+    add(t, kind="HOLD", ticker="BTC", qty=0.1, price=120_000_000, market="COIN", style="LONG")
+    assert t.account()["total"]["krw"] is not None and sum(coins.asked) == 1                                    # once per page, not once per part
+
+
+def test_a_coin_quoted_per_million_and_a_value_that_is_no_price(term, coins):  # noqa: F811
+    from terminal import coin_bridge
+    assert coin_bridge.unit_of("1000000MOGUSDT") == 1_000_000 and coin_bridge.coin_of("1000000MOGUSDT") == "MOG"       # it read "000MOG", a price a thousand times off
+    assert coin_bridge.unit_of("1000SHIBUSDT") == 1000 and coin_bridge.unit_of("BTCUSDT") == 1 and coin_bridge.coin_of("1000SHIBUSDT") == "SHIB"
+    coins({"1000000MOGUSDT": [2.0] * 7, "BTCUSDT": [90_000.0] * 6 + [float("nan")], "ETHUSDT": [3000.0] * 6 + [0.0]})
+    t = term({"KRW=X": 1400.0})
+    for c in ("MOG", "BTC", "ETH"):
+        add(t, kind="HOLD", ticker=c, qty=1, price=1000, market="COIN", style="LONG")
+    rows = {h["ticker"]: h for h in t.account()["holdings"]}
+    assert rows["MOG"]["close"] == pytest.approx(2.0 / 1_000_000 * 1400)
+    assert rows["BTC"]["close"] is None and rows["BTC"]["status"] == "UNAVAILABLE" and rows["ETH"]["close"] is None      # NaN and zero are not prices
+    assert t.account()["total"]["krw"] is None

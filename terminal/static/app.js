@@ -76,11 +76,11 @@ async function api(path, opts) {
 }
 // What the server's error codes mean, in Korean.  A code that is not here is shown as it is, marked as a code.
 const ERR_KO = { INVALID_TICKER: "종목 코드 형식이 올바르지 않습니다.", WATCHLIST_FULL: "관심종목은 최대 100개입니다.", SERVER_UNREACHABLE: "터미널 서버에 연결되지 않습니다.",
-  INTERNAL_ERROR: "서버 내부 오류가 발생했습니다. 잠시 뒤 다시 해 보고, 계속되면 '서버 다시 시작'을 누르세요.", INVALID_RANGE: "기간 값이 올바르지 않습니다.",
+  INTERNAL_ERROR: "서버 내부 오류가 발생했습니다. 잠시 뒤 다시 해 보세요. 계속되면 터미널을 띄운 컴퓨터에서 프로그램을 껐다 켜세요(기록: data/terminal/logs/server_errors.log).", INVALID_RANGE: "기간 값이 올바르지 않습니다.",
   BAD_RESPONSE: "서버의 답을 읽지 못했습니다. 화면을 새로 고쳐 보세요.", BAD_JSON: "보낸 내용을 서버가 읽지 못했습니다. 화면을 새로 고친 뒤 다시 해 보세요.",
   BAD_LENGTH: "보낸 내용이 너무 길거나 길이가 맞지 않습니다.", METHOD_NOT_ALLOWED: "이 주소는 그 방식의 요청을 받지 않습니다.", NOT_FOUND: "그런 주소가 없습니다. 화면을 새로 고쳐 보세요.",
   FORBIDDEN_HOST: "이 주소로는 터미널을 열 수 없습니다. 터미널을 띄운 컴퓨터에서는 127.0.0.1 주소로, 휴대폰에서는 '폰 연결'에 보이는 주소로 여세요.",
-  PHONE_MAC_ONLY: "이 동작은 터미널을 띄운 컴퓨터에서만 할 수 있습니다. 휴대폰에서는 보기와 거래 기록·관심종목·알림 입력만 됩니다.",
+  PHONE_MAC_ONLY: "이 동작은 터미널을 띄운 컴퓨터에서만 할 수 있습니다. 휴대폰에서는 모든 화면 보기와 거래 기록, 모의 매매 기록, 관심종목, 알림 조건, 질문하기가 됩니다.",
   PHONE_NOT_PAIRED: "이 기기의 연결이 끊겼습니다. 화면을 새로 고쳐 연결 코드를 다시 넣으세요.", PHONE_VIEW_OFF: "휴대폰 연결이 꺼져 있습니다. 먼저 켜세요.",
   PHONE_VIEW_UNAVAILABLE: "이 서버에서는 휴대폰 연결을 쓸 수 없습니다.", PHONE_CODE_WRONG: "코드가 맞지 않습니다.", PHONE_CODE_EXPIRED: "코드의 시간이 지났습니다. 새 코드를 만드세요.",
   PHONE_CODE_LOCKED: "틀린 횟수가 많아 이 코드는 더 쓸 수 없습니다. 새 코드를 만드세요.", PHONE_TOO_MANY: "연결된 기기가 이미 다섯 대입니다. 하나를 끊은 뒤 다시 하세요.", FORBIDDEN_ORIGIN: "다른 사이트에서 온 요청이라 받지 않았습니다.",
@@ -669,7 +669,7 @@ async function renderModel() {
       <div class="panel"><h2>전향적 추적 ${badge(t.status)}</h2>${t.status === "REAL" ? `<div class="kv"><div><span>기록된 실행</span><b>${esc(t.runs)}</b></div><div><span>관찰 건수</span><b>${esc(t.observations)}</b></div>${t.excluded_runs ? `<div title="같은 거래일을 두 번 스캔한 기록입니다. 지우지 않고 집계에서만 뺍니다."><span>집계 제외 (중복 스캔)</span><b>실행 ${esc(t.excluded_runs)}개 · ${esc(t.excluded_observations)}건</b></div>` : ""}
         <div><span>최근 갱신</span><b>${esc(t.latest_update || "—")}</b></div></div>
         ${t.outcome_states ? `<div class="kv">${Object.entries(t.outcome_states).map(([k, v]) => `<div><span>${esc(outKo(k))}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
-        <div class="meta">표본이 충분히 쌓이기 전에는 성과를 판단할 수 없습니다.</div>` : `<div class="empty">추적 데이터를 읽지 못했습니다 (${esc(t.error || "")}).</div>`}</div>
+        <div class="meta">표본이 충분히 쌓이기 전에는 성과를 판단할 수 없습니다.</div>` : `<div class="empty">추적 데이터를 읽지 못했습니다. ${esc(t.error ? errKo({ message: t.error }) : "")}</div>`}</div>
       <div class="panel"><h2>도전자 모델</h2><div class="empty">${esc(d.challenger_note)}</div></div>`;
     wireCapital(el, cap, b, mk);
   } catch (e) { el.innerHTML = errBox(e); }

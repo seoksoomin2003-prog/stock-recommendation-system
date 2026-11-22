@@ -53,7 +53,7 @@ function acctBind(d) {
   const held = new Set(d.holdings.map((h) => `${h.market}:${h.ticker}`));
   const hint = () => {
     const k = f.kind.value, m = f.market.value;
-    $("#accthint").textContent = k === "HOLD" ? ACCT_HOLD_HINT
+    $("#accthint").textContent = k === "HOLD" ? ACCT_HOLD_HINT + (m === "COIN" ? " 코인의 지금 가격은 바이낸스 달러 가격에 환율을 곱한 값이라 국내 거래소 가격과 다를 수 있습니다." : "")
       : m === "COIN" ? "코인은 원화로 적습니다. 지금 가격은 바이낸스 달러 가격에 환율을 곱한 값이라 국내 거래소 가격과 다를 수 있습니다."
       : "실제로 체결된 내용만 적으세요. 이 화면은 주문을 내지 않습니다.";
   };
@@ -64,6 +64,13 @@ function acctBind(d) {
   f.ticker.onblur = () => {            // 주식 코드는 모양으로 시장이 정해집니다: 계좌 칸을 맞춰 줍니다
     const t = f.ticker.value.trim().toUpperCase();
     if (t && f.market.value !== "COIN" && marketOf(t) !== f.market.value) { f.market.value = marketOf(t); const keep = t; redraw(); $("#acctform").ticker.value = keep; }
+    // What the form cannot refuse but the user should know before saving (assessment 2026-11-23)
+    const m = $("#acctform").market.value, covered = new Set((d.coins || []).map((c) => c.coin)), msg = $("#acctmsg");
+    const warn = !t ? "" : /[가-힣]/.test(t) ? "종목 이름이 아니라 코드로 적어야 합니다(예: 삼성전자는 005930, 애플은 AAPL)."
+      : m === "COIN" && /^\d{6}$/.test(t) ? "6자리 숫자는 한국 주식 코드로 보입니다. 주식이라면 계좌를 '한국 주식'으로 바꾸세요. 그대로 두면 코인으로 기록됩니다."
+      : m === "COIN" && covered.size && !covered.has(t) ? `'${t}'은(는) 가격을 받는 코인 ${covered.size}종에 없습니다. 기록은 되지만 지금 가격과 평가액이 '없음'으로 나오고 합계도 비게 됩니다.`
+      : m !== "COIN" && covered.has(t) ? `'${t}'은(는) 코인 이름이기도 합니다. 코인이라면 계좌를 '코인'으로 바꾸세요. 그대로 두면 주식 코드로 기록됩니다.` : "";
+    msg.className = "msg"; msg.textContent = warn;
   };
   f.onsubmit = async (e) => {
     e.preventDefault();

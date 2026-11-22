@@ -99,7 +99,9 @@ def read(long_snap: Optional[Dict[str, Any]], swing_snap: Optional[Dict[str, Any
     status["insider_buy"] = CONFIRMED if out["insider_buy"] is not None else MISSING
     # the market state the program shows everywhere is the swing scan's (order_plan.market_state reads SWING first)
     regimes = [((s or {}).get("domains") or {}).get("REGIME") for s in (swing_snap, long_snap)]
-    out["market_state"] = next((r["score_100"] for r in regimes if isinstance(r, dict) and r.get("score_100") is not None), None)
+    # read only when at least half of the state's factors had data, as the order plan reads it (MARKET_STATE_MIN_COVERAGE)
+    out["market_state"] = next((r["score_100"] for r in regimes if isinstance(r, dict) and r.get("score_100") is not None
+                                and (r.get("coverage") is None or r["coverage"] >= 0.5)), None)
     status["market_state"] = CONFIRMED if out["market_state"] is not None else MISSING
     # no equity: return on equity and price to book mean nothing, and the stored 99 is a mark, not a ratio
     out["no_equity"] = out.get("debt_equity") == NO_EQUITY

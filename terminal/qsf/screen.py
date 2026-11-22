@@ -4,6 +4,8 @@ A stock missing a value a filter asks about is left out and counted, never treat
 """
 from typing import Any, Dict, List, Optional, Tuple
 
+from terminal.qsf import config
+
 ACTIONS = ("BUY", "WATCH", "AVOID", "HOLD", "REDUCE", "SELL", "BLOCKED", "INSUFFICIENT_DATA")
 STRATEGIES = ("SWING", "LONG_TERM")
 ENTRY_STATES = ("ENTRY_NOW", "WAIT_FOR_PULLBACK", "WAIT_FOR_BREAKOUT_CONFIRMATION", "WAIT_FOR_EARNINGS", "OVERVALUED_AT_CURRENT_PRICE", "NO_VALID_ENTRY_SETUP")
@@ -121,5 +123,5 @@ def screen(latest: Dict[str, Any], query: Dict[str, Any]) -> Dict[str, Any]:
     known.sort(key=lambda r: (_value(r, f["sort"]), str(r.get("ticker"))), reverse=f["order"] == "desc")
     ordered = known + sorted(unknown, key=lambda r: str(r.get("ticker")))
     page = ordered[f["offset"]:f["offset"] + f["limit"]]
-    return {"status": "REAL", "market": latest.get("market"), "session": latest.get("session"), "model_version": latest.get("model_version"), "generated_at": latest.get("generated_at"), "strategy": f["strategy"],
+    return {"status": "REAL", "market": latest.get("market"), "session": latest.get("session"), "model_version": latest.get("model_version"), "live_version": config.MODEL_VERSION, "generated_at": latest.get("generated_at"), "strategy": f["strategy"],
             "total": len(rows), "matched": len(ordered), "missing_value": missing, "offset": f["offset"], "limit": f["limit"], "sort": f["sort"], "order": f["order"], "sectors": _counts(rows), "matched_sectors": _counts(ordered), "rows": page}

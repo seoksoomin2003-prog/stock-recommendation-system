@@ -172,7 +172,14 @@ def test_the_live_score_reads_annual_statements_until_the_one_reading_says_other
     (tmp_path / fp.REPORTS["US"]).write_text(json.dumps({"verdict": "NOT_DISTINGUISHED"}), encoding="utf-8")
     assert fp.live_period(tmp_path, "US") == "ANNUAL"
     (tmp_path / fp.REPORTS["US"]).write_text(json.dumps({"verdict": "TRAILING_BETTER"}), encoding="utf-8")
-    assert fp.live_period(tmp_path, "US") == "TRAILING" and fp.live_period(tmp_path, "KR") == "ANNUAL"                 # each market has its own reading
+    # user decision 2026-11-23: the reading reports and switches nothing; the button on the screen does, and only after the reading
+    assert fp.live_period(tmp_path, "US") == "ANNUAL" and fp.set_period(tmp_path, "KR", "TRAILING")["status"] == "REFUSED"
+    got = fp.set_period(tmp_path, "US", "TRAILING")
+    assert got["status"] == "OK" and fp.live_period(tmp_path, "US") == "TRAILING" and fp.live_period(tmp_path, "KR") == "ANNUAL" and fp.stored_switch(tmp_path, "US") == "TRAILING"
+    assert fp.status(tmp_path)["markets"]["US"]["can_switch"] is True and fp.status(tmp_path)["markets"]["KR"]["can_switch"] is False
+    assert fp.set_period(tmp_path, "US", "ANNUAL")["live_period"] == "ANNUAL" and fp.set_period(tmp_path, "US", "TRAILING")["live_period"] == "TRAILING"
+    with pytest.raises(ValueError, match="BAD_VALUE"):
+        fp.set_period(tmp_path, "US", "QUARTERLY")
     monkeypatch.setenv(fp.SWITCH, "annual")
     assert fp.live_period(tmp_path, "US") == "ANNUAL"
     monkeypatch.setenv(fp.SWITCH, "TRAILING")
@@ -355,8 +362,8 @@ def test_the_one_reading_compares_the_buy_bands_and_a_better_trailing_score_beco
     assert fp.live_period(tmp_path, "US") == "ANNUAL"
     store["docs"] = docs_for(250, tickers, every=2)
     res = fp.evaluate_once(tmp_path, "US", Panel(500, tickers), log=lambda *_: None)
-    assert res["verdict"] == "TRAILING_BETTER" and res["applies"] == "TRAILING" and res["swing"]["days"] == 240 and res["long"]["reading"] == "FIGURES_ONLY" and len(res["reasons"]) == 5 and "기준: 120일 이상" in res["reasons"][2] and res["swing"]["difference"]["days_with_difference"] >= 120
-    assert "다음 스캔부터" in res["reasons"][-1] and fp.live_period(tmp_path, "US") == "TRAILING" and fp.live_period(tmp_path, "KR") == "ANNUAL"
+    assert res["verdict"] == "TRAILING_BETTER" and res["applies"] == "ANNUAL" and res["applies_itself"] is False and res["swing"]["days"] == 240 and res["long"]["reading"] == "FIGURES_ONLY" and len(res["reasons"]) == 5 and "기준: 120일 이상" in res["reasons"][2] and res["swing"]["difference"]["days_with_difference"] >= 120
+    assert "자동으로 바꾸지는 않습니다" in res["reasons"][-1] and fp.live_period(tmp_path, "US") == "ANNUAL" and fp.live_period(tmp_path, "KR") == "ANNUAL"
     with pytest.raises(RuntimeError, match="다시 읽지 않습니다"):
         fp.evaluate_once(tmp_path, "US", Panel(500, tickers), log=lambda *_: None)
     store["docs"] = docs_for(250, tickers, trailing_shift=0.0)
@@ -372,13 +379,14 @@ def test_the_daily_job_the_backup_the_readings_and_the_documents_know_the_record
     by = {e["key"]: e for e in rd.REGISTRY}
     for m in ("kr", "us"):
         e = by[f"fund_period_{m}"]
-        assert e["applies"] is True and e["need"] == fp.READ_AT and e["store"] == f"fund_period_{m}" and e["report"] == fp.REPORTS[m.upper()].name and "QSF_FUND_PERIOD" in e["after"]
-    assert sum(1 for e in rd.REGISTRY if e["applies"]) == 2 and rd.VERDICT_KO["TRAILING_BETTER"] and rd.VERDICT_KO["ANNUAL_BETTER"]
+        assert e["applies"] is False and e["need"] == fp.READ_AT and e["store"] == f"fund_period_{m}" and e["report"] == fp.REPORTS[m.upper()].name and "QSF_FUND_PERIOD" in e["after"]
+    assert sum(1 for e in rd.REGISTRY if e["applies"]) == 0          # no reading changes anything by itself any more (2026-11-23)
+    assert rd.VERDICT_KO["TRAILING_BETTER"] and rd.VERDICT_KO["ANNUAL_BETTER"]
     src = (ROOT / "terminal" / "qsf" / "service.py").read_text(encoding="utf-8")
     assert 'f"periods1:' in src and 'f"krq1:' in src and "fund_period.live_period(self.base, market)" in src
     proto = (ROOT / fp.PROTOCOL).read_text(encoding="utf-8")
     assert "나란히 기록" in proto and "TRAILING_BETTER" in proto and "QSF_FUND_PERIOD=ANNUAL" in proto and "IC가 A -0.002, B -0.014" in proto
-    assert config.MODEL_VERSION == "QSF-1.5.1"                                                         # the live formula and its inputs did not change
+    assert config.MODEL_VERSION == "QSF-1.5.2"                                                         # the live formula and its inputs did not change
 
 
 def test_the_pass_bar_keeps_a_chance_pass_rare_and_two_episodes_do_not_decide():

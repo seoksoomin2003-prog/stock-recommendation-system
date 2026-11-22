@@ -147,7 +147,7 @@ def test_a_paired_phone_reads_and_makes_entries_and_the_rest_stays_on_the_comput
     origin = f"http://127.0.0.1:{port}"
     assert ask(port, "POST", "/api/watchlist/add", {"ticker": "MSFT", "market": "US"}, cookie=mine, origin=origin)[0] == 200
     assert ask(port, "POST", "/api/watchlist/add", {"ticker": "MSFT", "market": "US"}, cookie=mine, origin="http://evil.example")[:2] == (403, {"error": "FORBIDDEN_ORIGIN"})
-    for path in ("/api/settings", "/api/capital", "/api/qsf/rank-rules", "/api/qsf/turnover-rules", "/api/automation/run", "/api/lab/run", "/api/model/scan",
+    for path in ("/api/settings", "/api/capital", "/api/qsf/fund-period", "/api/qsf/rank-rules", "/api/qsf/turnover-rules", "/api/automation/run", "/api/lab/run", "/api/model/scan",
                  "/api/phone/switch", "/api/phone/code", "/api/phone/unpair"):
         assert ask(port, "POST", path, {"on": True}, cookie=mine, origin=origin)[:2] == (403, {"error": "PHONE_MAC_ONLY"}), path
     assert ask(port, "GET", "/api/phone/status", cookie=mine)[:2] == (200, {"on": True, "available": False, "phone": True})      # no code, no other device
@@ -186,4 +186,4 @@ def test_every_changing_request_is_either_a_phone_entry_or_named_as_computer_onl
     assert pv.PHONE_WRITES <= posts
     assert posts - pv.PHONE_WRITES == {"/api/settings", "/api/capital", "/api/qsf/rank-rules", "/api/qsf/turnover-rules", "/api/automation/run", "/api/lab/run",
                                        "/api/model/scan", "/api/phone/switch", "/api/phone/code", "/api/phone/unpair",
-                                       "/api/qsf/stance"}      # a new changing request must be put on one side (the stance sizes orders: a setting)
+                                       "/api/qsf/stance", "/api/qsf/fund-period"}      # a new changing request must be put on one side (the stance sizes orders: a setting)

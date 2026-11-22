@@ -1,8 +1,10 @@
 """QSF factor calculators.  Each returns (normalized 0..1, raw dict, explanation, source, as_of, status) or a
 missing/not-applicable marker.  Absolute anchors are fixed research defaults; raw values are kept unchanged.
 
-Correlated indicators are grouped: RSI and MACD share the 5-point momentum factor and moving averages sit only in
-trend, so one underlying trend cannot collect full credit several times.
+Indicators of one family are grouped: RSI and MACD share the 5-point momentum factor and moving averages sit only in
+trend, so one indicator does not enter several factors.  The factors themselves still overlap: measured on the 2026-11-20
+scan, the US swing score's rank correlation with ``trend_structure`` alone is 0.88, and trend, volatility and debt each show
+up in more than one factor (reports/maturity_assessment_2026_11_23/).
 """
 import math
 from typing import Any, Callable, Dict, List, Optional
