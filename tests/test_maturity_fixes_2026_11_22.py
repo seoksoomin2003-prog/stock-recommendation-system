@@ -34,9 +34,10 @@ def test_a_strong_label_steps_down_and_a_recorded_band_still_buffers():
 
 
 def test_the_card_says_which_factors_made_the_difference():
-    card = {"actionability": "ACTIONABLE", "score": 73.3, "band_label": "보유·관찰 · 빠진 요인을 중간값으로 보면 69.5점", "band_held_back": True, "missing": ["밸류에이션"],
+    card = {"actionability": "ACTIONABLE", "score": 73.3, "band_label": "보유·관찰 · 빠진 요인을 중간값으로 보면 69.5점", "band_held_back": True, "missing": ["valuation"],
             "top_positive": [], "top_negative": [], "action": "WATCH", "holding": {}, "entry": {"reason": ""}}
-    assert "자료가 없는 요인(밸류에이션)" in qsf_service._why(card) and "자료가 없는 요인" not in qsf_service._why({**card, "band_held_back": False})
+    said = qsf_service._why(card)
+    assert "약점 요인 없음. 자료가 없는 요인(가치(밸류에이션))을" in said and "자료가 없는 요인" not in qsf_service._why({**card, "band_held_back": False})       # the factor's Korean name, as its own sentence
 
 
 # ---------------------------------------------------------------------- the long entry rule's hole

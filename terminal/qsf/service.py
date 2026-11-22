@@ -1157,7 +1157,9 @@ def _why(c: Dict[str, Any]) -> str:
     said = _why_of(c)
     if c.get("band_held_back") and c["actionability"] == "ACTIONABLE":
         # QSF-1.5.1: the score stands, the buy label does not, and the card says which factors made the difference
-        said += f" 자료가 없는 요인({', '.join(c.get('missing') or [])[:80]})을 빼고 계산한 점수라서, 그 자리를 중간값으로 읽은 점수로 구간을 정했습니다."
+        from terminal.assistant import FACTOR_KO          # the Korean factor names live with the assistant's answers; imported here to avoid a cycle
+        names = ", ".join(FACTOR_KO.get(f, f) for f in (c.get("missing") or [])[:4])
+        said = f"{said.rstrip('. ')}. 자료가 없는 요인({names})을 빼고 계산한 점수라서, 그 자리를 중간값으로 읽은 점수로 구간을 정했습니다."
     return said
 
 
