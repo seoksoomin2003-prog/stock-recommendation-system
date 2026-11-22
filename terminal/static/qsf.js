@@ -255,7 +255,7 @@ function qsfDrawDetail(d) {
     ${d.high_risk ? `<div class="meta">${QSF_RISK_NOTE} 기준일 ${esc(d.high_risk.session)}.</div>` : ""}
     ${d.filing_events ? `<div class="meta">${QSF_FILING_NOTE} 기준일 ${esc(d.filing_events.session)}.</div>` : ""}
     ${(d.deals || []).length ? `<div class="notice">SEC에 인수·합병 절차 공시가 있습니다: ${d.deals.slice(0, 3).map((x) => `${esc(x.label)}(${esc(x.form)}, ${esc(x.date)})`).join(", ")}. 인수 가격이 정해진 종목은 더 오를 여지가 작고 거래가 깨지면 크게 내릴 수 있습니다. 인수하는 쪽이 내는 경우도 있으니 공시 원문을 확인하세요. 점수는 이 공시를 읽지 않습니다.</div>` : ""}
-    ${qsfFiveHtml(d.five_views, d.ticker, d.market)}
+    ${icCardHtml(d.committee, d.ticker, d.market)}
     ${qsfRiskGradeLine(d.risk_grade)}
     ${QSF_RANK_NOTE[d.rank_basis] ? `<div class="meta">${QSF_RANK_NOTE[d.rank_basis]}</div>` : ""}
     ${qsfAuditLine(d.price_audit)}
@@ -453,50 +453,6 @@ function qsfCapHtml(d) {
     <div class="tbl-wrap"><table class="qs-table"><thead><tr><th>순위</th><th class="l">종목</th><th>점수</th><th title="20거래일 평균 거래대금 순위">거래대금 순위</th><th class="l">라이브 대상</th><th class="l">상태</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="meta">점수는 그날 기록에 적힌 값입니다(다시 계산하지 않음). 규칙: ${esc(d.protocol)}</div></div>`;
 }
-// 다섯 관점(버핏·멍거·그레이엄·린치·드러켄밀러식 기준)의 종목별 의견을 점수 카드에 보여 줍니다. 점수와 무관한 참고입니다.
-// 포트폴리오는 따로 있는 기능입니다: 카드의 '포트폴리오 받아보기'를 눌렀을 때만 그 종목을 중심으로 만들어 보여 줍니다.
-function qsfFiveHtml(f, ticker, market) {
-  if (!f || !f.judged) return "";
-  return `<div class="panel"><h3>다섯 관점 <span class="meta" style="margin:0">알려진 원칙을 기준값으로 옮긴 참고 · 점수와 무관</span></h3>
-    ${f.views.map((v) => `<div class="meta" style="margin:6px 0"><b>${esc(v.name)}</b> <span class="badge">${esc(v.verdict_label)}</span> ${esc(v.motto)} · ${v.verdict === "UNKNOWN" ? `확인할 수 있는 기준이 ${v.known}개뿐이라 판단하지 않았습니다.` : `기준 ${v.known}개 중 ${v.met}개 충족. ${v.capped ? `<b>${esc(v.capped)}</b> ` : ""}${esc(v.detail || "")}`}</div>`).join("")}
-    <div class="meta" style="margin:8px 0 0"><b>${esc(f.team_line)}</b></div><div class="meta">${esc(f.note)}</div>
-    <div style="margin:10px 0 0"><button type="button" class="fp-get" data-t="${esc(ticker || "")}" data-m="${esc(market || "")}" title="이 종목을 중심으로 다섯 관점이 만든 포트폴리오를 지금 작성합니다. 누르기 전에는 만들지 않습니다.">포트폴리오 받아보기</button>
-      <span class="meta" style="margin:0 0 0 8px">이 종목을 중심으로 다섯 관점이 만드는 참고 포트폴리오 · 누를 때 작성</span></div>
-    <div class="fp-out"></div></div>`;
-}
-
-function qsfPortfolioHtml(d) {
-  if (!d || (d.status !== "OK" && d.status !== "EMPTY")) return `<div class="notice">${esc((d && d.reason) || "포트폴리오를 만들지 못했습니다.")}</div>`;
-  const rows = (d.rows || []).map((r) => `<tr><td class="l"><button type="button" class="qs-open" data-t="${esc(r.ticker)}"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span></button>${r.is_seed ? ' <span class="badge">이 종목</span>' : ""}</td>
-    <td class="l">${esc(r.sector || "")}</td><td class="num">${(r.weight * 100).toFixed(1)}%</td><td class="l">${r.agree}개: ${esc((r.agree_names || []).join(", "))}</td>
-    <td class="l">${r.is_seed ? "" : esc(r.added_by || "")}</td><td class="l">${esc(r.against_why || "")}</td></tr>`).join("");
-  const rest = (d.lines || []).slice(1 + (d.rows || []).length);
-  return `<h3 style="margin-top:14px">다섯 관점 포트폴리오 <span class="meta" style="margin:0">${esc(d.session || "")} 기록으로 지금 작성 · 저장하지 않음</span></h3>
-    <div class="meta"><b>${esc((d.lines || [])[0] || "")}</b></div>
-    ${(d.seed_lines || []).map((x) => `<div class="meta" style="margin:4px 0">${esc(x)}</div>`).join("")}
-    ${rows ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th class="l">업종</th><th>비중</th><th class="l">담은 관점</th><th class="l">더한 관점</th><th class="l">다른 의견</th></tr></thead><tbody>${rows}</tbody></table></div>` : ""}
-    ${rest.map((x) => `<div class="meta">${esc(x)}</div>`).join("")}`;
-}
-
-async function qsfPortfolio(btn) {
-  const out = btn.parentElement.parentElement.querySelector(".fp-out");
-  if (!out || btn.disabled) return;
-  const t = btn.dataset.t, mk = btn.dataset.m;
-  btn.disabled = true; btn.textContent = "작성 중…";
-  out.innerHTML = `<div class="meta">다섯 관점이 포트폴리오를 작성하고 있습니다…</div>`;
-  try {
-    const d = await api(`/api/five/portfolio?t=${encodeURIComponent(t)}&market=${mk}`);
-    out.innerHTML = qsfPortfolioHtml(d);
-    out.querySelectorAll(".qs-open").forEach((b) => { b.onclick = () => { qsfEvaluate(b.dataset.t, mk); $("#qsfmsg").scrollIntoView({ block: "start" }); }; });
-    btn.textContent = "다시 받아보기";
-  } catch (e) {
-    out.innerHTML = `<div class="notice">포트폴리오를 만들지 못했습니다: ${esc((e && e.message) || String(e))}</div>`;
-    btn.textContent = "포트폴리오 받아보기";
-  }
-  btn.disabled = false;
-}
-document.addEventListener("click", (e) => { const b = e.target.closest && e.target.closest(".fp-get"); if (b) qsfPortfolio(b); });
-
 async function qsfCap() {
   const box = $("#qsfcap"); if (!box) return;
   if (!isKR()) { box.innerHTML = ""; return; }

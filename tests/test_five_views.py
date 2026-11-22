@@ -105,16 +105,11 @@ def test_a_missing_half_of_a_criterion_is_not_read_as_a_low_figure():
     assert cash(fcf=0.1, fcf_years=None) is None and cash(fcf=0.01, fcf_years=None) is False and cash(fcf=0.1, fcf_years=0.5) is False and cash(fcf=0.1, fcf_years=0.8) is True
 
 
-def test_the_market_state_is_the_one_the_program_shows_and_the_index_fund_is_not_a_stock():
+def test_the_market_state_is_the_one_the_program_shows():
     """The screen's market state is the swing scan's; the long scan scores its own (15 and 14 on 2026-11-20)."""
     swing = {**SWING, "domains": {"REGIME": {"score_100": 15.4}}}
     assert fv.figures(long_snap(state=14.2), swing)["market_state"] == 15.4 and fv.figures(long_snap(state=14.2), SWING)["market_state"] == 14.2
     assert fv.figures(None, swing)["market_state"] == 15.4 and fv.figures({"factors": []}, None)["market_state"] is None
-    from terminal import assistant
-    from terminal.qsf import config
-    assert assistant.BENCHMARKS == frozenset(config.BENCHMARK.values())
-    source = (__import__("pathlib").Path(assistant.__file__)).read_text(encoding="utf-8")
-    assert "if t not in BENCHMARKS]" in source
 
 
 def test_the_team_list_needs_a_majority_and_can_be_empty(tmp_path):
@@ -137,22 +132,11 @@ def test_the_team_list_needs_a_majority_and_can_be_empty(tmp_path):
     assert [r["session"] for r in rows] == ["2026-11-23", "2026-11-24"] and rows[0]["rules"] == "FV-1" and rows[0]["picked"][0] == {"ticker": "G0", "agree": 5, "agree_names": [v[1] for v in fv.VIEWS], "mean_share": 1.0, "weight": 0.1}
 
 
-from tests.test_terminal_1 import _loopback_only, live  # noqa: E402,F401  (fixtures: a local server on 127.0.0.1 only)
-
-
-def test_the_score_card_shows_the_five_views_and_no_screen_shows_the_team_list(live):
-    """User decision 2026-11-22: the market-wide team list leaves the screens (its daily record stays)."""
-    import urllib.error
-    import urllib.request
+def test_the_checklists_are_retired_from_every_screen():
+    """User specification 2026-11-22: five investor engines and a committee (terminal/committee, tests/test_committee.py) replace
+    the checklists on the screens, in the assistant and in the daily record.  This module stays as it was, read by nothing."""
     from pathlib import Path
-    url, _ = live
-    try:
-        urllib.request.urlopen(f"{url}/api/five/team?market=KR", timeout=5)
-        raise AssertionError("the team list still has a route")
-    except urllib.error.HTTPError as exc:
-        assert exc.code == 404
-    page = (Path(fv.__file__).parent / "static" / "qsf.js").read_text(encoding="utf-8")
-    assert "${qsfFiveHtml(d.five_views, d.ticker, d.market)}" in page and "/api/five/team" not in page and "qsffive" not in page and "qsfFive()" not in page
-    assert "rank: () => { qsfRank(); qsfCap(); qsfChanges(); }" in page
-    service = (Path(fv.__file__).parent / "qsf" / "service.py").read_text(encoding="utf-8")
-    assert '"five_views": five' in service and "never fails the evaluation" in service
+    root = Path(fv.__file__).parent
+    for name in ("assistant.py", "server.py", "qsf/service.py", "static/qsf.js", "static/committee.js"):
+        assert "five_views" not in (root / name).read_text(encoding="utf-8"), name
+    assert "five_views" not in (root.parent / "app.py").read_text(encoding="utf-8")

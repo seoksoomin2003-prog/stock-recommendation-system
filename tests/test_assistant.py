@@ -545,35 +545,34 @@ def test_example_questions_name_a_stock_of_the_market_on_screen(term):
     assert 'isKR() ? "삼성전자" : "AAPL"' in page
 
 
-def test_the_five_views_answer_a_stock_and_give_the_team_list(term, monkeypatch):
-    """User request 2026-11-22: five well-known approaches as a team, one or two lines each, and a team list."""
-    from terminal import five_views as fv
+def test_the_five_investors_answer_a_stock_and_the_portfolios_are_made_when_asked(term, monkeypatch):
+    """User specification 2026-11-22: five investor engines, a unified committee and six portfolios (terminal/committee, IC-1)."""
+    from terminal.committee import investors as civ, service as cs
+    from tests import committee_cases as cc
     assert A.read_question("삼성전자 다섯 관점은?", True) == "FIVE" and A.read_question("버핏이라면 삼성전자 어때", True) == "FIVE" and A.read_question("다섯 관점 팀 목록은?", False) == "TEAM"
     assert A.read_question("삼성전자 포트폴리오 받아보기", True) == "PORTFOLIO" and A.read_question("버핏식 포트폴리오로 삼성전자", True) == "PORTFOLIO" and A.read_question("내 포트폴리오 괜찮아?", False) == "HOLDINGS"
     assert A.read_question("삼성전자 분석해 줘", True) == "ANALYZE" and A.read_question("오늘 상위 종목은?", False) == "TOP"          # the other questions are read as before
     # review 2026-11-22: "다섯" and "관점" alone took other questions away
     assert A.read_question("장기 관점에서 삼성전자 어때?", True) == "ANALYZE" and A.read_question("삼성전자 다섯 거래일 뒤 범위는?", True) == A.read_question("삼성전자 범위는?", True)
     assert A.read_question("오늘 상위 다섯 종목은?", False) == "TOP" and A.read_question("린치식으로 보면 삼성전자는?", True) == "FIVE" and A.read_question("거장들의 팀 목록", False) == "TEAM"
-    good = {"price": 100.0, "domains": {"REGIME": {"score_100": 60.0}}, "factors": [
-        {"factor": "valuation", "raw": {"pe": 12.0, "pb": 1.2}}, {"factor": "business_quality", "raw": {"roe": 0.2, "op_margin": 0.25, "gross_margin": 0.5, "roe_years_positive": 1.0}},
-        {"factor": "growth_quality", "raw": {"eps_cagr3": 0.15, "rev_growth": 0.08}}, {"factor": "free_cash_flow", "raw": {"fcf_margin": 0.12, "fcf_years_positive": 1.0}},
-        {"factor": "balance_dilution", "raw": {"debt_equity": 0.3, "share_change": -0.01}}, {"factor": "financial_resilience", "raw": {"current_ratio": 2.5}},
-        {"factor": "capital_allocation", "raw": {"returns_capital": True}}, {"factor": "long_trend", "raw": {"ma200": 90.0, "ma200_slope": 0.05}},
-        {"factor": "relative_strength", "raw": {"percentile": 0.8}}, {"factor": "momentum_persistence", "raw": {"ret_12_1": 0.2}}, {"factor": "downside_drawdown", "raw": {"max_drawdown_252": -0.15}},
-        {"factor": "material_events", "raw": {"negative": 0}}, {"factor": "governance", "raw": {"issues": []}}]}
-    monkeypatch.setattr(A, "five_opinions", lambda terminal, stock: fv.opinions(good, None))
+    empty = A.answer(term, "삼성전자 다섯 관점은?", "KR")                                  # the scratch terminal's snapshots carry no figures: said, not made up
+    assert empty["status"] == "REAL" and empty["intent"] == "FIVE" and empty["title"] == "삼성전자(005930) 다섯 투자자와 투자위원회" and empty["summary"].startswith("투자위원회 판정: 자료 부족.")
+    assert "다섯 투자자와 투자위원회 (참고)" not in [s["title"] for s in A.answer(term, "삼성전자 분석해 줘", "KR")["sections"]]
+    entry = cs.judge(cc.figures(ticker="005930"), None, {})
+    view = {"status": "OK", "investors": [entry["opinions"][k] for k in civ.ORDER], "committee": entry["committee"], "note": civ.NOTE}
+    monkeypatch.setattr(cs, "stock", lambda terminal, ticker, market, cards=None: view)
     got = A.answer(term, "삼성전자 다섯 관점은?", "KR")
-    assert got["status"] == "REAL" and got["intent"] == "FIVE" and got["title"] == "삼성전자(005930) 다섯 관점" and got["summary"].startswith("다섯 관점 가운데 5개가 '기준에 맞음'")
     by = {s["title"]: s["lines"] for s in got["sections"]}
-    assert len(by["다섯 관점"]) == 5 and by["다섯 관점"][0].startswith("버핏식(좋은 사업을 적정한 값에): 기준 7개 중 7개 충족, 기준에 맞음. 맞는 것: ROE 20.0%")
-    assert "실존 투자자의 실제 의견이 아닙니다" in by["이 답의 한계"][0] and got["follow"][:2] == ["삼성전자 포트폴리오 받아보기", "삼성전자 분석해 줘"]
-    note = A.answer(term, "삼성전자 분석해 줘", "KR")
-    five = {s["title"]: s["lines"] for s in note["sections"]}["다섯 관점 (참고)"]
-    assert len(five) == 7 and five[5].startswith("다섯 관점 가운데 5개") and five[6] == fv.NOTE
-    # user decision 2026-11-22: the market-wide list leaves the screens; the portfolio is asked for at a stock and made only then
+    assert got["summary"].startswith("투자위원회 판정: 매수 조건 충족. 세 관점(버핏식, 린치식, 드러켄밀러식)이 매수 조건입니다.") and got["follow"][:2] == ["삼성전자 포트폴리오 받아보기", "삼성전자 분석해 줘"]
+    assert len(by["다섯 투자자의 의견"]) == 5 and by["다섯 투자자의 의견"][0].startswith("버핏식(장기 사업 소유자) 적극 매수 조건 충족, 점수 87, 신뢰 100: ") and by["이 답의 한계"] == [civ.NOTE]
+    assert any(x.startswith("철학의 차이: ") for x in by["의견이 갈린 곳"]) and by["들어갈 조건과 나올 조건"][0].startswith("들어갈 조건, ") and "투자 매력 78" in by["위원회의 아홉 점수(합치지 않음)"][0]
+    note = {s["title"]: s["lines"] for s in A.answer(term, "삼성전자 분석해 줘", "KR")["sections"]}["다섯 투자자와 투자위원회 (참고)"]
+    assert len(note) == 7 and note[5].startswith("투자위원회: 매수 조건 충족. ") and note[6] == civ.NOTE
+    # the market-wide list is on no screen; the six portfolios are asked for and made only then
     team = A.answer(term, "다섯 관점 팀 목록은?", "KR")
-    assert team["status"] == "REAL" and team["intent"] == "TEAM" and team["title"] == "다섯 관점은 종목을 넣어 묻습니다" and team["follow"] == ["삼성전자 다섯 관점은?", "삼성전자 포트폴리오 받아보기"]
+    assert team["status"] == "REAL" and team["intent"] == "TEAM" and team["title"] == "다섯 투자자는 종목을 넣어 묻습니다" and team["follow"] == ["삼성전자 다섯 관점은?", "삼성전자 포트폴리오 받아보기"]
     assert "요청할 때만 만듭니다" in " ".join(team["lines"]) and not any(i["kind"] == "FIVE_TEAM" for i in A.briefing(term, "KR")["items"]) and "five" not in A.PART_KO
     assert "TEAM" not in [k for k, _, _ in A.PLAIN_INTENTS] and "삼성전자 포트폴리오 받아보기" in A.EXAMPLES
-    port = A.answer(term, "삼성전자 포트폴리오 받아보기", "KR")                           # the scratch terminal's snapshots carry no figures: said, not made up
-    assert port["status"] == "REAL" and port["intent"] == "PORTFOLIO" and port["title"] == "삼성전자(005930) 다섯 관점 포트폴리오" and "판단할 수 없는 종목을 중심으로 포트폴리오를 만들지 않습니다" in port["summary"]
+    port = A.answer(term, "삼성전자 포트폴리오 받아보기", "KR")
+    assert port["status"] == "REAL" and port["intent"] == "PORTFOLIO" and port["title"] == "삼성전자(005930) 여섯 포트폴리오" and port["tab"] == "committee"
+    assert port["summary"] == "삼성전자: 여섯 포트폴리오 어디에도 들지 않습니다. 이유는 아래에 관점마다 적었습니다." and len({s["title"]: s["lines"] for s in port["sections"]}["이 종목의 자리"]) == 6

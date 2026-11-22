@@ -594,15 +594,12 @@ class QSF(ScreenViews):
             ev["stale_inputs"] = old_list
         return {"fund": fund, "events": ev}
 
-    def _five_views(self, ticker: str, market: str, cards: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Five well-known approaches as fixed checklists over the cards' own figures (terminal/five_views.py).  Shown beside the
+    def _committee(self, ticker: str, market: str, cards: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Five investor engines and the unified committee on this stock (terminal/committee, rules IC-1).  Shown beside the
         cards; no score reads them, and a failure here never fails the evaluation."""
         try:
-            from terminal import five_views as fv
-            marks = (["고위험"] if ticker in self._high_risk(market)["codes"] else []) + (["자금 조달 공시"] if (self._filing_mark(self._filing_marks(market), ticker) or {}).get("financing") else [])
-            op = fv.opinions(cards.get("LONG_TERM"), cards.get("SWING"), self.stored_info(ticker, market), marks)
-            return {"views": [{k: v[k] for k in ("key", "name", "motto", "verdict", "verdict_label", "met", "known", "line", "detail", "capped")} for v in op["views"]],
-                    "agree": op["agree"], "judged": op["judged"], "in_team": op["in_team"], "team_line": fv.team_line(op), "note": fv.NOTE}
+            from terminal.committee import service as cs
+            return cs.stock(self.terminal, ticker, market, cards)
         except Exception:
             return None
 
@@ -794,8 +791,8 @@ class QSF(ScreenViews):
         cards = {s: self.card(ctx, s, pos if own in (None, s) else None) for s in strategies}
         risky = self._high_risk(market)
         deals = self.stored_deals((ctx.get("fund") or {}).get("cik"), ctx["expected_session"]) if market == "US" else []     # a stated fact beside the cards, never scored
-        five = self._five_views(ticker, market, cards)
-        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "deals": deals, "five_views": five, "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None,
+        committee = self._committee(ticker, market, cards)
+        return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "deals": deals, "committee": committee, "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None,
                 "risk_grade": self._risk_grade(ticker, market), "filing_events": self._filing_mark(self._filing_marks(market), ticker), "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
 
     def signal(self, ticker: str, weight_pct: Optional[float] = None, max_weight_pct: Optional[float] = None, market: str = "US") -> Dict[str, Any]:

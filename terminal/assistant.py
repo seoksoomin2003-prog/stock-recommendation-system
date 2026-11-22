@@ -470,9 +470,9 @@ FACTOR_KO = {"trend_structure": "추세 구조", "relative_strength": "상대 �
              "vkospi_regime": "한국 변동성 지수", "index_trend": "지수 추세", "breadth": "시장 폭", "usdkrw_regime": "원·달러 환율", "credit_liquidity": "신용 스프레드"}
 BUY_LINE = 70.0
 # (key, an example the screen shows, needs a stock, words that mean it).  Read in this order: the first that fits answers.
-# the five views (terminal/five_views.py): asked with a stock for its five opinions.  The portfolio they make is a feature of its
-# own, asked for at a stock and made only then (terminal/five_portfolio.py, user decision 2026-11-22); without a stock the
-# answer says how to ask.
+# five investor engines and a unified committee (terminal/committee, rules IC-1): asked with a stock for its five opinions and
+# the committee's decision.  The six portfolios are a feature of their own, made only when asked for (user decision 2026-11-22);
+# without a stock the answer says how to ask.
 # "다섯" and "관점" alone are not enough: "장기 관점에서 어때", "다섯 거래일 뒤 범위", "상위 다섯 종목" are other questions
 FIVE_WORDS = ("다섯 관점", "다섯관점", "5 관점", "5관점", "다섯 명", "다섯명", "5인", "버핏", "멍거", "그레이엄", "그레리엄", "그레이험", "린치", "드러켄", "거장", "팀 목록", "팀목록")
 STOCK_INTENTS = (
@@ -1085,11 +1085,11 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
     change = (_bands(float(rows["LONG_TERM"]["score"])) if rows.get("LONG_TERM") and rows["LONG_TERM"].get("score") is not None else []) \
         + [f"장기 보유 논리가 깨지는 조건: {x}." for x in (hold.get("invalidation") or [])[:3]] + [f"다음 실적에서 볼 것: {x}." for x in (hold.get("milestones") or [])[:3]]
     sections.append({"title": "견해가 바뀌는 조건", "lines": change})
-    try:                    # five well-known approaches as fixed checklists (reference; never the people's own opinion, never scored)
-        from terminal import five_views as fv
-        five = five_opinions(terminal, stock)
-        if five["judged"]:
-            sections.append({"title": "다섯 관점 (참고)", "lines": [v["line"] for v in five["views"]] + [fv.team_line(five), fv.NOTE]})
+    try:                    # five investor engines and the committee (reference; never the people's own opinion, never scored)
+        from terminal.committee import service as cs
+        five = cs.stock(terminal, ticker, market)
+        if five["status"] == "OK" and five["committee"]["valid"]:          # nothing to add when no view could judge
+            sections.append({"title": "다섯 투자자와 투자위원회 (참고)", "lines": committee_lines(five) + [f"투자위원회: {five['committee']['decision_ko']}. {five['committee']['thesis']}", five["note"]]})
     except Exception:
         pass
     sections.append({"title": "이 노트의 한계", "lines": NOTE_LIMITS})
@@ -1106,93 +1106,49 @@ def analyst_note(terminal: Any, stock: Dict[str, str], rows: Dict[str, Dict[str,
     return reply(f"{head} 분석 노트", summary, sections, "stock", follow, _basis(base, market))
 
 
-_FIVE: Dict[Any, Any] = {}           # one session's team list, kept while the ledger does not change
-BENCHMARKS = frozenset(("SPY", "^KS11", "^KQ11"))       # terminal/qsf/config.py BENCHMARK
-
-
-def five_opinions(terminal: Any, stock: Dict[str, str]) -> Dict[str, Any]:
-    """The five views on one stock, from its stored snapshots, its stored Yahoo record and its avoid marks."""
-    from terminal import analyst_extra as ax
-    from terminal import five_views as fv
-    row = next((r for r in _rows(terminal, stock["market"]) if r["ticker"] == stock["ticker"]), None) or {}
-    try:
-        info = terminal.qsf.stored_info(stock["ticker"], stock["market"])
-    except Exception:
-        info = {}
-    return fv.opinions(_snap(terminal, stock, "LONG_TERM"), _snap(terminal, stock, "SWING"), info, ax.marks_of(row))
-
-
-def five_team(terminal: Any, market: str) -> Dict[str, Any]:
-    """The team list of the newest scan: every scanned stock read by the five views (``five_views.team``).  Since 2026-11-22 it
-    is read by the daily record only; no screen shows it."""
-    from terminal import five_views as fv
-    session = terminal.qsf.latest(market).get("session")
-    if not session:
-        return {"picked": [], "eligible": 0, "judged": 0, "meets_by_view": {k: 0 for k, *_ in fv.VIEWS}, "agree_needed": fv.AGREE, "size": fv.TEAM_SIZE, "session": None}
-    return {**_five_seen(terminal, market, session)["team"], "session": session}
-
-
-def _five_seen(terminal: Any, market: str, session: str) -> Dict[str, Any]:
-    """Every scanned stock of the session read by the five views, once per session: {survey, team}."""
-    from terminal import analyst_extra as ax
-    from terminal import five_views as fv
-    key = (str(terminal.base), market, session, terminal.qsf.ledger._index_stamp())
-    if key not in _FIVE:
-        snaps = [s for s in _snaps(terminal, market, session) if s.get("data_date") == session]
-        long_, swing = {s["ticker"]: s for s in snaps if s["strategy"] == "LONG_TERM"}, {s["ticker"]: s for s in snaps if s["strategy"] == "SWING"}
-        rows = {r["ticker"]: r for r in _rows(terminal, market)}
-        try:
-            sector = {r["ticker"]: ax.SECTOR_KO.get(r.get("sector"), r.get("sector")) for r in terminal.qsf.screen_rows(market).get("rows") or []}
-        except Exception:
-            sector = {}
-
-        def info(t: str) -> Dict[str, Any]:
-            try:
-                return terminal.qsf.stored_info(t, market)
-            except Exception:
-                return {}
-        stocks = [{"ticker": t, "name": (rows.get(t) or {}).get("name"), "sector": sector.get(t), "long": long_.get(t), "swing": swing.get(t), "info": info(t), "marks": ax.marks_of(rows.get(t) or {})}
-                  for t in sorted(set(long_) | set(swing)) if t not in BENCHMARKS]          # the index fund the scan carries is not a stock to pick
-        seen = fv.survey(stocks)
-        if len(_FIVE) > 3:
-            _FIVE.clear()
-        _FIVE[key] = {"survey": seen, "team": fv.team_of(seen)}
-    return _FIVE[key]
-
-
-def five_portfolio(terminal: Any, stock: Dict[str, str]) -> Dict[str, Any]:
-    """The portfolio around one stock (terminal/five_portfolio.py), made when asked: by the card's button or by the question."""
-    from terminal import five_portfolio as fp
-    market = stock["market"]
-    session = terminal.qsf.latest(market).get("session")
-    if not session:
-        return {"status": "NO_SCAN", "rules": fp.RULES, "seed": stock["ticker"], "market": market, "rows": [], "lines": [], "seed_lines": [], "by_view": [], "reason": "저장된 스캔 기록이 없습니다."}
-    return {**fp.build(_five_seen(terminal, market, session)["survey"], stock["ticker"]), "market": market, "session": session, "name": stock.get("name")}
-
-
-def portfolio_answer(terminal: Any, stock: Dict[str, str], follow: List[str]) -> Dict[str, Any]:
-    from terminal import five_views as fv
-    p = five_portfolio(terminal, stock)
-    head = f"{stock['name']}({stock['ticker']})"
-    if p["status"] not in ("OK", "EMPTY"):
-        return reply(f"{head} 다섯 관점 포트폴리오", p["reason"], [{"title": "이 답의 한계", "lines": [fv.NOTE]}], "qsf", follow)
-    lines = p["lines"]
-    return reply(f"{head} 다섯 관점 포트폴리오", lines[0],
-                 [{"title": f"{stock['name']}에 대한 다섯 의견", "lines": p["seed_lines"]}, {"title": "포트폴리오", "lines": lines[1:-2]},
-                  {"title": "이 포트폴리오의 한계", "lines": [f"{p['session']} 스캔 기록으로 지금 만들었습니다. 저장해 두지 않으며, 다시 물으면 그때의 기록으로 다시 만듭니다."] + lines[-2:]}], "qsf", follow)
+def committee_lines(view: Dict[str, Any]) -> List[str]:
+    """The five opinions in one line each, as the note and the answers write them."""
+    return [f"{o['name']}({o['philosophy']}) {o['recommendation_ko']}" + ("" if o["score"] is None else f", 점수 {o['score']:.0f}, 신뢰 {o['confidence']}") + f": {o['opinion']}" for o in view["investors"]]
 
 
 def five_answer(terminal: Any, stock: Dict[str, str], follow: List[str]) -> Dict[str, Any]:
-    from terminal import five_views as fv
-    op = five_opinions(terminal, stock)
+    """Five investor engines and the unified committee on one stock (terminal/committee, rules IC-1): rule results, not advice."""
+    from terminal.committee import service as cs
+    view = cs.stock(terminal, stock["ticker"], stock["market"])
     head = f"{stock['name']}({stock['ticker']})"
+    if view["status"] != "OK":
+        return reply(f"{head} 다섯 투자자와 투자위원회", view["reason"], [], "qsf", follow)
+    c = view["committee"]
     snap = _snap(terminal, stock, "LONG_TERM") or _snap(terminal, stock, "SWING")
-    if not op["judged"]:
-        return reply(f"{head} 다섯 관점", f"{stock['name']}의 저장된 자료가 모자라 다섯 관점 모두 판단하지 않았습니다.", [{"title": "이 답의 한계", "lines": [fv.NOTE]}], "stock", follow)
-    return reply(f"{head} 다섯 관점", fv.team_line(op),
-                 [{"title": "다섯 관점", "lines": [v["line"] + (f" {v['detail']}" if v["detail"] and v["verdict"] != fv.UNKNOWN else "") for v in op["views"]]},
-                  {"title": "다섯을 합쳐 보면", "lines": [fv.team_line(op), f"'{stock['name'] if stock['market'] == 'KR' else stock['ticker']} 포트폴리오 받아보기'라고 묻거나 점수 카드의 버튼을 누르면, 이 종목을 중심으로 다섯 관점이 만든 포트폴리오를 그때 작성합니다."]},
-                  {"title": "이 답의 한계", "lines": [fv.NOTE]}], "stock", follow, _basis(snap, stock["market"]) if snap else None)
+    sc = c["scores"]
+    scores = ", ".join(f"{c['score_labels'][k]} {'자료 없음' if sc[k] is None else f'{sc[k]:.0f}'}" for k in ("attractiveness", "confidence", "agreement", "quality", "valuation", "growth", "regime", "downside", "data"))
+    return reply(f"{head} 다섯 투자자와 투자위원회", f"투자위원회 판정: {c['decision_ko']}. {c['reasons'][0] if c['reasons'] else ''}",
+                 [{"title": "다섯 투자자의 의견", "lines": committee_lines(view)},
+                  {"title": "투자위원회가 그렇게 정한 이유", "lines": c["reasons"] + [c["thesis"]]},
+                  {"title": "의견이 갈린 곳", "lines": [f"{d['kind_ko']}: {d['text']}" for d in c["disagreements"]]},
+                  {"title": "따로 본 위험", "lines": [f"{'중대' if r['level'] == 'CRITICAL' else '주요'} 위험, {r['name']}: {r['text']}({r['raised_by']}의 관심사)" for r in c["material_risks"]]},
+                  {"title": "들어갈 조건과 나올 조건", "lines": [f"들어갈 조건, {x}" for x in c["entry_conditions"]] + [f"나올 조건, {x}" for x in c["exit_conditions"]]},
+                  {"title": "위원회의 아홉 점수(합치지 않음)", "lines": [scores]},
+                  {"title": "이 답의 한계", "lines": [view["note"]]}], "qsf", follow, _basis(snap, stock["market"]) if snap else None)
+
+
+def portfolio_answer(terminal: Any, stock: Dict[str, str], follow: List[str]) -> Dict[str, Any]:
+    """Asking is the button: the six portfolios are made now, and the answer says where this stock is in each."""
+    from terminal.committee import service as cs
+    p = cs.stock_in_portfolios(terminal, stock["ticker"], stock["market"])
+    head = f"{stock['name']}({stock['ticker']})"
+    if p["status"] != "OK":
+        return reply(f"{head} 여섯 포트폴리오", p["reason"], [], "committee", follow)
+    inside = [x for x in p["places"] if x["in"]]
+    summary = (f"{stock['name']}: 여섯 포트폴리오 가운데 {len(inside)}곳에 듭니다(" + ", ".join(f"{x['name']} {x['weight'] * 100:.1f}%" for x in inside) + ")." if inside
+               else f"{stock['name']}: 여섯 포트폴리오 어디에도 들지 않습니다. 이유는 아래에 관점마다 적었습니다.")
+    ports = [f"{q['name']}: {q['count']}종목, 현금 {q['cash'] * 100:.0f}%. " + (", ".join(f"{r['name']} {r['weight'] * 100:.1f}%" for r in q["holdings"][:5]) + (" 등" if q["count"] > 5 else "") if q["holdings"] else (q["cash_reasons"] or ["종목 없음"])[0])
+             for q in p["portfolios"]]
+    return reply(f"{head} 여섯 포트폴리오", summary,
+                 [{"title": "이 종목의 자리", "lines": [f"{x['name']}: {'편입 ' + format(x['weight'] * 100, '.1f') + '%' if x['in'] else '없음'}. {x['why']}" for x in p["places"]]},
+                  {"title": "여섯 포트폴리오(지금 만든 것)", "lines": ports},
+                  {"title": "이 포트폴리오의 한계", "lines": [f"{p['session']} 스캔 기록으로 지금 만들었습니다. 전체 종목과 비중은 '투자위원회' 탭의 '여섯 포트폴리오 받아보기'에서 봅니다.",
+                                                   "주문을 내지 않는 모의 포트폴리오입니다. 금액과 수량은 계산하지 않습니다.", p["note"]]}], "committee", follow)
 
 
 def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: str) -> Dict[str, Any]:
@@ -1400,14 +1356,14 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
                      {"title": "쓰는 법", "lines": [f"종목은 '{example_stock(market)}' 자리에 코드, 티커, 회사명을 적습니다(스캔 대상: 미국 S&P 500, 한국 시가총액 상위 300).", "'장기'를 넣으면 장기 점수로, 없으면 스윙 점수로 답합니다.",
                                                 "이 목록은 'help', '도움말', '?'로 언제든 다시 볼 수 있습니다."]}])
         return {**got, "examples": examples_for(market)}
-    if intent == "TEAM":                                    # the five views asked without a stock: say how to ask
-        from terminal import five_views as fv
+    if intent == "TEAM":                                    # the five investors asked without a stock: say how to ask
+        from terminal.committee import investors as civ
         eg = example_stock(market)
-        return reply("다섯 관점은 종목을 넣어 묻습니다", f"종목을 넣어 물어 주세요. 예: '{eg} 다섯 관점은?', '{eg} 포트폴리오 받아보기'.",
-                     [{"title": "할 수 있는 것", "lines": [f"'{eg} 다섯 관점은?': 그 종목에 대한 다섯 관점의 의견을 한두 줄씩 봅니다. 점수 카드에도 나옵니다.",
-                                                   f"'{eg} 포트폴리오 받아보기': 그 종목을 중심으로 다섯 관점이 만든 포트폴리오를 그때 만들어 보여 줍니다. 점수 카드의 '포트폴리오 받아보기' 버튼과 같습니다.",
-                                                   "포트폴리오는 요청할 때만 만듭니다. 시장 전체에서 고른 목록을 자동으로 띄우지 않습니다."]},
-                      {"title": "한계", "lines": [fv.NOTE, switch]}], "qsf", [f"{eg} 다섯 관점은?", f"{eg} 포트폴리오 받아보기"])
+        return reply("다섯 투자자는 종목을 넣어 묻습니다", f"종목을 넣어 물어 주세요. 예: '{eg} 다섯 관점은?', '{eg} 포트폴리오 받아보기'.",
+                     [{"title": "할 수 있는 것", "lines": [f"'{eg} 다섯 관점은?': 그 종목에 대한 다섯 투자자(버핏식·멍거식·그레이엄식·린치식·드러켄밀러식)의 의견과 통합 투자위원회의 판정을 봅니다. 점수 카드에도 나옵니다.",
+                                                   f"'{eg} 포트폴리오 받아보기': 여섯 포트폴리오(다섯 투자자와 투자위원회)를 그때 만들고 그 종목이 어디에 드는지 보여 줍니다.",
+                                                   "여섯 포트폴리오 전체는 '투자위원회' 탭의 '여섯 포트폴리오 받아보기'로 봅니다. 포트폴리오는 요청할 때만 만듭니다."]},
+                      {"title": "한계", "lines": [civ.NOTE, switch]}], "committee", [f"{eg} 다섯 관점은?", f"{eg} 포트폴리오 받아보기"])
     if intent == "TODAY":
         brief = briefing(terminal, market)
         groups = [{"title": LEVEL_KO[lv], "lines": [i["text"] for i in brief["items"] if i["level"] == lv][:6]} for lv in LEVELS]
