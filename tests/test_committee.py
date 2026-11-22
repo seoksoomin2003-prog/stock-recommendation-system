@@ -247,3 +247,89 @@ def test_the_screens_ask_for_portfolios_only_through_a_button(live):
     assert app.count('_committee_record(res, "') == 2 and "committee_service.daily_record" in app                # the daily job writes the record; no screen reads a portfolio from it unasked
     from terminal import automation
     assert "research_data/committee_kr/*.jsonl" in automation.BACKUP_GLOBS and "research_data/committee_us/*.jsonl" in automation.BACKUP_GLOBS
+
+
+def test_graham_shows_the_enterprising_verdict_beside_the_defensive_one_and_changes_nothing():
+    """User decision 2026-11-22: both profiles on the card for comparison; the portfolio and the record use the defensive one alone."""
+    f = cc.figures(pe=9.0, pb=1.0, current_ratio=1.6, eps_cagr3=0.02)             # cheap, and its current ratio is between the two profiles' bars
+    one = iv.graham(f)
+    assert one["profile"] == "방어적 투자자" and one["other_profile"]["profile"] == "적극적 투자자" and set(one["other_profile"]) == {"profile", "recommendation", "recommendation_ko", "score", "opinion", "buy", "same"}
+    assert one["other_profile"]["recommendation"] == iv.graham(f, False, {"graham_profile": "ENTERPRISING"})["recommendation"] and "other_profile" not in iv.graham(f, False, {"graham_profile": "ENTERPRISING"})
+    assert one["other_profile"]["same"] == (one["recommendation"] == one["other_profile"]["recommendation"])
+    b = book([dict(ticker="X1", pe=9.0, pb=1.0, current_ratio=1.6, eps_cagr3=0.02)])
+    assert b["X1"]["opinions"]["GRAHAM"]["recommendation"] == one["recommendation"]                      # what the portfolio and the record read
+    assert "other_profile" in service.CARD_KEYS and "alt.profile" in (Path(service.__file__).parent.parent / "static" / "committee.js").read_text(encoding="utf-8")
+
+
+def test_a_financial_is_judged_among_the_sessions_financials_and_never_more_easily_than_before():
+    """User decision 2026-11-22: on the 2026-11-20 record the committee's most attractive US stocks were mostly insurers."""
+    banks = {f"B{k}": cc.figures(ticker=f"B{k}", sector="금융", roe=0.06 + 0.02 * k) for k in range(10)}          # 6% .. 24%
+    ctx = service.context(banks)
+    peers = ctx["financial_roe"]
+    assert (peers["n"], round(peers["median"], 6), round(peers["top"], 6)) == (10, 0.15, 0.24) and iv.fin_band(ctx, 0.08, 0.16)[:2] == (peers["median"], peers["top"]) and iv.fin_band(None, 0.08, 0.16) == (0.08, 0.16, None)
+    mid, top = banks["B5"], banks["B9"]                                                     # 16% and 24%
+    assert iv.buffett(mid, False, None)["components"]["사업의 질"] == 100.0 and iv.buffett(mid, False, ctx)["components"]["사업의 질"] < 15       # an ordinary financial is ordinary among financials
+    assert iv.buffett(top, False, ctx)["components"]["사업의 질"] == 100.0 and "금융업 10종목의 중앙값 15.0%, 상위 10% 24.0%" in iv.buffett(mid, False, ctx)["opinion"]
+    assert iv.munger(mid, False, ctx)["components"]["사업의 탁월함"] < iv.munger(mid, False, None)["components"]["사업의 탁월함"]
+    low = service.context({f"L{k}": cc.figures(ticker=f"L{k}", sector="금융", roe=0.02 + 0.01 * k) for k in range(10)})      # the best of a poor lot: 11%
+    assert iv.fin_band(low, 0.08, 0.16)[:2] == (0.08, 0.16) and iv.buffett(cc.figures(sector="금융", roe=0.11), False, low)["components"]["사업의 질"] < 40
+    assert iv.fin_band(service.context({"A": cc.figures(sector="금융")}), 0.08, 0.16)[2] is None and service.context({})["financial_roe"] is None      # too few to compare
+    plain = cc.figures()
+    assert iv.buffett(plain, False, ctx)["score"] == iv.buffett(plain, False, None)["score"]             # nothing changes for a company that is not a financial
+
+
+def test_the_paper_record_is_read_once_at_240_days_by_the_written_rule(tmp_path):
+    """User decision 2026-11-22; reports/IC1_PAPER_READING_PROTOCOL.md was committed before the first record line."""
+    import random
+    from terminal.committee import reading
+    from terminal.qsf import readings
+    folder = tmp_path / "research_data" / "committee_us"
+    folder.mkdir(parents=True)
+    days = [f"D{i:04d}" for i in range(260)]
+    held = {"BUFFETT": "UP", "MUNGER": "FLAT", "GRAHAM": "DOWN"}
+    ports = {k: {"cash": 0.0 if k in held else 1.0, "holdings": {held[k]: 1.0} if k in held else {}} for k in pf.ORDER}
+    def write(n):
+        (folder / "2027-01.jsonl").write_text("".join(json.dumps({"session": d, "rules": "IC-1", "portfolios": ports}) + "\n" for d in days[:n]), encoding="utf-8")
+    rng = random.Random(7)
+    index, level = {}, 100.0
+    for d in days:
+        level *= 1.0 + rng.gauss(0.0003, 0.008)
+        index[d] = level
+    drift = {"UP": 0.004, "FLAT": 0.0, "DOWN": -0.004}
+    px = {t: {} for t in drift}
+    for t, extra in drift.items():
+        own, noise = 100.0, random.Random(t)
+        for i, d in enumerate(days):
+            own = own if i == 0 else own * (index[d] / index[days[i - 1]]) * (1.0 + extra + noise.gauss(0, 0.004))
+            px[t][d] = own
+    price, bench = (lambda t, s: px[t].get(s)), (lambda s: index.get(s))
+    write(241)
+    try:
+        reading.evaluate_once(tmp_path, "US", price, bench, 0.0)
+        raise AssertionError("read before 240 paper days")
+    except RuntimeError as exc:
+        assert "241거래일" in str(exc) and not (tmp_path / reading.REPORTS["US"]).exists()
+    write(260)
+    res = reading.evaluate_once(tmp_path, "US", price, bench, 0.0)
+    got = {k: v["verdict"] for k, v in res["portfolios"].items()}
+    assert res["days"] == 240 and res["records"] == 242 and res["last"] == days[241] and res["bar"] == 3.0 and res["kind"] == "PAPER"            # the first 242 records only
+    assert got == {"BUFFETT": "BETTER", "MUNGER": "NOT_DISTINGUISHED", "GRAHAM": "WORSE", "LYNCH": "NOT_DISTINGUISHED", "DRUCKENMILLER": "NOT_DISTINGUISHED", "COMMITTEE": "NOT_DISTINGUISHED"}
+    assert res["verdict"] == "PAPER_BETTER" and res["portfolios"]["BUFFETT"]["t"] >= 3.0 and res["portfolios"]["LYNCH"]["average_invested"] == 0.0 and len(res["reasons"]) == 7
+    assert "daily" not in res["portfolios"]["BUFFETT"] and json.loads((tmp_path / reading.REPORTS["US"]).read_text(encoding="utf-8"))["verdict"] == "PAPER_BETTER"
+    try:
+        reading.evaluate_once(tmp_path, "US", price, bench, 0.0)
+        raise AssertionError("read twice")
+    except RuntimeError as exc:
+        assert "이미 읽었습니다" in str(exc)
+    assert reading.judge(2.99) == "NOT_DISTINGUISHED" and reading.judge(-3.0) == "WORSE" and reading.judge(None) == "NOT_DISTINGUISHED"
+    # the daily job finds it by itself: two entries in the list of readings, counted on the committee's own record
+    by = {e["key"]: e for e in readings.REGISTRY}
+    e = by["committee_paper_us"]
+    assert e["argv"] == ["--market", "US", "qsf", "committee-evaluate"] and e["report"] == reading.REPORTS["US"].name and (e["need"], e["horizon"]) == (reading.READ_AT, 2)
+    assert readings.records(tmp_path, e) == 260 and readings.due(tmp_path, e) and readings.records(tmp_path, by["committee_paper_kr"]) == 0 and not readings.due(tmp_path, by["committee_paper_kr"])
+    assert readings.verdict(e, res) == "PAPER_BETTER" and "지수보다 나았다고 볼 만한 것" in readings.meaning("PAPER_BETTER") and "자동으로 바뀌지 않습니다" in e["after"]
+    assert "버핏식 포트폴리오: 지수보다 나음" in readings.text(e, res)
+    protocol = (Path(reading.__file__).parent.parent.parent / reading.PROTOCOL).read_text(encoding="utf-8")
+    assert "t ≥ 3.0이면" in protocol and "시차 5" in protocol and "240개" in protocol and "아무것도 자동으로 바뀌지 않는다" in protocol
+    app = (Path(reading.__file__).parent.parent.parent / "app.py").read_text(encoding="utf-8")
+    assert '"committee-evaluate": _qsf_committee' in app and '"committee-evaluate"' in app[app.index("QSF_ACTIONS = ["):app.index("def ", app.index("QSF_ACTIONS = ["))]

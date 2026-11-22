@@ -7,6 +7,7 @@ daily job writes its record; no tab makes them by being opened.
 """
 from __future__ import annotations
 
+import json
 import statistics
 from typing import Any, Callable, Dict, List, Optional
 
@@ -17,7 +18,7 @@ BENCHMARKS = frozenset(("SPY", "^KS11", "^KQ11"))       # terminal/qsf/config.py
 RETURN_DAYS = 126
 CARD_KEYS = ("investor", "name", "philosophy", "question", "score", "confidence", "coverage", "recommendation", "recommendation_ko", "held", "horizon", "valuation", "expected_return",
              "downside_risk", "positives", "negatives", "opinion", "thesis", "conditions", "suggested_weight", "action", "components", "missing", "evidence", "category_ko", "loss_risk",
-             "regimes", "regimes_not_told", "profile", "method", "margin_of_safety", "fair_pe", "insufficient")
+             "regimes", "regimes_not_told", "profile", "method", "margin_of_safety", "fair_pe", "insufficient", "other_profile")
 
 
 def _session_figures(terminal: Any, market: str, session: str) -> Dict[str, Dict[str, Any]]:
@@ -50,12 +51,15 @@ def _session_figures(terminal: Any, market: str, session: str) -> Dict[str, Dict
 
 
 def context(figures: Dict[str, Dict[str, Any]]) -> Dict[str, Any]:
-    """What one stock's engines need from the rest of the session: each sector's median relative strength."""
+    """What one stock's engines need from the rest of the session: each sector's median relative strength, and where the
+    session's financials stand on return on equity (a financial is judged among financials: user decision 2026-11-22)."""
     by: Dict[str, List[float]] = {}
     for f in figures.values():
         if f.get("sector") and f.get("rs") is not None:
             by.setdefault(f["sector"], []).append(f["rs"])
-    return {"sector_rs": {k: statistics.median(v) for k, v in by.items() if len(v) >= 3}}
+    fin = sorted(f["roe"] for f in figures.values() if f.get("kind") == "FINANCIAL" and f.get("roe") is not None)
+    peers = {"n": len(fin), "median": statistics.median(fin), "top": fin[min(len(fin) - 1, int(len(fin) * 0.9))]} if fin else None      # the session's own financials
+    return {"sector_rs": {k: statistics.median(v) for k, v in by.items() if len(v) >= 3}, "financial_roe": peers}
 
 
 def judge(f: Dict[str, Any], held: Optional[Dict[str, bool]], ctx: Dict[str, Any]) -> Dict[str, Any]:
@@ -241,9 +245,9 @@ def daily_record(terminal: Any, market: str) -> Dict[str, Any]:
     return record.append(terminal.base, market, work["session"], work["book"], work["portfolios"])
 
 
-def performance(terminal: Any, market: str) -> Dict[str, Any]:
+def _prices(terminal: Any, market: str) -> Any:
+    """(price(ticker, session), benchmark(session)): closes from the stored bars, adjusted where the store has them."""
     from terminal.qsf import config
-    rows = record.read(terminal.base, market)
     try:
         load = terminal.qsf._loader(market)
     except Exception:
@@ -264,11 +268,33 @@ def performance(terminal: Any, market: str) -> Dict[str, Any]:
             return price(bench, session)
         try:                      # Korea: the index close the scan itself stored that day
             from terminal import assistant
-            snap = next((s for s in assistant._snaps(terminal, market, session) if s.get("data_date") == session), None)
+            snap = next((x for x in assistant._snaps(terminal, market, session) if x.get("data_date") == session), None)
             return fg.read(snap, None).get("index_close") if snap else None
         except Exception:
             return None
-    out = record.performance(rows, price, benchmark, config.round_trip_cost(market) / 2.0)
+    return price, benchmark
+
+
+def performance(terminal: Any, market: str) -> Dict[str, Any]:
+    from terminal.committee import reading
+    from terminal.qsf import config
+    price, benchmark = _prices(terminal, market)
+    out = record.performance(record.read(terminal.base, market), price, benchmark, config.round_trip_cost(market) / 2.0)
+    try:
+        read = json.loads((terminal.base / reading.REPORTS[market]).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        read = None
     out.update({"market": market, "rules": iv.RULES, "benchmark": "SPY" if market == "US" else "KOSPI(가격 지수, 배당 제외)", "names": {k: portfolios.SPEC[k]["name"] for k in portfolios.ORDER}, "note": iv.NOTE,
-                "not_this": "과거로 거슬러 계산한 수익(백테스트)이 아니고, 실제 계좌의 수익도 아닙니다. 주문은 나가지 않습니다."})
+                "not_this": "과거로 거슬러 계산한 수익(백테스트)이 아니고, 실제 계좌의 수익도 아닙니다. 주문은 나가지 않습니다.",
+                "reading": {"protocol": reading.PROTOCOL, "read_at": reading.READ_AT, "bar": reading.BAR, "left": max(reading.READ_AT + 2 - out["records"], 0),
+                            "verdict": (read or {}).get("verdict"), "reasons": (read or {}).get("reasons") or [],
+                            "rule": f"모의 하루 수익이 {reading.READ_AT}개가 되는 날 한 번, 지수 대비 초과수익의 t값이 ±{reading.BAR:g}을 넘는지 읽고 텔레그램으로 알립니다. 아무것도 자동으로 바뀌지 않습니다."}})
     return out
+
+
+def paper_reading(terminal: Any, market: str) -> Dict[str, Any]:
+    """The one reading at 240 paper days (terminal/committee/reading.py).  The daily job asks for it; it refuses until then."""
+    from terminal.committee import reading
+    from terminal.qsf import config
+    price, benchmark = _prices(terminal, market)
+    return reading.evaluate_once(terminal.base, market, price, benchmark, config.round_trip_cost(market) / 2.0)

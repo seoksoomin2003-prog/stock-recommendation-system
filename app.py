@@ -434,7 +434,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
                "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "paper-book-record", "paper-book-status", "turnover-book-record", "turnover-book-status", "rank-book-record", "rank-book-status",
                "forecast-test", "forecast-record", "forecast-status", "forecast-touch-test", "score-split-record", "score-split-status", "score-split-evaluate",
-               "fund-period-record", "fund-period-status", "fund-period-evaluate",
+               "fund-period-record", "fund-period-status", "fund-period-evaluate", "committee-evaluate",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-sue-prepare", "kr-sue-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
                "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
@@ -804,6 +804,14 @@ def _qsf_fund_period(args) -> int:      # reports/QSF_FUND_PERIOD_PROTOCOL.md
     return 0 if res.get("status") in ("OK", "REAL") else 3 if res.get("status") == "WAITING" else 1
 
 
+def _qsf_committee(args) -> int:      # reports/IC1_PAPER_READING_PROTOCOL.md: the one reading of the six portfolios' paper record
+    from terminal.committee import service as committee_service
+    from terminal.services import Terminal
+    res = committee_service.paper_reading(Terminal(PROJECT_ROOT), args.market)
+    print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
+    return 0 if res.get("status") == "REAL" else 1
+
+
 def _expectations_record(res, market: str) -> None:    # analyst estimates, short interest, ex-dividend dates as stored; it never fails the step
     try:
         from terminal.cache import FileCache
@@ -1054,6 +1062,7 @@ QSF_HANDLERS = {
     "fund-period-record": _qsf_fund_period,
     "fund-period-status": _qsf_fund_period,
     "fund-period-evaluate": _qsf_fund_period,
+    "committee-evaluate": _qsf_committee,
     "us-challenger-record": _qsf_us_challenger_record,
 }
 

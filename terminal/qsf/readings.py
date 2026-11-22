@@ -28,9 +28,9 @@ NO_CHANGE = "이 결과로 점수·스캔 대상·규칙이 자동으로 바뀌�
 
 
 def _e(key: str, label: str, argv: List[str], report: str, protocol: str, need: int, horizon: int, store: Optional[str] = None, ledger: Optional[str] = None,
-       verdict: tuple = ("verdict",), after: str = NO_CHANGE, applies: bool = False) -> Dict[str, Any]:
+       verdict: tuple = ("verdict",), after: str = NO_CHANGE, applies: bool = False, committee: Optional[str] = None) -> Dict[str, Any]:
     return {"key": key, "label": label, "argv": argv, "report": report, "protocol": f"reports/{protocol}", "need": need, "horizon": horizon, "store": store, "ledger": ledger,
-            "verdict": verdict, "after": after, "applies": applies}
+            "verdict": verdict, "after": after, "applies": applies, "committee": committee}
 
 
 def _per_market(key: str, label: str, action: str, report: str, protocol: str, need: int, horizon: int, store: Optional[str] = None, ledger: bool = False, **kw) -> List[Dict[str, Any]]:
@@ -74,6 +74,9 @@ REGISTRY: List[Dict[str, Any]] = [
        after="METHOD_SUPPORTED가 나와도 매매 보조 화면의 진입 규칙은 자동으로 바뀌지 않습니다."),
     _e("kr_method_240", "한국 독자 매매법 · 240일 읽기", ["qsf", "kr-method-evaluate-240"], "QSF_KR_METHOD_FORWARD_240.json", "QSF_KR_METHOD_PROTOCOL.md", 240, 10, store="kr_method",
        after="METHOD_SUPPORTED가 나와도 매매 보조 화면의 진입 규칙은 자동으로 바뀌지 않습니다."),
+    # the six portfolios of the investment committee (terminal/committee): 240 paper days need 242 recorded sessions
+    *[_e(f"committee_paper_{m.lower()}", f"투자위원회 여섯 포트폴리오 모의 성과({ko})", ["--market", m, "qsf", "committee-evaluate"], f"IC1_PAPER_{m}.json", "IC1_PAPER_READING_PROTOCOL.md", 240, 2,
+         committee=m, after="PAPER_BETTER가 나와도 엔진·위원회·포트폴리오의 규칙과 점수는 자동으로 바뀌지 않습니다.") for m, ko in (("KR", "한국"), ("US", "미국"))],
 ]
 
 VERDICT_KO = {
@@ -99,6 +102,7 @@ VERDICT_KO = {
     "MARKS_FLAG_LOSERS_BUT_SCORE_KNOWS": "회피 표시가 부진한 종목을 가리키지만 점수가 이미 반영하고 있습니다",
     "METHOD_SUPPORTED": "매매법이 지지됐습니다",
     "NO_PRIMARY": "미리 고른 주 매매법이 없어 판정하지 않고 수치만 적었습니다",
+    "PAPER_BETTER": "여섯 모의 포트폴리오 가운데 지수보다 나았다고 볼 만한 것이 있습니다(어느 것인지는 아래 줄에)",
     "FIGURES_ONLY": "판정 없이 수치만 적었습니다",
     "True": "도전자 점수가 지지됐습니다",
     "False": "도전자 점수가 지지되지 않았습니다",
@@ -123,6 +127,9 @@ def report(base: Path, e: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 def records(base: Path, e: Dict[str, Any]) -> Optional[int]:
     """Sessions the reading's record has so far: its own store's index, or the live ledger's sessions of its market."""
+    if e.get("committee"):
+        from terminal.committee import record
+        return len(record.read(Path(base), e["committee"]))
     if e.get("store"):
         return len(kf.read_index(Path(base), STORES / e["store"]))
     if e.get("ledger"):

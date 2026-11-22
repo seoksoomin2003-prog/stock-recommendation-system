@@ -115,9 +115,25 @@ B_QUALITY, B_PREDICT, B_STRENGTH = 65.0, 60.0, 40.0          # the business bar
 B_SELL_QUALITY, B_SELL_PREDICT, B_STRONG_MOS, B_REDUCE_MOS = 45.0, 35.0, 0.20, -0.60
 
 
+def fin_band(ctx: Optional[Dict[str, Any]], low: float, high: float) -> Tuple[float, float, Optional[Dict[str, float]]]:
+    """Where a bank's or an insurer's return on equity is measured from.  User decision 2026-11-22: among the session's own
+    financials, from their median (nothing) to their top tenth (everything), so that an ordinary financial is not read as an
+    excellent business because it has few other figures.  Without the session's financials (a stock outside the scan, fewer
+    than ``FIN_MIN`` of them) the fixed ``low``-``high`` band stands.  The band is never easier than the fixed one: where the
+    session's best financials earn little (Korea's top tenth: 16.6% on 2026-11-20), being the best of them is not enough."""
+    peers = (ctx or {}).get("financial_roe")
+    if peers and peers.get("n", 0) >= FIN_MIN and peers["top"] > peers["median"]:
+        return max(peers["median"], low), max(peers["top"], high), peers          # among peers, and never easier than the fixed band
+    return low, high, None
+
+
+FIN_MIN = 8
+
+
 def buffett(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     fin = f["kind"] == "FINANCIAL"
-    quality = [part(f, "roic", 3, 0.08 if fin else 0.06, 0.16 if fin else 0.20), part(f, "op_margin", 2, 0.08, 0.25), part(f, "fcf_margin", 2, 0.03, 0.15), part(f, "gross_margin", 1, 0.25, 0.50)]
+    lo, hi, peers = fin_band(ctx, 0.08, 0.16) if fin else (0.06, 0.20, None)
+    quality = [part(f, "roic", 3, lo, hi), part(f, "op_margin", 2, 0.08, 0.25), part(f, "fcf_margin", 2, 0.03, 0.15), part(f, "gross_margin", 1, 0.25, 0.50)]
     predict = [part(f, "profit_years", 3, 0.6, 1.0), part(f, "fcf_years", 2, 0.5, 1.0), part(f, "eps_cagr3", 2, -0.05, 0.10), part(f, "rev_cagr3", 1, 0.0, 0.08)]
     strength = [part(f, "debt_equity", 3, 2.0, 0.3), part(f, "cash_debt", 1, 0.1, 1.0), part(f, "interest_cover", 1, 2.0, 10.0)]
     if f.get("no_equity"):
@@ -143,7 +159,8 @@ def buffett(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]]
         rec = WAIT
     else:
         rec = STRONG_BUY if mos >= B_STRONG_MOS else BUY if mos >= 0 else WAIT
-    business = f"{'ROE' if fin else '투하자본 수익률'} {pct(f['roic'])}, 흑자 연도 {pct(f.get('profit_years'), 0)}"
+    among = f"(금융업 {peers['n']}종목의 중앙값 {pct(peers['median'])}, 상위 10% {pct(peers['top'])})" if peers else ""
+    business = f"{'ROE' if fin else '투하자본 수익률'} {pct(f['roic'])}{among}, 흑자 연도 {pct(f.get('profit_years'), 0)}"
     if rec in BUY_SIDE:
         opinion = f"{business}로 오래 보유할 만한 사업이고, PER {pe:.1f}배가 보수적 적정 PER {fair:.1f}배 이하입니다. 사업의 질 점수가 {B_SELL_QUALITY:.0f} 아래로 떨어지면 생각을 바꿉니다."
     elif rec == WAIT:
@@ -187,7 +204,8 @@ def loss_risk(f: Dict[str, Any]) -> Dict[str, Any]:
 
 def munger(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     fin = f["kind"] == "FINANCIAL"
-    excellence = [part(f, "roic", 4, 0.10 if not fin else 0.10, 0.25 if not fin else 0.18), part(f, "gross_margin", 2, 0.30, 0.60), part(f, "op_margin", 3, 0.12, 0.30)]
+    lo, hi, peers = fin_band(ctx, 0.10, 0.18) if fin else (0.10, 0.25, None)
+    excellence = [part(f, "roic", 4, lo, hi), part(f, "gross_margin", 2, 0.30, 0.60), part(f, "op_margin", 3, 0.12, 0.30)]
     persist = [part(f, "profit_years", 3, 0.6, 1.0), part(f, "rev_cagr3", 2, 0.0, 0.10), part(f, "eps_cagr3", 2, 0.0, 0.12), part(f, "ocf_to_ni", 2, 0.7, 1.2)]
     buys = None if f.get("insider_buy") is None or f.get("insider_sell") is None else f["insider_buy"] >= f["insider_sell"]
     incentives = [part(f, "insider_pct", 2, 0.0, 0.05), flag("insider_buy", 1, buys), part(f, "share_change", 2, 0.03, -0.02)]
@@ -203,7 +221,7 @@ def munger(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] 
     ps = g["components"]["지속성과 재투자"]
     # exceptional means it has kept it up: no loss year on file, and the persistence figures say so too
     exceptional = ex >= M_EXCELLENT and lr <= M_RISK_OK and ps is not None and ps >= M_PERSIST and (f.get("profit_years") is None or f["profit_years"] >= 1.0)
-    margin = "ROE만으로 봄(금융업은 이익률이 해당 없음)" if fin else f"영업이익률 {pct(f.get('op_margin'))}"
+    margin = ("ROE만으로 봄(금융업은 이익률이 해당 없음" + (f", 금융업 중앙값 {pct(peers['median'])}·상위 10% {pct(peers['top'])}와 비교)" if peers else ")")) if fin else f"영업이익률 {pct(f.get('op_margin'))}"
     if lr >= M_RISK_AVOID:
         rec = SELL if held else AVOID
     elif exceptional and pe is not None and pe > 0:
@@ -216,7 +234,7 @@ def munger(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] 
         rec = REDUCE if held else AVOID
     worst = max(risk["ways"], key=lambda w: w["points"])["text"] if risk["ways"] else "눈에 띄는 것 없음"
     if rec in BUY_SIDE:
-        opinion = f"탁월한 사업입니다(투하자본 수익률 {pct(f['roic'])}, {margin}). 거꾸로 따져도 영구 손실 위험이 낮고({lr:.0f}/100) PER {pe:.1f}배는 이 사업에 줄 수 있는 {fair:.1f}배 이하입니다. 위험 점수가 {M_RISK_AVOID:.0f}을 넘으면 팝니다."
+        opinion = f"탁월한 사업입니다({'ROE' if fin else '투하자본 수익률'} {pct(f['roic'])}, {margin}). 거꾸로 따져도 영구 손실 위험이 낮고({lr:.0f}/100) PER {pe:.1f}배는 이 사업에 줄 수 있는 {fair:.1f}배 이하입니다. 위험 점수가 {M_RISK_AVOID:.0f}을 넘으면 팝니다."
     elif rec == WAIT:
         opinion = f"탁월한 사업이고 영구 손실 위험도 낮습니다({lr:.0f}/100). 다만 " + ("값을 매길 이익이 없어" if not pe or pe <= 0 else f"PER {pe:.1f}배가 이 사업에 줄 수 있는 {fair:.1f}배를 넘어") + " 기다립니다. 기회비용을 생각하면 서두를 이유가 없습니다."
     elif lr >= M_RISK_AVOID:
@@ -225,7 +243,7 @@ def munger(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] 
         opinion = (f"좋은 사업이지만 탁월하다고 하기엔 모자랍니다(탁월함 {ex:.0f}/기준 {M_EXCELLENT:.0f}, 지속성 {'자료 없음' if ps is None else f'{ps:.0f}'}/기준 {M_PERSIST:.0f}, 흑자 연도 {pct(f.get('profit_years'), 0)}). "
                    f"가진 것은 두되 새로 살 이유는 없습니다. 적자 없이 높은 수익률이 이어지면 매수 후보가 됩니다.")
     else:
-        opinion = f"평범한 사업은 싸도 사지 않습니다(탁월함 {ex:.0f}, 투하자본 수익률 {pct(f['roic'])}). 탁월함 {M_GOOD:.0f} 이상이 되기 전에는 보지 않습니다."
+        opinion = f"평범한 사업은 싸도 사지 않습니다(탁월함 {ex:.0f}, {'ROE' if fin else '투하자본 수익률'} {pct(f['roic'])}{', ' + margin if fin else ''}). 탁월함 {M_GOOD:.0f} 이상이 되기 전에는 보지 않습니다."
     cond = {"buy": f"사업의 탁월함 {M_EXCELLENT:.0f} 이상(지금 {ex:.0f}), 지속성 {M_PERSIST:.0f} 이상이고 적자 연도 없음, 영구 손실 위험 {M_RISK_OK:.0f} 이하(지금 {lr:.0f}), PER {fair:.1f}배 이하(지금 {times(pe)})",
             "hold": f"탁월함 {M_GOOD:.0f} 이상, 위험 40 이하인 동안", "add": f"조건이 그대로이고 PER이 {0.8 * fair:.1f}배 이하일 때. 더 나은 기회가 없을 때만",
             "reduce": f"탁월함이 {M_GOOD:.0f} 아래로 내려가거나 훨씬 나은 사업이 같은 값에 나올 때", "sell": f"영구 손실 위험 {M_RISK_AVOID:.0f} 이상",
@@ -260,7 +278,18 @@ def graham_value(f: Dict[str, Any], p: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def graham(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    p = GRAHAM_PROFILES[(ctx or {}).get("graham_profile") or "DEFENSIVE"]
+    """The defensive profile decides (the portfolio and the record use it alone).  The enterprising profile's verdict is shown
+    beside it for comparison and changes nothing (user decision 2026-11-22)."""
+    asked = (ctx or {}).get("graham_profile") or "DEFENSIVE"
+    out = _graham(f, held, GRAHAM_PROFILES[asked])
+    if asked == "DEFENSIVE":
+        other = _graham(f, held, GRAHAM_PROFILES["ENTERPRISING"])
+        out["other_profile"] = {"profile": other.get("profile") or GRAHAM_PROFILES["ENTERPRISING"]["label"], "recommendation": other["recommendation"], "recommendation_ko": other["recommendation_ko"],
+                                "score": other["score"], "opinion": other["opinion"], "buy": other["conditions"]["buy"], "same": other["recommendation"] == out["recommendation"]}
+    return out
+
+
+def _graham(f: Dict[str, Any], held: bool, p: Dict[str, Any]) -> Dict[str, Any]:
     val = graham_value(f, p)
     pe = f.get("pe")
     earn_yield = None if not pe or pe <= 0 else 1.0 / pe

@@ -109,8 +109,10 @@ def _stats(daily: List[float], bench: List[Optional[float]]) -> Dict[str, Any]:
     return out
 
 
-def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional[float]], benchmark: Callable[[str], Optional[float]], one_way_cost: float) -> Dict[str, Any]:
-    """Paper results of each recorded portfolio.  ``price(ticker, session)`` and ``benchmark(session)`` give a close or None."""
+def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional[float]], benchmark: Callable[[str], Optional[float]], one_way_cost: float,
+                keep_daily: bool = False) -> Dict[str, Any]:
+    """Paper results of each recorded portfolio.  ``price(ticker, session)`` and ``benchmark(session)`` give a close or None.
+    ``keep_daily``: also give each portfolio's daily returns and the index's (the one reading of terminal/committee/reading.py)."""
     sessions = [r["session"] for r in rows]
     out: Dict[str, Any] = {"kind": "PAPER", "kind_ko": "모의 기록(기록을 시작한 날부터, 과거로 거슬러 계산한 값 없음)", "first_session": sessions[0] if sessions else None,
                            "last_session": sessions[-1] if sessions else None, "records": len(rows), "portfolios": {}, "one_way_cost": one_way_cost,
@@ -154,6 +156,10 @@ def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional
         stats.update({"cost_total": round(costs, 5), "turnover_per_day": round(sum(turns) / len(turns), 4) if turns else None,
                       "average_holding_sessions": round(sum(ended) / len(ended), 1) if ended else None, "positions_closed": len(ended),
                       "unpriced": sorted(unpriced), "price_breaks": jumps[:10]})
+        if keep_daily:
+            stats["daily"] = daily
         out["portfolios"][key] = stats
+    if keep_daily:
+        out["benchmark_daily"] = bench
     out["status"] = "OK"
     return out

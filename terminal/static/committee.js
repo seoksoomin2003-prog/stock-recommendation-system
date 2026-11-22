@@ -17,7 +17,8 @@ const icMarket = () => (state.market === "KR" ? "KR" : "US");
 function icInvestorHtml(o) {
   const est = (x, unit) => (x && x.value !== null && x.value !== undefined ? `${unit === "점" ? icNum(x.value) + "점" : icPct(x.value)} <span class="meta" style="margin:0">(${esc(x.basis)})</span>` : `<span class="meta" style="margin:0">${esc((x && x.basis) || "계산하지 않음")}</span>`);
   const comps = Object.entries(o.components || {}).map(([k, v]) => `${esc(k)} ${icNum(v)}`).join(" · ");
-  const extra = [o.category_ko ? `회사의 종류: ${o.category_ko}` : "", o.profile ? `기준: ${o.profile}` : "", o.method || "",
+  const alt = o.other_profile;
+  const extra = [o.category_ko ? `회사의 종류: ${o.category_ko}` : "", o.profile ? `기준: ${o.profile}(포트폴리오와 기록은 이 기준)` : "", o.method || "",
     o.loss_risk && o.loss_risk.score !== null ? `영구 손실 위험 ${icNum(o.loss_risk.score)}/100 (질문 ${o.loss_risk.asked}개 중 ${o.loss_risk.answered}개에 답함)` : "",
     (o.regimes || []).length ? `시장 국면: ${o.regimes.map((r) => `${r.label}(확신 ${r.confidence})`).join(", ")}` : "",
     (o.regimes_not_told || []).length ? `읽지 못한 국면: ${o.regimes_not_told.join(", ")}` : ""].filter(Boolean);
@@ -28,7 +29,9 @@ function icInvestorHtml(o) {
     <div class="meta" style="margin:6px 0 0"><b style="color:var(--up)">근거</b> ${esc((o.positives || [])[0] || "없음")}</div>
     <div class="meta" style="margin:2px 0 0"><b style="color:var(--bad)">우려</b> ${esc((o.negatives || [])[0] || "없음")}</div>
     <div class="meta" style="margin:2px 0 0"><b>할 일</b> ${esc(o.action)}</div>
+    ${alt ? `<div class="meta" style="margin:2px 0 0"><b>${esc(alt.profile)} 기준이라면</b> ${icBadge(alt.recommendation, alt.recommendation_ko)}${alt.same ? " 같은 판정" : ""}</div>` : ""}
     <details><summary>자세히</summary>
+      ${alt ? `<div class="meta"><b>${esc(alt.profile)} 기준(비교용, 아무것도 바꾸지 않음)</b> ${esc(alt.opinion)} 매수 조건: ${esc(alt.buy)}</div>` : ""}
       <div class="meta">묻는 것: ${esc(o.question)} · 보는 기간: ${esc(o.horizon)}</div>
       <div class="meta">가격 판단: ${esc(o.valuation)}</div>
       <div class="meta">기대수익률: ${est(o.expected_return)} · 하방 위험: ${est(o.downside_risk, o.investor === "MUNGER" ? "점" : "")}</div>
@@ -239,11 +242,13 @@ async function icPerf() {
   let d;
   try { d = await api(`/api/committee/performance?market=${mk}`); } catch (e) { box.innerHTML = errBox(e); return; }
   if (icState.view !== "perf" || mk !== icState.market) return;
+  const rd = d.reading || {};
+  const reading = `<div class="meta"><b>한 번의 읽기</b> ${esc(rd.rule || "")} ${rd.verdict ? `읽은 결과: <b>${esc(rd.verdict)}</b>` : `앞으로 약 ${rd.left}거래일.`} 규칙: ${esc(rd.protocol || "")}</div>${(rd.reasons || []).map((x) => `<div class="meta">${esc(x)}</div>`).join("")}`;
   const head = `<h2>여섯 포트폴리오의 모의 성과 <span class="badge" style="color:var(--warn)">모의 기록</span></h2>
     <div class="meta">${esc(d.kind_ko)} · ${esc(d.not_this)}</div><div class="meta">${esc(d.method)} 거래 비용은 편도 ${icPct(d.one_way_cost, 2)}로 계산합니다. 비교 지수: ${esc(d.benchmark)}.</div>`;
   if (d.status !== "OK") {
     box.innerHTML = `<div class="panel">${head}<div class="empty">${esc(d.reason || "기록이 없습니다.")}</div>
-      <div class="meta">매일 작업이 그날의 여섯 포트폴리오를 한 줄씩 기록합니다. 기록 ${d.records}거래일${d.first_session ? `(${esc(d.first_session)} ~ ${esc(d.last_session)})` : ""}.</div></div>`;
+      <div class="meta">매일 작업이 그날의 여섯 포트폴리오를 한 줄씩 기록합니다. 기록 ${d.records}거래일${d.first_session ? `(${esc(d.first_session)} ~ ${esc(d.last_session)})` : ""}.</div>${reading}</div>`;
     return;
   }
   const rows = Object.entries(d.portfolios).map(([k, s]) => `<tr><td class="l"><b>${esc((d.names || {})[k] || k)}</b></td><td class="num">${s.days}</td><td class="num">${icPct(s.total_return, 2)}</td><td class="num">${icPct(s.benchmark_return, 2)}</td>
@@ -253,7 +258,7 @@ async function icPerf() {
   box.innerHTML = `<div class="panel">${head}
     <div class="tbl-wrap"><table><thead><tr><th class="l">포트폴리오</th><th>거래일</th><th>수익</th><th>지수</th><th>최대 낙폭</th><th>오른 날</th><th>연환산</th><th>변동성</th><th>샤프</th><th>소르티노</th><th>칼마</th><th>알파</th><th>베타</th><th>하루 교체</th><th>평균 보유일</th><th>비용 합</th></tr></thead><tbody>${rows}</tbody></table></div>
     ${first.ratios ? `<div class="meta">${esc(first.ratios)}</div>` : ""}
-    <div class="meta">기록 ${d.records}거래일(${esc(d.first_session)} ~ ${esc(d.last_session)}). 표본이 짧을 때의 수익은 우연과 구별되지 않습니다. 이 성과를 보고 규칙을 고치지 않습니다.</div></div>`;
+    <div class="meta">기록 ${d.records}거래일(${esc(d.first_session)} ~ ${esc(d.last_session)}). 표본이 짧을 때의 수익은 우연과 구별되지 않습니다. 이 성과를 보고 규칙을 고치지 않습니다.</div>${reading}</div>`;
 }
 
 RENDER.committee = renderCommittee;
