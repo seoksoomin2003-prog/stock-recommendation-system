@@ -355,3 +355,28 @@ details[open] > summary .fold-hint { display: none; }
 .ic-card details, .ic-committee details { margin-top: 6px; } .ic-card summary, .ic-committee summary, .ic-grid + .ic-committee summary { cursor: pointer; color: var(--accent); font-size: 12px; }
 .ic-scores { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 8px 0; }
 .ic-scores span { display: flex; flex-direction: column; font-size: 11px; color: var(--muted); } .ic-scores i { font-style: normal; } .ic-scores b { font-size: 15px; color: var(--ink); }
+
+
+/* Phone connection panel (terminal/phone_view.py) */
+.phonebar { flex-basis: 100%; font-size: 13px; }
+.phonebar[hidden] { display: none; }
+.phone-body { display: grid; gap: 6px; padding: 8px 0; }
+.phone-head { display: flex; align-items: center; gap: 10px; }
+.phone-head #phoneclose { margin-left: auto; }
+.phone-body button { width: auto; justify-self: start; }
+.phone-addr { font-size: 15px; user-select: all; padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px; }
+.phone-code { font-size: 26px; font-weight: 700; letter-spacing: 6px; font-variant-numeric: tabular-nums; }
+.phone-devs { margin: 0; padding-left: 18px; }
+.phone-devs li { margin: 2px 0; }
+
+/* Touch screens: targets a finger can hit, and the explanation bar that stands in for hover text */
+@media (pointer: coarse) {
+  button, select, input, summary { min-height: 40px; }
+  nav button, .seg button { min-height: 42px; }
+  [title]:not(button):not(a):not(input):not(select):not(summary) { text-decoration: underline dotted; text-underline-offset: 3px; }
+}
+#taptip { position: fixed; left: 8px; right: 8px; bottom: 8px; z-index: 50; padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5;
+  background: var(--panel, #1c232d); color: var(--ink, #e6e9ee); border: 1px solid var(--line, #3a4452); box-shadow: 0 6px 24px rgba(0, 0, 0, .35); }
+#taptip[hidden] { display: none; }
+.on-phone #collect, .on-phone .qsf-rule-switch { display: none; }        /* computer-only controls */
+@media (max-width: 600px) { .top { position: static; } }                  /* the wrapped header would cover a fifth of a phone screen */

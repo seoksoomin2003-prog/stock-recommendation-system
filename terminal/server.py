@@ -1,7 +1,9 @@
 """Local web server for the terminal (standard library only).
 
-Binds to 127.0.0.1 only (never 0.0.0.0): the terminal is reachable from this Mac alone.
+The terminal's own listener binds to 127.0.0.1 only: it is reachable from this computer alone.
 JSON API under /api/..., static files from terminal/static/.  Read-only except the local watchlist, alert rules and journal.
+A second listener for a paired phone of the local network exists only while the user has switched it on
+(terminal/phone_view.py, user decisions 2026-11-22); every request to it passes ``_phone_gate`` first.
 """
 import json
 import logging
@@ -18,6 +20,9 @@ from pathlib import Path
 from typing import Callable, Dict, Optional
 from urllib.parse import parse_qs, urlparse
 
+from http.cookies import CookieError, SimpleCookie
+
+from terminal import phone_view
 from terminal.services import Terminal, clean_ticker
 
 STATIC = Path(__file__).resolve().parent / "static"
@@ -130,9 +135,20 @@ def _strategy(s: str) -> str:
     return s
 
 
-def routes(t: Terminal, errors: Optional[ErrorTally] = None) -> Dict[str, Callable]:
+def _phone(phone: Optional[phone_view.PhoneView]) -> phone_view.PhoneView:
+    if phone is None:
+        raise ValueError("PHONE_VIEW_UNAVAILABLE")
+    return phone
+
+
+def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[phone_view.PhoneView] = None) -> Dict[str, Callable]:
     errors = errors or ErrorTally()
     return {
+        # the phone's door: asked and switched from this computer only (a paired phone gets PHONE_MAC_ONLY at the gate)
+        ("GET", "/api/phone/status"): lambda q, b: phone.status() if phone else {"on": False, "available": False},
+        ("POST", "/api/phone/switch"): lambda q, b: _phone(phone).switch(b.get("on") is True),
+        ("POST", "/api/phone/code"): lambda q, b: _phone(phone).new_code(),
+        ("POST", "/api/phone/unpair"): lambda q, b: _phone(phone).unpair(str(b.get("id") or "")),
         ("GET", "/api/health"): lambda q, b: {**t.health(), "server_errors": errors.view()},
         ("GET", "/api/overview"): lambda q, b: t.overview(_market(q.get("market", "US"))),
         ("GET", "/api/chart"): lambda q, b: t.chart(q.get("t", ""), q.get("range", "1y")),
@@ -221,9 +237,10 @@ GONE = (BrokenPipeError, ConnectionResetError, ConnectionAbortedError)      # th
 STORED_UNREADABLE = (json.JSONDecodeError, UnicodeError)                    # ValueErrors that are never about the request's own values
 
 
-def make_handler(t: Terminal, errors: Optional[ErrorTally] = None):
+def make_handler(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[phone_view.PhoneView] = None, remote: bool = False):
+    """``remote``: the handler of the second listener (devices of the local network); needs ``phone``."""
     errors = errors or ErrorTally()
-    table = routes(t, errors)
+    table = routes(t, errors, phone)
     writes = threading.Lock()       # saves (watchlist, alerts, journal, settings) run one at a time: no lost update, no shared temp file
 
     class Handler(BaseHTTPRequestHandler):
@@ -233,8 +250,10 @@ def make_handler(t: Terminal, errors: Optional[ErrorTally] = None):
         def log_message(self, fmt, *args):          # quiet; never logs request bodies or headers
             log.debug("%s %s", self.command, self.path.split("?")[0])
 
-        def _send(self, code: int, body: bytes, ctype: str):
+        def _send(self, code: int, body: bytes, ctype: str, cookie: Optional[str] = None):
             self.send_response(code)
+            if cookie:
+                self.send_header("Set-Cookie", cookie)
             self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
@@ -256,13 +275,63 @@ def make_handler(t: Terminal, errors: Optional[ErrorTally] = None):
             except GONE:
                 return None
 
+        def _phone_gate(self, method: str, u, host: Optional[str]) -> bool:
+            """The second listener's door.  True: the request was answered here (refused, or the pairing page or call)."""
+            if not phone_view.client_ok(self.client_address[0]) or not phone_view.host_ok(host, self.server.server_port):
+                self._json(403, {"error": "FORBIDDEN_HOST"})
+                return True
+            if self.headers.get("Sec-Fetch-Site") == "cross-site":
+                self._json(403, {"error": "FORBIDDEN_SITE"})
+                return True
+            jar = SimpleCookie()
+            try:
+                jar.load(self.headers.get("Cookie") or "")
+            except CookieError:
+                jar = SimpleCookie()
+            if phone.device(jar[phone_view.COOKIE].value if phone_view.COOKIE in jar else None):
+                if (method, u.path) == ("GET", "/api/phone/status"):      # the page asks where it runs; a phone learns nothing else here
+                    self._json(200, {"on": True, "available": False, "phone": True})
+                    return True
+                if u.path.startswith("/api/phone/") or (method == "POST" and u.path not in phone_view.PHONE_WRITES):
+                    self._json(403, {"error": "PHONE_MAC_ONLY"})          # switches, scans and settings stay on the computer
+                    return True
+                return False
+            if method == "POST" and u.path == "/api/phone/pair":
+                self._phone_pair(host)
+            elif method == "GET" and not u.path.startswith("/api/"):
+                self._send(200, phone_view.PAIR_PAGE.encode("utf-8"), "text/html; charset=utf-8")
+            else:
+                self._json(401, {"error": "PHONE_NOT_PAIRED"})
+            return True
+
+        def _phone_pair(self, host: Optional[str]):
+            if self.headers.get("Origin") not in (None, f"http://{host}"):
+                return self._json(403, {"error": "FORBIDDEN_ORIGIN"})
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+                body = json.loads(self.rfile.read(n) or b"{}") if 0 <= n <= 200 else None
+            except (ValueError, RecursionError):
+                body = None
+            if not isinstance(body, dict):
+                return self._json(400, {"error": "BAD_JSON"})
+            with writes:
+                got = phone.pair(body.get("code"), self.headers.get("User-Agent"))
+            if "token" not in got:
+                log.info("phone pairing refused: %s", got.get("error"))          # the code itself is never logged
+                return self._json(403, got)
+            self._send(200, b'{"status": "OK"}', "application/json; charset=utf-8",
+                       cookie=f"{phone_view.COOKIE}={got['token']}; Max-Age={got['max_age']}; Path=/; HttpOnly; SameSite=Strict")
+
         def _dispatch(self, method: str):
             u = urlparse(self.path)
             # A page on another site can point its own name at 127.0.0.1 (DNS rebinding) and then read every GET as if it were
             # this page: portfolio, journal, alerts.  Such a request carries the other site's name in Host, so only this
             # address is answered.  A request without Host (a script, not a browser) is answered as before.
             host = self.headers.get("Host")
-            if host is not None and host not in (f"{HOST}:{self.server.server_port}", f"localhost:{self.server.server_port}"):
+            if remote:
+                if self._phone_gate(method, u, host):
+                    return None
+            elif host is not None and host not in (f"{HOST}:{self.server.server_port}", f"localhost:{self.server.server_port}"):
                 return self._json(403, {"error": "FORBIDDEN_HOST"})
             if u.path.startswith("/api/"):
                 if self.headers.get("Sec-Fetch-Site") == "cross-site":            # another site's page loading an API address as an image or script
@@ -273,7 +342,7 @@ def make_handler(t: Terminal, errors: Optional[ErrorTally] = None):
                 body = {}
                 if method == "POST":
                     if self.headers.get("Origin") not in (None, f"http://{HOST}:{self.server.server_port}",
-                                                          f"http://localhost:{self.server.server_port}"):
+                                                          f"http://localhost:{self.server.server_port}", *((f"http://{host}",) if remote else ())):
                         return self._json(403, {"error": "FORBIDDEN_ORIGIN"})
                     try:
                         n = int(self.headers.get("Content-Length") or 0)
@@ -352,10 +421,18 @@ def _two(q) -> str:
 
 
 def serve(port: int = 8765, base_dir: Path = Path("."), terminal: Optional[Terminal] = None,
-          background: bool = False, warm_up: bool = False) -> ThreadingHTTPServer:
-    """``warm_up``: compute the first screen in the background (the real server; tests and scratch servers leave it off)."""
+          background: bool = False, warm_up: bool = False, phone_listener: bool = False, phone_port: int = phone_view.PORT) -> ThreadingHTTPServer:
+    """``warm_up``: compute the first screen in the background (the real server; tests and scratch servers leave it off).
+    ``phone_listener``: open the phone's door at start when the user left it switched on (the real server only)."""
     t = terminal or Terminal(base_dir)
-    httpd = _Server((HOST, port), make_handler(t))
+    errors = ErrorTally()
+    phone = phone_view.PhoneView(getattr(t, "base", base_dir), port=phone_port)
+    # every interface, because the network address changes with the Wi-Fi; the gate answers private addresses only
+    phone.factory = lambda: _Server(("0.0.0.0", phone.port), make_handler(t, errors, phone=phone, remote=True))
+    httpd = _Server((HOST, port), make_handler(t, errors, phone=phone))
+    httpd.phone = phone
+    if phone_listener:
+        phone.start_if_on()
     if warm_up:
         from terminal import warm
         warm.start(t)

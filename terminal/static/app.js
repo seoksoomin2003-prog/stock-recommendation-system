@@ -69,6 +69,7 @@ async function api(path, opts) {
   catch (e) { netDown(true); throw new Error("SERVER_UNREACHABLE"); }
   if ($("#netbar") && !$("#netbar").hidden) netDown(false);
   const j = await r.json().catch(() => ({ error: "BAD_RESPONSE" }));
+  if (r.status === 401 && j.error === "PHONE_NOT_PAIRED") { location.reload(); throw new Error("PHONE_NOT_PAIRED"); }      // this phone was disconnected: back to the pairing page
   if (!r.ok) throw new Error(j.error || `HTTP_${r.status}`);
   return j;
 }
@@ -77,7 +78,11 @@ const ERR_KO = { INVALID_TICKER: "종목 코드 형식이 올바르지 않습니
   INTERNAL_ERROR: "서버 내부 오류가 발생했습니다. 잠시 뒤 다시 해 보고, 계속되면 '서버 다시 시작'을 누르세요.", INVALID_RANGE: "기간 값이 올바르지 않습니다.",
   BAD_RESPONSE: "서버의 답을 읽지 못했습니다. 화면을 새로 고쳐 보세요.", BAD_JSON: "보낸 내용을 서버가 읽지 못했습니다. 화면을 새로 고친 뒤 다시 해 보세요.",
   BAD_LENGTH: "보낸 내용이 너무 길거나 길이가 맞지 않습니다.", METHOD_NOT_ALLOWED: "이 주소는 그 방식의 요청을 받지 않습니다.", NOT_FOUND: "그런 주소가 없습니다. 화면을 새로 고쳐 보세요.",
-  FORBIDDEN_HOST: "이 주소로는 터미널을 열 수 없습니다. 터미널을 띄운 기기에서 127.0.0.1 주소로 여세요.", FORBIDDEN_ORIGIN: "다른 사이트에서 온 요청이라 받지 않았습니다.",
+  FORBIDDEN_HOST: "이 주소로는 터미널을 열 수 없습니다. 터미널을 띄운 컴퓨터에서는 127.0.0.1 주소로, 휴대폰에서는 '폰 연결'에 보이는 주소로 여세요.",
+  PHONE_MAC_ONLY: "이 동작은 터미널을 띄운 컴퓨터에서만 할 수 있습니다. 휴대폰에서는 보기와 거래 기록·관심종목·알림 입력만 됩니다.",
+  PHONE_NOT_PAIRED: "이 기기의 연결이 끊겼습니다. 화면을 새로 고쳐 연결 코드를 다시 넣으세요.", PHONE_VIEW_OFF: "휴대폰 연결이 꺼져 있습니다. 먼저 켜세요.",
+  PHONE_VIEW_UNAVAILABLE: "이 서버에서는 휴대폰 연결을 쓸 수 없습니다.", PHONE_CODE_WRONG: "코드가 맞지 않습니다.", PHONE_CODE_EXPIRED: "코드의 시간이 지났습니다. 새 코드를 만드세요.",
+  PHONE_CODE_LOCKED: "틀린 횟수가 많아 이 코드는 더 쓸 수 없습니다. 새 코드를 만드세요.", PHONE_TOO_MANY: "연결된 기기가 이미 다섯 대입니다. 하나를 끊은 뒤 다시 하세요.", FORBIDDEN_ORIGIN: "다른 사이트에서 온 요청이라 받지 않았습니다.",
   FORBIDDEN_SITE: "다른 사이트에서 온 요청이라 받지 않았습니다.",
   INVALID_MARKET: "시장 값이 올바르지 않습니다(미국 또는 한국).", BAD_MARKET: "시장 값이 올바르지 않습니다(미국 또는 한국).",
   INVALID_STRATEGY: "구분 값이 올바르지 않습니다(스윙 또는 장기).", BAD_STRATEGY: "구분 값이 올바르지 않습니다(스윙 또는 장기).",
