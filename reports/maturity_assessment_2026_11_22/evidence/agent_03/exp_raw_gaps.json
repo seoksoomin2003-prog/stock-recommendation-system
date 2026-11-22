@@ -1,0 +1,86 @@
+{
+ "US": {
+  "n": 503,
+  "free_cash_flow_missing_reasons": {
+   "FCF 마진 없음, FCF 흑자 연도 비율 없음: 계산 값 없음": 38,
+   "재무 수치를 찾지 못했습니다.": 2
+  },
+  "empty_raw_inputs": {
+   "business_quality": {
+    "gross_margin": 313,
+    "roe": 31,
+    "op_margin": 120
+   },
+   "financial_resilience": {
+    "interest_cover": 145,
+    "cash_debt": 15,
+    "current_ratio": 28
+   },
+   "valuation": {
+    "pb": 31,
+    "fcf_yield": 38,
+    "pe": 1
+   },
+   "growth_quality": {
+    "eps_cagr3": 90,
+    "rev_cagr3": 12,
+    "rev_growth": 10
+   },
+   "balance_dilution": {
+    "debt_equity": 9,
+    "share_change": 17
+   },
+   "capital_allocation": {
+    "share_change": 13,
+    "returns_capital": 19
+   },
+   "insider_ownership": {
+    "insider_pct": 1
+   },
+   "free_cash_flow": {
+    "fcf_margin": 1
+   },
+   "downside_drawdown": {
+    "downside_vol": 1
+   }
+  }
+ },
+ "KR": {
+  "n": 300,
+  "free_cash_flow_missing_reasons": {
+   "금융 자회사의 채권 증감이 연결 영업현금에 섞여 현금흐름을 평가하지 않습니다": 1,
+   "FCF 마진 없음, FCF 흑자 연도 비율 없음: 계산 값 없음": 9,
+   "보험·금융 자회사의 현금이 연결 영업현금에 섞여 현금흐름을 평가하지 않습니다": 1
+  },
+  "empty_raw_inputs": {
+   "business_quality": {
+    "gross_margin": 300,
+    "op_margin": 30
+   },
+   "balance_dilution": {
+    "share_change": 300
+   },
+   "financial_resilience": {
+    "interest_cover": 272,
+    "cash_debt": 1
+   },
+   "capital_allocation": {
+    "share_change": 231
+   },
+   "growth_quality": {
+    "eps_cagr3": 115,
+    "rev_cagr3": 23,
+    "rev_growth": 5
+   },
+   "valuation": {
+    "fcf_yield": 11
+   },
+   "long_trend": {
+    "ma200_slope": 3
+   },
+   "momentum_persistence": {
+    "ret_12_1": 4
+   }
+  }
+ }
+}

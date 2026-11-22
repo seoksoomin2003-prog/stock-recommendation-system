@@ -1,0 +1,33 @@
+== 1. Independent reproduction of calibrate bars (my code, my seed) ==
+live swing  n=240 h=20 step=1 lag=20 nominal 2.24: my quantile 3.40 | calibrate.bar 3.33 | noise passes nominal 5.62% (table 1.25%) | noise passes calibrate bar 1.38%  [1s]
+live long   n=756 h=63 step=1 lag=63 nominal 2.24: my quantile 3.39 | calibrate.bar 3.35 | noise passes nominal 5.67% (table 1.25%) | noise passes calibrate bar 1.30%  [7s]
+fund period n=240 h=20 step=1 lag=20 nominal 3.0 : my quantile 5.01 | calibrate.bar 4.84 | noise passes nominal 2.10% (table 0.13%) | noise passes calibrate bar 0.17%  [1s]
+rank/turnover book n=240 h=1 lag=5 nominal 2.0   : my quantile 2.07 | calibrate.bar 2.06 | noise passes nominal 2.72% (table 2.28%) | noise passes calibrate bar 2.35%  [0s]
+committee paper n=240 h=1 lag=5 nominal 3.0      : my quantile 3.18 | calibrate.bar 3.15 | noise passes nominal 0.21% (table 0.13%) | noise passes calibrate bar 0.14%  [0s]
+
+== 2. Power of the primary verdicts (condition A, t part + IC>=0.02 + both halves IC>0) ==
+dispersion: sd of per-date IC as recorded in reports/QSF_LIVE_FORWARD_POWER_2026_11_11.md
+KR SWING: sd 0.138, n 240, h 20, new bar 3.33
+  old bar 2.24: IC for 50% 0.066, 80% 0.102
+  new bar     : IC for 50% 0.098, 80% 0.137  (t only)
+  new bar     : IC for 50% 0.098, 80% 0.137  (t + IC>=0.02 + both halves)
+  power at true IC 0.00/0.02/0.03/0.05/0.08/0.10/0.15 (new bar, t+IC+halves): 1.3%, 3.8%, 6.2%, 13.7%, 33.8%, 51.2%, 86.8%
+  chance of t <= -2.0 when true IC is 0.03 (a 'looks negative' misread): 1.6%
+US SWING: sd 0.197, n 240, h 20, new bar 3.33
+  old bar 2.24: IC for 50% 0.095, 80% 0.145
+  new bar     : IC for 50% 0.141, 80% 0.195  (t only)
+  new bar     : IC for 50% 0.141, 80% 0.195  (t + IC>=0.02 + both halves)
+  power at true IC 0.00/0.02/0.03/0.05/0.08/0.10/0.15 (new bar, t+IC+halves): 1.4%, 2.9%, 4.1%, 7.7%, 16.8%, 25.9%, 55.8%
+  chance of t <= -2.0 when true IC is 0.03 (a 'looks negative' misread): 2.4%
+KR LONG: sd 0.107, n 756, h 63, new bar 3.35
+  old bar 2.24: IC for 50% 0.052, 80% 0.079
+  new bar     : IC for 50% 0.077, 80% 0.106  (t only)
+  new bar     : IC for 50% 0.077, 80% 0.106  (t + IC>=0.02 + both halves)
+  power at true IC 0.00/0.02/0.03/0.05/0.08/0.10/0.15 (new bar, t+IC+halves): 1.4%, 5.3%, 9.0%, 22.0%, 53.5%, 74.7%, 98.1%
+  chance of t <= -2.0 when true IC is 0.03 (a 'looks negative' misread): 0.8%
+US LONG: sd 0.14, n 756, h 63, new bar 3.35
+  old bar 2.24: IC for 50% 0.066, 80% 0.102
+  new bar     : IC for 50% 0.099, 80% 0.138  (t only)
+  new bar     : IC for 50% 0.099, 80% 0.138  (t + IC>=0.02 + both halves)
+  power at true IC 0.00/0.02/0.03/0.05/0.08/0.10/0.15 (new bar, t+IC+halves): 1.1%, 3.6%, 5.9%, 13.6%, 33.2%, 50.5%, 86.7%
+  chance of t <= -2.0 when true IC is 0.03 (a 'looks negative' misread): 1.5%

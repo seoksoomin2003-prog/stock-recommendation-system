@@ -1,0 +1,869 @@
+{
+ "B0_baseline_swing": {
+  "score": 75.42,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B0_baseline_long": {
+  "score": 87.42,
+  "band": "STRONG_BUY_CANDIDATE",
+  "band_label": "강력 매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B1_missing_statements_swing": {
+  "score": 72.39,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 0.875,
+  "input_coverage": 0.875,
+  "confidence": "MEDIUM",
+  "gates": [],
+  "missing": [
+   "earnings_revenue_quality",
+   "profitability",
+   "balance_sheet",
+   "cash_flow_quality"
+  ],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B1_missing_statements_long": {
+  "score": 81.3,
+  "band": "STRONG_BUY_CANDIDATE",
+  "band_label": "판단 불가(자료 부족)",
+  "action": "INSUFFICIENT_DATA",
+  "actionability": "INSUFFICIENT_DATA",
+  "coverage": 0.3,
+  "input_coverage": 0.289,
+  "confidence": "INSUFFICIENT",
+  "gates": [],
+  "missing": [
+   "valuation",
+   "business_quality",
+   "growth_quality",
+   "free_cash_flow",
+   "balance_dilution",
+   "financial_resilience",
+   "leverage",
+   "capital_allocation"
+  ],
+  "partial": [
+   "insider_ownership"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B2_stale_price": {
+  "score": 75.57,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BLOCKED",
+  "actionability": "BLOCKED",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [
+   "STALE_PRICE"
+  ],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-03"
+ },
+ "B2b_stale_price_flag_absent": {
+  "score": 75.42,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-10-01"
+ },
+ "B5_last_close_zero": {
+  "score": 38.53,
+  "band": "SELL_AVOID",
+  "band_label": "매도·회피 후보",
+  "action": "AVOID",
+  "actionability": "BLOCKED",
+  "coverage": 1.0,
+  "input_coverage": 0.938,
+  "confidence": "HIGH",
+  "gates": [
+   "DATA_ANOMALY",
+   "LOW_PRICE"
+  ],
+  "missing": [],
+  "partial": [
+   "momentum",
+   "atr_risk"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B5_last_close_negative": {
+  "score": 44.94,
+  "band": "WEAK_REDUCE",
+  "band_label": "약세·축소 후보",
+  "action": "AVOID",
+  "actionability": "BLOCKED",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [
+   "DATA_ANOMALY",
+   "LOW_PRICE"
+  ],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B5_last_close_nan": {
+  "score": 81.18,
+  "band": "STRONG_BUY_CANDIDATE",
+  "band_label": "판단 불가(자료 부족)",
+  "action": "INSUFFICIENT_DATA",
+  "actionability": "INSUFFICIENT_DATA",
+  "coverage": 0.55,
+  "input_coverage": 0.431,
+  "confidence": "INSUFFICIENT",
+  "gates": [],
+  "missing": [
+   "trend_structure",
+   "relative_strength",
+   "volatility_structure",
+   "risk_reward",
+   "atr_risk"
+  ],
+  "partial": [
+   "momentum",
+   "breakout_volume",
+   "drawdown_gap"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B5_nan_close_40_bars_back": {
+  "score": 74.42,
+  "band": "BUY_CANDIDATE",
+  "band_label": "판단 불가(자료 부족)",
+  "action": "INSUFFICIENT_DATA",
+  "actionability": "INSUFFICIENT_DATA",
+  "coverage": 0.762,
+  "input_coverage": 0.7,
+  "confidence": "INSUFFICIENT",
+  "gates": [],
+  "missing": [
+   "trend_structure",
+   "volatility_structure",
+   "drawdown_gap"
+  ],
+  "partial": [
+   "momentum",
+   "atr_risk"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B5_zero_close_40_bars_back": {
+  "score": 70.2,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BLOCKED",
+  "actionability": "BLOCKED",
+  "coverage": 1.0,
+  "input_coverage": 0.944,
+  "confidence": "HIGH",
+  "gates": [
+   "DATA_ANOMALY"
+  ],
+  "missing": [],
+  "partial": [
+   "atr_risk",
+   "drawdown_gap"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B5_high_below_low": {
+  "score": 73.57,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B5_nan_last_volume": {
+  "score": 77.03,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 0.969,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [
+   "breakout_volume"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B5_negative_last_volume": {
+  "score": 75.76,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B5_price_x10_100_bars_back": {
+  "score": 80.28,
+  "band": "STRONG_BUY_CANDIDATE",
+  "band_label": "강력 매수 후보",
+  "action": "BLOCKED",
+  "actionability": "BLOCKED",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [
+   "DATA_ANOMALY"
+  ],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B5_price_step_35pct_100_bars_back": {
+  "score": 78.8,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B5_unadjusted_2for1_split_150_back": {
+  "score": 67.55,
+  "band": "HOLD_WATCH",
+  "band_label": "보유·관찰",
+  "action": "WATCH",
+  "actionability": "BLOCKED",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [
+   "DATA_ANOMALY"
+  ],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B5_unadjusted_2for1_split_270_back": {
+  "score": 75.61,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B6_last_bar_doubled": {
+  "score": 75.99,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BLOCKED",
+  "actionability": "BLOCKED",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [
+   "DATA_ANOMALY"
+  ],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B6_bar_doubled_mid": {
+  "score": 75.23,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BLOCKED",
+  "actionability": "BLOCKED",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [
+   "DATA_ANOMALY"
+  ],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B6_out_of_order": {
+  "score": 75.46,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BLOCKED",
+  "actionability": "BLOCKED",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [
+   "DATA_ANOMALY"
+  ],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B7_missing_40_sessions": {
+  "score": 76.24,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B7_indicator_shift": {
+  "n": [
+   320,
+   280
+  ],
+  "ma50": [
+   66.8949,
+   66.8949
+  ],
+  "ma200": [
+   62.1963,
+   60.8031
+  ],
+  "ret_126": [
+   0.1331,
+   0.1789
+  ],
+  "ret_252": [
+   0.2838,
+   0.3358
+  ],
+  "hist_vol": [
+   0.0636,
+   0.0732
+  ],
+  "max_move_252": [
+   0.005,
+   0.0373
+  ],
+  "row_defects": [
+   0,
+   0
+  ]
+ },
+ "B7_missing_160_sessions": {
+  "score": 74.63,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BLOCKED",
+  "actionability": "BLOCKED",
+  "coverage": 0.875,
+  "input_coverage": 0.875,
+  "confidence": "MEDIUM",
+  "gates": [
+   "SHORT_HISTORY"
+  ],
+  "missing": [
+   "trend_structure"
+  ],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "B7_short_history_120": {
+  "score": 72.84,
+  "band": "BUY_CANDIDATE",
+  "band_label": "판단 불가(자료 부족)",
+  "action": "INSUFFICIENT_DATA",
+  "actionability": "INSUFFICIENT_DATA",
+  "coverage": 0.75,
+  "input_coverage": 0.75,
+  "confidence": "INSUFFICIENT",
+  "gates": [
+   "SHORT_HISTORY"
+  ],
+  "missing": [
+   "trend_structure",
+   "relative_strength"
+  ],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G1_strong_SWING": {
+  "score": 75.42,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G2_insufficient_SWING": {
+  "score": 69.79,
+  "band": "HOLD_WATCH",
+  "band_label": "보유·관찰",
+  "action": "WATCH",
+  "actionability": "ACTIONABLE",
+  "coverage": 0.75,
+  "input_coverage": 0.75,
+  "confidence": "LOW",
+  "gates": [],
+  "missing": [
+   "earnings_revenue_quality",
+   "profitability",
+   "balance_sheet",
+   "cash_flow_quality",
+   "earnings_calendar",
+   "material_disclosures",
+   "insider_activity"
+  ],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G3_conflict_good_chart_bad_statements_SWING": {
+  "score": 63.34,
+  "band": "HOLD_WATCH",
+  "band_label": "보유·관찰",
+  "action": "WATCH",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G3_conflict_bad_chart_good_statements_SWING": {
+  "score": 43.94,
+  "band": "WEAK_REDUCE",
+  "band_label": "약세·축소 후보",
+  "action": "AVOID",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G4_stale_statements_SWING": {
+  "score": 75.42,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 0.938,
+  "input_coverage": 0.938,
+  "confidence": "MEDIUM",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [
+   "earnings_revenue_quality",
+   "profitability",
+   "balance_sheet",
+   "cash_flow_quality"
+  ],
+  "data_date": "2026-11-04"
+ },
+ "G4_stale_price_SWING": {
+  "score": 75.57,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BLOCKED",
+  "actionability": "BLOCKED",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [
+   "STALE_PRICE"
+  ],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-03"
+ },
+ "G5_valuation_unknown_SWING": {
+  "score": 75.42,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G5_valuation_pe_only_SWING": {
+  "score": 75.42,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G1_strong_LONG_TERM": {
+  "score": 87.42,
+  "band": "STRONG_BUY_CANDIDATE",
+  "band_label": "강력 매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G2_insufficient_LONG_TERM": {
+  "score": 82.91,
+  "band": "STRONG_BUY_CANDIDATE",
+  "band_label": "판단 불가(자료 부족)",
+  "action": "INSUFFICIENT_DATA",
+  "actionability": "INSUFFICIENT_DATA",
+  "coverage": 0.211,
+  "input_coverage": 0.211,
+  "confidence": "INSUFFICIENT",
+  "gates": [],
+  "missing": [
+   "valuation",
+   "business_quality",
+   "growth_quality",
+   "free_cash_flow",
+   "balance_dilution",
+   "financial_resilience",
+   "leverage",
+   "governance",
+   "material_events",
+   "insider_ownership",
+   "capital_allocation"
+  ],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G3_conflict_good_chart_bad_statements_LONG_TERM": {
+  "score": 25.89,
+  "band": "SELL_AVOID",
+  "band_label": "매도·회피 후보",
+  "action": "AVOID",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G3_conflict_bad_chart_good_statements_LONG_TERM": {
+  "score": 74.82,
+  "band": "BUY_CANDIDATE",
+  "band_label": "매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G4_stale_statements_LONG_TERM": {
+  "score": 87.42,
+  "band": "STRONG_BUY_CANDIDATE",
+  "band_label": "판단 불가(자료 부족)",
+  "action": "INSUFFICIENT_DATA",
+  "actionability": "INSUFFICIENT_DATA",
+  "coverage": 0.65,
+  "input_coverage": 0.65,
+  "confidence": "INSUFFICIENT",
+  "gates": [],
+  "missing": [],
+  "partial": [],
+  "stale": [
+   "valuation",
+   "business_quality",
+   "growth_quality",
+   "free_cash_flow",
+   "balance_dilution",
+   "financial_resilience",
+   "leverage",
+   "capital_allocation"
+  ],
+  "data_date": "2026-11-04"
+ },
+ "G4_stale_price_LONG_TERM": {
+  "score": 87.46,
+  "band": "STRONG_BUY_CANDIDATE",
+  "band_label": "강력 매수 후보",
+  "action": "BLOCKED",
+  "actionability": "BLOCKED",
+  "coverage": 1.0,
+  "input_coverage": 1.0,
+  "confidence": "HIGH",
+  "gates": [
+   "STALE_PRICE"
+  ],
+  "missing": [],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-03"
+ },
+ "G5_valuation_unknown_LONG_TERM": {
+  "score": 90.13,
+  "band": "STRONG_BUY_CANDIDATE",
+  "band_label": "강력 매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 0.833,
+  "input_coverage": 0.833,
+  "confidence": "MEDIUM",
+  "gates": [],
+  "missing": [
+   "valuation"
+  ],
+  "partial": [],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "G5_valuation_pe_only_LONG_TERM": {
+  "score": 87.33,
+  "band": "STRONG_BUY_CANDIDATE",
+  "band_label": "강력 매수 후보",
+  "action": "BUY",
+  "actionability": "ACTIONABLE",
+  "coverage": 1.0,
+  "input_coverage": 0.889,
+  "confidence": "MEDIUM",
+  "gates": [],
+  "missing": [],
+  "partial": [
+   "valuation"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04"
+ },
+ "RAISE_a_whole_factor_valuation": {
+  "with_figures": {
+   "score": 75.11,
+   "band": "BUY_CANDIDATE",
+   "band_label": "매수 후보",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "coverage": 1.0,
+   "input_coverage": 1.0,
+   "confidence": "HIGH",
+   "gates": [],
+   "missing": [],
+   "partial": [],
+   "stale": [],
+   "data_date": "2026-11-04"
+  },
+  "figures_missing": {
+   "score": 90.13,
+   "band": "STRONG_BUY_CANDIDATE",
+   "band_label": "강력 매수 후보",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.833,
+   "input_coverage": 0.833,
+   "confidence": "MEDIUM",
+   "gates": [],
+   "missing": [
+    "valuation"
+   ],
+   "partial": [],
+   "stale": [],
+   "data_date": "2026-11-04"
+  },
+  "score_change": 15.02
+ },
+ "RAISE_b_sub_figure_growth": {
+  "with_figures": {
+   "score": 85.05,
+   "band": "STRONG_BUY_CANDIDATE",
+   "band_label": "강력 매수 후보",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "coverage": 1.0,
+   "input_coverage": 1.0,
+   "confidence": "HIGH",
+   "gates": [],
+   "missing": [],
+   "partial": [],
+   "stale": [],
+   "data_date": "2026-11-04"
+  },
+  "figures_missing": {
+   "score": 87.46,
+   "band": "STRONG_BUY_CANDIDATE",
+   "band_label": "강력 매수 후보",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "coverage": 1.0,
+   "input_coverage": 0.97,
+   "confidence": "HIGH",
+   "gates": [],
+   "missing": [],
+   "partial": [
+    "growth_quality"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04"
+  },
+  "score_change": 2.41
+ },
+ "RAISE_c_bad_statements_gone_swing": {
+  "with_figures": {
+   "score": 63.34,
+   "band": "HOLD_WATCH",
+   "band_label": "보유·관찰",
+   "action": "WATCH",
+   "actionability": "ACTIONABLE",
+   "coverage": 1.0,
+   "input_coverage": 1.0,
+   "confidence": "HIGH",
+   "gates": [],
+   "missing": [],
+   "partial": [],
+   "stale": [],
+   "data_date": "2026-11-04"
+  },
+  "figures_missing": {
+   "score": 72.39,
+   "band": "BUY_CANDIDATE",
+   "band_label": "매수 후보",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.875,
+   "input_coverage": 0.875,
+   "confidence": "MEDIUM",
+   "gates": [],
+   "missing": [
+    "earnings_revenue_quality",
+    "profitability",
+    "balance_sheet",
+    "cash_flow_quality"
+   ],
+   "partial": [],
+   "stale": [],
+   "data_date": "2026-11-04"
+  },
+  "score_change": 9.05
+ },
+ "RAISE_d_arithmetic_bound": {
+  "counted_weight": 90,
+  "min_total_coverage": 0.7,
+  "note": "score_shown = score_true / coverage when every missing factor would have scored 0",
+  "true_49_shown": 70.0,
+  "true_56_shown": 70.0,
+  "true_63_shown": 70.0
+ },
+ "LOWER_e_good_valuation_gone": {
+  "with_figures": 87.42,
+  "figures_missing": 90.13,
+  "score_change": 2.71
+ }
+}

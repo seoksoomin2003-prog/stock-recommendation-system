@@ -1,0 +1,703 @@
+{
+ "S0_all_sources_answer": {
+  "SWING": {
+   "score": 72.13,
+   "band_label": "매수 후보",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.938,
+   "input_coverage": 0.9,
+   "confidence": "HIGH",
+   "gates": [],
+   "missing": [
+    "balance_sheet",
+    "cash_flow_quality"
+   ],
+   "partial": [
+    "earnings_revenue_quality",
+    "profitability"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_stale": null,
+   "valuation_status": null,
+   "valuation_raw": null,
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "regime_dates": {
+    "vix": "2026-11-04",
+    "vix_term": "2026-11-04",
+    "index": "2026-11-04",
+    "hy_spread": "2026-11-04",
+    "breadth": null
+   }
+  },
+  "LONG_TERM": {
+   "score": 67.87,
+   "band_label": "보유·관찰",
+   "action": "WATCH",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.722,
+   "input_coverage": 0.513,
+   "confidence": "LOW",
+   "gates": [],
+   "missing": [
+    "free_cash_flow",
+    "balance_dilution",
+    "financial_resilience",
+    "leverage",
+    "capital_allocation"
+   ],
+   "partial": [
+    "valuation",
+    "business_quality",
+    "growth_quality",
+    "insider_ownership"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_stale": null,
+   "valuation_status": "REAL",
+   "valuation_raw": {
+    "pe": 45.7798068689615,
+    "pb": 11.444951717240375,
+    "fcf_yield": null
+   },
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "regime_dates": {
+    "vix": "2026-11-04",
+    "vix_term": "2026-11-04",
+    "index": "2026-11-04",
+    "hy_spread": "2026-11-04",
+    "breadth": null
+   }
+  }
+ },
+ "S1_price_timeout_no_copy": {
+  "status": "UNAVAILABLE",
+  "reason": "가격 이력을 받지 못했습니다."
+ },
+ "S2_all_sources_down_2_days_later_copies_stand_in": {
+  "SWING": {
+   "score": 72.13,
+   "band_label": "매수 후보",
+   "action": "BLOCKED",
+   "actionability": "BLOCKED",
+   "coverage": 0.938,
+   "input_coverage": 0.9,
+   "confidence": "HIGH",
+   "gates": [
+    "STALE_PRICE"
+   ],
+   "missing": [
+    "balance_sheet",
+    "cash_flow_quality"
+   ],
+   "partial": [
+    "earnings_revenue_quality",
+    "profitability"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_stale": [
+    {
+     "what": "SEC 재무제표",
+     "fetched_at": "2026-11-20T11:10:22.302073+00:00",
+     "age_days": 2.0,
+     "error": "TimeoutError"
+    },
+    {
+     "what": "SEC 공시 목록",
+     "fetched_at": "2026-11-20T11:10:22.302303+00:00",
+     "age_days": 2.0,
+     "error": "TimeoutError"
+    }
+   ],
+   "valuation_status": null,
+   "valuation_raw": null,
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "regime_dates": {
+    "vix": "2026-11-04",
+    "vix_term": "2026-11-04",
+    "index": "2026-11-04",
+    "hy_spread": "2026-11-04",
+    "breadth": null
+   }
+  },
+  "LONG_TERM": {
+   "score": 67.87,
+   "band_label": "보유·관찰",
+   "action": "WATCH",
+   "actionability": "BLOCKED",
+   "coverage": 0.722,
+   "input_coverage": 0.513,
+   "confidence": "LOW",
+   "gates": [
+    "STALE_PRICE"
+   ],
+   "missing": [
+    "free_cash_flow",
+    "balance_dilution",
+    "financial_resilience",
+    "leverage",
+    "capital_allocation"
+   ],
+   "partial": [
+    "valuation",
+    "business_quality",
+    "growth_quality",
+    "insider_ownership"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_stale": [
+    {
+     "what": "SEC 재무제표",
+     "fetched_at": "2026-11-20T11:10:22.302073+00:00",
+     "age_days": 2.0,
+     "error": "TimeoutError"
+    },
+    {
+     "what": "SEC 공시 목록",
+     "fetched_at": "2026-11-20T11:10:22.302303+00:00",
+     "age_days": 2.0,
+     "error": "TimeoutError"
+    }
+   ],
+   "valuation_status": "REAL",
+   "valuation_raw": {
+    "pe": 45.7798068689615,
+    "pb": 11.444951717240375,
+    "fcf_yield": null
+   },
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "regime_dates": {
+    "vix": "2026-11-04",
+    "vix_term": "2026-11-04",
+    "index": "2026-11-04",
+    "hy_spread": "2026-11-04",
+    "breadth": null
+   }
+  }
+ },
+ "S3_statements_timeout_no_copy": {
+  "SWING": {
+   "score": 70.14,
+   "band_label": "매수 후보",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.875,
+   "input_coverage": 0.875,
+   "confidence": "MEDIUM",
+   "gates": [],
+   "missing": [
+    "earnings_revenue_quality",
+    "profitability",
+    "balance_sheet",
+    "cash_flow_quality"
+   ],
+   "partial": [],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_stale": null,
+   "valuation_status": null,
+   "valuation_raw": null,
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "regime_dates": {
+    "vix": "2026-11-04",
+    "vix_term": "2026-11-04",
+    "index": "2026-11-04",
+    "hy_spread": "2026-11-04",
+    "breadth": null
+   }
+  },
+  "LONG_TERM": {
+   "score": 78.2,
+   "band_label": "판단 불가(자료 부족)",
+   "action": "INSUFFICIENT_DATA",
+   "actionability": "INSUFFICIENT_DATA",
+   "coverage": 0.3,
+   "input_coverage": 0.289,
+   "confidence": "INSUFFICIENT",
+   "gates": [],
+   "missing": [
+    "valuation",
+    "business_quality",
+    "growth_quality",
+    "free_cash_flow",
+    "balance_dilution",
+    "financial_resilience",
+    "leverage",
+    "capital_allocation"
+   ],
+   "partial": [
+    "insider_ownership"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_stale": null,
+   "valuation_status": "MISSING",
+   "valuation_raw": null,
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "regime_dates": {
+    "vix": "2026-11-04",
+    "vix_term": "2026-11-04",
+    "index": "2026-11-04",
+    "hy_spread": "2026-11-04",
+    "breadth": null
+   }
+  }
+ },
+ "S4_statements_timeout_30_day_old_copy": {
+  "SWING": {
+   "score": 72.13,
+   "band_label": "매수 후보",
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.938,
+   "input_coverage": 0.9,
+   "confidence": "HIGH",
+   "gates": [],
+   "missing": [
+    "balance_sheet",
+    "cash_flow_quality"
+   ],
+   "partial": [
+    "earnings_revenue_quality",
+    "profitability"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_stale": [
+    {
+     "what": "SEC 재무제표",
+     "fetched_at": "2026-10-23T11:10:22.379044+00:00",
+     "age_days": 30.0,
+     "error": "TimeoutError"
+    }
+   ],
+   "valuation_status": null,
+   "valuation_raw": null,
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "regime_dates": {
+    "vix": "2026-11-04",
+    "vix_term": "2026-11-04",
+    "index": "2026-11-04",
+    "hy_spread": "2026-11-04",
+    "breadth": null
+   }
+  },
+  "LONG_TERM": {
+   "score": 67.87,
+   "band_label": "보유·관찰",
+   "action": "WATCH",
+   "actionability": "ACTIONABLE",
+   "coverage": 0.722,
+   "input_coverage": 0.513,
+   "confidence": "LOW",
+   "gates": [],
+   "missing": [
+    "free_cash_flow",
+    "balance_dilution",
+    "financial_resilience",
+    "leverage",
+    "capital_allocation"
+   ],
+   "partial": [
+    "valuation",
+    "business_quality",
+    "growth_quality",
+    "insider_ownership"
+   ],
+   "stale": [],
+   "data_date": "2026-11-04",
+   "provenance_stale": [
+    {
+     "what": "SEC 재무제표",
+     "fetched_at": "2026-10-23T11:10:22.379044+00:00",
+     "age_days": 30.0,
+     "error": "TimeoutError"
+    }
+   ],
+   "valuation_status": "REAL",
+   "valuation_raw": {
+    "pe": 45.7798068689615,
+    "pb": 11.444951717240375,
+    "fcf_yield": null
+   },
+   "market_state": {
+    "state": "FAVOURABLE",
+    "coverage": 1.0
+   },
+   "regime_dates": {
+    "vix": "2026-11-04",
+    "vix_term": "2026-11-04",
+    "index": "2026-11-04",
+    "hy_spread": "2026-11-04",
+    "breadth": null
+   }
+  }
+ },
+ "S5_company_record_30_days_old_request_fails": {
+  "score": 67.87,
+  "band_label": "보유·관찰",
+  "action": "WATCH",
+  "actionability": "ACTIONABLE",
+  "coverage": 0.722,
+  "input_coverage": 0.513,
+  "confidence": "LOW",
+  "gates": [],
+  "missing": [
+   "free_cash_flow",
+   "balance_dilution",
+   "financial_resilience",
+   "leverage",
+   "capital_allocation"
+  ],
+  "partial": [
+   "valuation",
+   "business_quality",
+   "growth_quality",
+   "insider_ownership"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04",
+  "provenance_stale": [
+   {
+    "what": "야후 종목 정보(주식 수·시가총액)",
+    "fetched_at": "2026-10-23T11:10:22.417690+00:00",
+    "age_days": 30.0,
+    "error": "TimeoutError"
+   }
+  ],
+  "valuation_status": "REAL",
+  "valuation_raw": {
+   "pe": 45.7798068689615,
+   "pb": 11.444951717240375,
+   "fcf_yield": null
+  },
+  "market_state": {
+   "state": "FAVOURABLE",
+   "coverage": 1.0
+  },
+  "regime_dates": {
+   "vix": "2026-11-04",
+   "vix_term": "2026-11-04",
+   "index": "2026-11-04",
+   "hy_spread": "2026-11-04",
+   "breadth": null
+  }
+ },
+ "S5_company_record_400_days_old_request_fails": {
+  "score": 88.23,
+  "band_label": "판단 불가(자료 부족)",
+  "action": "INSUFFICIENT_DATA",
+  "actionability": "INSUFFICIENT_DATA",
+  "coverage": 0.556,
+  "input_coverage": 0.402,
+  "confidence": "INSUFFICIENT",
+  "gates": [],
+  "missing": [
+   "valuation",
+   "free_cash_flow",
+   "balance_dilution",
+   "financial_resilience",
+   "leverage",
+   "capital_allocation"
+  ],
+  "partial": [
+   "business_quality",
+   "growth_quality",
+   "insider_ownership"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04",
+  "provenance_stale": [
+   {
+    "what": "야후 종목 정보(주식 수·시가총액)",
+    "fetched_at": "2025-10-18T11:10:22.456382+00:00",
+    "age_days": 400.0,
+    "error": "TimeoutError"
+   }
+  ],
+  "valuation_status": "MISSING",
+  "valuation_raw": null,
+  "market_state": {
+   "state": "FAVOURABLE",
+   "coverage": 1.0
+  },
+  "regime_dates": {
+   "vix": "2026-11-04",
+   "vix_term": "2026-11-04",
+   "index": "2026-11-04",
+   "hy_spread": "2026-11-04",
+   "breadth": null
+  }
+ },
+ "S6_share_count_on_another_price_basis": {
+  "score": 88.23,
+  "band_label": "판단 불가(자료 부족)",
+  "action": "INSUFFICIENT_DATA",
+  "actionability": "INSUFFICIENT_DATA",
+  "coverage": 0.556,
+  "input_coverage": 0.402,
+  "confidence": "INSUFFICIENT",
+  "gates": [],
+  "missing": [
+   "valuation",
+   "free_cash_flow",
+   "balance_dilution",
+   "financial_resilience",
+   "leverage",
+   "capital_allocation"
+  ],
+  "partial": [
+   "business_quality",
+   "growth_quality",
+   "insider_ownership"
+  ],
+  "stale": [],
+  "data_date": "2026-11-04",
+  "provenance_stale": null,
+  "valuation_status": "MISSING",
+  "valuation_raw": null,
+  "market_state": {
+   "state": "FAVOURABLE",
+   "coverage": 1.0
+  },
+  "regime_dates": {
+   "vix": "2026-11-04",
+   "vix_term": "2026-11-04",
+   "index": "2026-11-04",
+   "hy_spread": "2026-11-04",
+   "breadth": null
+  }
+ },
+ "S7_scan_2_of_25_without_bars": {
+  "status": "REAL",
+  "reason": null,
+  "tickers": 25,
+  "asked": null,
+  "at_session": null,
+  "scored": 46,
+  "errors": {
+   "T0": "NO_PRICE",
+   "T1": "NO_PRICE"
+  },
+  "no_bars": null,
+  "ledger": {
+   "recorded": 46,
+   "already": 0,
+   "file": "2026-11-04_US_000001.jsonl.gz"
+  },
+  "fundamentals": {
+   "stocks": 23,
+   "with_statements": 23,
+   "share": 1.0
+  },
+  "download": null
+ },
+ "S7_scan_4_of_25_without_bars": {
+  "status": "DATA_NOT_READY",
+  "reason": "NOT_PUBLISHED",
+  "tickers": 25,
+  "asked": 25,
+  "at_session": 21,
+  "scored": null,
+  "errors": {},
+  "no_bars": 4,
+  "ledger": null,
+  "fundamentals": null,
+  "download": {
+   "chunks": 1,
+   "failed": 0,
+   "kinds": {}
+  }
+ },
+ "S7b_scan_2_of_25_one_session_behind": {
+  "status": "REAL",
+  "scored": 50,
+  "late_rows": [
+   {
+    "ticker": "T0",
+    "strategy": "SWING",
+    "score": 77.90576512147108,
+    "action": "BLOCKED",
+    "actionability": "BLOCKED",
+    "gates": [
+     "STALE_PRICE"
+    ],
+    "data_date": "2026-11-03"
+   },
+   {
+    "ticker": "T1",
+    "strategy": "SWING",
+    "score": 77.90576512147108,
+    "action": "BLOCKED",
+    "actionability": "BLOCKED",
+    "gates": [
+     "STALE_PRICE"
+    ],
+    "data_date": "2026-11-03"
+   },
+   {
+    "ticker": "T0",
+    "strategy": "LONG_TERM",
+    "score": 69.86420572159456,
+    "action": "WATCH",
+    "actionability": "BLOCKED",
+    "gates": [
+     "STALE_PRICE"
+    ],
+    "data_date": "2026-11-03"
+   },
+   {
+    "ticker": "T1",
+    "strategy": "LONG_TERM",
+    "score": 69.86420572159456,
+    "action": "WATCH",
+    "actionability": "BLOCKED",
+    "gates": [
+     "STALE_PRICE"
+    ],
+    "data_date": "2026-11-03"
+   }
+  ]
+ },
+ "S8_whole_scan_statements_down": {
+  "status": "DATA_NOT_READY",
+  "reason": "FUNDAMENTALS_NOT_READY",
+  "tickers": 25,
+  "fundamentals": {
+   "stocks": 25,
+   "with_statements": 0,
+   "share": 0.0
+  },
+  "ledger": null,
+  "ledger_rows": 0
+ },
+ "S8b_named_scan_statements_down": {
+  "status": "REAL",
+  "reason": null,
+  "tickers": 25,
+  "fundamentals": {
+   "stocks": 25,
+   "with_statements": 0,
+   "share": 0.0
+  },
+  "ledger": {
+   "recorded": 50,
+   "already": 0,
+   "file": "2026-11-04_US_000001.jsonl.gz"
+  },
+  "ledger_rows": 1
+ },
+ "S8c_whole_scan_statements_down_400_day_copies": {
+  "status": "REAL",
+  "reason": null,
+  "fundamentals": {
+   "stocks": 25,
+   "with_statements": 25,
+   "share": 1.0
+  },
+  "stale_inputs": {
+   "stocks": 25,
+   "oldest_days": 400.0,
+   "tickers": [
+    "T0",
+    "T1",
+    "T10",
+    "T11",
+    "T12",
+    "T13",
+    "T14",
+    "T15",
+    "T16",
+    "T17",
+    "T18",
+    "T19",
+    "T2",
+    "T20",
+    "T21",
+    "T22",
+    "T23",
+    "T24",
+    "T3",
+    "T4"
+   ]
+  },
+  "ledger": {
+   "recorded": 50,
+   "already": 0,
+   "file": "2026-11-04_US_000001.jsonl.gz"
+  },
+  "first_row": {
+   "ticker": "T0",
+   "strategy": "SWING",
+   "score": 77.90576512147108,
+   "action": "BUY",
+   "actionability": "ACTIONABLE",
+   "confidence": "HIGH"
+  }
+ },
+ "S9_source_filter": {
+  "rows_in": 7,
+  "rows_out": 4,
+  "dates_out": [
+   "2026-10-28",
+   "2026-10-30",
+   "2026-11-03",
+   "2026-11-04"
+  ],
+  "closes_out": [
+   10.0,
+   10.2,
+   10.4,
+   10.5
+  ],
+  "note": "NaN, zero and negative closes are dropped without a mark; a doubled date passes"
+ },
+ "S10_earnings_calendar_timeout": {
+  "SWING": {
+   "score": 72.13,
+   "coverage": 0.938,
+   "confidence": "HIGH",
+   "missing": [
+    "balance_sheet",
+    "cash_flow_quality"
+   ]
+  },
+  "LONG_TERM": {
+   "score": 67.87,
+   "coverage": 0.722,
+   "confidence": "LOW",
+   "missing": [
+    "free_cash_flow",
+    "balance_dilution",
+    "financial_resilience",
+    "leverage",
+    "capital_allocation"
+   ]
+  }
+ }
+}

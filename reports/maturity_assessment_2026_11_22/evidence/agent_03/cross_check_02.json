@@ -1,0 +1,134 @@
+{
+ "US": {
+  "n": 503,
+  "financial_by_rule": 53,
+  "non_financial": 450,
+  "gross_margin_missing": {
+   "of_scored_business_quality": [
+    313,
+    500,
+    0.626
+   ],
+   "of_non_financial": [
+    260,
+    450,
+    0.578
+   ]
+  },
+  "roe_opmargin_grossmargin_all_present": [
+   159,
+   500
+  ],
+  "interest_cover_missing": {
+   "of_non_financial_with_factor": [
+    145,
+    447,
+    0.324
+   ],
+   "if_financials_counted_as_missing_of_all": 0.394
+  },
+  "resilience_all_three_inputs": [
+   287,
+   447
+  ],
+  "buy_band": 79,
+  "buy_band_scored_as_financial_rule": 16,
+  "sector_label_financials": {
+   "n": 71,
+   "mean_minus_all": 5.286,
+   "share_universe": 0.141,
+   "share_top_quintile": 0.29,
+   "share_buy_band": 0.304
+  }
+ },
+ "PHM": {
+  "score": 76.0,
+  "leverage": {
+   "norm": 1.0,
+   "raw": {
+    "debt_equity": 0.003380708950838947
+   }
+  },
+  "balance_dilution": {
+   "norm": 1.0,
+   "raw": {
+    "debt_equity": 0.003380708950838947,
+    "share_change": -0.04904946408742361
+   }
+  },
+  "financial_resilience": {
+   "norm": 1.0,
+   "raw": {
+    "cash_debt": 45.1223006833713,
+    "current_ratio": null,
+    "interest_cover": null
+   }
+  }
+ },
+ "CME": {
+  "score": 72.4,
+  "leverage": {
+   "norm": 1.0,
+   "raw": {
+    "debt_equity": 0.0
+   }
+  },
+  "balance_dilution": {
+   "norm": 0.9081931263381704,
+   "raw": {
+    "debt_equity": 0.0,
+    "share_change": 0.0010168248394195611
+   }
+  },
+  "financial_resilience": {
+   "norm": 0.5964927849419233,
+   "raw": {
+    "cash_debt": null,
+    "current_ratio": 1.031582683860616,
+    "interest_cover": 24.391580161476355
+   }
+  }
+ },
+ "KR": {
+  "n": 300,
+  "financial_by_rule": 28,
+  "non_financial": 272,
+  "gross_margin_missing": {
+   "of_scored_business_quality": [
+    300,
+    300,
+    1.0
+   ],
+   "of_non_financial": [
+    272,
+    272,
+    1.0
+   ]
+  },
+  "roe_opmargin_grossmargin_all_present": [
+   0,
+   300
+  ],
+  "interest_cover_missing": {
+   "of_non_financial_with_factor": [
+    272,
+    272,
+    1.0
+   ],
+   "if_financials_counted_as_missing_of_all": 1.0
+  },
+  "resilience_all_three_inputs": [
+   0,
+   272
+  ],
+  "buy_band": 36,
+  "buy_band_scored_as_financial_rule": 8,
+  "sector_label_financials": {
+   "n": 27,
+   "mean_minus_all": 11.63,
+   "share_universe": 0.091,
+   "share_top_quintile": 0.2,
+   "share_buy_band": 0.222
+  }
+ }
+}

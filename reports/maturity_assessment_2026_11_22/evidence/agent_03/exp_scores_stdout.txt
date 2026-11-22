@@ -1,0 +1,75 @@
+~/Developer/quant-stock-engine/reports/maturity_assessment_2026_11_22/evidence/agent_03/exp_scores.py:60: RuntimeWarning: Mean of empty slice
+  inv[f] = {"domain": d, "weight_share": round(w / W, 3), "available": round(float(ok.mean()), 3), "mean": round(float(np.nanmean(col)), 3), "sd": round(float(np.nanstd(col)), 3),
+~/Developer/quant-stock-engine/.venv/lib/python3.14/site-packages/numpy/lib/_nanfunctions_impl.py:1997: RuntimeWarning: Degrees of freedom <= 0 for slice.
+  var = nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+~/Developer/quant-stock-engine/reports/maturity_assessment_2026_11_22/evidence/agent_03/exp_scores.py:61: RuntimeWarning: Mean of empty slice
+  "at_zero": round(float((col[ok] <= 0.0001).mean()), 3), "at_one": round(float((col[ok] >= 0.9999).mean()), 3), "rho_with_score": round(spearman(col, score), 3)}
+~/Developer/quant-stock-engine/.venv/lib/python3.14/site-packages/numpy/_core/_methods.py:142: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+~/Developer/quant-stock-engine/reports/maturity_assessment_2026_11_22/evidence/agent_03/exp_scores.py:121: RuntimeWarning: All-NaN slice encountered
+  med = {f: float(np.nanmedian(M[:, j])) for j, f in enumerate(fids)}
+sessions: {'US': (13, '2026-11-04', '2026-11-20'), 'KR': (13, '2026-11-04', '2026-11-20')}
+
+===== US_SWING 2026-11-20 n 503 QSF-1.4.1 US_SWING_V2 | factors 16 ref 4
+ domain weight: {'TECHNICAL': 0.5, 'FUNDAMENTAL': 0.125, 'RISK': 0.25, 'EVENTS': 0.125} | largest: {'trend_structure': 0.125, 'relative_strength': 0.125, 'breakout_volume': 0.125, 'risk_reward': 0.075}
+ effective factors: 9.03 eig top3: [0.25, 0.111, 0.081] | pairs>=0.5: [('trend_structure', 'relative_strength', np.float64(0.8)), ('trend_structure', 'breakout_volume', np.float64(0.78)), ('atr_risk', 'drawdown_gap', np.float64(0.77)), ('relative_strength', 'breakout_volume', np.float64(0.69)), ('breakout_volume', 'atr_risk', np.float64(0.67)), ('breakout_volume', 'drawdown_gap', np.float64(0.65))]
+ variance share top: {'trend_structure': 0.311, 'relative_strength': 0.277, 'breakout_volume': 0.162, 'atr_risk': 0.104, 'drawdown_gap': 0.076, 'momentum': 0.055} | by domain: {'TECHNICAL': 0.858, 'FUNDAMENTAL': -0.0, 'RISK': 0.149, 'EVENTS': -0.007} complete rows 432
+ score q[5,25,50,75,95,max]: [33.1, 41.3, 50.7, 60.4, 68.6, 76.4] | buy 13 near70±1 13 ±2 28 near55±1 28
+ ablation (most changing): {'trend_structure': (0.972, 15, [13, 2]), 'relative_strength': (0.972, 16, [13, 4]), 'momentum': (0.991, 15, [13, 24]), 'volatility_structure': (0.993, 14, [13, 27]), 'atr_risk': (0.993, 19, [13, 8])}
+ ablation by domain: {'TECHNICAL': {'rho': 0.467, 'top20_kept': 6, 'buy_after': 12}, 'FUNDAMENTAL': {'rho': 0.985, 'top20_kept': 14, 'buy_after': 15}, 'RISK': {'rho': 0.975, 'top20_kept': 12, 'buy_after': 43}, 'EVENTS': {'rho': 0.99, 'top20_kept': 16, 'buy_after': 20}}
+ weights ±20%: {'rho_p5_median': [0.998, 0.999], 'top20_kept_p5_median': [17, 18], 'buy_band_kept_p5_median': [0.54, 0.92]} | ±50%: {'rho_p5_median': [0.982, 0.992], 'top20_kept_p5_median': [14, 16], 'buy_band_kept_p5_median': [0.15, 0.77]}
+ rank-normalised: rho 0.987 top20 kept 16
+ missing: {'stocks_with_missing': 19, 'stocks_with_not_applicable': 53, 'rho_missing_count_vs_score': -0.007, 'mean_score_by_gaps': {'0': 50.9, '1': 52.0}, 'truly_missing_only': {'n': 19}, 'if_gaps_were_median': {'n': 71, 'mean_change': 0.64, 'p5_p95': [-0.0, 3.6], 'buy_now': 5, 'buy_if_median': 5}, 'if_gaps_were_neutral_0.5': {'mean_change': 0.13, 'buy_if_neutral': 5}, 'if_worst_factor_went_missing': {'median_gain': 4.34, 'p95_gain': 5.7, 'max_gain': 7.48, 'new_buy_band': 45}}
+ coverage: {'min': 0.562, 'p5': 1.0, 'confidence': {'HIGH': 498, 'MEDIUM': 2, 'INSUFFICIENT': 3}, 'buy_band_min_coverage': 0.95, 'buy_band_confidence': {'HIGH': 13}}
+ actions: {'WATCH': 177, 'AVOID': 310, 'BUY': 13, 'INSUFFICIENT_DATA': 3} {'BLOCKED': 10, 'ACTIONABLE': 490, 'INSUFFICIENT_DATA': 3} | entry in buy band: {'WAIT_FOR_PULLBACK': 12, 'ENTRY_NOW': 1} | gates: {'EARNINGS_IMMINENT': 8, 'SEVERE_EVENT': 2, 'SHORT_HISTORY': 3}
+ sector eta²: 0.186 | rho(score, cap): 0.088 | sectors: {'헬스케어': (60, 8.0, 0.119, 0.28), '필수소비재': (31, 6.3, 0.062, 0.11), '유틸리티': (31, 3.7, 0.062, 0.07), '금융': (71, 3.5, 0.141, 0.22), '부동산': (30, 0.1, 0.06, 0.07), '산업재': (76, -1.4, 0.151, 0.11), '경기소비재': (54, -1.5, 0.107, 0.04), '소재': (19, -2.7, 0.038, 0.01), '에너지': (21, -3.9, 0.042, 0.0), '커뮤니케이션': (22, -5.6, 0.044, 0.01), '기술': (87, -6.8, 0.173, 0.08)}
+ day-to-day same version: n 6 rho median 0.985 top20 kept median 16 buy kept/before: [(18, 25), (18, 22), (20, 28), (13, 22)] | version changes: 6
+ inventory saturation (at_zero>=0.4 or at_one>=0.4 or available<0.8): {'risk_reward': (1.0, 0.678, 0.008), 'liquidity': (1.0, 0.0, 0.433), 'earnings_calendar': (0.978, 0.016, 0.929), 'insider_activity': (1.0, 0.541, 0.072)}
+
+===== US_LONG_TERM 2026-11-20 n 503 QSF-1.4.1 US_LONG_TERM_V2 | factors 16 ref 4
+ domain weight: {'TECHNICAL': 0.111, 'FUNDAMENTAL': 0.556, 'RISK': 0.222, 'EVENTS': 0.111} | largest: {'valuation': 0.167, 'business_quality': 0.167, 'growth_quality': 0.089, 'free_cash_flow': 0.078}
+ effective factors: 9.83 eig top3: [0.174, 0.163, 0.117] | pairs>=0.5: [('long_trend', 'momentum_persistence', np.float64(0.78)), ('balance_dilution', 'leverage', np.float64(0.78)), ('long_trend', 'relative_strength', np.float64(0.69)), ('balance_dilution', 'financial_resilience', np.float64(0.59)), ('financial_resilience', 'leverage', np.float64(0.58)), ('business_quality', 'free_cash_flow', np.float64(0.54))]
+ variance share top: {'business_quality': 0.246, 'free_cash_flow': 0.145, 'valuation': 0.141, 'financial_resilience': 0.116, 'balance_dilution': 0.081, 'growth_quality': 0.078} | by domain: {'TECHNICAL': 0.077, 'FUNDAMENTAL': 0.691, 'RISK': 0.216, 'EVENTS': 0.018} complete rows 398
+ score q[5,25,50,75,95,max]: [44.0, 55.6, 62.1, 67.1, 74.5, 82.8] | buy 79 near70±1 33 ±2 65 near55±1 29
+ ablation (most changing): {'valuation': (0.865, 9, [79, 148]), 'business_quality': (0.911, 13, [79, 52]), 'growth_quality': (0.953, 14, [79, 108]), 'financial_resilience': (0.954, 13, [79, 94]), 'downside_drawdown': (0.976, 15, [79, 83])}
+ ablation by domain: {'TECHNICAL': {'rho': 0.943, 'top20_kept': 14, 'buy_after': 98}, 'FUNDAMENTAL': {'rho': 0.638, 'top20_kept': 6, 'buy_after': 77}, 'RISK': {'rho': 0.903, 'top20_kept': 8, 'buy_after': 84}, 'EVENTS': {'rho': 0.994, 'top20_kept': 18, 'buy_after': 92}}
+ weights ±20%: {'rho_p5_median': [0.99, 0.995], 'top20_kept_p5_median': [17, 18], 'buy_band_kept_p5_median': [0.84, 0.95]} | ±50%: {'rho_p5_median': [0.941, 0.972], 'top20_kept_p5_median': [13, 16], 'buy_band_kept_p5_median': [0.66, 0.87]}
+ rank-normalised: rho 0.97 top20 kept 15
+ missing: {'stocks_with_missing': 54, 'stocks_with_not_applicable': 53, 'rho_missing_count_vs_score': 0.115, 'mean_score_by_gaps': {'0': 60.4, '1': 61.7, '2': 65.2}, 'truly_missing_only': {'n': 54}, 'if_gaps_were_median': {'n': 105, 'mean_change': 0.78, 'p5_p95': [-0.0, 2.5], 'buy_now': 26, 'buy_if_median': 26}, 'if_gaps_were_neutral_0.5': {'mean_change': -0.61, 'buy_if_neutral': 22}, 'if_worst_factor_went_missing': {'median_gain': 4.76, 'p95_gain': 10.86, 'max_gain': 22.9, 'new_buy_band': 113}}
+ coverage: {'min': 0.167, 'p5': 0.922, 'confidence': {'HIGH': 496, 'INSUFFICIENT': 5, 'MEDIUM': 2}, 'buy_band_min_coverage': 0.167, 'buy_band_confidence': {'HIGH': 78, 'INSUFFICIENT': 1}}
+ actions: {'WATCH': 302, 'BUY': 78, 'AVOID': 118, 'INSUFFICIENT_DATA': 5} {'ACTIONABLE': 496, 'INSUFFICIENT_DATA': 5, 'BLOCKED': 2} | entry in buy band: {'ENTRY_NOW': 70, 'OVERVALUED_AT_CURRENT_PRICE': 8, 'NO_VALID_ENTRY_SETUP': 1} | gates: {'SEVERE_EVENT': 2, 'SHORT_HISTORY': 3}
+ sector eta²: 0.179 | rho(score, cap): 0.177 | sectors: {'금융': (71, 5.3, 0.141, 0.29), '헬스케어': (60, 3.4, 0.119, 0.15), '기술': (87, 1.6, 0.173, 0.21), '에너지': (21, 1.5, 0.042, 0.02), '커뮤니케이션': (22, -0.4, 0.044, 0.07), '산업재': (76, -0.4, 0.151, 0.1), '필수소비재': (31, -1.9, 0.062, 0.05), '경기소비재': (54, -2.2, 0.107, 0.06), '소재': (19, -4.0, 0.038, 0.03), '부동산': (30, -5.5, 0.06, 0.01), '유틸리티': (31, -9.7, 0.062, 0.0)}
+ day-to-day same version: n 6 rho median 1.0 top20 kept median 20 buy kept/before: [(76, 76), (78, 79), (78, 79), (78, 79)] | version changes: 6
+ inventory saturation (at_zero>=0.4 or at_one>=0.4 or available<0.8): {'liquidity': (1.0, 0.0, 0.433)}
+
+===== KR_SWING 2026-11-20 n 300 QSF-1.4.1 KR_SWING_V3 | factors 11 ref 10
+ domain weight: {'FUNDAMENTAL': 0.25, 'RISK': 0.5, 'EVENTS': 0.25} | largest: {'risk_reward': 0.15, 'atr_risk': 0.125, 'liquidity': 0.125, 'drawdown_gap': 0.1}
+ effective factors: 8.15 eig top3: [0.203, 0.179, 0.102] | pairs>=0.5: [('atr_risk', 'drawdown_gap', np.float64(0.82))]
+ variance share top: None | by domain: None complete rows 0
+ score q[5,25,50,75,95,max]: [31.0, 39.9, 46.6, 52.2, 59.3, 67.9] | buy 0 near70±1 0 ±2 0 near55±1 16
+ ablation (most changing): {'risk_reward': (0.899, 8, [0, 8]), 'liquidity': (0.901, 9, [0, 0]), 'atr_risk': (0.934, 13, [0, 6]), 'balance_sheet': (0.941, 16, [0, 2]), 'earnings_revenue_quality': (0.963, 16, [0, 0])}
+ ablation by domain: {'FUNDAMENTAL': {'rho': 0.719, 'top20_kept': 15, 'buy_after': 1}, 'RISK': {'rho': 0.737, 'top20_kept': 0, 'buy_after': 122}, 'EVENTS': {'rho': 0.984, 'top20_kept': 17, 'buy_after': 0}}
+ weights ±20%: {'rho_p5_median': [0.989, 0.995], 'top20_kept_p5_median': [16, 18], 'buy_band_kept_p5_median': None} | ±50%: {'rho_p5_median': [0.934, 0.972], 'top20_kept_p5_median': [12, 15], 'buy_band_kept_p5_median': None}
+ rank-normalised: rho 0.92 top20 kept 12
+ missing: {'stocks_with_missing': 300, 'stocks_with_not_applicable': 28, 'rho_missing_count_vs_score': 0.107, 'mean_score_by_gaps': {'1': 45.6, '2': 48.5, '3': 46.5}, 'truly_missing_only': {'n': 300}, 'if_gaps_were_median': {'n': 300, 'mean_change': nan, 'p5_p95': [nan, nan], 'buy_now': 0, 'buy_if_median': 0}, 'if_gaps_were_neutral_0.5': {'mean_change': 0.33, 'buy_if_neutral': 0}, 'if_worst_factor_went_missing': {'median_gain': 7.95, 'p95_gain': 11.08, 'max_gain': 12.56, 'new_buy_band': 14}}
+ coverage: {'min': 0.8, 'p5': 0.921, 'confidence': {'HIGH': 288, 'MEDIUM': 12}, 'buy_band_min_coverage': None, 'buy_band_confidence': {}}
+ actions: {'AVOID': 256, 'WATCH': 44} {'ACTIONABLE': 291, 'BLOCKED': 9} | entry in buy band: {} | gates: {'SEVERE_EVENT': 7, 'SHORT_HISTORY': 1, 'LOW_LIQUIDITY': 3, 'EARNINGS_IMMINENT': 1}
+ sector eta²: 0.112 | rho(score, cap): 0.342 | sectors: {'필수소비재': (18, 5.2, 0.06, 0.117), '금융': (27, 5.0, 0.09, 0.167), '경기소비재': (20, 4.0, 0.067, 0.067), '커뮤니케이션': (13, 3.4, 0.043, 0.1), '기술': (44, -0.2, 0.147, 0.133), '헬스케어': (34, -0.3, 0.113, 0.117), '지주회사': (26, -1.2, 0.087, 0.05), '산업재': (88, -2.0, 0.293, 0.217), '소재': (26, -4.4, 0.087, 0.033)}
+ day-to-day same version: n 6 rho median 0.964 top20 kept median 16 buy kept/before: [(0, 0), (0, 0), (0, 0), (0, 0)] | version changes: 6
+ inventory saturation (at_zero>=0.4 or at_one>=0.4 or available<0.8): {'risk_reward': (1.0, 0.6, 0.027), 'atr_risk': (1.0, 0.467, 0.0), 'earnings_calendar': (0.993, 0.003, 0.997), 'insider_activity': (0.0, nan, nan)}
+
+===== KR_LONG_TERM 2026-11-20 n 300 QSF-1.4.1 KR_LONG_TERM_V2 | factors 16 ref 5
+ domain weight: {'TECHNICAL': 0.111, 'FUNDAMENTAL': 0.556, 'RISK': 0.222, 'EVENTS': 0.111} | largest: {'valuation': 0.167, 'business_quality': 0.167, 'growth_quality': 0.089, 'free_cash_flow': 0.078}
+ effective factors: 8.65 eig top3: [0.214, 0.146, 0.131] | pairs>=0.5: [('balance_dilution', 'leverage', np.float64(1.0)), ('long_trend', 'momentum_persistence', np.float64(0.8)), ('financial_resilience', 'leverage', np.float64(0.8)), ('balance_dilution', 'financial_resilience', np.float64(0.79)), ('relative_strength', 'downside_drawdown', np.float64(0.66)), ('business_quality', 'free_cash_flow', np.float64(0.62)), ('valuation', 'downside_drawdown', np.float64(0.54)), ('business_quality', 'growth_quality', np.float64(0.51))]
+ variance share top: {'business_quality': 0.223, 'valuation': 0.187, 'free_cash_flow': 0.131, 'financial_resilience': 0.119, 'balance_dilution': 0.097, 'growth_quality': 0.085} | by domain: {'TECHNICAL': 0.05, 'FUNDAMENTAL': 0.723, 'RISK': 0.209, 'EVENTS': 0.022} complete rows 179
+ score q[5,25,50,75,95,max]: [27.2, 43.4, 54.5, 64.3, 74.5, 83.5] | buy 36 near70±1 13 ±2 30 near55±1 19
+ ablation (most changing): {'valuation': (0.91, 11, [36, 36]), 'business_quality': (0.973, 14, [36, 40]), 'growth_quality': (0.98, 17, [36, 43]), 'financial_resilience': (0.983, 15, [36, 37]), 'balance_dilution': (0.99, 16, [36, 29])}
+ ablation by domain: {'TECHNICAL': {'rho': 0.979, 'top20_kept': 17, 'buy_after': 52}, 'FUNDAMENTAL': {'rho': 0.648, 'top20_kept': 7, 'buy_after': 29}, 'RISK': {'rho': 0.964, 'top20_kept': 15, 'buy_after': 56}, 'EVENTS': {'rho': 0.997, 'top20_kept': 19, 'buy_after': 29}}
+ weights ±20%: {'rho_p5_median': [0.995, 0.998], 'top20_kept_p5_median': [18, 19], 'buy_band_kept_p5_median': [0.81, 0.94]} | ±50%: {'rho_p5_median': [0.971, 0.988], 'top20_kept_p5_median': [15, 17], 'buy_band_kept_p5_median': [0.67, 0.86]}
+ rank-normalised: rho 0.992 top20 kept 15
+ missing: {'stocks_with_missing': 121, 'stocks_with_not_applicable': 28, 'rho_missing_count_vs_score': 0.0, 'mean_score_by_gaps': {'0': 54.3, '1': 49.0, '2': 46.6, '3': 63.0}, 'truly_missing_only': {'n': 121}, 'if_gaps_were_median': {'n': 121, 'mean_change': 0.54, 'p5_p95': [-2.5, 3.0], 'buy_now': 15, 'buy_if_median': 11}, 'if_gaps_were_neutral_0.5': {'mean_change': -0.29, 'buy_if_neutral': 10}, 'if_worst_factor_went_missing': {'median_gain': 4.22, 'p95_gain': 8.6, 'max_gain': 12.7, 'new_buy_band': 35}}
+ coverage: {'min': 0.789, 'p5': 0.899, 'confidence': {'HIGH': 262, 'MEDIUM': 37, 'LOW': 1}, 'buy_band_min_coverage': 0.889, 'buy_band_confidence': {'HIGH': 26, 'MEDIUM': 10}}
+ actions: {'WATCH': 110, 'BUY': 35, 'AVOID': 154, 'BLOCKED': 1} {'ACTIONABLE': 292, 'BLOCKED': 8} | entry in buy band: {'ENTRY_NOW': 35, 'NO_VALID_ENTRY_SETUP': 1} | gates: {'SEVERE_EVENT': 7, 'SHORT_HISTORY': 1, 'LOW_LIQUIDITY': 3}
+ sector eta²: 0.136 | rho(score, cap): 0.124 | sectors: {'금융': (27, 11.8, 0.09, 0.2), '필수소비재': (18, 7.2, 0.06, 0.1), '커뮤니케이션': (13, 6.6, 0.043, 0.067), '경기소비재': (20, 2.8, 0.067, 0.05), '지주회사': (26, 1.9, 0.087, 0.117), '기술': (44, 0.4, 0.147, 0.15), '산업재': (88, -2.9, 0.293, 0.167), '헬스케어': (34, -4.8, 0.113, 0.117), '소재': (26, -7.3, 0.087, 0.033)}
+ day-to-day same version: n 6 rho median 1.0 top20 kept median 20 buy kept/before: [(36, 38), (36, 36), (36, 37), (36, 36)] | version changes: 6
+ inventory saturation (at_zero>=0.4 or at_one>=0.4 or available<0.8): {'downside_drawdown': (1.0, 0.477, 0.0), 'insider_ownership': (0.907, 0.0, 0.941), 'capital_allocation': (0.77, 0.0, 0.957)}

@@ -1,0 +1,18 @@
+{
+ "sampled_days": 10,
+ "engine_check": {
+  "days": 10,
+  "filled": 10,
+  "moved": 0
+ },
+ "stocks_scored_on_first_day": 12,
+ "inputs_the_audit_gives_the_engine": {
+  "bars": "rows i0..i only (built before the engine is called)",
+  "events": "None",
+  "regime": "None",
+  "earnings": "None",
+  "fund": "None",
+  "rs_rank": "absent"
+ },
+ "reading": "The engine receives only rows up to day i, so wiping or multiplying later rows cannot reach it: the check passes by construction. It shows the engine keeps no hidden state between calls; it says nothing about statements (filing dates), events, the earnings calendar, the universe rank or the live service."
+}

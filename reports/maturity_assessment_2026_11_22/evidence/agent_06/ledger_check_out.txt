@@ -1,0 +1,44 @@
+verify: {'status': 'OK', 'shards': 30, 'voided': 3, 'bad_files': []}
+index rows 33 live 27
+('KR', '2026-11-04') [(590, 'QSF-1.1.1')]
+('US', '2026-11-04') [(1004, 'QSF-1.1.1')]
+('US', '2026-11-05') [(1004, 'QSF-1.1.2')]
+('KR', '2026-11-05') [(592, 'QSF-1.1.2')]
+('US', '2026-11-06') [(1006, 'QSF-1.1.3')]
+('KR', '2026-11-06') [(592, 'QSF-1.1.3')]
+('KR', '2026-11-09') [(590, 'QSF-1.1.8')]
+('US', '2026-11-09') [(1006, 'QSF-1.1.8')]
+('US', '2026-11-10') [(1006, 'QSF-1.1.8')]
+('KR', '2026-11-10') [(4, 'QSF-1.1.8'), (592, 'QSF-1.1.8')]
+('US', '2026-11-11') [(1008, 'QSF-1.3.1')]
+('KR', '2026-11-11') [(600, 'QSF-1.3.1')]
+('US', '2026-11-12') [(1008, 'QSF-1.3.2')]
+('KR', '2026-11-12') [(600, 'QSF-1.3.2')]
+('US', '2026-11-13') [(1008, 'QSF-1.3.2')]
+('KR', '2026-11-13') [(600, 'QSF-1.3.2')]
+('US', '2026-11-16') [(1008, 'QSF-1.4.1')]
+('KR', '2026-11-16') [(600, 'QSF-1.4.1')]
+('KR', '2026-11-17') [(600, 'QSF-1.4.1')]
+('US', '2026-11-17') [(1006, 'QSF-1.4.1')]
+('US', '2026-11-18') [(1008, 'QSF-1.4.1')]
+('KR', '2026-11-18') [(600, 'QSF-1.4.1')]
+('US', '2026-11-19') [(1006, 'QSF-1.4.1')]
+('KR', '2026-11-19') [(600, 'QSF-1.4.1')]
+('US', '2026-11-20') [(1008, 'QSF-1.4.1')]
+('KR', '2026-11-20') [(600, 'QSF-1.4.1')]
+== US 2026-11-20 snapshots 1008 keys ['action', 'actionability', 'band', 'benchmark', 'cik', 'confidence', 'coverage', 'data_date', 'domains', 'entry_session', 'entry_status', 'factors', 'gates', 'held', 'holding', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  factor contributions vs domain points: max abs diff 0.0 over 1008
+  sample fields: {'ticker': 'A', 'strategy': 'SWING', 'model_version': 'QSF-1.4.1', 'score': 67.60666830906558, 'coverage': 1.0, 'data_date': '2026-11-20', 'recorded_at': '2026-11-20T22:25:58.615104+00:00', 'entry_session': '2026-11-23', 'entry_status': 'NO_VALID_ENTRY_SETUP', 'benchmark': 'SPY'}
+  sample factor: {"as_of": "2026-11-20", "contribution": 8.333333333333334, "domain": "TECHNICAL", "factor": "trend_structure", "normalized": 0.8333333333333334, "raw": {"ma20": 175.61350021362304, "ma200": 138.9832498550415, "ma200_slope": 0.058221369613991936, "ma50": 171.0897998046875, "ma50_slope": 0.05996632487
+  domains: {"EVENTS": {"coverage": 1.0, "points": 3.3, "score_100": 33.0}, "FUNDAMENTAL": {"coverage": 1.0, "points": 8.573949041012053, "score_100": 85.73949041012052}, "REGIME": {"coverage": 1.0, "points": 0.0, "reference": true, "score_100": 15.405136768447838}, "RISK": {"coverage": 1.0, "points": 10.663887832387664, "score_100": 53.31943916193832}, "TECHNICAL": {"coverage": 1.0, "points": 31.547497773852
+  provenance: {"events": "SEC EDGAR submissions (8-K 항목 번호, NT 지연 공시)", "fund": "SEC EDGAR 10-K", "fund_filed": "2025-12-22", "price": "Yahoo Finance 일봉", "price_date": "2026-11-20", "regime": {"breadth": "2026-11-20", "hy_spread": "2026-11-19", "index": "2026-11-20", "vix": "2026-11-20", "vix_term": "2026-11-20"}}
+  max score by strategy: {'SWING': 76.4209355589696, 'LONG_TERM': 82.82793136479569} count >= 70: {'SWING': 13, 'LONG_TERM': 80}
+  recorded_at vs entry_session: {'recorded_date<=entry_session': 1008} entry_status: {'NO_VALID_ENTRY_SETUP': 444, 'OVERVALUED_AT_CURRENT_PRICE': 63, 'WAIT_FOR_PULLBACK': 174, 'ENTRY_NOW': 322, 'WAIT_FOR_EARNINGS': 4, 'WAIT_FOR_BREAKOUT_CONFIRMATION': 1}
+== KR 2026-11-20 snapshots 600 keys ['action', 'actionability', 'band', 'benchmark', 'confidence', 'coverage', 'data_date', 'domains', 'entry_session', 'entry_status', 'factors', 'gates', 'held', 'holding', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  factor contributions vs domain points: max abs diff 0.0 over 600
+  sample fields: {'ticker': '005930', 'strategy': 'SWING', 'model_version': 'QSF-1.4.1', 'score': 53.88246846872865, 'coverage': 0.925, 'data_date': '2026-11-20', 'recorded_at': '2026-11-20T22:41:33.508150+00:00', 'entry_session': '2026-11-23', 'entry_status': 'NO_VALID_ENTRY_SETUP', 'benchmark': '^KS11'}
+  sample factor: {"as_of": "2026-11-20", "contribution": null, "domain": "TECHNICAL", "factor": "trend_structure", "normalized": 0.16666666666666666, "raw": {"ma20": 208059.1885139689, "ma200": 241592.6701609221, "ma200_slope": 0.19469171622262293, "ma50": 234345.8422288139, "ma50_slope": -0.08011943119472964}, "rea
+  domains: {"EVENTS": {"coverage": 0.7, "points": 6.1, "score_100": 87.14285714285714}, "FUNDAMENTAL": {"coverage": 1.0, "points": 8.594281797080416, "score_100": 85.94281797080416}, "REGIME": {"coverage": 0.75, "points": 0.0, "reference": true, "score_100": 25.40154909695331}, "RISK": {"coverage": 1.0, "points": 5.242231536349183, "score_100": 26.211157681745913}, "TECHNICAL": {"coverage": 1.0, "points": 0.
+  provenance: {"events": "OpenDART 공시 목록 (보고서명 분류)", "fund": "OpenDART 사업보고서", "fund_filed": "2026-03-10", "price": "Yahoo Finance 일봉", "price_date": "2026-11-20", "regime": {"breadth": "2026-11-20", "index": "2026-11-19", "kosdaq": "2026-11-19", "kr_credit": "2026-11-20", "usdkrw": "2026-11-20", "vkospi": null}}
+  max score by strategy: {'SWING': 67.86914868156974, 'LONG_TERM': 83.49836032986491} count >= 70: {'SWING': 0, 'LONG_TERM': 36}
+  recorded_at vs entry_session: {'recorded_date<=entry_session': 600} entry_status: {'NO_VALID_ENTRY_SETUP': 414, 'ENTRY_NOW': 150, 'WAIT_FOR_PULLBACK': 25, 'OVERVALUED_AT_CURRENT_PRICE': 11}

@@ -1,0 +1,22 @@
+node:fs:484
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open 'fc_000660 KR.json'
+    at Object.readFileSync (node:fs:484:20)
+    at read (~/Developer/quant-stock-engine/reports/maturity_assessment_2026_11_22/evidence/agent_08/count_card.js:6:35)
+    at Object.<anonymous> (~/Developer/quant-stock-engine/reports/maturity_assessment_2026_11_22/evidence/agent_08/count_card.js:9:27)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'fc_000660 KR.json'
+}
+
+Node.js v24.20.0

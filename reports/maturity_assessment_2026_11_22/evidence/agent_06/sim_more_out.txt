@@ -1,0 +1,24 @@
+1. pooled reference of live_forward._pooled: (t_US + t_KR)/sqrt(2) >= 2.24, two independent null markets
+  swing: noise passes 2.24 in 5.50% (table says 1.25%); sd of null t 1.42
+  long: noise passes 2.24 in 5.71% (table says 1.25%); sd of null t 1.44
+2. family of the four primary verdicts, t condition only, independent nulls: P(any passes) = 1-(1-p)^4
+  swing: single pass 1.23%
+  long: single pass 1.34%
+3. bars of other designs as the code calls them
+  rank/turnover book: bar(2.0, 240, 1, 1, 20) -> 2.24
+  committee paper: bar(3.0, 240, 1, 1, 5) -> 3.15
+  fund period / score split swing: bar(3.0 / 2.0, 240, 20, 1, 20) -> 4.84
+  score split: bar(2.0, 240, 20, 1, 20) -> 2.91
+  kr_forward / us_challenger swing: bar(2.24, 48, 20, 5, 4) -> 3.26
+  us/kr challenger long: bar(2.24, 151, 63, 5, 13) -> 3.31
+  plain_bar(2.0, 12) -> 2.24
+4. already-recorded historical t values against the null of their own design (what nominal bars meant)
+  KR live replay LONG 252d: 77 monthly dates, lag 12, recorded t 8.20: null P(t>=2.24) 7.9%, null 98.75% quantile 4.16, 99.9% quantile 6.89, P(null t >= recorded) 0.045%
+  KR universe test LONG 252d: 77 monthly dates, lag 12, recorded t 2.46: null P(t>=2.24) 7.9%, null 98.75% quantile 4.16, 99.9% quantile 6.89, P(null t >= recorded) 6.390%
+  KR long early: 23 monthly dates, lag 12, recorded t 2.05: null P(t>=2.24) 20.2%, null 98.75% quantile 10.91, 99.9% quantile 24.37, P(null t >= recorded) 21.905%
+  KR all-stock signal 20d: 232 dates step 5, lag 4, recorded t 13.43: null P(t>=2.24) 3.1%, null 98.75% quantile 2.72, 99.9% quantile 3.75, P(null t >= recorded) 0.000%
+  KR all-stock signal 252d: 186 dates step 5, lag 51, recorded t 13.69: null P(t>=2.24) 11.5%, null 98.75% quantile 5.68, 99.9% quantile 11.37, P(null t >= recorded) 0.062%
+  US 1.2 SWING 20d: 153 monthly dates, lag 1 (no overlap), bar 2.24: null P(t>=2.24) 1.4%, null 98.75% quantile 2.28, 99.9% quantile 3.18, P(null t >= recorded) 1.402%
+5. committee paper reading: annual excess return needed, tracking error 10%/yr, bar 3.15
+  power 50%: annual excess 32%
+  power 80%: annual excess 41%

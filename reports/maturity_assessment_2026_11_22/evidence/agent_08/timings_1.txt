@@ -1,0 +1,44 @@
+Sun Nov 22 20:07:44 KST 2026
+/  run1  200  0.002501s  4721B
+/  run2  200  0.001540s  4721B
+/style.css  run1  200  0.001542s  26699B
+/style.css  run2  200  0.001472s  26699B
+/app.js  run1  200  0.001740s  54175B
+/app.js  run2  200  0.001615s  54175B
+/qsf.js  run1  200  0.001758s  105816B
+/qsf.js  run2  200  0.001489s  105816B
+/api/health  run1  200  0.002793s  189B
+/api/health  run2  200  0.002831s  189B
+/api/assistant/today?market=US  run1  200  0.629747s  4816B
+/api/assistant/today?market=US  run2  200  0.349631s  4816B
+/api/assistant/today?market=KR  run1  200  3.518465s  3427B
+/api/assistant/today?market=KR  run2  200  0.232005s  3427B
+/api/qsf/latest?market=US  run1  200  0.014916s  623076B
+/api/qsf/latest?market=US  run2  200  0.014417s  623076B
+/api/qsf/latest?market=KR  run1  200  0.011792s  359073B
+/api/qsf/latest?market=KR  run2  200  0.011256s  359073B
+/api/qsf/screen?market=US  run1  200  0.007718s  67626B
+/api/qsf/screen?market=US  run2  200  0.007417s  67626B
+/api/symbols?q=appl&market=US  run1  200  0.013673s  403B
+/api/symbols?q=appl&market=US  run2  200  0.014300s  403B
+/api/symbols?q=삼성&market=KR  run1  200  0.024390s  69B
+/api/symbols?q=삼성&market=KR  run2  200  0.013500s  69B
+/api/record  run1  200  0.562384s  8199B
+/api/record  run2  200  0.048618s  8199B
+/api/qsf/readings  run1  200  0.010837s  12071B
+/api/qsf/readings  run2  200  0.009944s  12071B
+/api/qsf/top3?market=US  run1  200  0.002146s  63267B
+/api/qsf/top3?market=US  run2  200  0.001701s  63267B
+/api/qsf/changes?market=US&strategy=SWING  run1  200  0.095149s  10787B
+/api/qsf/changes?market=US&strategy=SWING  run2  200  0.110568s  10787B
+/api/qsf/heatmap?market=US&strategy=SWING  run1  200  0.178688s  147490B
+/api/qsf/heatmap?market=US&strategy=SWING  run2  200  0.003596s  147490B
+/api/committee/dashboard?market=US  run1  200  0.645139s  7629B
+/api/committee/dashboard?market=US  run2  200  0.006977s  7629B
+/api/qsf/track-record?market=US  run1  200  0.002243s  7899B
+/api/qsf/track-record?market=US  run2  200  0.001862s  7899B
+evaluate AAPL US run1 200 1.200325s 57580B
+evaluate TECH US  000 0.000000s 0B
+evaluate 000660 KR  000 0.000000s 0B
+evaluate TECH US 200 0.072818s 58370B
+evaluate 000660 KR 200 0.305504s 59962B

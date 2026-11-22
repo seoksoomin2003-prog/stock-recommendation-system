@@ -1,0 +1,96 @@
+~/Developer/quant-stock-engine/.venv/lib/python3.14/site-packages/numpy/lib/_nanfunctions_impl.py:1213: RuntimeWarning: Mean of empty slice
+  return np.nanmean(a, axis, out=out, keepdims=keepdims)
+~/Developer/quant-stock-engine/.venv/lib/python3.14/site-packages/numpy/_core/fromnumeric.py:3862: RuntimeWarning: Mean of empty slice
+  return _methods._mean(a, axis=axis, dtype=dtype,
+~/Developer/quant-stock-engine/.venv/lib/python3.14/site-packages/numpy/_core/_methods.py:142: RuntimeWarning: invalid value encountered in scalar divide
+  ret = ret.dtype.type(ret / rcount)
+~/Developer/quant-stock-engine/reports/maturity_assessment_2026_11_22/evidence/agent_03/exp_ext2.py:108: RuntimeWarning: Mean of empty slice
+  "near_high_within_3pct": {"n": int(near.sum()), "rr_median": r3(np.nanmedian(rr[near])), "share_rr_ge_1.5": r3(np.nanmean(rr[near] >= 1.5)), "factor_mean": r3(np.nanmean(M[near, j]))},
+~/Developer/quant-stock-engine/reports/maturity_assessment_2026_11_22/evidence/agent_03/exp_ext2.py:109: RuntimeWarning: Mean of empty slice
+  "far_from_high_20pct": {"n": int(far.sum()), "rr_median": r3(np.nanmedian(rr[far])), "share_rr_ge_1.5": r3(np.nanmean(rr[far] >= 1.5)), "factor_mean": r3(np.nanmean(M[far, j]))},
+
+===== US_SWING 2026-11-20 n 503
+ lines per day:
+    {'session': '2026-11-04', 'version': 'QSF-1.1.1', 'n': 501, 'ge80': 0, 'ge70': 10, 'lt40': 28, 'max': 74.389, 'median': 56.551}
+    {'session': '2026-11-05', 'version': 'QSF-1.1.2', 'n': 501, 'ge80': 0, 'ge70': 0, 'lt40': 109, 'max': 66.799, 'median': 49.757}
+    {'session': '2026-11-06', 'version': 'QSF-1.1.3', 'n': 502, 'ge80': 0, 'ge70': 0, 'lt40': 101, 'max': 68.175, 'median': 50.388}
+    {'session': '2026-11-09', 'version': 'QSF-1.1.8', 'n': 502, 'ge80': 0, 'ge70': 8, 'lt40': 46, 'max': 71.49, 'median': 55.387}
+    {'session': '2026-11-10', 'version': 'QSF-1.1.8', 'n': 502, 'ge80': 0, 'ge70': 12, 'lt40': 42, 'max': 72.84, 'median': 55.865}
+    {'session': '2026-11-11', 'version': 'QSF-1.3.1', 'n': 503, 'ge80': 0, 'ge70': 21, 'lt40': 16, 'max': 74.049, 'median': 58.094}
+    {'session': '2026-11-12', 'version': 'QSF-1.3.2', 'n': 503, 'ge80': 0, 'ge70': 9, 'lt40': 15, 'max': 73.465, 'median': 56.613}
+    {'session': '2026-11-13', 'version': 'QSF-1.3.2', 'n': 503, 'ge80': 0, 'ge70': 15, 'lt40': 10, 'max': 73.628, 'median': 57.513}
+    {'session': '2026-11-16', 'version': 'QSF-1.4.1', 'n': 503, 'ge80': 0, 'ge70': 25, 'lt40': 68, 'max': 76.67, 'median': 55.75}
+    {'session': '2026-11-17', 'version': 'QSF-1.4.1', 'n': 502, 'ge80': 0, 'ge70': 22, 'lt40': 74, 'max': 75.82, 'median': 55.034}
+    {'session': '2026-11-18', 'version': 'QSF-1.4.1', 'n': 502, 'ge80': 0, 'ge70': 28, 'lt40': 81, 'max': 75.239, 'median': 54.721}
+    {'session': '2026-11-19', 'version': 'QSF-1.4.1', 'n': 502, 'ge80': 0, 'ge70': 22, 'lt40': 84, 'max': 74.199, 'median': 53.155}
+    {'session': '2026-11-20', 'version': 'QSF-1.4.1', 'n': 503, 'ge80': 0, 'ge70': 13, 'lt40': 102, 'max': 76.421, 'median': 50.731}
+  b_few_factors_reproduce {"1": {"factors": ["trend_structure"], "r2": 0.771, "rank_rho": 0.883}, "2": {"factors": ["trend_structure", "breakout_volume"], "r2": 0.865, "rank_rho": 0.931}, "3": {"factors": ["trend_structure", "breakout_volume", "relative_strength"], "r2": 0.893, "rank_rho": 0.948}, "5": {"factors": ["trend_structure", "breakout_volume", "relative_strength", "atr_risk", "drawdown_gap"], "r2": 0.923, "rank_rho": 0.964}}
+  c_near_constant {"factors": {"earnings_calendar": {"mode_value": 1.0, "mode_share": 0.929, "weight": 4.0, "points_of_100_at_mode": 5.0}, "material_disclosures": {"mode_value": 0.6, "mode_share": 0.95, "weight": 3.0, "points_of_100_at_mode": 2.25}}, "weight_share": 0.087, "all_missing": [], "mean_points_of_100_by_factor": {"trend_structure": 6.717, "relative_strength": 6.267, "momentum": 2.025, "breakout_volume": 4.9, "volatility_structure": 2.315, "earnings_revenue_quality": 2.362, "profitability": 1.747, "balance_sheet": 2.053, "cash_flow_quality": 2.063, "risk_reward": 0.625, "atr_risk": 3.711, "liquidity": 5.526, "drawdown_gap": 2.773, "earnings_calendar": 4.782, "material_disclosures": 2.2, "insider_activity": 0.977}, "max_points_of_100_by_factor": {"trend_structure": 12.5, "relative_strength": 12.5, "momentum": 6.25, "breakout_volume": 12.5, "volatility_structure": 6.25, "earnings_revenue_quality": 3.75, "profitability": 2.5, "balance_sheet": 3.75, "cash_flow_quality": 2.5, "risk_reward": 7.5, "atr_risk": 6.25, "liquidity": 6.25, "drawdown_gap": 5.0, "earnings_calendar": 5.0, "material_disclosures": 3.75, "insider_activity": 3.75}}
+  d_random_benchmark {"leave_one_out_rho_min": 0.874, "weights_20pct_rho_p5": 0.988, "noise_0.05_rho_median": 0.983, "equal_factor_rho": 0.868, "score_sd": 8.158}
+  e_reward_risk {"share_rr_lt_1.5": 0.887, "share_rr_lt_1.0_factor_zero": 0.678, "rr_median": 0.748, "near_high_within_3pct": {"n": 11, "rr_median": 1.26, "share_rr_ge_1.5": 0.0, "factor_mean": 0.079}, "far_from_high_20pct": {"n": 230, "rr_median": 0.906, "share_rr_ge_1.5": 0.217, "factor_mean": 0.141}, "top_fifth_by_chart_domain": {"n": 101, "share_rr_ge_1.5": 0.05, "factor_mean": 0.058}, "rho_rr_factor_vs_dist_high": -0.266, "rho_rr_factor_vs_chart_domain": -0.243, "entry_status": {"NO_VALID_ENTRY_SETUP": 319, "WAIT_FOR_PULLBACK": 174, "ENTRY_NOW": 9, "WAIT_FOR_BREAKOUT_CONFIRMATION": 1}, "entry_status_score_ge_70": {"WAIT_FOR_PULLBACK": 12, "ENTRY_NOW": 1}}
+  f_replay_1_5_0_eps_part_only {"loss_makers_with_empty_eps_growth": 10, "scores_changed": 8, "largest_fall": -1.875, "left_buy_band": 0}
+  g_input_coverage_proxy {"median": 1.0, "p5": 0.962, "share_ge_0.9": 0.994, "share_0.8_0.9": 0.0, "share_lt_0.8": 0.006, "recorded_confidence": {"HIGH": 498, "MEDIUM": 2, "INSUFFICIENT": 3}}
+
+===== US_LONG_TERM 2026-11-20 n 503
+ lines per day:
+    {'session': '2026-11-04', 'version': 'QSF-1.1.1', 'n': 501, 'ge80': 0, 'ge70': 64, 'lt40': 5, 'max': 79.818, 'median': 61.016}
+    {'session': '2026-11-05', 'version': 'QSF-1.1.2', 'n': 501, 'ge80': 0, 'ge70': 33, 'lt40': 14, 'max': 77.285, 'median': 58.487}
+    {'session': '2026-11-06', 'version': 'QSF-1.1.3', 'n': 502, 'ge80': 0, 'ge70': 30, 'lt40': 10, 'max': 77.168, 'median': 58.761}
+    {'session': '2026-11-09', 'version': 'QSF-1.1.8', 'n': 502, 'ge80': 0, 'ge70': 44, 'lt40': 6, 'max': 78.946, 'median': 60.518}
+    {'session': '2026-11-10', 'version': 'QSF-1.1.8', 'n': 502, 'ge80': 0, 'ge70': 50, 'lt40': 6, 'max': 79.318, 'median': 60.725}
+    {'session': '2026-11-11', 'version': 'QSF-1.3.1', 'n': 503, 'ge80': 0, 'ge70': 59, 'lt40': 5, 'max': 79.706, 'median': 61.485}
+    {'session': '2026-11-12', 'version': 'QSF-1.3.2', 'n': 503, 'ge80': 0, 'ge70': 53, 'lt40': 5, 'max': 79.452, 'median': 61.143}
+    {'session': '2026-11-13', 'version': 'QSF-1.3.2', 'n': 503, 'ge80': 0, 'ge70': 57, 'lt40': 5, 'max': 79.52, 'median': 61.439}
+    {'session': '2026-11-16', 'version': 'QSF-1.4.1', 'n': 503, 'ge80': 3, 'ge70': 75, 'lt40': 5, 'max': 82.512, 'median': 61.988}
+    {'session': '2026-11-17', 'version': 'QSF-1.4.1', 'n': 502, 'ge80': 4, 'ge70': 78, 'lt40': 5, 'max': 82.35, 'median': 61.957}
+    {'session': '2026-11-18', 'version': 'QSF-1.4.1', 'n': 502, 'ge80': 3, 'ge70': 78, 'lt40': 5, 'max': 82.493, 'median': 62.044}
+    {'session': '2026-11-19', 'version': 'QSF-1.4.1', 'n': 502, 'ge80': 3, 'ge70': 78, 'lt40': 5, 'max': 82.525, 'median': 61.959}
+    {'session': '2026-11-20', 'version': 'QSF-1.4.1', 'n': 503, 'ge80': 3, 'ge70': 79, 'lt40': 5, 'max': 82.828, 'median': 62.088}
+  b_few_factors_reproduce {"1": {"factors": ["free_cash_flow"], "r2": 0.429, "rank_rho": 0.614}, "2": {"factors": ["free_cash_flow", "balance_dilution"], "r2": 0.541, "rank_rho": 0.734}, "3": {"factors": ["free_cash_flow", "balance_dilution", "business_quality"], "r2": 0.703, "rank_rho": 0.821}, "5": {"factors": ["free_cash_flow", "balance_dilution", "business_quality", "financial_resilience", "leverage"], "r2": 0.721, "rank_rho": 0.834}}
+  c_near_constant {"factors": {"governance": {"mode_value": 0.8, "mode_share": 0.948, "weight": 3.0, "points_of_100_at_mode": 2.667}, "material_events": {"mode_value": 0.6, "mode_share": 0.95, "weight": 3.0, "points_of_100_at_mode": 2.0}}, "weight_share": 0.067, "all_missing": [], "mean_points_of_100_by_factor": {"long_trend": 2.959, "relative_strength": 1.671, "momentum_persistence": 1.247, "valuation": 8.195, "business_quality": 12.014, "growth_quality": 4.439, "free_cash_flow": 6.102, "balance_dilution": 3.982, "financial_resilience": 3.65, "downside_drawdown": 3.298, "liquidity": 3.93, "leverage": 2.772, "governance": 2.611, "material_events": 1.946, "insider_ownership": 0.426, "capital_allocation": 1.941}, "max_points_of_100_by_factor": {"long_trend": 5.556, "relative_strength": 3.333, "momentum_persistence": 2.222, "valuation": 16.667, "business_quality": 16.667, "growth_quality": 8.889, "free_cash_flow": 7.778, "balance_dilution": 5.556, "financial_resilience": 7.778, "downside_drawdown": 5.556, "liquidity": 4.444, "leverage": 4.444, "governance": 3.333, "material_events": 3.333, "insider_ownership": 2.222, "capital_allocation": 2.222}}
+  d_random_benchmark {"leave_one_out_rho_min": 0.818, "weights_20pct_rho_p5": 0.988, "noise_0.05_rho_median": 0.984, "equal_factor_rho": 0.813, "score_sd": 8.517}
+  f_replay_1_5_0_growth {"loss_makers_with_empty_eps_growth": 25, "growth_factor_ge_0.7_before": 5, "scores_changed": 19, "largest_fall": -2.963, "mean_fall_of_changed": -1.299, "left_buy_band": 0, "rank_rho": 1.0, "mean_score_of_changed_before": 48.804}
+  g_input_coverage_proxy {"median": 0.94, "p5": 0.799, "share_ge_0.9": 0.73, "share_0.8_0.9": 0.215, "share_lt_0.8": 0.056, "recorded_confidence": {"HIGH": 496, "INSUFFICIENT": 5, "MEDIUM": 2}}
+
+===== KR_SWING 2026-11-20 n 300
+ lines per day:
+    {'session': '2026-11-04', 'version': 'QSF-1.1.1', 'n': 295, 'ge80': 0, 'ge70': 0, 'lt40': 185, 'max': 61.559, 'median': 36.88}
+    {'session': '2026-11-05', 'version': 'QSF-1.1.2', 'n': 296, 'ge80': 0, 'ge70': 0, 'lt40': 194, 'max': 64.098, 'median': 35.79}
+    {'session': '2026-11-06', 'version': 'QSF-1.1.3', 'n': 296, 'ge80': 0, 'ge70': 0, 'lt40': 209, 'max': 62.608, 'median': 34.537}
+    {'session': '2026-11-09', 'version': 'QSF-1.1.8', 'n': 295, 'ge80': 0, 'ge70': 0, 'lt40': 206, 'max': 62.929, 'median': 35.29}
+    {'session': '2026-11-10', 'version': 'QSF-1.1.8', 'n': 298, 'ge80': 0, 'ge70': 0, 'lt40': 207, 'max': 63.77, 'median': 34.924}
+    {'session': '2026-11-11', 'version': 'QSF-1.3.1', 'n': 300, 'ge80': 0, 'ge70': 0, 'lt40': 175, 'max': 56.699, 'median': 38.621}
+    {'session': '2026-11-12', 'version': 'QSF-1.3.2', 'n': 300, 'ge80': 0, 'ge70': 0, 'lt40': 162, 'max': 56.53, 'median': 38.836}
+    {'session': '2026-11-13', 'version': 'QSF-1.3.2', 'n': 300, 'ge80': 0, 'ge70': 0, 'lt40': 151, 'max': 56.549, 'median': 39.886}
+    {'session': '2026-11-16', 'version': 'QSF-1.4.1', 'n': 300, 'ge80': 0, 'ge70': 0, 'lt40': 74, 'max': 68.533, 'median': 46.508}
+    {'session': '2026-11-17', 'version': 'QSF-1.4.1', 'n': 300, 'ge80': 0, 'ge70': 0, 'lt40': 68, 'max': 68.533, 'median': 46.709}
+    {'session': '2026-11-18', 'version': 'QSF-1.4.1', 'n': 300, 'ge80': 0, 'ge70': 0, 'lt40': 70, 'max': 68.533, 'median': 46.675}
+    {'session': '2026-11-19', 'version': 'QSF-1.4.1', 'n': 300, 'ge80': 0, 'ge70': 0, 'lt40': 72, 'max': 68.533, 'median': 47.503}
+    {'session': '2026-11-20', 'version': 'QSF-1.4.1', 'n': 300, 'ge80': 0, 'ge70': 0, 'lt40': 76, 'max': 67.869, 'median': 46.575}
+  b_few_factors_reproduce {"1": {"factors": ["cash_flow_quality"], "r2": 0.384, "rank_rho": 0.632}, "2": {"factors": ["cash_flow_quality", "profitability"], "r2": 0.477, "rank_rho": 0.706}, "3": {"factors": ["cash_flow_quality", "profitability", "atr_risk"], "r2": 0.538, "rank_rho": 0.751}, "5": {"factors": ["cash_flow_quality", "profitability", "atr_risk", "earnings_revenue_quality", "material_disclosures"], "r2": 0.593, "rank_rho": 0.778}}
+  c_near_constant {"factors": {"earnings_calendar": {"mode_value": 1.0, "mode_share": 0.997, "weight": 4.0, "points_of_100_at_mode": 10.0}}, "weight_share": 0.1, "all_missing": ["insider_activity"], "mean_points_of_100_by_factor": {"earnings_revenue_quality": 4.238, "profitability": 2.094, "balance_sheet": 4.541, "cash_flow_quality": 2.543, "risk_reward": 1.92, "atr_risk": 1.975, "liquidity": 8.402, "drawdown_gap": 2.585, "earnings_calendar": 9.966, "material_disclosures": 4.308, "insider_activity": null}, "max_points_of_100_by_factor": {"earnings_revenue_quality": 7.5, "profitability": 5.0, "balance_sheet": 7.5, "cash_flow_quality": 5.0, "risk_reward": 15.0, "atr_risk": 12.5, "liquidity": 12.5, "drawdown_gap": 10.0, "earnings_calendar": 10.0, "material_disclosures": 7.5, "insider_activity": 7.5}}
+  d_random_benchmark {"leave_one_out_rho_min": 0.863, "weights_20pct_rho_p5": 0.989, "noise_0.05_rho_median": 0.984, "equal_factor_rho": 0.94, "score_sd": 8.946}
+  e_reward_risk {"share_rr_lt_1.5": 0.827, "share_rr_lt_1.0_factor_zero": 0.597, "rr_median": 0.893, "near_high_within_3pct": {"n": 0, "rr_median": null, "share_rr_ge_1.5": null, "factor_mean": null}, "far_from_high_20pct": {"n": 0, "rr_median": null, "share_rr_ge_1.5": null, "factor_mean": null}, "top_fifth_by_chart_domain": {"n": 60, "share_rr_ge_1.5": 0.033, "factor_mean": 0.04}, "rho_rr_factor_vs_dist_high": null, "rho_rr_factor_vs_chart_domain": -0.423, "entry_status": {"NO_VALID_ENTRY_SETUP": 257, "WAIT_FOR_PULLBACK": 25, "ENTRY_NOW": 18}, "entry_status_score_ge_70": {}}
+  f_replay_1_5_0_eps_part_only {"loss_makers_with_empty_eps_growth": 30, "scores_changed": 21, "largest_fall": -4.286, "left_buy_band": 0}
+  g_input_coverage_proxy {"median": 0.925, "p5": 0.842, "share_ge_0.9": 0.707, "share_0.8_0.9": 0.287, "share_lt_0.8": 0.007, "recorded_confidence": {"HIGH": 288, "MEDIUM": 12}}
+
+===== KR_LONG_TERM 2026-11-20 n 300
+ lines per day:
+    {'session': '2026-11-04', 'version': 'QSF-1.1.1', 'n': 295, 'ge80': 0, 'ge70': 13, 'lt40': 68, 'max': 79.495, 'median': 51.825}
+    {'session': '2026-11-05', 'version': 'QSF-1.1.2', 'n': 296, 'ge80': 0, 'ge70': 14, 'lt40': 69, 'max': 79.816, 'median': 51.418}
+    {'session': '2026-11-06', 'version': 'QSF-1.1.3', 'n': 296, 'ge80': 0, 'ge70': 15, 'lt40': 70, 'max': 79.584, 'median': 52.094}
+    {'session': '2026-11-09', 'version': 'QSF-1.1.8', 'n': 295, 'ge80': 0, 'ge70': 14, 'lt40': 81, 'max': 79.404, 'median': 51.334}
+    {'session': '2026-11-10', 'version': 'QSF-1.1.8', 'n': 298, 'ge80': 0, 'ge70': 12, 'lt40': 82, 'max': 79.355, 'median': 51.019}
+    {'session': '2026-11-11', 'version': 'QSF-1.3.1', 'n': 300, 'ge80': 0, 'ge70': 15, 'lt40': 61, 'max': 78.672, 'median': 52.532}
+    {'session': '2026-11-12', 'version': 'QSF-1.3.2', 'n': 300, 'ge80': 0, 'ge70': 16, 'lt40': 62, 'max': 78.263, 'median': 52.388}
+    {'session': '2026-11-13', 'version': 'QSF-1.3.2', 'n': 300, 'ge80': 0, 'ge70': 16, 'lt40': 61, 'max': 78.184, 'median': 52.396}
+    {'session': '2026-11-16', 'version': 'QSF-1.4.1', 'n': 300, 'ge80': 4, 'ge70': 38, 'lt40': 56, 'max': 84.155, 'median': 54.584}
+    {'session': '2026-11-17', 'version': 'QSF-1.4.1', 'n': 300, 'ge80': 5, 'ge70': 36, 'lt40': 55, 'max': 83.577, 'median': 54.587}
+    {'session': '2026-11-18', 'version': 'QSF-1.4.1', 'n': 300, 'ge80': 5, 'ge70': 37, 'lt40': 56, 'max': 83.731, 'median': 54.461}
+    {'session': '2026-11-19', 'version': 'QSF-1.4.1', 'n': 300, 'ge80': 3, 'ge70': 36, 'lt40': 56, 'max': 83.706, 'median': 54.358}
+    {'session': '2026-11-20', 'version': 'QSF-1.4.1', 'n': 300, 'ge80': 3, 'ge70': 36, 'lt40': 54, 'max': 83.498, 'median': 54.503}
+  b_few_factors_reproduce {"1": {"factors": ["business_quality"], "r2": 0.664, "rank_rho": 0.802}, "2": {"factors": ["business_quality", "free_cash_flow"], "r2": 0.793, "rank_rho": 0.89}, "3": {"factors": ["business_quality", "free_cash_flow", "valuation"], "r2": 0.826, "rank_rho": 0.905}, "5": {"factors": ["business_quality", "free_cash_flow", "valuation", "leverage", "financial_resilience"], "r2": 0.917, "rank_rho": 0.956}}
+  c_near_constant {"factors": {"governance": {"mode_value": 0.8, "mode_share": 0.933, "weight": 3.0, "points_of_100_at_mode": 2.667}, "insider_ownership": {"mode_value": 1.0, "mode_share": 0.941, "weight": 2.0, "points_of_100_at_mode": 2.222}, "capital_allocation": {"mode_value": 1.0, "mode_share": 0.957, "weight": 2.0, "points_of_100_at_mode": 2.222}}, "weight_share": 0.078, "all_missing": [], "mean_points_of_100_by_factor": {"long_trend": 2.028, "relative_strength": 1.672, "momentum_persistence": 1.038, "valuation": 9.587, "business_quality": 8.285, "growth_quality": 4.195, "free_cash_flow": 3.982, "balance_dilution": 3.459, "financial_resilience": 3.709, "downside_drawdown": 0.822, "liquidity": 2.987, "leverage": 2.974, "governance": 2.54, "material_events": 1.888, "insider_ownership": 2.15, "capital_allocation": 2.165}, "max_points_of_100_by_factor": {"long_trend": 5.556, "relative_strength": 3.333, "momentum_persistence": 2.222, "valuation": 16.667, "business_quality": 16.667, "growth_quality": 8.889, "free_cash_flow": 7.778, "balance_dilution": 5.556, "financial_resilience": 7.778, "downside_drawdown": 5.556, "liquidity": 4.444, "leverage": 4.444, "governance": 3.333, "material_events": 3.333, "insider_ownership": 2.222, "capital_allocation": 2.222}}
+  d_random_benchmark {"leave_one_out_rho_min": 0.82, "weights_20pct_rho_p5": 0.988, "noise_0.05_rho_median": 0.987, "equal_factor_rho": 0.82, "score_sd": 9.103}
+  f_replay_1_5_0_growth {"loss_makers_with_empty_eps_growth": 44, "growth_factor_ge_0.7_before": 7, "scores_changed": 27, "largest_fall": -4.545, "mean_fall_of_changed": -1.607, "left_buy_band": 0, "rank_rho": 1.0, "mean_score_of_changed_before": 32.007}
+  g_input_coverage_proxy {"median": 0.864, "p5": 0.759, "share_ge_0.9": 0.0, "share_0.8_0.9": 0.843, "share_lt_0.8": 0.157, "recorded_confidence": {"HIGH": 262, "MEDIUM": 37, "LOW": 1}}

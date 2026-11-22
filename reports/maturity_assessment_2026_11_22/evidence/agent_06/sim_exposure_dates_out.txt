@@ -1,0 +1,15 @@
+(a) rank book RK-1: no selection skill at all; the rule book is invested 20 points less than the paper book; bar 2.24
+    diff_t = -0.20 * market_t + noise_t ; market vol 18%/yr ; noise sd per day given
+    market -30%/yr, noise 0.1%/day: ADOPT (mean>0 & t>=2.24) in 27.4%
+    market -30%/yr, noise 0.3%/day: ADOPT (mean>0 & t>=2.24) in 13.9%
+    market -15%/yr, noise 0.1%/day: ADOPT (mean>0 & t>=2.24) in 9.5%
+    market -15%/yr, noise 0.3%/day: ADOPT (mean>0 & t>=2.24) in 6.2%
+    market +0%/yr, noise 0.1%/day: ADOPT (mean>0 & t>=2.24) in 2.3%
+    market +0%/yr, noise 0.3%/day: ADOPT (mean>0 & t>=2.24) in 2.3%
+    market +15%/yr, noise 0.1%/day: ADOPT (mean>0 & t>=2.24) in 0.4%
+    market +15%/yr, noise 0.3%/day: ADOPT (mean>0 & t>=2.24) in 0.6%
+(b) earliest dates: sessions counted from 2026-11-23, weekdays minus exchange holidays I listed by hand (approximate beyond 2027)
+    US SWING: session number 260 is about 2027-12-06 (if no session is ever missed and no formula change moves the start again)
+    US LONG_TERM: session number 819 is about 2030-02-27 (if no session is ever missed and no formula change moves the start again)
+    KR SWING: session number 260 is about 2027-12-09 (if no session is ever missed and no formula change moves the start again)
+    KR LONG_TERM: session number 819 is about 2030-03-25 (if no session is ever missed and no formula change moves the start again)

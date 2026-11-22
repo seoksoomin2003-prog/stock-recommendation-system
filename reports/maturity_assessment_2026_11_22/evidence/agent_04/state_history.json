@@ -1,0 +1,1334 @@
+[
+ {
+  "market": "US",
+  "session": "2026-11-04",
+  "model": "QSF-1.1.1",
+  "n": 1004,
+  "score": 62.7,
+  "state": "FAVOURABLE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.8,
+    "REAL",
+    "2026-11-04",
+    {
+     "percentile_5y": 0.391,
+     "vix": 16.61
+    }
+   ],
+   "vix_term": [
+    0.832,
+    "REAL",
+    "2026-11-04",
+    {
+     "vix_vix3m": 0.884
+    }
+   ],
+   "credit_spread": [
+    0.135,
+    "REAL",
+    "2026-11-03",
+    {
+     "percentile": 0.865,
+     "spread": 3.4,
+     "window_obs": 785
+    }
+   ],
+   "index_trend_breadth": [
+    0.667,
+    "REAL",
+    "2026-11-04",
+    {
+     "breadth": 0.638,
+     "close": 766.81,
+     "ma200": 729.913,
+     "ma50": 767.058
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-05",
+  "model": "QSF-1.1.2",
+  "n": 1004,
+  "score": 36.2,
+  "state": "ADVERSE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.297,
+    "REAL",
+    "2026-11-05",
+    {
+     "percentile_5y": 0.924,
+     "vix": 28.18
+    }
+   ],
+   "vix_term": [
+    0.0,
+    "REAL",
+    "2026-11-05",
+    {
+     "vix_vix3m": 1.103
+    }
+   ],
+   "credit_spread": [
+    0.176,
+    "REAL",
+    "2026-11-04",
+    {
+     "percentile": 0.824,
+     "spread": 3.32,
+     "window_obs": 786
+    }
+   ],
+   "index_trend_breadth": [
+    0.721,
+    "REAL",
+    "2026-11-05",
+    {
+     "breadth": 0.61,
+     "close": 733.0,
+     "ma200": 730.151,
+     "ma50": 766.396
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-06",
+  "model": "QSF-1.1.3",
+  "n": 1006,
+  "score": 37.2,
+  "state": "ADVERSE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.407,
+    "REAL",
+    "2026-11-06",
+    {
+     "percentile_5y": 0.871,
+     "vix": 25.64
+    }
+   ],
+   "vix_term": [
+    0.039,
+    "REAL",
+    "2026-11-06",
+    {
+     "vix_vix3m": 1.042
+    }
+   ],
+   "credit_spread": [
+    0.107,
+    "REAL",
+    "2026-11-05",
+    {
+     "percentile": 0.893,
+     "spread": 3.48,
+     "window_obs": 786
+    }
+   ],
+   "index_trend_breadth": [
+    0.689,
+    "REAL",
+    "2026-11-06",
+    {
+     "breadth": 0.584,
+     "close": 735.29,
+     "ma200": 730.383,
+     "ma50": 765.68
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-09",
+  "model": "QSF-1.1.8",
+  "n": 1006,
+  "score": 55.9,
+  "state": "FAVOURABLE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.656,
+    "REAL",
+    "2026-11-09",
+    {
+     "percentile_5y": 0.666,
+     "vix": 19.92
+    }
+   ],
+   "vix_term": [
+    0.473,
+    "REAL",
+    "2026-11-09",
+    {
+     "vix_vix3m": 0.955
+    }
+   ],
+   "credit_spread": [
+    0.124,
+    "REAL",
+    "2026-11-06",
+    {
+     "percentile": 0.876,
+     "spread": 3.42,
+     "window_obs": 784
+    }
+   ],
+   "index_trend_breadth": [
+    0.788,
+    "REAL",
+    "2026-11-09",
+    {
+     "breadth": 0.664,
+     "close": 752.69,
+     "ma200": 730.7,
+     "ma50": 765.347
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-10",
+  "model": "QSF-1.1.8",
+  "n": 1006,
+  "score": 58.0,
+  "state": "FAVOURABLE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.676,
+    "REAL",
+    "2026-11-10",
+    {
+     "percentile_5y": 0.636,
+     "vix": 19.46
+    }
+   ],
+   "vix_term": [
+    0.536,
+    "REAL",
+    "2026-11-10",
+    {
+     "vix_vix3m": 0.943
+    }
+   ],
+   "credit_spread": [
+    0.163,
+    "REAL",
+    "2026-11-09",
+    {
+     "percentile": 0.837,
+     "spread": 3.34,
+     "window_obs": 784
+    }
+   ],
+   "index_trend_breadth": [
+    0.774,
+    "REAL",
+    "2026-11-10",
+    {
+     "breadth": 0.653,
+     "close": 749.92,
+     "ma200": 730.986,
+     "ma50": 765.004
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-11",
+  "model": "QSF-1.3.1",
+  "n": 1008,
+  "score": 64.0,
+  "state": "FAVOURABLE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.761,
+    "REAL",
+    "2026-11-11",
+    {
+     "percentile_5y": 0.482,
+     "vix": 17.49
+    }
+   ],
+   "vix_term": [
+    0.705,
+    "REAL",
+    "2026-11-11",
+    {
+     "vix_vix3m": 0.909
+    }
+   ],
+   "credit_spread": [
+    0.163,
+    "REAL",
+    "2026-11-09",
+    {
+     "percentile": 0.837,
+     "spread": 3.34,
+     "window_obs": 784
+    }
+   ],
+   "index_trend_breadth": [
+    0.789,
+    "REAL",
+    "2026-11-11",
+    {
+     "breadth": 0.665,
+     "close": 759.81,
+     "ma200": 731.307,
+     "ma50": 764.965
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-12",
+  "model": "QSF-1.3.2",
+  "n": 1008,
+  "score": 60.2,
+  "state": "FAVOURABLE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.709,
+    "REAL",
+    "2026-11-12",
+    {
+     "percentile_5y": 0.578,
+     "vix": 18.7
+    }
+   ],
+   "vix_term": [
+    0.589,
+    "REAL",
+    "2026-11-12",
+    {
+     "vix_vix3m": 0.932
+    }
+   ],
+   "credit_spread": [
+    0.189,
+    "REAL",
+    "2026-11-11",
+    {
+     "percentile": 0.811,
+     "spread": 3.3,
+     "window_obs": 785
+    }
+   ],
+   "index_trend_breadth": [
+    0.769,
+    "REAL",
+    "2026-11-12",
+    {
+     "breadth": 0.649,
+     "close": 757.12,
+     "ma200": 731.616,
+     "ma50": 764.804
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-13",
+  "model": "QSF-1.3.2",
+  "n": 1008,
+  "score": 61.8,
+  "state": "FAVOURABLE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.683,
+    "REAL",
+    "2026-11-13",
+    {
+     "percentile_5y": 0.624,
+     "vix": 19.3
+    }
+   ],
+   "vix_term": [
+    0.57,
+    "REAL",
+    "2026-11-13",
+    {
+     "vix_vix3m": 0.936
+    }
+   ],
+   "credit_spread": [
+    0.276,
+    "REAL",
+    "2026-11-12",
+    {
+     "percentile": 0.724,
+     "spread": 3.2,
+     "window_obs": 785
+    }
+   ],
+   "index_trend_breadth": [
+    0.794,
+    "REAL",
+    "2026-11-13",
+    {
+     "breadth": 0.669,
+     "close": 754.37,
+     "ma200": 731.918,
+     "ma50": 764.428
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-16",
+  "model": "QSF-1.4.1",
+  "n": 1008,
+  "score": 48.8,
+  "state": "ADVERSE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.526,
+    "REAL",
+    "2026-11-16",
+    {
+     "percentile_5y": 0.8,
+     "vix": 22.91
+    }
+   ],
+   "vix_term": [
+    0.274,
+    "REAL",
+    "2026-11-16",
+    {
+     "vix_vix3m": 0.995
+    }
+   ],
+   "credit_spread": [
+    0.239,
+    "REAL",
+    "2026-11-13",
+    {
+     "percentile": 0.761,
+     "spread": 3.23,
+     "window_obs": 784
+    }
+   ],
+   "index_trend_breadth": [
+    0.727,
+    "REAL",
+    "2026-11-16",
+    {
+     "breadth": 0.615,
+     "close": 739.95,
+     "ma200": 732.157,
+     "ma50": 763.823
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-17",
+  "model": "QSF-1.4.1",
+  "n": 1006,
+  "score": 40.4,
+  "state": "ADVERSE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.415,
+    "REAL",
+    "2026-11-17",
+    {
+     "percentile_5y": 0.865,
+     "vix": 25.46
+    }
+   ],
+   "vix_term": [
+    0.154,
+    "REAL",
+    "2026-11-17",
+    {
+     "vix_vix3m": 1.019
+    }
+   ],
+   "credit_spread": [
+    0.157,
+    "REAL",
+    "2026-11-16",
+    {
+     "percentile": 0.843,
+     "spread": 3.34,
+     "window_obs": 784
+    }
+   ],
+   "index_trend_breadth": [
+    0.68,
+    "REAL",
+    "2026-11-17",
+    {
+     "breadth": 0.578,
+     "close": 732.44,
+     "ma200": 732.343,
+     "ma50": 763.153
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-18",
+  "model": "QSF-1.4.1",
+  "n": 1008,
+  "score": 34.6,
+  "state": "ADVERSE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.454,
+    "REAL",
+    "2026-11-18",
+    {
+     "percentile_5y": 0.844,
+     "vix": 24.56
+    }
+   ],
+   "vix_term": [
+    0.194,
+    "REAL",
+    "2026-11-18",
+    {
+     "vix_vix3m": 1.011
+    }
+   ],
+   "credit_spread": [
+    0.112,
+    "REAL",
+    "2026-11-17",
+    {
+     "percentile": 0.888,
+     "spread": 3.43,
+     "window_obs": 785
+    }
+   ],
+   "index_trend_breadth": [
+    0.489,
+    "REAL",
+    "2026-11-18",
+    {
+     "breadth": 0.558,
+     "close": 730.2,
+     "ma200": 732.546,
+     "ma50": 762.509
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-19",
+  "model": "QSF-1.4.1",
+  "n": 1006,
+  "score": 24.5,
+  "state": "ADVERSE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.285,
+    "REAL",
+    "2026-11-19",
+    {
+     "percentile_5y": 0.928,
+     "vix": 28.44
+    }
+   ],
+   "vix_term": [
+    0.0,
+    "REAL",
+    "2026-11-19",
+    {
+     "vix_vix3m": 1.052
+    }
+   ],
+   "credit_spread": [
+    0.098,
+    "REAL",
+    "2026-11-18",
+    {
+     "percentile": 0.902,
+     "spread": 3.47,
+     "window_obs": 786
+    }
+   ],
+   "index_trend_breadth": [
+    0.441,
+    "REAL",
+    "2026-11-19",
+    {
+     "breadth": 0.52,
+     "close": 715.87,
+     "ma200": 732.694,
+     "ma50": 761.669
+    }
+   ]
+  }
+ },
+ {
+  "market": "US",
+  "session": "2026-11-20",
+  "model": "QSF-1.4.1",
+  "n": 1008,
+  "score": 15.4,
+  "state": "ADVERSE",
+  "coverage": 1.0,
+  "factors": {
+   "vix_regime": [
+    0.0,
+    "REAL",
+    "2026-11-20",
+    {
+     "percentile_5y": 0.994,
+     "vix": 35.89
+    }
+   ],
+   "vix_term": [
+    0.0,
+    "REAL",
+    "2026-11-20",
+    {
+     "vix_vix3m": 1.16
+    }
+   ],
+   "credit_spread": [
+    0.08,
+    "REAL",
+    "2026-11-19",
+    {
+     "percentile": 0.92,
+     "spread": 3.52,
+     "window_obs": 786
+    }
+   ],
+   "index_trend_breadth": [
+    0.394,
+    "REAL",
+    "2026-11-20",
+    {
+     "breadth": 0.482,
+     "close": 689.81,
+     "ma200": 732.755,
+     "ma50": 760.18
+    }
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-04",
+  "model": "QSF-1.1.1",
+  "n": 590,
+  "score": 25.0,
+  "state": "ADVERSE",
+  "coverage": 0.6,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-04",
+    {
+     "close": 5683.8,
+     "ma200": 6504.926,
+     "ma50": 6455.098
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-04",
+    {
+     "breadth": 0.281,
+     "n": 292
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-05",
+    {
+     "change_63": -0.046,
+     "usdkrw": 1341.78
+    }
+   ],
+   "credit_liquidity": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-05",
+  "model": "QSF-1.1.2",
+  "n": 592,
+  "score": 25.0,
+  "state": "ADVERSE",
+  "coverage": 0.6,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-04",
+    {
+     "close": 5683.8,
+     "ma200": 6504.926,
+     "ma50": 6455.098
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-05",
+    {
+     "breadth": 0.215,
+     "n": 293
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-05",
+    {
+     "change_63": -0.035,
+     "usdkrw": 1357.88
+    }
+   ],
+   "credit_liquidity": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-06",
+  "model": "QSF-1.1.3",
+  "n": 592,
+  "score": 25.0,
+  "state": "ADVERSE",
+  "coverage": 0.6,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-05",
+    {
+     "close": 5383.8,
+     "ma200": 6508.913,
+     "ma50": 6424.515
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-06",
+    {
+     "breadth": 0.19,
+     "n": 294
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-06",
+    {
+     "change_63": -0.038,
+     "usdkrw": 1363.65
+    }
+   ],
+   "credit_liquidity": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-09",
+  "model": "QSF-1.1.8",
+  "n": 590,
+  "score": 25.0,
+  "state": "ADVERSE",
+  "coverage": 0.6,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-09",
+    {
+     "close": 5018.85,
+     "ma200": 6512.719,
+     "ma50": 6357.291
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-09",
+    {
+     "breadth": 0.201,
+     "n": 293
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-10",
+    {
+     "change_63": -0.049,
+     "usdkrw": 1346.38
+    }
+   ],
+   "credit_liquidity": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-10",
+  "model": "QSF-1.1.8",
+  "n": 592,
+  "score": 25.0,
+  "state": "ADVERSE",
+  "coverage": 0.6,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-09",
+    {
+     "close": 5018.85,
+     "ma200": 6512.719,
+     "ma50": 6357.291
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-10",
+    {
+     "breadth": 0.211,
+     "n": 294
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-10",
+    {
+     "change_63": -0.052,
+     "usdkrw": 1342.34
+    }
+   ],
+   "credit_liquidity": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-11",
+  "model": "QSF-1.3.1",
+  "n": 600,
+  "score": 26.8,
+  "state": "ADVERSE",
+  "coverage": 0.75,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-10",
+    {
+     "close": 5239.13,
+     "ma200": 6515.299,
+     "ma50": 6325.91
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-11",
+    {
+     "breadth": 0.164,
+     "n": 299
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-11",
+    {
+     "change_63": -0.056,
+     "usdkrw": 1337.77
+    }
+   ],
+   "credit_liquidity": [
+    0.342,
+    "REAL",
+    "2026-11-11",
+    {
+     "percentile": 0.658,
+     "value": 0.681,
+     "window_obs": 2460
+    }
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-12",
+  "model": "QSF-1.3.2",
+  "n": 600,
+  "score": 26.9,
+  "state": "ADVERSE",
+  "coverage": 0.75,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-11",
+    {
+     "close": 5375.36,
+     "ma200": 6518.188,
+     "ma50": 6295.17
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-12",
+    {
+     "breadth": 0.167,
+     "n": 299
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-12",
+    {
+     "change_63": -0.057,
+     "usdkrw": 1334.48
+    }
+   ],
+   "credit_liquidity": [
+    0.346,
+    "REAL",
+    "2026-11-12",
+    {
+     "percentile": 0.654,
+     "value": 0.678,
+     "window_obs": 2461
+    }
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-13",
+  "model": "QSF-1.3.2",
+  "n": 600,
+  "score": 27.0,
+  "state": "ADVERSE",
+  "coverage": 0.75,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-12",
+    {
+     "close": 5342.73,
+     "ma200": 6520.698,
+     "ma50": 6266.247
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-13",
+    {
+     "breadth": 0.181,
+     "n": 299
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-13",
+    {
+     "change_63": -0.056,
+     "usdkrw": 1335.11
+    }
+   ],
+   "credit_liquidity": [
+    0.349,
+    "REAL",
+    "2026-11-13",
+    {
+     "percentile": 0.651,
+     "value": 0.675,
+     "window_obs": 2461
+    }
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-16",
+  "model": "QSF-1.4.1",
+  "n": 600,
+  "score": 27.1,
+  "state": "ADVERSE",
+  "coverage": 0.75,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-13",
+    {
+     "close": 5290.53,
+     "ma200": 6522.627,
+     "ma50": 6235.657
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-16",
+    {
+     "breadth": 0.194,
+     "n": 299
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-16",
+    {
+     "change_63": -0.055,
+     "usdkrw": 1335.69
+    }
+   ],
+   "credit_liquidity": [
+    0.353,
+    "REAL",
+    "2026-11-16",
+    {
+     "percentile": 0.647,
+     "value": 0.673,
+     "window_obs": 2459
+    }
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-17",
+  "model": "QSF-1.4.1",
+  "n": 600,
+  "score": 27.0,
+  "state": "ADVERSE",
+  "coverage": 0.75,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-16",
+    {
+     "close": 5100.5,
+     "ma200": 6523.701,
+     "ma50": 6200.951
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-17",
+    {
+     "breadth": 0.167,
+     "n": 299
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-18",
+    {
+     "change_63": -0.043,
+     "usdkrw": 1330.98
+    }
+   ],
+   "credit_liquidity": [
+    0.348,
+    "REAL",
+    "2026-11-17",
+    {
+     "percentile": 0.652,
+     "value": 0.677,
+     "window_obs": 2459
+    }
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-18",
+  "model": "QSF-1.4.1",
+  "n": 600,
+  "score": 27.1,
+  "state": "ADVERSE",
+  "coverage": 0.75,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-18",
+    {
+     "close": 5067.44,
+     "ma200": 6524.568,
+     "ma50": 6138.825
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-18",
+    {
+     "breadth": 0.177,
+     "n": 299
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-19",
+    {
+     "change_63": -0.039,
+     "usdkrw": 1331.34
+    }
+   ],
+   "credit_liquidity": [
+    0.354,
+    "REAL",
+    "2026-11-18",
+    {
+     "percentile": 0.646,
+     "value": 0.673,
+     "window_obs": 2460
+    }
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-19",
+  "model": "QSF-1.4.1",
+  "n": 600,
+  "score": 27.0,
+  "state": "ADVERSE",
+  "coverage": 0.75,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-18",
+    {
+     "close": 5067.44,
+     "ma200": 6524.568,
+     "ma50": 6138.825
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-19",
+    {
+     "breadth": 0.174,
+     "n": 299
+    }
+   ],
+   "usdkrw_regime": [
+    1.0,
+    "REAL",
+    "2026-11-19",
+    {
+     "change_63": -0.037,
+     "usdkrw": 1334.16
+    }
+   ],
+   "credit_liquidity": [
+    0.352,
+    "REAL",
+    "2026-11-19",
+    {
+     "percentile": 0.648,
+     "value": 0.674,
+     "window_obs": 2461
+    }
+   ]
+  }
+ },
+ {
+  "market": "KR",
+  "session": "2026-11-20",
+  "model": "QSF-1.4.1",
+  "n": 600,
+  "score": 25.4,
+  "state": "ADVERSE",
+  "coverage": 0.75,
+  "factors": {
+   "vkospi_regime": [
+    null,
+    "MISSING",
+    null,
+    {}
+   ],
+   "index_trend": [
+    0.0,
+    "REAL",
+    "2026-11-19",
+    {
+     "close": 5137.89,
+     "ma200": 6525.308,
+     "ma50": 6107.839
+    }
+   ],
+   "breadth": [
+    0.0,
+    "REAL",
+    "2026-11-20",
+    {
+     "breadth": 0.157,
+     "n": 299
+    }
+   ],
+   "usdkrw_regime": [
+    0.939,
+    "REAL",
+    "2026-11-20",
+    {
+     "change_63": -0.025,
+     "usdkrw": 1346.13
+    }
+   ],
+   "credit_liquidity": [
+    0.332,
+    "REAL",
+    "2026-11-20",
+    {
+     "percentile": 0.668,
+     "value": 0.687,
+     "window_obs": 2461
+    }
+   ]
+  }
+ }
+]
