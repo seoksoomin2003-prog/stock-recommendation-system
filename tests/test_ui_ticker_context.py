@@ -86,7 +86,7 @@ def test_the_score_tab_is_kept_and_its_scan_is_fetched_once():
     assert qsf.count("/api/qsf/latest") == 2 and "api(`/api/qsf/latest?market=${mk}`)" in body(qsf, "function qsfLatest(", "\n}")      # the comment and the one fetch
     assert "const QSF_LATEST_TTL_MS = 5 * 60 * 1000;" in qsf and "qsfLatest(mk).catch(" in body(qsf, "async function qsfRank(", "\n}")
     assert "state.loaded.qsf = true;" in body(qsf, "async function renderQsf(", "\n}") and "RETURN.qsf = qsfReturn;" in qsf
-    assert "window.scrollTo(0, scrollY);" in body(qsf, "function qsfReturn(", "\n}")
+    assert "window.scrollTo(0, folded ? 0 : scrollY);" in body(qsf, "function qsfReturn(", "\n}")          # batch 2: a folded card starts at the top
     shown = body(js, "function show(tab", "\n}")
     assert "if (!state.loaded[tab] || ALWAYS_FRESH.has(tab)) RENDER[tab]();" in shown and "else if (RETURN[tab]) RETURN[tab](tabScroll[tab] || 0);" in shown
     assert '"qsf"' not in js[js.index("const ALWAYS_FRESH"):js.index("const RENDER")]

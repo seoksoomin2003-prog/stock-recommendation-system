@@ -180,7 +180,7 @@ def test_the_screens_read_the_new_fields():
     card = body(qsf, "function qsfCard(", "\n}")
     assert "${qsfBalance(c.balance)}" in card and "qsfMarketState(" not in card and "names[f.factor] || f.factor" in card
     rank = body(qsf, "async function qsfRank(", "\n}")
-    assert "/api/qsf/rank-notes?market=" in rank and "qsfRankRow(" in rank and "nt.session === d.session" in rank and rank.count("qsfMarketState(") == 1
+    assert "/api/qsf/rank-notes?market=" in rank and "qsfRankRow(" in rank and "nt.session === d.session" in rank and rank.count("qsfMarketState(") == 0      # batch 2: the strip holds it
     assert "slice(0, 50)" in rank and "qsfFillRow(slot" in rank and 'class="qsf-exp-row"' in qsf and "QSF_RANK_COLS = 12" in qsf
     row = body(qsf, "function qsfRankRow(", "\n}")
     assert row.count("<td") == 10 and row.count("QSF_RANK_DOMAINS.map(dom)") == 1 and 'colspan="${QSF_RANK_COLS}"' in row     # 8 cells + 4 domain cells = 12, and the fold
@@ -189,4 +189,4 @@ def test_the_screens_read_the_new_fields():
     assert "d.headline_main || d.headline" in today and "asstTiles(d.tiles)" in today and "asstCands(d.candidates, d.note)" in today and "i.ops" in today
     assert "redrawers.delete(asstSparks)" in today and "spark(cv" in today
     css = (ROOT / "terminal" / "static" / "style.css").read_text(encoding="utf-8")
-    assert ".qsf-rank-tbl .w, .qsf-rank-tbl .w2, .asst-cand .w { display: none; }" in css and ".qsf-balance {" in css
+    assert ".qsf-rank-tbl .w, .qsf-rank-tbl .w2, .asst-cand .w { display: none; }" in body(css, "@media (max-width: 640px) {", "\n}") and ".qsf-balance {" in css

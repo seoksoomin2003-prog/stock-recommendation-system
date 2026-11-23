@@ -443,18 +443,50 @@ details[open] > summary .fold-hint { display: none; }
 .asst-ops { margin-top: 14px; padding-top: 8px; border-top: 1px solid var(--line); }
 .asst-ops > summary { cursor: pointer; font-weight: 600; }
 @media (max-width: 760px) {
-  .qsf-rank-tbl .w, .qsf-rank-tbl .w2, .asst-cand .w { display: none; }
   .qsf-balance, .asst-cands { grid-template-columns: 1fr; }
   .asst-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .asst-tiles .card canvas { display: none; }
   .asst-tiles .card .px { font-size: 16px; }
-  .asst-cand .aw, .qsf-rank-tbl .qr-why { white-space: normal; min-width: 100px; }
-  .qsf-rank-tbl .qr-md { display: block; }
-  .qsf-rank-tbl .qr-name { min-width: 90px; }
-  .qsf-rank-tbl > * > tr > td, .qsf-rank-tbl > * > tr > th { padding: 6px 5px; }
 }
 
 /* UI batch 1 (2026-11-23): an index tile's two changes each carry their period and keep it on their own line. */
 .card .chg .nw { display: block; white-space: nowrap; }
 .badge.near-edge { color: var(--warn); border-color: var(--warn); }
-@media (max-width: 760px) { .badge.near-edge { display: block; width: max-content; margin: 2px 0 0 auto; } }   /* under the score, not beside it */
+@media (max-width: 1023px) { .badge.near-edge { display: block; width: max-content; margin: 2px 0 0 auto; } }   /* under the score, not beside it */
+
+/* UI batch 2 (2026-11-23, user decisions) */
+/* P1-8: one status strip at the top of the score tab; the full text opens from it. */
+.qsf-strip { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
+.qsf-strip > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.qsf-strip > summary::-webkit-details-marker { display: none; }
+.qsf-strip-items { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 0; }
+.qsf-strip-items > * + *::before { content: "·"; margin: 0 8px; color: var(--muted); font-weight: 400; }
+.qsf-strip-items > :empty { display: none; }
+.qsf-strip[open] > summary { margin-bottom: 8px; }
+.qsf-form { margin: 0 0 10px; }
+/* P1-9: a closed card is one line. */
+.qsf-reopen { margin: 0 0 12px; }
+/* P1-7: rare risks are a short line under the name; common notes are colourless chips; a blocked row is bold. */
+.qr-risk { color: var(--warn); font-size: 12px; font-weight: 600; margin-top: 2px; word-break: keep-all; }
+.badge.info { color: var(--muted); font-weight: 500; }
+.qsf-rank-tbl .qr-out, .qs-table .qr-out { color: var(--warn); font-weight: 700; font-size: 12px; white-space: normal; word-break: keep-all; border-left: 3px solid var(--warn); padding-left: 6px; margin-top: 2px; }
+/* P1-10: below the full content width (1248 px) the four area columns go (they are in the card); tablets also put the day's
+   change under the score; phones put judgement and entry on a second line. */
+.qr-m2 { display: none; }
+@media (max-width: 1279px) { .qsf-rank-tbl .qd-col { display: none; } }
+@media (max-width: 1023px) {
+  .qsf-rank-tbl .qr-dcol { display: none; }
+  .qsf-rank-tbl .qr-md { display: block; }                                   /* the day's change sits under the score */
+  .qsf-rank-tbl .qr-why { white-space: normal; min-width: 100px; }
+  .qsf-rank-tbl td.w2 { white-space: normal; word-break: keep-all; min-width: 84px; }
+}
+@media (max-width: 640px) {
+  .qsf-rank-tbl .w, .qsf-rank-tbl .w2, .asst-cand .w { display: none; }
+  .qsf-rank-tbl .qr-m2, .asst-cand .qr-m2 { display: block; margin-top: 4px; font-size: 12.5px; word-break: keep-all; }
+  .asst-cand .aw { white-space: normal; min-width: 100px; }
+  .qsf-rank-tbl .qr-why { white-space: normal; min-width: 84px; }
+  .qsf-rank-tbl .qr-rank .badge { padding: 1px 4px; font-size: 10px; }
+  .qsf-rank-tbl .qr-name { min-width: 90px; }
+  .qsf-rank-tbl > * > tr > td, .qsf-rank-tbl > * > tr > th { padding: 6px 5px; }
+}
+@media (max-width: 400px) { .qsf-rank-tbl .qr-why { min-width: 72px; font-size: 12px; } }

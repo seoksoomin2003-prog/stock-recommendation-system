@@ -35,10 +35,13 @@ def test_the_shown_tab_lights_its_group_and_a_group_returns_to_its_last_tab():
 
 
 def test_the_caveat_is_one_line_that_opens_and_nothing_of_it_was_removed():
+    # UI batch 2 (2026-11-23): the one line is now the status strip at the top of the score tab; the full caveat opens from it.
     from terminal.qsf import config
     js = read("qsf.js")
-    block = js[js.index('<details class="notice qsf-caveat">'):js.index('<div id="qsfrecord"></div>')]
-    assert "<summary><b>점수가 높다고 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다. 참고용으로만 쓰세요.</b>" in block and block.rstrip().endswith("</details>")
+    strip = js[js.index('<details class="qsf-strip" id="qsfstrip">'):js.index('<div id="qsfstance"></div></details>')]
+    assert "<b>점수 검증: 높은 점수의 수익 근거 아직 없음 · 참고용</b></span>" in strip.split("</summary>")[0]          # the warning stays in the line
+    block = strip[strip.index('<div class="notice qsf-caveat">'):strip.index('<div id="qsfrecord"></div>')]
+    assert "<b>점수가 높다고 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다. 참고용으로만 쓰세요.</b>" in block and block.rstrip().endswith("</div>")
     assert config.VALIDATION_NOTICE.split("근거를 찾지 못했습니다. ", 1)[1] in block and "주문을 실행하지 않고, 투자 자문이 아닙니다." in block      # the whole text is still there
     assert '<details class="qsf-record"><summary>과거 성적: 이 점수를 얼마나 믿을 수 있나' in js and '<details class="qsf-record" open>' not in js
 

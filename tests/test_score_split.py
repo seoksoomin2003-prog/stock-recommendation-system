@@ -278,7 +278,10 @@ def test_the_daily_job_the_backup_the_routes_and_the_page_know_the_split():
     assert 'score_split.record(PROJECT_ROOT, "KR")' in app and 'score_split.record(PROJECT_ROOT, "US")' in app and '"score-split-evaluate": _qsf_score_split' in app
     assert '("GET", "/api/qsf/market-state")' in (ROOT / "terminal" / "server.py").read_text(encoding="utf-8")
     js = (ROOT / "terminal" / "static" / "qsf.js").read_text(encoding="utf-8")
-    assert "function qsfMarketState(ms)" in js and 'filter(([k]) => k !== "REGIME")' in js and "${qsfMarketState((Object.values(d.cards)[0] || {}).market_state)}" in js and "/api/qsf/market-state?market=" in js
+    assert "function qsfMarketState(ms)" in js and 'filter(([k]) => k !== "REGIME")' in js and "/api/qsf/market-state?market=" in js
+    # UI batch 2 (2026-11-23): the market state is shown once, in the strip at the top of the score tab, not inside each card
+    strip = js[js.index("async function qsfStrip("):js.index("function qsfBar(")]
+    assert "qsfMarketState(ms)" in strip and "qsfStateShort(" in strip and "qsfMarketState(" not in js[js.index("function qsfDrawDetail("):js.index("async function qsfHistory(")]
     assert config.VALIDATION_NOTICE in js and "시장 상태" in config.VALIDATION_NOTICE
     assert pb.VERSION == "PB-2" and "PB-2" in (ROOT / "reports" / "PAPER_BOOK_RULES.md").read_text(encoding="utf-8")
     assert (ROOT / ss.PROTOCOL).exists() and "QSF-1.4.0" in (ROOT / ss.PROTOCOL).read_text(encoding="utf-8")

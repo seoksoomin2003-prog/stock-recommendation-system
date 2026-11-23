@@ -194,4 +194,5 @@ def test_a_screener_row_opens_its_score_card_in_the_view_that_shows_it():
     page = (Path(am.__file__).parent / "static" / "qsf.js").read_text(encoding="utf-8")
     click = next(line for line in page.splitlines() if 'body.querySelectorAll(".qs-open")' in line)      # the screener's rows (the change list's rows are already in the rank view)
     assert click.index('qsfSetView("rank")') < click.index("qsfEvaluate(b.dataset.t, mk)")
-    assert '<div data-view="rank"><div id="qsfdetail">' in page                      # the panel the card is drawn into lives in the rank view
+    rank_view = page[page.index('<div data-view="rank">'):page.index('<div id="qsfrank">')]
+    assert '<div id="qsfdetail"></div>' in rank_view and '<form id="qsfform"' in rank_view                      # the panel the card is drawn into lives in the rank view
