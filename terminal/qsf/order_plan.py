@@ -10,6 +10,7 @@ reports/PAPER_BOOK_RULES.md.
 """
 import math
 from bisect import bisect_right
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Iterable, List, Optional
 
 from terminal import portfolio as pf
@@ -27,6 +28,55 @@ REASONS = {"RANK_OUT": "그날 점수 순위가 진입 기준 밖", "REENTRY_WAI
 BINDING = {"RISK": "거래당 위험 한도", "WEIGHT": "종목 비중 한도", "CASH": "현금", "SLEEVE": "스타일 비중 한도", "SECTOR": "섹터 한도", "LIQUIDITY": "거래대금 대비 주문 크기 한도", "EXPOSURE": "나쁜 날의 새 주문 합계 한도"}
 # What changed in the plan's rules after the paper book's versions were named (reports/PAPER_BOOK_RULES.md, section 8).  It is written
 # into every plan, so a record says which rules made it.
+# The price steps an order must sit on (added 2026-11-23, review of slippage and latency).  KRX stocks, KOSPI and KOSDAQ alike since
+# 2023-01-25: by price band.  US: one cent from $1 (SEC Rule 612), a hundredth of a cent under it.  The plan's own ``limit`` is a
+# computed cap (close + LIMIT_ATR x ATR) that is rarely on a step: KRX refuses such a price, rounding it up pays more than the plan
+# allows and rounding it down was left to the user.  ``order_price`` is the cap rounded DOWN to a step, shown on the real-account plan
+# only; the paper book and the comparison books keep reading ``limit`` exactly as before.
+KR_TICKS = ((2_000, 1), (5_000, 5), (20_000, 10), (50_000, 50), (200_000, 100), (500_000, 500), (math.inf, 1_000))
+KST = timezone(timedelta(hours=9))
+# When to place the orders (added 2026-11-23).  The plan, the paper book and the cost estimate all assume a fill at the open.
+TIMING_NOTE = {
+    "KR": "주문 시점: 08:30~08:59에 한국거래소(KRX) 지정가로 넣으면 09:00 시가 단일가(동시호가)로 체결되어 매수·매도 호가 차이를 따로 내지 않습니다. "
+          "계획의 기준도 이 시가 체결입니다. 09:00 뒤에 넣으면 그 차이를 내고 계획과 조건이 달라집니다. "
+          "넥스트레이드(NXT) 프리마켓(08:00~08:50)으로 가는 주문은 동시호가가 아니라 그 시장의 호가에 체결되니, 주문 화면에서 거래 시장을 확인하세요.",
+    "US": "주문 시점: 미국 정규장 시작(한국 시간 23:30, 서머타임 기간 22:30) 전에 지정가로 넣어 시가에 맞추세요. 계획의 기준이 시가 체결입니다. "
+          "프리마켓·애프터마켓·주간거래는 호가 차이가 커서 계획의 비용 가정보다 비싸게 체결될 수 있습니다."}
+
+
+def tick_size(market: str, price: float) -> float:
+    """The price step of an order at ``price``."""
+    if market == "KR":
+        return next(t for lim, t in KR_TICKS if price < lim)
+    return 0.01 if price >= 1 else 0.0001
+
+
+def order_price(market: str, limit: Optional[float]) -> Optional[float]:
+    """``limit`` rounded DOWN to the price step, so a fill at it never exceeds the plan's cap.  A lower band's step divides every
+    band edge, so the result is on the grid even when rounding crosses an edge.  None for a missing or non-positive limit."""
+    if not limit or limit <= 0:
+        return None
+    t = tick_size(market, limit)
+    p = math.floor(limit / t + 1e-9) * t
+    return float(int(round(p))) if market == "KR" else round(p, 2 if t >= 0.01 else 4)
+
+
+def kr_timing_now(now: datetime) -> str:
+    """Where Korea's clock stands against the opening auction, for a message sent at ``now``.  Holidays are not known here, so a
+    weekday morning line says so."""
+    k = now.astimezone(KST)
+    hm = (k.hour, k.minute)
+    if k.weekday() >= 5:
+        return "다음 거래일 08:30~08:59 동시호가에 맞추세요."
+    if hm >= (15, 30):
+        return "오늘 장은 끝났습니다. 다음 거래일 아침에 새 기록이 나오면 그 계획을 따르세요."
+    if hm < (8, 30):
+        return "오늘이 거래일이면 08:30~08:59 동시호가에 맞추세요(휴장일이면 다음 거래일)."
+    if hm < (9, 0):
+        return "지금이 동시호가 시간입니다(09:00 전까지)."
+    return "오늘 장은 이미 열렸습니다. 계획은 시가 체결을 기준으로 하므로 지금 넣는 주문은 계획과 조건이 다릅니다."
+
+
 PLAN_AMENDMENT = "A1 (2026-11-22): 시장 상태가 나쁘거나 알 수 없는 날, 새 주문의 합계는 계좌의 50% 이하(미국). 시장 상태를 읽을 수 없으면 나쁜 날로 취급."
 
 

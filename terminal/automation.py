@@ -735,6 +735,49 @@ class Daily:
         steps["KR_FORWARD"] = {**self._timed_step("KR_FORWARD", session), "retried": True}
         self._save(st)
 
+    def _kr_early(self, st: Dict[str, Any], steps: Dict[str, Dict[str, Any]]) -> None:
+        """A short Korean message the moment the Korean score is recorded, with the plan and when to place it.  The day's summary
+        waits for the whole chain: on 4 of the 7 Korean trading mornings from 2026-11-11 to 11-20 it came after the 09:00 open,
+        while the Korean score had been ready by about 08:00 on the mornings the Mac was awake.  Once per Korean session (a
+        retried step or a later hourly run sends nothing new); a plan that cannot be read sends nothing and never stops the run."""
+        if (steps.get("QSF_KR") or {}).get("status") != OK:
+            return
+        try:
+            plan = self._term().order_plan("KR")
+            if plan.get("status") not in ("REAL", "NO_ACCOUNT") or (st.get("kr_early") or {}).get("session") == plan.get("session"):
+                return
+            tg = self.telegram(self.compose_kr_early(plan, self.now()))
+            mac = self.macos(f"한국 점수 기록 완료 {plan['session']}", "주문 계획 준비됨 · 동시호가 08:30~08:59 · 자세한 내용은 텔레그램과 화면")
+            ok = tg.get("status") == "SENT" if tg.get("status") != "NOT_CONFIGURED" else mac.get("status") == "SENT"
+            if ok:
+                st["kr_early"] = {"session": plan["session"], "at": self.now().isoformat()}
+                self._save(st)
+        except Exception:
+            pass
+
+    @staticmethod
+    def compose_kr_early(plan: Dict[str, Any], now: datetime, shown: int = 8) -> str:
+        from terminal.qsf import order_plan as op
+        lines = [f"🇰🇷 한국 점수 기록 완료 (기준 거래일 {plan['session']}, {now.astimezone(KST):%H:%M} KST)", ""]
+        if plan["status"] == "NO_ACCOUNT":
+            by = plan.get("candidates_by") or {}
+            part = lambda s, label: f"{label} {(by.get(s) or {}).get('all', 0)}(매수 구간 {(by.get(s) or {}).get('buy', 0)})"      # noqa: E731
+            lines += [f"진입 가능 후보 {plan.get('candidates', 0)}종목: {part('SWING', '스윙')}, {part('LONG', '장기')}.",
+                      "계좌 평가액이 없어 수량은 계산하지 않았습니다(화면 '내 계좌'에 기록하면 계산합니다)."]
+        else:
+            orders = plan.get("orders") or []
+            lines.append(f"내 계좌 기준 주문 계획 {len(orders)}종목 (진입 후보 {plan.get('candidates', 0)}종목)" if orders else
+                         f"한도 안에서 새로 살 후보가 없습니다 (진입 후보 {plan.get('candidates', 0)}종목).")
+            for o in orders[:shown]:
+                price = o.get("limit_order") if o.get("limit_order") is not None else o["limit"]
+                lines.append(f"· {o.get('name') or o['ticker']}({o['ticker']}) {'장기' if o['style'] == 'LONG' else '스윙'} {o['shares']:,}주, 지정가 {price:,.0f}원"
+                             + (f" · {o['band_label']}" if o.get("band_label") else ""))
+            if len(orders) > shown:
+                lines.append(f"· 외 {len(orders) - shown}종목은 화면의 주문 계획에서")
+        lines += ["", op.kr_timing_now(now) + " 08:30~08:59에 KRX 지정가로 넣으면 시가 단일가로 체결됩니다(NXT 프리마켓 주문은 다릅니다).",
+                  "전체 요약은 모든 작업이 끝난 뒤 따로 보냅니다. 주문을 보내지 않으며, 규칙 계산 결과이지 매매 지시가 아닙니다."]
+        return "\n".join(lines)
+
     def _wait_for_network(self) -> bool:
         """Up to NETWORK_WAIT_S for a name lookup to work.  launchd starts the job the moment the lid opens, before Wi-Fi is back."""
         waited = 0.0
@@ -816,6 +859,8 @@ class Daily:
             self._mark(name, k, len(todo))
             steps[name] = self._timed_step(name, session)
             self._save(st)
+            if name == "QSF_KR":
+                self._kr_early(st, steps)
         # A step that failed within minutes most likely met a network that was not up yet (lid just opened).  Waiting for the next
         # hourly firing can lose the day: the chain runs for about two hours and launchd drops the firings in between.  One more
         # try at the end; "data not ready" is left alone, since the provider will not have it a minute later either.
@@ -826,6 +871,8 @@ class Daily:
                 self._mark(name, k, len(todo))
                 steps[name] = {**self._timed_step(name, session), "retried": True}
                 self._save(st)
+                if name == "QSF_KR":
+                    self._kr_early(st, steps)
         self._mark("WRAP_UP", len(todo), len(todo))
         st["kr_day"] = kr_day
         self._kr_holdings(st)

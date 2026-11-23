@@ -978,7 +978,7 @@ class Terminal(ModelViews):
         equity = val["summary"]["equity"]
         if not equity or equity <= 0:
             return {"status": "NO_ACCOUNT", "market": market, "session": session, "candidates": len(cands), "candidates_by": op.count_by(cands), "note": note, "market_state": mstate, "stance": stance_shown,
-                    "reason": "계좌 평가액이 없습니다. '내 계좌'에 입금·거래를 기록하면 그 계좌 기준으로 계획을 보여 줍니다."}
+                    "timing_note": op.TIMING_NOTE[market], "reason": "계좌 평가액이 없습니다. '내 계좌'에 입금·거래를 기록하면 그 계좌 기준으로 계획을 보여 줍니다."}
         account = {"equity": equity, "cash": state["cash"],
                    "positions": {h["ticker"]: {"style": h.get("style"), "value": h.get("value") or 0.0, "sector": h.get("sector")} for h in val["holdings"]}}
         from terminal.qsf import holding, rank_book, turnover_book
@@ -987,12 +987,14 @@ class Terminal(ModelViews):
         rank = rank_book.active_rules(self.base, market)             # the same for the rank rules: an entry only inside the day's top share
         outside = op.outside_top(cands, op.ahead_share(snaps, session), rank["entry_top"]) if rank else None
         plan = op.build(cands, account, market, st, sized, blocked=blocked, outside=outside)
+        for o in plan["orders"]:            # the price an order can carry: the cap rounded down to the price step (display only)
+            o["limit_order"] = op.order_price(market, o["limit"])
         # what the market state alone asked for stays readable apart from the stance
         plan.update(size_factor=float(mstate.get("size_factor") or 1.0), new_exposure_cap=mstate.get("new_exposure_cap"), stance=stance_shown,
                     market_state={k: mstate.get(k) for k in op.STATE_SHOWN})
         bands = op.annotate(plan["orders"], {r["ticker"]: r["deal"] for r in latest.get("rows") or [] if r.get("deal")},
                             bands={(c["ticker"], c["style"]): c.get("band") for c in cands})          # display only
-        return {"status": "REAL", "session": session, "equity": equity, "cash": state["cash"], "integrity": integ["status"], "note": note, "turnover_rules": bool(rules),
+        return {"status": "REAL", "session": session, "equity": equity, "cash": state["cash"], "integrity": integ["status"], "note": note, "timing_note": op.TIMING_NOTE[market], "turnover_rules": bool(rules),
                 "rank_rules": bool(rank), "reentry_wait": blocked or {}, "bands": bands, **plan}
 
     def market_state(self, market: str = "US") -> Dict[str, Any]:

@@ -770,12 +770,12 @@ async function qsfLookahead() {
 // ------------------------------------------------------------------ order plan (real account) and the paper book
 function qsfOrderRows(orders, binding) {
   return orders.map((o) => `<tr><td class="l"><b>${esc(o.name || o.ticker)}</b> <span class="meta">${esc(o.ticker)}</span>${qsfDealTag(o.deal)}</td><td>${o.style === "LONG" ? "장기" : "스윙"}</td><td class="num">${o.score.toFixed(1)}${o.band_label ? `<div class="meta" style="margin:0">${esc(o.band_label)}</div>` : ""}</td>
-    <td class="num">${fmt(o.shares, 0)}</td><td class="num">${money(o.ref_close)}</td><td class="num">${money(o.limit)}</td><td class="num">${money(o.stop)}</td><td class="num">${isNum(o.target) ? money(o.target) : DASH}</td>
+    <td class="num">${fmt(o.shares, 0)}</td><td class="num">${money(o.ref_close)}</td><td class="num"${isNum(o.limit_order) ? ` title="계산한 상한 ${money(o.limit)}을 호가 단위로 내린 가격입니다. 이 가격 그대로 주문할 수 있습니다."` : ""}>${money(isNum(o.limit_order) ? o.limit_order : o.limit)}</td><td class="num">${money(o.stop)}</td><td class="num">${isNum(o.target) ? money(o.target) : DASH}</td>
     <td class="num">${money(o.notional, 0)} <span class="meta">(${o.weight_pct.toFixed(1)}%)</span></td><td class="num">${o.risk_pct.toFixed(2)}%</td><td class="l">${esc((binding || {})[o.binding] || o.binding_label || o.binding)}</td>
     <td class="num" title="스프레드 가정 ${o.slippage_bps.spread}bp + 주문 크기 충격 ${isNum(o.slippage_bps.impact) ? o.slippage_bps.impact.toFixed(1) : "?"}bp">${o.slippage_bps.total.toFixed(1)}bp</td>
     <td class="num">${money(o.fee_buy)} / ${money(o.fee_sell)}</td><td class="num">${o.est_round_trip_pct.toFixed(2)}%</td></tr>`).join("");
 }
-const QSF_ORDER_HEAD = `<thead><tr><th class="l">종목</th><th>스타일</th><th>점수</th><th>수량</th><th title="계획을 만든 날의 종가">기준 종가</th><th title="다음 시가가 이 가격보다 높으면 따라가지 않습니다">지정가 상한</th><th>손절</th><th>목표</th><th>금액 (비중)</th>
+const QSF_ORDER_HEAD = `<thead><tr><th class="l">종목</th><th>스타일</th><th>점수</th><th>수량</th><th title="계획을 만든 날의 종가">기준 종가</th><th title="기준 종가 + 0.5 ATR을 호가 단위로 내린 가격(내 계좌 계획). 다음 시가가 이 가격보다 높으면 따라가지 않습니다">지정가 상한</th><th>손절</th><th>목표</th><th>금액 (비중)</th>
   <th title="손절에 닿았을 때 계좌 대비 손실">위험</th><th class="l" title="수량을 정한 한도">묶인 한도</th><th title="편도 슬리피지 추정">슬리피지 추정</th><th title="토스증권 공시 수수료와 매도 세금">수수료 매수 / 매도</th><th title="수수료·세금 + 슬리피지 추정의 왕복 합계">왕복 예상 비용</th></tr></thead>`;
 function qsfSkipLine(counts, labels) {
   const parts = Object.entries(counts || {}).map(([k, n]) => `${esc((labels || {})[k] || k)} ${n}종목`);
@@ -786,7 +786,7 @@ function qsfPlanHtml(d) {
   const how = `<div class="meta">프로그램이 진입 상태를 '지금 진입 가능'(장기는 '진입을 막는 조건 없음')으로 읽은 종목을 점수 높은 순으로 놓고, 설정해 두신 한도(거래당 위험, 종목 비중, 장기·스윙 비중, 섹터 비중)와 현금 안에서 수량을 정합니다. 이미 보유한 종목과 같은 날 이미 계획된 종목에는 주문을 또 만들지 않습니다.</div>`;
   if (!d) return "";
   if (d.status === "NO_SCAN") return `<div class="panel">${title}${how}<div class="empty">기록된 스캔이 없습니다.</div></div>`;
-  if (d.status === "NO_ACCOUNT") return `<div class="panel">${title}${how}${d.market_state ? qsfMarketState(d.market_state) : ""}<div class="empty">${esc(d.reason)} 오늘 진입 후보는 ${d.candidates}종목입니다.</div></div>`;
+  if (d.status === "NO_ACCOUNT") return `<div class="panel">${title}${how}${d.market_state ? qsfMarketState(d.market_state) : ""}<div class="empty">${esc(d.reason)} 오늘 진입 후보는 ${d.candidates}종목입니다.</div>${d.timing_note ? `<div class="meta">${esc(d.timing_note)}</div>` : ""}</div>`;
   const a = d.assumptions;
   const body = d.orders.length
     ? `<div class="tbl-wrap"><table>${QSF_ORDER_HEAD}<tbody>${qsfOrderRows(d.orders)}</tbody></table></div>`
@@ -796,8 +796,8 @@ function qsfPlanHtml(d) {
     ${d.market_state ? qsfMarketState(d.market_state) : ""}${d.size_factor < 1 ? `<div class="notice">시장 상태가 나쁘거나 읽을 수 없는 날이라 새 주문의 거래당 위험 한도와 종목 비중 한도를 ${(d.size_factor * 100).toFixed(0)}%로 계산했습니다.${d.new_exposure_cap ? ` 새 주문의 합계도 계좌의 ${(d.new_exposure_cap * 100).toFixed(0)}%까지만 잡았습니다(이 계획의 합계 ${isNum(d.new_exposure_pct) ? d.new_exposure_pct.toFixed(1) : "?"}%).` : ""}</div>` : ""}
     ${d.stance && d.stance.note ? `<div class="notice">${esc(d.stance.note)}${Object.keys(d.stance.left_out_by || {}).length ? ` 빠진 이유: ${Object.entries(d.stance.left_out_by).map(([k, n]) => `${esc(k)} ${n}건`).join(", ")}.` : ""}</div>` : ""}
     ${body}${d.bands && d.bands.note ? `<div class="notice">${esc(d.bands.note)}</div>` : ""}${qsfSkipLine(d.skipped_counts, Object.fromEntries((d.skipped || []).map((s) => [s.code, s.reason])))}
-    <div class="meta">비용: ${esc(a.cost_basis)}. ${esc(a.slippage_note)} 주문은 종목의 20일 평균 거래대금의 ${a.max_participation_pct}%를 넘지 않게 줄이고, 계좌의 ${a.min_weight_pct}% 미만인 주문은 만들지 않습니다. 지정가 상한은 기준 종가 + ${a.limit_atr} ATR입니다.</div>
-    <div class="meta">${esc(d.note)}</div></div>`;
+    <div class="meta">비용: ${esc(a.cost_basis)}. ${esc(a.slippage_note)} 주문은 종목의 20일 평균 거래대금의 ${a.max_participation_pct}%를 넘지 않게 줄이고, 계좌의 ${a.min_weight_pct}% 미만인 주문은 만들지 않습니다. 지정가 상한은 기준 종가 + ${a.limit_atr} ATR을 호가 단위로 내린 가격입니다.</div>
+    ${d.timing_note ? `<div class="notice">${esc(d.timing_note)}</div>` : ""}<div class="meta">${esc(d.note)}</div></div>`;
 }
 async function qsfPlan() {
   const box = $("#qsfplan"); if (!box) return;
