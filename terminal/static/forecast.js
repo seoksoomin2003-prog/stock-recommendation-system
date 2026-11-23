@@ -59,12 +59,12 @@ function fcTouchLines(d, levels) {
   const head = `<h3>기준에 닿을 가능성 <span class="meta m0">예측 층 FC-2 · 종가 기준</span> ${fcTouchBadge(t.test)}</h3>`;
   if (!t.table) return `${head}<div class="meta">닿을 가능성은 ${esc(t.first)} 거래일 기록부터 보입니다. 지금 보이는 기록(${esc(d.session)})은 그 전에 쓴 것이라 표가 없습니다. 비워 둔 것이며 0이 아닙니다.</div>`;
   const rows = levels.map((l) => { const cs = hs.map((h) => fcTouchCell(d, l, h)), far = cs[cs.length - 1];
-    return `<tr><td class="l"><b>스윙 ${esc(l.name)}</b></td><td class="num">${qsfPrice(l.v, d.market)}</td>
-      <td class="num" title="${hs[hs.length - 1]}거래일 변동성의 몇 배 거리인가">${isNum(far.dist) ? far.dist.toFixed(2) + "배" : DASH}</td>
-      ${cs.map((c) => `<td class="num">${isNum(c.p) ? `<b>${c.text}</b>` : c.text}</td>`).join("")}
-      <td class="num">${isNum(far.past) ? fcPct(far.past, 0) : DASH}</td></tr>`; }).join("");
+    return `<tr><td class="l"><b>스윙 ${esc(l.name)}</b></td><td class="num" data-l="가격">${qsfPrice(l.v, d.market)}</td>
+      <td class="num" data-l="변동성 대비 거리" title="${hs[hs.length - 1]}거래일 변동성의 몇 배 거리인가">${isNum(far.dist) ? far.dist.toFixed(2) + "배" : DASH}</td>
+      ${cs.map((c, i) => `<td class="num" data-l="${hs[i]}거래일 안에">${isNum(c.p) ? `<b>${c.text}</b>` : c.text}</td>`).join("")}
+      <td class="num" data-l="같은 묶음의 과거 실제">${isNum(far.past) ? fcPct(far.past, 0) : DASH}</td></tr>`; }).join("");
   const src = hs.map((h) => t.table.horizons[h].source === "EMPIRICAL" ? null : `${h}거래일은 과거 경로가 모자라 공식 값`).filter(Boolean).join(", ");
-  return `${head}<div class="tbl-wrap"><table class="fc-table"><thead><tr><th class="l">스윙 카드의 기준</th><th>가격</th><th title="가장 긴 지평의 변동성 대비 거리">변동성 대비 거리</th>
+  return `${head}<div class="tbl-wrap"><table class="fc-table tbl-stack"><thead><tr><th class="l">스윙 카드의 기준</th><th>가격</th><th title="가장 긴 지평의 변동성 대비 거리">변동성 대비 거리</th>
       ${hs.map((h) => `<th title="앞으로 ${h}거래일 안의 어느 날 종가가 이 기준에 이르거나 넘을 가능성">${h}거래일 안에</th>`).join("")}
       <th title="과거 점검에서 이 종목과 같은 변동성 묶음이 같은 거리에 실제로 닿은 비율(가장 긴 지평)">같은 묶음의 과거 실제</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="meta">${esc(t.note)} ${fcTouchReason(t.test)}${src ? ` ${src}.` : ""} 손절은 종가가 기준 이하로, 목표는 기준 이상으로 마감하는 경우입니다. 같은 거리라면 모든 종목에 같은 값이며 점수와 무관합니다. 하락장에서는 손절에 닿는 비율이 이보다 높았고, 손절과 목표 중 어느 쪽에 먼저 닿는지는 계산하지 않습니다. 손절·목표 기준과 주문 계획은 이 숫자로 바뀌지 않습니다.</div>`;
@@ -102,8 +102,8 @@ function fcLevelLines(d, levels) {
   const hs = FC_HORIZONS.filter((h) => d.ranges[h]);
   if (!levels.length || !hs.length) return "";
   const where = (l, h) => { const r = d.ranges[h], a = Math.abs(l.log); return a <= r.log_half50 ? 0 : a <= r.log_half80 ? 1 : 2; };
-  const rows = levels.map((l) => `<tr><td class="l"><b>스윙 ${esc(l.name)}</b></td><td class="num">${qsfPrice(l.v, d.market)}</td><td class="num">${fcSigned(l.pct)}</td>${hs.map((h) => `<td class="l">${FC_WHERE[where(l, h)]}</td>`).join("")}</tr>`).join("");
-  return `<div class="tbl-wrap"><table class="fc-table"><thead><tr><th class="l">스윙 카드의 기준</th><th>가격</th><th title="카드의 조회 시세 대비 거리">시세 대비</th>${hs.map((h) => `<th class="l">${h}거래일 범위에서</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
+  const rows = levels.map((l) => `<tr><td class="l"><b>스윙 ${esc(l.name)}</b></td><td class="num" data-l="가격">${qsfPrice(l.v, d.market)}</td><td class="num" data-l="시세 대비">${fcSigned(l.pct)}</td>${hs.map((h) => `<td class="l" data-l="${h}거래일 범위에서">${FC_WHERE[where(l, h)]}</td>`).join("")}</tr>`).join("");
+  return `<div class="tbl-wrap"><table class="fc-table tbl-stack"><thead><tr><th class="l">스윙 카드의 기준</th><th>가격</th><th title="카드의 조회 시세 대비 거리">시세 대비</th>${hs.map((h) => `<th class="l">${h}거래일 범위에서</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
     <div class="meta">읽는 법(위·아래를 합친 크기 기준): '50% 범위 폭 안쪽'이면 그 거래일 수 뒤 종가가 이 거리보다 멀리 가 있을 경우가 절반을 넘고, '80% 범위 밖'이면 다섯 번에 한 번보다 적습니다. ${esc(d.path_note || "")} 손절·목표 기준과 주문 계획은 이 범위로 바뀌지 않습니다.</div>`;
 }
 function fcDirection(d) {
@@ -124,12 +124,12 @@ function fcStockHtml(d, cards) {
   const levels = fcLevels(cards), t = d.test;
   const cell = (r, key, hw) => `${qsfPrice(r[key][0], d.market)} ~ ${qsfPrice(r[key][1], d.market)} <span class="meta m0">(${fcSigned(r[key][0] / d.close - 1)} ~ ${fcSigned(hw)})</span>`;
   const body = hs.map((h) => { const r = d.ranges[h], th = t && t.horizons[h];
-    return `<tr><td class="l">${h}거래일 뒤</td><td class="l">${cell(r, "p50", r.half_width50)}</td><td class="l">${cell(r, "p80", r.half_width80)}</td>
-      <td class="num">${th ? fcPct(th.cover50.all) : DASH}</td><td class="num">${th ? fcPct(th.cover80.all) : DASH}</td></tr>`; }).join("");
+    return `<tr><td class="l">${h}거래일 뒤</td><td class="l" data-l="50% 범위">${cell(r, "p50", r.half_width50)}</td><td class="l" data-l="80% 범위">${cell(r, "p80", r.half_width80)}</td>
+      <td class="num" data-l="과거 실제 (50%)">${th ? fcPct(th.cover50.all) : DASH}</td><td class="num" data-l="과거 실제 (80%)">${th ? fcPct(th.cover80.all) : DASH}</td></tr>`; }).join("");
   const r0 = d.ranges[hs[0]], third = r0.vol_third;
   const bias = t ? `과거 점검에서 이 묶음의 80% 범위가 실제로 담은 비율은 ${hs.map((h) => `${fcPct(t.horizons[h].by_vol[d.ranges[h].vol_third])}(${h}거래일)`).join(", ")}입니다${third === 0 ? ": 범위가 조금 좁게 나오는 묶음" : third === 2 ? ": 범위가 조금 넓게 나오는 묶음" : ""}.` : "";
   return `${head}${fcStrip(d, levels)}
-    <div class="tbl-wrap"><table class="fc-table"><thead><tr><th class="l">지평</th><th class="l">50% 범위 (종가 대비)</th><th class="l">80% 범위 (종가 대비)</th><th title="과거 점검에서 50% 범위가 실제로 담은 비율">과거 실제 (50%)</th><th title="과거 점검에서 80% 범위가 실제로 담은 비율">과거 실제 (80%)</th></tr></thead><tbody>${body}</tbody></table></div>
+    <div class="tbl-wrap"><table class="fc-table tbl-stack"><thead><tr><th class="l">지평</th><th class="l">50% 범위 (종가 대비)</th><th class="l">80% 범위 (종가 대비)</th><th title="과거 점검에서 50% 범위가 실제로 담은 비율">과거 실제 (50%)</th><th title="과거 점검에서 80% 범위가 실제로 담은 비율">과거 실제 (80%)</th></tr></thead><tbody>${body}</tbody></table></div>
     <div class="meta">${fcTestReason(t, d.bands)} 이 종목은 기록일 ${r0.forecast}종목 중 변동성 <b>${FC_THIRD[third]}</b> 3분의 1입니다. ${bias}${t ? ` 시장이 급변한 평가일(${hs.map((h) => fcPct(t.horizons[h].stress_share)).join(", ")})에는 80% 범위가 종목 절반도 담지 못했습니다.` : ""}</div>
     ${fcLevelLines(d, levels)}${fcTouchLines(d, levels)}${fcDirection(d)}`;
 }

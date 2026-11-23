@@ -77,7 +77,7 @@ async function renderPortfolio() {
     <div class="panel span-all"><h2>거래 기록 <span class="meta m0">${d.journal.length}건 · 추가만 가능, 취소는 별도 기록으로 남습니다</span></h2>
       ${d.journal.length ? `<div class="tbl-wrap"><table><thead><tr><th>날짜</th><th class="l">종류</th><th class="l">종목</th><th>수량</th><th>가격</th><th>금액</th><th class="l">메모</th><th></th></tr></thead>
       <tbody>${d.journal.map(journalRow).join("")}</tbody></table></div>` : '<div class="empty">기록이 없습니다.</div>'}</div>
-    <div class="panel meta">${esc(d.note)}</div>` });
+    <div class="meta span-all m0">${esc(d.note)}</div>` });
   $("#jgo").onclick = () => acctRecord(mk);
   loadSignals();
   el.querySelectorAll("[data-void]").forEach((b) => (b.onclick = async (e) => {

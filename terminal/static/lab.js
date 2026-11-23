@@ -36,8 +36,8 @@ async function renderComparison() {
       독립 표본이 ${d.min_independent}개 이상 쌓이기 전에는 어느 모델이 낫다고 판단하지 마세요.</div>
     <div class="tbl-wrap"><table><thead><tr><th>모델</th><th class="l">성격</th><th>코호트</th>${H.map((h) => `<th>${h}일 평균 초과수익<br><span class="meta m0">vs SPY</span></th>`).join("")}<th class="l">최근 선정 종목</th></tr></thead>
     <tbody>${d.order.map((m) => { const r = d.results[m] || { cohorts: 0, horizons: {} }; const meta = d.models[m] || {};
-      return `<tr><td title="${esc(meta.rule || "")}"><b>${esc(meta.name || m)}</b>${m === "P6-11B" ? " " + badge("FROZEN") : ""}</td><td class="l">${esc(meta.style || "")}</td>
-        <td class="num">${r.cohorts}</td>${H.map((h) => cell(r.horizons[String(h)])).join("")}<td class="l" style="white-space:normal;min-width:220px">${latest(m)}</td></tr>`; }).join("")}</tbody></table></div>
+      return `<tr><td title="${esc(meta.rule || "")}"><b>${esc(meta.name || m)}</b>${m === "P6-11B" ? " " + badge("FROZEN") : ""}</td><td class="l wrap">${esc(meta.style || "")}</td>
+        <td class="num">${r.cohorts}</td>${H.map((h) => cell(r.horizons[String(h)])).join("")}<td class="l" style="white-space:normal;min-width:160px">${latest(m)}</td></tr>`; }).join("")}</tbody></table></div>
     <div class="meta">${esc(d.method)} 가격 데이터 마지막 날 ${esc(d.panel_last || "없음")} · 다음 신호일 ${esc(d.signal_session)}.</div>
     <div class="mt-3"><button id="labrun" class="btn-primary">데이터 갱신 + 오늘 신호 기록</button>
       <span class="meta" id="labmsg">미국 장 마감(동부 17:00, 한국 오전 7시경) 이후에 실행하면 그날 종가로 기록됩니다. 같은 날 여러 번 눌러도 한 번만 기록됩니다.</span></div>
@@ -177,7 +177,7 @@ async function renderRecord() {
   const rows = (us.progress || []).map((p) => {
     const k = pk[`${p.strategy}|${p.horizon}`] || {};
     const cell = (x) => `${isNum(x.independent) ? x.independent.toFixed(1) : DASH} / ${x.target} <span class="meta m0">(만기 ${x.matured_sessions})</span>`;
-    return `<tr${p.primary ? ' class="rec-primary"' : ""}><td class="l">${p.strategy === "SWING" ? "스윙" : "장기"} ${p.horizon}거래일${p.primary ? " (주 지평)" : ""}</td><td class="num">${p.needed_sessions.toLocaleString("ko-KR")}</td><td class="num">${cell(p)}</td><td class="num">${cell(k)}</td><td class="num">${SPAN(p.remaining_years)}</td></tr>`;
+    return `<tr${p.primary ? ' class="rec-primary"' : ""}><td class="l">${p.strategy === "SWING" ? "스윙" : "장기"} ${p.horizon}거래일${p.primary ? " (주 지평)" : ""}</td><td class="num" data-l="필요 거래일">${p.needed_sessions.toLocaleString("ko-KR")}</td><td class="num" data-l="미국 독립 표본">${cell(p)}</td><td class="num" data-l="한국 독립 표본">${cell(k)}</td><td class="num" data-l="남은 기간 (미국)">${SPAN(p.remaining_years)}</td></tr>`;
   }).join("");
   const mk = (name, q) => `<div><span>${name} 기록 거래일</span><b class="num">${q.sessions}</b></div><div><span>${name} 현재 버전</span><b class="num">${q.current_version_sessions}</b></div><div><span>${name} 마지막 기록</span><b>${esc(q.last || "—")}</b></div>`;
   const stat = { OK: "완료", FAILED: "실패", SKIPPED: "건너뜀", WAITING: "자료 대기" };
@@ -186,7 +186,7 @@ async function renderRecord() {
   el.innerHTML = `<div class="panel"><h2>전향 기록 현황 <span class="tech-id">${esc(d.model_version)}</span></h2>
     ${d.alerts.length ? `<ul class="rec-alerts">${d.alerts.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("")}</ul>` : '<div class="meta">문제없이 기록이 쌓이고 있습니다.</div>'}
     <h3>QSF 점수 기록</h3><div class="kv">${mk("미국", us)}${mk("한국", kr)}</div>
-    <h3>판단까지 남은 기간</h3><div class="tbl-wrap"><table><thead><tr><th class="l">지평</th><th>필요 거래일</th><th>미국 독립 표본</th><th>한국 독립 표본</th><th>남은 기간 (미국)</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <h3>판단까지 남은 기간</h3><div class="tbl-wrap"><table class="tbl-stack"><thead><tr><th class="l">지평</th><th>필요 거래일</th><th>미국 독립 표본</th><th>한국 독립 표본</th><th>남은 기간 (미국)</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="meta">현재 버전 기록만 셉니다. 독립 표본은 만기 거래일 수를 지평으로 나눈 값이고, ${d.minimum_independent}개가 기준입니다. 남은 기간은 매 거래일 빠짐없이 기록한다고 가정한 값입니다.</div>
     <h3>기준 모델 기록</h3>${b.status === "REAL" ? `<div class="kv"><div><span>자본금</span><b>${b.capital_configured ? "입력됨" : '<span class="missing">미입력</span>'}</b></div><div><span>결과 확정 / 기준</span><b class="num">${b.completed} / ${b.target}</b></div><div><span>결과 대기</span><b class="num">${b.pending}</b></div><div><span>유효 스캔 날짜</span><b class="num">${b.scan_dates}</b></div><div><span>마지막 유효 스캔</span><b>${esc(b.last_scan_date || "—")}</b></div></div>` : `<div class="empty">추적 기록을 읽지 못했습니다 (${esc(b.error || "")}).</div>`}
     <h3>한국 결합 점수 기록 <span class="meta m0">라이브와 분리</span></h3><div class="kv"><div><span>기록 거래일</span><b class="num">${f.sessions}</b></div><div><span>마지막 기록</span><b>${esc(f.last || "—")}</b></div><div><span>늦은 기록</span><b class="num">${f.late}</b></div><div><span>독립 표본 (20거래일)</span><b class="num">${f.independent.toFixed(1)} / ${f.target}</b></div><div><span>남은 기간</span><b>${SPAN(f.remaining_sessions / 252)}</b></div><div><span>시세 대조 (KRX)</span><b>${f.price_check ? `${esc(f.price_check.session)}: ${f.price_check.checked}종목 중 ${f.price_check.gaps}개 차이` : DASH}</b></div></div>
@@ -195,15 +195,17 @@ async function renderRecord() {
     <h3>미국 도전자 점수 기록 <span class="meta m0">라이브와 분리</span></h3><div class="kv"><div><span>기록 거래일</span><b class="num">${u.sessions}</b></div><div><span>마지막 기록</span><b>${esc(u.last || "—")}</b></div><div><span>늦은 기록</span><b class="num">${u.late}</b></div><div><span>스윙 독립 표본 (20거래일)</span><b class="num">${u.independent.toFixed(1)} / ${u.target}</b></div><div><span>장기 독립 표본 (63거래일)</span><b class="num">${u.long_independent.toFixed(1)} / ${u.target}</b></div></div>
     <div class="meta">점수와 날짜만 쌓습니다. 수익률은 표본이 찬 뒤 한 번만 평가합니다. 이 점수는 추천과 라이브 점수에 쓰이지 않습니다.${u.sessions ? "" : ` 첫 기록 대상은 ${esc(u.first_due)}입니다.`}</div>
     ${recAudit(d.price_audit)}
-    <h3>자동 실행</h3><div class="kv">${d.disk ? `<div><span>디스크 여유</span><b class="num">${d.disk.free_gb}GB</b></div>` : ""}${d.backup ? `<div><span>마지막 백업</span><b>${esc(d.backup.latest || "—")}</b></div>` : ""}<div><span>설치</span><b>${a.installed ? "설치됨" : '<span class="missing">미설치</span>'}</b></div><div><span>실행 시각</span><b>${esc(a.schedule_text || (a.schedule_kst || []).join(", "))}</b></div><div><span>마지막 실행</span><b>${a.last_run_at ? when(a.last_run_at) : DASH}</b></div><div><span>기준 거래일</span><b>${esc(a.latest_session || "—")}</b></div></div>
+    <h3 id="rec-auto">자동 실행</h3><div class="kv">${d.disk ? `<div><span>디스크 여유</span><b class="num">${d.disk.free_gb}GB</b></div>` : ""}${d.backup ? `<div><span>마지막 백업</span><b>${esc(d.backup.latest || "—")}</b></div>` : ""}<div><span>설치</span><b>${a.installed ? "설치됨" : '<span class="missing">미설치</span>'}</b></div><div><span>실행 시각</span><b>${esc(a.schedule_text || (a.schedule_kst || []).join(", "))}</b></div><div><span>마지막 실행</span><b>${a.last_run_at ? when(a.last_run_at) : DASH}</b></div><div><span>기준 거래일</span><b>${esc(a.latest_session || "—")}</b></div></div>
     <div class="meta">${a.steps.map((s) => `${esc(s.name)}: ${esc(stat[s.status] || "기록 없음")}`).join(" · ")}</div>
     <div class="meta">${esc(d.note)}</div></div>`;
 }
 // 작업 화면 개편 7단계 (배치 명세 3.16): 가운데 칸에 과거 시뮬레이션, 오른쪽 칸에 전향 기록 현황(한 칸에서는 맨 앞, 지금 순서).  한국은
 // 가운데 칸이 한 문장뿐이라 한 칸(.ws--single)으로 기록을 넓게 먼저 보여 줍니다.
+// 전향 기록 현황을 그리는 중인 약속: 위 막대의 데이터 시각 칩(app.js)이 그리기를 기다렸다가 자동 실행 묶음(#rec-auto)으로 내려갑니다.
+let labRecordReady = Promise.resolve();
 RENDER.lab = async function () {
-  $("#tab-lab").innerHTML = `<div class="${isKR() ? "ws ws--single" : "ws"}" data-ws="lab"><div class="ws-body"><div class="ws-main" id="labbody"></div>
+  $("#tab-lab").innerHTML = `<div class="${isKR() ? "ws ws--single" : "ws"}" data-ws="lab"><div class="ws-ctx"><h2>연구실 <span class="meta m0">${isKR() ? "전향 기록 현황" : "과거 시뮬레이션 · 전향 기록 현황"}</span></h2></div><div class="ws-body"><div class="ws-main" id="labbody"></div>
     <div class="ws-right" role="complementary" aria-label="전향 기록 현황"><div id="recpanel" class="ws-first"></div></div></div></div>`;
-  renderRecord();
+  labRecordReady = renderRecord();
   await renderLab();
 };

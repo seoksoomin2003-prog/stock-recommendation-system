@@ -780,14 +780,26 @@ main.wide > .tab:not(:has(> .ws)) { max-width: var(--content-max-wide); }
 .ws-lower > .span-all, .ws-lower > .fold, .ws-lower > :only-child { grid-column: 1 / -1; }
 .ws-lower:empty, .ws-ctx:empty { display: none; }
 .ws-empty { color: var(--muted); font-size: var(--fs-md); padding: var(--sp-5) var(--sp-4); min-height: 96px; display: flex; align-items: center; justify-content: center; text-align: center; }
+/* Two columns (stage 8, critic P1-4): the whole .ws becomes the grid and .ws-body steps aside (display: contents), so the lower line
+   sits in the main column under the main panels and the right column spans both rows instead of leaving the main column half empty.
+   The last row takes the slack (1fr), so a tall right column never opens a gap between main and lower.  Without a context line the
+   rows move up one. */
 @container content (min-width: 1120px) {
-  .ws:not(.ws--single) > .ws-body:has(> .ws-right > :not([hidden]):not(:empty)) { grid-template-columns: minmax(0, 1fr) var(--ws-right); }
-  .ws:not(.ws--single) > .ws-body:has(> .ws-right > :not([hidden]):not(:empty)) > .ws-main { grid-column: 1; grid-row: 1; }
+  .ws:not(.ws--single):has(> .ws-body > .ws-right > :not([hidden]):not(:empty)) {
+    display: grid; grid-template-columns: minmax(0, 1fr) var(--ws-right); grid-template-rows: auto auto 1fr; gap: var(--gutter); align-items: start; }
+  .ws:not(.ws--single):has(> .ws-body > .ws-right > :not([hidden]):not(:empty)) > .ws-ctx { grid-column: 1 / -1; grid-row: 1; }
+  .ws:not(.ws--single):has(> .ws-body > .ws-right > :not([hidden]):not(:empty)) > .ws-body { display: contents; }
+  .ws:not(.ws--single) > .ws-body:has(> .ws-right > :not([hidden]):not(:empty)) > .ws-main { grid-column: 1; grid-row: 2; }
   .ws:not(.ws--single) > .ws-body:has(> .ws-right > :not([hidden]):not(:empty)) > .ws-right {
-    display: flex; flex-direction: column; gap: var(--ws-gap); grid-column: 2; grid-row: 1; min-width: 0;
+    display: flex; flex-direction: column; gap: var(--ws-gap); grid-column: 2; grid-row: 2 / span 2; min-width: 0;
     position: sticky; top: calc(var(--sticky-top, 0px) + var(--gutter)); z-index: var(--z-raise);
     max-height: calc(100vh - var(--sticky-top, 0px) - 2 * var(--gutter)); overflow-y: auto; overscroll-behavior: contain;
     container: wsright / inline-size; }
+  .ws:not(.ws--single):has(> .ws-body > .ws-right > :not([hidden]):not(:empty)) > .ws-lower { grid-column: 1; grid-row: 3; }
+  .ws:not(.ws--single):not(:has(> .ws-ctx:not(:empty))):has(> .ws-body > .ws-right > :not([hidden]):not(:empty)) { grid-template-rows: auto 1fr; }
+  .ws:not(.ws--single):not(:has(> .ws-ctx:not(:empty))) > .ws-body:has(> .ws-right > :not([hidden]):not(:empty)) > .ws-main { grid-row: 1; }
+  .ws:not(.ws--single):not(:has(> .ws-ctx:not(:empty))) > .ws-body:has(> .ws-right > :not([hidden]):not(:empty)) > .ws-right { grid-row: 1 / span 2; }
+  .ws:not(.ws--single):not(:has(> .ws-ctx:not(:empty))):has(> .ws-body > .ws-right > :not([hidden]):not(:empty)) > .ws-lower { grid-row: 2; }
 }
 /* 오늘, one column (chief): the question box, then the candidates, then 할 일과 알림 — so the candidates do not sink under a long list */
 .ws[data-ws="today"] > .ws-body > .ws-main { display: contents; }
@@ -919,10 +931,16 @@ tr.me > td:first-child, #qsfplan tr.hl > td:first-child, .qsf-rrow[aria-expanded
   .qsf-srow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 }
 @media (hover: hover) { @container content (min-width: 1120px) { .qsf-srow:hover > td { background: var(--row-hover); } } }
-/* column sets of the ranking by its own column's width (2.7): Full 12 columns from 1184 px; Medium (860-1183) drops the four area bars
+/* column sets of the ranking by its own column's width (2.7): Full 12 columns from 1120 px (stage 8, chief decision on QR-31: the area
+   bars stay at 1920 px with the full menu and the right column open, main about 1144 px; from 1120 to 1259 px the name column and the
+   area bars are a little narrower so the set fits); Medium (860-1119) drops the four area bars
    (the card shows them) and puts the day's change under the score; Compact (640-859) also wraps entry and reasons and puts the
    band-edge mark under the score; Narrow (< 640) is the phone set.  The table fits each set, so its header stays sticky (QR-36). */
-@container wsmain (max-width: 1183px) {
+@container wsmain (max-width: 1259px) {
+  .qsf-rank-tbl .qr-name { min-width: 128px; }
+  .qsf-rank-tbl .qd-bar { width: 18px; }
+}
+@container wsmain (max-width: 1119px) {
   .qsf-rank-tbl .qd-col, .qsf-rank-tbl .qr-dcol { display: none; }
   .qsf-rank-tbl .qr-md { display: block; }                                   /* the day's change sits under the score */
 }
@@ -1060,3 +1078,98 @@ td.corr-cell { background: color-mix(in srgb, var(--viz-bar) calc(var(--r, 0) * 
 .phone-why { display: none; }
 .on-phone .phone-why { display: inline; }
 .on-phone #qsfstanceseg button, .on-phone .qsf-fund-switch { opacity: 0.55; cursor: not-allowed; }
+
+/* Workstation stage 8 (2026-11-24): refinement after the visual critique (audit/ui_redesign/VISUAL_CRITIQUE.md) and the functional check.
+   The two-column grid above (lower line in the main column), the ranking's column sets, and below: the score card in the right column
+   (sticky head, short table forms), the screener's one area column, the Today candidates in a narrow column, the ranking's 읽는 법 fold,
+   and the P2 polish (whole Korean words, the rail menu, small sideways scrolls). */
+.nw { white-space: nowrap; }
+body { word-break: keep-all; overflow-wrap: break-word; }
+/* P1-1: the card's head (name, 종목 화면, 닫기) stays at the top of the right column while the card scrolls under it.  Only in two
+   columns: the right column is the container "wsright" (and the scroller) only then. */
+@container wsright (min-width: 1px) {
+  #qsfdetail > .panel > h2 { position: sticky; top: 0; z-index: calc(var(--z-raise) + 1); background: var(--panel); margin: calc(-1 * var(--sp-3)) calc(-1 * var(--sp-4)) var(--sp-2);
+    padding: var(--sp-3) var(--sp-4) var(--sp-2); border-bottom: 1px solid var(--line-soft); border-radius: var(--r-lg) var(--r-lg) 0 0; }
+}
+/* short form of the card's tables in a narrow right column: one block per row, each value under its column name (data-l) */
+@container wsright (max-width: 520px) {
+  .tbl-wrap:has(> table.tbl-stack) { overflow: visible; background: none; }
+  table.tbl-stack, table.tbl-stack > tbody { display: block; width: 100%; }
+  table.tbl-stack > thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  table.tbl-stack > tbody > tr { display: block; padding: var(--sp-2) 0; border-bottom: 1px solid var(--line-soft); }
+  table.tbl-stack > tbody > tr:last-child { border-bottom: 0; }
+  table.tbl-stack > tbody > tr > td { display: block; height: auto; padding: 1px 0; border: 0; text-align: left; white-space: normal; position: static; background: none; }
+  table.tbl-stack > tbody > tr > td:first-child { font-weight: 600; padding-bottom: 2px; }
+  table.tbl-stack > tbody > tr > td[data-l]::before { content: attr(data-l); display: inline-block; min-width: 8.5em; margin-right: var(--sp-2); color: var(--muted); font-size: var(--fs-sm); font-weight: 400; }
+  .fc-legend { margin-left: 0; }
+  .fc-row { grid-template-columns: 64px 1fr; gap: 6px; }
+}
+/* P1-5: below 900 px of main the screener's four area columns become one column of four small bars (numbers in the title) */
+.qs-table .qs-dmini { display: none; }
+.qs-mini { display: inline-flex; align-items: flex-end; gap: 3px; height: 20px; padding-bottom: 1px; border-bottom: 1px solid var(--axis); vertical-align: middle; }
+.qs-mini i { display: block; width: 7px; background: var(--viz-bar); border-radius: 1px 1px 0 0; }
+.qs-mini i.none { height: 100%; background: transparent; box-shadow: inset 0 0 0 1px var(--viz-missing-edge); }
+@container wsmain (max-width: 899px) {
+  .qs-table .qs-dcol { display: none; }
+  .qs-table .qs-dmini { display: table-cell; text-align: center; }
+  .qs-table td:last-child { white-space: normal; min-width: 110px; word-break: keep-all; }
+}
+/* P1-6: Today candidates in a narrow column: the chip alone (its title has the full name) and the 가점/감점 lines wrap */
+.asst-cand { container: acand / inline-size; }
+@container acand (max-width: 440px) {
+  .asst-cand .an-sub { display: none; }
+  .asst-cand .an { min-width: 0; }
+  .asst-cand td.aw { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; min-width: 0; }
+  .asst-cand td { padding-left: 4px; padding-right: 4px; }
+}
+/* P1-8: one line above the ranking, the rest in 읽는 법 */
+.qr-caveat { margin-top: 0; }
+.qr-how { margin: var(--sp-1) 0 var(--sp-2); font-size: var(--fs-sm); }
+.qr-how > summary { cursor: pointer; color: var(--muted); width: max-content; max-width: 100%; }
+.qr-how > summary:hover { color: var(--ink); }
+.qr-how[open] > summary { margin-bottom: var(--sp-1); }
+/* P2-12: a Today item is one row with its buttons on the right when there is room */
+.asst-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-1) var(--sp-3); }
+.asst-item > .asst-act { margin-top: 0; }
+.asst-item > :first-child { flex: 1 1 320px; min-width: 0; }
+/* P2-4: the rail fits 800 px of height: the group headings are read by screen readers only and a thin line parts the groups; the menu
+   still scrolls when it is taller than the window, and show() rolls it so the current tab is in view. */
+@media (min-width: 1024px) {
+  html[data-nav="rail"] .nav-h { position: absolute; width: 1px; height: 1px; padding: 0; margin: 0; overflow: hidden; clip: rect(0 0 0 0); border: 0; }
+  html[data-nav="rail"] .nav-grp + .nav-grp::before { content: ""; display: block; height: 1px; margin: 6px 12px; background: var(--line); }
+  html[data-nav="rail"] .tabs { padding-top: var(--sp-2); }
+  html[data-nav="rail"] .tabs button { min-height: 40px; }
+}
+@media (max-width: 640px) { .qsf-rank-tbl .qr-push { white-space: normal; } }      /* P2-7: the ranking fits a 390 px phone without a sideways scroll */
+/* P2-7: the small sideways scrolls.  통합 계좌 holdings: two-line headers and a wrapping name below 900 px of main; 투자위원회: the three
+   text columns wrap; 모델: the model description wraps (lab.js).  연구실's 판단까지 남은 기간 uses the short form in the right column. */
+@container wsmain (max-width: 899px) {
+  #acctholds th { white-space: normal; word-break: keep-all; }
+  #acctholds td:nth-child(2) { white-space: normal; min-width: 110px; }
+  #acctholds th, #acctholds td { padding-left: 6px; padding-right: 6px; }
+}
+table.ic-top td:first-child { white-space: normal; min-width: 140px; }
+table.ic-top td:nth-last-child(-n+3) { white-space: normal; min-width: 104px; word-break: keep-all; }
+/* a table's column names may take two lines in the narrow right column (비교 기간 성과) and in 모델's top-stock table below 900 px */
+@container wsright (max-width: 520px) { .ws-right th { white-space: normal; word-break: keep-all; } }
+@container wsmain (max-width: 899px) { .ws[data-ws="model"] .ws-main th { white-space: normal; word-break: keep-all; } }
+/* P2-6: the daily top-3 tables of 판정 일정 share their column positions, so the eye reads straight down */
+@container wsmain (min-width: 640px) {
+  table.qt3 { table-layout: fixed; }
+  table.qt3 col.qt3-r { width: 64px; } table.qt3 col.qt3-s { width: 72px; } table.qt3 col.qt3-p { width: 46%; }
+  table.qt3 td { white-space: normal; overflow-wrap: anywhere; }
+}
+/* P2-8: a lower-line panel keeps its own height instead of stretching to its neighbour (a one-line "no sales yet" panel beside a chart) */
+.ws-lower { align-items: start; }
+/* P2-2: a market tile's sparkline gives way to a long price instead of pushing out of the tile */
+.card .row > div:first-child { min-width: 0; }
+.card .row > canvas { flex: 0 1 70px; min-width: 40px; }
+/* 시장별 자세히 holdings (13 columns): below 900 px of main the cells and column names wrap at whole words */
+@container wsmain (max-width: 899px) {
+  .pf-hold th, .pf-hold td { white-space: normal; word-break: keep-all; padding-left: 6px; padding-right: 6px; }
+  .pf-hold td:first-child { min-width: 104px; }
+}
+@container wsmain (max-width: 899px) {
+  .ws[data-ws="coin"] .ws-main th { white-space: normal; word-break: keep-all; }
+  .ws[data-ws="coin"] .ws-main td:nth-child(2) { white-space: normal; min-width: 96px; }
+}

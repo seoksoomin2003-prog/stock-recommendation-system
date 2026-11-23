@@ -98,8 +98,11 @@ def test_the_menu_folds_the_card_but_a_card_link_and_back_forward_do_not():
 
 # ---------------------------------------------------------------- P1-10 judgement and entry at every width
 def test_the_ranking_fits_by_width_without_losing_judgement_or_entry():
-    # workstation stage 4 (layout spec 2.7): the steps follow the ranking's own column (container wsmain), not the window
-    medium = media(CSS, "wsmain (max-width: 1183px)", "@container {} {{")
+    # workstation stage 4 (layout spec 2.7): the steps follow the ranking's own column (container wsmain), not the window.
+    # Stage 8 (chief decision on QR-31): the full set with the area bars starts at 1120 px of column, so the bars stay at 1920 px with the
+    # full menu and the right column open (column about 1144 px); medium is 860-1119 px.
+    medium = media(CSS, "wsmain (max-width: 1119px)", "@container {} {{")
+    assert "wsmain (max-width: 1183px)" not in CSS and ".qsf-rank-tbl .qd-bar { width: 18px; }" in media(CSS, "wsmain (max-width: 1259px)", "@container {} {{")
     assert ".qsf-rank-tbl .qd-col, .qsf-rank-tbl .qr-dcol { display: none; }" in medium and ".qsf-rank-tbl .qr-md { display: block; }" in medium
     compact = media(CSS, "wsmain (max-width: 859px)", "@container {} {{")
     assert ".qsf-rank-tbl .qr-why { white-space: normal; min-width: 100px; }" in compact and "td.w2 { white-space: normal; word-break: keep-all;" in compact

@@ -483,7 +483,7 @@ $("#topmenu").onclick = (e) => {
 };
 document.addEventListener("click", (e) => { if (!e.target.closest("#moresheet, #bottombar")) moreClose(); if (!e.target.closest("#topmenu, #topmore")) topClose(false); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") { moreClose(); topClose(); drawerClose(); } });
-// 왼쪽 메뉴의 폭 (사용자 결정 2026-11-24): 1280px 이상 펼침(232px), 1024~1279px 좁은 줄(72px).  ☰로 바꾼 폭은 이 브라우저에 남깁니다
+// 왼쪽 메뉴의 폭 (사용자 결정 2026-11-24): 1440px 이상 펼침(232px), 1024~1439px 좁은 줄(72px; 8단계 전에는 1280px부터 펼침).  ☰로 바꾼 폭은 이 브라우저에 남깁니다
 // (qse-nav).  641~1023px에서는 ☰가 서랍(264px)을 열고 닫으며, 서랍은 남기지 않습니다.  640px 이하에는 ☰가 없습니다(아래 막대).
 const navWide = () => window.matchMedia("(min-width: 1024px)").matches;
 let navMem = null;            // 저장을 못 하는 브라우저에서 이 페이지 동안만 기억하는 폭
@@ -495,8 +495,11 @@ function paintNavToggle() {
   const label = navWide() ? (open ? "메뉴 접기" : "메뉴 펼치기") : open ? "메뉴 닫기" : "메뉴 열기";
   t.setAttribute("aria-expanded", String(open)); t.setAttribute("aria-label", label); t.title = label;
 }
+// 저장한 폭이 없을 때: 1440px 미만이면 좁은 줄로 시작해 화면이 두 칸이 되게 합니다 (사용자 결정 2026-11-24, 작업 화면 개편 8단계).
+// ☰로 고른 폭(qse-nav)은 늘 그대로 따릅니다.  theme.js가 첫 페인트 전에 같은 규칙을 씁니다.
+const NAV_RAIL_BELOW = "(max-width: 1439px)";
 function navApply() {
-  const n = navPref() || (window.matchMedia("(max-width: 1279px)").matches ? "rail" : "full");
+  const n = navPref() || (window.matchMedia(NAV_RAIL_BELOW).matches ? "rail" : "full");
   if (document.documentElement.dataset.nav !== n) { document.documentElement.dataset.nav = n; requestAnimationFrame(() => { setTopH(); redrawAll(); }); }
   paintNavToggle();
 }
@@ -522,7 +525,7 @@ $("#navtoggle").onclick = () => {
   navApply();
 };
 $("#navscrim").onclick = () => drawerClose();
-window.matchMedia("(max-width: 1279px)").addEventListener("change", navApply);
+window.matchMedia(NAV_RAIL_BELOW).addEventListener("change", navApply);
 window.matchMedia("(max-width: 1023px)").addEventListener("change", () => { drawerClose(false); paintNavToggle(); });
 navApply();
 // 메뉴 안에서는 화살표 위아래(폰 줄에서는 좌우), Home, End로 탭 사이를 옮깁니다.  Tab 키로는 지금 탭 하나에만 멈춥니다.
@@ -582,6 +585,8 @@ function show(tab, push = true) {
   if (healthAt && Date.now() - healthAt > 30000) loadHealth();      // 탭을 옮길 때도 화면이 업데이트됐는지 확인합니다
   document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
   paintGroups(tab);
+  const onBtn = document.querySelector(".tabs button.on");                // 메뉴가 창보다 길면 지금 탭이 보이게 메뉴만 굴립니다 (8단계)
+  if (onBtn && navWide() && onBtn.offsetParent) onBtn.scrollIntoView({ block: "nearest" });
   drawerClose();                                                     // 서랍에서 고른 경우: 닫고 ☰로 초점을 돌려줍니다
   document.querySelectorAll(".tab").forEach((s) => s.classList.toggle("on", s.id === "tab-" + tab));
   $("main").classList.toggle("wide", WIDE_TABS.has(tab));
@@ -977,7 +982,8 @@ function renderFund(f) {
   }
   const cell = (r, y) => {
     const v = r.values[y];
-    if (r.unit === "ratio") return isNum(v) ? (r.key === "debt_ratio" ? `${(v * 100).toFixed(0)}%` : pct(v * 100, 1, false)) : DASH;
+    // 이익률 같은 비율은 수준이지 움직임이 아니라 가격 색을 쓰지 않습니다 (8단계, 시각화 명세 8절: 오르내림 색은 변화에만)
+    if (r.unit === "ratio") return isNum(v) ? (r.key === "debt_ratio" ? `${(v * 100).toFixed(0)}%` : `<span class="num">${(v * 100).toFixed(1)}%</span>`) : DASH;
     if (r.unit === "USD/shares") return isNum(v) ? `$${v.toFixed(2)}` : DASH;
     if (r.unit === "KRW/shares") return isNum(v) ? `${Math.round(v).toLocaleString("ko-KR")}원` : DASH;
     return big(v, r.unit === "KRW" ? "KRW" : "USD");
@@ -1004,7 +1010,8 @@ function renderFilings(f) {
 function drawPrice() {
   const cv = $("#pc"), c = lastChart;
   if (!cv || !c || !c.bars.length || !cv.isConnected) return;
-  const H = isPhone() ? 300 : 420;
+  // 넓은 화면에서는 창 높이를 따라 420~640px (작업 화면 개편 8단계: 오른쪽 칸 옆에 빈 자리가 남지 않게).  폰은 300px 그대로.
+  const H = isPhone() ? 300 : Math.round(Math.min(640, Math.max(420, window.innerHeight - 380)));
   const { ctx, w, h } = setupCanvas(cv, H);
   const bars = c.bars, n = bars.length, padR = 58, padT = 8, volH = Math.round(h * 0.18), gap = 18, priceH = h - volH - gap - padT - 18;
   const pw = w - padR, bw = pw / n;
@@ -1255,7 +1262,7 @@ async function renderModel() {
     // 작업 화면 개편 7단계 (배치 명세 3.15): 맨 위 줄에 모델 이름, 오른쪽 칸(한 칸에서는 맨 앞)에 자본금과 마지막 스캔, 가운데 칸에 상위 종목 표,
     // 아래 줄에 전향적 추적과 도전자 모델(미국은 lab.js가 비교 표로 바꿈).  설정(자본금)과 결과(표)가 따로 섭니다.
     el.innerHTML = ui.ws({ name: "model", label: "자본금과 마지막 스캔",
-      ctx: `<h2>${esc(b.name)} ${badge(b.status || "FROZEN")} <span class="meta m0">${esc(b.role)}</span></h2>`,
+      ctx: `<h2>모델 <span class="tech-id" title="기준 모델의 이름입니다. 기록을 비교할 때 씁니다.">${esc(b.name)}</span> ${badge(b.status || "FROZEN")} <span class="meta m0">${esc(b.role)}</span></h2>`,
       right: `<div class="panel ws-first"><h2>투자 자본금과 마지막 스캔</h2>
       <div class="form" style="margin:0 0 12px"><label>투자 자본금 (${esc(cap.currency)})<input id="capInput" inputmode="decimal" autocomplete="off" value="${isNum(cap.amount) ? cap.amount : ""}" placeholder="금액 입력"></label><button id="capSave">저장</button>${mk === "KR" ? '<button id="capRun" type="button" title="저장된 금액으로 한국 모델 스캔을 실행합니다">스캔 실행</button>' : ""}<div class="wide meta m0" id="capNote"></div><div class="wide meta m0" id="capRunNote"></div></div>
       ${b.newer_empty_scan ? `<div class="notice">더 최근 스캔(${when(b.newer_empty_scan.executed_at)}, 기준 거래일 ${esc(b.newer_empty_scan.latest_session || "")})은 그날 시세가 아직 다 나오지 않아 채점한 종목이 없었습니다. 아래는 그 전의 마지막 유효 결과입니다.</div>` : ""}
@@ -1270,8 +1277,9 @@ async function renderModel() {
       lower: `<div class="panel"><h2>전향적 추적 ${badge(t.status)}</h2>${t.status === "REAL" ? `<div class="kv"><div><span>기록된 실행</span><b>${esc(t.runs)}</b></div><div><span>관찰 건수</span><b>${esc(t.observations)}</b></div>${t.excluded_runs ? `<div title="같은 거래일을 두 번 스캔한 기록입니다. 지우지 않고 집계에서만 뺍니다."><span>집계 제외 (중복 스캔)</span><b>실행 ${esc(t.excluded_runs)}개 · ${esc(t.excluded_observations)}건</b></div>` : ""}
         <div><span>최근 갱신</span><b>${esc(t.latest_update || "—")}</b></div></div>
         ${t.outcome_states ? `<div class="kv">${Object.entries(t.outcome_states).map(([k, v]) => `<div><span>${esc(outKo(k))}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
-        <div class="meta">표본이 충분히 쌓이기 전에는 성과를 판단할 수 없습니다.</div>` : `<div class="empty">추적 데이터를 읽지 못했습니다. ${esc(t.error ? errKo({ message: t.error }) : "")}</div>`}</div>
-      <div class="panel"><h2>도전자 모델</h2><div class="empty">${esc(d.challenger_note)}</div></div>` });
+        <div class="meta">표본이 충분히 쌓이기 전에는 성과를 판단할 수 없습니다.</div>` : `<div class="empty">추적 데이터를 읽지 못했습니다. ${esc(t.error ? errKo({ message: t.error }) : "")}</div>`}
+        ${mk === "KR" ? `<div class="meta"><b>도전자 모델</b> ${esc(d.challenger_note)}</div>` : ""}</div>
+      ${mk === "KR" ? "" : `<div class="panel"><h2>도전자 모델</h2><div class="empty">${esc(d.challenger_note)}</div></div>`}` });
     wireCapital(el, cap, b, mk);
   } catch (e) { el.innerHTML = errBox(e); }
 }
@@ -1347,7 +1355,13 @@ async function paintTimeChip() {
 }
 function topChips() { paintStateChip(); paintTimeChip(); }
 $("#mstate").onclick = () => Promise.resolve(show("qsf")).then(() => { const st = $("#qsfstrip"); if (st) { st.open = true; st.scrollIntoView({ block: "nearest" }); } });
-$("#datatime").onclick = () => Promise.resolve(show("lab")).then(() => { const n = $("#autoline"); if (n) n.scrollIntoView({ block: "nearest" }); });
+// 연구실의 자동 실행 묶음(#rec-auto)은 전향 기록 현황(renderRecord)이 /api/record를 받은 뒤에 생깁니다: 그 그리기를 기다린 뒤 내려갑니다
+// (작업 화면 개편 8단계: 예전에는 모델 탭에만 있는 #autoline을 찾아 아무 데도 가지 않았습니다).
+$("#datatime").onclick = async () => {
+  await show("lab");
+  if (typeof labRecordReady !== "undefined") await labRecordReady.catch(() => {});
+  const n = $("#rec-auto"); if (n && state.tab === "lab") n.scrollIntoView({ block: "start" });
+};
 window.addEventListener("DOMContentLoaded", topChips);                // after qsf.js has defined qsfStateShort
 setInterval(paintTimeChip, 5 * 60 * 1000);
 setInterval(loadHealth, 5 * 60 * 1000);
@@ -1362,6 +1376,8 @@ function fromHash() {
   if (tab === "qsf" && !card && typeof qsfState !== "undefined") {
     const v = QSF_VIEWS[view] ? view : "rank";
     if (booted && state.tab === "qsf") { if (v !== qsfState.view) qsfSetView(v); return; }
+    // 다른 탭에서 왔고 순위·카드를 이미 그려 두었으면 다시 그리지 않으므로(qsfReturn) 연 뒤에 보기를 맞춥니다 (작업 화면 개편 8단계)
+    if (booted && state.loaded.qsf && $("#qsfview")) { show("qsf", false); if (v !== qsfState.view) qsfSetView(v); return; }
     qsfState.view = v;
   }
   // #committee:ports 처럼 투자위원회의 보기 (작업 화면 개편 7단계, O-7): 같은 탭이면 보기만 바꾸고, 이미 그려 둔 탭이면 연 뒤 보기를 맞춥니다.
