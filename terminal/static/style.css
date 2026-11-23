@@ -434,7 +434,7 @@ details[open] > summary .fold-hint { display: none; }
 /* UI 점검 2026-11-23: 순위 표, 근거 균형 상자, 오늘 탭의 숫자와 후보 */
 .qsf-rank-tbl td { vertical-align: top; }
 .qsf-rank-tbl .qr-name { white-space: normal; min-width: 150px; }
-.qsf-rank-tbl .qr-why { white-space: nowrap; font-size: var(--fs-sm); }
+.qsf-rank-tbl .qr-why { white-space: nowrap; font-size: var(--fs-sm); word-break: keep-all; overflow-wrap: anywhere; }   /* when it wraps, a Korean word moves whole */
 .qsf-rank-tbl .qr-out { color: var(--warn); font-size: var(--fs-sm); white-space: normal; }
 .qsf-rrow { cursor: pointer; }
 .qsf-rrow:hover td, .qsf-rrow[aria-expanded="true"] td { background: var(--chip); }
@@ -507,7 +507,7 @@ details[open] > summary .fold-hint { display: none; }
   .qsf-rank-tbl .qr-name { min-width: 90px; }
   .qsf-rank-tbl > * > tr > td, .qsf-rank-tbl > * > tr > th { padding: 6px 5px; }
 }
-@media (max-width: 400px) { .qsf-rank-tbl .qr-why { min-width: 72px; font-size: var(--fs-sm); } }
+@media (max-width: 400px) { .qsf-rank-tbl .qr-why { min-width: 68px; font-size: var(--fs-sm); } }   /* 68: whole words still fit a 360 px phone */
 
 /* UI batch 3 P2-3 (2026-11-23): utility classes that replaced the common inline styles in the JS templates.  They keep
    the precedence an inline style had (!important), so a screen-level rule does not move them.  Margins sit on the 4 px grid. */

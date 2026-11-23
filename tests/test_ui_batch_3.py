@@ -160,3 +160,10 @@ def test_the_phone_header_is_one_line_and_the_computer_keeps_a_sticky_group_bar(
     assert "position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-header); height: 56px;" in phone and "body { padding-bottom: 56px; }" in phone
     assert ".groups { position: sticky; top: var(--top-h, 0px); z-index: var(--z-header); }" in media(CSS, "min-width: 641px")
     assert ".bottombar, .moresheet { display: none; }" in CSS and "setTopH();" in APP and "new ResizeObserver(setTopH)" in APP
+
+
+# ---------------------------------------------------------------- batch 2 leftover: the reason column on a phone
+def test_the_reason_column_keeps_korean_words_whole_and_fits_a_small_phone():
+    base = CSS[CSS.index(".qsf-rank-tbl .qr-why {"):CSS.index("}", CSS.index(".qsf-rank-tbl .qr-why {"))]
+    assert "word-break: keep-all" in base and "overflow-wrap: anywhere" in base                    # a word longer than the cell still breaks
+    assert ".qsf-rank-tbl .qr-why { min-width: 68px;" in media(CSS, "max-width: 400px")
