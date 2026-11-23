@@ -164,6 +164,6 @@ def test_the_coin_market_is_wired_into_the_server_and_the_screen():
     assert '<button type="button" data-m="COIN">코인</button>' in html and '<button type="button" data-group="coin" hidden>코인</button>' in html and 'id="tab-coin"' in html
     assert html.index("assistant.js") < html.index("coin.js") < html.index("command.js")
     assert 'const groupShown = (g) => (isCoin() ? g === "today" || g === "coin" : g !== "coin");' in app and 'if (isCoin()) { askAssistant(t);' in app
-    assert "RENDER.coin = renderCoin" in coin and "/api/coin/latest" in coin and "esc(r.coin)" in coin and "esc(d.reason" in coin and "주문" in coin.splitlines()[0]
+    assert "RENDER.coin = renderCoin" in coin and "/api/coin/latest" in coin and "esc(r.coin)" in coin and ("esc(d.reason" in coin or "ui.empty(d.reason" in coin) and "주문" in coin.splitlines()[0]
     design = (ROOT / "reports" / "CRYPTO_ENGINE_DESIGN_2026_11_21.md").read_text(encoding="utf-8")
     assert "새 코인 점수를 만들지 않고" in design and "구현 기록" in design

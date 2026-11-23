@@ -40,7 +40,7 @@ async function renderChart() {
   state.loaded.chart = true;
   const el = $("#tab-chart"), mk = state.market, t = chaTicker();
   const chips = [...CHA_HOME[mk], ...recentTickers().filter((x) => marketOf(x) === mk).slice(0, 6)];
-  el.innerHTML = `<div class="panel"><h2>차트분석 <span class="meta" style="margin:0">${esc(chaName(t))}${chaName(t) !== t ? ` · ${esc(t)}` : ""}</span></h2>
+  el.innerHTML = `<div class="panel"><h2>차트분석 <span class="meta m0">${esc(chaName(t))}${chaName(t) !== t ? ` · ${esc(t)}` : ""}</span></h2>
     <form id="cha-form" class="cmp-bar" autocomplete="off"><input id="cha-q" maxlength="15" placeholder="${isKR() ? "종목 코드 (예: 005930)" : "종목 코드 (예: AAPL)"}" aria-label="차트로 볼 종목 코드">
       <button type="submit">보기</button>${chips.map((x) => `<button type="button" class="chip${x === t ? " on" : ""}" data-cha="${esc(x)}">${esc(chaName(x))}</button>`).join("")}</form>
     <div class="cha-ctl"><span class="seg" id="cha-rng">${Object.entries(CHA_RANGES).map(([r, n]) => `<button type="button" data-r="${r}" class="${r === cha.range ? "on" : ""}">${n}</button>`).join("")}</span>
@@ -53,7 +53,7 @@ async function renderChart() {
       <div class="cha-xline" id="cha-x" hidden></div></div>
     <div class="legend" id="cha-legend"></div><div id="cha-meta"><div class="meta">불러오는 중…</div></div></div>
     <div class="panel"><h2>지금 상태</h2><div class="notice" id="cha-caveat"></div><div id="cha-lines"></div></div>
-    <div class="panel"><h2>최근 신호 <span class="meta" style="margin:0" id="cha-sig-n"></span></h2><div id="cha-sigs"></div></div>`;
+    <div class="panel"><h2>최근 신호 <span class="meta m0" id="cha-sig-n"></span></h2><div id="cha-sigs"></div></div>`;
   $("#cha-form").onsubmit = (e) => { e.preventDefault(); const q = $("#cha-q").value.trim(); if (q) chartWith(q); };
   el.querySelectorAll("[data-cha]").forEach((b) => (b.onclick = () => chartWith(b.dataset.cha)));
   $("#cha-rng").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; cha.range = b.dataset.r; chaSave(); renderChart(); };
@@ -71,9 +71,9 @@ async function renderChart() {
 }
 function chaControls(d) {
   const s = d.settings, mk = state.market, on = new Set(d.ma || []);
-  $("#cha-ma").innerHTML = `<span class="meta" style="margin:0">이동평균</span>${s.ma_choices.map((n) => `<label class="cha-opt"><input type="checkbox" data-ma="${n}"${on.has(n) ? " checked" : ""}>
+  $("#cha-ma").innerHTML = `<span class="meta m0">이동평균</span>${s.ma_choices.map((n) => `<label class="cha-opt"><input type="checkbox" data-ma="${n}"${on.has(n) ? " checked" : ""}>
     <span class="swatch" style="background:${chaMaColor(n)}"></span>${n}일</label>`).join("")}
-    <button type="button" class="ghost" id="cha-ma-def">기본(${s.ma_default[mk].join("·")})</button><span class="meta" style="margin:0">최대 ${s.ma_max}개</span>`;
+    <button type="button" class="ghost" id="cha-ma-def">기본(${s.ma_default[mk].join("·")})</button><span class="meta m0">최대 ${s.ma_max}개</span>`;
   $("#cha-ma").querySelectorAll("[data-ma]").forEach((b) => (b.onchange = () => {
     const got = [...$("#cha-ma").querySelectorAll("[data-ma]:checked")].map((x) => +x.dataset.ma);
     if (got.length > s.ma_max) { b.checked = false; alert(`이동평균은 한 번에 ${s.ma_max}개까지 그립니다.`); return; }
@@ -183,7 +183,7 @@ function chaDraw() {
   $("#cha-legend").innerHTML = [...mas.map((k) => `<span><i style="background:${chaMaColor(k)}"></i>${k}일선</span>`),
     cha.bb ? `<span><i style="background:${muted}"></i>볼린저밴드(${s.bollinger.n}일, ±${s.bollinger.k}표준편차)</span>` : "",
     `<span><i style="background:${ink}"></i>거래량 ${s.volume.n}일 평균</span>`, `<span><i style="background:${acc}"></i>RSI·MACD선</span>`, `<span><i style="background:${chaMaColor(20)}"></i>MACD 시그널</span>`,
-    cha.sig ? `<span><b class="up">▲</b> 오름 쪽 · <b class="down">▼</b> 내림 쪽 신호 · <b style="color:var(--warn)">●</b> 거래량 급증 (모두 검증 안 됨)</span>` : ""].join("");
+    cha.sig ? `<span><b class="up">▲</b> 오름 쪽 · <b class="down">▼</b> 내림 쪽 신호 · <b class="c-warn">●</b> 거래량 급증 (모두 검증 안 됨)</span>` : ""].join("");
   chaHover();
 }
 function chaGrid(ctx, pw, lo, hi, y, grid, muted, label, rows = 4, at = null) {

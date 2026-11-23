@@ -48,8 +48,8 @@ function asstTiles(t) {
   const ms = t.market_state, bad = ms && ms.state !== "FAVOURABLE";
   const st = ms && isNum(ms.score_100) ? `<div class="card asst-state" title="어떤 종목 점수에도 들어가지 않는 값입니다"><div class="nm">시장 상태 <span class="muted">점수 미반영</span></div>
       <div class="px num">${ms.score_100.toFixed(0)}<small class="muted">/100</small></div>
-      <div><span class="badge${bad ? " risk-note" : ""}">${esc(ms.label || "")}</span>${bad && isNum(ms.size_factor) && ms.size_factor < 1 ? ` <span class="meta" style="margin:0">새 주문 크기 ${(ms.size_factor * 100).toFixed(0)}%</span>` : ""}</div>
-      <div class="meta" style="margin-top:4px">${esc(ms.session || "")} 기록</div></div>` : "";
+      <div><span class="badge${bad ? " risk-note" : ""}">${esc(ms.label || "")}</span>${bad && isNum(ms.size_factor) && ms.size_factor < 1 ? ` <span class="meta m0">새 주문 크기 ${(ms.size_factor * 100).toFixed(0)}%</span>` : ""}</div>
+      <div class="meta mt-1">${esc(ms.session || "")} 기록</div></div>` : "";
   return `<div class="grid asst-tiles">${t.items.map(card).join("")}${st}</div>${meta(t.source || "", t.fetched_at)}`;
 }
 // 오늘의 후보(사용자 결정 2026-11-23): 스타일마다 '지금 진입 가능'(장기는 '진입을 막는 조건 없음')인 종목을 점수순으로 다섯까지.
@@ -62,10 +62,10 @@ function asstCands(c, note) {
   const one = (k) => {
     const s = c.styles[k];
     if (!s) return "";
-    const rows = s.rows.map((r) => `<tr><td class="l an"><button type="button" class="chip" data-ticker="${esc(r.ticker)}">${esc(r.ticker)}</button> <span class="meta" style="margin:0">${esc(r.name || "")}</span><div class="qr-m2">${esc(r.band_label || "")}</div></td>
+    const rows = s.rows.map((r) => `<tr><td class="l an"><button type="button" class="chip" data-ticker="${esc(r.ticker)}">${esc(r.ticker)}</button> <span class="meta m0">${esc(r.name || "")}</span><div class="qr-m2">${esc(r.band_label || "")}</div></td>
       <td class="num"><b>${qsfInt(r.score)}</b>${moved(r)}${qsfNear(r.score, c.band_edges)}</td><td class="l w">${esc(r.band_label || "")}</td><td class="l w">${esc(sectorKo(r.sector))}</td><td class="l aw">${why(r)}</td></tr>`).join("");
     const ready = k === "LONG_TERM" ? "진입을 막는 조건 없음" : "지금 진입 가능";
-    return `<div class="asst-cand"><h4>${ASST_STYLE[k]} <span class="meta" style="margin:0">${ready} ${s.total}종목 · 그중 매수 후보 구간(70점 이상) ${s.buy_band}</span></h4>
+    return `<div class="asst-cand"><h4>${ASST_STYLE[k]} <span class="meta m0">${ready} ${s.total}종목 · 그중 매수 후보 구간(70점 이상) ${s.buy_band}</span></h4>
       ${rows ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>점수</th><th class="l w">구간</th><th class="l w">업종</th><th class="l">가점 / 감점</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="meta">${ready}인 종목이 없습니다.</div>`}</div>`;
   };
   return `<h3>오늘의 후보 ${c.session ? `<span class="badge">${esc(c.session)}</span>` : ""}</h3>${note ? `<div class="notice">${esc(note)}</div>` : ""}<div class="asst-cands">${one("SWING")}${one("LONG_TERM")}</div><div class="meta">${esc(c.note || "")}</div>`;
@@ -101,7 +101,7 @@ async function renderToday() {
     }).join("");
     const opsBox = ops.length ? `<details class="asst-ops"${ops.some((i) => i.level === "ACT") ? " open" : ""}><summary>작업 상태 (자동 실행·기록) <span class="badge">${ops.length}</span></summary><ul class="asst-list">${ops.map(asstItem).join("")}</ul></details>` : "";
     const unread = (d.unread_parts || []).length ? `<div class="msg err">읽지 못한 부분: ${d.unread_parts.map((p) => esc(p.label)).join(", ")}. 이 부분의 항목은 이 화면에 빠져 있습니다.</div>` : "";
-    brief.innerHTML = `<h2>${esc(d.headline_main || d.headline)}</h2><div class="meta" style="margin-top:0">${mk} 시장 · 기준 거래일 ${esc(d.session || "기록 없음")} · ${when(d.generated_at)} 기준</div>
+    brief.innerHTML = `<h2>${esc(d.headline_main || d.headline)}</h2><div class="meta mt-0">${mk} 시장 · 기준 거래일 ${esc(d.session || "기록 없음")} · ${when(d.generated_at)} 기준</div>
       ${unread}${asstTiles(d.tiles)}${asstCands(d.candidates, d.note)}${groups ? `<h3>할 일과 알림</h3>${groups}` : '<div class="meta">보여 줄 항목이 없습니다.</div>'}${opsBox}${d.candidates && d.candidates.styles ? "" : `<div class="meta">${esc(d.note)}</div>`}`;
     if (asstSparks) redrawers.delete(asstSparks);
     asstSparks = () => brief.querySelectorAll("canvas[data-spark]").forEach((cv) => spark(cv, JSON.parse(cv.dataset.spark)));

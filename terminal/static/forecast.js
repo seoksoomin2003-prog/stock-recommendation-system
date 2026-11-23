@@ -56,7 +56,7 @@ function fcTouchCell(d, l, h) {
 function fcTouchLines(d, levels) {
   const hs = FC_HORIZONS.filter((h) => d.ranges[h]), t = d.touch;
   if (!t || !levels.length || !hs.length) return "";
-  const head = `<h3>기준에 닿을 가능성 <span class="meta" style="margin:0">예측 층 FC-2 · 종가 기준</span> ${fcTouchBadge(t.test)}</h3>`;
+  const head = `<h3>기준에 닿을 가능성 <span class="meta m0">예측 층 FC-2 · 종가 기준</span> ${fcTouchBadge(t.test)}</h3>`;
   if (!t.table) return `${head}<div class="meta">닿을 가능성은 ${esc(t.first)} 거래일 기록부터 보입니다. 지금 보이는 기록(${esc(d.session)})은 그 전에 쓴 것이라 표가 없습니다. 비워 둔 것이며 0이 아닙니다.</div>`;
   const rows = levels.map((l) => { const cs = hs.map((h) => fcTouchCell(d, l, h)), far = cs[cs.length - 1];
     return `<tr><td class="l"><b>스윙 ${l.name}</b></td><td class="num">${qsfPrice(l.v, d.market)}</td>
@@ -109,7 +109,7 @@ function fcLevelLines(d, levels) {
 function fcDirection(d) {
   const rows = Object.entries(d.direction || {}).filter(([, v]) => v).map(([s, v]) => `<li><b>${QSF_STRAT[s]} 점수 (${v.horizon}거래일)</b>:
     기대 초과 수익 ${fcSigned(v.alpha, 2)} · 대상 절반을 이길 확률 ${fcPct(v.p, 0)}. ${esc(v.reason)}
-    <span class="meta" style="margin:0">가정(설명력 ${d.ic_assumed}이 있다면): ${fcSigned(v.alpha_assumed, 2)}, ${fcPct(v.p_assumed)} · 표준화 점수 ${isNum(v.z) ? (v.z > 0 ? "+" : "") + v.z.toFixed(2) : "없음"}. 가정이며 예측이 아닙니다.</span></li>`).join("");
+    <span class="meta m0">가정(설명력 ${d.ic_assumed}이 있다면): ${fcSigned(v.alpha_assumed, 2)}, ${fcPct(v.p_assumed)} · 표준화 점수 ${isNum(v.z) ? (v.z > 0 ? "+" : "") + v.z.toFixed(2) : "없음"}. 가정이며 예측이 아닙니다.</span></li>`).join("");
   return rows ? `<details class="fc-fold"><summary>방향 쪽 숫자: 근거 기준으로 초과 수익 0, 확률 50%</summary><ul class="qsf-list">${rows}</ul></details>` : "";
 }
 function fcStockHtml(d, cards) {
@@ -122,7 +122,7 @@ function fcStockHtml(d, cards) {
   const head = `<div class="meta">${fcTestBadge(d.test)} 기준일 <b>${esc(d.session)}</b> 종가 <b>${qsfPrice(d.close, d.market)}</b>. 움직임의 크기이며 오를지 내릴지는 말하지 않습니다.</div>`;
   if (!hs.length) return head + '<div class="meta">가격 이력이 120거래일에 못 미쳐 범위를 내지 않았습니다. 비워 둔 것이며 0이 아닙니다.</div>' + fcDirection(d);
   const levels = fcLevels(cards), t = d.test;
-  const cell = (r, key, hw) => `${qsfPrice(r[key][0], d.market)} ~ ${qsfPrice(r[key][1], d.market)} <span class="meta" style="margin:0">(${fcSigned(r[key][0] / d.close - 1)} ~ ${fcSigned(hw)})</span>`;
+  const cell = (r, key, hw) => `${qsfPrice(r[key][0], d.market)} ~ ${qsfPrice(r[key][1], d.market)} <span class="meta m0">(${fcSigned(r[key][0] / d.close - 1)} ~ ${fcSigned(hw)})</span>`;
   const body = hs.map((h) => { const r = d.ranges[h], th = t && t.horizons[h];
     return `<tr><td class="l">${h}거래일 뒤</td><td class="l">${cell(r, "p50", r.half_width50)}</td><td class="l">${cell(r, "p80", r.half_width80)}</td>
       <td class="num">${th ? fcPct(th.cover50.all) : DASH}</td><td class="num">${th ? fcPct(th.cover80.all) : DASH}</td></tr>`; }).join("");
@@ -153,7 +153,7 @@ function fcTrackHtml(d, market) {
       <td class="num">${x.matured || 0} / ${d.read_at}</td><td class="num">${x.matured ? fcPct(x.cover80) : '<span class="missing">아직 없음</span>'}</td><td class="num">${x.matured ? fcPct(x.cover50) : '<span class="missing">아직 없음</span>'}</td>
       <td class="l">${rd ? `${rd.verdict === "RANGE_CALIBRATED" ? "띠 안" : "띠 밖"} (80%: ${fcParts(rd.cover80)}, 50%: ${fcParts(rd.cover50)})` : `끝난 기록일 ${d.read_at}개에서 한 번 읽음`}</td></tr>`; }).join("");
   const drow = Object.entries(d.direction_horizons).map(([s, h]) => { const x = f.direction[s] || {};
-    return `<tr><td class="l">${QSF_STRAT[s]} (${h}거래일)</td><td class="num">${d.ic_evidence[s]}</td><td class="l" style="white-space:normal">${esc(d.ic_reason[s])}</td><td class="num">${x.matured || 0}</td>
+    return `<tr><td class="l">${QSF_STRAT[s]} (${h}거래일)</td><td class="num">${d.ic_evidence[s]}</td><td class="l wrap">${esc(d.ic_reason[s])}</td><td class="num">${x.matured || 0}</td>
       <td class="num">${x.matured ? [x.high, x.middle, x.low].map((v) => fcPct(v, 0)).join(" / ") : '<span class="missing">아직 없음</span>'}</td>
       <td class="num">${x.matured ? `${qsfNum(x.brier_assumed, 4)} / ${qsfNum(x.brier_half, 4)}` : '<span class="missing">아직 없음</span>'}</td></tr>`; }).join("");
   const tt = d.touch, tq = tt && tt.test, tf = f.touch || {}, tab = tt && tt.table;
@@ -176,10 +176,10 @@ function fcTrackHtml(d, market) {
     ${t ? `<div class="tbl-wrap"><table><thead><tr><th class="l">지평</th><th title="80% 범위가 실제로 담은 비율">80% 범위: 전체 / 전반 / 후반</th><th title="50% 범위가 실제로 담은 비율">50% 범위: 전체 / 전반 / 후반</th>
       <th title="그날 변동성이 낮은, 중간, 높은 3분의 1에서 80% 범위가 담은 비율">변동성 낮음 / 중간 / 높음</th><th title="80% 범위가 종목 절반도 담지 못한 평가일의 비율">한꺼번에 틀린 날</th></tr></thead><tbody>${trow}</tbody></table></div>
     <div class="meta">조용한 종목은 범위가 조금 좁고 요동치는 종목은 조금 넓게 나옵니다. 띠 안이지만 한쪽으로 치우친 오차이며 이 판에서는 고치지 않았습니다.</div>` : ""}
-    <h3>앞으로의 기록 <span class="meta" style="margin:0">${esc(d.record.first || "")} ~ ${esc(d.record.last || "")} · 기록일 ${d.record.sessions}개${td ? ` · 최근 ${td.forecast} / ${td.universe}종목에 범위` : ""}</span></h3>
+    <h3>앞으로의 기록 <span class="meta m0">${esc(d.record.first || "")} ~ ${esc(d.record.last || "")} · 기록일 ${d.record.sessions}개${td ? ` · 최근 ${td.forecast} / ${td.universe}종목에 범위` : ""}</span></h3>
     <div class="tbl-wrap"><table><thead><tr><th class="l">지평</th><th title="최근 기록일 80% 범위 폭의 중간값">지금 80% 범위 폭</th><th title="과거 점검 구간의 중간값">과거 중간값</th><th title="지평이 끝나 채점할 수 있는 기록일">끝난 기록일</th><th>실제 포함률 (80%)</th><th>실제 포함률 (50%)</th><th class="l">판정</th></tr></thead><tbody>${rrow}</tbody></table></div>
     <div class="meta">지평이 끝난 날부터 포함률이 쌓입니다. 그 전의 수치는 판정이 아니며 어떤 점수에도 쓰지 않습니다.</div>
-    <h3>방향 쪽 숫자 <span class="meta" style="margin:0">기록만 하고 판정하지 않음</span></h3>
+    <h3>방향 쪽 숫자 <span class="meta m0">기록만 하고 판정하지 않음</span></h3>
     <div class="tbl-wrap"><table><thead><tr><th class="l">점수</th><th title="과거 시험이 기준을 통과했을 때만 0이 아닙니다">근거 기준 설명력</th><th class="l">0인 이유</th><th>끝난 기록일</th><th title="표준화 점수가 +1 이상, 사이, −1 이하인 종목이 대상 절반을 이긴 비율">점수 높음 / 중간 / 낮음이 이긴 비율</th><th title="낮을수록 좋습니다. 늘 50%라고 말하면 0.25입니다">확률 오차: 가정 / 50%</th></tr></thead><tbody>${drow}</tbody></table></div>
     <div class="meta">설명력이 0이면 기대 초과 수익은 0, 대상 절반을 이길 확률은 50%입니다. 함께 적는 가정 값(설명력 ${d.ic_assumed})은 "약한 설명력이 있다면"의 숫자이며 예측이 아닙니다. 이 표는 라이브 전향 평가가 기준을 통과했을 때만 바뀝니다.</div>
     ${touchHtml}

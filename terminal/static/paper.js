@@ -97,21 +97,21 @@ async function renderPaper() {
   const s = d.stats, dec = mk === "KR" ? 0 : 2;
   const kv = (k, v, t) => `<div${t ? ` title="${esc(t)}"` : ""}><span>${k}</span><b class="num">${v}</b></div>`;
   const tiles = `<div class="kv">${kv("평가액", isNum(d.equity) ? money(d.equity, dec) : '<span class="missing">시세 없음</span>', "현금 + 보유 종목의 최근 종가 평가")}${kv("현금", money(d.cash, dec))}
-    ${kv("넣은 모의 자금", money(d.net_deposits, dec), "넣은 금액 − 뺀 금액")}${kv("총 손익", `${ptSigned(d.total_pnl, dec)} ${isNum(d.return_pct) ? `<span class="meta" style="margin:0">(${ptPct(d.return_pct)})</span>` : ""}`, "평가액 − 넣은 모의 자금. 보유 종목은 아직 팔지 않은 평가 손익입니다")}
+    ${kv("넣은 모의 자금", money(d.net_deposits, dec), "넣은 금액 − 뺀 금액")}${kv("총 손익", `${ptSigned(d.total_pnl, dec)} ${isNum(d.return_pct) ? `<span class="meta m0">(${ptPct(d.return_pct)})</span>` : ""}`, "평가액 − 넣은 모의 자금. 보유 종목은 아직 팔지 않은 평가 손익입니다")}
     ${kv("끝난 거래 순손익", ptSigned(s.net, dec), "매도까지 끝난 거래의 손익에서 수수료·세금을 뺀 합계")}${kv("낸 수수료·세금", money(d.fees, dec), "매수·매도 기록에 적힌 수수료와 세금의 합")}
     ${kv("끝난 거래 / 이익 거래", `${s.count} / ${s.wins}`)}${kv("거래당 평균 순수익률", ptPct(s.mean_net_pct))}</div>`;
-  const prow = d.positions.map((p) => `<tr><td class="l"><b>${esc(p.name || p.ticker)}</b> <span class="meta" style="margin:0">${esc(p.ticker)}</span></td><td class="num">${fmt(p.qty, Number.isInteger(p.qty) ? 0 : 4)}</td>
-    <td class="num" title="매수 수수료를 넣은 평균">${money(p.avg)}</td><td class="num">${isNum(p.close) ? money(p.close) : '<span class="missing">시세 없음</span>'}${p.date ? ` <span class="meta" style="margin:0">${esc(p.date.slice(5))}</span>` : ""}</td>
-    <td class="num">${isNum(p.value) ? money(p.value, dec) : DASH}</td><td class="num">${ptSigned(p.unrealized, dec)} <span class="meta" style="margin:0">${ptPct(p.unrealized_pct)}</span></td>
+  const prow = d.positions.map((p) => `<tr><td class="l"><b>${esc(p.name || p.ticker)}</b> <span class="meta m0">${esc(p.ticker)}</span></td><td class="num">${fmt(p.qty, Number.isInteger(p.qty) ? 0 : 4)}</td>
+    <td class="num" title="매수 수수료를 넣은 평균">${money(p.avg)}</td><td class="num">${isNum(p.close) ? money(p.close) : '<span class="missing">시세 없음</span>'}${p.date ? ` <span class="meta m0">${esc(p.date.slice(5))}</span>` : ""}</td>
+    <td class="num">${isNum(p.value) ? money(p.value, dec) : DASH}</td><td class="num">${ptSigned(p.unrealized, dec)} <span class="meta m0">${ptPct(p.unrealized_pct)}</span></td>
     <td class="num" title="최근 종가에 모두 팔 때의 수수료·세금">${isNum(p.exit_fee) ? money(p.exit_fee) : DASH}</td><td class="l">${esc(p.opened)}</td>
     <td><button type="button" data-sell="${esc(p.ticker)}" data-qty="${p.qty}" data-px="${isNum(p.close) ? p.close : ""}">매도 기록</button></td></tr>`).join("");
-  const crow = d.closed.map((c) => `<tr><td class="l">${esc(c.date)}</td><td class="l"><b>${esc(c.name || c.ticker)}</b> <span class="meta" style="margin:0">${esc(c.ticker)}</span></td><td class="num">${fmt(c.qty, Number.isInteger(c.qty) ? 0 : 4)}</td>
+  const crow = d.closed.map((c) => `<tr><td class="l">${esc(c.date)}</td><td class="l"><b>${esc(c.name || c.ticker)}</b> <span class="meta m0">${esc(c.ticker)}</span></td><td class="num">${fmt(c.qty, Number.isInteger(c.qty) ? 0 : 4)}</td>
     <td class="num">${money(c.buy_price)}</td><td class="num">${money(c.price)}</td><td class="num">${money(c.paid, dec)}</td><td class="num">${money(c.proceeds, dec)}</td>
     <td class="num" title="매수 때 ${money(c.fee_buy)} + 매도 때 ${money(c.fee_sell)}">${money(c.fees)}</td><td class="num">${ptSigned(c.net, dec)}</td><td class="num">${ptPct(c.net_pct)}</td><td class="num">${c.hold_days}일</td></tr>`).join("");
   const jrow = d.journal.map((r) => `<tr${r.voided ? ' style="opacity:.5"' : ""}><td class="l">${esc(r.date || "")}</td><td class="l">${esc(PT_KIND_KO[r.kind] || r.kind)}${r.voided ? ' <span class="badge">취소됨</span>' : ""}</td>
-    <td class="l">${r.ticker ? `${esc(r.name || r.ticker)} <span class="meta" style="margin:0">${esc(r.ticker)}</span>` : ""}</td><td class="num">${isNum(r.qty) ? fmt(r.qty, Number.isInteger(r.qty) ? 0 : 4) : ""}</td>
+    <td class="l">${r.ticker ? `${esc(r.name || r.ticker)} <span class="meta m0">${esc(r.ticker)}</span>` : ""}</td><td class="num">${isNum(r.qty) ? fmt(r.qty, Number.isInteger(r.qty) ? 0 : 4) : ""}</td>
     <td class="num">${isNum(r.price) ? money(r.price) : isNum(r.amount) ? money(r.amount, dec) : ""}</td>
-    <td class="num"${r.fee_parts ? ` title="${esc(ptFeeText(r.fee_parts).replace(/<[^>]+>/g, ""))}"` : ""}>${isNum(r.fee) ? `${money(r.fee)} <span class="meta" style="margin:0">${r.fee_auto ? "자동" : "직접"}</span>` : ""}</td>
+    <td class="num"${r.fee_parts ? ` title="${esc(ptFeeText(r.fee_parts).replace(/<[^>]+>/g, ""))}"` : ""}>${isNum(r.fee) ? `${money(r.fee)} <span class="meta m0">${r.fee_auto ? "자동" : "직접"}</span>` : ""}</td>
     <td class="l">${esc(r.note || "")}</td><td>${r.kind !== "VOID" && !r.voided ? `<button type="button" data-void="${esc(r.id)}">취소</button>` : ""}</td></tr>`).join("");
   el.innerHTML = `<div class="panel">${title}${about}${d.records ? tiles : ""}</div>
     <div class="panel"><h2>${d.records ? "기록 추가" : "시작하기: 모의 자금을 먼저 넣으세요"}</h2>${ptFormHtml(d)}</div>

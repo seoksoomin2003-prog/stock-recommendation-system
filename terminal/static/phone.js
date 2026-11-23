@@ -11,8 +11,8 @@ function phoneHtml(d) {
   const left = d.code_until ? Math.max(0, Math.round((new Date(d.code_until) - Date.now()) / 60000)) : 0;
   const addr = (d.addresses || []).length ? d.addresses.map((a) => `<code class="phone-addr">${esc(a)}</code>`).join(" 또는 ")
     : "이 컴퓨터의 와이파이 주소를 찾지 못했습니다. 와이파이에 연결돼 있는지 확인하세요.";
-  const code = d.code ? `<span class="phone-code">${esc(d.code)}</span> <span class="meta" style="margin:0">약 ${left}분 남음 · 틀릴 수 있는 횟수 ${d.tries_left}번 · 한 번 쓰면 사라집니다</span>`
-    : `<span class="meta" style="margin:0">${d.code_state === "LOCKED" ? "틀린 횟수가 많아 코드를 닫았습니다." : d.code_state === "EXPIRED" ? "코드의 시간이 지났습니다." : "지금 살아 있는 코드가 없습니다."} 기기를 더 연결하려면 새 코드를 만드세요.</span>`;
+  const code = d.code ? `<span class="phone-code">${esc(d.code)}</span> <span class="meta m0">약 ${left}분 남음 · 틀릴 수 있는 횟수 ${d.tries_left}번 · 한 번 쓰면 사라집니다</span>`
+    : `<span class="meta m0">${d.code_state === "LOCKED" ? "틀린 횟수가 많아 코드를 닫았습니다." : d.code_state === "EXPIRED" ? "코드의 시간이 지났습니다." : "지금 살아 있는 코드가 없습니다."} 기기를 더 연결하려면 새 코드를 만드세요.</span>`;
   const dev = (d.devices || []).length ? `<ul class="phone-devs">${d.devices.map((x) => `<li>${esc(x.name || "기기")} · 연결 ${esc(phoneWhen(x.paired_at))} · 마지막 접속 ${esc(phoneWhen(x.last_seen))}
       <button type="button" class="ghost phone-unpair" data-id="${esc(x.id)}">끊기</button></li>`).join("")}</ul>` : '<div class="meta">아직 연결된 기기가 없습니다.</div>';
   const bad = d.listen_error ? `<div class="err">휴대폰 쪽 문을 열지 못했습니다(${esc(d.listen_error)}). 포트 ${d.port}을 다른 프로그램이 쓰고 있는지 확인한 뒤 껐다 켜세요.</div>` : "";

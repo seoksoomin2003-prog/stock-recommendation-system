@@ -10,12 +10,12 @@ const icState = { view: "dash", port: "COMMITTEE", ports: {}, market: null };
 const icNum = (v, d = 0) => (v === null || v === undefined ? "–" : Number(v).toFixed(d));
 const icPct = (v, d = 1) => (v === null || v === undefined ? "–" : (v * 100).toFixed(d) + "%");
 const icBadge = (code, label) => `<span class="badge" style="color:${IC_REC_COLOR[code] || "var(--muted)"}">${esc(label || code)}</span>`;
-const icList = (xs) => (xs && xs.length ? xs.map((x) => `<div class="meta" style="margin:3px 0">${esc(x)}</div>`).join("") : `<div class="meta" style="margin:3px 0">없음</div>`);
+const icList = (xs) => (xs && xs.length ? xs.map((x) => `<div class="meta my-1">${esc(x)}</div>`).join("") : `<div class="meta my-1">없음</div>`);
 const icMarket = () => (state.market === "KR" ? "KR" : "US");
 
 // ---------------------------------------------------------------- 한 투자자의 카드
 function icInvestorHtml(o) {
-  const est = (x, unit) => (x && x.value !== null && x.value !== undefined ? `${unit === "점" ? icNum(x.value) + "점" : icPct(x.value)} <span class="meta" style="margin:0">(${esc(x.basis)})</span>` : `<span class="meta" style="margin:0">${esc((x && x.basis) || "계산하지 않음")}</span>`);
+  const est = (x, unit) => (x && x.value !== null && x.value !== undefined ? `${unit === "점" ? icNum(x.value) + "점" : icPct(x.value)} <span class="meta m0">(${esc(x.basis)})</span>` : `<span class="meta m0">${esc((x && x.basis) || "계산하지 않음")}</span>`);
   const comps = Object.entries(o.components || {}).map(([k, v]) => `${esc(k)} ${icNum(v)}`).join(" · ");
   const alt = o.other_profile;
   const extra = [o.category_ko ? `회사의 종류: ${o.category_ko}` : "", o.profile ? `기준: ${o.profile}(포트폴리오와 기록은 이 기준)` : "", o.method || "",
@@ -23,13 +23,13 @@ function icInvestorHtml(o) {
     (o.regimes || []).length ? `시장 국면: ${o.regimes.map((r) => `${r.label}(확신 ${r.confidence})`).join(", ")}` : "",
     (o.regimes_not_told || []).length ? `읽지 못한 국면: ${o.regimes_not_told.join(", ")}` : ""].filter(Boolean);
   return `<div class="ic-card">
-    <div><b>${esc(o.name)}</b> <span class="badge" title="실존 투자자의 의견이 아니라 알려진 원칙을 옮긴 규칙입니다">규칙 엔진</span> <span class="meta" style="margin:0">${esc(o.philosophy)}</span></div>
-    <div style="margin:6px 0">${icBadge(o.recommendation, o.recommendation_ko)} <span class="num">점수 <b>${icNum(o.score)}</b> · <span title="판단에 쓴 수치가 얼마나 확인됐는지입니다. 맞을 확률이 아닙니다.">자료 확인 ${icNum(o.confidence)}</span></span></div>
+    <div><b>${esc(o.name)}</b> <span class="badge" title="실존 투자자의 의견이 아니라 알려진 원칙을 옮긴 규칙입니다">규칙 엔진</span> <span class="meta m0">${esc(o.philosophy)}</span></div>
+    <div class="my-2">${icBadge(o.recommendation, o.recommendation_ko)} <span class="num">점수 <b>${icNum(o.score)}</b> · <span title="판단에 쓴 수치가 얼마나 확인됐는지입니다. 맞을 확률이 아닙니다.">자료 확인 ${icNum(o.confidence)}</span></span></div>
     <div class="ic-say">${esc(o.opinion)}</div>
-    <div class="meta" style="margin:6px 0 0"><b>근거</b> ${esc((o.positives || [])[0] || "없음")}</div>
-    <div class="meta" style="margin:2px 0 0"><b>우려</b> ${esc((o.negatives || [])[0] || "없음")}</div>
-    <div class="meta" style="margin:2px 0 0"><b>할 일</b> ${esc(o.action)}</div>
-    ${alt ? `<div class="meta" style="margin:2px 0 0"><b>${esc(alt.profile)} 기준이라면</b> ${icBadge(alt.recommendation, alt.recommendation_ko)}${alt.same ? " 같은 판정" : ""}</div>` : ""}
+    <div class="meta mt-2"><b>근거</b> ${esc((o.positives || [])[0] || "없음")}</div>
+    <div class="meta mt-1"><b>우려</b> ${esc((o.negatives || [])[0] || "없음")}</div>
+    <div class="meta mt-1"><b>할 일</b> ${esc(o.action)}</div>
+    ${alt ? `<div class="meta mt-1"><b>${esc(alt.profile)} 기준이라면</b> ${icBadge(alt.recommendation, alt.recommendation_ko)}${alt.same ? " 같은 판정" : ""}</div>` : ""}
     <details><summary>자세히</summary>
       ${alt ? `<div class="meta"><b>${esc(alt.profile)} 기준(비교용, 아무것도 바꾸지 않음)</b> ${esc(alt.opinion)} 매수 조건: ${esc(alt.buy)}</div>` : ""}
       <div class="meta">묻는 것: ${esc(o.question)} · 보는 기간: ${esc(o.horizon)}</div>
@@ -51,7 +51,7 @@ function icCommitteeHtml(c) {
   const s = c.scores || {}, L = c.score_labels || {};
   const order = ["attractiveness", "confidence", "agreement", "quality", "valuation", "growth", "regime", "downside", "data"];
   return `<div class="ic-committee">
-    <div><b>통합 투자위원회</b> ${icBadge(c.decision, c.decision_ko)} <span class="meta" style="margin:0">다섯 의견을 평균하지 않고 규칙으로 정합니다 · 보는 기간: ${esc(c.horizon)}</span></div>
+    <div><b>통합 투자위원회</b> ${icBadge(c.decision, c.decision_ko)} <span class="meta m0">다섯 의견을 평균하지 않고 규칙으로 정합니다 · 보는 기간: ${esc(c.horizon)}</span></div>
     <div class="ic-scores">${order.map((k) => `<span><i>${esc(L[k] || k)}</i><b class="num">${icNum(s[k])}</b></span>`).join("")}</div>
     <div class="ic-say">${esc(c.thesis)}</div>
     <div class="meta"><b>이렇게 정한 이유</b></div>${icList(c.reasons)}
@@ -72,11 +72,11 @@ function icCommitteeHtml(c) {
 function icCardHtml(v, ticker, market) {
   if (!v) return "";
   if (v.status !== "OK") return `<div class="panel"><h3>다섯 투자자와 투자위원회</h3><div class="meta">${esc(v.reason || "판단할 자료가 없습니다.")}</div></div>`;
-  return `<div class="panel"><h3>다섯 투자자와 투자위원회 <span class="meta" style="margin:0">실존 투자자의 의견이 아닙니다 · 알려진 원칙을 규칙으로 옮긴 참고 · 점수와 무관 · 주문 없음</span></h3>
+  return `<div class="panel"><h3>다섯 투자자와 투자위원회 <span class="meta m0">실존 투자자의 의견이 아닙니다 · 알려진 원칙을 규칙으로 옮긴 참고 · 점수와 무관 · 주문 없음</span></h3>
     <div class="ic-grid">${v.investors.map(icInvestorHtml).join("")}</div>
     ${icCommitteeHtml(v.committee)}
     ${plainBlock(v.plain)}
-    <div style="margin:10px 0 0"><button type="button" class="ic-place" data-t="${esc(ticker || v.ticker || "")}" data-m="${esc(market || v.market || "")}" title="여섯 포트폴리오를 지금 만들고 이 종목이 어디에 드는지 보여 줍니다. 누르기 전에는 만들지 않습니다.">포트폴리오 받아보기</button>
+    <div class="mt-3"><button type="button" class="ic-place" data-t="${esc(ticker || v.ticker || "")}" data-m="${esc(market || v.market || "")}" title="여섯 포트폴리오를 지금 만들고 이 종목이 어디에 드는지 보여 줍니다. 누르기 전에는 만들지 않습니다.">포트폴리오 받아보기</button>
       <span class="meta" style="margin:0 0 0 8px">다섯 투자자와 위원회의 여섯 포트폴리오 · 누를 때 작성</span></div>
     <div class="ic-out"></div>
     <div class="meta">${esc(v.note || "")}${v.source === "EVALUATION" ? " 스캔 대상이 아닌 종목이라 방금 계산한 값으로 판단했습니다." : ""}</div></div>`;
@@ -85,7 +85,7 @@ function icCardHtml(v, ticker, market) {
 function icPlaceHtml(d) {
   if (!d || d.status !== "OK") return `<div class="notice">${esc((d && d.reason) || "포트폴리오를 만들지 못했습니다.")}</div>`;
   const rows = d.places.map((p) => `<tr><td class="l"><b>${esc(p.name)}</b></td><td class="num">${p.in ? icPct(p.weight) : "없음"}</td><td class="num">${p.count}종목 · 현금 ${icPct(p.cash, 0)}</td><td class="l">${esc(p.why)}</td></tr>`).join("");
-  return `<h3 style="margin-top:14px">여섯 포트폴리오에서 이 종목 <span class="meta" style="margin:0">${esc(d.session || "")} 기록으로 지금 작성</span></h3>
+  return `<h3 class="mt-4">여섯 포트폴리오에서 이 종목 <span class="meta m0">${esc(d.session || "")} 기록으로 지금 작성</span></h3>
     <div class="tbl-wrap"><table><thead><tr><th class="l">포트폴리오</th><th>이 종목의 비중</th><th>포트폴리오</th><th class="l">이유</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="meta">전체 종목과 비중은 <a href="#committee">투자위원회 탭</a>의 '여섯 포트폴리오'에서 봅니다. 주문을 내지 않는 모의 포트폴리오입니다.</div>`;
 }
@@ -111,7 +111,7 @@ async function icPlace(btn) {
 function renderCommittee() {
   const el = $("#tab-committee");
   icState.market = icMarket();
-  el.innerHTML = `<div class="panel"><h2>투자위원회 <span class="meta" style="margin:0">${icState.market === "KR" ? "한국" : "미국"} · 다섯 투자자 엔진과 통합 위원회 · 규칙 IC-1</span></h2>
+  el.innerHTML = `<div class="panel"><h2>투자위원회 <span class="meta m0">${icState.market === "KR" ? "한국" : "미국"} · 다섯 투자자 엔진과 통합 위원회 · 규칙 IC-1</span></h2>
     <div class="meta">버핏식·멍거식·그레이엄식·린치식·드러켄밀러식 다섯 규칙이 종목마다 따로 판단하고, 위원회가 그 다섯을 읽어 하나의 판정을 냅니다. 실존 투자자의 의견이 아니고, 수익으로 검증하지 않았으며, QSF 점수와 섞지 않고, 주문을 내지 않습니다.</div>
     <div class="qsf-nav"><span class="seg" id="icview" role="group" aria-label="보기">${Object.entries(IC_VIEWS).map(([k, v]) => `<button type="button" data-v="${k}">${v}</button>`).join("")}</span></div></div>
     <div id="icbody"></div>`;
@@ -128,7 +128,7 @@ function icSetView(v) {
 function icOpenRows(box, mk) {
   box.querySelectorAll(".qs-open").forEach((b) => { b.onclick = () => qsfOpenCard(b.dataset.t); });
 }
-const icTicker = (t, name) => `<button type="button" class="qs-open" data-t="${esc(t)}"><b>${esc(t)}</b> <span class="meta" style="margin:0">${esc(name || "")}</span></button>`;
+const icTicker = (t, name) => `<button type="button" class="qs-open" data-t="${esc(t)}"><b>${esc(t)}</b> <span class="meta m0">${esc(name || "")}</span></button>`;
 
 async function icDash() {
   const box = $("#icbody"), mk = icState.market;
@@ -140,12 +140,12 @@ async function icDash() {
   const chips = (o) => Object.entries(o || {}).map(([k, n]) => `<span class="badge">${esc(k)} ${n}</span>`).join(" ") || "없음";
   const top = d.top.map((r) => `<tr><td class="l">${icTicker(r.ticker, r.name)}</td><td class="l">${esc(r.sector || "")}</td><td class="l">${esc(r.decision_ko)}</td><td class="num">${icNum(r.attractiveness)}</td><td class="num">${icNum(r.confidence)}</td>
     <td class="l">${esc((r.supporters || []).join(", "))}</td><td class="l">${r.strongest_for ? esc(r.strongest_for.text) : ""}</td><td class="l">${r.strongest_against ? esc(r.strongest_against.investor + ": " + r.strongest_against.text) : ""}</td></tr>`).join("");
-  box.innerHTML = `<div class="panel"><h2>위원회 현황 <span class="meta" style="margin:0">${esc(d.session)} 기록 · ${d.judged}종목</span></h2>
+  box.innerHTML = `<div class="panel"><h2>위원회 현황 <span class="meta m0">${esc(d.session)} 기록 · ${d.judged}종목</span></h2>
       <div class="meta"><b>시장 상태</b> ${icNum(d.market_state)}/100 · 국면: ${(d.regimes || []).map((r) => `${esc(r.label)}(확신 ${r.confidence})`).join(", ") || "뚜렷한 국면 없음"} · 읽지 못한 국면: ${esc((d.regimes_not_told || []).join(", "))}</div>
       <div class="meta"><b>위원회 판정의 분포</b> ${chips(d.decisions)}</div>
       <div class="meta"><b>의견 일치(평균)</b> ${icNum(d.average_agreement)}/100 · <b>의견이 갈린 종류</b> ${chips(d.disagreements)}</div>
       <div class="meta"><b>자주 나온 위험</b> ${chips(d.risks)}</div></div>
-    <div class="panel"><h2>위원회가 매수 조건으로 본 종목 <span class="meta" style="margin:0">${d.buy_count}종목 가운데 매력 순 ${d.top.length}종목 · 줄을 누르면 점수 카드</span></h2>
+    <div class="panel"><h2>위원회가 매수 조건으로 본 종목 <span class="meta m0">${d.buy_count}종목 가운데 매력 순 ${d.top.length}종목 · 줄을 누르면 점수 카드</span></h2>
       ${top ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th class="l">업종</th><th class="l">판정</th><th>매력</th><th title="자료 양 50%, 다섯 규칙의 자료 확인 30%, 의견 일치 20%를 섞은 값입니다. 맞을 확률이 아닙니다.">자료·일치</th><th class="l">찬성한 관점</th><th class="l">찬성 논거</th><th class="l">반대 논거</th></tr></thead><tbody>${top}</tbody></table></div>`
         : `<div class="empty">위원회가 매수 조건으로 본 종목이 없습니다. 억지로 채우지 않습니다.</div>`}
       <div class="meta">${esc(d.note)}</div></div>`;
@@ -162,7 +162,7 @@ function icPortHtml(p) {
   // 예외 두 가지(2026-11-23): 비중 과다는 알리기만 하고 그대로 두며, 치명적 훼손은 여섯 포트폴리오 모두에서 전부 뺍니다
   const interrupts = (p.fatal || []).map((n) => `<div class="notice"><b>치명적 훼손으로 전량 제외</b> ${esc(n.name)}(${esc(n.ticker)}): ${esc(n.why)}. 빠진 비중 ${icPct(n.weight)}는 현금으로 둡니다.</div>`).join("")
     + (p.overweight || []).map((n) => `<div class="notice"><b>비중 과다 알림${n.new ? " · 오늘 처음" : ""}</b> ${esc(n.text)}</div>`).join("");
-  return `<div class="panel"><h2>${esc(p.name)} <span class="meta" style="margin:0">${esc(p.objective)}</span></h2>
+  return `<div class="panel"><h2>${esc(p.name)} <span class="meta m0">${esc(p.objective)}</span></h2>
     ${plainBlock(p.plain)}
     ${interrupts}
     <div class="ic-scores"><span><i>종목 수</i><b class="num">${p.count}</b></span><span><i>투자 비중</i><b class="num">${icPct(p.invested, 0)}</b></span><span><i>현금</i><b class="num">${icPct(p.cash, 0)}</b></span>
@@ -180,9 +180,9 @@ function icPortHtml(p) {
 
 function icPortsDraw(d, mk) {
   const box = $("#icbody");
-  const tabs = d.portfolios.map((p) => `<button type="button" data-p="${p.key}">${esc(p.name.replace(" 포트폴리오", ""))} <span class="meta" style="margin:0">${p.count}</span></button>`).join("");
+  const tabs = d.portfolios.map((p) => `<button type="button" data-p="${p.key}">${esc(p.name.replace(" 포트폴리오", ""))} <span class="meta m0">${p.count}</span></button>`).join("");
   const over = (d.overlap || []).filter((o) => o.count).map((o) => `${esc(o.a.replace(" 포트폴리오", ""))}–${esc(o.b.replace(" 포트폴리오", ""))} ${o.count}종목`).join(" · ");
-  box.innerHTML = `<div class="panel"><h2>여섯 포트폴리오 <span class="meta" style="margin:0">${esc(d.session)} 기록으로 작성 · 모의(주문 없음)</span>
+  box.innerHTML = `<div class="panel"><h2>여섯 포트폴리오 <span class="meta m0">${esc(d.session)} 기록으로 작성 · 모의(주문 없음)</span>
       <button type="button" class="ghost" id="icportsget">다시 받아보기</button></h2>
       <div class="meta">${esc(d.made)}</div>
       <div class="meta"><b>겹치는 종목</b> ${over || "여섯 포트폴리오 사이에 겹치는 종목이 없습니다"}</div>
@@ -216,7 +216,7 @@ function icPorts() {
   $("#icbody").innerHTML = `<div class="panel"><h2>여섯 포트폴리오</h2>
     <div class="meta">버핏식(오래 가져갈 좋은 사업), 멍거식(탁월한 사업 몇 개), 그레이엄식(싸고 튼튼한 종목을 넓게), 린치식(성장에 비해 값이 적당한 종목), 드러켄밀러식(시장·이익·추세가 맞는 곳), 투자위원회(위험을 따져 합친 것).
       여섯은 서로 다른 규칙으로 종목을 고르고 비중을 정합니다. 조건을 채운 종목이 없으면 현금으로 둡니다.</div>
-    <div style="margin:12px 0"><button type="button" class="btn-primary" id="icportsget">여섯 포트폴리오 받아보기</button>
+    <div class="my-3"><button type="button" class="btn-primary" id="icportsget">여섯 포트폴리오 받아보기</button>
       <span class="meta" style="margin:0 0 0 8px">누르면 지금 기록으로 작성합니다. 누르기 전에는 만들지 않습니다.</span></div>
     <div class="meta">주문을 내지 않는 모의 포트폴리오입니다. 금액과 수량은 계산하지 않습니다.</div></div>`;
   $("#icportsget").onclick = () => icPortsGet();
@@ -233,12 +233,12 @@ async function icCompare(asked) {
   const rows = d.rows.map((r) => `<tr><td class="l">${icTicker(r.ticker, r.name)}</td>${r.views.map((v) => `<td class="l" title="${esc(v.valuation)} · ${esc(v.horizon)}">${icBadge(v.recommendation, v.recommendation_ko)} <span class="num">${icNum(v.score)}</span></td>`).join("")}
     <td class="l"><b>${esc(r.committee)}</b></td><td class="num">${icNum(r.attractiveness)}</td><td class="num">${icNum(r.agreement)}</td><td class="num">${icNum(r.growth)}</td><td class="num">${icNum(r.downside)}</td></tr>`).join("");
   const tally = Object.entries(d.tally).map(([n, o]) => `<div class="meta"><b>${esc(n)}</b> ${Object.entries(o).sort((a, b) => b[1] - a[1]).map(([k, c]) => `${esc(k)} ${c}`).join(" · ")}</div>`).join("");
-  box.innerHTML = `<div class="panel"><h2>투자자 비교 <span class="meta" style="margin:0">${esc(d.session)} 기록 · ${d.asked ? "고른 종목" : "위원회 매력 상위 20종목"}</span></h2>
+  box.innerHTML = `<div class="panel"><h2>투자자 비교 <span class="meta m0">${esc(d.session)} 기록 · ${d.asked ? "고른 종목" : "위원회 매력 상위 20종목"}</span></h2>
       <form id="iccmpform" class="search" style="margin:0 0 8px"><input id="iccmpq" placeholder="${mk === "KR" ? "005930, 000660" : "AAPL, NVDA, MSFT"}" value="${esc(asked || "")}" aria-label="비교할 종목 코드(쉼표로 구분)"><button>비교</button></form>
       ${(d.not_found || []).length ? `<div class="notice">스캔 기록에 없는 종목: ${esc(d.not_found.join(", "))}</div>` : ""}
       <div class="tbl-wrap"><table><thead><tr><th class="l">종목</th>${names.map((n) => `<th class="l">${esc(n)}</th>`).join("")}<th class="l">위원회</th><th>매력</th><th>일치</th><th>성장</th><th>하방 위험</th></tr></thead><tbody>${rows}</tbody></table></div>
       <div class="meta">칸에 마우스를 올리면 그 관점의 가격 판단과 보는 기간이 나옵니다. 숫자는 그 관점의 점수(0~100)입니다.</div></div>
-    <div class="panel"><h2>관점마다 판정이 어떻게 갈리나 <span class="meta" style="margin:0">${d.judged}종목</span></h2>${tally}<div class="meta">${esc(d.note)}</div></div>`;
+    <div class="panel"><h2>관점마다 판정이 어떻게 갈리나 <span class="meta m0">${d.judged}종목</span></h2>${tally}<div class="meta">${esc(d.note)}</div></div>`;
   $("#iccmpform").onsubmit = (e) => { e.preventDefault(); icCompare($("#iccmpq").value.trim().toUpperCase()); };
   icOpenRows(box, mk);
 }
@@ -251,7 +251,7 @@ async function icPerf() {
   if (icState.view !== "perf" || mk !== icState.market) return;
   const rd = d.reading || {};
   const reading = `<div class="meta"><b>한 번의 읽기</b> ${esc(rd.rule || "")} ${rd.verdict ? `읽은 결과: <b>${esc(rd.verdict)}</b>` : `앞으로 약 ${rd.left}거래일.`} 규칙: ${esc(rd.protocol || "")}</div>${(rd.reasons || []).map((x) => `<div class="meta">${esc(x)}</div>`).join("")}`;
-  const head = `<h2>여섯 포트폴리오의 모의 성과 <span class="badge" style="color:var(--warn)">모의 기록</span></h2>
+  const head = `<h2>여섯 포트폴리오의 모의 성과 <span class="badge c-warn">모의 기록</span></h2>
     <div class="meta">${esc(d.kind_ko)} · ${esc(d.not_this)}</div><div class="meta">${esc(d.method)} 거래 비용은 편도 ${icPct(d.one_way_cost, 2)}로 계산합니다. 비교 지수: ${esc(d.benchmark)}.</div>`;
   if (d.status !== "OK") {
     box.innerHTML = `<div class="panel">${head}<div class="empty">${esc(d.reason || "기록이 없습니다.")}</div>

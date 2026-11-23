@@ -42,11 +42,11 @@ async function renderCompare() {
     <div class="cmp-bar" id="cmp-chips"></div>
     <form id="cmp-add" class="cmp-bar" autocomplete="off"><input id="cmp-q" maxlength="15" placeholder="종목 코드 추가 (예: NVDA, 005930)" aria-label="비교할 종목 코드">
       <button type="submit">추가</button>
-      <span class="meta" style="margin:0">지수: ${Object.entries(CMP_INDEX).map(([s, n]) => `<button type="button" class="chip" data-add="${esc(s)}">${esc(n)}</button>`).join(" ")}</span></form>
+      <span class="meta m0">지수: ${Object.entries(CMP_INDEX).map(([s, n]) => `<button type="button" class="chip" data-add="${esc(s)}">${esc(n)}</button>`).join(" ")}</span></form>
     <canvas id="cmp-cv" class="chart" aria-label="수익률 비교 차트"></canvas><div class="legend" id="cmp-legend"></div><div id="cmp-meta"></div></div>
     <div class="panel"><h2>기간 성과</h2><div id="cmp-stats"></div></div>
     <div class="panel"><h2>일간 수익률 상관계수</h2><div id="cmp-corr"></div></div>
-    <div class="panel"><h2>상관계수의 변화 <span class="meta" style="margin:0" id="cmp-roll-h"></span></h2><canvas id="cmp-roll" class="chart" aria-label="이동 상관계수 차트"></canvas><div class="legend" id="cmp-roll-legend"></div><div id="cmp-roll-meta"></div></div>`;
+    <div class="panel"><h2>상관계수의 변화 <span class="meta m0" id="cmp-roll-h"></span></h2><canvas id="cmp-roll" class="chart" aria-label="이동 상관계수 차트"></canvas><div class="legend" id="cmp-roll-legend"></div><div id="cmp-roll-meta"></div></div>`;
   $("#cmp-rng").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; cmp.range = b.dataset.r; renderCompare(); };
   $("#cmp-add").onsubmit = (e) => { e.preventDefault(); cmpAdd($("#cmp-q").value); renderCompare(); };
   el.querySelectorAll("[data-add]").forEach((b) => (b.onclick = () => { cmpAdd(b.dataset.add); renderCompare(); }));
@@ -67,7 +67,7 @@ async function renderCompare() {
 function cmpChips() {
   const box = $("#cmp-chips");
   box.innerHTML = cmp.list.map((t) => `<span class="chip"><span class="swatch" style="background:${cmpColor(t)}"></span>${esc(cmpName(t))}<button type="button" class="x" data-rm="${esc(t)}" aria-label="${esc(cmpName(t))} 빼기">×</button></span>`).join("")
-    || '<span class="meta" style="margin:0">아직 없습니다.</span>';
+    || '<span class="meta m0">아직 없습니다.</span>';
   box.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = () => { cmpRemove(b.dataset.rm); renderCompare(); }));
 }
 function cmpDraw() {

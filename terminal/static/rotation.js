@@ -6,7 +6,7 @@ const rrg = { data: null, heads: [] };
 async function renderRotation(box) {
   box.innerHTML = `<div class="panel"><h2>업종 순환 그래프</h2><canvas id="rrg-cv" class="chart" aria-label="업종 순환 그래프"></canvas>
     <div class="legend" id="rrg-legend"></div><div id="rrg-meta">${loading}</div></div>
-    <div class="panel"><h2>업종 상대 성과 <span class="meta" style="margin:0">업종을 누르면 점수 상위 종목이 나옵니다</span></h2><div id="rrg-table"></div></div>
+    <div class="panel"><h2>업종 상대 성과 <span class="meta m0">업종을 누르면 점수 상위 종목이 나옵니다</span></h2><div id="rrg-table"></div></div>
     <div class="panel" id="rrg-picks" hidden></div>`;
   const want = state.market;
   try {
@@ -86,7 +86,7 @@ function rrgTable(d) {
   const order = { LEADING: 0, IMPROVING: 1, WEAKENING: 2, LAGGING: 3 };
   const rows = [...d.funds].sort((a, b) => order[a.quadrant] - order[b.quadrant] || b.tail[b.tail.length - 1].ratio - a.tail[a.tail.length - 1].ratio);
   $("#rrg-table").innerHTML = `<div class="tbl-wrap"><table><thead><tr><th class="l">업종</th><th class="l">국면</th><th>상대강도 비율</th><th>모멘텀</th><th>지수 대비 4주</th><th>지수 대비 13주</th></tr></thead><tbody>
-    ${rows.map((f) => { const p = f.tail[f.tail.length - 1]; return `<tr class="click${rrg.sel === f.symbol ? " me" : ""}" data-fund="${esc(f.symbol)}"><td class="l">${esc(f.name)} <span class="meta" style="margin:0">${esc(f.symbol.replace(".KS", ""))}</span></td>
+    ${rows.map((f) => { const p = f.tail[f.tail.length - 1]; return `<tr class="click${rrg.sel === f.symbol ? " me" : ""}" data-fund="${esc(f.symbol)}"><td class="l">${esc(f.name)} <span class="meta m0">${esc(f.symbol.replace(".KS", ""))}</span></td>
       <td class="l"><span class="swatch" style="background:${cssVar(RRG_Q[f.quadrant][1])};border-radius:50%"></span>${RRG_Q[f.quadrant][0]}</td><td class="num">${fmt(p.ratio, 1)}</td><td class="num">${fmt(p.momentum, 1)}</td>
       <td class="num">${pct(isNum(f.relative["4w"]) ? f.relative["4w"] * 100 : null, 1)}</td><td class="num">${pct(isNum(f.relative["13w"]) ? f.relative["13w"] * 100 : null, 1)}</td></tr>`; }).join("")}</tbody></table></div>
     <div class="meta">업종 ETF의 가격 흐름을 지수와 비교한 것입니다. QSF 점수에 쓰이지 않으며, 검증된 매매 신호가 아닙니다.</div>`;

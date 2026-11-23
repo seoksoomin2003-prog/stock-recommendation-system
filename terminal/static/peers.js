@@ -17,17 +17,17 @@ const peerState = { sort: "market_cap", desc: true, data: null, all: false };
 async function loadPeers(t) {
   const box = $("#s-peers");
   if (!box) return;
-  box.innerHTML = `<h2>동종업계 비교</h2>${loading}`;
+  box.innerHTML = ui.head({ title: "동종업계 비교" }) + loading;
   try {
     const d = await api(mq(`/api/qsf/peers?t=${encodeURIComponent(t)}`));
     if (state.ticker !== t) return;
     peerState.data = d; peerState.all = false; paintPeers();
-  } catch (e) { if (state.ticker === t) box.innerHTML = `<h2>동종업계 비교</h2>${errBox(e)}`; }
+  } catch (e) { if (state.ticker === t) box.innerHTML = ui.head({ title: "동종업계 비교" }) + errBox(e); }
 }
 function paintPeers() {
   const box = $("#s-peers"), d = peerState.data;
   if (!box || !d) return;
-  if (d.status !== "REAL") { box.innerHTML = '<h2>동종업계 비교</h2><div class="empty">이 종목은 QSF 스캔 대상이 아니라 업종 비교가 없습니다.</div>'; return; }
+  if (d.status !== "REAL") { box.innerHTML = ui.head({ title: "동종업계 비교" }) + ui.empty("이 종목은 QSF 스캔 대상이 아니라 업종 비교가 없습니다."); return; }
   const gradeRow = (st, name) => `<tr><td class="l">${name}</td>${PEER_PARTS.map(([k]) => {
     const g = (d.grades[st] || {})[k] || {};
     return `<td>${g.grade ? `<span class="grade g-${g.grade}" title="업종 ${g.n}개 중 상위 ${Math.round((1 - g.percentile) * 100)}% · 값 ${fmt(g.value, 1)}">${g.grade}</span>` : `<span class="missing" title="${g.n < 6 ? "비교할 종목이 6개 미만" : "값 없음"}">—</span>`}</td>`;
@@ -38,12 +38,11 @@ function paintPeers() {
     return peerState.desc ? y - x : x - y;
   });
   const shown = peerState.all ? rows : rows.filter((r, i) => i < 12 || r.ticker === d.ticker);
-  box.innerHTML = `<h2>동종업계 비교 <span class="meta" style="margin:0">${esc(sectorKo(d.group))} · ${esc(d.basis)} ${d.peers.length}개 종목</span></h2>
-    <div class="tbl-wrap"><table class="grades"><thead><tr><th class="l">업종 내 위치</th>${PEER_PARTS.map(([, n]) => `<th>${n}</th>`).join("")}</tr></thead>
-      <tbody>${gradeRow("SWING", "스윙 점수")}${gradeRow("LONG_TERM", "장기 점수")}</tbody></table></div>
+  box.innerHTML = `${ui.head({ title: "동종업계 비교", sub: `${sectorKo(d.group)} · ${d.basis} ${d.peers.length}개 종목` })}
+    ${ui.table({ cls: "grades", cols: [{ label: "업종 내 위치", cls: "l" }, ...PEER_PARTS.map(([, label]) => ({ label }))], rows: [gradeRow("SWING", "스윙 점수"), gradeRow("LONG_TERM", "장기 점수")] })}
     <div class="meta">${esc(d.basis_note)} 글자에 마우스를 올리면 순위와 값이 보입니다.</div>
     <div class="tbl-wrap"><table id="peer-tbl"><thead><tr><th class="l">종목</th>${PEER_COLS.map(([k, n]) => `<th class="sort${peerState.sort === k ? " on" : ""}" data-k="${k}">${n}${peerState.sort === k ? (peerState.desc ? " ▼" : " ▲") : ""}</th>`).join("")}</tr></thead>
-      <tbody>${shown.map((r) => `<tr class="click${r.ticker === d.ticker ? " me" : ""}" data-ticker="${esc(r.ticker)}"><td class="l"><b>${esc(r.name || r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.ticker)}</span></td>${PEER_COLS.map(([, , f]) => `<td class="num">${f(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+      <tbody>${shown.map((r) => `<tr class="click${r.ticker === d.ticker ? " me" : ""}" data-ticker="${esc(r.ticker)}"><td class="l"><b>${esc(r.name || r.ticker)}</b> <span class="meta m0">${esc(r.ticker)}</span></td>${PEER_COLS.map(([, , f]) => `<td class="num">${f(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
     ${rows.length > shown.length ? `<button class="ghost" id="peer-all" type="button">${rows.length}개 모두 보기</button>` : ""}
     <div class="meta">점수: 스캔 거래일 ${esc(d.session)} · ${esc(d.model_version || "")}. 재무 비율: ${d.ratio_session ? `${esc(d.ratio_version)} 원장 기록 ${esc(d.ratio_session)} (점수가 실제로 읽은 값)` : `${esc(d.ratio_version)} 원장 기록이 아직 없어 비어 있습니다. 첫 기록은 다음 자동 실행 뒤에 생깁니다.`} 머리글을 누르면 정렬합니다.</div>`;
   box.querySelectorAll("th.sort").forEach((th) => (th.onclick = (e) => {

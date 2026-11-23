@@ -383,9 +383,9 @@ function card(i) {
   return `<div class="card" ${tk} title="${esc(i.symbol)}${i.date ? " · " + esc(i.date) : ""}">
     <div class="nm">${esc(i.name || i.symbol)} <span class="muted">${esc(code)}</span></div>
     <div class="row"><div><div class="px num">${fmt(i.close, won ? 0 : 2)}</div>
-      <div class="chg"><span class="nw"><span class="meta" style="margin:0">1일</span> ${pct(i.change_pct)}</span><span class="nw"><span class="meta" style="margin:0">1개월</span> ${pct(i.change_1m_pct, 1)}</span></div></div>
+      <div class="chg"><span class="nw"><span class="meta m0">1일</span> ${pct(i.change_pct)}</span><span class="nw"><span class="meta m0">1개월</span> ${pct(i.change_1m_pct, 1)}</span></div></div>
       <canvas data-spark='${JSON.stringify(i.spark || [])}'></canvas></div>
-    <div class="meta" style="margin-top:4px">${i.status !== "REAL" ? badge(i.status) + " " : ""}${liveBadge(i.intraday)} ${esc(i.date || "")}</div>
+    <div class="meta mt-1">${i.status !== "REAL" ? badge(i.status) + " " : ""}${liveBadge(i.intraday)} ${esc(i.date || "")}</div>
   </div>`;
 }
 
@@ -447,7 +447,7 @@ function renderProfile(c) {
   const kv = [["시가총액", big(p.marketCap, c.market === "KR" ? "KRW" : "USD")], ["PER(후행)", fmt(p.trailingPE, 1)], ["PER(예상)", fmt(p.forwardPE, 1)],
     ["PBR", fmt(p.priceToBook, 2)], ["배당수익률", p.dividendYieldSuspect ? `<span class="flat" title="Yahoo가 준 값이 ${fmt(p.dividendYieldLimit, 0)}%를 넘어 틀린 기록으로 봅니다. 투자위원회 계산에도 쓰지 않습니다.">— (원자료 이상 ${fmt(p.dividendYield, 2)}%)</span>` : isNum(p.dividendYield) ? `${fmt(p.dividendYield, 2)}%` : DASH],
     ["베타", fmt(p.beta, 2)], ["평균 거래량", big(p.averageVolume, "")], ["상장 주식수", big(p.sharesOutstanding, "")]];
-  $("#s-head").innerHTML = `<div class="head"><h2 style="margin:0">${esc(p.longName || p.shortName || c.ticker)} <span class="meta" style="margin:0">${esc(c.ticker)} · ${esc(p.exchange || "")}</span></h2>
+  $("#s-head").innerHTML = `<div class="head"><h2 class="m0">${esc(p.longName || p.shortName || c.ticker)} <span class="meta m0">${esc(c.ticker)} · ${esc(p.exchange || "")}</span></h2>
       <span><button class="ghost" id="addw">＋ 관심종목</button> <button class="ghost" id="addc" type="button">비교 차트</button> <button class="ghost" id="adda" type="button" title="이동평균·볼린저밴드·RSI·MACD와 고전 신호를 봅니다">차트분석</button> <button class="ghost" id="addq" type="button" title="점수 탭에서 이 종목의 점수 카드를 엽니다">점수 카드</button></span></div>
     <div class="head" id="s-price"></div>
     <div class="meta">${esc([sectorKo(p.sector), p.industry].filter(Boolean).join(" · "))}${p.website ? ` · <a href="${esc(p.website)}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>
@@ -486,7 +486,7 @@ function renderFilings(f) {
   const name = f.market === "KR" ? "DART" : "SEC";
   if (f.status === "UNAVAILABLE") { el.innerHTML = `<h2>최근 ${name} 공시 ${badge("UNAVAILABLE")}</h2><div class="empty">${esc(f.reason || "")}</div>`; return; }
   el.innerHTML = `<h2>최근 ${name} 공시 ${badge(f.status)}</h2><div class="tbl-wrap"><table><thead><tr><th>제출일</th><th class="l">양식</th><th class="l">설명</th><th class="l">원문</th></tr></thead>
-    <tbody>${f.items.map((i) => `<tr><td>${esc(i.filing_date)}</td><td class="l"><b>${esc(i.form)}</b> <span class="meta" style="margin:0">${esc(FORM_KO[i.form] || "")}</span></td>
+    <tbody>${f.items.map((i) => `<tr><td>${esc(i.filing_date)}</td><td class="l"><b>${esc(i.form)}</b> <span class="meta m0">${esc(FORM_KO[i.form] || "")}</span></td>
       <td class="l">${esc(i.description || "")}</td><td class="l">${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener noreferrer">열기 ↗</a>` : DASH}</td></tr>`).join("")}</tbody></table></div>
     ${meta(f.source, f.fetched_at)}`;
 }
@@ -551,10 +551,10 @@ async function renderMacro() {
   try {
     const d = await api(mq("/api/macro")); if (mk !== state.market) return; state.loaded.macro = true;
     el.innerHTML = `${d.reason ? `<div class="notice">${esc(d.reason)}</div>` : ""}<div class="panel" id="econcal"></div><div class="panel"><h2>${mk === "KR" ? "한국" : "미국"} 거시 지표</h2><div class="mgrid">${d.items.map((m) => `<div class="mcard">
-      <div class="nm meta" style="margin:0">${esc(m.label)} <span>${esc(m.id)}</span> ${m.status !== "REAL" ? badge(m.status) : ""}</div>
+      <div class="nm meta m0">${esc(m.label)} <span>${esc(m.id)}</span> ${m.status !== "REAL" ? badge(m.status) : ""}</div>
       <div class="row" style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span class="px num" style="font-size:20px;font-weight:650">${fmtMacro(m, m.value)}</span>
-        <span class="meta" style="margin:0">${esc(m.date || "")}</span></div>
-      <div class="meta" style="margin:0">직전 ${fmtMacro(m, m.previous)} · 1년 전 ${fmtMacro(m, m.value_1y_ago)}</div>
+        <span class="meta m0">${esc(m.date || "")}</span></div>
+      <div class="meta m0">직전 ${fmtMacro(m, m.previous)} · 1년 전 ${fmtMacro(m, m.value_1y_ago)}</div>
       <canvas data-m="${esc(m.id)}"></canvas></div>`).join("")}</div>
       <div class="meta">${mk === "KR" ? "소비자물가" : "CPI"}는 전년 동월 대비 상승률(%)로 계산해 표시합니다. 차트는 최근 약 260개 관측치입니다.</div>${meta(d.source)}</div>`;
     const draw = () => d.items.forEach((m) => { const cv = el.querySelector(`canvas[data-m="${m.id}"]`); if (cv && cv.isConnected) mini(cv, m.series); });
@@ -586,10 +586,10 @@ async function renderWatch() {
   if (!el.innerHTML) el.innerHTML = loading;
   try {
     const d = await api(mq("/api/watchlist")); if (mk !== state.market) return; state.loaded.watch = true;
-    el.innerHTML = `<div class="panel"><h2>${mk === "KR" ? "한국" : "미국"} 관심종목 <span class="meta" style="margin:0">${d.tickers.length}개</span></h2>
+    el.innerHTML = `<div class="panel"><h2>${mk === "KR" ? "한국" : "미국"} 관심종목 <span class="meta m0">${d.tickers.length}개</span></h2>
       <form class="addrow" id="wadd"><input id="wq" placeholder="추가할 종목 코드" maxlength="15"><button type="submit">추가</button></form>
       ${d.items.length ? `<div class="tbl-wrap"><table><thead><tr><th>종목</th><th>종가</th><th>전일 대비</th><th>1개월</th><th class="l">추세(30일)</th><th class="l">스윙 점수</th><th class="l">장기 점수</th><th class="l">상태</th><th></th></tr></thead>
-      <tbody>${d.items.map((i) => `<tr class="click" data-ticker="${esc(i.symbol)}"><td><b>${esc(i.symbol)}</b> ${i.name ? `<span class="meta" style="margin:0">${esc(i.name)}</span>` : ""}</td><td class="num">${fmt(i.close, d0)}</td><td>${pct(i.change_pct)}</td><td>${pct(i.change_1m_pct, 1)}</td>
+      <tbody>${d.items.map((i) => `<tr class="click" data-ticker="${esc(i.symbol)}"><td><b>${esc(i.symbol)}</b> ${i.name ? `<span class="meta m0">${esc(i.name)}</span>` : ""}</td><td class="num">${fmt(i.close, d0)}</td><td>${pct(i.change_pct)}</td><td>${pct(i.change_1m_pct, 1)}</td>
         <td class="l"><canvas style="width:80px;height:24px" data-spark='${JSON.stringify(i.spark || [])}'></canvas></td><td class="l">${watchScore(i.qsf, "SWING", d.qsf_scan)}</td><td class="l">${watchScore(i.qsf, "LONG_TERM", d.qsf_scan)}</td><td class="l">${badge(i.status)} ${liveBadge(i.intraday)} <span class="meta">${esc(i.date || "")}</span></td>
         <td><button class="x" data-rm="${esc(i.symbol)}" title="삭제">✕</button></td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">관심종목이 없습니다.</div>'}
       ${d.qsf_scan && d.qsf_scan.status === "REAL" ? `<div class="meta">점수는 ${esc(d.qsf_scan.session)} 거래일 스캔(${esc(d.qsf_scan.model_version)})에 기록된 값입니다. 스캔 대상이 아닌 종목은 비워 둡니다. 점수 탭에서 다시 계산할 수 있습니다.</div>` : ""}
@@ -688,13 +688,13 @@ async function renderModel() {
   try {
     const [d, cap] = await Promise.all([api(mq("/api/model")), api(mq("/api/capital"))]); if (mk !== state.market) return; state.loaded.model = true;
     const b = d.baseline, t = d.tracking;
-    el.innerHTML = `<div class="panel"><h2>${esc(b.name)} ${badge(b.status || "FROZEN")} <span class="meta" style="margin:0">${esc(b.role)}</span></h2>
+    el.innerHTML = `<div class="panel"><h2>${esc(b.name)} ${badge(b.status || "FROZEN")} <span class="meta m0">${esc(b.role)}</span></h2>
       <div class="form" style="margin:8px 0 12px"><label>투자 자본금 (${esc(cap.currency)})<input id="capInput" inputmode="decimal" autocomplete="off" value="${isNum(cap.amount) ? cap.amount : ""}" placeholder="금액 입력"></label><button id="capSave">저장</button>${mk === "KR" ? '<button id="capRun" type="button" title="저장된 금액으로 한국 모델 스캔을 실행합니다 (python app.py --market KR scan과 같습니다)">스캔 실행</button>' : ""}<div class="wide meta" id="capNote" style="margin:0"></div><div class="wide meta" id="capRunNote" style="margin:0"></div></div>
       ${b.newer_empty_scan ? `<div class="notice">더 최근 스캔(${when(b.newer_empty_scan.executed_at)}, 기준 거래일 ${esc(b.newer_empty_scan.latest_session || "")})은 그날 시세가 아직 다 나오지 않아 채점한 종목이 없었습니다. 아래는 그 전의 마지막 유효 결과입니다.</div>` : ""}
       ${b.run_id ? `<div class="kv"><div><span>최근 전체 스캔</span><b>${when(b.executed_at)}</b></div>${b.latest_session ? `<div><span>기준 거래일</span><b>${esc(b.latest_session)}</b></div>` : ""}<div><span>결과</span><b>${esc(REC_KO[b.recommendation_status] || b.recommendation_status)}</b></div>
         <div><span>시장 국면</span><b>${esc(REGIME_KO[b.regime] || b.regime || "—")}</b></div><div><span>기준 자본</span><b class="num">${isNum(b.capital) ? b.capital.toLocaleString("ko-KR") + " " + esc(b.currency || "") : DASH}</b></div></div>
       <h3>모델 상위 종목</h3><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th class="l">섹터</th><th>기준가</th><th title="모델이 순위를 매기는 데 쓰는 값입니다. 수익률이 아닙니다.">${mk === "KR" ? "모델 점수(순위용)" : "모델 알파(순위용)"}</th><th>목표 비중</th><th>목표 금액</th><th>주수</th><th>손절가</th><th>보유 기간</th></tr></thead>
-      <tbody>${(b.top5 || []).map((r) => `<tr class="click" data-ticker="${esc(r.ticker)}"><td>${esc(r.recommendation_rank)}</td><td class="l"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span></td>
+      <tbody>${(b.top5 || []).map((r) => `<tr class="click" data-ticker="${esc(r.ticker)}"><td>${esc(r.recommendation_rank)}</td><td class="l"><b>${esc(r.ticker)}</b> <span class="meta m0">${esc(r.name || "")}</span></td>
         <td class="l">${esc(sectorKo(r.sector))}</td><td class="num">${fmt(r.close, mk === "KR" ? 0 : 2)}</td><td class="num">${fmt(r.alpha, 3)}</td><td class="num">${isNum(r.target_weight) ? (r.target_weight * 100).toFixed(1) + "%" : DASH}</td>
         <td class="num" data-cap-amount data-w="${isNum(r.target_weight) ? r.target_weight : ""}">${DASH}</td><td class="num" data-cap-shares data-w="${isNum(r.target_weight) ? r.target_weight : ""}" data-close="${isNum(r.close) ? r.close : ""}">${DASH}</td>
         <td class="num">${fmt(r.hard_stop)}</td><td>${isNum(r.horizon_days) ? r.horizon_days + "거래일" : DASH}</td></tr>`).join("") || '<tr><td colspan="10" class="empty">추천 종목 없음</td></tr>'}</tbody></table></div>

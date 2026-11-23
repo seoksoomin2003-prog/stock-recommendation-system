@@ -10,11 +10,11 @@ const alPost = (path, body) => api(path, { method: "POST", headers: { "Content-T
 
 async function renderAlerts(box) {
   if (!box) return;
-  box.innerHTML = `<h2>알림 센터 <button class="ghost" id="al-check" type="button" style="float:right">지금 확인</button></h2>
+  box.innerHTML = `${ui.head({ title: "알림 센터", actions: '<button class="ghost" id="al-check" type="button" style="float:right">지금 확인</button>' })}
     <form class="form" id="al-form" autocomplete="off">
       <label>조건<select name="type">${[["PRICE_ABOVE", "종가가 이 가격 이상"], ["PRICE_BELOW", "종가가 이 가격 이하"], ["MOVE", "하루 등락폭이 이 % 이상"], ["BAND_CHANGE", "QSF 점수 구간이 바뀜"], ["EARNINGS_SOON", "실적 발표가 다가옴"]]
         .map(([k, n]) => `<option value="${k}">${n}</option>`).join("")}</select></label>
-      <label>종목 코드<input name="ticker" maxlength="15" style="text-transform:uppercase" placeholder="비우면 ${isKR() ? "한국" : "미국"} 보유·관심 종목 전체"></label>
+      <label>종목 코드<input name="ticker" maxlength="15" class="upper" placeholder="비우면 ${isKR() ? "한국" : "미국"} 보유·관심 종목 전체"></label>
       <label id="al-vlabel"><span>가격</span><input name="value" inputmode="decimal"></label>
       <label id="al-slabel" hidden>구분<select name="strategy"><option value="SWING">스윙 점수</option><option value="LONG_TERM">장기 점수</option></select></label>
       <div><button class="btn-primary" type="submit">조건 추가</button></div>
@@ -45,17 +45,15 @@ async function loadAlerts() {
   let d;
   try { d = await api("/api/alerts"); } catch (e) { box.innerHTML = errBox(e); return; }
   if (!box.isConnected) return;
-  box.innerHTML = d.rules.length
-    ? `<div class="tbl-wrap"><table><thead><tr><th class="l">조건</th><th class="l">상태</th><th></th></tr></thead><tbody>${d.rules.map((r) => `<tr>
+  box.innerHTML = ui.table({ cols: [{ label: "조건", cls: "l" }, { label: "상태", cls: "l" }, { label: "" }], empty: "걸어 둔 조건이 없습니다.", rows: d.rules.map((r) => `<tr>
         <td class="l">${esc(r.name)}</td>
-        <td class="l">${r.status === "ACTIVE" ? '<span class="badge">대기</span>' : `<span class="badge risk-note">발동 ${esc(r.triggered_at || "")}</span>`}</td>
-        <td class="num">${r.status === "TRIGGERED" ? `<button class="ghost" data-rearm="${esc(r.id)}" type="button">다시 켜기</button> ` : ""}<button class="ghost" data-del="${esc(r.id)}" type="button">삭제</button></td></tr>`).join("")}</tbody></table></div>`
-    : '<div class="empty">걸어 둔 조건이 없습니다.</div>';
+        <td class="l">${r.status === "ACTIVE" ? ui.badge("대기") : ui.badge(`발동 ${r.triggered_at || ""}`, "risk-note")}</td>
+        <td class="num">${r.status === "TRIGGERED" ? `<button class="ghost" data-rearm="${esc(r.id)}" type="button">다시 켜기</button> ` : ""}<button class="ghost" data-del="${esc(r.id)}" type="button">삭제</button></td></tr>`) });
   box.insertAdjacentHTML("beforeend", `<div class="meta">${esc(d.basis)} 가격 조건은 한 번 발동하면 멈추고, 구간·등락·실적 조건은 바뀔 때마다 알립니다. 점수 구간 변화는 검증된 매매 신호가 아닙니다.</div>`);
   box.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => { await alPost("/api/alerts/remove", { id: b.dataset.del }).catch(() => null); loadAlerts(); }));
   box.querySelectorAll("[data-rearm]").forEach((b) => (b.onclick = async () => { await alPost("/api/alerts/rearm", { id: b.dataset.rearm }).catch(() => null); loadAlerts(); }));
   $("#al-log").innerHTML = d.log.length
-    ? `<h3>최근 보낸 알림</h3><div class="tbl-wrap"><table><tbody>${d.log.slice(0, 20).map((a) => `<tr><td class="l">${alTime(a.at)}</td><td class="l">${a.market === "KR" ? "[한국] " : ""}${esc(a.text)}</td></tr>`).join("")}</tbody></table></div>`
+    ? `<h3>최근 보낸 알림</h3>${ui.table({ rows: d.log.slice(0, 20).map((a) => `<tr><td class="l">${alTime(a.at)}</td><td class="l">${a.market === "KR" ? "[한국] " : ""}${esc(a.text)}</td></tr>`) })}`
     : "";
 }
 async function checkAlerts() {
@@ -67,8 +65,8 @@ async function checkAlerts() {
   if (!box.isConnected) return;
   const missed = {};
   d.notes.forEach((n) => (missed[n.reason] = (missed[n.reason] || new Set()).add(n.ticker)));
-  box.innerHTML = `<h3>지금 확인한 결과 <span class="meta" style="margin:0">${alTime(d.checked_at)} · 조건 ${d.rules}개</span></h3>
-    ${d.alerts.length ? `<ul class="alerts">${d.alerts.map((a) => `<li class="${a.level}">${a.market === "KR" ? "[한국] " : ""}${esc(a.text)}</li>`).join("")}</ul>` : '<div class="empty">지금 발동할 조건이 없습니다.</div>'}
+  box.innerHTML = `<h3>지금 확인한 결과 <span class="meta m0">${alTime(d.checked_at)} · 조건 ${d.rules}개</span></h3>
+    ${d.alerts.length ? `<ul class="alerts">${d.alerts.map((a) => `<li class="${a.level}">${a.market === "KR" ? "[한국] " : ""}${esc(a.text)}</li>`).join("")}</ul>` : ui.empty("지금 발동할 조건이 없습니다.")}
     ${Object.keys(missed).length ? `<div class="meta">확인하지 못한 종목: ${Object.entries(missed).map(([k, s]) => `${AL_NOTE[k] || k} ${[...s].slice(0, 8).map(esc).join(", ")}${s.size > 8 ? ` 외 ${s.size - 8}개` : ""}`).join(" · ")}</div>` : ""}
     <div class="meta">미리보기일 뿐 보내지 않고 기록하지도 않습니다. 실제 알림은 다음 자동 실행 때 나갑니다.</div>`;
 }
