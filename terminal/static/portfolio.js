@@ -74,7 +74,7 @@ async function renderPortfolio() {
   el.querySelectorAll("[data-void]").forEach((b) => (b.onclick = async (e) => {
     e.stopPropagation();
     if (!confirm("이 기록을 취소할까요? 원래 기록은 남고, 취소 기록이 추가됩니다.")) return;
-    try { await post("/api/journal/void", { ref: b.dataset.void }); renderPortfolio(); } catch (err) { alert(errKo(err)); }
+    try { await post("/api/journal/void", { ref: b.dataset.void }); renderPortfolio(); } catch (err) { notify(errKo(err)); }
   }));
   loadEquity();
   if (d.holdings.length) loadRisk();
@@ -92,7 +92,7 @@ function totalHtml(t) {
 function holdingRow(h) {
   const stop = h.stop ? `${money(h.stop)} <span class="meta m0">(${pct(h.stop_distance_pct, 1, false)})</span>` : '<span class="missing">미설정</span>';
   const swing = h.style === "SWING";
-  return `<tr class="click" data-ticker="${esc(h.ticker)}"><td><b>${esc(h.ticker)}</b>${h.name ? ` <span class="meta m0">${esc(h.name)}</span>` : ""} ${liveBadge(h.intraday)}${h.status !== "REAL" ? " " + badge(h.status) : ""}</td>
+  return `<tr class="click" data-ticker="${esc(h.ticker)}"><td>${tickerLabel(h.ticker, h.name)} ${liveBadge(h.intraday)}${h.status !== "REAL" ? " " + badge(h.status) : ""}</td>
     <td class="num">${isNum(h.weight_pct) ? h.weight_pct.toFixed(1) + "%" : DASH}</td><td class="num" data-sig="score" data-t="${esc(h.ticker)}">${DASH}</td><td class="l" data-sig="action" data-t="${esc(h.ticker)}">${DASH}</td><td class="num">${stop}</td>
     ${swing ? `<td class="num">${h.target ? money(h.target) : DASH}</td><td class="l" data-sig="left" data-t="${esc(h.ticker)}">${DASH}</td>` : `<td class="l" data-sig="review" data-t="${esc(h.ticker)}">${DASH}</td>`}
     <td>${pnl(h.unrealized)} ${pct(h.unrealized_pct, 1)}</td><td>${pct(h.change_pct)}</td><td class="num">${qtyFmt(h.qty)}</td><td class="num">${money(h.avg_cost)}</td><td class="num">${money(h.close)}</td><td class="num">${money(h.value)}</td>

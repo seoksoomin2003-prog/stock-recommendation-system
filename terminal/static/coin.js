@@ -2,7 +2,7 @@
 "use strict";
 const coinPct = (v, d = 2) => (isNum(v) ? `<span class="${v > 0 ? "up" : v < 0 ? "down" : ""}">${(v * 100 > 0 ? "+" : "") + (v * 100).toFixed(d)}%</span>` : DASH);
 const coinPrice = (v) => (isNum(v) ? (v >= 1 ? v.toLocaleString("ko-KR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v.toFixed(6)) : DASH);
-const coinWhen = (ms) => new Date(ms).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+const coinWhen = (ms) => stamp(new Date(ms));
 
 async function renderCoin() {
   const el = $("#tab-coin");

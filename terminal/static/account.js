@@ -21,7 +21,7 @@ function acctHoldingsHtml(d) {
   if (!d.holdings.length) return '<div class="empty">보유 종목이 없습니다. 아래 "거래 기록 추가"에서 "이미 가지고 있는 종목 추가"를 고르면 지금 갖고 있는 종목을 바로 넣을 수 있습니다.</div>';
   const rate = d.total.usdkrw;
   const rows = d.holdings.map((h) => `<tr><td class="l">${ACCT_KO[h.market]}</td>
-    <td class="l"><b>${esc(h.ticker)}</b> <span class="meta m0">${esc(h.name || "")}</span>${h.status !== "REAL" ? " " + badge(h.status) : ""}</td>
+    <td class="l">${tickerLabel(h.ticker, h.name)}${h.status !== "REAL" ? " " + badge(h.status) : ""}</td>
     <td class="l">${esc(STYLE_KO[h.style] || "미지정")}</td><td class="num">${qtyFmt(h.qty)}</td><td class="num">${acctPrice(h.avg_cost, h.currency)}</td><td class="num">${acctPrice(h.close, h.currency)}</td>
     <td class="num">${acctCur(h.value, h.currency)}</td><td class="num">${acctTotal(h.value_krw, rate)}</td><td class="num">${isNum(h.weight_total_pct) ? h.weight_total_pct.toFixed(1) + "%" : DASH}</td>
     <td class="num">${pct(h.unrealized_pct)}</td><td class="num">${h.stop ? acctPrice(h.stop, h.currency) : DASH}</td><td class="num">${h.target ? acctPrice(h.target, h.currency) : DASH}</td></tr>`).join("");
@@ -39,7 +39,7 @@ function acctFormHtml(d) {
   return `<form class="form" id="acctform" autocomplete="off">
     <label>종류<select name="kind">${kinds.map((k) => `<option value="${k}" ${k === f.kind ? "selected" : ""}>${KIND_KO[k]}</option>`).join("")}</select></label>
     <label>계좌<select name="market">${Object.keys(ACCT_KO).map((m) => `<option value="${m}" ${m === f.market ? "selected" : ""}>${ACCT_KO[m]} (${ACCT_CUR[m] === "KRW" ? "원" : "달러"})</option>`).join("")}</select></label>
-    <label>${f.kind === "HOLD" ? "산 날짜" : "날짜"}<input name="date" type="date" value="${esc(f.date || acctToday(f.market))}" max="${acctToday(f.market)}"></label>
+    <label>${f.kind === "HOLD" ? "산 날짜" : "날짜"}${f.market === "US" ? "(미국 기준)" : ""}<input name="date" type="date" value="${esc(f.date || acctToday(f.market))}" max="${acctToday(f.market)}"></label>
     ${Object.keys(label).map((k) => k === "style" ? `<label data-f="style">${label[k]}${styleSelect}</label>`
       : `<label data-f="${k}">${label[k]}<input name="${k}" ${k === "ticker" ? `maxlength="15" style="text-transform:uppercase" ${f.market === "COIN" ? 'list="acctcoins"' : ""}` : 'inputmode="decimal"'}></label>`).join("")}
     <datalist id="acctcoins">${coins}</datalist>
@@ -136,7 +136,7 @@ async function renderAccount() {
   el.querySelectorAll(".acct-detail").forEach((b) => { b.onclick = () => { setMarket(b.dataset.m, false); show("portfolio"); }; });
   el.querySelectorAll("[data-void]").forEach((b) => { b.onclick = async () => {
     if (!confirm("이 기록을 취소합니다. 지우지 않고 '취소' 기록을 덧붙입니다.")) return;
-    try { await post("/api/journal/void", { ref: b.dataset.void }); renderAccount(); } catch (err) { alert(errKo(err)); }
+    try { await post("/api/journal/void", { ref: b.dataset.void }); renderAccount(); } catch (err) { notify(errKo(err)); }
   }; });
   acctBind(d);
 }

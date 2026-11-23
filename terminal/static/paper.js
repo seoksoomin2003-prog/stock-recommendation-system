@@ -24,7 +24,7 @@ function ptFormHtml(d) {
     <label data-f="price">가격(${curSym()})<input name="price" inputmode="decimal" value="${v("price")}"></label>
     <label data-f="amount">금액(${curSym()})<input name="amount" inputmode="decimal" value="${v("amount")}"></label>
     <label data-f="fee" title="비워 두면 토스증권 수수료와 매도 세금을 자동으로 계산합니다">수수료·세금(${curSym()}, 비우면 자동)<input name="fee" inputmode="decimal" placeholder="자동 계산"></label>
-    <label>날짜<input name="date" type="date" value="${esc(p.date || d.today || "")}" max="${esc(d.today || "")}"></label>
+    <label>날짜${isKR() ? "" : "(미국 기준)"}<input name="date" type="date" value="${esc(p.date || d.today || "")}" max="${esc(d.today || "")}"></label>
     <label>메모(선택)<input name="note" maxlength="200" value="${v("note")}"></label>
     <button class="btn-primary">기록</button>
     <div class="wide meta m0" id="ptpreview"></div><div class="wide meta m0" id="ptmsg"></div></form>`;
@@ -77,7 +77,7 @@ function ptWireForm(d, mk) {
 async function ptVoid(id) {
   if (!confirm("이 기록을 취소할까요? 기록은 지워지지 않고 '취소됨'으로 남습니다.")) return;
   try { await api("/api/paper-trade/void", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ref: id }) }); renderPaper(); }
-  catch (e) { alert(errKo(e)); }
+  catch (e) { notify(errKo(e)); }
 }
 
 async function renderPaper() {

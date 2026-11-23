@@ -5,7 +5,7 @@ const AL_VALUE = { PRICE_ABOVE: ["가격", "decimal"], PRICE_BELOW: ["가격", "
 const AL_ERR = { BAD_TYPE: "조건을 고르세요.", TICKER_REQUIRED: "가격 조건은 종목 코드가 필요합니다.", BAD_VALUE: "값이 올바르지 않습니다. (등락폭 0~50%, 실적 1~30일)",
   BAD_STRATEGY: "구분이 올바르지 않습니다.", TOO_MANY_RULES: "알림 조건은 최대 200개입니다.", INVALID_TICKER: "종목 코드 형식이 올바르지 않습니다." };
 const AL_NOTE = { NO_PRICE: "최근 확정 종가 없음", NO_PREVIOUS_CLOSE: "전일 종가 없음", NO_EARNINGS_DATE: "실적 일정 모름", NOT_SCANNED: "QSF 스캔 대상 아님" };
-const alTime = (iso) => { const t = new Date(iso); return isNaN(t) ? esc(iso) : t.toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }); };
+const alTime = (iso) => stamp(iso) || esc(iso);
 const alPost = (path, body) => api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 async function renderAlerts(box) {

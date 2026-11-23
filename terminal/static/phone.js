@@ -1,7 +1,7 @@
 // '폰 연결': 같은 와이파이의 휴대폰에서 이 화면을 여는 문을 켜고 끈다 (terminal/phone_view.py).  켜고 끄기는 이 컴퓨터에서만 된다.
 "use strict";
 const phonePost = (path, body) => api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
-const phoneWhen = (iso) => { const t = new Date(iso); return isNaN(t) ? "" : t.toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }); };
+const phoneWhen = (iso) => stamp(iso);
 let phoneTimer = null;
 
 function phoneHtml(d) {
@@ -31,7 +31,7 @@ async function phonePaint(d) {
   $("#phonebtn").textContent = d.on ? "폰 연결 · 켜짐" : "폰 연결";
   const act = (sel, fn) => bar.querySelectorAll(sel).forEach((b) => { b.onclick = async () => {
     b.disabled = true;
-    try { phonePaint(await fn(b)); } catch (e) { b.disabled = false; alert(errKo(e)); }
+    try { phonePaint(await fn(b)); } catch (e) { b.disabled = false; notify(errKo(e)); }
   }; });
   act("#phoneon", () => phonePost("/api/phone/switch", { on: true }));
   act("#phoneoff", () => (confirm("휴대폰 연결을 끕니다. 연결된 기기도 모두 끊깁니다.") ? phonePost("/api/phone/switch", { on: false }) : api("/api/phone/status")));

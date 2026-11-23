@@ -3,7 +3,7 @@
 "use strict";
 const SP_BAND = { BUY_CANDIDATE: "g-A", HOLD_WATCH: "g-C", WEAK_REDUCE: "g-D", SELL_AVOID: "g-F" };
 const spPct = (to, from) => (isNum(to) && isNum(from) && from > 0 ? (to / from - 1) * 100 : null);
-const spPctTxt = (v) => (isNum(v) ? `<span class="${v >= 0 ? "up" : "down"}">${v >= 0 ? "+" : ""}${v.toFixed(1)}%</span>` : '<span class="missing">없음</span>');
+const spPctTxt = (v) => (isNum(v) ? `<span class="${v >= 0 ? "up" : "down"}">${v >= 0 ? "+" : ""}${v.toFixed(1)}%</span>` : DASH);
 
 async function loadSectorPicks(f) {
   const box = $("#rrg-picks");

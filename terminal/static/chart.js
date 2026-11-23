@@ -76,7 +76,7 @@ function chaControls(d) {
     <button type="button" class="ghost" id="cha-ma-def">기본(${s.ma_default[mk].join("·")})</button><span class="meta m0">최대 ${s.ma_max}개</span>`;
   $("#cha-ma").querySelectorAll("[data-ma]").forEach((b) => (b.onchange = () => {
     const got = [...$("#cha-ma").querySelectorAll("[data-ma]:checked")].map((x) => +x.dataset.ma);
-    if (got.length > s.ma_max) { b.checked = false; alert(`이동평균은 한 번에 ${s.ma_max}개까지 그립니다.`); return; }
+    if (got.length > s.ma_max) { b.checked = false; notify(`이동평균은 한 번에 ${s.ma_max}개까지 그립니다.`, "info"); return; }
     cha.ma[mk] = got; chaSave(); renderChart();
   }));
   $("#cha-ma-def").onclick = () => { delete cha.ma[mk]; chaSave(); renderChart(); };
@@ -126,7 +126,8 @@ function chaDraw() {
   });
   const pad = (hi - lo) * 0.05 || 1; lo -= pad; hi += pad;
   const ph = P.h - 22, py = (v) => 6 + (1 - (v - lo) / (hi - lo)) * (ph - 6);
-  chaGrid(P.ctx, pw, lo, hi, py, grid, muted, (v) => v.toLocaleString("ko-KR", { maximumFractionDigits: v >= 100 ? 0 : 2 }));
+  const nt = niceTicks(lo, hi);
+  chaGrid(P.ctx, pw, lo, hi, py, grid, muted, (v) => tickLabel(v, nt.digits), 4, nt.ticks);
   chaDates(P.ctx, bars, x, P.h - 14, P.w, muted);
   const ctx = P.ctx;
   if (cha.bb) {

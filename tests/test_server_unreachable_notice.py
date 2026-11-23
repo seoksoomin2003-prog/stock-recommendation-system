@@ -14,5 +14,5 @@ def test_a_failed_request_raises_its_own_error_and_shows_the_notice():
 
 def test_the_rank_view_tells_a_failed_request_from_a_missing_scan():
     js = (STATIC / "qsf.js").read_text(encoding="utf-8")
-    failed, missing = js.index("순위를 불러오지 못했습니다"), js.index("아직 스캔 기록이 없습니다. <code>python app.py qsf scan</code>")
+    failed, missing = js.index("순위를 불러오지 못했습니다"), js.index("아직 스캔 기록이 없습니다. 매일 자동 실행 뒤에 표시됩니다.")
     assert failed < missing and "스캔 기록이 없다는 뜻이 아닙니다" in js

@@ -25,7 +25,7 @@ function cmpSave() { try { localStorage.setItem(CMP_KEY, JSON.stringify(cmp.list
 function cmpAdd(t) {
   t = String(t).trim().toUpperCase();
   if (!t || cmp.list.includes(t)) return;
-  if (cmp.list.length >= 8) { alert("비교는 최대 8개까지입니다."); return; }
+  if (cmp.list.length >= 8) { notify("비교는 최대 8개까지입니다.", "info"); return; }
   cmp.list.push(t); cmpSlot(t); cmpSave();
 }
 function cmpRemove(t) { cmp.list = cmp.list.filter((x) => x !== t); delete cmp.slots[t]; cmpSave(); }

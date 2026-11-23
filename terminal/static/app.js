@@ -21,6 +21,21 @@ const DASH = '<span class="missing">—</span>';
 // A bar's open is drawn only when it lies inside the bar's own low-high range: Yahoo sends 0 for some Korean intraday bars
 // (005930 on 2026-11-23), and a body drawn from 0 ran through the volume pane.  The stored bar is left as it came.
 function goodOpen(b) { return isNum(b.open) && b.open > 0 && (!isNum(b.low) || b.open >= b.low) && (!isNum(b.high) || b.open <= b.high); }
+// 종목 이름표 (4차 묶음 P2-10, 사용자 결정 2026-11-23): 한국 종목은 이름을 굵게 앞에, 6자리 코드는 흐리게 뒤에 둡니다.
+// 미국 종목은 코드가 앞입니다.  이름이 없으면 코드만 씁니다.
+const nameFirst = (t, name) => !!name && marketOf(t) === "KR";
+function tickerLabel(t, name, attrs = "") {
+  if (nameFirst(t, name)) return `<b${attrs}>${esc(name)}</b> <span class="meta m0">${esc(t)}</span>`;
+  return `<b${attrs}>${esc(t)}</b>${name ? ` <span class="meta m0">${esc(name)}</span>` : ""}`;
+}
+const tickerText = (t, name) => (nameFirst(t, name) ? `${name} ${t}` : `${t}${name ? " " + name : ""}`);
+// 시각은 한 형식으로 (4차 묶음 P3-11, 사용자 결정): 2026-11-23 12:23, 이 기기의 시각(한국에서는 한국 시각)입니다.
+function stamp(v) {
+  const d = v instanceof Date ? v : new Date(v);
+  if (isNaN(d)) return "";
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 function fmt(v, d = 2) { return isNum(v) ? v.toLocaleString("ko-KR", { minimumFractionDigits: d, maximumFractionDigits: d }) : DASH; }
 function pct(v, d = 2, sign = true) {
   if (!isNum(v)) return DASH;
@@ -30,10 +45,19 @@ function pct(v, d = 2, sign = true) {
 function big(v, unit = "USD") {
   if (!isNum(v)) return DASH;
   const a = Math.abs(v), s = v < 0 ? "-" : "", p = unit === "USD" ? "$" : unit === "KRW" ? "₩" : "";
-  if (a >= 1e12) return `${s}${p}${(a / 1e12).toFixed(2)}조`;
-  if (a >= 1e8) return `${s}${p}${(a / 1e8).toLocaleString("ko-KR", { maximumFractionDigits: a >= 1e11 ? 0 : 1 })}억`;
-  if (a >= 1e4) return `${s}${p}${(a / 1e4).toLocaleString("ko-KR", { maximumFractionDigits: 1 })}만`;
+  // 4차 묶음 P2-5 (사용자 결정): 조·억 단위는 그대로, 쉼표를 넣고 소수 자리를 크기에 따라 정합니다 (₩1,124.6조, $3.52조, ₩8,350억).
+  const n = (x, d) => x.toLocaleString("ko-KR", { minimumFractionDigits: d, maximumFractionDigits: d });
+  if (a >= 1e12) return `${s}${p}${n(a / 1e12, a >= 1e13 ? 1 : 2)}조`;
+  if (a >= 1e8) return `${s}${p}${n(a / 1e8, a >= 1e11 ? 0 : 1)}억`;
+  if (a >= 1e4) return `${s}${p}${n(a / 1e4, 1)}만`;
   return `${s}${p}${a.toLocaleString("ko-KR", { maximumFractionDigits: 2 })}`;
+}
+// 서버가 쓴 문장 속 큰 금액(예: "20일 평균 거래대금 17,237,663,755달러")을 같은 조·억 표기로 바꿉니다.  1억 미만은 그대로.
+function bigInText(s) {
+  return String(s).replace(/(\d{1,3}(?:,\d{3})+)(?:\.\d+)?\s?(달러|원)/g, (all, num, unit) => {
+    const v = Number(num.replace(/,/g, ""));
+    return v >= 1e8 ? big(v, unit === "원" ? "KRW" : "USD") : all;
+  });
 }
 // Yahoo's sector names in Korean; any other name (a Korean exchange industry, for one) is shown as it is.
 const SECTOR_KO = { "Technology": "기술", "Financial Services": "금융", "Healthcare": "헬스케어", "Consumer Cyclical": "경기소비재", "Consumer Defensive": "필수소비재", "Industrials": "산업재", "Basic Materials": "소재", "Energy": "에너지", "Utilities": "유틸리티", "Real Estate": "부동산", "Communication Services": "커뮤니케이션" };
@@ -43,10 +67,23 @@ const liveBadge = (on) => (on ? '<span class="badge live" title="정규장 진�
 function when(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
-  return isNaN(d) ? esc(iso) : d.toLocaleString("ko-KR", { dateStyle: "short", timeStyle: "short" });
+  return isNaN(d) ? esc(iso) : stamp(d);
 }
 function meta(source, fetched, extra = "") {
   return `<div class="meta">출처: ${esc(source)}${fetched ? ` · 받아온 시각 ${when(fetched)}` : ""}${extra ? " · " + extra : ""}</div>`;
+}
+// 화면 안 알림 (4차 묶음 P3-5): 브라우저 기본 경고창 대신 화면 아래에 잠깐 띄웁니다.  되돌릴 수 없는 동작의 확인(confirm)은 그대로입니다.
+let toastTimer = null;
+function notify(text, tone = "err") {
+  const el = $("#toast");
+  if (!el) return;
+  el.className = `toast ${tone}`;
+  el.setAttribute("role", tone === "err" ? "alert" : "status");
+  el.innerHTML = `<span>${esc(text)}</span><button type="button" class="ghost">닫기</button>`;
+  el.hidden = false;
+  el.querySelector("button").onclick = () => { el.hidden = true; };
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, tone === "err" ? 9000 : 5000);
 }
 // 서버가 응답하지 않으면 화면 위에 알린다.  요청 실패가 '기록 없음'으로 읽히지 않게 하려는 것이다.
 let netTimer = null;
@@ -136,13 +173,41 @@ function setupCanvas(cv, h) {
   const dpr = window.devicePixelRatio || 1, w = cv.clientWidth || cv.parentElement.clientWidth;
   cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.height = h + "px";
   const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // 4차 묶음 P2-14: 화면 읽기 프로그램에 그림이라고 알리고, 이름이 없으면 그 패널의 제목을 이름으로 씁니다.  스파크라인은 숨깁니다.
+  if (cv.getAttribute("aria-hidden") !== "true") {
+    cv.setAttribute("role", "img");
+    if (!cv.getAttribute("aria-label")) { const t = cv.closest(".panel") && cv.closest(".panel").querySelector("h2, h3"); cv.setAttribute("aria-label", t ? t.textContent.trim() : "차트"); }
+  }
   return { ctx, w, h };
 }
+// 스파크라인 아래의 '그래프 폭': 그래프 기간 최저와 최고의 차이(%).  카드끼리 흔들림의 크기를 비교할 수 있게 합니다.
+function sparkRange(vals) {
+  const v = (vals || []).filter(isNum);
+  if (v.length < 2) return "";
+  const lo = Math.min(...v), hi = Math.max(...v);
+  return lo > 0 ? `<span class="nw" title="그래프(최근 ${v.length}거래일 종가)의 최저와 최고의 차이입니다. 점선은 그래프 첫날 값입니다.">그래프 폭 ${((hi / lo - 1) * 100).toFixed(1)}%</span>` : "";
+}
+// 가격 축 눈금 (4차 묶음 P2-6): 1·2·2.5·5 × 10ⁿ 간격의 값에 천 단위 쉼표.  소수 자리는 간격에 맞춥니다.
+function niceTicks(lo, hi, n = 5) {
+  if (!(hi > lo) || !isFinite(lo) || !isFinite(hi)) return { ticks: [], digits: 0 };
+  const raw = (hi - lo) / n, mag = 10 ** Math.floor(Math.log10(raw)), f = raw / mag;
+  const m = f < 1.5 ? 1 : f < 2.25 ? 2 : f < 3.5 ? 2.5 : f < 7.5 ? 5 : 10, step = m * mag;      // the nearest nice step
+  const ticks = [];
+  for (let k = Math.ceil(lo / step - 1e-9); k * step <= hi + step * 1e-9; k++) ticks.push(Number((k * step).toPrecision(12)));
+  const e = Math.floor(Math.log10(step) + 1e-9);
+  return { ticks, digits: Math.max(0, -e + (Math.abs(step / 10 ** e - 2.5) < 1e-9 ? 1 : 0)) };
+}
+const tickLabel = (v, digits) => v.toLocaleString("ko-KR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 function spark(cv, vals) {
   const v = (vals || []).filter(isNum);
+  cv.setAttribute("aria-hidden", "true");
   if (v.length < 2) return;
   const { ctx, w, h } = setupCanvas(cv, cv.clientHeight || 28);
   const lo = Math.min(...v), hi = Math.max(...v), rg = hi - lo || 1;
+  // 4차 묶음 P2-24: 첫날 값의 점선 기준선.  카드마다 최저~최고로 늘려 그리므로, 흔들림의 크기는 카드의 '그래프 폭'으로 읽습니다.
+  const by = h - 2 - ((v[0] - lo) / rg) * (h - 4);
+  ctx.save(); ctx.setLineDash([2, 3]); ctx.globalAlpha = 0.6; ctx.strokeStyle = cssVar("--muted"); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, by); ctx.lineTo(w, by); ctx.stroke(); ctx.restore();
   ctx.strokeStyle = cssVar(v[v.length - 1] >= v[0] ? "--up" : "--down"); ctx.lineWidth = 1.4;
   ctx.beginPath();
   v.forEach((x, i) => { const px = (i / (v.length - 1)) * w, py = h - 2 - ((x - lo) / rg) * (h - 4); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
@@ -211,7 +276,13 @@ $("#moresheet").onclick = (e) => {
 document.addEventListener("click", (e) => { if (!e.target.closest("#moresheet, #bottombar")) moreClose(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") moreClose(); });
 // 컴퓨터에서는 묶음 줄이 머리줄 바로 아래에 붙어 따라옵니다.  머리줄 높이(수집 막대가 열리면 달라짐)를 재어 둡니다.
-const setTopH = () => document.documentElement.style.setProperty("--top-h", Math.round($(".top").getBoundingClientRect().height) + "px");
+// --sticky-top: 표 머리 행이 붙을 높이 (4차 묶음 P3-3) = 머리줄 + 붙어 따라오는 묶음 줄
+const setTopH = () => {
+  const top = Math.round($(".top").getBoundingClientRect().height), g = $(".groups");
+  const gh = g && getComputedStyle(g).position === "sticky" ? Math.round(g.getBoundingClientRect().height) : 0;
+  document.documentElement.style.setProperty("--top-h", top + "px");
+  document.documentElement.style.setProperty("--sticky-top", top + gh + "px");
+};
 setTopH();
 window.addEventListener("resize", setTopH);
 if (window.ResizeObserver) new ResizeObserver(setTopH).observe($(".top"));
@@ -299,6 +370,8 @@ function openTicker(t) {
   window.scrollTo(0, 0);
 }
 document.querySelectorAll(".tabs button").forEach((b) => (b.onclick = () => show(b.dataset.tab)));
+// 빈 화면의 '지금 수집' 단추는 머리줄의 같은 단추를 누릅니다 (4차 묶음 P2-17).
+document.addEventListener("click", (e) => { const b = e.target.closest && e.target.closest(".collect-now"); if (b && $("#collect")) $("#collect").click(); });
 document.querySelectorAll(".groups button").forEach((b) => (b.onclick = () => showGroup(b.dataset.group)));
 $("#market").onclick = (e) => { const b = e.target.closest("button"); if (b) setMarket(b.dataset.m); };
 async function searchKr(q) {
@@ -439,7 +512,7 @@ function card(i) {
     <div class="row"><div><div class="px num">${fmt(i.close, won ? 0 : 2)}</div>
       <div class="chg"><span class="nw"><span class="meta m0">1일</span> ${pct(i.change_pct)}</span><span class="nw"><span class="meta m0">1개월</span> ${pct(i.change_1m_pct, 1)}</span></div></div>
       <canvas data-spark='${JSON.stringify(i.spark || [])}'></canvas></div>
-    <div class="meta mt-1">${i.status !== "REAL" ? badge(i.status) + " " : ""}${liveBadge(i.intraday)} ${esc(i.date || "")}</div>
+    <div class="meta mt-1">${i.status !== "REAL" ? badge(i.status) + " " : ""}${liveBadge(i.intraday)} ${esc(i.date || "")} ${sparkRange(i.spark)}</div>
   </div>`;
 }
 
@@ -506,14 +579,13 @@ function renderProfile(c) {
     <div class="head" id="s-price"></div>
     <div class="meta">${esc([sectorKo(p.sector), p.industry].filter(Boolean).join(" · "))}${p.website ? ` · <a href="${esc(p.website)}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>
     <div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span><b class="num">${v}</b></div>`).join("")}</div>
-    ${p.longBusinessSummary ? `<div class="summary" id="sum" title="눌러서 펼치기">${esc(p.longBusinessSummary)}</div><div class="meta">사업 설명은 Yahoo 제공 영문 원문입니다.</div>` : ""}
+    ${p.longBusinessSummary ? `<details class="co-sum" id="sum"><summary>회사 설명 <span class="meta m0">Yahoo 영문 원문</span> <span class="co-lead" lang="en">${esc(p.longBusinessSummary)}</span></summary><div class="summary open" lang="en">${esc(p.longBusinessSummary)}</div></details>` : ""}
     ${meta(c.profile.source, c.profile.fetched_at, badge(c.profile.status))}`;
   renderHeadPrice();
-  const s = $("#sum"); if (s) s.onclick = () => s.classList.toggle("open");
   $("#addc").onclick = () => compareWith([c.ticker]);
   $("#adda").onclick = () => chartWith(c.ticker);
   $("#addq").onclick = () => { if (typeof qsfOpenCard === "function") qsfOpenCard(c.ticker); };
-  $("#addw").onclick = async () => { try { await api("/api/watchlist/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: c.ticker }) }); $("#addw").textContent = "✓ 추가됨"; state.loaded.watch = false; } catch (e) { alert(errKo(e)); } };
+  $("#addw").onclick = async () => { try { await api("/api/watchlist/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: c.ticker }) }); $("#addw").textContent = "✓ 추가됨"; state.loaded.watch = false; } catch (e) { notify(errKo(e)); } };
 }
 function renderFund(f) {
   const el = $("#s-fund");
@@ -559,11 +631,14 @@ function drawPrice() {
   const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * priceH, x = (i) => i * bw + bw / 2;
   const grid = cssVar("--grid"), muted = cssVar("--muted"), up = cssVar("--up"), dn = cssVar("--down");
   ctx.font = "11px -apple-system, sans-serif"; ctx.textBaseline = "middle";
-  for (let k = 0; k <= 4; k++) {
-    const v = lo + ((hi - lo) * k) / 4, yy = y(v);
+  const nt = niceTicks(lo, hi);
+  nt.ticks.forEach((v) => {
+    const yy = y(v);
     ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(pw, yy); ctx.stroke();
-    ctx.fillStyle = muted; ctx.fillText(fmt(v, v >= 100 ? 0 : 2), pw + 6, yy);
-  }
+    ctx.fillStyle = muted; ctx.fillText(tickLabel(v, nt.digits), pw + 6, yy);
+  });
+  const b0 = bars[0], b1 = bars[n - 1], px = (v) => (isNum(v) ? v.toLocaleString("ko-KR", { maximumFractionDigits: 2 }) : "없음");
+  cv.setAttribute("aria-label", `${tickerText(state.ticker || "", "")} 가격 차트: ${b0.date}부터 ${b1.date}까지, 종가 ${px(b0.close)}에서 ${px(b1.close)}`);
   // date labels
   ctx.textBaseline = "top"; ctx.textAlign = "center";
   const step = Math.max(1, Math.round(n / (w < 600 ? 4 : 7)));
@@ -665,7 +740,7 @@ function watchScore(q, strategy, scan) {
 async function watchOp(op, t) {
   t = (t || "").trim(); if (!t) return;
   try { await api(`/api/watchlist/${op}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: t }) }); setMarket(marketOf(t.toUpperCase()), false); renderWatch(); }
-  catch (e) { alert(errKo(e)); }
+  catch (e) { notify(errKo(e)); }
 }
 
 // ------------------------------------------------------------------ 모델 (읽기 전용)
@@ -743,7 +818,7 @@ async function renderModel() {
     const [d, cap] = await Promise.all([api(mq("/api/model")), api(mq("/api/capital"))]); if (mk !== state.market) return; state.loaded.model = true;
     const b = d.baseline, t = d.tracking;
     el.innerHTML = `<div class="panel"><h2>${esc(b.name)} ${badge(b.status || "FROZEN")} <span class="meta m0">${esc(b.role)}</span></h2>
-      <div class="form" style="margin:8px 0 12px"><label>투자 자본금 (${esc(cap.currency)})<input id="capInput" inputmode="decimal" autocomplete="off" value="${isNum(cap.amount) ? cap.amount : ""}" placeholder="금액 입력"></label><button id="capSave">저장</button>${mk === "KR" ? '<button id="capRun" type="button" title="저장된 금액으로 한국 모델 스캔을 실행합니다 (python app.py --market KR scan과 같습니다)">스캔 실행</button>' : ""}<div class="wide meta m0" id="capNote"></div><div class="wide meta m0" id="capRunNote"></div></div>
+      <div class="form" style="margin:8px 0 12px"><label>투자 자본금 (${esc(cap.currency)})<input id="capInput" inputmode="decimal" autocomplete="off" value="${isNum(cap.amount) ? cap.amount : ""}" placeholder="금액 입력"></label><button id="capSave">저장</button>${mk === "KR" ? '<button id="capRun" type="button" title="저장된 금액으로 한국 모델 스캔을 실행합니다">스캔 실행</button>' : ""}<div class="wide meta m0" id="capNote"></div><div class="wide meta m0" id="capRunNote"></div></div>
       ${b.newer_empty_scan ? `<div class="notice">더 최근 스캔(${when(b.newer_empty_scan.executed_at)}, 기준 거래일 ${esc(b.newer_empty_scan.latest_session || "")})은 그날 시세가 아직 다 나오지 않아 채점한 종목이 없었습니다. 아래는 그 전의 마지막 유효 결과입니다.</div>` : ""}
       ${b.run_id ? `<div class="kv"><div><span>최근 전체 스캔</span><b>${when(b.executed_at)}</b></div>${b.latest_session ? `<div><span>기준 거래일</span><b>${esc(b.latest_session)}</b></div>` : ""}<div><span>결과</span><b>${esc(REC_KO[b.recommendation_status] || b.recommendation_status)}</b></div>
         <div><span>시장 국면</span><b>${esc(REGIME_KO[b.regime] || b.regime || "—")}</b></div><div><span>기준 자본</span><b class="num">${isNum(b.capital) ? b.capital.toLocaleString("ko-KR") + " " + esc(b.currency || "") : DASH}</b></div></div>
@@ -752,7 +827,7 @@ async function renderModel() {
         <td class="l">${esc(sectorKo(r.sector))}</td><td class="num">${fmt(r.close, mk === "KR" ? 0 : 2)}</td><td class="num">${fmt(r.alpha, 3)}</td><td class="num">${isNum(r.target_weight) ? (r.target_weight * 100).toFixed(1) + "%" : DASH}</td>
         <td class="num" data-cap-amount data-w="${isNum(r.target_weight) ? r.target_weight : ""}">${DASH}</td><td class="num" data-cap-shares data-w="${isNum(r.target_weight) ? r.target_weight : ""}" data-close="${isNum(r.close) ? r.close : ""}">${DASH}</td>
         <td class="num">${fmt(r.hard_stop)}</td><td>${isNum(r.horizon_days) ? r.horizon_days + "거래일" : DASH}</td></tr>`).join("") || '<tr><td colspan="10" class="empty">추천 종목 없음</td></tr>'}</tbody></table></div>
-      <div class="meta">실행 ID ${esc(b.run_id)} · 읽기 전용 표시입니다. 이 화면은 모델을 실행하거나 변경하지 않습니다.</div>` : '<div class="empty">기록된 전체 스캔이 없습니다.</div>'}</div>
+      <div class="meta"><span class="tech-id">실행 ID ${esc(b.run_id)}</span> · 읽기 전용 표시입니다. 이 화면은 모델을 실행하거나 변경하지 않습니다.</div>` : '<div class="empty">기록된 전체 스캔이 없습니다.</div>'}</div>
       <div class="panel"><h2>전향적 추적 ${badge(t.status)}</h2>${t.status === "REAL" ? `<div class="kv"><div><span>기록된 실행</span><b>${esc(t.runs)}</b></div><div><span>관찰 건수</span><b>${esc(t.observations)}</b></div>${t.excluded_runs ? `<div title="같은 거래일을 두 번 스캔한 기록입니다. 지우지 않고 집계에서만 뺍니다."><span>집계 제외 (중복 스캔)</span><b>실행 ${esc(t.excluded_runs)}개 · ${esc(t.excluded_observations)}건</b></div>` : ""}
         <div><span>최근 갱신</span><b>${esc(t.latest_update || "—")}</b></div></div>
         ${t.outcome_states ? `<div class="kv">${Object.entries(t.outcome_states).map(([k, v]) => `<div><span>${esc(outKo(k))}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}

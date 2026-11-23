@@ -32,6 +32,9 @@ function paintPeers() {
     const g = (d.grades[st] || {})[k] || {};
     return `<td>${g.grade ? `<span class="grade g-${g.grade}" title="업종 ${g.n}개 중 상위 ${Math.round((1 - g.percentile) * 100)}% · 값 ${fmt(g.value, 1)}">${g.grade}</span>` : `<span class="missing" title="${g.n < 6 ? "비교할 종목이 6개 미만" : "값 없음"}">—</span>`}</td>`;
   }).join("")}</tr>`;
+  // 4차 묶음 P2-7: 값이 하나도 없는 열은 접고 한 줄로 알립니다(빈 열은 정렬할 수 없습니다).  0으로 채우지 않습니다.
+  const cols = PEER_COLS.filter(([k]) => d.peers.some((r) => isNum(peerVal(r, k)))), hidden = PEER_COLS.filter((c) => !cols.includes(c));
+  if (!cols.some(([k]) => k === peerState.sort)) { peerState.sort = "market_cap"; peerState.desc = true; }
   const rows = [...d.peers].sort((a, b) => {
     const x = peerVal(a, peerState.sort), y = peerVal(b, peerState.sort);
     if (!isNum(x) && !isNum(y)) return 0; if (!isNum(x)) return 1; if (!isNum(y)) return -1;      // missing values go last, never treated as 0
@@ -41,8 +44,9 @@ function paintPeers() {
   box.innerHTML = `${ui.head({ title: "동종업계 비교", sub: `${sectorKo(d.group)} · ${d.basis} ${d.peers.length}개 종목` })}
     ${ui.table({ cls: "grades", cols: [{ label: "업종 내 위치", cls: "l" }, ...PEER_PARTS.map(([, label]) => ({ label }))], rows: [gradeRow("SWING", "스윙 점수"), gradeRow("LONG_TERM", "장기 점수")] })}
     <div class="meta">${esc(d.basis_note)} 글자에 마우스를 올리면 순위와 값이 보입니다.</div>
-    <div class="tbl-wrap"><table id="peer-tbl"><thead><tr><th class="l">종목</th>${PEER_COLS.map(([k, n]) => `<th class="sort${peerState.sort === k ? " on" : ""}" data-k="${k}">${n}${peerState.sort === k ? (peerState.desc ? " ▼" : " ▲") : ""}</th>`).join("")}</tr></thead>
-      <tbody>${shown.map((r) => `<tr class="click${r.ticker === d.ticker ? " me" : ""}" data-ticker="${esc(r.ticker)}"><td class="l"><b>${esc(r.name || r.ticker)}</b> <span class="meta m0">${esc(r.ticker)}</span></td>${PEER_COLS.map(([, , f]) => `<td class="num">${f(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    <div class="tbl-wrap"><table id="peer-tbl"><thead><tr><th class="l">종목</th>${cols.map(([k, n]) => `<th class="sort${peerState.sort === k ? " on" : ""}" data-k="${k}">${n}${peerState.sort === k ? (peerState.desc ? " ▼" : " ▲") : ""}</th>`).join("")}</tr></thead>
+      <tbody>${shown.map((r) => `<tr class="click${r.ticker === d.ticker ? " me" : ""}" data-ticker="${esc(r.ticker)}"><td class="l"><b>${esc(r.name || r.ticker)}</b> <span class="meta m0">${esc(r.ticker)}</span></td>${cols.map(([, , f]) => `<td class="num">${f(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+    ${hidden.length ? `<div class="meta">값이 하나도 없는 열 ${hidden.length}개(${hidden.map(([, n]) => n).join(", ")})는 접었습니다. 재무 비율은 다음 자동 실행 뒤에 채워집니다.</div>` : ""}
     ${rows.length > shown.length ? `<button class="ghost" id="peer-all" type="button">${rows.length}개 모두 보기</button>` : ""}
     <div class="meta">점수: 스캔 거래일 ${esc(d.session)} · ${esc(d.model_version || "")}. 재무 비율: ${d.ratio_session ? `${esc(d.ratio_version)} 원장 기록 ${esc(d.ratio_session)} (점수가 실제로 읽은 값)` : `${esc(d.ratio_version)} 원장 기록이 아직 없어 비어 있습니다. 첫 기록은 다음 자동 실행 뒤에 생깁니다.`} 머리글을 누르면 정렬합니다.</div>`;
   box.querySelectorAll("th.sort").forEach((th) => (th.onclick = (e) => {

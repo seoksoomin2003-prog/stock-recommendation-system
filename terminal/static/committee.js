@@ -7,8 +7,8 @@ const IC_VIEWS = { dash: "위원회 현황", ports: "여섯 포트폴리오", co
 const IC_COND = { buy: "매수", hold: "보유", add: "추가 매수", reduce: "축소", sell: "매도", invalidation: "생각이 틀렸다고 볼 때" };
 const icState = { view: "dash", port: "COMMITTEE", ports: {}, market: null };
 
-const icNum = (v, d = 0) => (v === null || v === undefined ? "–" : Number(v).toFixed(d));
-const icPct = (v, d = 1) => (v === null || v === undefined ? "–" : (v * 100).toFixed(d) + "%");
+const icNum = (v, d = 0) => (v === null || v === undefined ? DASH : Number(v).toLocaleString("ko-KR", { minimumFractionDigits: d, maximumFractionDigits: d }));
+const icPct = (v, d = 1) => (v === null || v === undefined ? DASH : (v * 100).toFixed(d) + "%");
 const icBadge = (code, label) => `<span class="badge" style="color:${IC_REC_COLOR[code] || "var(--muted)"}">${esc(label || code)}</span>`;
 const icList = (xs) => (xs && xs.length ? xs.map((x) => `<div class="meta my-1">${esc(x)}</div>`).join("") : `<div class="meta my-1">없음</div>`);
 const icMarket = () => (state.market === "KR" ? "KR" : "US");
@@ -128,7 +128,7 @@ function icSetView(v) {
 function icOpenRows(box, mk) {
   box.querySelectorAll(".qs-open").forEach((b) => { b.onclick = () => qsfOpenCard(b.dataset.t); });
 }
-const icTicker = (t, name) => `<button type="button" class="qs-open" data-t="${esc(t)}"><b>${esc(t)}</b> <span class="meta m0">${esc(name || "")}</span></button>`;
+const icTicker = (t, name) => `<button type="button" class="qs-open" data-t="${esc(t)}">${tickerLabel(t, name)}</button>`;
 
 async function icDash() {
   const box = $("#icbody"), mk = icState.market;

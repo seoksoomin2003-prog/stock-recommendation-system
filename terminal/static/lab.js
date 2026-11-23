@@ -87,7 +87,7 @@ async function renderLab() {
   let d;
   try { d = await api("/api/lab/research"); } catch (e) { el.innerHTML = errBox(e); return; }
   state.loaded.lab = true;
-  if (d.status !== "REAL") { el.innerHTML = `<div class="panel"><h2>연구실</h2><div class="empty">${esc(d.reason || "")}</div><div class="meta">모델 탭의 '데이터 갱신' 버튼 또는 <code>python app.py lab update</code> 로 가격 데이터를 먼저 받으세요.</div></div>`; return; }
+  if (d.status !== "REAL") { el.innerHTML = `<div class="panel"><h2>연구실</h2><div class="empty">${esc(d.reason || "")}</div><div class="meta">모델 탭의 '데이터 갱신' 버튼으로 가격 데이터를 먼저 받으세요.</div></div>`; return; }
   labData = d;
   const codes = Object.keys(d.models);
   const yrs = Object.keys(d.benchmark.by_year || {});
@@ -168,7 +168,7 @@ async function renderRecord() {
   const stat = { OK: "완료", FAILED: "실패", SKIPPED: "건너뜀", WAITING: "자료 대기" };
   const f = d.kr_forward;
   const u = d.us_challenger;
-  el.innerHTML = `<div class="panel"><h2>전향 기록 현황 <span class="meta m0">${esc(d.model_version)}</span></h2>
+  el.innerHTML = `<div class="panel"><h2>전향 기록 현황 <span class="tech-id">${esc(d.model_version)}</span></h2>
     ${d.alerts.length ? `<ul class="rec-alerts">${d.alerts.map((x) => `<li class="${x.level}">${esc(x.text)}</li>`).join("")}</ul>` : '<div class="meta">문제없이 기록이 쌓이고 있습니다.</div>'}
     <h3>QSF 점수 기록</h3><div class="kv">${mk("미국", us)}${mk("한국", kr)}</div>
     <h3>판단까지 남은 기간</h3><div class="tbl-wrap"><table><thead><tr><th class="l">지평</th><th>필요 거래일</th><th>미국 독립 표본</th><th>한국 독립 표본</th><th>남은 기간 (미국)</th></tr></thead><tbody>${rows}</tbody></table></div>

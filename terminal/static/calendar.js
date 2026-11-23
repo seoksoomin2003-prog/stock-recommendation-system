@@ -14,10 +14,10 @@ async function loadCalendar(box) {
       what: `<b>${esc(i.name)}</b>${[i.label, !i.time_kst && i.country === "US" ? "미국 현지 날짜" : ""].filter(Boolean).map((x) => ` <span class="meta m0">${esc(x)}</span>`).join("")}`,
       tip: i.time_local ? `현지 ${i.date} ${i.time_local} (${i.time_zone})` : "발표 시각은 기관 일정표에 없습니다" })),
     ...(d.earnings || []).map((e) => ({ day: e.date, time: null, away: null, country: mk, ticker: e.ticker,
-      what: `<b data-ticker="${esc(e.ticker)}" class="pointer">${esc(e.ticker)}</b> ${esc(e.name || "")} 실적 발표 ${e.held ? ui.badge("보유") : ""}${e.watched ? ui.badge("관심") : ""}${e.stale ? ui.badge("오래된 일정", "risk-note") : ""}`,
+      what: `${tickerLabel(e.ticker, e.name, ` data-ticker="${esc(e.ticker)}" class="pointer"`)} 실적 발표 ${e.held ? ui.badge("보유") : ""}${e.watched ? ui.badge("관심") : ""}${e.stale ? ui.badge("오래된 일정", "risk-note") : ""}`,
       tip: "Yahoo 실적 일정 (회사 확정 전에는 추정치)" })),
     ...(d.dividends || []).map((e) => ({ day: e.date, time: null, away: null, country: mk, ticker: e.ticker,
-      what: `<b data-ticker="${esc(e.ticker)}" class="pointer">${esc(e.ticker)}</b> ${esc(e.name || "")} 배당락일 ${e.held ? ui.badge("보유") : ""}${e.watched ? ui.badge("관심") : ""}`,
+      what: `${tickerLabel(e.ticker, e.name, ` data-ticker="${esc(e.ticker)}" class="pointer"`)} 배당락일 ${e.held ? ui.badge("보유") : ""}${e.watched ? ui.badge("관심") : ""}`,
       tip: "Yahoo 종목 정보의 배당락일 (공식 자료가 아니라 회사 공시와 다를 수 있음)" })),
   ].sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : (a.time || "99") < (b.time || "99") ? -1 : 1));
   const today = d.from;
