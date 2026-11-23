@@ -1,17 +1,37 @@
 :root {
-  --bg: #f6f7f9; --panel: #ffffff; --ink: #14171c; --muted: #5d6673; --line: #e1e4e9;
-  --up-intl: #067a4b; --down-intl: #c43038; --up-kr: #c22f35; --down-kr: #1f5fd1; --ok: #067a4b; --on-accent: #ffffff; --accent: #2457d6; --warn: #8f5600; --bad: #b3261e;
-  --judge-buy: #6d28d9; --judge-hold: #64748b; --chip: #eef1f5; --hover: #eef1f5; --line-strong: #7b8594; --sma20: #d68a00; --sma50: #2457d6; --sma200: #8a3ffc; --grid: #edf0f3;
+  --bg: #f3f5f8; --panel: #ffffff; --ink: #14171c; --muted: #5d6673; --line: #dde2ea;
+  --up-intl: #02721c; --down-intl: #c13a46; --up-kr: #c13a46; --down-kr: #1f5fd1; --ok: #02721c; --on-accent: #ffffff; --accent: #2457d6; --warn: #8f5600; --bad: #b3261e;
+  --judge-buy: #6d28d9; --judge-hold: #64748b; --chip: #eef1f5; --hover: #eef1f5; --line-strong: #7b8594; --sma20: var(--ma20); --sma50: var(--ma50); --sma200: var(--ma200); --grid: #edf0f3;
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
   --ma5: #d6457f; --ma10: #8c5a2b; --ma20: #d68a00; --ma50: #2457d6; --ma60: #0f8c9e; --ma120: #5d6673; --ma200: #8a3ffc;
+  /* workstation surfaces and text steps (DESIGN_SYSTEM_SPECIFICATION.md section 1) */
+  --bg-2: #edf0f4; --head: #f7f8fa; --elevated: #ffffff; --row-hover: #f3f6fa; --row-selected: #e9effb; --seg-track: #eef1f5; --seg-on: #ffffff;
+  --line-soft: #e8ecf1; --ink-2: #3d4756; --faint: #8a93a0; --accent-fill: #2457d6; --accent-fill-hover: #1e4bc0;
+  --nav-active: color-mix(in srgb, var(--accent) 16%, transparent);
+  /* chart tokens (FINANCIAL_VISUALIZATION_SPECIFICATION.md 1.2, 2.5b, 2.6) */
+  --viz-surface: var(--panel); --axis: #7b8594; --tick: var(--muted); --cross: color-mix(in srgb, var(--muted) 60%, transparent); --bench: var(--muted);
+  --viz-bar: #64748b; --viz-track: #eef1f5; --viz-missing: #ffffff; --viz-missing-edge: #c3c9d2;
+  --band-80: color-mix(in srgb, #64748b 22%, transparent); --band-50: color-mix(in srgb, #64748b 55%, transparent);
+  --heat-mid: #cdd1d7; --heat-seq-lo: #e2e8f0; --heat-seq-hi: #334155; --heat-cb-up: #1f5fd1; --heat-cb-down: #b35900;
+  --shadow-1: 0 1px 2px rgba(15,23,35,.06); --shadow-2: 0 6px 20px rgba(15,23,35,.12); --shadow-3: 0 16px 40px rgba(15,23,35,.18);
+  --scrim: rgba(15,23,35,.35);
   color-scheme: light;
 }
 :root[data-theme="dark"] {
-  --bg: #0e1116; --panel: #161b22; --ink: #e6e9ee; --muted: #8b95a3; --line: #262d36;
-  --up-intl: #2fbf7f; --down-intl: #ff6369; --up-kr: #ff6369; --down-kr: #5b9cff; --ok: #2fbf7f; --on-accent: #0e1116; --accent: #6d9bff; --warn: #f0a531; --bad: #ff7b72;
-  --judge-buy: #a78bfa; --judge-hold: #64748b; --chip: #1f2630; --hover: #1f2630; --line-strong: #6b7686; --sma20: #f0a531; --sma50: #6d9bff; --sma200: #b98bff; --grid: #1d232c;
-  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  --bg: #0b1018; --panel: #151e2b; --ink: #e5eaf1; --muted: #94a3b8; --line: #273446;
+  --up-intl: #0fa05c; --down-intl: #e76250; --up-kr: #e76250; --down-kr: #4c8dff; --ok: #0fa05c; --on-accent: #ffffff; --accent: #5b96f7; --warn: #f59e0b; --bad: #ff7b72;
+  --judge-buy: #a78bfa; --judge-hold: #7d8da6; --chip: #1e2a3a; --hover: #1e2a3a; --line-strong: #6b7b92; --sma20: var(--ma20); --sma50: var(--ma50); --sma200: var(--ma200); --grid: #1e2836;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #0ca30c; --s7: #9085e9; --s8: #e66767;
   --ma5: #f07aa8; --ma10: #c08a5a; --ma20: #f0a531; --ma50: #6d9bff; --ma60: #3cc2d4; --ma120: #a3acb9; --ma200: #b98bff;
+  --bg-2: #101722; --head: #182231; --elevated: #1b2635; --row-hover: #1a2432; --row-selected: #1c2c45; --seg-track: #101722; --seg-on: #212e44;
+  --line-soft: #1e2836; --ink-2: #b4bfcd; --faint: #6b7b92; --accent-fill: #2563eb; --accent-fill-hover: #2f6ceb;
+  --nav-active: color-mix(in srgb, var(--accent) 16%, transparent);
+  --viz-surface: var(--panel); --axis: #3a4a60; --tick: var(--muted); --cross: color-mix(in srgb, var(--muted) 60%, transparent); --bench: var(--muted);
+  --viz-bar: #8a98ad; --viz-track: #1b2635; --viz-missing: #151e2b; --viz-missing-edge: #3a4a60;
+  --band-80: color-mix(in srgb, #8a98ad 30%, transparent); --band-50: color-mix(in srgb, #8a98ad 65%, transparent);
+  --heat-mid: #3a3f47; --heat-seq-lo: #243042; --heat-seq-hi: #cbd5e1; --heat-cb-up: #5b9cff; --heat-cb-down: #f0a531;
+  --shadow-1: 0 1px 0 rgba(0,0,0,.35); --shadow-2: 0 8px 24px rgba(0,0,0,.5); --shadow-3: 0 16px 48px rgba(0,0,0,.6);
+  --scrim: rgba(4,8,14,.6);
   color-scheme: dark;
 }
 /* Price colours follow the market's custom (user decision 2026-11-23): Korean screens red up / blue down as Korean brokers show
@@ -20,35 +40,46 @@
 :root { --up: var(--up-intl); --down: var(--down-intl); }
 :root[data-color="kr"] { --up: var(--up-kr); --down: var(--down-kr); }
 /* Light theme green, red and amber were darkened (2026-11-23 light check): #0a8f5a, #d0363c and #b26b00 were 3.6-4.3:1 on the chip.
+   Workstation redesign (2026-11-24): both themes' up/down pairs are the visualization spec's validated shades (section 2.2).
    On Korean screens the 50-day line leaves blue, the falling-candle colour there, for the 60-day teal. */
 :root[data-color="kr"] { --sma50: var(--ma60); }
 /* UI batch 3 P2-1 (2026-11-23): one scale for type, space, corners, shadows and layers (DESIGN_SYSTEM_ASSESSMENT.md section 5).
-   Seven type sizes; space on a 4 px grid; the phone block below lowers the display size. */
+   Seven type sizes; space on a 4 px grid; the phone block below lowers the display size.  Shadows moved into the two theme blocks
+   (2026-11-24, dark needs heavier ones); the workstation sizes and the shell's layout tokens follow (no colour in this block). */
 :root {
   --fs-xs: 11px; --fs-sm: 12px; --fs-md: 13px; --fs-base: 14px; --fs-lg: 16px; --fs-xl: 18px; --fs-display: 28px;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", "Noto Sans KR", "Noto Sans CJK KR", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "D2Coding", monospace;
+  --lh-tight: 1.2; --lh-ui: 1.4; --lh-body: 1.5; --lh-prose: 1.7;
   --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px;
   --r-sm: 4px; --r-md: 6px; --r-lg: 8px; --r-pill: 999px;
-  --shadow-1: 0 1px 2px rgba(0,0,0,.18); --shadow-2: 0 6px 24px rgba(0,0,0,.25); --shadow-3: 0 12px 40px rgba(0,0,0,.3);
-  --z-raise: 1; --z-header: 10; --z-popover: 20; --z-dialog: 40; --z-toast: 50;
+  --z-raise: 1; --z-header: 10; --z-nav: 12; --z-popover: 20; --z-scrim: 29; --z-drawer: 30; --z-dialog: 40; --z-toast: 50;
+  --ctl-h: 32px; --ctl-h-sm: 28px; --ctl-h-touch: 40px;
+  --row-h: 32px; --row-h-compact: 28px; --row-h-touch: 40px; --cell-x: 8px;
+  --dur-1: 120ms; --dur-2: 180ms; --ease: cubic-bezier(.2, 0, 0, 1);
   --content-max: 1280px; --content-max-wide: 1680px;
+  /* shell (WORKSTATION_LAYOUT_SPECIFICATION.md 1.2; menu widths are the owner's 232 / 72 / 264) */
+  --topbar-h: 48px; --top-h-min: var(--topbar-h);
+  --nav-full: 232px; --nav-rail: 72px; --nav-drawer: 264px; --nav-w: var(--nav-full); --nav-w-rail: var(--nav-rail); --nav-cur: var(--nav-full);
+  --page-pad: 16px; --gutter: 16px; --ws-gap: 12px; --ws-right: 360px; --ws-max: 1760px; --ws-narrow: 1280px; --right-w: 560px;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); }
 /* No overflow-x: hidden on the page (batch 5 P3-13): checked at 320 and 720 px on every tab with nothing cut off, so a future
    overflow shows as a sideways scroll instead of hiding content. */
-body { font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+body { font: var(--fs-base)/var(--lh-body) var(--font-ui); }
 .num { font-variant-numeric: tabular-nums; }
-.top { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--panel);
-       border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: var(--z-header); flex-wrap: wrap; }
-.brand { font-weight: 700; font-size: var(--fs-lg); }
+.top { display: flex; align-items: center; gap: var(--sp-2); padding: 0 var(--page-pad); min-height: var(--top-h-min); background: var(--bg-2);
+       border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: var(--z-header); flex-wrap: nowrap; }
+.brand { font-weight: 700; font-size: var(--fs-lg); white-space: nowrap; flex: none; }
 .ver { font-weight: 500; font-size: var(--fs-sm); color: var(--muted); margin-left: 6px; }
-.search { display: flex; gap: 6px; flex: 1; min-width: 200px; max-width: 360px; margin-left: auto; }
+.search { display: flex; gap: 6px; flex: 1 1 320px; min-width: 220px; max-width: 320px; margin-left: var(--sp-2); }
 .search input { flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
                 background: var(--bg); color: var(--ink); font-size: var(--fs-base); text-transform: uppercase; }
 button { font: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink);
          border-radius: var(--r-md); padding: 6px 12px; }
 button:hover { border-color: var(--accent); }
-.search button { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.search button { background: var(--accent-fill); color: var(--on-accent); border-color: var(--accent-fill); }
 .ghost { padding: 6px 10px; }
 button:disabled { opacity: .55; cursor: default; }
 .collectbar { flex-basis: 100%; display: flex; align-items: center; gap: 10px; font-size: var(--fs-md); color: var(--muted); }
@@ -64,10 +95,9 @@ button:disabled { opacity: .55; cursor: default; }
 .verbar button { padding: 2px 8px; font-size: var(--fs-sm); }
 .netbar span { flex: 1; min-width: 0; }
 .netbar button { padding: 2px 8px; font-size: var(--fs-sm); }
-.groups { display: flex; gap: 2px; padding: 0 12px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
-.groups button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 10px 14px; background: none; color: var(--muted);
-                 white-space: nowrap; font-size: var(--fs-lg); }
-.groups button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
+/* The group buttons (.groups) are never drawn since the workstation shell (2026-11-24): the left menu shows each group's heading
+   and tabs.  The element stays: number keys, the phone's 더보기 sheet and the tests read its names and order. */
+.groups { display: none; }
 .tabs { display: flex; gap: 2px; padding: 0 12px; background: var(--bg); border-bottom: 1px solid var(--line);
         flex-wrap: wrap; }      /* 탭이 창보다 길면 다음 줄로 넘깁니다: 가로로 밀려 안 보이는 탭이 없게 */
 .tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 7px 12px;
@@ -127,7 +157,7 @@ tr.click { cursor: pointer; } tr.click:hover td { background: var(--chip); }
                 background: var(--bg); color: var(--ink); text-transform: uppercase; }
 .x { padding: 2px 8px; color: var(--muted); }
 .foot { color: var(--muted); font-size: var(--fs-sm); padding: var(--sp-3) var(--sp-4) var(--sp-5); max-width: var(--content-max); margin: 0 auto; }
-.tip { position: fixed; pointer-events: none; z-index: var(--z-popover); background: var(--panel); border: 1px solid var(--line);
+.tip { position: fixed; pointer-events: none; z-index: var(--z-popover); background: var(--elevated); border: 1px solid var(--line);
        border-radius: var(--r-md); padding: 6px 8px; font-size: var(--fs-sm); box-shadow: var(--shadow-2); white-space: nowrap; }
 a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
 @media (max-width: 640px) {
@@ -148,7 +178,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 .form input, .form select { padding: 6px 8px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--bg);
   color: var(--ink); font: inherit; min-width: 0; width: 100%; }
 .form .wide { grid-column: 1 / -1; }
-.btn-primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.btn-primary { background: var(--accent-fill); color: var(--on-accent); border-color: var(--accent-fill); }
 .alerts { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .alerts li { padding: 6px 10px; border-radius: var(--r-md); background: var(--chip); border-left: 3px solid var(--muted); font-size: var(--fs-md); }
 .alerts li.bad { border-left-color: var(--bad); } .alerts li.warn { border-left-color: var(--warn); } .alerts li.info { border-left-color: var(--muted); }
@@ -229,7 +259,7 @@ tr.voided td { color: var(--muted); text-decoration: line-through; }
 .chip { padding: 4px 10px; border-radius: var(--r-pill); font-size: var(--fs-md); }
 
 /* 명령창 */
-#cmd { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: var(--z-dialog); display: flex; justify-content: center; align-items: flex-start; padding: 12vh 16px 0; }
+#cmd { position: fixed; inset: 0; background: var(--scrim); z-index: var(--z-dialog); display: flex; justify-content: center; align-items: flex-start; padding: 12vh 16px 0; }
 #cmd[hidden] { display: none; }
 .cmd-box { width: min(560px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-3); overflow: hidden; }
 #cmd-q { width: 100%; box-sizing: border-box; border: 0; border-bottom: 1px solid var(--line); padding: 14px 16px; font-size: var(--fs-lg); background: transparent; color: var(--ink); outline: none; border-radius: 0; min-height: 0; }
@@ -250,7 +280,7 @@ tr.voided td { color: var(--muted); text-decoration: line-through; }
 
 /* 동종업계 비교 */
 .grade { display: inline-block; min-width: 22px; padding: 1px 6px; border-radius: var(--r-sm); font-weight: 700; text-align: center; border: 1px solid var(--line); }
-.g-A { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+.g-A { background: var(--accent-fill); color: var(--on-accent); border-color: transparent; }
 .g-B { background: color-mix(in srgb, var(--accent) 55%, transparent); color: var(--ink); border-color: transparent; }
 .g-C { background: var(--chip); color: var(--ink); }
 .g-D, .g-F { background: transparent; color: var(--muted); }
@@ -340,7 +370,7 @@ details[open] > summary .fold-hint { display: none; }
 
 /* 종목 찾기: 검색창 아래 제안 목록, '혹시 이 종목인가요?' 목록 */
 .search { position: relative; }
-.sug { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: var(--z-popover); background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg);
+.sug { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: var(--z-popover); background: var(--elevated); border: 1px solid var(--line); border-radius: var(--r-lg);
   box-shadow: var(--shadow-2); padding: 4px 0; max-height: 60vh; overflow-y: auto; }
 .sug[hidden] { display: none; }
 .search .sug-item, .sym-item { display: flex; align-items: baseline; gap: 8px; width: 100%; text-align: left; background: transparent; color: var(--ink); padding: 7px 12px; }
@@ -500,14 +530,9 @@ details[open] > summary .fold-hint { display: none; }
 .qsf-sec-body > .panel { border: 0; padding: 0; margin: 0; background: transparent; }
 .qsf-sum { margin-top: var(--sp-1); }
 
-/* UI batch 3 P1-11 (2026-11-23, user decision): on the computer the group bar is thinner and stays under the header;
-   at 640 px and below the header is one line (brand, market, search), the groups move to a bottom bar
+/* UI batch 3 P1-11 (2026-11-23, user decision): at 640 px and below the header is one line (brand, market, search), the groups move to a bottom bar
    (today, stock, score, account, more) and the header's other buttons move into the 'more' sheet. */
 .bottombar, .moresheet { display: none; }
-@media (min-width: 641px) {
-  .groups { position: sticky; top: var(--top-h, 0px); z-index: var(--z-header); }
-  .groups button { padding: 8px 14px; font-size: var(--fs-base); }
-}
 @media (max-width: 640px) {
   .top { position: sticky; gap: var(--sp-2); padding: 2px var(--sp-3); min-height: 48px; }
   .top .ver, #acctbtn, #collect, #phonebtn, #cmdbtn, #theme { display: none; }
@@ -607,3 +632,124 @@ main.wide { max-width: var(--content-max-wide); }
 .asst-v-head b { font-size: var(--fs-xl); color: var(--v); }
 .asst-verdict .asst-sum { margin: var(--sp-1) 0; }
 .asst-v-change { font-weight: 600; margin-bottom: var(--sp-1); }
+
+/* Workstation redesign stage 1 (2026-11-24): the application shell (WORKSTATION_LAYOUT_SPECIFICATION.md section 1, owner decisions).
+   A 48 px top bar, the status bars in one sticky band under it, and a left vertical menu (groups with their tabs): 232 px from
+   1280 px, a 72 px rail from 1024 to 1279 px (☰ switches, remembered as qse-nav), a 264 px drawer from 641 to 1023 px, and the
+   phone bottom bar and 더보기 sheet unchanged at 640 px and below.  The test allows no other widths, so the spec's 1440 px step of
+   the top bar's ladder sits at 1600 px.  Nothing on a screen changes here. */
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ico { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ico.lg { width: 20px; height: 20px; }
+@media (min-width: 1600px) { :root { --page-pad: 24px; } }
+@media (max-width: 640px) { :root { --page-pad: 12px; --gutter: 12px; } }
+@media (prefers-reduced-motion: reduce) { :root { --dur-1: 0ms; --dur-2: 0ms; } }
+
+/* top bar: brand | market | search | chips | actions | ⋯ */
+.nav-toggle, #topmore { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.top .seg { flex: none; }
+.search input { min-height: 32px; padding-top: 4px; padding-bottom: 4px; }
+/* the search gives up room before the chips do; a chip shortens (with its whole text in title) only when nothing else is left */
+.top-chips { display: inline-flex; align-items: center; gap: var(--sp-2); flex: 0 0.1 auto; min-width: 0; overflow: hidden; margin-left: var(--sp-2); }
+.top-chip { display: inline-flex; align-items: center; gap: var(--sp-1); height: 26px; min-height: 0; padding: 0 10px; border: 1px solid transparent;
+  border-radius: var(--r-pill); background: var(--chip); color: var(--ink-2); font-size: var(--fs-sm); line-height: 1; white-space: nowrap;
+  font-variant-numeric: tabular-nums; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.top-chip:hover { border-color: var(--line-strong); }
+.top-chip[hidden] { display: none; }
+.top-chip b { color: var(--ink); }
+.top-chip .badge { font-size: var(--fs-xs); padding: 0 5px; }
+.top-acts { display: inline-flex; align-items: center; gap: var(--sp-2); margin-left: auto; flex: none; }
+.top-acts .ghost { height: 32px; padding: 0 10px; font-size: var(--fs-md); }
+.top-acts .ghost[hidden] { display: none; }
+/* 1280-1599 px (the default rules): phone link and theme in ⋯, the data chip in its short form */
+#topmore { display: inline-flex; }
+.top-acts #phonebtn, .top-acts #theme { display: none; }
+#mstate .chip-short, #datatime .chip-long { display: none; }
+@media (min-width: 1600px) {
+  #topmore { display: none; }
+  .top-acts #phonebtn:not([hidden]), .top-acts #theme { display: inline-block; }
+  #datatime .chip-long { display: inline; } #datatime .chip-short { display: none; }
+  .search { max-width: 440px; }
+}
+@media (max-width: 1279px) {
+  #datatime, .top-acts #acctbtn, .top-acts #collect { display: none; }
+  #mstate .chip-long { display: none; } #mstate .chip-short { display: inline; }
+}
+@media (max-width: 1023px) {
+  .top .ver, #mstate, .top-acts #cmdbtn { display: none; }
+  .search { flex: 1 1 auto; min-width: 160px; max-width: none; }
+}
+/* the ⋯ list: the bar's buttons that do not fit at this width, and the chips' text when the chips are hidden */
+.topmenu:not([hidden]) { position: fixed; top: calc(var(--top-h, 48px) + 4px); right: var(--page-pad); width: 280px; z-index: var(--z-popover);
+  display: grid; gap: var(--sp-2); padding: var(--sp-3); background: var(--elevated); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-2); }
+.topmenu .ms-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.topmenu .ms-row:empty { display: none; }
+
+/* status bars: one sticky band under the top bar; the phone panel is a popover and takes no height */
+.statusbars { position: sticky; top: var(--top-h, 0px); z-index: calc(var(--z-header) - 1); background: var(--bg-2); }
+.statusbars > .collectbar, .statusbars > .netbar, .statusbars > .verbar { min-height: 32px; padding: var(--sp-1) var(--page-pad); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.statusbars > .collectbar, .statusbars > .verbar { box-shadow: inset 3px 0 0 var(--accent); }
+.statusbars > .netbar { box-shadow: inset 3px 0 0 var(--bad); }
+.phonebar:not([hidden]) { position: fixed; top: calc(var(--top-h, 48px) + 4px); right: var(--page-pad); width: min(440px, calc(100vw - 2 * var(--page-pad)));
+  max-height: calc(100vh - var(--top-h, 48px) - 24px); overflow-y: auto; z-index: var(--z-popover); padding: var(--sp-3) var(--sp-4);
+  background: var(--elevated); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-2); }
+
+/* the menu column and the content column */
+.shell { display: grid; grid-template-columns: var(--nav-cur) minmax(0, 1fr); align-items: start; }
+.side { position: sticky; top: var(--sticky-top, 0px); height: calc(100vh - var(--sticky-top, 0px)); overflow-y: auto; overscroll-behavior: contain;
+  background: var(--bg-2); border-right: 1px solid var(--line); z-index: var(--z-nav); min-width: 0; }
+.content { container: content / inline-size; min-width: 0; }
+.scrim { position: fixed; inset: var(--sticky-top, 0px) 0 0 0; background: var(--scrim); z-index: var(--z-scrim); }
+.scrim[hidden] { display: none; }
+@media (min-width: 641px) {
+  .tabs { display: block; padding: var(--sp-1) 0 var(--sp-4); background: none; border: 0; }
+  .nav-grp[hidden] { display: none; }
+  .nav-h { display: flex; align-items: center; gap: var(--sp-2); padding: 14px 16px 4px; font-size: var(--fs-xs); font-weight: 600; line-height: 16px;
+    letter-spacing: .02em; color: var(--muted); }
+  .nav-grp:first-child .nav-h { padding-top: var(--sp-2); }
+  .nav-h .ico { width: 14px; height: 14px; }
+  .nav-grp[data-single] .nav-h { display: none; }
+  .nav-grp[data-single]::before { content: ""; display: block; height: 1px; margin: var(--sp-2) 16px; background: var(--line); }
+  .nav-grp[data-single]:first-child::before { display: none; }
+  .tabs button { display: flex; align-items: center; width: calc(100% - 16px); height: 32px; margin: 0 8px; padding: 0 12px; border: 0; border-radius: var(--r-md);
+    background: none; color: var(--muted); font-size: var(--fs-md); text-align: left; white-space: nowrap; }
+  .tabs button:hover { background: var(--hover); color: var(--ink); }
+  .tabs button.on { background: var(--nav-active); color: var(--ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--accent); }
+  .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+}
+/* rail: 72 px, the full Korean names on up to two lines; each group keeps its icon, its name is read by screen readers */
+@media (min-width: 1024px) {
+  html[data-nav="rail"] { --nav-cur: var(--nav-rail); }
+  html[data-nav="rail"] .nav-h { justify-content: center; padding: 10px 0 2px; }
+  html[data-nav="rail"] .nav-grp + .nav-grp:not([data-single]) .nav-h { margin: 6px 12px 0; border-top: 1px solid var(--line); }
+  html[data-nav="rail"] .nav-ht { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  html[data-nav="rail"] .nav-grp[data-single]::before { margin: 6px 12px; }
+  html[data-nav="rail"] .tabs button { height: auto; min-height: 44px; width: calc(100% - 12px); margin: 2px 6px; padding: 4px 6px; justify-content: center;
+    text-align: center; font-size: var(--fs-xs); line-height: 1.25; white-space: normal; word-break: keep-all; }
+}
+/* drawer: 641-1023 px; ☰ opens it, Esc, the scrim, a choice or a wider window close it */
+@media (max-width: 1023px) {
+  :root { --nav-cur: 0px; }
+  .shell { display: block; }
+  .side { position: fixed; top: var(--sticky-top, 0px); left: 0; bottom: 0; height: auto; width: var(--nav-drawer); z-index: var(--z-drawer);
+    background: var(--elevated); box-shadow: var(--shadow-3); transform: translateX(-100%); visibility: hidden;
+    transition: transform var(--dur-2) var(--ease), visibility 0s linear var(--dur-2); }
+  html[data-drawer="open"] .side { transform: none; visibility: visible; transition: transform var(--dur-2) var(--ease); }
+}
+/* phone: today's header line, the current group's tabs as one strip under it, the bottom bar and 더보기 sheet (unchanged) */
+@media (max-width: 640px) {
+  #navtoggle, #topmore, .top-chips { display: none; }
+  .search { flex: 1 1 0; min-width: 0; }
+  .phonebar:not([hidden]) { top: auto; bottom: 64px; left: 8px; right: 8px; width: auto; max-height: calc(100vh - var(--top-h, 48px) - 80px); }
+  .side { position: static; transform: none; visibility: visible; transition: none; width: auto; height: auto; overflow: visible; z-index: auto;
+    background: none; border: 0; box-shadow: none; }
+  .scrim { display: none; }
+  .nav-h, .nav-grp { display: none; }
+  .nav-grp.cur:not([hidden]) { display: flex; flex-wrap: wrap; gap: 2px; }
+  .tabs[data-single-cur] { display: none; }
+}
+/* Until the screens move into their workspace grids (later stages), the ranking keeps the room it had before the menu column:
+   below the old widths it scrolls inside its own box instead of spilling past the content column or under the open card. */
+@container content (max-width: 1279px) { .qsf-rank-tbl .qd-col { display: none; } }
+@container content (max-width: 1023px) { .tbl-wrap:has(> .qsf-rank-tbl) { overflow-x: auto; } }
+@container content (max-width: 1599px) { .qsf-split:has(> #qsfdetail > .panel) .tbl-wrap:has(> .qsf-rank-tbl) { overflow-x: auto; } }

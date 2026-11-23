@@ -38,7 +38,7 @@ def test_every_field_shares_one_rule_and_its_edge_passes_three_to_one():
     for t in (light, dark):
         for surface in ("--panel", "--bg"):
             assert _contrast(t["--line-strong"], t[surface]) >= 3, surface
-    assert CSS.count("--line-strong: #6b7686") == 1                                                 # one dark block since batch 5
+    assert CSS.count("--line-strong: #6b7b92") == 1                                                 # one dark block since batch 5 (value of 2026-11-24)
 
 
 # ---------------------------------------------------------------- P2-3 utility classes for the common inline styles
@@ -158,7 +158,8 @@ def test_the_phone_header_is_one_line_and_the_computer_keeps_a_sticky_group_bar(
     assert ".top .ver, #acctbtn, #collect, #phonebtn, #cmdbtn, #theme { display: none; }" in phone and ".groups { display: none; }" in phone
     assert "min-height: 48px" in phone and ".search { order: 0; flex: 1 1 0;" in phone
     assert "position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-header); height: 56px;" in phone and "body { padding-bottom: 56px; }" in phone
-    assert ".groups { position: sticky; top: var(--top-h, 0px); z-index: var(--z-header); }" in media(CSS, "min-width: 641px")
+    # workstation shell 2026-11-24: the group bar is replaced by the left menu (a column, so it is not added to the sticky height)
+    assert ".groups { display: none; }" in CSS and ".side { position: sticky; top: var(--sticky-top, 0px);" in CSS and "ro.observe($(\"#statusbars\"))" in APP
     assert ".bottombar, .moresheet { display: none; }" in CSS and "setTopH();" in APP and "new ResizeObserver(setTopH)" in APP
 
 

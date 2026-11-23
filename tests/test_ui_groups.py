@@ -28,10 +28,13 @@ def test_every_tab_belongs_to_one_of_six_groups_and_keeps_its_section():
 def test_the_shown_tab_lights_its_group_and_a_group_returns_to_its_last_tab():
     js, css, cmd = read("app.js"), read("style.css"), read("command.js")
     assert "paintGroups(tab);" in js[js.index("function show(tab"):js.index("function paintMarket")]
-    assert "groupTab[g] = tab;" in js and "show(groupTab[g] || first.dataset.tab)" in js and 'document.querySelector(".tabs").hidden = mine.length < 2;' in js
+    assert "groupTab[g] = tab;" in js and "show(groupTab[g] || first.dataset.tab)" in js
+    # workstation shell 2026-11-24: every group stays in the left menu; the phone strip hides when the current group has one tab
+    assert 'document.querySelector(".tabs").toggleAttribute("data-single-cur", !cur || cur.querySelectorAll("button[data-tab]:not([hidden])").length < 2);' in js
+    assert ".tabs[data-single-cur] { display: none; }" in css
     assert '.groups button").forEach((b) => (b.onclick = () => showGroup(b.dataset.group)))' in js
     assert ".tabs[hidden], .tabs button[hidden] { display: none; }" in css and ".groups {" in css
-    assert 'document.querySelectorAll(".groups button")[+e.key - 1]' in cmd and "묶음 바로가기" in cmd and "탭 바로가기" not in cmd
+    assert "const g = navGroups()[+e.key - 1];" in cmd and "묶음 바로가기" in cmd and "탭 바로가기" not in cmd           # the menu's visible groups, in order
 
 
 def test_the_caveat_is_one_line_that_opens_and_nothing_of_it_was_removed():

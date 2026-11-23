@@ -72,7 +72,7 @@ function keysPaint() {
   const label = keysOn ? "한 글자 단축키 끄기" : "한 글자 단축키 켜기";
   $("#keysbtn").textContent = label; $("#cmd-keys").textContent = label;
   $("#cmd-help").innerHTML = "↑↓ 선택 · Enter 이동 · Esc 닫기 · " + (keysOn
-    ? "어디서나 <kbd>/</kbd> 또는 <kbd>⌘K</kbd> · 묶음 바로가기 <kbd>1</kbd>~<kbd>6</kbd> · 시장 전환 <kbd>M</kbd> · 도움말 <kbd>?</kbd>"
+    ? "어디서나 <kbd>/</kbd> 또는 <kbd>⌘K</kbd> · 묶음 바로가기 <kbd>1</kbd>~<kbd>9</kbd>(메뉴 순서) · 시장 전환 <kbd>M</kbd> · 도움말 <kbd>?</kbd>"
     : "한 글자 단축키 꺼짐 · 명령창은 <kbd>⌘K</kbd>(Ctrl+K)로 엽니다");
 }
 function keysToggle() {
@@ -151,7 +151,8 @@ document.addEventListener("keydown", (e) => {
   if (!keysOn || !cmdEl.hidden || typing(e) || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
   if (e.key === "/") { e.preventDefault(); cmdOpen(); return; }
   if (e.key === "?") { e.preventDefault(); cmdOpen(); return; }
-  if (/^[1-9]$/.test(e.key)) { const g = document.querySelectorAll(".groups button")[+e.key - 1]; if (g) { showGroup(g.dataset.group); window.scrollTo(0, 0); } return; }
+  // 숫자 키는 왼쪽 메뉴에 보이는 묶음의 순서를 따릅니다 (작업 화면 개편 2026-11-24): 코인 시장에서는 1 오늘, 2 내 계좌, 3 코인.
+  if (/^[1-9]$/.test(e.key)) { const g = navGroups()[+e.key - 1]; if (g) { showGroup(g); window.scrollTo(0, 0); } return; }
   if (e.key === "m" || e.key === "M") setMarket({ US: "KR", KR: "COIN", COIN: "US" }[state.market] || "US");
 });
 $("#cmdbtn").onclick = cmdOpen;

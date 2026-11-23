@@ -64,7 +64,7 @@ def test_clickable_rows_take_focus_and_open_with_enter_or_space():
 
 # ---------------------------------------------------------------- P2-13 selected state, focus, palette
 def test_selected_state_and_focus_are_announced():
-    assert 'role="tablist"' not in HTML and '<nav class="tabs" aria-label="탭" hidden>' in HTML
+    assert 'role="tablist"' not in HTML and '<nav class="tabs" aria-label="탭">' in HTML                # the left menu since 2026-11-24
     assert 'b.toggleAttribute("aria-current", b.dataset.group === g)' in body(APP, "function paintGroups(")
     assert 'x.toggleAttribute("aria-current", x === b)' in body(APP, "function paintTitle(")
     assert 'b.setAttribute("aria-pressed", b.classList.contains("on"))' in body(APP, "function markKeyable(")

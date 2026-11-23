@@ -230,18 +230,30 @@ function spark(cv, vals) {
 }
 
 // ------------------------------------------------------------------ tabs & routing
-// 탭은 여섯 묶음으로 나뉩니다.  윗줄은 묶음, 아랫줄은 그 묶음의 탭입니다(탭이 하나뿐인 묶음은 아랫줄을 숨깁니다).
+// 탭은 여섯 묶음으로 나뉩니다.  작업 화면 개편(2026-11-24, 사용자 결정)부터 컴퓨터에서는 왼쪽 세로 메뉴에 묶음 제목과 그 탭이 함께
+// 보입니다(.tabs 안의 .nav-grp).  옛 윗줄 묶음 단추(.groups)는 화면에 나오지 않지만 숫자 키와 폰의 더보기가 그 이름과 순서를 읽습니다.
+// 폰(640px 이하)에서는 지금 묶음의 탭만 머리줄 아래 한 줄로 보이고, 탭이 하나뿐인 묶음은 그 줄을 숨깁니다.
 const groupTab = {};          // 묶음마다 마지막으로 본 탭
 function groupOf(tab) { const b = document.querySelector(`.tabs button[data-tab="${tab}"]`); return b ? b.dataset.group : null; }
+// 이 시장의 메뉴에 보이는 탭인지: 시장 규칙만 봅니다(코인 시장은 오늘·코인 묶음과 어느 시장에서나 열리는 통합 계좌).
+const tabShown = (b) => groupShown(b.dataset.group) || ANY_MARKET.has(b.dataset.tab);
 function paintGroups(tab) {
   const g = groupOf(tab);
   if (!g) return;
   groupTab[g] = tab;
   document.querySelectorAll(".groups button").forEach((b) => { b.classList.toggle("on", b.dataset.group === g); b.toggleAttribute("aria-current", b.dataset.group === g); b.hidden = !groupShown(b.dataset.group); });
-  const mine = [...document.querySelectorAll(".tabs button")].filter((b) => { b.hidden = b.dataset.group !== g || (!groupShown(g) && !ANY_MARKET.has(b.dataset.tab)); return !b.hidden; });
-  document.querySelector(".tabs").hidden = mine.length < 2;
+  document.querySelectorAll(".tabs .nav-grp").forEach((w) => {
+    const items = [...w.querySelectorAll("button[data-tab]")];
+    items.forEach((b) => (b.hidden = !tabShown(b)));
+    const n = items.filter((b) => !b.hidden).length;
+    w.hidden = n === 0; w.toggleAttribute("data-single", n === 1); w.classList.toggle("cur", w.dataset.group === g);
+  });
+  const cur = document.querySelector(`.tabs .nav-grp[data-group="${g}"]`);
+  document.querySelector(".tabs").toggleAttribute("data-single-cur", !cur || cur.querySelectorAll("button[data-tab]:not([hidden])").length < 2);
   paintBar(g);
 }
+// 메뉴에 보이는 묶음, 위에서부터 (숫자 키 1~9가 이 순서를 따릅니다).
+const navGroups = () => [...document.querySelectorAll(".tabs .nav-grp")].filter((w) => [...w.querySelectorAll("button[data-tab]")].some(tabShown)).map((w) => w.dataset.group);
 // 폰 아래 막대 (3차 묶음 P1-11, 사용자 결정 2026-11-23): 640px 이하에서는 윗줄 묶음 대신 오늘·종목·점수·내 계좌·더보기를 화면 아래에
 // 둡니다.  코인 시장에서는 종목·점수 자리에 코인이 옵니다.  더보기는 나머지 묶음(시장, 차트, 검증·기록)과 머리줄에서 뺀 단추를 엽니다.
 const BAR_GROUPS = ["today", "stock", "score", "coin", "account"];
@@ -257,6 +269,24 @@ function paintBar(g) {
   });
   bar.querySelector("[data-more]").classList.toggle("on", !BAR_GROUPS.includes(g));
 }
+// 머리줄의 두 칩(시장 상태, 자료 시각)이 그려지지 않는 너비(좁은 컴퓨터 화면, 폰)에서는 그 글을 도구 목록 위에 한 줄씩 적습니다.
+function chipLines() {
+  return ["mstate", "datatime"].map((id) => $("#" + id)).filter((c) => c && !c.hidden && c.dataset.line && !c.getClientRects().length)
+    .map((c) => `<div class="meta m0">${esc(c.dataset.line)}</div>`).join("");
+}
+// 도구 단추 줄: 폰의 더보기(where = "sheet")와 머리줄의 ⋯ 목록(where = "top")이 같이 씁니다.  어느 쪽이든 누르면 머리줄의 원래 단추를
+// 누르므로 동작은 한 곳에만 있습니다.  ⋯ 목록에는 지금 너비에서 머리줄에 보이지 않는 단추만 들어갑니다.
+const TOP_ACTS = [["acctbtn", "내 계좌"], ...MORE_ACTS];
+function toolsHtml(where) {
+  const top = where === "top";
+  const acts = (top ? TOP_ACTS : MORE_ACTS).filter(([id]) => {
+    const b = $("#" + id);
+    return b && (!b.hidden || id === "keysbtn") && !(id === "collect" && document.documentElement.classList.contains("on-phone"))
+      && (!top || id === "keysbtn" || !b.getClientRects().length);          // ⋯에는 이 너비에서 머리줄에 그려지지 않은 단추만
+  });
+  const label = (id, name) => (id === "phonebtn" || id === "keysbtn" ? $("#" + id).textContent : top && id === "theme" ? $("#theme").title : name);
+  return `${chipLines()}<div class="ms-row">${acts.map(([id, name]) => `<button type="button" data-act="${id}">${esc(label(id, name))}</button>`).join("")}</div>`;
+}
 function moreClose() {
   const sh = $("#moresheet");
   if (!sh || sh.hidden) return;
@@ -266,10 +296,9 @@ function moreClose() {
 function moreOpen() {
   const sh = $("#moresheet");
   const groups = [...document.querySelectorAll(".groups button")].filter((b) => !BAR_GROUPS.includes(b.dataset.group) && groupShown(b.dataset.group));
-  const acts = MORE_ACTS.filter(([id]) => { const b = $("#" + id); return b && (!b.hidden || id === "keysbtn") && !(id === "collect" && document.documentElement.classList.contains("on-phone")); });
   sh.innerHTML = `<div class="ms-title">다른 묶음</div><div class="ms-row">${groups.map((b) => `<button type="button" data-group="${b.dataset.group}" class="${b.classList.contains("on") ? "on" : ""}">${esc(b.textContent)}</button>`).join("")
       || '<span class="meta m0">이 시장에는 다른 묶음이 없습니다.</span>'}</div>
-    <div class="ms-title">도구</div><div class="ms-row">${acts.map(([id, label]) => `<button type="button" data-act="${id}">${esc(id === "phonebtn" || id === "keysbtn" ? $("#" + id).textContent : label)}</button>`).join("")}</div>`;
+    <div class="ms-title">도구</div>${toolsHtml("sheet")}`;
   sh.hidden = false;
   $("#bottombar [data-more]").setAttribute("aria-expanded", "true");
 }
@@ -288,21 +317,100 @@ $("#moresheet").onclick = (e) => {
   if (b.dataset.group) showGroup(b.dataset.group);
   else if (b.dataset.act) $("#" + b.dataset.act).click();                 // 머리줄 단추가 하는 일을 그대로 합니다
 };
-document.addEventListener("click", (e) => { if (!e.target.closest("#moresheet, #bottombar")) moreClose(); });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") moreClose(); });
-// 컴퓨터에서는 묶음 줄이 머리줄 바로 아래에 붙어 따라옵니다.  머리줄 높이(수집 막대가 열리면 달라짐)를 재어 둡니다.
-// --sticky-top: 표 머리 행이 붙을 높이 (4차 묶음 P3-3) = 머리줄 + 붙어 따라오는 묶음 줄
+// 머리줄의 ⋯ 목록 (작업 화면 개편): 좁은 컴퓨터 화면에서 머리줄에 들어가지 못한 단추와 두 칩의 글.  Esc, 바깥 누르기, 고르기로 닫힙니다.
+function topClose(back = true) {
+  const m = $("#topmenu");
+  if (!m || m.hidden) return;
+  m.hidden = true;
+  $("#topmore").setAttribute("aria-expanded", "false");
+  if (back) $("#topmore").focus();
+}
+function topOpen() {
+  const m = $("#topmenu");
+  m.innerHTML = toolsHtml("top");
+  m.hidden = false;
+  $("#topmore").setAttribute("aria-expanded", "true");
+  const f = m.querySelector("button");
+  if (f) f.focus();
+}
+$("#topmore").onclick = () => ($("#topmenu").hidden ? topOpen() : topClose());
+$("#topmenu").onclick = (e) => {
+  const b = e.target.closest("button[data-act]");
+  if (!b) return;
+  topClose(false);
+  $("#" + b.dataset.act).click();
+};
+document.addEventListener("click", (e) => { if (!e.target.closest("#moresheet, #bottombar")) moreClose(); if (!e.target.closest("#topmenu, #topmore")) topClose(false); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") { moreClose(); topClose(); drawerClose(); } });
+// 왼쪽 메뉴의 폭 (사용자 결정 2026-11-24): 1280px 이상 펼침(232px), 1024~1279px 좁은 줄(72px).  ☰로 바꾼 폭은 이 브라우저에 남깁니다
+// (qse-nav).  641~1023px에서는 ☰가 서랍(264px)을 열고 닫으며, 서랍은 남기지 않습니다.  640px 이하에는 ☰가 없습니다(아래 막대).
+const navWide = () => window.matchMedia("(min-width: 1024px)").matches;
+let navMem = null;            // 저장을 못 하는 브라우저에서 이 페이지 동안만 기억하는 폭
+function navPref() { try { const n = localStorage.getItem("qse-nav"); if (n === "full" || n === "rail") return n; } catch (e) { /* storage unavailable */ } return navMem; }
+function paintNavToggle() {
+  const t = $("#navtoggle"), d = document.documentElement;
+  if (!t) return;
+  const open = navWide() ? d.dataset.nav !== "rail" : d.dataset.drawer === "open";
+  const label = navWide() ? (open ? "메뉴 접기" : "메뉴 펼치기") : open ? "메뉴 닫기" : "메뉴 열기";
+  t.setAttribute("aria-expanded", String(open)); t.setAttribute("aria-label", label); t.title = label;
+}
+function navApply() {
+  const n = navPref() || (window.matchMedia("(max-width: 1279px)").matches ? "rail" : "full");
+  if (document.documentElement.dataset.nav !== n) { document.documentElement.dataset.nav = n; requestAnimationFrame(() => { setTopH(); redrawAll(); }); }
+  paintNavToggle();
+}
+function drawerOpen() {
+  document.documentElement.dataset.drawer = "open";
+  $("#navscrim").hidden = false;
+  paintNavToggle();
+  const on = document.querySelector(".tabs button.on:not([hidden])") || document.querySelector(".tabs button[data-tab]:not([hidden])");
+  if (on) on.focus();
+}
+function drawerClose(back = true) {
+  if (document.documentElement.dataset.drawer !== "open") return;
+  delete document.documentElement.dataset.drawer;
+  $("#navscrim").hidden = true;
+  paintNavToggle();
+  if (back) $("#navtoggle").focus();
+}
+$("#navtoggle").onclick = () => {
+  if (isPhone()) return;
+  if (!navWide()) return document.documentElement.dataset.drawer === "open" ? drawerClose() : drawerOpen();
+  navMem = document.documentElement.dataset.nav === "rail" ? "full" : "rail";
+  try { localStorage.setItem("qse-nav", navMem); } catch (e) { /* not remembered: this page only */ }
+  navApply();
+};
+$("#navscrim").onclick = () => drawerClose();
+window.matchMedia("(max-width: 1279px)").addEventListener("change", navApply);
+window.matchMedia("(max-width: 1023px)").addEventListener("change", () => { drawerClose(false); paintNavToggle(); });
+navApply();
+// 메뉴 안에서는 화살표 위아래(폰 줄에서는 좌우), Home, End로 탭 사이를 옮깁니다.  Tab 키로는 지금 탭 하나에만 멈춥니다.
+document.querySelector(".tabs").addEventListener("keydown", (e) => {
+  const keys = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1, Home: "first", End: "last" };
+  if (!(e.key in keys) || !e.target.matches("button[data-tab]")) return;
+  const items = [...document.querySelectorAll(".tabs button[data-tab]")].filter((b) => !b.hidden && !b.closest(".nav-grp").hidden && b.offsetParent !== null);
+  const i = items.indexOf(e.target), k = keys[e.key];
+  const next = k === "first" ? items[0] : k === "last" ? items[items.length - 1] : items[Math.min(items.length - 1, Math.max(0, i + k))];
+  if (!next) return;
+  e.preventDefault();
+  items.forEach((b) => (b.tabIndex = b === next ? 0 : -1));
+  next.focus();
+});
+// 머리줄과 그 아래 상태 막대(수집·연결·업데이트 안내)는 화면 위에 붙어 따라옵니다.  두 높이를 재어 둡니다(수집 막대가 열리면 달라짐).
+// --sticky-top: 표 머리 행이 붙을 높이 (4차 묶음 P3-3) = 머리줄 + 상태 막대.  왼쪽 메뉴는 줄이 아니라 칸이라 더하지 않습니다.
 const setTopH = () => {
-  const top = Math.round($(".top").getBoundingClientRect().height), g = $(".groups");
-  const gh = g && getComputedStyle(g).position === "sticky" ? Math.round(g.getBoundingClientRect().height) : 0;
+  const top = Math.round($(".top").getBoundingClientRect().height), g = $("#statusbars");
+  const gh = g ? Math.round(g.getBoundingClientRect().height) : 0;
   document.documentElement.style.setProperty("--top-h", top + "px");
   document.documentElement.style.setProperty("--sticky-top", top + gh + "px");
 };
 setTopH();
 window.addEventListener("resize", setTopH);
-if (window.ResizeObserver) new ResizeObserver(setTopH).observe($(".top"));
+if (window.ResizeObserver) { const ro = new ResizeObserver(setTopH); ro.observe($(".top")); ro.observe($("#statusbars")); }
 function showGroup(g) {
-  const first = document.querySelector(`.tabs button[data-group="${g}"]`);
+  const last = groupTab[g] && document.querySelector(`.tabs button[data-tab="${groupTab[g]}"]`);
+  if (groupTab[g] && !(last && tabShown(last))) delete groupTab[g];     // 다른 시장에서 본 탭
+  const first = [...document.querySelectorAll(`.tabs button[data-group="${g}"]`)].find(tabShown) || document.querySelector(`.tabs button[data-group="${g}"]`);
   if (first) show(groupTab[g] || first.dataset.tab);
 }
 const tabScroll = {};        // 탭을 떠날 때의 스크롤 위치.  다시 그리지 않는 탭(RETURN)으로 돌아올 때 되돌립니다.
@@ -321,6 +429,8 @@ function paintTitle(tab) {
   $("#pagetitle").textContent = name ? `${name} · 퀀트 터미널` : "퀀트 터미널";
   document.title = $("#pagetitle").textContent;
   document.querySelectorAll(".tabs button").forEach((x) => x.toggleAttribute("aria-current", x === b));
+  if (b) b.setAttribute("aria-current", "page");
+  document.querySelectorAll(".tabs button[data-tab]").forEach((x) => (x.tabIndex = x === b ? 0 : -1));     // 메뉴는 Tab 한 번에 지금 탭으로
 }
 function show(tab, push = true) {
   if (!ANY_MARKET.has(tab) && !groupShown(groupOf(tab) || "today")) tab = isCoin() ? "coin" : "today";       // 지금 시장에 없는 탭이면 그 시장의 첫 화면으로
@@ -330,6 +440,7 @@ function show(tab, push = true) {
   if (healthAt && Date.now() - healthAt > 30000) loadHealth();      // 탭을 옮길 때도 화면이 업데이트됐는지 확인합니다
   document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
   paintGroups(tab);
+  drawerClose();                                                     // 서랍에서 고른 경우: 닫고 ☰로 초점을 돌려줍니다
   document.querySelectorAll(".tab").forEach((s) => s.classList.toggle("on", s.id === "tab-" + tab));
   $("main").classList.toggle("wide", WIDE_TABS.has(tab));
   paintTitle(tab);
@@ -360,6 +471,7 @@ function setMarket(m, render = true) {
   redrawers.clear(); redrawLater.clear();
   document.querySelectorAll(".tab").forEach((s) => (s.innerHTML = ""));
   if (state.ticker && marketOf(state.ticker) !== m) state.ticker = null;
+  paintStateChip();
   if (render) show(state.tab);
 }
 // Recently opened stocks, on this browser only.  Shown as shortcuts on the empty stock tab.
@@ -537,7 +649,8 @@ document.addEventListener("keydown", (e) => {
 });
 
 // theme: auto (OS) → light → dark.  The page always carries data-theme, so style.css keeps one copy of the dark colours (batch 5 P2-21);
-// theme.js sets it before the first paint, and 'auto' follows the device setting when it changes.
+// theme.js sets it before the first paint, and 'auto' follows the device setting when it changes.  Nothing stored means dark (user
+// decision 2026-11-24); theme.js has already moved an old stored 'auto' to dark once.
 const THEMES = ["auto", "light", "dark"];
 const systemDark = () => !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
 function applyTheme(t) {
@@ -546,8 +659,8 @@ function applyTheme(t) {
   $("#theme").title = "화면 테마: " + { auto: "시스템", light: "밝게", dark: "어둡게" }[t];
   redrawAll();
 }
-let theme = "auto";
-try { theme = localStorage.getItem("qse-theme") || "auto"; } catch (e) { /* storage unavailable */ }
+let theme = "dark";
+try { theme = localStorage.getItem("qse-theme") || "dark"; } catch (e) { /* storage unavailable */ }
 $("#theme").onclick = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % 3]; try { localStorage.setItem("qse-theme", theme); } catch (e) {} applyTheme(theme); };
 // 다시 그리기 (5차 묶음 P2-22): "탭:부분" 이름마다 함수 하나.  같은 탭을 다시 그려도 쌓이지 않습니다.  지금 보이는 탭만 바로
 // 그리고, 숨은 탭은 표시만 해 두었다가 그 탭으로 돌아올 때 그립니다(숨은 캔버스는 폭이 0이라 그려도 소용이 없습니다).
@@ -938,6 +1051,53 @@ function loadHealth() {
 }
 loadHealth();
 setTimeout(() => pruneRecentTickers().catch(() => {}), 3000);      // 첫 화면을 그린 뒤에
+// 머리줄 칩 (작업 화면 개편 2026-11-24): 이미 있는 응답만 읽어 보여 줍니다.  읽지 못하면 칩을 숨깁니다.  시장 상태는 순위·카드 탭의
+// 상태 띠와 같은 글(qsfStateShort)이고 종목 점수에는 들어가지 않습니다.  자료 시각은 오래된 자료를 새것처럼 보이지 않게, 기준 거래일과
+// 수집 시각과 며칠 전인지를 그대로 적고, 빠진 거래일·실패한 마지막 시도·수집 중을 글로 붙입니다.  '최신'이라고 쓰지 않습니다.
+const plainText = (html) => { const d = document.createElement("div"); d.innerHTML = html; return d.textContent.replace(/\s+/g, " ").trim(); };
+function chipSet(el, long, short, line, title) {
+  el.innerHTML = `<span class="chip-long">${long}</span><span class="chip-short">${short}</span>`;
+  el.dataset.line = line; el.title = title; el.hidden = false;
+}
+let chipToken = 0;
+async function paintStateChip() {
+  const el = $("#mstate"), mk = state.market, tok = ++chipToken;
+  if (!el) return;
+  if (mk === "COIN" || typeof qsfStateShort !== "function") { el.hidden = true; el.dataset.line = ""; return; }      // 코인 시장 상태 기록은 없습니다
+  let ms;
+  try { ms = await api(`/api/qsf/market-state?market=${mk}`); } catch (e) { ms = undefined; }
+  if (tok !== chipToken || mk !== state.market) return;
+  if (ms === undefined) { el.hidden = true; el.dataset.line = ""; return; }
+  const ok = ms && ms.status === "REAL" ? ms : null, has = ok && isNum(ok.score_100);
+  const cut = ok && isNum(ok.size_factor) && ok.size_factor < 1 && (!has || ok.state !== "FAVOURABLE") ? ` <span class="badge risk-note">${(ok.size_factor * 100).toFixed(0)}%</span>` : "";
+  const long = qsfStateShort(ok), short = has ? `상태 <b class="num">${ok.score_100.toFixed(0)}</b>${cut}` : ok ? `상태 자료 없음${cut}` : "상태 읽지 못함";
+  const line = plainText(long) + (ok && ok.session ? ` · ${ok.session} 기록` : "");
+  chipSet(el, long, short, line, `${line} · 종목 점수에는 들어가지 않습니다. 누르면 순위·카드 탭의 상태 띠를 엽니다.`);
+}
+async function paintTimeChip() {
+  const el = $("#datatime");
+  if (!el) return;
+  const a = await api("/api/automation/status").catch(() => null);
+  if (!a) { el.hidden = true; el.dataset.line = ""; return; }
+  const lr = a.last_run, la = a.last_attempt, tags = [];
+  if (a.running) tags.push('<span class="badge live">수집 중</span>');
+  if (lr && (lr.missing_sessions || []).length) tags.push(`<span class="badge STALE">빠진 거래일 ${lr.missing_sessions.length}</span>`);
+  if (la && la.status === "ERROR" && (!lr || Date.parse(la.at) > Date.parse(lr.at))) tags.push('<span class="badge UNAVAILABLE">마지막 시도 오류</span>');
+  let long = "실행 기록 없음", short = "실행 기록 없음";
+  if (lr) {
+    const days = Math.floor((Date.now() - Date.parse(lr.at)) / 86400000), age = isNum(days) && days >= 1 ? ` (${days}일 전)` : "";
+    long = `기준 거래일 ${esc(lr.session)} · 수집 ${esc(stamp(lr.at))}${age}`;
+    short = `${esc(lr.session)} 기준${age}`;
+  }
+  const tag = tags.length ? " " + tags.join(" ") : "";
+  const line = plainText(long + tag);
+  chipSet(el, long + tag, short + tag, line, `자동 실행 · ${line} · 누르면 연구실 탭의 자동 실행 줄을 봅니다.`);
+}
+function topChips() { paintStateChip(); paintTimeChip(); }
+$("#mstate").onclick = () => Promise.resolve(show("qsf")).then(() => { const st = $("#qsfstrip"); if (st) { st.open = true; st.scrollIntoView({ block: "nearest" }); } });
+$("#datatime").onclick = () => Promise.resolve(show("lab")).then(() => { const n = $("#autoline"); if (n) n.scrollIntoView({ block: "nearest" }); });
+window.addEventListener("DOMContentLoaded", topChips);                // after qsf.js has defined qsfStateShort
+setInterval(paintTimeChip, 5 * 60 * 1000);
 setInterval(loadHealth, 5 * 60 * 1000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - healthAt > 30000) loadHealth(); });
 let booted = false;

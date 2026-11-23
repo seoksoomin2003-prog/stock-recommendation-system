@@ -9,6 +9,7 @@ function collectStale() {
   if (typeof qsfDropLatest === "function") qsfDropLatest();
   if (typeof symbolCache !== "undefined") symbolCache.clear();
   state.loaded.qsf = false;
+  if (typeof topChips === "function") topChips();          // 머리줄의 시장 상태·자료 시각 칩도 다시 읽습니다
 }
 
 function collectPaint(html, closable) {

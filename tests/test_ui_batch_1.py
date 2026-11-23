@@ -91,7 +91,8 @@ def test_price_colours_follow_the_market_and_status_green_does_not():
         assert t["--ok"] == t["--up-intl"]
         for k in ("--up-kr", "--down-kr"):
             assert _contrast(t[k], t["--panel"]) >= 4.5, k
-    assert light["--up-kr"] == "#c22f35" and light["--down-kr"] == "#1f5fd1" and dark["--down-kr"] == "#5b9cff"
+    # workstation redesign 2026-11-24: both pairs are the visualization spec's validated shades (FINANCIAL_VISUALIZATION_SPECIFICATION.md 2.2)
+    assert light["--up-kr"] == "#c13a46" and light["--down-kr"] == "#1f5fd1" and dark["--down-kr"] == "#4c8dff" and dark["--up-kr"] == "#e76250"
     assert ':root { --up: var(--up-intl); --down: var(--down-intl); }' in CSS and ':root[data-color="kr"] { --up: var(--up-kr); --down: var(--down-kr); }' in CSS
     assert ".badge.REAL { color: var(--muted); }" in CSS and ".msg.ok { color: var(--ok); }" in CSS
 
@@ -112,10 +113,11 @@ state.tab = "today"; state.market = "US"; paintColorRule(); seen.push(ds.color |
 def test_text_on_the_accent_passes_and_a_selected_segment_is_a_neutral_inversion():
     light = _tokens(CSS[:CSS.index(':root[data-theme="dark"]')])
     dark = _tokens(CSS[CSS.index(':root[data-theme="dark"]'):CSS.index("* { box-sizing")])
-    assert _contrast(dark["--on-accent"], dark["--accent"]) >= 4.5 and _contrast(light["--on-accent"], light["--accent"]) >= 4.5
+    # workstation redesign 2026-11-24: filled accents use --accent-fill (DESIGN_SYSTEM_SPECIFICATION.md section 2); --accent stays for text and lines
+    assert _contrast(dark["--on-accent"], dark["--accent-fill"]) >= 4.5 and _contrast(light["--on-accent"], light["--accent-fill"]) >= 4.5
     for sel in (".search button {", ".btn-primary {", ".g-A {"):
         rule = CSS[CSS.index(sel):CSS.index("}", CSS.index(sel))]
-        assert "color: var(--on-accent)" in rule and "#fff" not in rule
+        assert "color: var(--on-accent)" in rule and "#fff" not in rule and "background: var(--accent-fill)" in rule
     assert ".seg button.on { background: var(--ink); color: var(--panel);" in CSS
     assert _contrast(dark["--ink"], dark["--panel"]) >= 7 and _contrast(light["--ink"], light["--panel"]) >= 7
 

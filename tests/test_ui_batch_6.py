@@ -34,9 +34,10 @@ def test_the_stance_buttons_sit_in_the_view_row_not_inside_the_folded_strip():
 
 # ---------------------------------------------------------------- P2-8 one meaning per colour
 def test_judgements_have_their_own_colours_and_states_are_neutral():
-    for theme, buy in ((":root {", "#6d28d9"), (':root[data-theme="dark"]', "#a78bfa")):
+    # dark hold grey of 2026-11-24 (DESIGN_SYSTEM_SPECIFICATION.md section 2: #64748b fell under 3:1 on the selected row)
+    for theme, buy, hold in ((":root {", "#6d28d9", "#64748b"), (':root[data-theme="dark"]', "#a78bfa", "#7d8da6")):
         block = CSS[CSS.index(theme):CSS.index("}", CSS.index(theme))]
-        assert f"--judge-buy: {buy};" in block and "--judge-hold: #64748b;" in block
+        assert f"--judge-buy: {buy};" in block and f"--judge-hold: {hold};" in block
     assert ".act-buy { --act: var(--judge-buy); }" in CSS and ".act-sell { --act: var(--warn); }" in CSS
     assert "#16A34A" not in CSS and "#DC2626" not in CSS
     assert ".qsf-bar i { display: block; height: 100%; background: var(--muted); }" in CSS
