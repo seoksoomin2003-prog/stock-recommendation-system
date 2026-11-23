@@ -114,7 +114,7 @@ def test_the_today_tab_and_the_daily_message_tell_an_interrupt_once():
     assert "버핏식, 그레이엄식 포트폴리오에서 전부 뺐습니다" in items[0]["text"] and "주문이 아닙니다" in items[0]["text"] and items[0]["tab"] == "committee"
     assert items[1]["short"] == "버핏식 KEEP 비중 20%(규칙은 12%로 축소)" and assistant.committee_items(row, "US", "2026-11-25") == [] and assistant.committee_items(None, "US", "2026-11-24") == []
     lines = assistant.daily_lines([{"status": "REAL", "market": "US", "items": items}])
-    assert lines == ["모의 포트폴리오 알림: 미국 FILED 전량 제외(버핏식, 그레이엄식), 버핏식 KEEP 비중 20%(규칙은 12%로 축소)"]
+    assert lines == ["가상 포트폴리오 알림: 미국 FILED 전량 제외(버핏식, 그레이엄식), 버핏식 KEEP 비중 20%(규칙은 12%로 축소)"]
     assert assistant.daily_lines([{"status": "REAL", "market": "US", "items": []}]) == [] and "committee" in assistant.PART_KO
 
 

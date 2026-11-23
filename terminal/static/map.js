@@ -1,7 +1,10 @@
 // 시장 지도 탭: 업종별 히트맵(크기 = 시가총액, 색 = 등락 또는 점수).  읽기 전용.
 "use strict";
-const heat = { mode: "1d", strategy: "SWING", data: null, rects: [] };
-try { const v = JSON.parse(localStorage.getItem("qse-heat-view") || "null"); if (v && v.mode) Object.assign(heat, { mode: v.mode, strategy: v.strategy || "SWING" }); } catch (e) { /* default view */ }
+const heat = { mode: "1d", strategy: "SWING", palette: "std", data: null, rects: [] };
+try { const v = JSON.parse(localStorage.getItem("qse-heat-view") || "null"); if (v && v.mode) Object.assign(heat, { mode: v.mode, strategy: v.strategy || "SWING", palette: v.palette === "cb" ? "cb" : "std" }); } catch (e) { /* default view */ }
+// 색각 친화 색 (6차 묶음 P3-7, 사용자 결정 2026-11-24): 오르면 파랑, 내리면 주황.  빨강·초록을 구별하기 어려운 사람도 읽습니다.
+const HEAT_CB = { up: { light: "#1f5fd1", dark: "#5b9cff" }, down: { light: "#b35900", dark: "#f0a531" } };
+function heatSide(up, dark) { return heat.palette === "cb" ? HEAT_CB[up ? "up" : "down"][dark ? "dark" : "light"] : cssVar(up ? "--up" : "--down"); }
 const HEAT_MODES = { "1d": ["1일", 0.03], "5d": ["5일", 0.08], "1m": ["1개월", 0.15], score: ["QSF 점수", null] };
 
 // Squarified treemap (Bruls et al.): rows of tiles kept close to square.  Items need .value > 0; returns {item, x, y, w, h}.
@@ -40,23 +43,32 @@ function heatColor(it) {
   const v = it.change[heat.mode];
   if (!isNum(v)) return null;
   const t = Math.min(1, Math.abs(v) / HEAT_MODES[heat.mode][1]);
-  return mixRgb(mid, rgbOf(cssVar(v >= 0 ? "--up" : "--down")), t);
+  return mixRgb(mid, rgbOf(heatSide(v >= 0, dark)), t);
 }
 
+// 등락 보기에서는 스윙·장기 점수 단추를 쓰지 않으므로 흐리게 두고 이유를 적습니다 (P3-7).  색 선택은 점수 보기에서 쓰지 않습니다.
+function heatIdle() {
+  const st = $("#heat-strat"), pal = $("#heat-pal"), score = heat.mode === "score";
+  if (st) { st.classList.toggle("idle", !score); st.title = score ? "" : "등락 보기에서는 쓰지 않습니다. 점수 보기를 고르면 이 점수로 칠합니다."; }
+  if (pal) pal.classList.toggle("idle", score);
+}
 async function renderMap() {
   state.loaded.map = true;
   const el = $("#tab-map");
   el.innerHTML = `<div class="panel"><h2>시장 히트맵 <span class="seg" id="heat-mode">${Object.entries(HEAT_MODES).map(([k, [n]]) => `<button data-k="${k}" class="${k === heat.mode ? "on" : ""}">${n}</button>`).join("")}</span>
-      <span class="seg" id="heat-strat">${[["SWING", "스윙"], ["LONG_TERM", "장기"]].map(([k, n]) => `<button data-k="${k}" class="${k === heat.strategy ? "on" : ""}">${n} 점수</button>`).join("")}</span></h2>
+      <span class="seg" id="heat-strat">${[["SWING", "스윙"], ["LONG_TERM", "장기"]].map(([k, n]) => `<button data-k="${k}" class="${k === heat.strategy ? "on" : ""}">${n} 점수</button>`).join("")}</span>
+      <span class="seg" id="heat-pal" title="색: 기본은 시장의 상승·하락 색, 파랑·주황은 색각 친화 색입니다">${[["std", "기본 색"], ["cb", "파랑·주황"]].map(([k, n]) => `<button data-k="${k}" class="${k === heat.palette ? "on" : ""}">${n}</button>`).join("")}</span></h2>
     <canvas id="heat-cv" class="chart" aria-label="시장 히트맵"></canvas><div class="legend" id="heat-legend"></div><div id="heat-meta">${loading}</div></div>
     <div id="map-more"></div>`;
   const pick = (id, key) => ($(id).onclick = (e) => {
     const b = e.target.closest("button"); if (!b) return; heat[key] = b.dataset.k;
-    try { localStorage.setItem("qse-heat-view", JSON.stringify({ mode: heat.mode, strategy: heat.strategy })); } catch (err) { /* not remembered */ }
+    try { localStorage.setItem("qse-heat-view", JSON.stringify({ mode: heat.mode, strategy: heat.strategy, palette: heat.palette })); } catch (err) { /* not remembered */ }
     $(id).querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+    heatIdle();
     key === "strategy" ? loadHeat() : heatDraw();
   });
-  pick("#heat-mode", "mode"); pick("#heat-strat", "strategy");
+  pick("#heat-mode", "mode"); pick("#heat-strat", "strategy"); pick("#heat-pal", "palette");
+  heatIdle();
   loadHeat();
   if (typeof renderRotation === "function") renderRotation($("#map-more"));
 }
@@ -104,7 +116,7 @@ function heatDraw() {
   const span = HEAT_MODES[heat.mode][1];
   $("#heat-legend").innerHTML = heat.mode === "score"
     ? `<span>타일 크기: 시가총액 · 색: ${heat.strategy === "SWING" ? "스윙" : "장기"} 점수 (40 이하 옅게 → 80 이상 진하게, 회색은 점수 없음)</span>`
-    : `<span>타일 크기: 시가총액 · 색: ${HEAT_MODES[heat.mode][0]} 등락 (<span class="down">−${(span * 100).toFixed(0)}%</span> ~ 0 회색 ~ <span class="up">+${(span * 100).toFixed(0)}%</span>, 그 너머는 같은 색)</span>`;
+    : `<span>타일 크기: 시가총액 · 색: ${HEAT_MODES[heat.mode][0]} 등락 (<span style="color:${heatSide(false, lumOf(rgbOf(cssVar("--panel"))) < 0.5)}">−${(span * 100).toFixed(0)}%</span> ~ 0 회색 ~ <span style="color:${heatSide(true, lumOf(rgbOf(cssVar("--panel"))) < 0.5)}">+${(span * 100).toFixed(0)}%</span>, 그 너머는 같은 색)</span>`;
   cv.onmousemove = (e) => {
     const b = cv.getBoundingClientRect(), mx = e.clientX - b.left, my = e.clientY - b.top;
     const r = heat.rects.find((q) => mx >= q.x && mx < q.x + q.w && my >= q.y && my < q.y + q.h), tip = $("#tip");

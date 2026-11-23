@@ -6,7 +6,6 @@ const KIND_FIELDS = { DEPOSIT: ["amount"], WITHDRAW: ["amount"], FEE: ["amount"]
   BUY: ["ticker", "style", "qty", "price", "fee", "stop", "target"], HOLD: ["ticker", "style", "qty", "price", "stop", "target"], SELL: ["ticker", "qty", "price", "fee"], PLAN: ["ticker", "stop", "target"], STYLE: ["ticker", "style"] };
 const FIELD_KO = { ticker: "종목 코드", style: "구분", qty: "수량(주)", price: "가격($)", fee: "수수료($)", amount: "금액($)", stop: "손절가($, 선택)", target: "목표가($, 선택)" };
 const BIND_KO = { RISK: "1회 거래 위험 한도", WEIGHT: "종목당 최대 비중", CASH: "보유 현금" };
-let prefill = null;
 
 function money(v, d = 2) {
   if (!isNum(v)) return DASH;
@@ -33,7 +32,7 @@ async function renderPortfolio() {
   const krw = (v) => (mk === "US" && isNum(v) && isNum(fx.usdkrw) ? `<span class="meta m0">≈ ₩${Math.round(v * fx.usdkrw).toLocaleString("ko-KR")}</span>` : "");
   el.innerHTML = `
     ${d.integrity.status !== "OK" ? `<div class="notice">거래 기록 무결성 오류: ${esc(d.integrity.reason || "")}${d.integrity.line ? ` (${d.integrity.line}번째 줄)` : ""}. 새 기록 추가가 중단됩니다. data/terminal/journal.jsonl 을 확인하세요.</div>` : ""}
-    ${empty ? `<div class="panel"><h2>시작하기</h2><div class="meta" style="font-size:13px">1) 아래 '거래 기록'에서 <b>입금</b>을 먼저 기록하고 2) 실제로 체결된 <b>매수·매도</b>를 기록하세요.
+    ${empty ? `<div class="panel"><h2>시작하기</h2><div class="meta">1) 아래 '통합 계좌에서 기록하기'를 눌러 <b>입금</b>을 먼저 기록하고 2) 실제로 체결된 <b>매수·매도</b>를 기록하세요.
       보유 종목·평균단가·손익은 기록으로부터 자동 계산됩니다. 기록은 이 Mac에만 저장되며, 잘못 입력한 기록은 삭제 대신 '취소'로 무효화합니다.</div></div>` : ""}
     ${totalHtml(d.total)}
     <div class="panel"><h2>${mk === "KR" ? "한국(원화)" : "미국(달러)"} 계좌 요약 ${s.complete ? "" : badge("STALE")}</h2>
@@ -64,12 +63,13 @@ async function renderPortfolio() {
       ${d.stats.count ? styleStatsHtml(d.stats_by_style) : ""}
       ${d.closed.length ? `<div class="tbl-wrap"><table><thead><tr><th>매도일</th><th class="l">종목</th><th class="l">구분</th><th>수량</th><th>평균단가</th><th>매도가</th><th>실현 손익</th><th>수익률</th><th>보유 일수</th></tr></thead>
       <tbody>${d.closed.slice(0, 50).map((c) => `<tr><td>${esc(c.date)}</td><td class="l"><b>${esc(c.ticker)}</b></td><td class="l">${esc(STYLE_KO[c.style] || "미지정")}</td><td class="num">${qtyFmt(c.qty)}</td><td class="num">${money(c.avg_cost)}</td><td class="num">${money(c.price)}</td><td>${pnl(c.pnl)}</td><td>${pct(c.return_pct, 1)}</td><td class="num">${c.hold_days}일</td></tr>`).join("")}</tbody></table></div>` : ""}</div>
-    <div class="panel" id="jform-panel"><h2>거래 기록 추가</h2>${formHtml(d)}</div>
+    <div class="panel" id="jform-panel"><h2>거래 기록 추가</h2><div class="meta">거래 기록은 통합 계좌의 양식 하나에서 적습니다. 누르면 ${mk === "KR" ? "한국" : "미국"} 계좌가 골라진 양식으로 갑니다.</div>
+      <button type="button" class="btn-primary mt-2" id="jgo">통합 계좌에서 기록하기</button></div>
     <div class="panel"><h2>거래 기록 <span class="meta m0">${d.journal.length}건 · 추가만 가능, 취소는 별도 기록으로 남습니다</span></h2>
       ${d.journal.length ? `<div class="tbl-wrap"><table><thead><tr><th>날짜</th><th class="l">종류</th><th class="l">종목</th><th>수량</th><th>가격</th><th>금액</th><th class="l">메모</th><th></th></tr></thead>
       <tbody>${d.journal.map(journalRow).join("")}</tbody></table></div>` : '<div class="empty">기록이 없습니다.</div>'}</div>
     <div class="panel meta">${esc(d.note)}</div>`;
-  bindForm(d);
+  $("#jgo").onclick = () => acctRecord(mk);
   loadSignals();
   el.querySelectorAll("[data-void]").forEach((b) => (b.onclick = async (e) => {
     e.stopPropagation();
@@ -155,36 +155,6 @@ function journalRow(r) {
     <td class="l meta" style="margin:0;white-space:normal;min-width:120px">${esc((r.note || "") + (r.kind === "BUY" || r.kind === "HOLD" ? ` ${styleText}` : "") + extra + ref)}</td>
     <td>${r.kind !== "VOID" && !r.voided ? `<button class="x" data-void="${esc(r.id)}" title="이 기록 취소">취소</button>` : ""}</td></tr>`;
 }
-function formHtml() {
-  const p = prefill || {};
-  const styleSelect = `<select name="style"><option value="">선택</option>${Object.entries(STYLE_KO).map(([k, v]) => `<option value="${k}" ${p.style === k ? "selected" : ""}>${v}</option>`).join("")}</select>`;
-  const kind = p.kind || "BUY";
-  return `<form class="form" id="jform" autocomplete="off">
-    <label>종류<select name="kind">${Object.keys(KIND_FIELDS).map((k) => `<option value="${k}" ${k === kind ? "selected" : ""}>${KIND_KO[k]}</option>`).join("")}</select></label>
-    <label>날짜(${isKR() ? "한국" : "미국"} 기준)<input name="date" type="date" value="${esc(p.date || todayET())}" max="${todayET()}"></label>
-    ${Object.keys(FIELD_KO).map((f) => f === "style" ? `<label data-f="style">${FIELD_KO[f]}${styleSelect}</label>` : `<label data-f="${f}">${FIELD_KO[f].replace("$", curSym())}<input name="${f}" ${f === "ticker" ? 'maxlength="15" style="text-transform:uppercase"' : 'inputmode="decimal"'} value="${esc(p[f] ?? "")}"></label>`).join("")}
-    <label class="wide">메모 (매매 이유 등, 선택)<input name="note" maxlength="500" value="${esc(p.note || "")}"></label>
-    <div class="wide"><button class="btn-primary" type="submit">기록 추가</button> <span class="meta">실제로 체결된 내용만 기록하세요. 이 화면은 주문을 내지 않습니다.</span>${isKR() ? `<div class="meta">${KR_SELL_HINT}</div>` : ""}<div class="msg" id="jmsg"></div></div>
-  </form>`;
-}
-function bindForm(d) {
-  const f = $("#jform"); if (!f) return;
-  const held = new Set((d ? d.holdings : []).map((h) => h.ticker));
-  const sync = () => { const need = KIND_FIELDS[f.kind.value]; f.querySelectorAll("[data-f]").forEach((l) => (l.hidden = !need.includes(l.dataset.f))); };
-  f.kind.onchange = sync; sync();
-  f.onsubmit = async (e) => {
-    e.preventDefault();
-    const body = { kind: f.kind.value, date: f.date.value, note: f.note.value, market: state.market };
-    KIND_FIELDS[body.kind].forEach((k) => { const v = f[k].value.trim().replace(/,/g, ""); if (v) body[k] = k === "ticker" ? v.toUpperCase() : v; });
-    if (body.ticker && marketOf(body.ticker) !== state.market) { $("#jmsg").className = "msg err"; $("#jmsg").textContent = wrongMarket(body.ticker); f.ticker.focus(); return; }
-    if (((body.kind === "BUY" || body.kind === "HOLD") && !held.has(body.ticker) && !body.style) || (body.kind === "STYLE" && !body.style)) {
-      $("#jmsg").className = "msg err"; $("#jmsg").textContent = "장기 또는 스윙을 선택하세요."; f.style.focus(); return;
-    }
-    try { await post("/api/journal/add", body); prefill = null; $("#jmsg").className = "msg ok"; $("#jmsg").textContent = "기록했습니다. 시세를 다시 불러오는 중…"; renderPortfolio(); }
-    catch (err) { $("#jmsg").className = "msg err"; $("#jmsg").textContent = errKo(err); }
-  };
-  if (prefill) { $("#jform-panel").scrollIntoView({ behavior: "smooth" }); }
-}
 let eqData = null;
 async function loadEquity() {
   try {
@@ -256,6 +226,11 @@ async function renderAssist() {
       <div class="meta">1회 거래 위험: 손절가에 도달했을 때 잃는 금액을 계좌의 몇 %로 제한할지 정합니다. 이 값들은 계산기와 경고에 쓰입니다.</div><div class="msg" id="stmsg"></div></div>
     <div class="panel" id="plan">${loading}</div>`;
   prefillTicker($("#szform").elements.t);          // 열어 둔 종목을 미리 적어 둡니다.  계산은 버튼을 눌러야 합니다.
+  if (state.sizeFill) {          // 점수 카드의 '크기 계산기에 넣기' (6차 묶음 P1-13): 코드·구분·스윙 손절 기준을 채우고 한 번 계산합니다
+    const f = $("#szform"), s = state.sizeFill; state.sizeFill = null;
+    f.elements.t.value = s.t; f.elements.style.value = s.style || ""; f.elements.stop.value = s.stop || "";
+    $("#szform").scrollIntoView({ block: "start" }); setTimeout(() => f.requestSubmit(), 0);
+  }
   $("#szform").onsubmit = (e) => { e.preventDefault(); runSizing(); };
   $("#stform").onsubmit = async (e) => {
     e.preventDefault(); const f = e.target, body = {};
@@ -302,7 +277,7 @@ async function runSizing() {
       <div class="meta">한도별 최대 수량: 위험 ${r.limits.RISK}주 · 비중 ${r.limits.WEIGHT}주 · 현금 ${r.limits.CASH}주 (계좌 ${money(d.equity)}${d.equity_source === "입력값" ? " 입력값, 전액 현금으로 가정" : ""}, 현금 ${money(d.cash)}, 위험 예산 ${money(r.risk_budget)})</div>
       ${r.shares > 0 && d.ticker ? '<button id="tojournal" class="mt-2">이 수량으로 매수 기록 작성</button> <span class="meta">체결된 뒤에 기록하세요.</span>' : ""}`;
     const b = $("#tojournal");
-    if (b) b.onclick = () => { prefill = { kind: "BUY", ticker: d.ticker, style: d.style || "", qty: r.shares, price: r.entry.toFixed(isKR() ? 0 : 2), stop: r.stop.toFixed(isKR() ? 0 : 2) }; show("portfolio"); };
+    if (b) b.onclick = () => acctRecord(marketOf(d.ticker), { kind: "BUY", ticker: d.ticker, style: d.style || "", qty: r.shares, price: r.entry.toFixed(isKR() ? 0 : 2), stop: r.stop.toFixed(isKR() ? 0 : 2) });
   } catch (e) { out.innerHTML = `<div class="msg err">${esc(errKo(e))}</div>`; }
 }
 async function loadPlan() {

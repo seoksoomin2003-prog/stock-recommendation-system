@@ -54,9 +54,11 @@ def balance(factors: Iterable[Dict[str, Any]], shown: int = SHOWN) -> Dict[str, 
 
 
 def short(b: Dict[str, Any]) -> Dict[str, Any]:
-    """The table's one line: the largest push each way, label and points only."""
-    pick = lambda xs: {"label": xs[0]["label"], "points": round(xs[0]["points"], 1)} if xs else None      # noqa: E731
-    return {"plus": pick(b["plus"]), "minus": pick(b["minus"])}
+    """The table's one line: the largest push each way, label and points only.  ``plus_more`` / ``minus_more``: the next ones (up to
+    two each way), so the page can skip a factor that nearly every shown row shares (UI batch 6 P2-25).  Display only."""
+    one = lambda x: {"label": x["label"], "points": round(x["points"], 1)}      # noqa: E731
+    return {"plus": one(b["plus"][0]) if b["plus"] else None, "minus": one(b["minus"][0]) if b["minus"] else None,
+            "plus_more": [one(x) for x in b["plus"][1:3]], "minus_more": [one(x) for x in b["minus"][1:3]]}
 
 
 def _session_snaps(ledger: Any, market: str, session: str) -> List[Dict[str, Any]]:

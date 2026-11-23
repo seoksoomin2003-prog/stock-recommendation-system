@@ -81,7 +81,7 @@ REGISTRY: List[Dict[str, Any]] = [
     _e("kr_method_240", "한국 독자 매매법 · 240일 읽기", ["qsf", "kr-method-evaluate-240"], "QSF_KR_METHOD_FORWARD_240.json", "QSF_KR_METHOD_PROTOCOL.md", 240, 10, store="kr_method",
        after="METHOD_SUPPORTED가 나와도 매매 보조 화면의 진입 규칙은 자동으로 바뀌지 않습니다."),
     # the six portfolios of the investment committee (terminal/committee): 240 paper days need 242 recorded sessions
-    *[_e(f"committee_paper_{m.lower()}", f"투자위원회 여섯 포트폴리오 모의 성과({ko})", ["--market", m, "qsf", "committee-evaluate"], f"IC1_PAPER_{m}.json", "IC1_PAPER_READING_PROTOCOL.md", 240, 2,
+    *[_e(f"committee_paper_{m.lower()}", f"투자위원회 여섯 포트폴리오 가상 성과({ko})", ["--market", m, "qsf", "committee-evaluate"], f"IC1_PAPER_{m}.json", "IC1_PAPER_READING_PROTOCOL.md", 240, 2,
          committee=m, after="PAPER_BETTER가 나와도 엔진·위원회·포트폴리오의 규칙과 점수는 자동으로 바뀌지 않습니다.") for m, ko in (("KR", "한국"), ("US", "미국"))],
 ]
 
@@ -108,7 +108,7 @@ VERDICT_KO = {
     "MARKS_FLAG_LOSERS_BUT_SCORE_KNOWS": "회피 표시가 부진한 종목을 가리키지만 점수가 이미 반영하고 있습니다",
     "METHOD_SUPPORTED": "매매법이 지지됐습니다",
     "NO_PRIMARY": "미리 고른 주 매매법이 없어 판정하지 않고 수치만 적었습니다",
-    "PAPER_BETTER": "여섯 모의 포트폴리오 가운데 지수보다 나았다고 볼 만한 것이 있습니다(어느 것인지는 아래 줄에)",
+    "PAPER_BETTER": "여섯 가상 포트폴리오 가운데 지수보다 나았다고 볼 만한 것이 있습니다(어느 것인지는 아래 줄에)",
     "FIGURES_ONLY": "판정 없이 수치만 적었습니다",
     "True": "도전자 점수가 지지됐습니다",
     "False": "도전자 점수가 지지되지 않았습니다",
@@ -179,7 +179,7 @@ def text(e: Dict[str, Any], rep: Dict[str, Any]) -> str:
     """The notice sent once when a reading has been made."""
     code = verdict(e, rep)
     lines = [f"[{KIND_KO[bool(e.get('primary'))]} · {e['label']}] {code}", meaning(code) + ".", *why(rep), *([] if e.get("primary") else [REFERENCE_NOTE]), e["after"],
-             f"수치: {REPORTS / e['report']} · 규칙: {e['protocol']} · 터미널 점수 탭의 '판정 일정'에서도 볼 수 있습니다."]
+             f"수치: {REPORTS / e['report']} · 규칙: {e['protocol']} · 터미널 순위·카드 탭의 '판정 일정'에서도 볼 수 있습니다."]
     return "\n".join(lines)
 
 
@@ -227,7 +227,7 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
             itself = False                                # both readings report and apply nothing by themselves (user decisions 2026-11-22)
             row = {"key": f"{book.VERSION}_{m}", "label": f"{label}({ko})", "protocol": book.PROTOCOL, "records": s["records"], "wanted": s["read_at"], "applies_itself": itself, "primary": False,
                    "after": "적용으로 정해지면 프로그램이 스스로 규칙을 바꿉니다. .env로 뒤집을 수 있습니다." if itself else
-                   "조건을 채워도 프로그램이 스스로 규칙을 바꾸지 않습니다. 결과를 알리고, 쓰려면 점수 탭 모의 장부의 그 규칙 칸에서 '이 규칙 쓰기'를 누릅니다.", "attempts": 0}
+                   "조건을 채워도 프로그램이 스스로 규칙을 바꾸지 않습니다. 결과를 알리고, 쓰려면 순위·카드 탭 가상 장부의 그 규칙 칸에서 '이 규칙 쓰기'를 누릅니다.", "attempts": 0}
             if s["status"] == "DECIDED":
                 adopt = s["decision"]["decision"] == "ADOPT"
                 row.update(state="READ", verdict=s["decision"]["decision"], meaning=("규칙 적용" if itself else "적용 조건 충족(자동 적용 안 함)") if adopt else "기존 규칙 유지", report=str(book.REPORTS[m]))

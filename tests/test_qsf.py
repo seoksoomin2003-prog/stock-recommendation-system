@@ -183,8 +183,8 @@ def test_ui_has_text_labels_and_separate_confidence():
     js = (ROOT / "terminal/static/qsf.js").read_text(encoding="utf-8")
     css = (ROOT / "terminal/static/style.css").read_text(encoding="utf-8")
     assert "esc(c.action_label)" in js and "신뢰도" in js and "데이터 반영률" in js
-    for colour in ("#16A34A", "#DC2626", "#64748B", "#D97706"):
-        assert colour in css
+    # UI batch 6 (P2-8): the page's judgement colours are their own tokens, apart from price colours; the engine's colour field is unchanged
+    assert ".act-buy { --act: var(--judge-buy); } .act-hold { --act: var(--judge-hold); } .act-sell { --act: var(--warn); }" in css
 
 
 # ---------------------------------------------------------------------- holding and entry

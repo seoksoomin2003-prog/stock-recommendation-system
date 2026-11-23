@@ -38,9 +38,13 @@ function cmdParse(raw) {
       ? { label: `${code} 비교 차트`, hint: "비교", run: () => compareWith([code]) }
       : target && target.tab === "chart" && typeof chartWith === "function" ? { label: `${code} 차트분석`, hint: "차트", run: () => chartWith(code) }
       : { label: `${code} 종목 화면`, hint: "종목", ticker: code, run: () => findSymbol(code) };      // 스캔한 종목의 코드가 아니면 가까운 종목을 먼저 묻습니다
+    // 'X 점수': 그 종목의 점수 카드 (6차 묶음 P2-15).  코드는 종목 화면, 점수는 카드라는 규칙을 명령창에서도 지킵니다.
+    const scoreItem = typeof qsfOpenCard === "function" && !isCoin() ? { label: `${code} 점수 카드`, hint: "점수", run: () => qsfOpenCard(code) } : null;
     // a word that is exactly a tab or market name (port, kr, map) goes there first; the ticker of the same letters comes second
     const exact = words.length === 1 && (Object.values(CMD_MARKETS).flat().includes(low) || tabs.some((t) => [t.label, ...(CMD_ALIASES[t.tab] || [])].some((n) => n.toLowerCase() === low)));
     exact ? out.push(item) : out.unshift(item);
+    if (scoreItem && target && target.tab === "qsf") out.unshift(scoreItem);          // 'X 점수': 카드가 먼저
+    else if (scoreItem && !target) out.splice(out.indexOf(item) + 1, 0, scoreItem);   // 코드만: 종목 화면 바로 다음
   }
   if (/[가-힣]/.test(q) && !out.length) out.push({ label: `'${q}' 한국 종목 검색`, hint: "검색", run: () => findSymbol(q) });
   if (typeof askAssistant === "function" && CMD_HELP.includes(low))

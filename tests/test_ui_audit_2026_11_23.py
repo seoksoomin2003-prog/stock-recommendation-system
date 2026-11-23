@@ -43,7 +43,7 @@ def test_no_scored_data_gives_no_balance_and_the_short_line_keeps_one_each_way()
     assert empty["points_sum"] is None and empty["plus"] == [] and empty["minus"] == [] and empty["missing"]
     s = RN.short(RN.balance(FACTORS))
     assert s["plus"]["label"] == RN._name("trend_structure") and s["minus"]["label"] == RN._name("valuation") and s["minus"]["points"] < 0
-    assert RN.short({"plus": [], "minus": []}) == {"plus": None, "minus": None}
+    assert RN.short({"plus": [], "minus": []}) == {"plus": None, "minus": None, "plus_more": [], "minus_more": []}
 
 
 # ---------------------------------------------------------------------- the ranking notes, read from the ledger

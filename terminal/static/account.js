@@ -29,19 +29,24 @@ function acctHoldingsHtml(d) {
     <th>${acctUnit === "KRW" ? "원화로" : "달러로"}</th><th title="세 계좌를 합친 금액 가운데 이 종목의 몫">전체 비중</th><th>손익</th><th>손절가</th><th>목표가</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
+// 거래 기록 양식은 이 화면 하나입니다 (6차 묶음 P2-16).  시장별 화면과 크기 계산기는 시장과 값을 채워 이리로 보냅니다.
+function acctRecord(market, fill) {
+  acctForm = { kind: (fill && fill.kind) || "BUY", market: ACCT_KO[market] ? market : "US", fill: fill || null, scroll: true };
+  show("account");
+}
 function acctFormHtml(d) {
-  const f = acctForm, cur = ACCT_CUR[f.market] === "KRW" ? "₩" : "$";
+  const f = acctForm, cur = ACCT_CUR[f.market] === "KRW" ? "₩" : "$", fill = f.fill || {};
   const kinds = ["HOLD", "BUY", "SELL", "DEPOSIT", "WITHDRAW", "DIVIDEND", "FEE", "PLAN", "STYLE"];
   const label = { ticker: f.market === "COIN" ? "코인 이름 (예: BTC)" : "종목 코드", style: "구분", qty: f.market === "COIN" ? "수량(개)" : "수량(주)", price: f.kind === "HOLD" ? `산 가격(${cur})` : `가격(${cur})`,
     fee: `수수료(${cur})`, amount: `금액(${cur})`, stop: `손절가(${cur}, 선택)`, target: `목표가(${cur}, 선택)` };
-  const styleSelect = `<select name="style"><option value="">선택</option>${Object.entries(STYLE_KO).map(([k, v]) => `<option value="${k}">${v}</option>`).join("")}</select>`;
+  const styleSelect = `<select name="style"><option value="">선택</option>${Object.entries(STYLE_KO).map(([k, v]) => `<option value="${k}"${fill.style === k ? " selected" : ""}>${v}</option>`).join("")}</select>`;
   const coins = (d.coins || []).map((c) => `<option value="${esc(c.coin)}">${esc(c.name || "")}</option>`).join("");
   return `<form class="form" id="acctform" autocomplete="off">
     <label>종류<select name="kind">${kinds.map((k) => `<option value="${k}" ${k === f.kind ? "selected" : ""}>${KIND_KO[k]}</option>`).join("")}</select></label>
     <label>계좌<select name="market">${Object.keys(ACCT_KO).map((m) => `<option value="${m}" ${m === f.market ? "selected" : ""}>${ACCT_KO[m]} (${ACCT_CUR[m] === "KRW" ? "원" : "달러"})</option>`).join("")}</select></label>
     <label>${f.kind === "HOLD" ? "산 날짜" : "날짜"}${f.market === "US" ? "(미국 기준)" : ""}<input name="date" type="date" value="${esc(f.date || acctToday(f.market))}" max="${acctToday(f.market)}"></label>
     ${Object.keys(label).map((k) => k === "style" ? `<label data-f="style">${label[k]}${styleSelect}</label>`
-      : `<label data-f="${k}">${label[k]}<input name="${k}" ${k === "ticker" ? `maxlength="15" style="text-transform:uppercase" ${f.market === "COIN" ? 'list="acctcoins"' : ""}` : 'inputmode="decimal"'}></label>`).join("")}
+      : `<label data-f="${k}">${label[k]}<input name="${k}"${fill[k] !== undefined && fill[k] !== null ? ` value="${esc(fill[k])}"` : ""} ${k === "ticker" ? `maxlength="15" style="text-transform:uppercase" ${f.market === "COIN" ? 'list="acctcoins"' : ""}` : 'inputmode="decimal"'}></label>`).join("")}
     <datalist id="acctcoins">${coins}</datalist>
     <label class="wide">메모 (선택)<input name="note" maxlength="500"></label>
     <div class="wide"><button class="btn-primary" type="submit">기록 추가</button> <span class="meta" id="accthint"></span><div class="msg" id="acctmsg"></div></div>
@@ -60,6 +65,7 @@ function acctBind(d) {
   const sync = () => { const need = KIND_FIELDS[f.kind.value]; f.querySelectorAll("[data-f]").forEach((l) => (l.hidden = !need.includes(l.dataset.f))); hint(); };
   // 종류나 계좌를 바꾸면 통화 표시와 칸 이름이 달라지므로 양식을 다시 그립니다 (이미 넣은 날짜는 남깁니다)
   const redraw = () => { acctForm = { kind: f.kind.value, market: f.market.value, date: f.date.value }; $("#acctform-panel").querySelector("form").outerHTML = acctFormHtml(d); acctBind(d); };
+  if (acctForm.scroll) { acctForm.scroll = false; $("#acctform-panel").scrollIntoView({ block: "start" }); (f.ticker.value ? f.qty : f.ticker).focus({ preventScroll: true }); }
   f.kind.onchange = redraw; f.market.onchange = redraw; sync();
   f.ticker.onblur = () => {            // 주식 코드는 모양으로 시장이 정해집니다: 계좌 칸을 맞춰 줍니다
     const t = f.ticker.value.trim().toUpperCase();
@@ -111,7 +117,7 @@ async function renderAccount() {
     <td>${a.market === "COIN" ? "" : `<button type="button" class="ghost acct-detail" data-m="${esc(a.market)}">자세히</button>`}</td></tr>`).join("");
   el.innerHTML = `
     ${d.integrity.status !== "OK" ? `<div class="notice">거래 기록 무결성 오류: ${esc(d.integrity.reason || "")}. 새 기록 추가가 중단됩니다.</div>` : ""}
-    <div class="panel"><h2>내 계좌 <span class="meta m0">미국 주식 · 한국 주식 · 코인</span>
+    <div class="panel"><h2>통합 계좌 <span class="meta m0">미국 주식 · 한국 주식 · 코인</span>
         <span class="seg" id="acctunit" role="group" aria-label="합계 통화"><button type="button" data-u="KRW" class="${acctUnit === "KRW" ? "on" : ""}">원화</button><button type="button" data-u="USD" class="${acctUnit === "USD" ? "on" : ""}">달러</button></span></h2>
       ${t.missing.length ? `<div class="notice">가격을 받지 못한 종목이 있어 합계를 확정할 수 없습니다: ${esc(t.missing.join(" / "))}</div>` : ""}
       ${!isNum(rate) ? '<div class="notice">환율을 받지 못해 달러 계좌를 원화로 바꾸지 못했습니다. 합계가 비어 있을 수 있습니다.</div>' : ""}

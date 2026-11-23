@@ -24,7 +24,7 @@ FRESH_ALERT_HOURS = 36     # the user's own alert conditions that fired since ab
 SHOWN_ORDERS = 3
 SWING_DAYS_LEFT = 3
 EX_DIVIDEND_DAYS = 5       # an ex-dividend date of a holding or a watched stock within this many days is listed
-PART_KO = {"committee": "모의 포트폴리오 알림", "context": "지수와 거시 일정", "account": "보유 종목 점검", "plan": "주문 계획", "market": "시장 상태", "earnings": "실적 일정", "alerts": "내 알림 조건", "job": "자료 수집 상태",
+PART_KO = {"committee": "가상 포트폴리오 알림", "context": "지수와 거시 일정", "account": "보유 종목 점검", "plan": "주문 계획", "market": "시장 상태", "earnings": "실적 일정", "alerts": "내 알림 조건", "job": "자료 수집 상태",
            "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시", "gaps": "재무 기준에 따른 점수 차이", "dividends": "배당락일"}
 # the portfolio's own alert codes (terminal.portfolio.alerts) and the exit readings (automation.exit_alerts)
 ALERT_LEVEL = {"STOP_HIT": "ACT", "NEAR_STOP": "ACT", "QSF_EXIT": "ACT", "QSF_THESIS_INVALIDATED": "ACT", "QSF_REDUCE": "ACT",
@@ -98,7 +98,7 @@ def plan_items(plan: Dict[str, Any], market: str) -> List[Dict[str, Any]]:
         out.append(item("DUE", "ORDER", f"{o.get('name') or o['ticker']}({o['ticker']}) {STYLE_KO.get(o['style'], o['style'])} {o['shares']:,}주: 지정가 상한 {price(o['limit'], market)}, "
                         f"손절 {price(o['stop'], market)}{target}, 계좌 비중 {o['weight_pct']:.1f}%, 걸린 한도 {o.get('binding_label') or o.get('binding')}.", o["ticker"], "qsf"))
     if len(orders) > SHOWN_ORDERS:
-        out.append(item("INFO", "ORDERS_MORE", f"주문 계획이 {len(orders) - SHOWN_ORDERS}건 더 있습니다. 점수 탭의 '주문 계획·모의 장부'에 모두 있습니다.", tab="qsf"))
+        out.append(item("INFO", "ORDERS_MORE", f"주문 계획이 {len(orders) - SHOWN_ORDERS}건 더 있습니다. 순위·카드 탭의 '주문 계획·가상 장부'에 모두 있습니다.", tab="qsf"))
     if not orders:
         why = sorted((plan.get("skipped_counts") or {}).items(), key=lambda kv: -kv[1])[:3]
         reasons = {s["code"]: s["reason"] for s in plan.get("skipped") or []}
@@ -360,18 +360,18 @@ def committee_items(row: Optional[Dict[str, Any]], market: str, session: Optiona
             # shown as long as it lasts (user decision 2026-11-23): the position is not cut, so the notice must not vanish after a day.
             # The daily message tells it on the day it crossed the line only.
             risk = " 줄이지 않기로 했으므로 이 포트폴리오의 결과가 이 한 종목에 크게 좌우됩니다."
-            out.append(item("DUE" if n.get("new") else "INFO", "IC_INTERRUPT" if n.get("new") else "IC_OVERWEIGHT", f"모의 포트폴리오 알림 · {n['text']}{risk}", n["ticker"], tab="committee",
+            out.append(item("DUE" if n.get("new") else "INFO", "IC_INTERRUPT" if n.get("new") else "IC_OVERWEIGHT", f"가상 포트폴리오 알림 · {n['text']}{risk}", n["ticker"], tab="committee",
                             short=f"{name.get(key, key)} {n['ticker']} 비중 {n['weight'] * 100:.0f}%(규칙은 {n['cap'] * 100:.0f}%로 축소)" if n.get("new") else None))
     for t, g in gone.items():
-        out.insert(0, item("DUE", "IC_INTERRUPT", f"모의 포트폴리오 알림 · {g['name']}({t})을 {', '.join(g['from'])} 포트폴리오에서 전부 뺐습니다. 이유: {g['why']}. 빠진 몫은 현금으로 둡니다. "
-                                                  "모의 포트폴리오의 규칙이 한 일이고 주문이 아닙니다.", t, tab="committee", short=f"{t} 전량 제외({', '.join(g['from'])})"))
+        out.insert(0, item("DUE", "IC_INTERRUPT", f"가상 포트폴리오 알림 · {g['name']}({t})을 {', '.join(g['from'])} 포트폴리오에서 전부 뺐습니다. 이유: {g['why']}. 빠진 몫은 현금으로 둡니다. "
+                                                  "가상 포트폴리오의 규칙이 한 일이고 주문이 아닙니다.", t, tab="committee", short=f"{t} 전량 제외({', '.join(g['from'])})"))
     return out
 
 
 def daily_lines(briefs: List[Dict[str, Any]]) -> List[str]:
     """Three lines for the daily message, both markets on each: market state, the top three, the order plan; and a fourth on
     the days an interrupt of the six paper portfolios fired.  Tickers and counts only: no amount and no quantity leaves the machine."""
-    rows: Dict[str, List[str]] = {"시장 상태": [], "스윙 상위 3": [], "주문 계획": [], "모의 포트폴리오 알림": []}
+    rows: Dict[str, List[str]] = {"시장 상태": [], "스윙 상위 3": [], "주문 계획": [], "가상 포트폴리오 알림": []}
     for brief in briefs:
         if brief.get("status") != "REAL":
             continue
@@ -384,7 +384,7 @@ def daily_lines(briefs: List[Dict[str, Any]]) -> List[str]:
             (by.get("NO_ACCOUNT") or {}).get("short") or ("새 주문 없음" if "NO_ORDERS" in by else None)
         fired = [i["short"] for i in brief["items"] if i["kind"] == "IC_INTERRUPT" and i.get("short")]
         for label, text in (("시장 상태", (by.get("MARKET_ADVERSE") or by.get("MARKET_UNKNOWN") or by.get("MARKET_STATE") or {}).get("short")), ("스윙 상위 3", (by.get("TOP3") or {}).get("short")), ("주문 계획", plan),
-                            ("모의 포트폴리오 알림", ", ".join(fired[:4]) + (f" 외 {len(fired) - 4}건" if len(fired) > 4 else "") if fired else None)):
+                            ("가상 포트폴리오 알림", ", ".join(fired[:4]) + (f" 외 {len(fired) - 4}건" if len(fired) > 4 else "") if fired else None)):
             if text:
                 rows[label].append(f"{where} {text}")
     return [f"{label}: " + " · ".join(parts) for label, parts in rows.items() if parts]
@@ -1315,7 +1315,7 @@ def portfolio_answer(terminal: Any, stock: Dict[str, str], follow: List[str]) ->
                  [{"title": "이 종목의 자리", "lines": [f"{x['name']}: {'편입 ' + format(x['weight'] * 100, '.1f') + '%' if x['in'] else '없음'}. {x['why']}" for x in p["places"]]},
                   {"title": "여섯 포트폴리오(지금 만든 것)", "lines": ports},
                   {"title": "이 포트폴리오의 한계", "lines": [f"{p['session']} 스캔 기록으로 지금 만들었습니다. 전체 종목과 비중은 '투자위원회' 탭의 '여섯 포트폴리오 받아보기'에서 봅니다.",
-                                                   "주문을 내지 않는 모의 포트폴리오입니다. 금액과 수량은 계산하지 않습니다.", p["note"]]}], "committee", follow)
+                                                   "주문을 내지 않는 가상 포트폴리오입니다. 금액과 수량은 계산하지 않습니다.", p["note"]]}], "committee", follow)
 
 
 def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: str) -> Dict[str, Any]:
@@ -1547,7 +1547,7 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
         c = config.COSTS[market]
         return reply(f"{where} 거래 비용 가정", f"{where} 주식은 사고파는 왕복 비용을 {config.round_trip_cost(market) * 100:.2f}%로 계산합니다.",
                      [{"title": "구성", "lines": [str(c.get("basis") or "")]},
-                      {"title": "어디에 쓰이나", "lines": ["손익비, 모의 장부, 판정의 수익 계산에 모두 이 비용을 뺍니다.", "스프레드와 슬리피지는 가정값이라 실제 체결과 다를 수 있습니다. 거래대금이 작은 종목은 더 클 수 있습니다."]},
+                      {"title": "어디에 쓰이나", "lines": ["손익비, 가상 장부, 판정의 수익 계산에 모두 이 비용을 뺍니다.", "스프레드와 슬리피지는 가정값이라 실제 체결과 다를 수 있습니다. 거래대금이 작은 종목은 더 클 수 있습니다."]},
                       {"title": "참고", "lines": [switch]}], "qsf")
     if intent == "ALERTS":
         view = terminal.alerts_view()
@@ -1566,7 +1566,7 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
         return reply("판정 일정", f"판정 {got['total']}건 가운데 {got['read']}건을 읽었습니다.{first}",
                      [{"title": "이미 읽은 판정", "lines": read[:6]}, {"title": "다음에 나올 판정", "lines": nxt},
                       {"title": "알아 둘 것", "lines": ["판정은 기록이 충분히 쌓인 날 매일 작업이 스스로 한 번 읽고 텔레그램으로 알립니다. 사람이 할 일은 없습니다.",
-                                                  "대부분의 판정은 결과만 알려 주고 점수나 규칙을 자동으로 바꾸지 않습니다. 전체 목록은 점수 탭의 '추적·검증'에 있습니다."]}], "qsf", ["이 점수 믿어도 돼?"])
+                                                  "대부분의 판정은 결과만 알려 주고 점수나 규칙을 자동으로 바꾸지 않습니다. 전체 목록은 순위·카드 탭의 '판정 일정'에 있습니다."]}], "qsf", ["이 점수 믿어도 돼?"])
     if intent == "JOB":
         st = automation.status(base)
         steps = st.get("steps") or {}
@@ -1696,7 +1696,7 @@ def answer(terminal: Any, text: str, market: str = "US") -> Dict[str, Any]:
         maybe = [{"title": "혹시 이 종목인가요", "lines": [f"{x['ticker']} {x['name']}({MARKET_KO[x['market']]})" for x in near]}] if near else []
         ask = [f"{x['name'] if x['market'] == 'KR' else x['ticker']} 분석해 줘" for x in near]
         return {"status": "UNKNOWN_STOCK", "question": text, "ticker": code, "tab": "stock", "title": "스캔 대상이 아닌 종목입니다", "summary": say + (" 비슷한 종목을 아래에 적었습니다." if near else ""),
-                "sections": maybe + [{"title": "할 수 있는 것", "lines": ["아래 버튼으로 종목 탭을 열면 시세와 재무를 보고, 점수 탭의 '평가'에 코드를 넣으면 그 자리에서 점수를 계산합니다(처음에는 수십 초 걸릴 수 있습니다)."]}],
+                "sections": maybe + [{"title": "할 수 있는 것", "lines": ["아래 버튼으로 종목 탭을 열면 시세와 재무를 보고, 순위·카드 탭의 '평가'에 코드를 넣으면 그 자리에서 점수를 계산합니다(처음에는 수십 초 걸릴 수 있습니다)."]}],
                 "lines": [say], "follow": ask, "suggestions": near, "note": NOTE}
     if intent is None:
         say = "비서는 정해진 질문만 규칙으로 읽습니다. 아래 예 가운데 가까운 것을 누르거나 비슷하게 적어 주세요."

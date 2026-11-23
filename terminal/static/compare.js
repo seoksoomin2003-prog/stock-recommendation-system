@@ -95,6 +95,8 @@ function cmpDraw() {
   if (labels) {      // direct labels at the line ends, nudged apart, in text ink beside a colour mark
     const ends = d.series.map((s) => ({ s, yy: y(s.points[n - 1]) })).sort((a, b) => a.yy - b.yy);
     for (let i = 1; i < ends.length; i++) ends[i].yy = Math.max(ends[i].yy, ends[i - 1].yy + 14);
+    const floor = h - 28;                                         // 아래로 밀려 날짜 줄과 겹치거나 밖으로 나가면 위로 되밀어 올립니다 (6차 묶음 P3-9)
+    for (let i = ends.length - 1; i >= 0; i--) ends[i].yy = Math.min(ends[i].yy, i === ends.length - 1 ? floor : ends[i + 1].yy - 14);
     ends.forEach(({ s, yy }) => {
       ctx.fillStyle = cmpColor(s.ticker); ctx.fillRect(pw + 36, yy - 4, 8, 8);
       ctx.fillStyle = ink; ctx.fillText(cmpName(s.ticker).slice(0, 7), pw + 48, yy);

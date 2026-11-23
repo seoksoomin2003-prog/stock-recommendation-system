@@ -170,18 +170,17 @@ def test_outside_links_are_http_only():
 # ---------------------------------------------------------------- P3-12 band colours come from the server's band list
 def test_band_colours_read_the_servers_bands():
     bar = body(QSF, "function qsfBar(")
-    assert not re.search(r"\b(70|55|40)\b", bar) and 'QSF_BAND_TONE[qsfBandKey(v)] || "act-hold"' in bar
+    assert not re.search(r"\b(70|55|40)\b", bar) and "act-" not in bar      # UI batch 6 P2-8: a domain bar is not a judgement, so no tone
     cls = body(QSF, "function qsfClass(")
     assert not re.search(r"\b40\b", cls) and 'band !== "SELL_AVOID"' in cls
     assert 'api("/api/qsf/bands")' in QSF
     from terminal.qsf import config, rank_notes
     got = rank_notes.bands()["bands"]
     assert [(b["start"], b["key"]) for b in got] == [(float(s), k) for s, k, _ in sorted(config.BANDS, key=lambda b: -b[0])]
-    assert set(re.findall(r"(\w+): \"act-", line(QSF, "const QSF_BAND_TONE"))) == {b["key"] for b in got}
     assert '("GET", "/api/qsf/bands"): lambda q, b: qsf_rank_notes.bands(),' in (ROOT / "terminal" / "server.py").read_text(encoding="utf-8")
     got = node("""const isNum = (v) => typeof v === "number" && isFinite(v);
 const QSF_ACTION_CLASS = { AVOID: "act-sell", BUY: "act-buy" };
-""" + line(QSF, "const QSF_BAND_TONE") + "let qsfBands = " + __import__("json").dumps(got) + ";\n" + body(QSF, "function qsfBandKey(")
+""" + "let qsfBands = " + __import__("json").dumps(got) + ";\n" + body(QSF, "function qsfBandKey(")
         + body(QSF, "function qsfClass(") + """console.log(JSON.stringify([qsfBandKey(80), qsfBandKey(54.9), qsfBandKey(39.9), qsfClass("AVOID", 45), qsfClass("AVOID", 30),
   qsfClass("BUY", 75)]));""")
     assert got == ["STRONG_BUY_CANDIDATE", "WEAK_REDUCE", "SELL_AVOID", "act-reduce", "act-sell", "act-buy"]

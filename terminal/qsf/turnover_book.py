@@ -245,7 +245,7 @@ def evaluate_once(base: Path, market: str, now: Callable[[], datetime] = _utcnow
            "read_at": now().isoformat(), "rules": dict(RULES), **measure(base_docs, rule_docs, seed),
            "note": "계좌 하나의 경로를 나란히 본 비교입니다. 점수가 맞는지의 근거가 아니며 투자 자문이 아닙니다. 규칙은 화면의 '이 규칙 쓰기' 버튼을 누르거나 .env의 QSF_TURNOVER_RULES=on 일 때만 쓰입니다."}
     res["consequence"] = ("자동으로 바뀌는 것은 없습니다(2026-11-22 결정). 이 두 조건은 규칙에 효과가 없어도 절반쯤은 채워지므로, 위의 t가 기준을 넘었는지를 함께 보고 정하세요. "
-                          "규칙을 쓰려면 점수 탭 모의 장부의 회전율 규칙 칸에서 '이 규칙 쓰기'를 누릅니다(.env의 QSF_TURNOVER_RULES=on 도 같습니다). 그러면 모의 장부, 실제 계좌의 주문 계획, 보유 종목 판단이 두 규칙을 씁니다." if res["decision"] == "ADOPT"
+                          "규칙을 쓰려면 순위·카드 탭 가상 장부의 회전율 규칙 칸에서 '이 규칙 쓰기'를 누릅니다(.env의 QSF_TURNOVER_RULES=on 도 같습니다). 그러면 가상 장부, 실제 계좌의 주문 계획, 보유 종목 판단이 두 규칙을 씁니다." if res["decision"] == "ADOPT"
                           else "아무것도 바뀌지 않습니다. 비교 장부는 더 적지 않습니다.")
     res["applies_itself"] = False
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -274,7 +274,7 @@ def text(rep: Dict[str, Any]) -> str:
         return f"[회전율 규칙 판정 · {name}] 읽지 못했습니다: {rep.get('reason')} 기록을 확인해야 합니다. 규칙: {PROTOCOL}"
     lines = [f"[회전율 규칙 판정 · {name}] 결정: {DECISION_KO[rep['decision']]}", f"구간 {rep['first']} ~ {rep['last']} ({rep['difference']['days']}거래일)"]
     lines += [f"- {w}" for w in rep["why"]]
-    lines += [rep["consequence"], "터미널 점수 탭의 모의 장부에서 수치를 볼 수 있습니다."]
+    lines += [rep["consequence"], "터미널 순위·카드 탭의 가상 장부에서 수치를 볼 수 있습니다."]
     return "\n".join(lines)
 
 

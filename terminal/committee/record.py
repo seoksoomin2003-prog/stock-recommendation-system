@@ -127,7 +127,7 @@ def performance(rows: List[Dict[str, Any]], price: Callable[[str, str], Optional
     """Paper results of each recorded portfolio.  ``price(ticker, session)`` and ``benchmark(session)`` give a close or None.
     ``keep_daily``: also give each portfolio's daily returns and the index's (the one reading of terminal/committee/reading.py)."""
     sessions = [r["session"] for r in rows]
-    out: Dict[str, Any] = {"kind": "PAPER", "kind_ko": "모의 기록(기록을 시작한 날부터, 과거로 거슬러 계산한 값 없음)", "first_session": sessions[0] if sessions else None,
+    out: Dict[str, Any] = {"kind": "PAPER", "kind_ko": "가상 기록(기록을 시작한 날부터, 과거로 거슬러 계산한 값 없음)", "first_session": sessions[0] if sessions else None,
                            "last_session": sessions[-1] if sessions else None, "records": len(rows), "portfolios": {}, "one_way_cost": one_way_cost,
                            "method": "D일 장 마감 뒤 정한 매매를 D+1일 종가에 한 것으로 보고 D+1일에서 D+2일까지의 수익부터 셉니다. 모의 계좌의 비중은 그 하루 동안 가격을 따라 움직인 뒤의 값입니다. "
                                      "배당은 수정 종가에 든 만큼만 반영됩니다."}

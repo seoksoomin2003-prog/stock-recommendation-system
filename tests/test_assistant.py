@@ -486,7 +486,7 @@ def test_the_assistant_asks_no_network_and_is_wired_into_the_server_and_the_firs
     html = (server.STATIC / "index.html").read_text(encoding="utf-8")
     assert html.index('data-tab="today"') < html.index('data-tab="overview"') and 'id="tab-today" class="tab on"' in html and html.index("assistant.js") < html.index("command.js")
     js = (server.STATIC / "assistant.js").read_text(encoding="utf-8")
-    assert "RENDER.today = renderToday" in js and "/api/assistant/ask" in js and "esc(i.text)" in js and "innerHTML = a." not in js
+    assert "RENDER.today = renderToday" in js and "/api/assistant/ask" in js and "esc(first)" in js and "esc(rest)" in js and "innerHTML = a." not in js
     assert 'class="asst-sum">${esc(a.summary)}' in js and "a.sections.map((s) => `<h4>${esc(s.title)}</h4>" in js and "이어서 물어보기" in js and "esc(a.basis)" in js      # every text goes through esc
     assert 'RENDER.today ? "today" : "overview"' in (server.STATIC / "app.js").read_text(encoding="utf-8")
     cmd = (server.STATIC / "command.js").read_text(encoding="utf-8")

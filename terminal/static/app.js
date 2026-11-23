@@ -223,7 +223,7 @@ function spark(cv, vals) {
   const by = h - 2 - ((v[0] - lo) / rg) * (h - 4);
   ctx.save(); ctx.setLineDash([2, 3]); ctx.globalAlpha = 0.6; ctx.strokeStyle = cssVar("--muted"); ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(0, by); ctx.lineTo(w, by); ctx.stroke(); ctx.restore();
-  ctx.strokeStyle = cssVar(v[v.length - 1] >= v[0] ? "--up" : "--down"); ctx.lineWidth = 1.4;
+  ctx.strokeStyle = cssVar(cv.hasAttribute("data-plain") ? "--ink" : v[v.length - 1] >= v[0] ? "--up" : "--down"); ctx.lineWidth = 1.4;
   ctx.beginPath();
   v.forEach((x, i) => { const px = (i / (v.length - 1)) * w, py = h - 2 - ((x - lo) / rg) * (h - 4); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
   ctx.stroke();
@@ -306,9 +306,10 @@ function showGroup(g) {
   if (first) show(groupTab[g] || first.dataset.tab);
 }
 const tabScroll = {};        // 탭을 떠날 때의 스크롤 위치.  다시 그리지 않는 탭(RETURN)으로 돌아올 때 되돌립니다.
-// 주소 표시줄에 적는 이름: 종목 화면은 stock/코드, 평가한 점수 카드가 있는 점수 탭은 qsf/코드, 나머지는 탭 이름입니다.
+// 주소 표시줄에 적는 이름: 종목 화면은 stock/코드, 평가한 점수 카드가 있는 순위·카드 탭은 qsf/코드, 나머지는 탭 이름입니다.
 function tabHash(tab) {
   if (tab === "stock" && state.ticker) return `stock/${state.ticker}`;
+  if (tab === "qsf" && typeof qsfState !== "undefined" && qsfState.view && qsfState.view !== "rank") return `qsf:${qsfState.view}`;     // 보기 (6차 묶음 P2-18)
   if (tab === "qsf" && state.card && marketOf(state.card) === state.market) return `qsf/${state.card}`;
   return tab;
 }
@@ -515,7 +516,9 @@ function markKeyable(root) {
     if (el.tagName !== "TR") el.setAttribute("role", "button");      // 표의 줄은 줄로 남겨 둡니다(열 이름과 함께 읽힘)
   }
   els.filter((el) => el.tagName === "H2").forEach((h) => h.setAttribute("aria-expanded", h.closest(".fold").classList.contains("open")));
-  root.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", b.classList.contains("on")));
+  const segs = [...root.querySelectorAll(".seg button")];
+  if (root.matches && root.matches(".seg button")) segs.push(root);       // 단추만 새로 들어온 경우(seg 안을 다시 그림)도 표시합니다
+  segs.forEach((b) => b.setAttribute("aria-pressed", b.classList.contains("on")));
 }
 new MutationObserver((list) => {
   for (const m of list) {
@@ -572,14 +575,17 @@ async function renderOverview() {
     draw(); redrawOn("overview", "sparks", draw);
   } catch (e) { el.innerHTML = errBox(e); }
 }
+// 오르면 좋은지 나쁜지가 정해지지 않은 지표(변동성, 금리, 달러인덱스, 환율): 색 없이 부호만 씁니다 (6차 묶음 P2-8).
+const NEUTRAL_TILE = /^(\^VIX|\^VXN|\^VKOSPI|\^TNX|\^IRX|\^FVX|\^TYX|DX-Y\.NYB|[A-Z]{3}=X)$/;
+function pctPlain(v, d = 2) { return isNum(v) ? `<span class="flat num">${v > 0 ? "+" : ""}${v.toFixed(d)}%</span>` : DASH; }
 function card(i) {
-  const code = i.ticker || i.symbol, won = /\.K[SQ]$/.test(i.symbol);
+  const code = i.ticker || i.symbol, won = /\.K[SQ]$/.test(i.symbol), plain = NEUTRAL_TILE.test(i.symbol || ""), chg = plain ? pctPlain : pct;
   const tk = /^[A-Z]{1,5}$/.test(code) || KR_RE.test(code) ? `data-ticker="${esc(code)}"` : "";
   return `<div class="card" ${tk} title="${esc(i.symbol)}${i.date ? " · " + esc(i.date) : ""}">
     <div class="nm">${esc(i.name || i.symbol)} <span class="muted">${esc(code)}</span></div>
     <div class="row"><div><div class="px num">${fmt(i.close, won ? 0 : 2)}</div>
-      <div class="chg"><span class="nw"><span class="meta m0">1일</span> ${pct(i.change_pct)}</span><span class="nw"><span class="meta m0">1개월</span> ${pct(i.change_1m_pct, 1)}</span></div></div>
-      <canvas data-spark='${JSON.stringify(i.spark || [])}'></canvas></div>
+      <div class="chg"><span class="nw"><span class="meta m0">1일</span> ${chg(i.change_pct)}</span><span class="nw"><span class="meta m0">1개월</span> ${chg(i.change_1m_pct, 1)}</span></div></div>
+      <canvas data-spark='${JSON.stringify(i.spark || [])}'${plain ? " data-plain" : ""}></canvas></div>
     <div class="meta mt-1">${i.status !== "REAL" ? badge(i.status) + " " : ""}${liveBadge(i.intraday)} ${esc(i.date || "")} ${sparkRange(i.spark)}</div>
   </div>`;
 }
@@ -643,7 +649,7 @@ function renderProfile(c) {
     ["PBR", fmt(p.priceToBook, 2)], ["배당수익률", p.dividendYieldSuspect ? `<span class="flat" title="Yahoo가 준 값이 ${fmt(p.dividendYieldLimit, 0)}%를 넘어 틀린 기록으로 봅니다. 투자위원회 계산에도 쓰지 않습니다.">— (원자료 이상 ${fmt(p.dividendYield, 2)}%)</span>` : isNum(p.dividendYield) ? `${fmt(p.dividendYield, 2)}%` : DASH],
     ["베타", fmt(p.beta, 2)], ["평균 거래량", big(p.averageVolume, "")], ["상장 주식수", big(p.sharesOutstanding, "")]];
   $("#s-head").innerHTML = `<div class="head"><h2 class="m0">${esc(p.longName || p.shortName || c.ticker)} <span class="meta m0">${esc(c.ticker)} · ${esc(p.exchange || "")}</span></h2>
-      <span><button class="ghost" id="addw">＋ 관심종목</button> <button class="ghost" id="addc" type="button">비교 차트</button> <button class="ghost" id="adda" type="button" title="이동평균·볼린저밴드·RSI·MACD와 고전 신호를 봅니다">차트분석</button> <button class="ghost" id="addq" type="button" title="점수 탭에서 이 종목의 점수 카드를 엽니다">점수 카드</button></span></div>
+      <span><button class="ghost" id="addw">＋ 관심종목</button> <button class="ghost" id="addc" type="button">비교 차트</button> <button class="ghost" id="adda" type="button" title="이동평균·볼린저밴드·RSI·MACD와 고전 신호를 봅니다">차트분석</button> <button class="ghost" id="addq" type="button" title="순위·카드 탭에서 이 종목의 점수 카드를 엽니다">점수 카드</button></span></div>
     <div class="head" id="s-price"></div>
     <div class="meta">${esc([sectorKo(p.sector), p.industry].filter(Boolean).join(" · "))}${safeUrl(p.website) ? ` · <a href="${esc(safeUrl(p.website))}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>
     <div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span><b class="num">${v}</b></div>`).join("")}</div>
@@ -789,7 +795,7 @@ async function renderWatch() {
       <tbody>${d.items.map((i) => `<tr class="click" data-ticker="${esc(i.symbol)}"><td><b>${esc(i.symbol)}</b> ${i.name ? `<span class="meta m0">${esc(i.name)}</span>` : ""}</td><td class="num">${fmt(i.close, d0)}</td><td>${pct(i.change_pct)}</td><td>${pct(i.change_1m_pct, 1)}</td>
         <td class="l"><canvas style="width:80px;height:24px" data-spark='${JSON.stringify(i.spark || [])}'></canvas></td><td class="l">${watchScore(i.qsf, "SWING", d.qsf_scan)}</td><td class="l">${watchScore(i.qsf, "LONG_TERM", d.qsf_scan)}</td><td class="l">${badge(i.status)} ${liveBadge(i.intraday)} <span class="meta">${esc(i.date || "")}</span></td>
         <td><button class="x" data-rm="${esc(i.symbol)}" title="삭제">✕</button></td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">관심종목이 없습니다.</div>'}
-      ${d.qsf_scan && d.qsf_scan.status === "REAL" ? `<div class="meta">점수는 ${esc(d.qsf_scan.session)} 거래일 스캔(${esc(d.qsf_scan.model_version)})에 기록된 값입니다. 스캔 대상이 아닌 종목은 비워 둡니다. 점수 탭에서 다시 계산할 수 있습니다.</div>` : ""}
+      ${d.qsf_scan && d.qsf_scan.status === "REAL" ? `<div class="meta">점수는 ${esc(d.qsf_scan.session)} 거래일 스캔(${esc(d.qsf_scan.model_version)})에 기록된 값입니다. 스캔 대상이 아닌 종목은 비워 둡니다. 순위·카드 탭에서 다시 계산할 수 있습니다.</div>` : ""}
       ${d.cache ? meta(d.source, d.cache.fetched_at) : ""}<div class="meta">관심종목은 이 Mac의 data/terminal/watchlist.json 에만 저장됩니다.</div></div>`;
     const draw = () => el.querySelectorAll("canvas[data-spark]").forEach((cv) => spark(cv, JSON.parse(cv.dataset.spark)));
     draw(); redrawOn("watch", "sparks", draw);
@@ -797,7 +803,7 @@ async function renderWatch() {
     el.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); watchOp("remove", b.dataset.rm); }));
   } catch (e) { el.innerHTML = errBox(e); }
 }
-// 스캔에 기록된 점수만 보여 줍니다. 여기서 계산하지 않습니다. 색은 점수 탭과 같은 기준이고 글자로도 적습니다.
+// 스캔에 기록된 점수만 보여 줍니다. 여기서 계산하지 않습니다. 색은 순위·카드 탭과 같은 기준이고 글자로도 적습니다.
 function watchScore(q, strategy, scan) {
   if (!scan || scan.status !== "REAL") return '<span class="missing">스캔 없음</span>';
   const c = q && q[strategy];
@@ -907,7 +913,7 @@ async function renderModel() {
 
 const ALWAYS_FRESH = new Set(["watch", "account", "portfolio", "assist", "paper", "model"]);      // 오늘 탭은 RETURN으로 돌아옵니다 (assistant.js)
 const RENDER = { overview: renderOverview, macro: renderMacro, watch: renderWatch, model: renderModel, stock: renderStock };
-const RETURN = {};          // 다시 그리지 않고 돌아온 탭이 할 일 (탭 이름 -> 함수(떠날 때의 스크롤 위치)).  점수 탭이 씁니다 (qsf.js).
+const RETURN = {};          // 다시 그리지 않고 돌아온 탭이 할 일 (탭 이름 -> 함수(떠날 때의 스크롤 위치)).  순위·카드 탭이 씁니다 (qsf.js).
 
 // ------------------------------------------------------------------ boot
 applyTheme(theme);
@@ -935,11 +941,17 @@ setTimeout(() => pruneRecentTickers().catch(() => {}), 3000);      // 첫 화면
 setInterval(loadHealth, 5 * 60 * 1000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - healthAt > 30000) loadHealth(); });
 let booted = false;
-// #탭, #stock/코드, #qsf/코드(점수 탭의 오늘 순위 보기에서 그 종목을 평가)를 읽습니다.  모르는 이름은 첫 화면으로 갑니다.
+// #탭, #stock/코드, #qsf/코드(순위·카드 탭의 오늘 순위 보기에서 그 종목을 평가)를 읽습니다.  모르는 이름은 첫 화면으로 갑니다.
 const HASH_TICKER = /^[0-9A-Z^][0-9A-Z.\-]{0,11}$/;
 function fromHash() {
-  const [tab, tk] = location.hash.replace(/^#/, "").split("/");
+  const [head, tk] = location.hash.replace(/^#/, "").split("/"), [tab, view] = head.split(":");
   const card = tab === "qsf" && HASH_TICKER.test((tk || "").toUpperCase()) ? tk.toUpperCase() : null;
+  // #qsf:exec 처럼 순위·카드 탭의 보기가 붙은 주소 (6차 묶음 P2-18): 같은 탭이면 보기만 바꿉니다.
+  if (tab === "qsf" && !card && typeof qsfState !== "undefined") {
+    const v = QSF_VIEWS[view] ? view : "rank";
+    if (booted && state.tab === "qsf") { if (v !== qsfState.view) qsfSetView(v); return; }
+    qsfState.view = v;
+  }
   // 화면이 이미 그 주소대로면 다시 그리지 않습니다.  종목이 없는 #stock도 같다고 봅니다: 다시 그리면 방금 띄운 '혹시 이 종목인가요?' 목록이 지워집니다.
   if (booted && tab === state.tab && (tab !== "stock" || (tk || "").toUpperCase() === (state.ticker || "")) && (!card || card === state.card)) return;
   booted = true;

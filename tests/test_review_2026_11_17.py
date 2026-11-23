@@ -164,7 +164,7 @@ def test_a_record_that_stopped_is_named_and_the_others_are_not(tmp_path):
     assert [(g["store"], g["problem"]) for g in got] == [("kr_method", "INDEX_TORN"), ("paper_book_kr", "BEHIND")]
     assert got[1]["last"] == d[6] and got[1]["behind"] == 3
     line = store_watch.text(got)
-    assert "기록이 멈춘 곳 2개" in line and "모의 장부(한국)(마지막 " + d[6] in line and "한국 독자 매매법(색인 파일 손상)" in line
+    assert "기록이 멈춘 곳 2개" in line and "가상 장부(한국)(마지막 " + d[6] in line and "한국 독자 매매법(색인 파일 손상)" in line
     assert store_watch.text([]) is None and store_watch.look(tmp_path / "empty", automation.FORWARD_STORES) == []
 
 

@@ -32,7 +32,7 @@ PRESETS: Dict[str, Dict[str, Any]] = {
     "AGGRESSIVE": {"line": config.BUY_BAND_EXIT, "min_confidence": None, "drop_volatile": False, "size": 1.5, "exposure_cap": None, "plan_needs_line": False},
 }
 REASONS = {"LINE": "점수가 이 성향의 선 아래", "CONFIDENCE": "자료가 적음(신뢰도 낮음)", "VOLATILE": "하루 움직임이 큰 쪽 3분의 1", "NOT_ACTIONABLE": "실행 가능 상태가 아님"}
-NOTE = ("성향은 화면이 무엇을 후보로 부르는지와 실제 계좌 주문 계획의 크기만 바꿉니다. 점수, 구간, 기록, 진입 규칙, 모의 장부, 비교 장부, 투자위원회는 그대로입니다. "
+NOTE = ("성향은 화면이 무엇을 후보로 부르는지와 실제 계좌 주문 계획의 크기만 바꿉니다. 점수, 구간, 기록, 진입 규칙, 가상 장부, 비교 장부, 투자위원회는 그대로입니다. "
         "아래 숫자는 설정값이고 수익으로 검증한 값이 아닙니다.")
 
 

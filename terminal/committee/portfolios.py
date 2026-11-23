@@ -122,7 +122,7 @@ def _notices(key: str, rows: List[Dict[str, Any]], before: Dict[str, float]) -> 
         out.append({"ticker": r["ticker"], "name": r["name"], "weight": r["weight"], "cap": cap, "line": round(line, 4), "to_cash": round(r["weight"] - cap, 4),
                     "new": before.get(r["ticker"], 0.0) < line,
                     "text": f"{name}: {r['name']}의 비중이 {r['weight'] * 100:.1f}%까지 커졌습니다(한 종목 한도 {cap * 100:.0f}%의 {OVERWEIGHT_FACTOR:g}배 이상). "
-                            f"이 포트폴리오의 규칙은 {cap * 100:.0f}%로 줄이고 나머지 {(r['weight'] - cap) * 100:.1f}%p를 현금으로 두는 것입니다. 모의 포트폴리오는 그대로 두고 알리기만 합니다."})
+                            f"이 포트폴리오의 규칙은 {cap * 100:.0f}%로 줄이고 나머지 {(r['weight'] - cap) * 100:.1f}%p를 현금으로 두는 것입니다. 가상 포트폴리오는 그대로 두고 알리기만 합니다."})
     return out
 
 

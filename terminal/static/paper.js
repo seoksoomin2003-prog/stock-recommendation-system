@@ -89,7 +89,7 @@ async function renderPaper() {
   state.loaded.paper = true;
   const title = `<h2>모의 매매 기록 <span class="badge">가상의 계좌</span> <span class="badge risk-note">주문을 보내지 않습니다</span></h2>`;
   const about = `<div class="meta">직접 고른 종목을 직접 정한 가격에 사고판 것으로 적어 두면, 수수료와 세금을 빼고 얼마가 남았는지 계산해 둡니다. ${esc(d.note)}</div>
-    <div class="meta">수수료 기준: ${esc(d.fee_basis)}. 프로그램이 자동으로 사고파는 기록은 점수 탭의 '주문 계획·모의 장부'에 따로 있습니다.</div>`;
+    <div class="meta">수수료 기준: ${esc(d.fee_basis)}. 프로그램이 자동으로 사고파는 기록은 순위·카드 탭의 '주문 계획·가상 장부'에 따로 있습니다.</div>`;
   if (d.status !== "REAL") {
     el.innerHTML = `<div class="panel">${title}<div class="notice">모의 매매 기록 파일에 문제가 있어 새 기록을 받을 수 없습니다: ${esc((d.integrity || {}).reason || "")}. data/terminal/paper_journal.jsonl 을 확인하세요.</div>${about}</div>`;
     return;

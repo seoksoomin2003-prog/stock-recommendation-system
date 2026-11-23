@@ -1,7 +1,7 @@
 :root {
   --bg: #f6f7f9; --panel: #ffffff; --ink: #14171c; --muted: #5d6673; --line: #e1e4e9;
   --up-intl: #067a4b; --down-intl: #c43038; --up-kr: #c22f35; --down-kr: #1f5fd1; --ok: #067a4b; --on-accent: #ffffff; --accent: #2457d6; --warn: #8f5600; --bad: #b3261e;
-  --chip: #eef1f5; --hover: #eef1f5; --line-strong: #7b8594; --sma20: #d68a00; --sma50: #2457d6; --sma200: #8a3ffc; --grid: #edf0f3;
+  --judge-buy: #6d28d9; --judge-hold: #64748b; --chip: #eef1f5; --hover: #eef1f5; --line-strong: #7b8594; --sma20: #d68a00; --sma50: #2457d6; --sma200: #8a3ffc; --grid: #edf0f3;
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
   --ma5: #d6457f; --ma10: #8c5a2b; --ma20: #d68a00; --ma50: #2457d6; --ma60: #0f8c9e; --ma120: #5d6673; --ma200: #8a3ffc;
   color-scheme: light;
@@ -9,7 +9,7 @@
 :root[data-theme="dark"] {
   --bg: #0e1116; --panel: #161b22; --ink: #e6e9ee; --muted: #8b95a3; --line: #262d36;
   --up-intl: #2fbf7f; --down-intl: #ff6369; --up-kr: #ff6369; --down-kr: #5b9cff; --ok: #2fbf7f; --on-accent: #0e1116; --accent: #6d9bff; --warn: #f0a531; --bad: #ff7b72;
-  --chip: #1f2630; --hover: #1f2630; --line-strong: #6b7686; --sma20: #f0a531; --sma50: #6d9bff; --sma200: #b98bff; --grid: #1d232c;
+  --judge-buy: #a78bfa; --judge-hold: #64748b; --chip: #1f2630; --hover: #1f2630; --line-strong: #6b7686; --sma20: #f0a531; --sma50: #6d9bff; --sma200: #b98bff; --grid: #1d232c;
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
   --ma5: #f07aa8; --ma10: #c08a5a; --ma20: #f0a531; --ma50: #6d9bff; --ma60: #3cc2d4; --ma120: #a3acb9; --ma200: #b98bff;
   color-scheme: dark;
@@ -91,7 +91,7 @@ main { padding: var(--sp-4); max-width: var(--content-max); margin: 0 auto; }
 .up { color: var(--up); } .down { color: var(--down); } .flat { color: var(--muted); }
 .badge { display: inline-block; font-size: var(--fs-xs); font-weight: 600; padding: 1px 7px; border-radius: var(--r-lg);
          background: var(--chip); color: var(--muted); vertical-align: middle; white-space: nowrap; }
-.badge.REAL { color: var(--ok); } .badge.STALE { color: var(--warn); } .badge.UNAVAILABLE { color: var(--bad); }
+.badge.REAL { color: var(--muted); } .badge.STALE { color: var(--warn); } .badge.UNAVAILABLE { color: var(--bad); }
 .badge.live { color: var(--warn); } .badge.FROZEN { color: var(--accent); }
 .tbl-wrap { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: var(--fs-md); }
@@ -151,7 +151,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 .btn-primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .alerts { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .alerts li { padding: 6px 10px; border-radius: var(--r-md); background: var(--chip); border-left: 3px solid var(--muted); font-size: var(--fs-md); }
-.alerts li.bad { border-left-color: var(--bad); } .alerts li.warn { border-left-color: var(--warn); } .alerts li.info { border-left-color: var(--ok); }
+.alerts li.bad { border-left-color: var(--bad); } .alerts li.warn { border-left-color: var(--warn); } .alerts li.info { border-left-color: var(--muted); }
 .bar { height: 8px; background: var(--chip); border-radius: var(--r-sm); overflow: hidden; min-width: 80px; }
 .bar i { display: block; height: 100%; background: var(--accent); }
 .bar.over i { background: var(--warn); }
@@ -162,14 +162,17 @@ tr.voided td { color: var(--muted); text-decoration: line-through; }
 .msg.ok { color: var(--ok); } .msg.err { color: var(--bad); }
 .form [hidden] { display: none; }
 
-/* QSF score tab: semantic colours are fixed across themes and always sit next to a text label. */
-.act-buy { --act: #16A34A; } .act-sell { --act: #DC2626; } .act-hold { --act: #64748B; } .act-reduce { --act: #D97706; }
+/* QSF score tab: judgement colours always sit next to a text label.  Since UI batch 6 (P2-8, user decision 2026-11-24) the app's
+   judgements have their own colours, apart from price colours: candidate purple, hold grey, reduce and avoid amber.  Green and red
+   (or Korean red and blue) mean only that a price moved. */
+.act-buy { --act: var(--judge-buy); } .act-hold { --act: var(--judge-hold); } .act-sell { --act: var(--warn); }
+.act-reduce { --act: color-mix(in srgb, var(--warn) 60%, var(--judge-hold)); }
 .qsf-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .qsf-form input { flex: 1; min-width: 180px; }
 .qsf-act { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; padding: 2px 9px 2px 7px; border: 1.5px solid var(--act); border-radius: var(--r-pill); color: var(--ink); white-space: nowrap; }
 .qsf-act i { width: 9px; height: 9px; border-radius: 50%; background: var(--act); }
 .qsf-bar { display: inline-block; width: 110px; height: 8px; border-radius: var(--r-sm); background: var(--chip); vertical-align: middle; overflow: hidden; }
-.qsf-bar i { display: block; height: 100%; background: var(--act); }
+.qsf-bar i { display: block; height: 100%; background: var(--muted); }      /* a domain score is not a judgement (P2-8) */
 .qsf-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; margin-top: 10px; }
 .qsf-card { border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--sp-4); min-width: 0; }
 .qsf-card header { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
@@ -577,3 +580,22 @@ main.wide { max-width: var(--content-max-wide); }
   .qsf-split:has(> #qsfdetail > .panel) .qsf-rank-tbl .qd-col, .qsf-split:has(> #qsfdetail > .panel) .qsf-rank-tbl .qr-dcol { display: none; }
   .qsf-split:has(> #qsfdetail > .panel) .qsf-rank-tbl .qr-md { display: block; }
 }
+
+/* UI batch 6 (2026-11-24): workflow.  The stance picker sits in the view row (user request); link-like buttons for "code opens the
+   stock screen"; one line per Today item; committee status as numbers; the heatmap's unused toggle dimmed. */
+.qsf-stance-pick { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.linkish { background: none; border: 0; padding: 0; min-height: 24px; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.linkish:hover b, .linkish:hover { color: var(--accent); }
+.qsf-go { display: inline-flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); }
+.qsf-go .linkish { color: var(--accent); font-size: var(--fs-sm); }
+#qsfplan tr.hl > td { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.qr-push { color: var(--ink); white-space: nowrap; }
+.asst-item { border-left-width: 4px; }
+.asst-more > summary { cursor: pointer; }
+.asst-more > div { margin-top: var(--sp-1); color: var(--muted); }
+.ic-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--sp-2); margin: var(--sp-2) 0; }
+.ic-stat { border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--sp-2) var(--sp-3); background: var(--bg); }
+.ic-stat span { display: block; font-size: var(--fs-sm); color: var(--muted); }
+.ic-stat b { font-size: var(--fs-xl); } .ic-stat small { font-size: var(--fs-sm); color: var(--muted); font-weight: 400; }
+.ic-more > summary { cursor: pointer; color: var(--accent); font-size: var(--fs-sm); }
+.seg.idle { opacity: 0.5; }

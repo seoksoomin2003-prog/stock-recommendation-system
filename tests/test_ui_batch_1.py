@@ -65,7 +65,7 @@ def test_a_dividend_yield_above_the_committee_limit_is_marked_not_dropped():
 # ---------------------------------------------------------------- P0-3 an index tile says which change is which
 def test_an_index_tile_labels_both_changes():
     card = body(APP, "function card(i) {")
-    assert '1일</span> ${pct(i.change_pct)}' in card and '1개월</span> ${pct(i.change_1m_pct, 1)}' in card
+    assert '1일</span> ${chg(i.change_pct)}' in card and '1개월</span> ${chg(i.change_1m_pct, 1)}' in card
     assert ".card .chg .nw { display: block; white-space: nowrap; }" in CSS
 
 
@@ -93,7 +93,7 @@ def test_price_colours_follow_the_market_and_status_green_does_not():
             assert _contrast(t[k], t["--panel"]) >= 4.5, k
     assert light["--up-kr"] == "#c22f35" and light["--down-kr"] == "#1f5fd1" and dark["--down-kr"] == "#5b9cff"
     assert ':root { --up: var(--up-intl); --down: var(--down-intl); }' in CSS and ':root[data-color="kr"] { --up: var(--up-kr); --down: var(--down-kr); }' in CSS
-    assert ".badge.REAL { color: var(--ok); }" in CSS and ".msg.ok { color: var(--ok); }" in CSS
+    assert ".badge.REAL { color: var(--muted); }" in CSS and ".msg.ok { color: var(--ok); }" in CSS
 
 
 def test_the_rule_is_set_before_a_tab_draws_and_the_account_keeps_the_international_pair():
@@ -176,7 +176,7 @@ const E = [80, 70, 55, 40];
 console.log(JSON.stringify([qsfInt(69.8), qsfInt(70.2), qsfNear(69.8, E) !== "", qsfNear(70.9, E) !== "", qsfNear(75, E), qsfNear(62, E), qsfNear(69.8, null)]));"""
     assert node(js) == ["70", "70", True, True, "", "", ""]
     row = body(QSF, "function qsfRankRow(")
-    assert "<b>${qsfInt(r.score)}</b>${qsfNear(r.score, edges)}" in row and "notes && notes.band_edges)" in QSF
+    assert "<b>${qsfInt(r.score)}</b>${qsfNear(r.score, edges)}" in row and "notes && notes.band_edges, common)" in QSF
     assert 'v >= 1 ? "up" : v <= -1 ? "down" : "flat"' in body(QSF, "function qsfDelta(") and "점수 변화(전일)</th>" in QSF
     assert "[80" not in QSF and "70, 67" not in QSF          # the edges are not kept in the page
 

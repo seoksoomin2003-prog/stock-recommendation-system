@@ -226,7 +226,7 @@ def reasons(s: Dict[str, Any], code: str, top: bool = False) -> List[str]:
             f"하루 평균: 최근 4분기 {s['trailing']['mean'] * 100:+.2f}%, 연간 {s['annual']['mean'] * 100:+.2f}%. 차이 {d['mean'] * 100:+.2f}%p, t {'없음' if t is None else format(t, '+.2f')} (기준: 차이가 양수이고 t {(d.get('t_bar') or MIN_T):g} 이상).",
             f"두 점수가 다른 종목을 고른 날: {d.get('days_with_difference', 0)}일 (기준: {MIN_DIFF_DAYS}일 이상). 기준 t {(d.get('t_bar') or MIN_T):g}은 표의 값 {MIN_T:g}을 이 표본 구조(겹치는 20거래일 수익의 하루 값)에서 우연히 넘는 비율이 표와 같아지도록 모의실험으로 고친 값입니다.",
             f"후보가 없던 날의 비율: 최근 4분기 {s['trailing']['empty_share'] * 100:.0f}%, 연간 {s['annual']['empty_share'] * 100:.0f}%.",
-            "최근 4분기 쪽이 나았습니다. 자동으로 바꾸지는 않습니다(2026-11-23 결정). 바꾸려면 점수 탭 '추적·검증'의 재무 기준 칸에서 버튼을 누릅니다." if code == ADOPT else "라이브 점수는 연간 재무 그대로입니다."]
+            "최근 4분기 쪽이 나았습니다. 자동으로 바꾸지는 않습니다(2026-11-23 결정). 바꾸려면 순위·카드 탭 '판정 일정'의 재무 기준 칸에서 버튼을 누릅니다." if code == ADOPT else "라이브 점수는 연간 재무 그대로입니다."]
 
 
 def evaluate_once(base: Path, market: str, px: Any, log=print) -> Dict[str, Any]:

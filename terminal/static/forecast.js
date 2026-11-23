@@ -95,7 +95,7 @@ function fcStrip(d, levels) {
   return `<div class="fc-strip" role="img" aria-label="${label}">
     ${levels.length ? `<div class="fc-row"><span class="fc-lab"></span><div class="fc-tags">${tags}</div></div>` : ""}
     ${rows}
-    <div class="fc-row"><span class="fc-lab"></span><div class="fc-axis"><span>${fcSigned(Math.exp(-span) - 1, 0)}</span><span>기준 종가</span><span>${fcSigned(Math.exp(span) - 1, 0)}</span></div></div>
+    <div class="fc-row"><span class="fc-lab"></span><div class="fc-axis"><span>${fcSigned(Math.exp(-span) - 1, 0)}</span><span>${fcSigned(Math.exp(-span / 2) - 1, 0)}</span><span>기준 종가 0%</span><span>${fcSigned(Math.exp(span / 2) - 1, 0)}</span><span>${fcSigned(Math.exp(span) - 1, 0)}</span></div></div>
     <div class="fc-legend"><span><i class="fc-key fc-b50"></i>50% 범위</span><span><i class="fc-key fc-b80"></i>80% 범위</span>${levels.map((l) => `<span><i class="fc-key fc-line ${l.cls}"></i>스윙 ${l.name}</span>`).join("")}</div></div>`;
 }
 function fcLevelLines(d, levels) {

@@ -310,7 +310,7 @@ def test_the_three_layers_are_wired_into_the_daily_steps_the_server_and_the_scre
     server = (root / "terminal" / "server.py").read_text(encoding="utf-8")
     assert all(f'"/api/qsf/{p}"' in server for p in ("paper-book", "order-plan", "regime-weights", "lookahead"))
     js = (root / "terminal" / "static" / "qsf.js").read_text(encoding="utf-8")
-    assert all(w in js for w in ("주문 계획·모의 장부", "주문을 보내지 않습니다", "판정 전 참고", "미래 자료 차단 점검", "시장 국면에 따른 영역 가중치", "슬리피지 추정", "기준 미달 (조건"))
+    assert all(w in js for w in ("주문 계획·가상 장부", "주문을 보내지 않습니다", "판정 전 참고", "미래 자료 차단 점검", "시장 국면에 따른 영역 가중치", "슬리피지 추정", "기준 미달 (조건"))
     assert 'exec: () => { qsfPlan(); qsfPaper(); }' in js and "qsfRegime(); qsfLookahead();" in js
     rules = (root / pb.RULES).read_text(encoding="utf-8")
     assert all(w in rules for w in ("PB-1", "1,000만 원", "1만 달러", "0.015%", "0.00206%", "30거래일", "5 ATR", "판정 전 참고", "주문을 보내지 않으며"))

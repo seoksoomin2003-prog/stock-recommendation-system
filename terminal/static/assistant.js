@@ -1,17 +1,29 @@
 // 오늘(비서): 프로그램이 이미 계산한 것을 정해진 규칙으로 정리해 보여 줍니다.  외부 AI를 쓰지 않고, 주문을 실행하지 않으며, 매수·매도를 권하지 않습니다.
 "use strict";
 const ASST_LEVELS = ["ACT", "DUE", "INFO"];
-const ASST_TAB_KO = { account: "내 계좌", portfolio: "시장별 자세히", committee: "투자위원회", qsf: "점수", assist: "매매 보조", lab: "연구실", stock: "종목", today: "오늘", coin: "코인", overview: "시장 개요", macro: "거시" };
+const ASST_TAB_KO = { account: "통합 계좌", portfolio: "시장별 자세히", committee: "투자위원회", qsf: "순위·카드", assist: "매매 보조", lab: "연구실", stock: "종목 정보", today: "오늘", coin: "코인", overview: "시장 개요", macro: "거시" };
 let asstPending = null;       // 명령창에서 넘어온 질문
 
-function asstGo(tab, ticker) {
+// '… 탭에서 보기'는 탭만이 아니라 그 항목을 보여 주는 보기까지 엽니다 (6차 묶음 P2-18).  항목 종류로 정하고, 종목이 있으면 그 카드나 화면입니다.
+const ASST_VIEW = { PLAN_UNAVAILABLE: "exec", ORDERS_MORE: "exec", NO_ORDERS: "exec", NEW_VERDICT: "track", VERDICT_STUCK: "track",
+  IC_INTERRUPT: "ports", IC_OVERWEIGHT: "ports", IC_EXCLUDED: "ports" };
+function asstGo(tab, ticker, view) {
   if (ticker && tab === "stock") return openTicker(ticker);
-  show(tab); window.scrollTo(0, 0);
+  if (tab === "qsf" && ticker && typeof qsfOpenCard === "function") return qsfOpenCard(ticker);
+  if (tab === "qsf" && view) { qsfState.view = view; show("qsf"); qsfSetView(view, true); }
+  else if (tab === "committee" && view && typeof icState !== "undefined") { icState.view = view; show("committee"); if ($("#icview")) icSetView(view); }
+  else show(tab);
+  window.scrollTo(0, 0);
 }
+// 할 일 한 줄 (6차 묶음 P2-20): 첫 문장을 제목으로, 나머지는 접어 둡니다.  수준은 왼쪽 띠의 색과 굵기로 봅니다.
+// 문장 끝은 한글이나 닫는 괄호 뒤의 마침표만 봅니다: 'Inc. ', 'Corp. ' 같은 영문 약어에서 끊지 않습니다.
+function asstFirst(text) { const m = String(text || "").match(/^.+?[가-힣)][.!?](?=\s|$)/); return m ? m[0] : String(text || ""); }
 function asstItem(i) {
-  const where = i.tab && i.tab !== "today" ? `<button type="button" class="ghost asst-go" data-tab="${esc(i.tab)}">${esc(ASST_TAB_KO[i.tab] || i.tab)} 탭에서 보기</button>` : "";
+  const view = ASST_VIEW[i.kind] || "", where = i.tab && i.tab !== "today" ? `<button type="button" class="ghost asst-go" data-tab="${esc(i.tab)}" data-view="${esc(view)}">${esc(ASST_TAB_KO[i.tab] || i.tab)} 탭에서 보기</button>` : "";
   const stock = i.ticker ? `<button type="button" class="chip" data-ticker="${esc(i.ticker)}">${esc(i.ticker)}</button>` : "";
-  return `<li class="asst-item ${esc(i.level)}"><div>${esc(i.text)}</div><div class="asst-act">${stock}${where}</div></li>`;
+  const first = asstFirst(i.text), rest = String(i.text || "").slice(first.length).trim();
+  const body = rest ? `<details class="asst-more"><summary>${esc(first)}</summary><div>${esc(rest)}</div></details>` : `<div class="asst-one">${esc(first)}</div>`;
+  return `<li class="asst-item ${esc(i.level)}">${body}<div class="asst-act">${stock}${where}</div></li>`;
 }
 // 답: 결론 한 줄을 먼저, 그 아래 제목이 붙은 묶음들, 끝에 자료 기준과 이어서 물어볼 것.
 function asstAnswer(a) {
@@ -84,7 +96,7 @@ async function renderToday() {
   box.onclick = (e) => {
     const go = e.target.closest(".asst-go"), ex = e.target.closest(".asst-ex"), tk = e.target.closest("[data-ticker]");
     if (ex) return asstAsk(ex.textContent);
-    if (go) return asstGo(go.dataset.tab, go.dataset.ticker);
+    if (go) return asstGo(go.dataset.tab, go.dataset.ticker, go.dataset.view);
     if (tk && tk.dataset.ticker) return openTicker(tk.dataset.ticker);
   };
   if (asstPending) { const q = asstPending; asstPending = null; asstAsk(q); }

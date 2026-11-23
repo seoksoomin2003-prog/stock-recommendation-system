@@ -56,7 +56,7 @@ def evaluate_once(base: Path, market: str, price: Callable[[str, str], Optional[
     verdict = ANY_BETTER if any(v["verdict"] == BETTER for v in out.values()) else UNKNOWN
     res = {"status": "REAL", "protocol": PROTOCOL, "rules": rows[0].get("rules"), "market": market, "first": rows[0]["session"], "last": rows[-1]["session"], "records": len(rows), "days": READ_AT,
            "bar": BAR, "lag": LAG, "verdict": verdict, "portfolios": out, "reasons": reasons + ["큰 차이만 잡히는 읽기입니다. '구분되지 않음'은 '효과 없음'이 아니라 '아직 모름'입니다."],
-           "kind": "PAPER", "note": "모의 기록의 읽기입니다. 과거로 거슬러 계산한 값도 실제 계좌의 수익도 아닙니다. 이 결과로 아무것도 자동으로 바뀌지 않습니다."}
+           "kind": "PAPER", "note": "가상 기록의 읽기입니다. 과거로 거슬러 계산한 값도 실제 계좌의 수익도 아닙니다. 이 결과로 아무것도 자동으로 바뀌지 않습니다."}
     target.parent.mkdir(parents=True, exist_ok=True)
     durable.write_text(target, json.dumps(res, ensure_ascii=False, indent=1))
     return res
