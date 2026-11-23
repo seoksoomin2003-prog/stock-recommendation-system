@@ -23,18 +23,18 @@ function icInvestorHtml(o) {
     (o.regimes || []).length ? `시장 국면: ${o.regimes.map((r) => `${r.label}(확신 ${r.confidence})`).join(", ")}` : "",
     (o.regimes_not_told || []).length ? `읽지 못한 국면: ${o.regimes_not_told.join(", ")}` : ""].filter(Boolean);
   return `<div class="ic-card">
-    <div><b>${esc(o.name)}</b> <span class="meta" style="margin:0">${esc(o.philosophy)}</span></div>
-    <div style="margin:6px 0">${icBadge(o.recommendation, o.recommendation_ko)} <span class="num">점수 <b>${icNum(o.score)}</b> · 신뢰 ${icNum(o.confidence)}</span></div>
+    <div><b>${esc(o.name)}</b> <span class="badge" title="실존 투자자의 의견이 아니라 알려진 원칙을 옮긴 규칙입니다">규칙 엔진</span> <span class="meta" style="margin:0">${esc(o.philosophy)}</span></div>
+    <div style="margin:6px 0">${icBadge(o.recommendation, o.recommendation_ko)} <span class="num">점수 <b>${icNum(o.score)}</b> · <span title="판단에 쓴 수치가 얼마나 확인됐는지입니다. 맞을 확률이 아닙니다.">자료 확인 ${icNum(o.confidence)}</span></span></div>
     <div class="ic-say">${esc(o.opinion)}</div>
-    <div class="meta" style="margin:6px 0 0"><b style="color:var(--up)">근거</b> ${esc((o.positives || [])[0] || "없음")}</div>
-    <div class="meta" style="margin:2px 0 0"><b style="color:var(--bad)">우려</b> ${esc((o.negatives || [])[0] || "없음")}</div>
+    <div class="meta" style="margin:6px 0 0"><b>근거</b> ${esc((o.positives || [])[0] || "없음")}</div>
+    <div class="meta" style="margin:2px 0 0"><b>우려</b> ${esc((o.negatives || [])[0] || "없음")}</div>
     <div class="meta" style="margin:2px 0 0"><b>할 일</b> ${esc(o.action)}</div>
     ${alt ? `<div class="meta" style="margin:2px 0 0"><b>${esc(alt.profile)} 기준이라면</b> ${icBadge(alt.recommendation, alt.recommendation_ko)}${alt.same ? " 같은 판정" : ""}</div>` : ""}
     <details><summary>자세히</summary>
       ${alt ? `<div class="meta"><b>${esc(alt.profile)} 기준(비교용, 아무것도 바꾸지 않음)</b> ${esc(alt.opinion)} 매수 조건: ${esc(alt.buy)}</div>` : ""}
       <div class="meta">묻는 것: ${esc(o.question)} · 보는 기간: ${esc(o.horizon)}</div>
       <div class="meta">가격 판단: ${esc(o.valuation)}</div>
-      <div class="meta">기대수익률: ${est(o.expected_return)} · 하방 위험: ${est(o.downside_risk, o.investor === "MUNGER" ? "점" : "")}</div>
+      <div class="meta">근사 수익률(가정, 예측 아님): ${est(o.expected_return)} · 하방 위험: ${est(o.downside_risk, o.investor === "MUNGER" ? "점" : "")}</div>
       ${comps ? `<div class="meta">항목별 점수: ${comps}</div>` : ""}
       ${extra.map((x) => `<div class="meta">${esc(x)}</div>`).join("")}
       ${o.loss_risk && (o.loss_risk.ways || []).length ? `<div class="meta">거꾸로 따져 본 위험: ${o.loss_risk.ways.map((w) => `${esc(w.ask)} → ${esc(w.text)}`).join(" · ")}</div>` : ""}
@@ -55,8 +55,8 @@ function icCommitteeHtml(c) {
     <div class="ic-scores">${order.map((k) => `<span><i>${esc(L[k] || k)}</i><b class="num">${icNum(s[k])}</b></span>`).join("")}</div>
     <div class="ic-say">${esc(c.thesis)}</div>
     <div class="meta"><b>이렇게 정한 이유</b></div>${icList(c.reasons)}
-    <div class="meta"><b style="color:var(--up)">가장 강한 찬성 논거</b> ${c.strongest_for ? `${esc(c.strongest_for.investor)}: ${esc(c.strongest_for.text)}` : "없음"}</div>
-    <div class="meta"><b style="color:var(--bad)">가장 강한 반대 논거</b> ${c.strongest_against ? `${esc(c.strongest_against.investor)}: ${esc(c.strongest_against.text)}` : "없음"}</div>
+    <div class="meta"><b>가장 강한 찬성 논거</b> ${c.strongest_for ? `${esc(c.strongest_for.investor)}: ${esc(c.strongest_for.text)}` : "없음"}</div>
+    <div class="meta"><b>가장 강한 반대 논거</b> ${c.strongest_against ? `${esc(c.strongest_against.investor)}: ${esc(c.strongest_against.text)}` : "없음"}</div>
     <details><summary>위원회 토론 자세히</summary>
       <div class="meta"><b>함께 좋게 본 것</b> ${esc(((c.agreement || {}).positives || []).join(", ") || "없음")}</div>
       <div class="meta"><b>함께 나쁘게 본 것</b> ${esc(((c.agreement || {}).negatives || []).join(", ") || "없음")}</div>
@@ -72,7 +72,7 @@ function icCommitteeHtml(c) {
 function icCardHtml(v, ticker, market) {
   if (!v) return "";
   if (v.status !== "OK") return `<div class="panel"><h3>다섯 투자자와 투자위원회</h3><div class="meta">${esc(v.reason || "판단할 자료가 없습니다.")}</div></div>`;
-  return `<div class="panel"><h3>다섯 투자자와 투자위원회 <span class="meta" style="margin:0">알려진 원칙을 규칙으로 옮긴 참고 · 점수와 무관 · 주문 없음</span></h3>
+  return `<div class="panel"><h3>다섯 투자자와 투자위원회 <span class="meta" style="margin:0">실존 투자자의 의견이 아닙니다 · 알려진 원칙을 규칙으로 옮긴 참고 · 점수와 무관 · 주문 없음</span></h3>
     <div class="ic-grid">${v.investors.map(icInvestorHtml).join("")}</div>
     ${icCommitteeHtml(v.committee)}
     ${plainBlock(v.plain)}
@@ -146,7 +146,7 @@ async function icDash() {
       <div class="meta"><b>의견 일치(평균)</b> ${icNum(d.average_agreement)}/100 · <b>의견이 갈린 종류</b> ${chips(d.disagreements)}</div>
       <div class="meta"><b>자주 나온 위험</b> ${chips(d.risks)}</div></div>
     <div class="panel"><h2>위원회가 매수 조건으로 본 종목 <span class="meta" style="margin:0">${d.buy_count}종목 가운데 매력 순 ${d.top.length}종목 · 줄을 누르면 점수 카드</span></h2>
-      ${top ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th class="l">업종</th><th class="l">판정</th><th>매력</th><th>신뢰</th><th class="l">찬성한 관점</th><th class="l">찬성 논거</th><th class="l">반대 논거</th></tr></thead><tbody>${top}</tbody></table></div>`
+      ${top ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th class="l">업종</th><th class="l">판정</th><th>매력</th><th title="자료 양 50%, 다섯 규칙의 자료 확인 30%, 의견 일치 20%를 섞은 값입니다. 맞을 확률이 아닙니다.">자료·일치</th><th class="l">찬성한 관점</th><th class="l">찬성 논거</th><th class="l">반대 논거</th></tr></thead><tbody>${top}</tbody></table></div>`
         : `<div class="empty">위원회가 매수 조건으로 본 종목이 없습니다. 억지로 채우지 않습니다.</div>`}
       <div class="meta">${esc(d.note)}</div></div>`;
   icOpenRows(box, mk);
@@ -171,7 +171,7 @@ function icPortHtml(p) {
     <div class="meta"><b>보유 중인 종목</b>의 비중은 가격에 따라 저절로 변합니다(한도로 되돌리지 않습니다). 한도의 1.5배 이상이 되면 알리고, 심각 공시가 뜨거나 멍거식 영구 손실 위험이 50 이상이면 전부 뺍니다.</div>
     ${(p.cash_reasons || []).map((x) => `<div class="meta"><b>현금</b> ${esc(x)}</div>`).join("")}
     ${sectors ? `<div class="meta"><b>업종</b> ${sectors}</div>` : ""}
-    ${rows ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th class="l">업종</th><th>비중</th><th class="l">판정</th><th>점수</th><th>신뢰</th><th class="l">상태</th><th class="l">논지(누르면 조건)</th></tr></thead><tbody>${rows}</tbody></table></div>`
+    ${rows ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th class="l">업종</th><th>비중</th><th class="l">판정</th><th>점수</th><th title="판단에 쓴 수치가 얼마나 확인됐는지입니다. 맞을 확률이 아닙니다.">자료 확인</th><th class="l">상태</th><th class="l">논지(누르면 조건)</th></tr></thead><tbody>${rows}</tbody></table></div>`
       : `<div class="empty">담은 종목이 없습니다. 전부 현금입니다.</div>`}
     ${(p.exits || []).length ? `<div class="meta"><b>이번에 나간 종목</b></div>${icList(p.exits.map((x) => `${x.name}(${x.ticker}): ${x.why}`))}` : ""}
     ${(p.moves_together || []).length ? `<div class="meta"><b>함께 움직여 빠진 종목</b> ${p.moves_together.map((x) => `${esc(x.ticker)}(${esc(x.with)}와 상관 ${x.correlation})`).join(", ")}</div>` : ""}

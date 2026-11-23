@@ -1,6 +1,6 @@
 // TERMINAL-3: 도전자 모델 전향적 비교(모델 탭) + 연구실 탭.  Uses helpers from app.js.
 "use strict";
-const LAB_COLORS = { MOM_12_1: "--sma20", LOWVOL_252: "--up", TREND_SWING: "--sma200", BASE_EW: "--sma50", SPY: "--muted" };
+const LAB_COLORS = { MOM_12_1: "--sma20", LOWVOL_252: "--ok", TREND_SWING: "--sma200", BASE_EW: "--sma50", SPY: "--muted" };
 const pctR = (v, d = 2) => (isNum(v) ? pct(v * 100, d) : DASH);
 
 // ------------------------------------------------------------------ 모델 탭: 전향적 비교

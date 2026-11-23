@@ -170,7 +170,7 @@ class Terminal(ModelViews):
             got = rank_notes.notes(self.qsf.ledger, market, session)
             sectors = {r["ticker"]: r.get("sector") for r in self.qsf.screen_rows(market).get("rows") or []}
             memo[key] = {"status": "REAL", "market": market, "session": session, "prev_session": next((v["prev_session"] for v in got.values()), None),
-                         "rows": {f"{t}|{s}": v for (t, s), v in got.items()}, "sectors": sectors,
+                         "rows": {f"{t}|{s}": v for (t, s), v in got.items()}, "sectors": sectors, "band_edges": rank_notes.band_edges(),
                          "note": "가점·감점은 중간(50점)에서 각 요인이 더하거나 뺀 점수입니다. 모든 요인의 값을 더하면 총점 − 50이 됩니다. 스캔이 원장에 남긴 값에서 읽었습니다."}
         return memo[key]
 
@@ -455,6 +455,16 @@ class Terminal(ModelViews):
         return {"status": c["annual_status"], "years": sorted(years)[-5:], "rows": rows, "fetched_at": c["annual_fetched"], "source": "OpenDART 사업보고서 (열 = 회계연도 종료일)",
                 "note": "재무제표 기준: " + (" → ".join("연결" if b == "CONSOLIDATED" else "별도" for b in bases) or "확인 불가") + ". 표시용 요약입니다."}
 
+    @staticmethod
+    def _dividend_check(data: Dict[str, Any]) -> Dict[str, Any]:
+        """Marks a dividend yield the investment committee rejects as a wrong Yahoo record (above its limit), so the stock page does not
+        show it as a fact.  Same limit as the committee; the value itself is passed on unchanged and never used here."""
+        from terminal.committee.figures import MAX_DIVIDEND_YIELD
+        dy = data.get("dividendYield")
+        if isinstance(dy, (int, float)) and not 0 <= dy <= MAX_DIVIDEND_YIELD:
+            return {**data, "dividendYieldSuspect": True, "dividendYieldLimit": MAX_DIVIDEND_YIELD}
+        return data
+
     def company(self, ticker: str) -> Dict[str, Any]:
         ticker = clean_ticker(ticker)
         market, sym = pf.market_of(ticker), self._sym(ticker)
@@ -463,9 +473,9 @@ class Terminal(ModelViews):
             c = self.qsf.kr_company(ticker)
             ident = c.get("ident") or {}
             data = {**(info["data"] or {}), "longName": ident.get("company_name") or (info["data"] or {}).get("longName"), "exchange": ident.get("market") or (info["data"] or {}).get("exchange")}
-            return {"ticker": ticker, "market": "KR", "profile": {"status": info["status"], "data": data, "source": "Yahoo Finance quote summary, KRX 상장 목록", "fetched_at": info["fetched_at"]},
+            return {"ticker": ticker, "market": "KR", "profile": {"status": info["status"], "data": self._dividend_check(data), "source": "Yahoo Finance quote summary, KRX 상장 목록", "fetched_at": info["fetched_at"]},
                     "fundamentals": self._kr_fundamentals(c)}
-        out = {"ticker": ticker, "market": "US", "profile": {"status": info["status"], "data": info["data"] or {},
+        out = {"ticker": ticker, "market": "US", "profile": {"status": info["status"], "data": self._dividend_check(info["data"] or {}),
                                              "source": "Yahoo Finance quote summary", "fetched_at": info["fetched_at"]}}
         out["fundamentals"] = self._fundamentals(ticker)
         return out

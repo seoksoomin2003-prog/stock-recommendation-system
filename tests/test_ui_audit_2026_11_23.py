@@ -157,7 +157,8 @@ def test_the_briefing_adds_figures_and_candidates_and_marks_the_job_lines(tmp_pa
     assert set(b["candidates"]["styles"]) == {"SWING", "LONG_TERM"}
     ops = [i for i in b["items"] if i.get("ops")]
     assert ops and all(i["kind"] in A.OPS_KINDS for i in ops) and all(i["kind"] not in A.OPS_KINDS for i in b["items"] if not i.get("ops"))
-    assert b["headline"] == A.headline(b["items"]) and b["headline_main"] == A.headline([i for i in b["items"] if not i.get("ops")])
+    # the first line ends with the market-state clause on an adverse day (UI batch 1, user decision 2026-11-23); this stand-in's KR day is 25/100
+    assert b["headline"] == A.headline(b["items"]) and b["headline_main"] == A.headline([i for i in b["items"] if not i.get("ops")]) + " 시장 상태 나쁨(25/100)."
     cut = A.briefing(TodayTerminal(tmp_path, notes_fail=True), "KR")
     assert cut["candidates"] is None and {"part": "candidates", "label": "오늘의 후보", "error": "OSError"} in cut["unread_parts"]
     plain = A.briefing(FakeTerminal(tmp_path), "KR")                               # a terminal without the notes: no candidates, nothing unread
@@ -185,7 +186,7 @@ def test_the_screens_read_the_new_fields():
     assert row.count("<td") == 10 and row.count("QSF_RANK_DOMAINS.map(dom)") == 1 and 'colspan="${QSF_RANK_COLS}"' in row     # 8 cells + 4 domain cells = 12, and the fold
     asst = (ROOT / "terminal" / "static" / "assistant.js").read_text(encoding="utf-8")
     today = body(asst, "async function renderToday(", "\n}")
-    assert "d.headline_main || d.headline" in today and "asstTiles(d.tiles)" in today and "asstCands(d.candidates)" in today and "i.ops" in today
+    assert "d.headline_main || d.headline" in today and "asstTiles(d.tiles)" in today and "asstCands(d.candidates, d.note)" in today and "i.ops" in today
     assert "redrawers.delete(asstSparks)" in today and "spark(cv" in today
     css = (ROOT / "terminal" / "static" / "style.css").read_text(encoding="utf-8")
     assert ".qsf-rank-tbl .w, .qsf-rank-tbl .w2, .asst-cand .w { display: none; }" in css and ".qsf-balance {" in css

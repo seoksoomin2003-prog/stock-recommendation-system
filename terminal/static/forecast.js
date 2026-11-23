@@ -13,7 +13,7 @@ const fcParts = (c) => (c ? ["all", "early", "late"].map((k) => fcPct(c[k])).joi
 // The verdict never stands alone: the badge says which check, the line beside it says what was measured.
 function fcTestBadge(t) {
   if (!t) return '<span class="badge STALE">과거 점검 없음</span>';
-  return t.verdict === "RANGE_CALIBRATED" ? '<span class="badge REAL">과거 점검 통과</span>' : '<span class="badge UNAVAILABLE">과거 점검 미달</span>';
+  return t.verdict === "RANGE_CALIBRATED" ? '<span class="badge" title="범위의 폭이 과거에 맞았다는 뜻입니다. 오를지 내릴지는 말하지 않습니다.">범위 폭 점검 통과 · 방향 근거 없음</span>' : '<span class="badge UNAVAILABLE">과거 점검 미달</span>';
 }
 function fcTestReason(t, bands) {
   if (!t) return "과거 점검 결과 파일이 없습니다. 범위가 맞는지 확인되지 않은 상태입니다.";
@@ -26,7 +26,7 @@ function fcTestReason(t, bands) {
 const FC_SIDE = { down: "아래", up: "위" };
 function fcTouchBadge(t) {
   if (!t) return '<span class="badge STALE">과거 점검 없음</span>';
-  return t.verdict === "TOUCH_CALIBRATED" ? '<span class="badge REAL">과거 점검 통과</span>' : '<span class="badge UNAVAILABLE">과거 점검 미달</span>';
+  return t.verdict === "TOUCH_CALIBRATED" ? '<span class="badge" title="닿을 비율이 과거에 맞았다는 뜻입니다. 오를지 내릴지는 말하지 않습니다.">닿을 비율 점검 통과 · 방향 근거 없음</span>' : '<span class="badge UNAVAILABLE">과거 점검 미달</span>';
 }
 function fcTouchReason(t) {
   if (!t) return "과거 점검 결과 파일이 없습니다. 닿을 가능성이 맞는지 확인되지 않은 상태입니다.";

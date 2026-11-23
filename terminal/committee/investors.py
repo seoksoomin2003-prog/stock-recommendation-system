@@ -87,7 +87,7 @@ def finish(key: str, f: Dict[str, Any], g: Dict[str, Any], rec: str, held: bool,
                    f"{'새로 사지 않습니다' if held else '기다립니다'}. 그 수치가 채워지면 다시 판단합니다.")
     elif rec == STRONG_BUY and sure_now < STRONG_MIN_CONFIDENCE:
         capped, rec = rec, BUY
-        opinion += f" 다만 판단에 쓴 수치가 적어(신뢰 {sure_now}, 기준 {STRONG_MIN_CONFIDENCE}) '적극 매수'가 아니라 '매수 조건'으로 한 단계 낮췄습니다."
+        opinion += f" 다만 판단에 쓴 수치가 적어(자료 확인 {sure_now}, 기준 {STRONG_MIN_CONFIDENCE}) '적극 매수'가 아니라 '매수 조건'으로 한 단계 낮췄습니다."
     extra = {**(extra or {}), "unchecked": [fg.label(n) for n in unchecked], "capped_from": capped}
     # what moved the score most, for and against: how far a figure is from the middle, times its weight in the score
     positives = [e["text"] for e in sorted(g["evidence"], key=lambda e: -e["value"] * e["weight"]) if e["value"] >= 0.7][:3]

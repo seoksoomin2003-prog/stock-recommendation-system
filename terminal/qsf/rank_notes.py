@@ -13,6 +13,14 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 STRONG, WEAK, SHOWN = 0.6, 0.4, 3
 
 
+def band_edges() -> List[float]:
+    """The score lines where a band starts, read from the engine's settings so the page never keeps its own copy.  Display only: the
+    'near an edge' mark (UI batch 1, user decision 2026-11-23).  The buy band's exit line (67) is left out: it holds only for a stock
+    already in the band the session before, and with it 30 of the US top 50 carried the mark on 2026-11-23 (13 without it)."""
+    from terminal.qsf import config as cfg
+    return sorted({float(b[0]) for b in cfg.BANDS if b[0] > 0}, reverse=True)
+
+
 def _name(fid: str) -> str:
     from terminal.assistant import FACTOR_KO          # the Korean factor names live with the assistant; imported late to avoid a cycle
     return FACTOR_KO.get(fid, fid)

@@ -107,7 +107,7 @@ def scores(f: Dict[str, Any], opinions: List[Dict[str, Any]], risks: List[Dict[s
             "valuation": mean([comp("GRAHAM", "가격과 안전마진"), comp("BUFFETT", "가격")]), "growth": growth, "regime": regime, "downside": downside, "data": data}
 
 
-SCORE_KO = {"attractiveness": "투자 매력", "confidence": "위원회 신뢰도", "agreement": "의견 일치", "quality": "사업의 질", "valuation": "가격 매력", "growth": "성장 기회", "regime": "시장 국면 적합",
+SCORE_KO = {"attractiveness": "투자 매력", "confidence": "자료·일치", "agreement": "의견 일치", "quality": "사업의 질", "valuation": "가격 매력", "growth": "성장 기회", "regime": "시장 국면 적합",
             "downside": "하방 위험(높을수록 위험)", "data": "자료 신뢰도"}
 
 
@@ -172,7 +172,7 @@ def decide(f: Dict[str, Any], opinions: List[Dict[str, Any]], held: bool = False
         lead = max(leads or buyers, key=lambda o: o["score"])
         if compelling:
             decision = CONDITIONAL_BUY
-            why.append(f"찬성은 {len(buyers)}개 관점({names(buyers)})뿐이지만 {lead['name']}의 근거가 강하고(점수 {lead['score']:.0f}, 신뢰 {lead['confidence']}) 주요 위험이 없어 조건부 매수로 정했습니다. 다수결이 아닙니다.")
+            why.append(f"찬성은 {len(buyers)}개 관점({names(buyers)})뿐이지만 {lead['name']}의 근거가 강하고(점수 {lead['score']:.0f}, 자료 확인 {lead['confidence']}) 주요 위험이 없어 조건부 매수로 정했습니다. 다수결이 아닙니다.")
         elif len(against) >= MANY_AGAINST:
             decision = REDUCE if held else AVOID
             why.append(f"찬성은 {names(buyers)}뿐이고 세 관점 이상({names(against)})이 회피입니다." + (f" {lead['name']}의 근거가 강해도(점수 {lead['score']:.0f}) 한두 관점이 세 관점 이상의 반대를 이기지는 못합니다." if leads else ""))

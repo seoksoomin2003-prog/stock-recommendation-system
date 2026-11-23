@@ -18,6 +18,9 @@ let screenStamp = null, healthAt = 0;      // 화면 파일 표식과 마지막 
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const isNum = (v) => typeof v === "number" && isFinite(v);
 const DASH = '<span class="missing">—</span>';
+// A bar's open is drawn only when it lies inside the bar's own low-high range: Yahoo sends 0 for some Korean intraday bars
+// (005930 on 2026-11-23), and a body drawn from 0 ran through the volume pane.  The stored bar is left as it came.
+function goodOpen(b) { return isNum(b.open) && b.open > 0 && (!isNum(b.low) || b.open >= b.low) && (!isNum(b.high) || b.open <= b.high); }
 function fmt(v, d = 2) { return isNum(v) ? v.toLocaleString("ko-KR", { minimumFractionDigits: d, maximumFractionDigits: d }) : DASH; }
 function pct(v, d = 2, sign = true) {
   if (!isNum(v)) return DASH;
@@ -173,6 +176,7 @@ function show(tab, push = true) {
   if (!ANY_MARKET.has(tab) && !groupShown(groupOf(tab) || "today")) tab = isCoin() ? "coin" : "today";       // 지금 시장에 없는 탭이면 그 시장의 첫 화면으로
   if (tab !== state.tab) tabScroll[state.tab] = window.scrollY;
   state.tab = tab;
+  paintColorRule();
   if (healthAt && Date.now() - healthAt > 30000) loadHealth();      // 탭을 옮길 때도 화면이 업데이트됐는지 확인합니다
   document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
   paintGroups(tab);
@@ -182,7 +186,15 @@ function show(tab, push = true) {
   if (!state.loaded[tab] || ALWAYS_FRESH.has(tab)) RENDER[tab]();
   else if (RETURN[tab]) RETURN[tab](tabScroll[tab] || 0);          // 이미 그려 둔 탭: 다시 만들지 않고 돌아왔다고만 알립니다
 }
+// Price colours by market (user decision 2026-11-23): Korean red up / blue down on Korean screens; screens that mix markets keep the
+// international pair.  Set before a tab draws, since the charts read the colours when they draw.
+const INTL_COLOR_TABS = new Set(["account"]);
+function paintColorRule() {
+  if (state.market === "KR" && !INTL_COLOR_TABS.has(state.tab)) document.documentElement.dataset.color = "kr";
+  else delete document.documentElement.dataset.color;
+}
 function paintMarket() {
+  paintColorRule();
   $("#market").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.m === state.market));
   $("#q").placeholder = state.market === "COIN" ? "코인에 대해 묻기 (예: 비트코인, 코인 상위는?)" : "종목 코드 또는 회사명";
 }
@@ -371,7 +383,7 @@ function card(i) {
   return `<div class="card" ${tk} title="${esc(i.symbol)}${i.date ? " · " + esc(i.date) : ""}">
     <div class="nm">${esc(i.name || i.symbol)} <span class="muted">${esc(code)}</span></div>
     <div class="row"><div><div class="px num">${fmt(i.close, won ? 0 : 2)}</div>
-      <div>${pct(i.change_pct)} <span class="meta" style="margin:0">1개월 ${pct(i.change_1m_pct, 1)}</span></div></div>
+      <div class="chg"><span class="nw"><span class="meta" style="margin:0">1일</span> ${pct(i.change_pct)}</span><span class="nw"><span class="meta" style="margin:0">1개월</span> ${pct(i.change_1m_pct, 1)}</span></div></div>
       <canvas data-spark='${JSON.stringify(i.spark || [])}'></canvas></div>
     <div class="meta" style="margin-top:4px">${i.status !== "REAL" ? badge(i.status) + " " : ""}${liveBadge(i.intraday)} ${esc(i.date || "")}</div>
   </div>`;
@@ -433,7 +445,7 @@ function renderHeadPrice() {
 function renderProfile(c) {
   const p = c.profile.data || {};
   const kv = [["시가총액", big(p.marketCap, c.market === "KR" ? "KRW" : "USD")], ["PER(후행)", fmt(p.trailingPE, 1)], ["PER(예상)", fmt(p.forwardPE, 1)],
-    ["PBR", fmt(p.priceToBook, 2)], ["배당수익률", isNum(p.dividendYield) ? `${fmt(p.dividendYield, 2)}%` : DASH],
+    ["PBR", fmt(p.priceToBook, 2)], ["배당수익률", p.dividendYieldSuspect ? `<span class="flat" title="Yahoo가 준 값이 ${fmt(p.dividendYieldLimit, 0)}%를 넘어 틀린 기록으로 봅니다. 투자위원회 계산에도 쓰지 않습니다.">— (원자료 이상 ${fmt(p.dividendYield, 2)}%)</span>` : isNum(p.dividendYield) ? `${fmt(p.dividendYield, 2)}%` : DASH],
     ["베타", fmt(p.beta, 2)], ["평균 거래량", big(p.averageVolume, "")], ["상장 주식수", big(p.sharesOutstanding, "")]];
   $("#s-head").innerHTML = `<div class="head"><h2 style="margin:0">${esc(p.longName || p.shortName || c.ticker)} <span class="meta" style="margin:0">${esc(c.ticker)} · ${esc(p.exchange || "")}</span></h2>
       <span><button class="ghost" id="addw">＋ 관심종목</button> <button class="ghost" id="addc" type="button">비교 차트</button> <button class="ghost" id="adda" type="button" title="이동평균·볼린저밴드·RSI·MACD와 고전 신호를 봅니다">차트분석</button> <button class="ghost" id="addq" type="button" title="점수 탭에서 이 종목의 점수 카드를 엽니다">점수 카드</button></span></div>
@@ -496,7 +508,7 @@ function drawPrice() {
   for (let k = 0; k <= 4; k++) {
     const v = lo + ((hi - lo) * k) / 4, yy = y(v);
     ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(pw, yy); ctx.stroke();
-    ctx.fillStyle = muted; ctx.fillText(v.toFixed(v >= 100 ? 0 : 2), pw + 6, yy);
+    ctx.fillStyle = muted; ctx.fillText(fmt(v, v >= 100 ? 0 : 2), pw + 6, yy);
   }
   // date labels
   ctx.textBaseline = "top"; ctx.textAlign = "center";
@@ -505,12 +517,12 @@ function drawPrice() {
   ctx.textAlign = "left";
   const candle = bw >= 1.8;
   bars.forEach((b, i) => {
-    const o = isNum(b.open) ? b.open : b.close, col = b.close >= o ? up : dn;
+    const okOpen = goodOpen(b), o = okOpen ? b.open : b.close, col = !okOpen && isNum(b.open) ? muted : b.close >= o ? up : dn;
     ctx.strokeStyle = col; ctx.fillStyle = col;
     if (candle && isNum(b.high) && isNum(b.low)) {
       ctx.beginPath(); ctx.moveTo(x(i), y(b.high)); ctx.lineTo(x(i), y(b.low)); ctx.stroke();
       const top = y(Math.max(o, b.close)), ht = Math.max(1, Math.abs(y(o) - y(b.close)));
-      ctx.fillRect(x(i) - bw * 0.35, top, Math.max(1, bw * 0.7), ht);
+      if (okOpen) ctx.fillRect(x(i) - bw * 0.35, top, Math.max(1, bw * 0.7), ht);
     }
     if (isNum(b.volume) && vmax) { ctx.globalAlpha = 0.45; const vh = (b.volume / vmax) * volH; ctx.fillRect(i * bw + bw * 0.1, h - 18 - vh, Math.max(1, bw * 0.8), vh); ctx.globalAlpha = 1; }
   });
@@ -520,7 +532,7 @@ function drawPrice() {
   cv.onmousemove = (e) => {
     const r = cv.getBoundingClientRect(), i = Math.min(n - 1, Math.max(0, Math.floor((e.clientX - r.left) / bw))), b = bars[i];
     const tip = $("#tip"); tip.hidden = false;
-    tip.innerHTML = `<b>${esc(b.date)}</b><br>시 ${fmt(b.open)} 고 ${fmt(b.high)} 저 ${fmt(b.low)} 종 ${fmt(b.close)}<br>거래량 ${big(b.volume, "")}<br>
+    tip.innerHTML = `<b>${esc(b.date)}</b><br>시 ${goodOpen(b) || !isNum(b.open) ? fmt(b.open) : "없음(원자료 이상)"} 고 ${fmt(b.high)} 저 ${fmt(b.low)} 종 ${fmt(b.close)}<br>거래량 ${big(b.volume, "")}<br>
       <span style="color:var(--sma20)">20일</span> ${fmt(b.sma20)} · <span style="color:var(--sma50)">50일</span> ${fmt(b.sma50)} · <span style="color:var(--sma200)">200일</span> ${fmt(b.sma200)}`;
     const tx = e.clientX + 14 + tip.offsetWidth > window.innerWidth ? e.clientX - tip.offsetWidth - 14 : e.clientX + 14;
     tip.style.left = tx + "px"; tip.style.top = e.clientY + 14 + "px";
@@ -603,7 +615,7 @@ async function watchOp(op, t) {
 }
 
 // ------------------------------------------------------------------ 모델 (읽기 전용)
-const REC_KO = { "REAL RECOMMENDATION": "정상 추천", "PARTIAL RECOMMENDATION": "부분 추천", "NO VALID RECOMMENDATION": "유효 추천 없음" };
+const REC_KO = { "REAL RECOMMENDATION": "모델 정상 실행", "PARTIAL RECOMMENDATION": "모델 일부만 실행", "NO VALID RECOMMENDATION": "모델 결과 없음" };
 const REGIME_KO = { BULL: "상승장", BEAR: "하락장", SIDEWAYS: "횡보장", RISK_OFF: "위험 회피", RISK_ON: "위험 선호" };
 const OUT_KO = { PENDING_ENTRY: "진입 대기", PENDING_OUTCOME: "보유 중(결과 대기)", COMPLETED_OUTCOME: "완료", INCOMPLETE: "데이터 불완전",
   VALID_PROSPECTIVE: "유효", PRE_FIX_EXCLUDED: "수정 전 제외", DATA_INVALID: "데이터 무효" };
@@ -681,7 +693,7 @@ async function renderModel() {
       ${b.newer_empty_scan ? `<div class="notice">더 최근 스캔(${when(b.newer_empty_scan.executed_at)}, 기준 거래일 ${esc(b.newer_empty_scan.latest_session || "")})은 그날 시세가 아직 다 나오지 않아 채점한 종목이 없었습니다. 아래는 그 전의 마지막 유효 결과입니다.</div>` : ""}
       ${b.run_id ? `<div class="kv"><div><span>최근 전체 스캔</span><b>${when(b.executed_at)}</b></div>${b.latest_session ? `<div><span>기준 거래일</span><b>${esc(b.latest_session)}</b></div>` : ""}<div><span>결과</span><b>${esc(REC_KO[b.recommendation_status] || b.recommendation_status)}</b></div>
         <div><span>시장 국면</span><b>${esc(REGIME_KO[b.regime] || b.regime || "—")}</b></div><div><span>기준 자본</span><b class="num">${isNum(b.capital) ? b.capital.toLocaleString("ko-KR") + " " + esc(b.currency || "") : DASH}</b></div></div>
-      <h3>추천 상위 종목</h3><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th class="l">섹터</th><th>기준가</th><th>${mk === "KR" ? "점수" : "알파"}</th><th>목표 비중</th><th>목표 금액</th><th>주수</th><th>손절가</th><th>보유 기간</th></tr></thead>
+      <h3>모델 상위 종목</h3><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th class="l">섹터</th><th>기준가</th><th title="모델이 순위를 매기는 데 쓰는 값입니다. 수익률이 아닙니다.">${mk === "KR" ? "모델 점수(순위용)" : "모델 알파(순위용)"}</th><th>목표 비중</th><th>목표 금액</th><th>주수</th><th>손절가</th><th>보유 기간</th></tr></thead>
       <tbody>${(b.top5 || []).map((r) => `<tr class="click" data-ticker="${esc(r.ticker)}"><td>${esc(r.recommendation_rank)}</td><td class="l"><b>${esc(r.ticker)}</b> <span class="meta" style="margin:0">${esc(r.name || "")}</span></td>
         <td class="l">${esc(sectorKo(r.sector))}</td><td class="num">${fmt(r.close, mk === "KR" ? 0 : 2)}</td><td class="num">${fmt(r.alpha, 3)}</td><td class="num">${isNum(r.target_weight) ? (r.target_weight * 100).toFixed(1) + "%" : DASH}</td>
         <td class="num" data-cap-amount data-w="${isNum(r.target_weight) ? r.target_weight : ""}">${DASH}</td><td class="num" data-cap-shares data-w="${isNum(r.target_weight) ? r.target_weight : ""}" data-close="${isNum(r.close) ? r.close : ""}">${DASH}</td>

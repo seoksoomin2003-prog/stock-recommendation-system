@@ -141,10 +141,11 @@ function chaDraw() {
   const wide = bw >= 2.2;
   if (cha.type === "line" || !wide) line(ctx, bars.map((b) => b.close), x, py, ink, 1.4);
   else bars.forEach((b, i) => {
-    const o = isNum(b.open) ? b.open : b.close, col = b.close >= o ? up : dn, hiv = isNum(b.high) ? b.high : Math.max(o, b.close), lov = isNum(b.low) ? b.low : Math.min(o, b.close);
+    const okOpen = goodOpen(b), o = okOpen ? b.open : b.close, col = !okOpen && isNum(b.open) ? muted : b.close >= o ? up : dn, hiv = isNum(b.high) ? b.high : Math.max(o, b.close), lov = isNum(b.low) ? b.low : Math.min(o, b.close);
     ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(x(i), py(hiv)); ctx.lineTo(x(i), py(lov)); ctx.stroke();
-    if (cha.type === "candle") ctx.fillRect(x(i) - bw * 0.35, py(Math.max(o, b.close)), Math.max(1, bw * 0.7), Math.max(1, Math.abs(py(o) - py(b.close))));
+    if (!okOpen) { /* no trustworthy open: the high-low line only */ }
+    else if (cha.type === "candle") ctx.fillRect(x(i) - bw * 0.35, py(Math.max(o, b.close)), Math.max(1, bw * 0.7), Math.max(1, Math.abs(py(o) - py(b.close))));
     else { ctx.beginPath(); ctx.moveTo(x(i) - bw * 0.4, py(o)); ctx.lineTo(x(i), py(o)); ctx.moveTo(x(i), py(b.close)); ctx.lineTo(x(i) + bw * 0.4, py(b.close)); ctx.stroke(); }
   });
   mas.forEach((k) => line(ctx, bars.map((b) => b.ma[k]), x, py, chaMaColor(k), 1.4));

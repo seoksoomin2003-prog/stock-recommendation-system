@@ -314,8 +314,23 @@ def candidates(rows: List[Dict[str, Any]], notes: Dict[str, Any], shown: int = C
                          "rows": [{"ticker": r["ticker"], "name": r.get("name"), "score": r["score"], "band": r.get("band"), "band_label": r.get("band_label"), "action": r.get("action"),
                                    "sector": sectors.get(r["ticker"]), **{k: v for k, v in (note_rows.get(f"{r['ticker']}|{strategy}") or {}).items() if k in ("plus", "minus", "prev")}}
                                   for r in ready[:shown]]}
-    return {"session": (notes or {}).get("session"), "styles": out,
-            "note": "진입 상태가 '지금 진입 가능'인 종목을 점수순으로 보여 줍니다(주문 계획과 같은 기준). 매수 후보 구간(70점) 아래 종목도 있을 수 있으니 구간을 함께 보세요. 순위일 뿐 매수 신호가 아닙니다."}
+    from terminal.qsf.rank_notes import band_edges
+    return {"session": (notes or {}).get("session"), "styles": out, "band_edges": band_edges(),
+            "note": "진입 상태가 '지금 진입 가능'(장기는 '진입을 막는 조건 없음')인 종목을 점수순으로 보여 줍니다(주문 계획과 같은 기준). 매수 후보 구간(70점) 아래 종목도 있을 수 있으니 구간을 함께 보세요. 순위일 뿐 매수 신호가 아닙니다."}
+
+
+def market_clause(state: Optional[Dict[str, Any]]) -> str:
+    """The clause the Today first line ends with on an adverse or unreadable day (UI batch 1, user decision 2026-11-23): the line used
+    to read "먼저 볼 것은 없습니다" on a day the market state was 15/100.  The levels and the rules are unchanged; only words."""
+    if not state:
+        return ""
+    score, factor = state.get("score_100"), float(state.get("size_factor") or 1.0)
+    size = "절반" if abs(factor - 0.5) < 1e-9 else f"{factor:g}배"
+    if state.get("state") == "ADVERSE" and score is not None:
+        return f" 시장 상태 나쁨({score:.0f}/100)" + (f" — 새 주문 크기 {size} 규칙 적용 중." if factor < 1 else ".")
+    if state.get("state") == "UNKNOWN" and factor < 1:
+        return f" 시장 상태를 읽을 수 없음 — 새 주문 크기 {size}{'으로' if size == '절반' else '로'} 계산 중."
+    return ""
 
 
 def headline(items: List[Dict[str, Any]]) -> str:
@@ -572,8 +587,12 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
     except Exception as exc:
         failed.append({"part": "candidates", "label": "오늘의 후보", "error": type(exc).__name__})
     main = [i for i in items if not i.get("ops")]
+    try:
+        day_state = plan_seen.get("market_state") or terminal.market_state(market)
+    except Exception:                                   # a stand-in terminal without it, or no state: the line goes without the clause
+        day_state = None
     return {"status": "REAL", "market": market, "generated_at": at.isoformat(timespec="seconds"), "session": plan_seen.get("session"),
-            "headline": headline(items), "headline_main": headline(main), "counts": {lv: sum(1 for i in items if i["level"] == lv) for lv in LEVELS}, "levels": LEVEL_KO,
+            "headline": headline(items), "headline_main": headline(main) + market_clause(day_state), "counts": {lv: sum(1 for i in items if i["level"] == lv) for lv in LEVELS}, "levels": LEVEL_KO,
             "orders": len(plan_seen.get("orders") or []), "items": items, "tiles": figures, "candidates": cands, "unread_parts": failed, "note": NOTE}
 
 
