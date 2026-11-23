@@ -282,6 +282,42 @@ def context_items(overview: Dict[str, Any], calendar: Dict[str, Any], market: st
     return out
 
 
+# The day's list keeps the investment items and the job's own state apart on screen (UI audit 2026-11-23): a failed news step is not
+# 'something to do today' about the market.  The items stay in one list for the daily message and the assistant's answers.
+OPS_KINDS = ("JOB_NOT_INSTALLED", "JOB_FAILED", "NEWS_FAILED", "JOB_NOTE", "JOB_RUNNING", "JOB_NEVER", "RECORD_ALERT")
+# Today's figures: the same overview items the market tab shows, the ones a trader looks at first.  A symbol the overview does not
+# carry is left out, never made up.
+TILE_SYMBOLS = {"US": ("^GSPC", "^IXIC", "^VIX", "^TNX", "KRW=X"), "KR": ("^KS11", "^KQ11", "^KS200", "KRW=X")}
+CANDIDATES_SHOWN = 5
+
+
+def tiles(overview: Dict[str, Any], market: str, state: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """The overview items for Today's first row, in a fixed order, plus the market state.  Read only."""
+    by = {i.get("symbol"): i for g in overview.get("groups") or [] for i in g.get("items") or []}
+    got = [by[s] for s in TILE_SYMBOLS.get(market, ()) if s in by]
+    shown = None
+    if state and state.get("score_100") is not None:
+        shown = {k: state.get(k) for k in ("score_100", "state", "label", "size_factor", "session")}
+    return {"items": got, "market_state": shown, "source": overview.get("source"), "fetched_at": (overview.get("cache") or {}).get("fetched_at"), "basis": overview.get("basis")}
+
+
+def candidates(rows: List[Dict[str, Any]], notes: Dict[str, Any], shown: int = CANDIDATES_SHOWN) -> Dict[str, Any]:
+    """Today's candidates (user decision 2026-11-23): per style, the stocks whose entry status is 'enter now', by score, as the
+    order plan reads them.  Each row carries its band and its largest push up and down from the ranking notes."""
+    from terminal.qsf import order_plan as op
+    note_rows, sectors = (notes or {}).get("rows") or {}, (notes or {}).get("sectors") or {}
+    out = {}
+    for strategy in ("SWING", "LONG_TERM"):
+        ready = sorted((r for r in rows if r.get("strategy") == strategy and r.get("entry_status") == op.ENTRY_READY and r.get("actionability") == "ACTIONABLE" and r.get("score") is not None),
+                       key=lambda r: -float(r["score"]))
+        out[strategy] = {"total": len(ready), "buy_band": sum(1 for r in ready if float(r["score"]) >= BUY_LINE),
+                         "rows": [{"ticker": r["ticker"], "name": r.get("name"), "score": r["score"], "band": r.get("band"), "band_label": r.get("band_label"), "action": r.get("action"),
+                                   "sector": sectors.get(r["ticker"]), **{k: v for k, v in (note_rows.get(f"{r['ticker']}|{strategy}") or {}).items() if k in ("plus", "minus", "prev")}}
+                                  for r in ready[:shown]]}
+    return {"session": (notes or {}).get("session"), "styles": out,
+            "note": "진입 상태가 '지금 진입 가능'인 종목을 점수순으로 보여 줍니다(주문 계획과 같은 기준). 매수 후보 구간(70점) 아래 종목도 있을 수 있으니 구간을 함께 보세요. 순위일 뿐 매수 신호가 아닙니다."}
+
+
 def headline(items: List[Dict[str, Any]]) -> str:
     n = {lv: sum(1 for i in items if i["level"] == lv) for lv in LEVELS}
     if n["ACT"]:
@@ -431,7 +467,10 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
         return committee_items(rows[-1] if rows else None, market, terminal.qsf.latest(market).get("session"))
     part("committee", committee_alerts)
     part("market", market_state)
-    part("context", lambda: context_items(terminal.overview(market), terminal.econ_calendar(market, 7), market))
+    def context() -> List[Dict[str, Any]]:
+        seen["overview"] = terminal.overview(market)
+        return context_items(seen["overview"], terminal.econ_calendar(market, 7), market)
+    part("context", context)
     part("earnings", lambda: earnings_items(terminal.qsf.earnings_upcoming(market, 14)))
     part("alerts", lambda: alert_items(terminal.alerts_view().get("log") or [], at))
     part("job", lambda: job_items(automation.status(base), automation.STEP_NAMES))
@@ -515,9 +554,27 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
     order = {lv: n for n, lv in enumerate(LEVELS)}
     items.sort(key=lambda i: order[i["level"]])          # a stable sort: inside a level the parts keep the order above
     plan_seen = seen.get("plan") or {}
+    for i in items:
+        if i["kind"] in OPS_KINDS:
+            i["ops"] = True
+    figures = cands = None
+    try:                                                # Today's first row; a stand-in terminal without these simply shows none
+        if seen.get("overview") is not None:
+            figures = tiles(seen["overview"], market, plan_seen.get("market_state") or terminal.market_state(market))
+    except AttributeError:
+        pass
+    except Exception as exc:
+        failed.append({"part": "tiles", "label": "시장 숫자", "error": type(exc).__name__})
+    try:
+        cands = candidates(terminal.qsf.screen_rows(market).get("rows") or [], terminal.rank_notes(market))
+    except AttributeError:
+        pass
+    except Exception as exc:
+        failed.append({"part": "candidates", "label": "오늘의 후보", "error": type(exc).__name__})
+    main = [i for i in items if not i.get("ops")]
     return {"status": "REAL", "market": market, "generated_at": at.isoformat(timespec="seconds"), "session": plan_seen.get("session"),
-            "headline": headline(items), "counts": {lv: sum(1 for i in items if i["level"] == lv) for lv in LEVELS}, "levels": LEVEL_KO,
-            "orders": len(plan_seen.get("orders") or []), "items": items, "unread_parts": failed, "note": NOTE}
+            "headline": headline(items), "headline_main": headline(main), "counts": {lv: sum(1 for i in items if i["level"] == lv) for lv in LEVELS}, "levels": LEVEL_KO,
+            "orders": len(plan_seen.get("orders") or []), "items": items, "tiles": figures, "candidates": cands, "unread_parts": failed, "note": NOTE}
 
 
 # ---------------------------------------------------------------------- questions, read by keyword

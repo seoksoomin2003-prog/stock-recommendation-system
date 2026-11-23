@@ -223,6 +223,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[pho
         ("GET", "/api/qsf/order-plan"): lambda q, b: t.order_plan(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/market-state"): lambda q, b: t.market_state(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/top3"): lambda q, b: t.qsf.top3(_market(q.get("market", "US"))),
+        ("GET", "/api/qsf/rank-notes"): lambda q, b: t.rank_notes(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/peers"): lambda q, b: t.qsf.peers(clean_ticker(q.get("t", "")), _market(q.get("market", "US"))),
         ("GET", "/api/qsf/sector-picks"): lambda q, b: t.sector_picks(_market(q.get("market", "US")), q.get("fund", "")),
         ("GET", "/api/qsf/heatmap"): lambda q, b: t.qsf.heatmap(_market(q.get("market", "US")), _strategy(q.get("strategy", "SWING"))),

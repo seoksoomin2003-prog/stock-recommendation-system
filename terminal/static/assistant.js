@@ -42,6 +42,33 @@ function askAssistant(q) {
   show("today"); window.scrollTo(0, 0);
 }
 
+// 첫 줄: 시장 탭과 같은 숫자 타일과 시장 상태(점수 미반영).  서버가 주지 않은 숫자는 만들지 않습니다.
+function asstTiles(t) {
+  if (!t || !(t.items || []).length) return "";
+  const ms = t.market_state, bad = ms && ms.state !== "FAVOURABLE";
+  const st = ms && isNum(ms.score_100) ? `<div class="card asst-state" title="어떤 종목 점수에도 들어가지 않는 값입니다"><div class="nm">시장 상태 <span class="muted">점수 미반영</span></div>
+      <div class="px num">${ms.score_100.toFixed(0)}<small class="muted">/100</small></div>
+      <div><span class="badge${bad ? " risk-note" : ""}">${esc(ms.label || "")}</span>${bad && isNum(ms.size_factor) && ms.size_factor < 1 ? ` <span class="meta" style="margin:0">새 주문 크기 ${(ms.size_factor * 100).toFixed(0)}%</span>` : ""}</div>
+      <div class="meta" style="margin-top:4px">${esc(ms.session || "")} 기록</div></div>` : "";
+  return `<div class="grid asst-tiles">${t.items.map(card).join("")}${st}</div>${meta(t.source || "", t.fetched_at)}`;
+}
+// 오늘의 후보(사용자 결정 2026-11-23): 스타일마다 '지금 진입 가능'인 종목을 점수순으로 다섯까지.
+const ASST_STYLE = { SWING: "스윙", LONG_TERM: "장기" };
+function asstCands(c) {
+  if (!c || !c.styles) return "";
+  const why = (r) => (r.plus ? `<div class="up">▲ ${esc(r.plus.label)} +${r.plus.points.toFixed(1)}</div>` : "") + (r.minus ? `<div class="down">▼ ${esc(r.minus.label)} −${Math.abs(r.minus.points).toFixed(1)}</div>` : "") || DASH;
+  const moved = (r) => (isNum(r.prev) ? ` <small class="${r.score - r.prev >= 0.05 ? "up" : r.score - r.prev <= -0.05 ? "down" : "flat"}" title="직전 기록 거래일과의 차이">${r.score - r.prev >= 0 ? "+" : "−"}${Math.abs(r.score - r.prev).toFixed(1)}</small>` : "");
+  const one = (k) => {
+    const s = c.styles[k];
+    if (!s) return "";
+    const rows = s.rows.map((r) => `<tr><td class="l an"><button type="button" class="chip" data-ticker="${esc(r.ticker)}">${esc(r.ticker)}</button> <span class="meta" style="margin:0">${esc(r.name || "")}</span></td>
+      <td class="num"><b>${Number(r.score).toFixed(1)}</b>${moved(r)}</td><td class="l w">${esc(r.band_label || "")}</td><td class="l w">${esc(sectorKo(r.sector))}</td><td class="l aw">${why(r)}</td></tr>`).join("");
+    return `<div class="asst-cand"><h4>${ASST_STYLE[k]} <span class="meta" style="margin:0">지금 진입 가능 ${s.total}종목 · 그중 매수 후보 구간(70점 이상) ${s.buy_band}</span></h4>
+      ${rows ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>점수</th><th class="l w">구간</th><th class="l w">업종</th><th class="l">가점 / 감점</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<div class="meta">지금 진입 가능한 종목이 없습니다.</div>'}</div>`;
+  };
+  return `<h3>오늘의 후보 ${c.session ? `<span class="badge">${esc(c.session)}</span>` : ""}</h3><div class="asst-cands">${one("SWING")}${one("LONG_TERM")}</div><div class="meta">${esc(c.note || "")}</div>`;
+}
+let asstSparks = null;
 async function renderToday() {
   const box = $("#tab-today");
   state.loaded.today = true;
@@ -64,13 +91,19 @@ async function renderToday() {
   try {
     const d = await api(`/api/assistant/today?market=${state.market}`);
     if (state.tab !== "today" || !$("#asst-brief")) return;
+    // 자동 실행·기록 상태는 아래 '작업 상태'로 따로 모읍니다(시장에 대해 할 일과 섞지 않습니다). 할 일 수준이 있으면 펼쳐 둡니다.
+    const main = d.items.filter((i) => !i.ops), ops = d.items.filter((i) => i.ops);
     const groups = ASST_LEVELS.map((lv) => {
-      const rows = d.items.filter((i) => i.level === lv);
+      const rows = main.filter((i) => i.level === lv);
       return rows.length ? `<h3 class="asst-h ${lv}">${esc(d.levels[lv])} <span class="badge">${rows.length}</span></h3><ul class="asst-list">${rows.map(asstItem).join("")}</ul>` : "";
     }).join("");
-    const unread = (d.unread_parts || []).length ? `<div class="msg err">읽지 못한 부분: ${d.unread_parts.map((p) => esc(p.label)).join(", ")}. 이 부분의 항목은 위 목록에 빠져 있습니다.</div>` : "";
-    brief.innerHTML = `<h2>${esc(d.headline)}</h2><div class="meta" style="margin-top:0">${mk} 시장 · 기준 거래일 ${esc(d.session || "기록 없음")} · ${when(d.generated_at)} 기준</div>
-      ${unread}${groups || '<div class="meta">보여 줄 항목이 없습니다.</div>'}<div class="meta">${esc(d.note)}</div>`;
+    const opsBox = ops.length ? `<details class="asst-ops"${ops.some((i) => i.level === "ACT") ? " open" : ""}><summary>작업 상태 (자동 실행·기록) <span class="badge">${ops.length}</span></summary><ul class="asst-list">${ops.map(asstItem).join("")}</ul></details>` : "";
+    const unread = (d.unread_parts || []).length ? `<div class="msg err">읽지 못한 부분: ${d.unread_parts.map((p) => esc(p.label)).join(", ")}. 이 부분의 항목은 이 화면에 빠져 있습니다.</div>` : "";
+    brief.innerHTML = `<h2>${esc(d.headline_main || d.headline)}</h2><div class="meta" style="margin-top:0">${mk} 시장 · 기준 거래일 ${esc(d.session || "기록 없음")} · ${when(d.generated_at)} 기준</div>
+      ${unread}${asstTiles(d.tiles)}${asstCands(d.candidates)}${groups ? `<h3>할 일과 알림</h3>${groups}` : '<div class="meta">보여 줄 항목이 없습니다.</div>'}${opsBox}<div class="meta">${esc(d.note)}</div>`;
+    if (asstSparks) redrawers.delete(asstSparks);
+    asstSparks = () => brief.querySelectorAll("canvas[data-spark]").forEach((cv) => spark(cv, JSON.parse(cv.dataset.spark)));
+    asstSparks(); redrawers.add(asstSparks);
   } catch (e) { brief.innerHTML = `<div class="msg err">오늘 목록을 만들지 못했습니다: ${esc(errKo(e))}</div>`; }
 }
 RENDER.today = renderToday;

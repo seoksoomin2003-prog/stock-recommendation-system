@@ -148,9 +148,31 @@ class Terminal(ModelViews):
             code = clean_ticker(ticker)
         res = self.qsf.evaluate(code, market)
         if isinstance(res, dict) and res.get("cards"):
-            from terminal.qsf import price_audit
-            res = {**res, "price_audit": price_audit.for_stock(self.base, market, code)}     # shown beside the score, never part of it
+            from terminal.qsf import price_audit, rank_notes
+            res = {**res, "price_audit": price_audit.for_stock(self.base, market, code),       # shown beside the score, never part of it
+                   "cards": {k: {**c, "balance": rank_notes.balance(c.get("factors") or [])} for k, c in res["cards"].items()}}    # display only
         return res
+
+    def rank_notes(self, market: str = "US") -> Dict[str, Any]:
+        """For the ranking table and Today's candidates: each recorded stock's largest push up and down, its score at the session
+        before, and its sector.  Read from the ledger snapshots of the newest scan; nothing is scored again."""
+        from terminal.qsf import rank_notes
+        latest = self.qsf.latest(market)
+        session = latest.get("session")
+        if latest.get("status") != "REAL" or not session:
+            return {"status": "NO_SCAN", "market": market}
+        memo = getattr(self, "_rank_notes_memo", None)
+        if memo is None:
+            memo = self._rank_notes_memo = {}
+        key = (market, session, latest.get("generated_at"), self.qsf.ledger._index_stamp())
+        if key not in memo:
+            memo.clear() if len(memo) > 8 else None
+            got = rank_notes.notes(self.qsf.ledger, market, session)
+            sectors = {r["ticker"]: r.get("sector") for r in self.qsf.screen_rows(market).get("rows") or []}
+            memo[key] = {"status": "REAL", "market": market, "session": session, "prev_session": next((v["prev_session"] for v in got.values()), None),
+                         "rows": {f"{t}|{s}": v for (t, s), v in got.items()}, "sectors": sectors,
+                         "note": "가점·감점은 중간(50점)에서 각 요인이 더하거나 뺀 점수입니다. 모든 요인의 값을 더하면 총점 − 50이 됩니다. 스캔이 원장에 남긴 값에서 읽었습니다."}
+        return memo[key]
 
     def qsf_history(self, ticker: str, market: str = "US") -> Dict[str, Any]:
         """A stock's recorded scores, read from the ledger.  Same ticker checks as evaluation."""

@@ -278,7 +278,7 @@ def test_the_daily_job_the_backup_the_routes_and_the_page_know_the_split():
     assert 'score_split.record(PROJECT_ROOT, "KR")' in app and 'score_split.record(PROJECT_ROOT, "US")' in app and '"score-split-evaluate": _qsf_score_split' in app
     assert '("GET", "/api/qsf/market-state")' in (ROOT / "terminal" / "server.py").read_text(encoding="utf-8")
     js = (ROOT / "terminal" / "static" / "qsf.js").read_text(encoding="utf-8")
-    assert "function qsfMarketState(ms)" in js and 'filter(([k]) => k !== "REGIME")' in js and "${qsfMarketState(c.market_state)}" in js and "/api/qsf/market-state?market=" in js
+    assert "function qsfMarketState(ms)" in js and 'filter(([k]) => k !== "REGIME")' in js and "${qsfMarketState((Object.values(d.cards)[0] || {}).market_state)}" in js and "/api/qsf/market-state?market=" in js
     assert config.VALIDATION_NOTICE in js and "시장 상태" in config.VALIDATION_NOTICE
     assert pb.VERSION == "PB-2" and "PB-2" in (ROOT / "reports" / "PAPER_BOOK_RULES.md").read_text(encoding="utf-8")
     assert (ROOT / ss.PROTOCOL).exists() and "QSF-1.4.0" in (ROOT / ss.PROTOCOL).read_text(encoding="utf-8")
