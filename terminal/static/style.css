@@ -1,6 +1,6 @@
 :root {
   --bg: #f6f7f9; --panel: #ffffff; --ink: #14171c; --muted: #5d6673; --line: #e1e4e9;
-  --up-intl: #0a8f5a; --down-intl: #d0363c; --up-kr: #c22f35; --down-kr: #1f5fd1; --ok: #0a8f5a; --on-accent: #ffffff; --accent: #2457d6; --warn: #b26b00; --bad: #b3261e;
+  --up-intl: #067a4b; --down-intl: #c43038; --up-kr: #c22f35; --down-kr: #1f5fd1; --ok: #067a4b; --on-accent: #ffffff; --accent: #2457d6; --warn: #8f5600; --bad: #b3261e;
   --chip: #eef1f5; --sma20: #d68a00; --sma50: #2457d6; --sma200: #8a3ffc; --grid: #edf0f3;
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
   --ma5: #d6457f; --ma10: #8c5a2b; --ma20: #d68a00; --ma50: #2457d6; --ma60: #0f8c9e; --ma120: #5d6673; --ma200: #8a3ffc;
@@ -29,6 +29,9 @@
    Status green (real data, saved, information) is --ok and never follows the price rule. */
 :root { --up: var(--up-intl); --down: var(--down-intl); }
 :root[data-color="kr"] { --up: var(--up-kr); --down: var(--down-kr); }
+/* Light theme green, red and amber were darkened (2026-11-23 light check): #0a8f5a, #d0363c and #b26b00 were 3.6-4.3:1 on the chip.
+   On Korean screens the 50-day line leaves blue, the falling-candle colour there, for the 60-day teal. */
+:root[data-color="kr"] { --sma50: var(--ma60); }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); }
 body { font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;

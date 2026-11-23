@@ -179,3 +179,11 @@ console.log(JSON.stringify([qsfInt(69.8), qsfInt(70.2), qsfNear(69.8, E) !== "",
     assert "<b>${qsfInt(r.score)}</b>${qsfNear(r.score, edges)}" in row and "notes && notes.band_edges)" in QSF
     assert 'v >= 1 ? "up" : v <= -1 ? "down" : "flat"' in body(QSF, "function qsfDelta(") and "점수 변화(전일)</th>" in QSF
     assert "[80" not in QSF and "70, 67" not in QSF          # the edges are not kept in the page
+
+
+# ---------------------------------------------------------------- light theme check (2026-11-23): small coloured text passes on the chip too
+def test_light_theme_green_and_amber_pass_on_the_chip_and_kr_moves_the_50_day_line_off_blue():
+    light = _tokens(CSS[:CSS.index("@media (prefers-color-scheme: dark)")])
+    for k in ("--up-intl", "--ok", "--down-intl", "--up-kr", "--down-kr", "--warn"):
+        assert _contrast(light[k], light["--chip"]) >= 4.5 and _contrast(light[k], light["--panel"]) >= 4.5, k
+    assert ':root[data-color="kr"] { --sma50: var(--ma60); }' in CSS
