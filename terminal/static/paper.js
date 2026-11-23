@@ -27,7 +27,7 @@ function ptFormHtml(d) {
     <label>날짜<input name="date" type="date" value="${esc(p.date || d.today || "")}" max="${esc(d.today || "")}"></label>
     <label>메모(선택)<input name="note" maxlength="200" value="${v("note")}"></label>
     <button class="btn-primary">기록</button>
-    <div class="wide meta" id="ptpreview" style="margin:0"></div><div class="wide meta" id="ptmsg" style="margin:0"></div></form>`;
+    <div class="wide meta m0" id="ptpreview"></div><div class="wide meta m0" id="ptmsg"></div></form>`;
 }
 
 function ptWireForm(d, mk) {

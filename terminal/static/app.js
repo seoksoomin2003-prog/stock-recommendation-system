@@ -160,7 +160,61 @@ function paintGroups(tab) {
   document.querySelectorAll(".groups button").forEach((b) => { b.classList.toggle("on", b.dataset.group === g); b.hidden = !groupShown(b.dataset.group); });
   const mine = [...document.querySelectorAll(".tabs button")].filter((b) => { b.hidden = b.dataset.group !== g || (!groupShown(g) && !ANY_MARKET.has(b.dataset.tab)); return !b.hidden; });
   document.querySelector(".tabs").hidden = mine.length < 2;
+  paintBar(g);
 }
+// 폰 아래 막대 (3차 묶음 P1-11, 사용자 결정 2026-11-23): 640px 이하에서는 윗줄 묶음 대신 오늘·종목·점수·내 계좌·더보기를 화면 아래에
+// 둡니다.  코인 시장에서는 종목·점수 자리에 코인이 옵니다.  더보기는 나머지 묶음(시장, 차트, 검증·기록)과 머리줄에서 뺀 단추를 엽니다.
+const BAR_GROUPS = ["today", "stock", "score", "coin", "account"];
+const MORE_ACTS = [["collect", "지금 수집"], ["phonebtn", "폰 연결"], ["cmdbtn", "명령창"], ["theme", "화면 테마"]];
+function paintBar(g) {
+  const bar = $("#bottombar");
+  if (!bar) return;
+  bar.querySelectorAll("button[data-group]").forEach((b) => {
+    const k = b.dataset.group;
+    b.hidden = k !== "account" && !groupShown(k);                       // 내 계좌는 어느 시장에서나 열립니다(ANY_MARKET)
+    b.classList.toggle("on", k === g);
+    b.toggleAttribute("aria-current", k === g);
+  });
+  bar.querySelector("[data-more]").classList.toggle("on", !BAR_GROUPS.includes(g));
+}
+function moreClose() {
+  const sh = $("#moresheet");
+  if (!sh || sh.hidden) return;
+  sh.hidden = true;
+  $("#bottombar [data-more]").setAttribute("aria-expanded", "false");
+}
+function moreOpen() {
+  const sh = $("#moresheet");
+  const groups = [...document.querySelectorAll(".groups button")].filter((b) => !BAR_GROUPS.includes(b.dataset.group) && groupShown(b.dataset.group));
+  const acts = MORE_ACTS.filter(([id]) => { const b = $("#" + id); return b && !b.hidden && !(id === "collect" && document.documentElement.classList.contains("on-phone")); });
+  sh.innerHTML = `<div class="ms-title">다른 묶음</div><div class="ms-row">${groups.map((b) => `<button type="button" data-group="${b.dataset.group}" class="${b.classList.contains("on") ? "on" : ""}">${esc(b.textContent)}</button>`).join("")
+      || '<span class="meta m0">이 시장에는 다른 묶음이 없습니다.</span>'}</div>
+    <div class="ms-title">도구</div><div class="ms-row">${acts.map(([id, label]) => `<button type="button" data-act="${id}">${esc(id === "phonebtn" ? $("#phonebtn").textContent : label)}</button>`).join("")}</div>`;
+  sh.hidden = false;
+  $("#bottombar [data-more]").setAttribute("aria-expanded", "true");
+}
+$("#bottombar").onclick = (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.hasAttribute("data-more")) return $("#moresheet").hidden ? moreOpen() : moreClose();
+  moreClose();
+  if (b.dataset.group === "account") show("account");                   // 머리줄의 '내 계좌'와 같은 통합 계좌
+  else showGroup(b.dataset.group);
+};
+$("#moresheet").onclick = (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  moreClose();
+  if (b.dataset.group) showGroup(b.dataset.group);
+  else if (b.dataset.act) $("#" + b.dataset.act).click();                 // 머리줄 단추가 하는 일을 그대로 합니다
+};
+document.addEventListener("click", (e) => { if (!e.target.closest("#moresheet, #bottombar")) moreClose(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") moreClose(); });
+// 컴퓨터에서는 묶음 줄이 머리줄 바로 아래에 붙어 따라옵니다.  머리줄 높이(수집 막대가 열리면 달라짐)를 재어 둡니다.
+const setTopH = () => document.documentElement.style.setProperty("--top-h", Math.round($(".top").getBoundingClientRect().height) + "px");
+setTopH();
+window.addEventListener("resize", setTopH);
+if (window.ResizeObserver) new ResizeObserver(setTopH).observe($(".top"));
 function showGroup(g) {
   const first = document.querySelector(`.tabs button[data-group="${g}"]`);
   if (first) show(groupTab[g] || first.dataset.tab);
@@ -689,7 +743,7 @@ async function renderModel() {
     const [d, cap] = await Promise.all([api(mq("/api/model")), api(mq("/api/capital"))]); if (mk !== state.market) return; state.loaded.model = true;
     const b = d.baseline, t = d.tracking;
     el.innerHTML = `<div class="panel"><h2>${esc(b.name)} ${badge(b.status || "FROZEN")} <span class="meta m0">${esc(b.role)}</span></h2>
-      <div class="form" style="margin:8px 0 12px"><label>투자 자본금 (${esc(cap.currency)})<input id="capInput" inputmode="decimal" autocomplete="off" value="${isNum(cap.amount) ? cap.amount : ""}" placeholder="금액 입력"></label><button id="capSave">저장</button>${mk === "KR" ? '<button id="capRun" type="button" title="저장된 금액으로 한국 모델 스캔을 실행합니다 (python app.py --market KR scan과 같습니다)">스캔 실행</button>' : ""}<div class="wide meta" id="capNote" style="margin:0"></div><div class="wide meta" id="capRunNote" style="margin:0"></div></div>
+      <div class="form" style="margin:8px 0 12px"><label>투자 자본금 (${esc(cap.currency)})<input id="capInput" inputmode="decimal" autocomplete="off" value="${isNum(cap.amount) ? cap.amount : ""}" placeholder="금액 입력"></label><button id="capSave">저장</button>${mk === "KR" ? '<button id="capRun" type="button" title="저장된 금액으로 한국 모델 스캔을 실행합니다 (python app.py --market KR scan과 같습니다)">스캔 실행</button>' : ""}<div class="wide meta m0" id="capNote"></div><div class="wide meta m0" id="capRunNote"></div></div>
       ${b.newer_empty_scan ? `<div class="notice">더 최근 스캔(${when(b.newer_empty_scan.executed_at)}, 기준 거래일 ${esc(b.newer_empty_scan.latest_session || "")})은 그날 시세가 아직 다 나오지 않아 채점한 종목이 없었습니다. 아래는 그 전의 마지막 유효 결과입니다.</div>` : ""}
       ${b.run_id ? `<div class="kv"><div><span>최근 전체 스캔</span><b>${when(b.executed_at)}</b></div>${b.latest_session ? `<div><span>기준 거래일</span><b>${esc(b.latest_session)}</b></div>` : ""}<div><span>결과</span><b>${esc(REC_KO[b.recommendation_status] || b.recommendation_status)}</b></div>
         <div><span>시장 국면</span><b>${esc(REGIME_KO[b.regime] || b.regime || "—")}</b></div><div><span>기준 자본</span><b class="num">${isNum(b.capital) ? b.capital.toLocaleString("ko-KR") + " " + esc(b.currency || "") : DASH}</b></div></div>

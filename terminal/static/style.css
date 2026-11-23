@@ -516,3 +516,45 @@ details[open] > summary .fold-hint { display: none; }
 .mt-3 { margin-top: var(--sp-3) !important; } .mt-4 { margin-top: var(--sp-4) !important; }
 .my-1 { margin: var(--sp-1) 0 !important; } .my-2 { margin: var(--sp-2) 0 !important; } .my-3 { margin: var(--sp-3) 0 !important; }
 .wrap { white-space: normal !important; } .upper { text-transform: uppercase; } .pointer { cursor: pointer; } .c-warn { color: var(--warn) !important; }
+
+/* UI batch 3 P1-12 (2026-11-23): card and detail sections fold under one plain header each; only the basis starts open. */
+.qsf-sec { border-top: 1px solid var(--line); margin-top: var(--sp-3); padding-top: var(--sp-2); }
+.qsf-sec > summary { cursor: pointer; font-weight: 600; font-size: var(--fs-base); padding: var(--sp-1) 0; list-style-position: outside; }
+.qsf-sec > summary .meta { font-weight: 400; }
+.qsf-sec-body { padding-top: var(--sp-1); }
+.qsf-sec-body > .panel { border: 0; padding: 0; margin: 0; background: transparent; }
+.qsf-sum { margin-top: var(--sp-1); }
+
+/* UI batch 3 P1-11 (2026-11-23, user decision): on the computer the group bar is thinner and stays under the header;
+   at 640 px and below the header is one line (brand, market, search), the groups move to a bottom bar
+   (today, stock, score, account, more) and the header's other buttons move into the 'more' sheet. */
+.bottombar, .moresheet { display: none; }
+@media (min-width: 641px) {
+  .groups { position: sticky; top: var(--top-h, 0px); z-index: var(--z-header); }
+  .groups button { padding: 8px 14px; font-size: var(--fs-base); }
+}
+@media (max-width: 640px) {
+  .top { position: sticky; gap: var(--sp-2); padding: 2px var(--sp-3); min-height: 48px; }
+  .top .ver, #acctbtn, #collect, #phonebtn, #cmdbtn, #theme { display: none; }
+  .top .brand { font-size: var(--fs-base); white-space: nowrap; }
+  .search { order: 0; flex: 1 1 0; min-width: 0; max-width: none; margin-left: 0; gap: var(--sp-1); }
+  .search input { min-height: 32px; padding: 4px 8px; }
+  .search button, #market button { padding: 4px 8px; }
+  .groups { display: none; }
+  .bottombar { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--z-header); height: 56px;
+               background: var(--panel); border-top: 1px solid var(--line); }
+  .bottombar button { flex: 1 1 0; min-width: 0; border: 0; border-top: 2px solid transparent; border-radius: 0; background: none;
+                      color: var(--muted); font-size: var(--fs-sm); padding: 0 2px; white-space: nowrap; }
+  .bottombar button.on { color: var(--ink); font-weight: 600; border-top-color: var(--accent); }
+  .bottombar button[hidden] { display: none; }
+  body { padding-bottom: 56px; }
+  #taptip { bottom: 64px; }
+  .moresheet:not([hidden]) { display: block; position: fixed; left: 0; right: 0; bottom: 56px; z-index: var(--z-popover);
+    background: var(--panel); border-top: 1px solid var(--line-strong); box-shadow: var(--shadow-3); padding: var(--sp-3) var(--sp-4) var(--sp-4); }
+  .moresheet .ms-title { font-size: var(--fs-sm); color: var(--muted); margin: var(--sp-2) 0 var(--sp-1); }
+  .moresheet .ms-title:first-child { margin-top: 0; }
+  .moresheet .ms-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+  .moresheet .ms-row button { min-height: 40px; padding: 8px 14px; }
+  .moresheet .ms-row button.on { border-color: var(--accent); font-weight: 600; }
+}
+@media (max-width: 380px) { .top .brand { display: none; } }

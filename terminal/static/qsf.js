@@ -301,6 +301,28 @@ function qsfRiskGradeLine(g) {
     과거 시험(${esc((t.first || "").slice(0, 4))}~${esc((t.last || "").slice(0, 4))}, 시가총액 상위 300): 위험 점수가 높은 쪽이 실제로 더 흔들린 비율 ${pc(t.pair_win, 0)}, 20거래일 뒤 −15% 이하로 끝난 비율은 위험 상위 20%가 ${pc(t.loss_top)}(전체 ${pc(t.loss_all)}),
     평균 최대 낙폭은 위험 상위 20%가 ${pc(t.drawdown_top)}(하위 20%는 ${pc(t.drawdown_bottom)}). 이미 본 구간의 시험입니다.</div>`;
 }
+// 3차 묶음 P1-12 (사용자 결정 2026-11-23): 카드와 종목 상세의 묶음은 모두 접고 근거만 펼칩니다.  누가 펼치거나 접으면
+// 묶음 종류마다(근거, 계획, 요인 계산, 위원회, 가격 범위, 이력과 기술 정보) 이 브라우저에 기억합니다.  내용과 계산은 그대로입니다.
+const QSF_FOLD_KEY = "qse-fold-";
+function qsfFoldOpen(key, dflt) {
+  try { const v = localStorage.getItem(QSF_FOLD_KEY + key); return v === null ? dflt : v === "1"; } catch (e) { return dflt; }
+}
+function qsfFold(key, title, body, dflt = false, id = "") {
+  return `<details class="qsf-sec" data-fold="${key}"${id ? ` id="${id}"` : ""}${qsfFoldOpen(key, dflt) ? " open" : ""}><summary>${title}</summary><div class="qsf-sec-body">${body}</div></details>`;
+}
+// toggle은 위로 번지지 않아 문서에서 잡는 단계(capture)로 받습니다.
+document.addEventListener("toggle", (ev) => {
+  const el = ev.target;
+  if (!el || !el.dataset || !el.dataset.fold || !el.isConnected) return;
+  try { localStorage.setItem(QSF_FOLD_KEY + el.dataset.fold, el.open ? "1" : "0"); } catch (e) { /* 저장 못 해도 화면은 그대로 */ }
+}, true);
+// 접힌 묶음의 자료는 처음 펼칠 때 한 번 읽습니다.  이미 펼쳐 둔 묶음이면 바로 읽습니다.
+function qsfOnOpen(el, load) {
+  if (!el) return;
+  if (el.open) { load(); return; }
+  const once = () => { if (el.open) { el.removeEventListener("toggle", once); load(); } };
+  el.addEventListener("toggle", once);
+}
 function qsfDrawDetail(d) {
   const p = d.p6_reference;
   $("#qsfdetail").innerHTML = `<div class="panel"><h2>${esc(d.ticker)} ${esc(d.name || "")} <span class="badge">${d.market === "US" ? "미국" : "한국"}</span>${d.high_risk ? " " + qsfRiskTag() : ""}${qsfFilingTags(d.filing_events)}${qsfAuditTag(d.price_audit)} <button type="button" class="ghost qsf-tostock" data-ticker="${esc(d.ticker)}" title="이 종목의 차트·재무·공시 화면을 엽니다">종목 화면</button> <button type="button" class="ghost qsf-close" title="카드를 한 줄로 접습니다. 순위는 그대로입니다.">닫기</button></h2>
@@ -308,21 +330,22 @@ function qsfDrawDetail(d) {
     ${d.filing_events ? `<div class="meta">${QSF_FILING_NOTE} 기준일 ${esc(d.filing_events.session)}.</div>` : ""}
     ${(d.deals || []).length ? `<div class="notice">SEC에 인수·합병 절차 공시가 있습니다: ${d.deals.slice(0, 3).map((x) => `${esc(x.label)}(${esc(x.form)}, ${esc(x.date)})`).join(", ")}. 인수 가격이 정해진 종목은 더 오를 여지가 작고 거래가 깨지면 크게 내릴 수 있습니다. 인수하는 쪽이 내는 경우도 있으니 공시 원문을 확인하세요. 점수는 이 공시를 읽지 않습니다.</div>` : ""}
     ${qsfAuditLine(d.price_audit)}
-    <div class="qsf-cards">${Object.values(d.cards).map((c) => qsfCard(c, true)).join("")}</div>
-    ${icCardHtml(d.committee, d.ticker, d.market)}
-    ${d.committee_note ? `<div class="meta"><b>엇갈림</b> ${esc(d.committee_note)}</div>` : ""}
-    ${qsfRiskGradeLine(d.risk_grade)}
+    <div class="qsf-cards">${Object.values(d.cards).map((c) => qsfCard(c)).join("")}</div>
+    ${d.committee ? qsfFold("committee", `다섯 투자자와 투자위원회 <span class="meta m0">규칙으로 옮긴 참고 · 점수와 무관</span>`,
+      `${icCardHtml(d.committee, d.ticker, d.market)}
+    ${d.committee_note ? `<div class="meta"><b>엇갈림</b> ${esc(d.committee_note)}</div>` : ""}`) : ""}
+    ${qsfFold("range", `가격 범위 · 예측 층 FC-1 <span class="meta m0">점수에 포함되지 않음</span>`, `<div id="qsffc"><div class="meta">불러오는 중…</div></div>`, false, "qsffcfold")}
+    ${qsfFold("tech", `이력과 기술 정보 <span class="meta m0">당일 점검 · 점수 이력 · 위험 등급 · 순위 기준 · P6-11B 참고</span>`, `${qsfRiskGradeLine(d.risk_grade)}
     ${QSF_RANK_NOTE[d.rank_basis] ? `<div class="meta">${QSF_RANK_NOTE[d.rank_basis]}</div>` : ""}
     ${p ? `<div class="meta">P6-11B 참고: ${p.status !== "REAL" ? "기록 없음" : p.in_top5 ? `최근 스캔 상위 5 (${p.rank}위)` : "최근 스캔 상위 5 아님"} · 별도 모델이며 점수에 합치지 않습니다.</div>` : ""}
-    <h3>가격 범위 · 예측 층 FC-1 <span class="meta m0">점수에 포함되지 않음</span></h3><div id="qsffc"><div class="meta">불러오는 중…</div></div>
     <details class="qsf-today-fold" id="qsftodayfold"><summary>당일 점검 (시세·공시·뉴스) <span class="meta m0">점수에 포함되지 않음</span></summary><div id="qsftoday"></div></details>
-    <div id="qsfhistory"></div></div>`;
+    <div id="qsfhistory"></div>`, false, "qsftechfold")}</div>`;
   qsfState.cardOpen = true;
   $("#qsfdetail .qsf-close").onclick = () => qsfFoldCard();
   const todayFold = $("#qsftodayfold");          // 펼칠 때 한 번 읽습니다: 공시를 처음 읽는 종목은 오래 걸립니다
   todayFold.addEventListener("toggle", () => { if (todayFold.open && !todayFold.dataset.done) { todayFold.dataset.done = "1"; qsfToday($("#qsftoday"), d.ticker, d.market); } });
-  fcStock($("#qsffc"), d.ticker, d.market, d.cards);
-  qsfHistory($("#qsfhistory"), d.ticker, d.market);
+  qsfOnOpen($("#qsffcfold"), () => fcStock($("#qsffc"), d.ticker, d.market, d.cards));
+  qsfOnOpen($("#qsftechfold"), () => qsfHistory($("#qsfhistory"), d.ticker, d.market));
 }
 
 // 기록된 점수 이력: 원장에 남은 값을 그대로 보여 줍니다. 다시 계산하지 않습니다.
@@ -341,7 +364,7 @@ async function qsfHistory(box, t, market) {
     ${["SWING", "LONG_TERM"].filter((k) => h.strategies[k]).map((k) => table(k, h.strategies[k])).join("")}</details>`;
 }
 
-// planOpen: the holding plan starts open on a stock the user looked up, folded in the ranking where three cards stack.
+// The holding plan follows the remembered fold like the other sections; the card of a stock the user holds opens it.
 // 새로 받지 못해 저장해 둔 자료로 채점한 입력: 무엇을, 며칠 전 자료로, 왜 못 받았는지
 function qsfStaleNote(c) {
   const old = (c.provenance && c.provenance.stale) || [];
@@ -373,7 +396,7 @@ function qsfBalance(b) {
   return `<div class="qsf-balance">${side("점수를 올린 요인", b.plus, "강점으로 칠 요인(0.6 이상)이 없습니다.")}${side("점수를 깎은 요인", b.minus, "약점으로 칠 요인(0.4 이하)이 없습니다.")}
     <div class="meta qb-note">중간(50점)에서 각 요인이 더하거나 뺀 점수입니다. 모든 요인을 더하면 50 ${b.points_sum >= 0 ? "+" : "−"} ${Math.abs(b.points_sum).toFixed(1)} = ${(50 + b.points_sum).toFixed(1)}점.${b.missing.length ? ` 자료가 없어 점수에서 빠진 요인: ${b.missing.map(esc).join(", ")}.` : ""}</div></div>`;
 }
-function qsfCard(c, planOpen = false) {
+function qsfCard(c) {
   const h = c.holding, m = c.market, e = c.entry, names = (c.balance && c.balance.labels) || {};
   // Only the card of a holding's own style carries c.position.
   const factors = c.factors.map((f) => `<tr><td class="l" title="${esc(f.factor)}">${esc(names[f.factor] || f.factor)}</td><td class="num">${f.scored === false ? "참고" : f.weight}</td><td class="num">${f.contribution === null ? "-" : f.contribution.toFixed(1)}</td>
@@ -393,22 +416,22 @@ function qsfCard(c, planOpen = false) {
       <div class="qsf-score num">${c.score === null ? "-" : c.score.toFixed(1)}<small>/100</small></div></div>
       <div>${qsfLabel(c)}<div class="meta mt-1">구간: ${esc(c.band_label)}${c.diagnostic_only ? " · 진단용 점수" : ""}</div></div></header>
     <div class="qsf-meta"><span title="자료가 얼마나 있는지를 말합니다. 맞을 확률이 아닙니다.">신뢰도(자료의 양) <b>${QSF_CONF[c.confidence]}</b></span><span>데이터 반영률 <b>${(c.coverage * 100).toFixed(0)}%</b></span>${isNum(c.input_coverage) && c.input_coverage < c.coverage - 0.005 ? `<span title="요인은 계산됐지만 그 안의 수치 일부가 비어 있습니다. 신뢰도는 이 값도 함께 봅니다.">요인 안 수치 반영률 <b>${(c.input_coverage * 100).toFixed(0)}%</b></span>` : ""}<span title="${esc((c.provenance && c.provenance.price) || "")}">시세 <b>${esc(c.data_date)}</b> ${qsfPrice(c.price, m)}</span><span>${esc(c.model_version)}</span></div>
-    <p>${esc(c.why_summary)}</p>
-    ${qsfBalance(c.balance)}
+    <div class="qsf-meta qsf-sum"><span>진입 <b>${qsfEntry(e.status, c.strategy)}</b></span>${c.strategy === "SWING" ? `<span>손절 기준 <b class="num">${qsfPrice(h.stop, m)}</b></span><span>목표 기준 <b class="num">${qsfPrice(h.target, m)}</b></span>` : ""}${c.exit ? `<span>보유 종목 <b>${QSF_EXIT[c.exit.action]}</b></span>` : ""}</div>
+    ${c.gates.length ? `<div class="notice"><b>위험 게이트 ${c.gates.length}건</b>: ${c.gates.map((g) => esc(g.text)).join(" ")} 점수는 진단용으로 남기지만 실행 대상이 아닙니다.</div>` : ""}
     ${c.earnings_unknown ? `<div class="notice">${esc(c.earnings_unknown)}</div>` : ""}
+    ${qsfFold("basis", `근거 <span class="meta m0">점수를 올리고 깎은 요인 · 영역별 점수 · 진입</span>`, `<p>${esc(c.why_summary)}</p>
+    ${qsfBalance(c.balance)}
     ${plainBlock(c.plain)}
     ${c.surface_note ? `<div class="meta"><b>엇갈림</b> ${esc(c.surface_note)}</div>` : ""}
     ${qsfStaleNote(c)}${qsfFundPeriodNote(c)}
-    ${c.gates.length ? `<div class="notice"><b>위험 게이트 ${c.gates.length}건</b>: ${c.gates.map((g) => esc(g.text)).join(" ")} 점수는 진단용으로 남기지만 실행 대상이 아닙니다.</div>` : ""}
     <h3>영역별 점수</h3><div class="qsf-domains">${Object.entries(c.domains).filter(([k]) => k !== "REGIME").map(([k, v]) => `<div><span>${esc(v.label)} <small class="meta m0">${v.reference ? "참고 · 점수 미반영" : v.max_points + "점"}${k === "RISK" ? " · 높을수록 좋음" : ""}</small></span>${qsfBar(v.score_100)}</div>`).join("")}</div>
     <h3>진입</h3><p><b>${qsfEntry(e.status, c.strategy)}</b>: ${esc(e.reason)}${e.zone ? ` 기준 구간 ${qsfPrice(e.zone.low, m)}~${qsfPrice(e.zone.high, m)}.` : ""}</p>
-    ${c.exit ? `<h3>보유 종목 판단</h3><p><b>${QSF_EXIT[c.exit.action]}</b>: ${esc(c.exit.reason)}</p>` : ""}
-    <details class="qsf-plan"${planOpen || c.position ? " open" : ""}><summary>보유 계획 (가설)과 판단이 바뀌는 조건</summary>
-    <h3>보유 계획 <span class="meta m0">(가설)</span></h3><dl class="qsf-dl"><dt>진입 예정일</dt><dd>${esc(h.entry_date)}</dd>${horizon}
+    ${c.exit ? `<h3>보유 종목 판단</h3><p><b>${QSF_EXIT[c.exit.action]}</b>: ${esc(c.exit.reason)}</p>` : ""}`, true)}
+    ${qsfFold(c.position ? "plan-held" : "plan", "계획 (가설) · 보유 계획과 판단이 바뀌는 조건", `<h3>보유 계획 <span class="meta m0">(가설)</span></h3><dl class="qsf-dl"><dt>진입 예정일</dt><dd>${esc(h.entry_date)}</dd>${horizon}
       <dt>무효화 조건</dt><dd>${h.invalidation.map(esc).join(" / ")}</dd><dt>이 기간의 이유</dt><dd>${h.why.map(esc).join(" / ")}</dd></dl>
-    <h3>판단이 바뀌는 조건</h3><ul class="qsf-list">${c.what_would_change.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></details>
+    <h3>판단이 바뀌는 조건</h3><ul class="qsf-list">${c.what_would_change.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`, !!c.position)}
     ${c.stability && c.stability.status === "REAL" ? `<div class="meta">직전 기록 ${esc(c.stability.previous_date)} ${c.stability.previous_score.toFixed(1)}점 → 변화 ${c.stability.delta >= 0 ? "+" : ""}${c.stability.delta.toFixed(1)}점${c.stability.large ? " (큰 변화)" : ""}</div>` : ""}
-    <details><summary>요인별 계산 (${c.factors.length}개)${c.missing.length ? ` · 빠진 요인 ${c.missing.length}개` : ""}</summary><div class="tbl-wrap"><table><thead><tr><th class="l">요인</th><th>배점</th><th>기여</th><th class="l">근거</th></tr></thead><tbody>${factors}</tbody></table></div></details>
+    ${qsfFold("factors", `요인별 계산 (${c.factors.length}개)${c.missing.length ? ` · 빠진 요인 ${c.missing.length}개` : ""} <span class="meta m0">기술 정보</span>`, `<div class="tbl-wrap"><table><thead><tr><th class="l">요인</th><th>배점</th><th>기여</th><th class="l">근거</th></tr></thead><tbody>${factors}</tbody></table></div>`)}
     <div class="meta">${esc(c.not_advice)}</div></article>`;
 }
 
@@ -628,7 +651,7 @@ function qsfScreenBuild() {
   const num = (k, label) => `<label>${label}<input type="number" name="${k}" min="0" max="100" step="1" value="${esc(f[k] || "")}" inputmode="numeric"></label>`;
   const opt = (k, v, label) => `<option value="${v}"${(f[k] || "") === v ? " selected" : ""}>${label}</option>`;
   const check = (k, label) => `<label class="qs-check"><input type="checkbox" name="${k}"${f[k] ? " checked" : ""}> ${label}</label>`;
-  box.innerHTML = `<div class="panel"><h2>스크리너 <span class="meta" id="qsfscreencount" style="margin:0"></span></h2>
+  box.innerHTML = `<div class="panel"><h2>스크리너 <span class="meta m0" id="qsfscreencount"></span></h2>
     <div class="meta">최신 스캔의 전 종목을 거르고 정렬합니다. 점수를 바꾸지 않으며, 걸러 낸 목록이 수익이 더 좋다는 근거는 아닙니다. 물어본 값이 없는 종목은 0점으로 치지 않고 빼서 따로 셉니다.</div>
     <form id="qsfscreenform" class="qs-form" autocomplete="off">
       <label class="qs-wide">검색<input type="search" name="q" maxlength="40" placeholder="코드 또는 이름" value="${esc(f.q || "")}"></label>
