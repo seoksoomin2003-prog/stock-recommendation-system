@@ -769,7 +769,7 @@ const wsCanSplit = () => { const c = $(".content"); if (!c) return false; const 
 if (window.ResizeObserver && $(".content")) {
   let wsW = 0;
   new ResizeObserver((es) => { const w = Math.round(es[0].contentRect.width); if (w === wsW) return; const first = !wsW; wsW = w;
-    if (!first) { clearTimeout(rz); rz = setTimeout(() => { setTopH(); if (typeof qsfDockStrip === "function") qsfDockStrip(); redrawAll(); }, 120); } }).observe($(".content"));
+    if (!first) { clearTimeout(rz); rz = setTimeout(() => { setTopH(); if (typeof qsfDockStrip === "function") qsfDockStrip(); watchMark(); redrawAll(); }, 120); } }).observe($(".content"));
 }
 
 // ------------------------------------------------------------------ 시장 개요
@@ -806,12 +806,16 @@ function card(i) {
 }
 
 // ------------------------------------------------------------------ 종목
+// 작업 화면 개편 5단계 (배치 명세 3.5, 흐름 명세 3.2·6절): 맨 위 줄(#s-head)에 이름·코드·거래소, 단추, 가격 줄(#s-price), 업종.
+// 가운데 칸에 가격 차트, 오른쪽 칸에 점수 요약(#s-score, 기록된 스캔, 사용자 결정 O-1)과 핵심 수치(#s-facts)와 업종 내 위치(#s-grades,
+// peers.js).  아래 줄에 바로 가기 단추, 동종업계 비교, 연간 재무, 공시, 회사 설명.  한 칸이면 점수 요약과 핵심 수치가 차트 위에 옵니다.
+const S_SECTIONS = [["s-peers", "동종업계 비교"], ["s-fund", "연간 재무"], ["s-fil", "공시"], ["s-desc", "회사 설명"]];
 async function renderStock() {
   const el = $("#tab-stock");
   if (!state.ticker) {
     const mk = state.market, recent = recentTickers().filter((t) => marketOf(t) === mk);
-    el.innerHTML = `<div class="panel"><div class="empty">위 검색창에 ${isKR() ? "종목 코드나 회사명을 입력하세요 (예: 005930, 삼성전자)." : "종목 코드를 입력하세요 (예: AAPL, MSFT, NVDA)."}</div>
-      ${recent.length ? `<h3>최근 본 종목</h3><div class="chips">${tickerChips(recent)}</div>` : ""}<div id="s-watch"></div></div>`;
+    el.innerHTML = `<div class="ws ws--single ws--narrow" data-ws="stock"><div class="ws-body"><div class="ws-main"><div class="panel"><div class="empty">위 검색창에 ${isKR() ? "종목 코드나 회사명을 입력하세요 (예: 005930, 삼성전자)." : "종목 코드를 입력하세요 (예: AAPL, MSFT, NVDA)."}</div>
+      ${recent.length ? `<h3>최근 본 종목</h3><div class="chips">${tickerChips(recent)}</div>` : ""}<div id="s-watch"></div></div></div></div></div>`;
     api(mq("/api/watchlist")).then((d) => {
       const list = (d.tickers || []).filter((t) => !t.startsWith("^") && marketOf(t) === mk);
       const box = $("#s-watch");
@@ -822,20 +826,44 @@ async function renderStock() {
   if (state.loaded.stock === state.ticker) return;
   state.loaded.stock = state.ticker;
   const t = state.ticker;
-  el.innerHTML = `<div class="panel" id="s-head">${loading}</div>
-    <div class="panel"><h2>가격 차트 <span class="seg" id="rng">${["3mo", "1y", "5y"].map((r) => `<button data-r="${r}" class="${r === state.range ? "on" : ""}">${{ "3mo": "3개월", "1y": "1년", "5y": "5년" }[r]}</button>`).join("")}</span>
+  state.lastQuote = null; lastChart = null;          // 앞 종목의 가격이 이 종목 머리줄에 잠깐이라도 나오지 않게
+  el.innerHTML = `<div class="ws" data-ws="stock"><div class="ws-ctx" id="s-head">${sHeadBase(t)}<div class="meta">불러오는 중…</div></div>
+    <div class="ws-body"><div class="ws-main"><div class="panel" id="s-chart"><h2>가격 차트 <span class="seg" id="rng">${["3mo", "1y", "5y"].map((r) => `<button data-r="${r}" class="${r === state.range ? "on" : ""}">${{ "3mo": "3개월", "1y": "1년", "5y": "5년" }[r]}</button>`).join("")}</span>
       <span class="legend"><span><i style="background:var(--sma20)"></i>20일선</span><span><i style="background:var(--sma50)"></i>50일선</span><span><i style="background:var(--sma200)"></i>200일선</span></span></h2>
-      <div class="chart"><canvas id="pc"></canvas></div><div id="c-meta"></div></div>
-    <div class="panel" id="s-peers"></div>
-    <div class="panel" id="s-fund">${loading}</div>
-    <div class="panel" id="s-fil">${loading}</div>`;
+      <div class="chart"><canvas id="pc"></canvas></div><div id="c-meta"></div></div></div>
+    <div class="ws-right" role="complementary" aria-label="점수 요약과 핵심 수치"><div class="panel ws-first" id="s-score"></div><div class="panel ws-first" id="s-facts"><h2>핵심 수치</h2><div class="meta">불러오는 중…</div></div><div class="panel" id="s-grades" hidden></div></div></div>
+    <div class="ws-lower"><nav class="s-secnav span-all chips" aria-label="이 화면의 묶음">${S_SECTIONS.map(([id, n]) => `<button type="button" class="chip" data-sec="${id}">${n}</button>`).join("")}</nav>
+    <div class="panel span-all" id="s-peers"></div>
+    <div class="panel span-all" id="s-fund">${loading}</div>
+    <div class="panel span-all" id="s-fil">${loading}</div>
+    <div class="panel span-all" id="s-desc"><h2>회사 설명</h2><div class="meta">불러오는 중…</div></div></div></div>`;
   $("#rng").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; state.range = b.dataset.r; $("#rng").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); loadChart(t); };
+  el.querySelector(".s-secnav").onclick = (e) => { const b = e.target.closest("[data-sec]"), s = b && $("#" + b.dataset.sec); if (s) s.scrollIntoView({ block: "start" }); };
   loadChart(t);
+  if (typeof qsfScanSummary === "function") qsfScanSummary($("#s-score"), t, state.market, { still: () => state.ticker === t && state.tab === "stock" }).then(sScoreAge);
+  else $("#s-score").remove();
   if (typeof loadPeers === "function") loadPeers(t);
   api(`/api/company?t=${encodeURIComponent(t)}`).then((c) => { if (state.ticker === t) { renderProfile(c); renderFund(c.fundamentals); } })
-    .catch((e) => { if (state.ticker === t) { $("#s-fund").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; $("#s-head").innerHTML = `<div class="err">${esc(errKo(e))}</div>`; } });
+    .catch((e) => { if (state.ticker === t) { $("#s-fund").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; sHeadError(t, e); } });
   api(`/api/filings?t=${encodeURIComponent(t)}`).then((f) => state.ticker === t && renderFilings(f))
     .catch((e) => state.ticker === t && ($("#s-fil").innerHTML = `<span class="err">${esc(errKo(e))}</span>`));
+}
+// 머리줄의 처음 모양: 이름이 오기 전에는 코드만, 가격 줄 자리(#s-price)는 처음부터 둡니다(차트가 먼저 오면 가격이 먼저 보임).
+function sHeadBase(t) { return `<h2 id="s-title" tabindex="-1">${esc(t)}</h2><div class="head" id="s-price"></div>`; }
+// 회사 정보를 받지 못했습니다: 오류 글과 '다시 시도'.  가격 줄은 남깁니다.  다시 시도는 화면을 처음부터 다시 그립니다.
+function sHeadError(t, e) {
+  const h = $("#s-head"); if (!h) return;
+  h.innerHTML = `${sHeadBase(t)}<div class="err">${esc(errKo(e))} <button type="button" class="ghost" id="s-retry">다시 시도</button></div>`;
+  for (const [id, title] of [["s-facts", "핵심 수치"], ["s-desc", "회사 설명"]]) { const b = $("#" + id); if (b) b.innerHTML = `<h2>${title}</h2><div class="empty">회사 정보를 받지 못했습니다.</div>`; }
+  renderHeadPrice();
+  $("#s-retry").onclick = () => { state.loaded.stock = null; renderStock(); };
+}
+// 점수 요약의 스캔 거래일보다 차트의 마지막 일봉이 새로우면, 요약 제목 옆에 지금 시세와 다를 수 있다고 적습니다.  두 날짜를 견줄 뿐입니다.
+function sScoreAge() {
+  const box = $("#s-score"), tag = box && box.querySelector(".s-age"), last = lastChart && lastChart.last && lastChart.last.date;
+  if (!tag) return;
+  tag.hidden = !(box.dataset.session && last && String(last) > box.dataset.session);
+  if (!tag.hidden) tag.title = `스캔 기록 ${box.dataset.session} · 차트의 마지막 일봉 ${last}`;
 }
 let lastChart = null;
 async function loadChart(t) {
@@ -848,32 +876,34 @@ async function loadChart(t) {
     const L = c.last || {};
     $("#c-meta").innerHTML = c.bars.length ? meta(c.source, c.cache.fetched_at, `${badge(c.status)} ${liveBadge(L.intraday)} 마지막 일봉 ${esc(L.date)}`) :
       `<div class="empty">${badge("UNAVAILABLE")} 가격 데이터를 받지 못했습니다. 종목 코드를 확인하세요.</div>`;
-    state.lastQuote = L; renderHeadPrice();
-  } catch (e) { $("#c-meta").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; }
+    state.lastQuote = L; renderHeadPrice(); sScoreAge();
+  } catch (e) { $("#c-meta").innerHTML = `<span class="err">${esc(errKo(e))}</span> <button type="button" class="ghost" id="c-retry">다시 시도</button>`; $("#c-retry").onclick = () => loadChart(t); }
 }
+// 가격 줄: 지난 값을 지금 값처럼 보이지 않게 마지막 일봉 날짜를 함께 적고, 정상 자료가 아니면 상태 표시를 붙입니다(차트 아래 줄과 같은 값).
 function renderHeadPrice() {
   const L = state.lastQuote, h = $("#s-price");
   if (!h || !L) return;
-  const d = isKR() ? 0 : 2;
-  h.innerHTML = `<span class="big num">${fmt(L.close, d)}</span> ${pct(L.change_pct)} ${liveBadge(L.intraday)}
-    <span class="meta">52주 범위 ${fmt(L.low_52w, d)} – ${fmt(L.high_52w, d)} · 200일선 대비 ${pct(L.vs_sma200_pct, 1)}</span>`;
+  const d = isKR() ? 0 : 2, st = lastChart && lastChart.status;
+  h.innerHTML = `<span class="big num">${fmt(L.close, d)}</span> ${pct(L.change_pct)} ${liveBadge(L.intraday)}${st && st !== "REAL" ? " " + badge(st) : ""}
+    <span class="meta">52주 범위 ${fmt(L.low_52w, d)} – ${fmt(L.high_52w, d)} · 200일선 대비 ${pct(L.vs_sma200_pct, 1)}${L.date ? ` · 마지막 일봉 ${esc(L.date)}` : ""}</span>`;
 }
 function renderProfile(c) {
   const p = c.profile.data || {};
   const kv = [["시가총액", big(p.marketCap, c.market === "KR" ? "KRW" : "USD")], ["PER(후행)", fmt(p.trailingPE, 1)], ["PER(예상)", fmt(p.forwardPE, 1)],
     ["PBR", fmt(p.priceToBook, 2)], ["배당수익률", p.dividendYieldSuspect ? `<span class="flat" title="Yahoo가 준 값이 ${fmt(p.dividendYieldLimit, 0)}%를 넘어 틀린 기록으로 봅니다. 투자위원회 계산에도 쓰지 않습니다.">— (원자료 이상 ${fmt(p.dividendYield, 2)}%)</span>` : isNum(p.dividendYield) ? `${fmt(p.dividendYield, 2)}%` : DASH],
     ["베타", fmt(p.beta, 2)], ["평균 거래량", big(p.averageVolume, "")], ["상장 주식수", big(p.sharesOutstanding, "")]];
-  $("#s-head").innerHTML = `<div class="head"><h2 class="m0">${esc(p.longName || p.shortName || c.ticker)} <span class="meta m0">${esc(c.ticker)} · ${esc(p.exchange || "")}</span></h2>
-      <span><button class="ghost" id="addw">＋ 관심종목</button> <button class="ghost" id="addc" type="button">비교 차트</button> <button class="ghost" id="adda" type="button" title="이동평균·볼린저밴드·RSI·MACD와 고전 신호를 봅니다">차트분석</button> <button class="ghost" id="addq" type="button" title="순위·카드 탭에서 이 종목의 점수 카드를 엽니다">점수 카드</button></span></div>
+  $("#s-head").innerHTML = `<h2 id="s-title" tabindex="-1">${esc(p.longName || p.shortName || c.ticker)} <span class="meta m0">${esc(c.ticker)} · ${esc(p.exchange || "")}</span></h2>
+      <span class="ws-tools"><button class="ghost" id="addw">＋ 관심종목</button> <button class="ghost" id="addc" type="button">비교 차트</button> <button class="ghost" id="adda" type="button" title="이동평균·볼린저밴드·RSI·MACD와 고전 신호를 봅니다">차트분석</button> <button class="ghost" id="addq" type="button" title="순위·카드 탭에서 이 종목의 점수 카드를 엽니다">점수 카드</button> <button class="ghost" id="addask" type="button" title="오늘 화면에서 이 종목을 지금 사도 되는지 프로그램 규칙으로 답합니다">사도 돼?</button></span>
     <div class="head" id="s-price"></div>
-    <div class="meta">${esc([sectorKo(p.sector), p.industry].filter(Boolean).join(" · "))}${safeUrl(p.website) ? ` · <a href="${esc(safeUrl(p.website))}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>
-    <div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span><b class="num">${v}</b></div>`).join("")}</div>
-    ${p.longBusinessSummary ? `<details class="co-sum" id="sum"><summary>회사 설명 <span class="meta m0">Yahoo 영문 원문</span> <span class="co-lead" lang="en">${esc(p.longBusinessSummary)}</span></summary><div class="summary open" lang="en">${esc(p.longBusinessSummary)}</div></details>` : ""}
+    <div class="meta">${esc([sectorKo(p.sector), p.industry].filter(Boolean).join(" · "))}${safeUrl(p.website) ? ` · <a href="${esc(safeUrl(p.website))}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>`;
+  $("#s-facts").innerHTML = `<h2>핵심 수치</h2><div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span><b class="num">${v}</b></div>`).join("")}</div>
     ${meta(c.profile.source, c.profile.fetched_at, badge(c.profile.status))}`;
+  $("#s-desc").innerHTML = `${p.longBusinessSummary ? `<details class="co-sum" id="sum"><summary>회사 설명 <span class="meta m0">Yahoo 영문 원문</span> <span class="co-lead" lang="en">${esc(p.longBusinessSummary)}</span></summary><div class="summary open" lang="en">${esc(p.longBusinessSummary)}</div></details>` : '<h2>회사 설명</h2><div class="empty">회사 설명이 없습니다.</div>'}`;
   renderHeadPrice();
   $("#addc").onclick = () => compareWith([c.ticker]);
   $("#adda").onclick = () => chartWith(c.ticker);
   $("#addq").onclick = () => { if (typeof qsfOpenCard === "function") qsfOpenCard(c.ticker); };
+  $("#addask").onclick = () => { if (typeof askAssistant === "function") askAssistant(`${c.ticker} 사도 돼?`); };      // 답은 오늘 화면에 (O-8)
   $("#addw").onclick = async () => { try { await api("/api/watchlist/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: c.ticker }) }); $("#addw").textContent = "✓ 추가됨"; state.loaded.watch = false; } catch (e) { notify(errKo(e)); } };
 }
 function renderFund(f) {
@@ -997,24 +1027,67 @@ function mini(cv, series) {
 }
 
 // ------------------------------------------------------------------ 관심종목
+// 작업 화면 개편 5단계 (배치 명세 3.6, 사용자 결정 U-5): 맨 위 줄에 제목·개수와 추가 칸, 가운데 칸에 표, 아래 줄에 각주.  두 칸일 때
+// (내용 폭 1120px 이상) 오른쪽 칸(#w-side)에 고른 종목의 짧은 요약: 표의 값, 30일 추세, 순위가 쓰는 기록된 스캔의 점수 요약
+// (qsfScanSummary)과 이동 단추.  두 칸에서는 줄을 누르면(또는 Enter) 그 종목을 고르고, 종목 이름 단추가 전처럼 종목 화면을 엽니다.
+// 한 칸에서는 줄 어디를 눌러도 전처럼 종목 화면이 열리고 오른쪽 칸은 숨습니다.  고르기는 주소를 바꾸지 않습니다.
+const watchState = { sel: null, items: [] };
 async function renderWatch() {
   const el = $("#tab-watch"), mk = state.market, d0 = mk === "KR" ? 0 : 2;
   if (!el.innerHTML) el.innerHTML = loading;
   try {
     const d = await api(mq("/api/watchlist")); if (mk !== state.market) return; state.loaded.watch = true;
-    el.innerHTML = `<div class="panel"><h2>${mk === "KR" ? "한국" : "미국"} 관심종목 <span class="meta m0">${d.tickers.length}개</span></h2>
-      <form class="addrow" id="wadd"><input id="wq" placeholder="추가할 종목 코드" maxlength="15"><button type="submit">추가</button></form>
-      ${d.items.length ? `<div class="tbl-wrap"><table><thead><tr><th>종목</th><th>종가</th><th>전일 대비</th><th>1개월</th><th class="l">추세(30일)</th><th class="l">스윙 점수</th><th class="l">장기 점수</th><th class="l">상태</th><th></th></tr></thead>
-      <tbody>${d.items.map((i) => `<tr class="click" data-ticker="${esc(i.symbol)}"><td><b>${esc(i.symbol)}</b> ${i.name ? `<span class="meta m0">${esc(i.name)}</span>` : ""}</td><td class="num">${fmt(i.close, d0)}</td><td>${pct(i.change_pct)}</td><td>${pct(i.change_1m_pct, 1)}</td>
+    watchState.items = d.items;
+    if (!d.items.some((i) => i.symbol === watchState.sel)) watchState.sel = null;
+    el.innerHTML = ui.ws({ name: "watch", label: "고른 관심종목",
+      ctx: `<h2>${mk === "KR" ? "한국" : "미국"} 관심종목 <span class="meta m0">${d.tickers.length}개</span></h2>
+      <span class="ws-tools"><form class="addrow" id="wadd"><input id="wq" placeholder="추가할 종목 코드" maxlength="15"><button type="submit">추가</button></form></span>`,
+      main: `<div class="panel">${d.items.length ? `<div class="tbl-wrap"><table id="wtbl"><thead><tr><th>종목</th><th>종가</th><th>전일 대비</th><th>1개월</th><th class="l">추세(30일)</th><th class="l">스윙 점수</th><th class="l">장기 점수</th><th class="l">상태</th><th></th></tr></thead>
+      <tbody>${d.items.map((i) => `<tr class="click" data-ticker="${esc(i.symbol)}"><td><button type="button" class="linkish" data-ticker="${esc(i.symbol)}" title="종목 화면(차트·재무·공시)을 엽니다"><b>${esc(i.symbol)}</b>${i.name ? ` <span class="meta m0">${esc(i.name)}</span>` : ""}</button></td><td class="num">${fmt(i.close, d0)}</td><td>${pct(i.change_pct)}</td><td>${pct(i.change_1m_pct, 1)}</td>
         <td class="l"><canvas style="width:80px;height:24px" data-spark='${JSON.stringify(i.spark || [])}'></canvas></td><td class="l">${watchScore(i.qsf, "SWING", d.qsf_scan)}</td><td class="l">${watchScore(i.qsf, "LONG_TERM", d.qsf_scan)}</td><td class="l">${badge(i.status)} ${liveBadge(i.intraday)} <span class="meta">${esc(i.date || "")}</span></td>
-        <td><button class="x" data-rm="${esc(i.symbol)}" title="삭제">✕</button></td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">관심종목이 없습니다.</div>'}
-      ${d.qsf_scan && d.qsf_scan.status === "REAL" ? `<div class="meta">점수는 ${esc(d.qsf_scan.session)} 거래일 스캔(${esc(d.qsf_scan.model_version)})에 기록된 값입니다. 스캔 대상이 아닌 종목은 비워 둡니다. 순위·카드 탭에서 다시 계산할 수 있습니다.</div>` : ""}
-      ${d.cache ? meta(d.source, d.cache.fetched_at) : ""}<div class="meta">관심종목은 이 Mac의 data/terminal/watchlist.json 에만 저장됩니다.</div></div>`;
+        <td><button class="x" data-rm="${esc(i.symbol)}" title="삭제">✕</button></td></tr>`).join("")}</tbody></table></div>` : '<div class="empty">관심종목이 없습니다.</div>'}</div>`,
+      right: `<div class="panel" id="w-side"></div>`,
+      lower: `<div class="w-notes">${d.qsf_scan && d.qsf_scan.status === "REAL" ? `<div class="meta">점수는 ${esc(d.qsf_scan.session)} 거래일 스캔(${esc(d.qsf_scan.model_version)})에 기록된 값입니다. 스캔 대상이 아닌 종목은 비워 둡니다. 순위·카드 탭에서 다시 계산할 수 있습니다.</div>` : ""}
+      ${d.cache ? meta(d.source, d.cache.fetched_at) : ""}<div class="meta">관심종목은 이 Mac의 data/terminal/watchlist.json 에만 저장됩니다.</div></div>` });
     const draw = () => el.querySelectorAll("canvas[data-spark]").forEach((cv) => spark(cv, JSON.parse(cv.dataset.spark)));
     draw(); redrawOn("watch", "sparks", draw);
     $("#wadd").onsubmit = (e) => { e.preventDefault(); watchOp("add", $("#wq").value); };
     el.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); watchOp("remove", b.dataset.rm); }));
+    const tb = el.querySelector("#wtbl tbody");
+    if (tb) tb.addEventListener("click", (e) => {
+      if (!wsCanSplit() || e.target.closest("button, a")) return;          // 한 칸, 이름 단추, ✕: 전처럼
+      const tr = e.target.closest("tr[data-ticker]");
+      if (!tr) return;
+      e.stopPropagation();                                                  // 종목 화면을 여는 문서의 클릭 처리로 가지 않게
+      watchState.sel = tr.dataset.ticker; watchSide();
+    });
+    watchSide();
   } catch (e) { el.innerHTML = errBox(e); }
+}
+// 고른 줄 표시: 두 칸일 때만 aria-selected (한 칸에서는 줄이 종목 화면을 엽니다).  내용 폭이 바뀔 때도 부릅니다.
+function watchMark() {
+  const on = wsCanSplit() ? watchState.sel : null;
+  document.querySelectorAll("#wtbl tbody tr[data-ticker]").forEach((tr) => { if (on && tr.dataset.ticker === on) tr.setAttribute("aria-selected", "true"); else tr.removeAttribute("aria-selected"); });
+}
+// 오른쪽 칸: 표가 이미 받은 값과, 순위가 쓰는 기록된 스캔의 점수 요약만 보여 줍니다.  새로 계산하는 값은 없습니다.
+function watchSide() {
+  const box = $("#w-side"), sym = watchState.sel, i = sym && watchState.items.find((x) => x.symbol === sym);
+  watchMark();
+  if (!box) return;
+  if (!i) { box.innerHTML = `<h2>고른 종목</h2><div class="ws-empty">표에서 줄을 고르면 여기에 그 종목 요약이 보입니다. 종목 이름을 누르면 종목 화면이 열립니다.</div>`; return; }
+  const d0 = marketOf(sym) === "KR" ? 0 : 2;
+  box.innerHTML = `<h2>${tickerLabel(sym, i.name)} <span class="ph-actions"><button type="button" class="btn-primary" data-ticker="${esc(sym)}" title="차트·재무·공시를 봅니다">종목 화면</button></span></h2>
+    <div class="w-facts"><div><span class="lbl">종가</span><b class="num">${fmt(i.close, d0)}</b></div><div><span class="lbl">전일 대비</span><b>${pct(i.change_pct)}</b></div><div><span class="lbl">1개월</span><b>${pct(i.change_1m_pct, 1)}</b></div><div><span class="lbl">상태</span><b>${badge(i.status)} ${liveBadge(i.intraday)} <span class="meta m0">${esc(i.date || "")}</span></b></div></div>
+    <div class="w-trend"><canvas style="width:100%;height:48px" data-spark='${JSON.stringify(i.spark || [])}'></canvas><div class="meta">추세(30일) ${sparkRange(i.spark)}</div></div>
+    <div id="w-score"></div>
+    <div class="qsf-sum-acts"><button type="button" class="ghost" id="w-chart" title="이동평균·볼린저밴드·RSI·MACD와 고전 신호를 봅니다">차트분석</button> <button type="button" class="ghost" id="w-cmp">비교 차트</button></div>`;
+  const cv = box.querySelector("canvas[data-spark]"); if (cv) spark(cv, JSON.parse(cv.dataset.spark));
+  $("#w-chart").onclick = () => chartWith(sym);
+  $("#w-cmp").onclick = () => compareWith([sym]);
+  if (typeof qsfScanSummary === "function") qsfScanSummary($("#w-score"), sym, state.market, { compact: true, still: () => watchState.sel === sym && state.tab === "watch" }).then(() => {
+    const sc = $("#w-score"), tag = sc && sc.querySelector(".s-age");          // 표의 날짜가 스캔 거래일보다 새로우면 (두 날짜를 견줄 뿐)
+    if (tag && i.date && sc.dataset.session && String(i.date) > sc.dataset.session) tag.hidden = false;
+  });
 }
 // 스캔에 기록된 점수만 보여 줍니다. 여기서 계산하지 않습니다. 색은 순위·카드 탭과 같은 기준이고 글자로도 적습니다.
 function watchScore(q, strategy, scan) {

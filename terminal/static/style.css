@@ -938,3 +938,34 @@ tr.me > td:first-child, #qsfplan tr.hl > td:first-child, .qsf-rrow[aria-expanded
   .qsf-rank-tbl .qr-why { white-space: normal; min-width: 84px; }
   .qsf-rank-tbl .qr-name { min-width: 90px; }
 }
+
+/* Workstation stage 5 (2026-11-24): 종목 정보 as a research screen and 관심종목 with a right panel (layout spec 3.5, 3.6; UX spec 3.2, 6;
+   owner decisions O-1, O-8, U-5).  종목: the header (#s-head) is the context line; the chart is the main column; the right column holds the
+   score summary from the recorded scan (#s-score), the key figures (#s-facts) and 업종 내 위치 (#s-grades); the lower line has the
+   section buttons, peers, financials, filings and the description, one per row.  In one column the summary and the figures come before
+   the chart (.ws-first).  관심종목: in two columns the right column (#w-side) shows the picked row; in one column it is hidden and a row
+   opens the stock screen as before. */
+#s-head > h2 { min-width: 0; }
+#s-head > .head, #s-head > .err { flex-basis: 100%; margin: 0; }
+.ws[data-ws="stock"] > .ws-lower { grid-template-columns: minmax(0, 1fr); }
+.s-secnav { margin: 0; }
+#s-desc > .co-sum { margin-top: 0; }
+.s-age[hidden] { display: none; }
+.s-secnav .chip { cursor: pointer; }
+.qsf-sum-row { padding: var(--sp-2) 0; border-top: 1px solid var(--line-soft); }
+.qsf-sum-row:first-of-type { border-top: 0; padding-top: 0; }
+.qsf-sum-row > div + div, .qsf-sum-row > .qr-out { margin-top: 2px; }
+.qsf-sum-n { font-size: var(--fs-lg); margin: 0 var(--sp-1); }
+.qsf-sum-row .badge.near-edge { display: inline-block; width: auto; margin: 0 var(--sp-1) 0 0; }      /* beside the score here, at every width */
+.qsf-sum-doms { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-3); margin-top: var(--sp-1); font-size: var(--fs-sm); }
+.qsf-sum-acts { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-2); }
+.ws[data-ws="watch"] > .ws-ctx .addrow { margin: 0; }
+.w-notes > .meta:first-child { margin-top: 0; }
+.w-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-2) var(--sp-4); margin-top: var(--sp-2); }
+.w-facts .lbl { display: block; color: var(--muted); font-size: var(--fs-sm); }
+.w-facts b { font-weight: 600; }
+.w-trend { margin-top: var(--sp-3); }
+.w-trend canvas { display: block; }
+#w-score { margin-top: var(--sp-2); }
+@container content (max-width: 1119px) { #w-side { display: none; } }
+@container content (min-width: 1120px) { #wtbl tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; } }

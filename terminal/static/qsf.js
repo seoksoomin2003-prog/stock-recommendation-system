@@ -350,6 +350,51 @@ function qsfOpenCard(ticker, push = true) {
   window.scrollTo(0, 0);
 }
 
+// 점수 요약 (작업 화면 개편 5단계, 사용자 결정 O-1): 종목 화면과 관심종목 오른쪽 칸.  순위가 쓰는 기록된 스캔(qsfLatest, 5분 기억)에서
+// 그 종목 줄을 그대로 옮깁니다.  평가를 부르지 않고 점수를 계산하지 않습니다.  순위 숫자는 순위 표와 같은 방법(그 스타일 줄의 차례)입니다.
+// 점수와 신뢰도는 따로 적고(곱하지 않음), 제목에 스캔 거래일을 적어 지난 값을 지금 값처럼 보이지 않게 합니다.  스캔에 없는 종목은
+// 숫자 없이 그렇다고만 씁니다.  compact: 관심종목 칸처럼 좁은 곳(영역 막대 생략, 제목은 h3).  still(): 그 사이 다른 종목을 열었는지.
+// 끝나면 box.dataset.session에 스캔 거래일을 남깁니다(종목 화면이 차트 날짜와 견줄 때 씀).
+async function qsfScanSummary(box, t, mk, { compact = false, still = () => true } = {}) {
+  if (!box) return;
+  const title = (sub, btn) => compact ? `<h3 class="qc-title">점수 요약 ${sub}</h3>` : `<h2>점수 요약 ${sub}${btn ? ` <span class="ph-actions">${btn}</span>` : ""}</h2>`;
+  const open = (cls = "btn-primary") => `<button type="button" class="${cls} qsf-sumopen" data-card="${esc(t)}" title="순위·카드 탭에서 이 종목의 점수 카드(지금 공식으로 계산)를 엽니다">점수 카드 열기</button>`;
+  delete box.dataset.session;
+  box.innerHTML = `${title('<span class="meta m0">스캔 기록</span>')}<div class="meta" role="status">불러오는 중…</div>`;
+  let d = null, failed = null;
+  try { d = await qsfLatest(mk); } catch (e) { failed = e; }
+  if (!box.isConnected || !still()) return;
+  if (failed || !d || d.status !== "REAL") {
+    box.innerHTML = `${title('<span class="meta m0">스캔 기록</span>')}<div class="empty">${failed ? `스캔 기록을 읽지 못했습니다: ${esc(errKo(failed))} 스캔 기록이 없다는 뜻이 아닙니다.` : "아직 기록된 스캔이 없습니다. 매일 자동 실행 뒤에 점수 요약이 나옵니다."}</div>
+      <div class="qsf-sum-acts">${failed ? '<button type="button" class="ghost qsf-sumretry">다시 시도</button> ' : ""}${open("ghost")}</div>`;
+    const r = box.querySelector(".qsf-sumretry"); if (r) r.onclick = () => qsfScanSummary(box, t, mk, { compact, still });
+    return;
+  }
+  box.dataset.session = d.session;
+  const sub = `<span class="meta m0">스캔 기록 ${esc(d.session)}</span> <span class="badge STALE s-age" hidden>지금 시세와 다를 수 있음</span>`;
+  const mine = ["SWING", "LONG_TERM"].map((s) => [s, d.rows.findIndex((x) => x.strategy === s && x.ticker === t)]);
+  if (!mine.some(([, i]) => i >= 0)) {
+    box.innerHTML = `${title(sub)}<div class="empty">이 종목은 ${esc(d.session)} 스캔 대상이 아닙니다. 점수 카드에서 지금 평가할 수 있습니다(처음에는 수십 초).</div><div class="qsf-sum-acts">${open()}</div>`;
+    return;
+  }
+  const edges = qsfBands ? qsfBands.map((b) => b.start).filter((v) => v > 0) : null;
+  const one = ([s]) => {
+    const rows = d.rows.filter((x) => x.strategy === s), i = rows.findIndex((x) => x.ticker === t), r = rows[i];
+    if (!r) return `<div class="qsf-sum-row"><div><b>${QSF_STRAT[s]}</b> <span class="meta m0">이 스캔에 ${QSF_STRAT[s]} 점수 기록 없음</span></div></div>`;
+    const n = rows.filter((x) => isNum(x.score)).length, top = n && isNum(r.score) ? Math.max(1, Math.ceil(((i + 1) / n) * 100)) : null;
+    const out = r.actionability !== "ACTIONABLE", gates = r.gates || [];
+    const why = out ? (gates.length ? gates.map((g) => esc(QSF_GATE[g] || g)).join(", ") : esc(QSF_ACT[r.actionability] || "실행 대상 아님")) : "";
+    const dm = r.domains || {}, bars = compact ? "" : `<div class="qsf-sum-doms">${QSF_RANK_DOMAINS.map((k) => `<span title="영역 점수(0~100)${k === "RISK" ? ". 높을수록 위험이 낮습니다" : ""}"><span class="meta m0">${QSF_DOMAIN_NAME[k]}</span> ${isNum(dm[k]) ? `<span class="qd-bar"><i style="width:${Math.max(2, Math.min(100, dm[k]))}%"></i></span><span class="num">${dm[k].toFixed(0)}</span>` : DASH}</span>`).join("")}</div>`;
+    return `<div class="qsf-sum-row"><div><b>${QSF_STRAT[s]}</b> <b class="num qsf-sum-n">${qsfInt(r.score)}</b>${qsfNear(r.score, edges)} ${qsfLabel(r)}${r.band_label && r.band_label !== r.action_label ? ` <span class="meta m0">구간 ${esc(r.band_label)}</span>` : ""}</div>
+      <div class="meta m0">${isNum(r.score) ? `${i + 1}위 / ${n}${top ? ` · 상위 ${top}%` : ""} · ` : ""}<span title="자료가 얼마나 있는지를 말합니다. 맞을 확률이 아닙니다.">신뢰도(자료의 양) ${esc(QSF_CONF[r.confidence] || r.confidence || "—")}</span>${r.entry_status ? ` · ${esc(qsfEntry(r.entry_status, s))}` : ""}</div>
+      ${why ? `<div class="qr-out">실행 대상 아님 · ${why}</div>` : ""}${bars}${qsfMissTag(r)}${qsfRiskLines(r)}</div>`;
+  };
+  box.innerHTML = `${title(sub, compact ? "" : open())}${mine.map(one).join("")}
+    ${d.live_model_version && d.model_version && d.live_model_version !== d.model_version ? `<div class="meta">${esc(d.model_version)} 공식으로 기록된 값입니다. 점수 카드는 지금 공식(${esc(d.live_model_version)})으로 다시 계산하므로 다를 수 있습니다.</div>` : ""}
+    <div class="meta">점수 검증: 높은 점수의 수익 근거 아직 없음 · 참고용 · ${esc(d.model_version || "")}</div>${compact ? `<div class="qsf-sum-acts">${open("ghost")}</div>` : ""}`;
+}
+document.addEventListener("click", (e) => { const b = e.target.closest && e.target.closest(".qsf-sumopen"); if (b) qsfOpenCard(b.dataset.card); });
+
 const QSF_RISK_NOTE = "참고용 표시입니다. 점수와 순위에 반영되지 않으며, 이 종목을 피하면 수익이 난다는 검증은 아직 없습니다. 한국 시장 변동성 상위 20%입니다.";
 const QSF_DEAL_NOTE = "SEC에 인수·합병 절차 공시가 있는 종목입니다. 인수 가격이 정해지면 주가가 그 값에 묶여 더 오를 여지가 작고, 거래가 깨지면 크게 내릴 수 있습니다. 인수하는 쪽이 낸 공시일 수도 있습니다. 점수에는 들어가지 않습니다.";
 const qsfDealTag = (d) => !d ? "" : ` <span class="badge risk-note" title="${QSF_DEAL_NOTE} ${esc(d.label || "")}(${esc(d.form || "")}, ${esc(d.date || "")})">합병 절차 공시 · 참고</span>`;

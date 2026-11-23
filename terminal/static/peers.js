@@ -27,6 +27,8 @@ async function loadPeers(t) {
 function paintPeers() {
   const box = $("#s-peers"), d = peerState.data;
   if (!box || !d) return;
+  const side = $("#s-grades");          // 작업 화면 개편 5단계: 종목 화면 오른쪽 칸에 '업종 내 위치'를 둡니다.  없으면 전처럼 한 묶음에
+  if (side) side.hidden = true;
   if (d.status !== "REAL") { box.innerHTML = ui.head({ title: "동종업계 비교" }) + ui.empty("이 종목은 QSF 스캔 대상이 아니라 업종 비교가 없습니다."); return; }
   const gradeRow = (st, name) => `<tr><td class="l">${name}</td>${PEER_PARTS.map(([k]) => {
     const g = (d.grades[st] || {})[k] || {};
@@ -41,9 +43,11 @@ function paintPeers() {
     return peerState.desc ? y - x : x - y;
   });
   const shown = peerState.all ? rows : rows.filter((r, i) => i < 12 || r.ticker === d.ticker);
+  const grades = `${ui.table({ cls: "grades", cols: [{ label: "업종 내 위치", cls: "l" }, ...PEER_PARTS.map(([, label]) => ({ label }))], rows: [gradeRow("SWING", "스윙 점수"), gradeRow("LONG_TERM", "장기 점수")] })}
+    <div class="meta">${esc(d.basis_note)} 글자에 마우스를 올리면 순위와 값이 보입니다.</div>`;
+  if (side) { side.innerHTML = `${ui.head({ title: "업종 내 위치", sub: `${sectorKo(d.group)} · ${d.basis} ${d.peers.length}개 종목` })}${grades}<div class="meta">점수: 스캔 거래일 ${esc(d.session)} · ${esc(d.model_version || "")}</div>`; side.hidden = false; }
   box.innerHTML = `${ui.head({ title: "동종업계 비교", sub: `${sectorKo(d.group)} · ${d.basis} ${d.peers.length}개 종목` })}
-    ${ui.table({ cls: "grades", cols: [{ label: "업종 내 위치", cls: "l" }, ...PEER_PARTS.map(([, label]) => ({ label }))], rows: [gradeRow("SWING", "스윙 점수"), gradeRow("LONG_TERM", "장기 점수")] })}
-    <div class="meta">${esc(d.basis_note)} 글자에 마우스를 올리면 순위와 값이 보입니다.</div>
+    ${side ? "" : grades}
     <div class="tbl-wrap"><table id="peer-tbl"><thead><tr><th class="l">종목</th>${cols.map(([k, n]) => `<th class="sort${peerState.sort === k ? " on" : ""}" data-k="${k}">${n}${peerState.sort === k ? (peerState.desc ? " ▼" : " ▲") : ""}</th>`).join("")}</tr></thead>
       <tbody>${shown.map((r) => `<tr class="click${r.ticker === d.ticker ? " me" : ""}" data-ticker="${esc(r.ticker)}"><td class="l"><b>${esc(r.name || r.ticker)}</b> <span class="meta m0">${esc(r.ticker)}</span></td>${cols.map(([, , f]) => `<td class="num">${f(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
     ${hidden.length ? `<div class="meta">값이 하나도 없는 열 ${hidden.length}개(${hidden.map(([, n]) => n).join(", ")})는 접었습니다. 재무 비율은 다음 자동 실행 뒤에 채워집니다.</div>` : ""}
