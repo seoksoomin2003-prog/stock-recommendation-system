@@ -28,6 +28,7 @@ from terminal.services import Terminal, clean_ticker
 STATIC = Path(__file__).resolve().parent / "static"
 from terminal import assistant, automation, coin_bridge, model_scan, record_status, server_agent, symbols, today  # noqa: E402
 from terminal.committee import service as committee_service  # noqa: E402
+from terminal.qsf import rank_notes as qsf_rank_notes  # noqa: E402
 from terminal.qsf import changes as qsf_changes, forecast as qsf_forecast, kr_cap_view as qsf_cap_view, kr_method as qsf_kr_method, lookahead as qsf_lookahead, paper_book as qsf_paper_book, regime_weights as qsf_regime_weights, screen as qsf_screen, track_record as qsf_track_record, turnover_book as qsf_turnover_book  # noqa: E402
 from terminal.qsf import fund_period as qsf_fund_period, rank_book as qsf_rank_book, readings as qsf_readings, stance as qsf_stance  # noqa: E402
 
@@ -224,6 +225,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[pho
         ("GET", "/api/qsf/market-state"): lambda q, b: t.market_state(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/top3"): lambda q, b: t.qsf.top3(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/rank-notes"): lambda q, b: t.rank_notes(_market(q.get("market", "US"))),
+        ("GET", "/api/qsf/bands"): lambda q, b: qsf_rank_notes.bands(),
         ("GET", "/api/qsf/peers"): lambda q, b: t.qsf.peers(clean_ticker(q.get("t", "")), _market(q.get("market", "US"))),
         ("GET", "/api/qsf/sector-picks"): lambda q, b: t.sector_picks(_market(q.get("market", "US")), q.get("fund", "")),
         ("GET", "/api/qsf/heatmap"): lambda q, b: t.qsf.heatmap(_market(q.get("market", "US")), _strategy(q.get("strategy", "SWING"))),

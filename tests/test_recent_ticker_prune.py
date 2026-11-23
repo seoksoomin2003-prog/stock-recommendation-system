@@ -22,11 +22,11 @@ def block() -> str:
 def run(stored, charts, exact=()):
     """charts: ticker -> the /api/chart answer (None: the request failed)."""
     js = """
-let store = { recentTickers: JSON.stringify(%s) };
+let store = { "qse-recent": JSON.stringify(%s) };
 const localStorage = { getItem: (k) => store[k] ?? null, setItem: (k, v) => { store[k] = v; } };
 const isNum = (v) => typeof v === "number" && isFinite(v);
 const marketOf = (t) => (/^[0-9A-Z]{6}$/.test(t) && /[0-9]/.test(t) ? "KR" : "US");
-function recentTickers() { return JSON.parse(localStorage.getItem("recentTickers") || "[]"); }
+function recentTickers() { return JSON.parse(localStorage.getItem("qse-recent") || "[]"); }
 const CHARTS = %s, EXACT = new Set(%s);
 async function api(url) {
   const q = new URL(url, "http://x").searchParams;
@@ -36,7 +36,7 @@ async function api(url) {
   return c;
 }
 %s
-pruneRecentTickers().then(() => console.log(store.recentTickers));
+pruneRecentTickers().then(() => console.log(store["qse-recent"]));
 """ % (json.dumps(stored), json.dumps(charts), json.dumps(list(exact)), block())
     out = subprocess.run(["node", "-e", js], capture_output=True, text=True, timeout=30)
     assert out.returncode == 0, out.stderr

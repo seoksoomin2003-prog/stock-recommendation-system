@@ -12,7 +12,7 @@ async function renderRotation(box) {
   try {
     const d = await api(mq("/api/rotation"));
     if (want !== state.market) return;
-    rrg.data = d; rrgDraw(); redrawers.add(rrgDraw); rrgTable(d);
+    rrg.data = d; rrgDraw(); redrawOn("map", "rrg", rrgDraw); rrgTable(d);
     $("#rrg-meta").innerHTML = d.status === "REAL"
       ? meta(d.source, d.fetched_at, `기준 지수 ${esc(d.benchmark)} · 마지막 주 ${esc(d.as_of)} · ${esc(d.method)}${d.missing.length ? ` · 가격 없음: ${esc(d.missing.join(", "))}` : ""}`)
       : `<div class="empty">${badge("UNAVAILABLE")} 업종 가격을 받지 못했습니다.</div>`;
@@ -21,7 +21,7 @@ async function renderRotation(box) {
 function rrgDraw() {
   const cv = $("#rrg-cv"), d = rrg.data;
   if (!cv || !cv.isConnected || !d || d.status !== "REAL") return;
-  const size = Math.min(cv.parentElement.clientWidth, 640), { ctx, w, h } = setupCanvas(cv, window.innerWidth < 600 ? size : Math.min(560, size));
+  const size = Math.min(cv.parentElement.clientWidth, 640), { ctx, w, h } = setupCanvas(cv, isPhone() ? size : Math.min(560, size));
   let span = 2;
   d.funds.forEach((f) => f.tail.forEach((p) => { span = Math.max(span, Math.abs(p.ratio - 100), Math.abs(p.momentum - 100)); }));
   span *= 1.12;

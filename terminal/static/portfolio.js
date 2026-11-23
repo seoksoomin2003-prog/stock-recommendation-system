@@ -194,7 +194,7 @@ async function loadEquity() {
     if (!d.points.length) { $("#eq-sum").innerHTML = "거래 기록이 생기면 계좌 가치 곡선을 그립니다."; return; }
     $("#eq-sum").innerHTML = `시작 ${esc(d.start)} 이후 · 내 계좌(TWR) ${pct(d.twr_pct)} · ${esc(d.benchmark)} ${pct(d.bench_pct)}`;
     $("#eq-meta").innerHTML = meta(d.source, d.fetched_at, esc(d.method));
-    drawEquity(); redrawers.add(drawEquity);
+    drawEquity(); redrawOn("portfolio", "equity", drawEquity);
   } catch (e) { $("#eq-sum").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; }
 }
 function drawEquity() {

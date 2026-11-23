@@ -84,7 +84,7 @@ def _contrast(a, b):
 
 
 def test_price_colours_follow_the_market_and_status_green_does_not():
-    light = _tokens(CSS[:CSS.index("@media (prefers-color-scheme: dark)")])
+    light = _tokens(CSS[:CSS.index(':root[data-theme="dark"]')])
     dark = _tokens(CSS[CSS.index(':root[data-theme="dark"]'):CSS.index("* { box-sizing")])
     for t in (light, dark):
         assert {"--up-intl", "--down-intl", "--up-kr", "--down-kr", "--ok", "--on-accent"} <= set(t) and "--up" not in t
@@ -110,7 +110,7 @@ state.tab = "today"; state.market = "US"; paintColorRule(); seen.push(ds.color |
 
 
 def test_text_on_the_accent_passes_and_a_selected_segment_is_a_neutral_inversion():
-    light = _tokens(CSS[:CSS.index("@media (prefers-color-scheme: dark)")])
+    light = _tokens(CSS[:CSS.index(':root[data-theme="dark"]')])
     dark = _tokens(CSS[CSS.index(':root[data-theme="dark"]'):CSS.index("* { box-sizing")])
     assert _contrast(dark["--on-accent"], dark["--accent"]) >= 4.5 and _contrast(light["--on-accent"], light["--accent"]) >= 4.5
     for sel in (".search button {", ".btn-primary {", ".g-A {"):
@@ -183,7 +183,7 @@ console.log(JSON.stringify([qsfInt(69.8), qsfInt(70.2), qsfNear(69.8, E) !== "",
 
 # ---------------------------------------------------------------- light theme check (2026-11-23): small coloured text passes on the chip too
 def test_light_theme_green_and_amber_pass_on_the_chip_and_kr_moves_the_50_day_line_off_blue():
-    light = _tokens(CSS[:CSS.index("@media (prefers-color-scheme: dark)")])
+    light = _tokens(CSS[:CSS.index(':root[data-theme="dark"]')])
     for k in ("--up-intl", "--ok", "--down-intl", "--up-kr", "--down-kr", "--warn"):
         assert _contrast(light[k], light["--chip"]) >= 4.5 and _contrast(light[k], light["--panel"]) >= 4.5, k
     assert ':root[data-color="kr"] { --sma50: var(--ma60); }' in CSS

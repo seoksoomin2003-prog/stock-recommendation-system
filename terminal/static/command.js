@@ -56,11 +56,27 @@ function cmdParse(raw) {
 const cmdEl = document.createElement("div");
 cmdEl.id = "cmd";
 cmdEl.hidden = true;
-cmdEl.innerHTML = `<div class="cmd-box" role="dialog" aria-label="명령창"><input id="cmd-q" autocomplete="off" spellcheck="false" placeholder="종목 코드, 회사명, 탭 이름, 질문, help (예: AAPL, 삼성전자, 점수, 지도, 한국)">
-  <ul id="cmd-list" role="listbox"></ul>
-  <div class="cmd-help">↑↓ 선택 · Enter 이동 · Esc 닫기 · 어디서나 <kbd>/</kbd> 또는 <kbd>⌘K</kbd> · 묶음 바로가기 <kbd>1</kbd>~<kbd>6</kbd> · 시장 전환 <kbd>M</kbd> · 도움말 <kbd>?</kbd></div></div>`;
+cmdEl.innerHTML = `<div class="cmd-box" role="dialog" aria-modal="true" aria-label="명령창"><input id="cmd-q" role="combobox" aria-expanded="true" aria-controls="cmd-list" aria-autocomplete="list" aria-label="명령창 입력" autocomplete="off" spellcheck="false" placeholder="종목 코드, 회사명, 탭 이름, 질문, help (예: AAPL, 삼성전자, 점수, 지도, 한국)">
+  <ul id="cmd-list" role="listbox" aria-label="이동할 곳"></ul>
+  <div class="cmd-help" id="cmd-help"></div><div class="cmd-keys"><button type="button" class="ghost" id="cmd-keys"></button></div></div>`;
 document.body.appendChild(cmdEl);
-let cmdItems = [], cmdSel = 0, cmdMoved = false, cmdSymTimer = null, cmdSymToken = 0;
+let cmdItems = [], cmdSel = 0, cmdMoved = false, cmdSymTimer = null, cmdSymToken = 0, cmdBack = null;
+// 한 글자 단축키(/ ? 1~9 M) 켜고 끄기 (5차 묶음 P3-4, 사용자 결정 2026-11-23): 기본은 켜짐.  ⌘K(Ctrl+K)는 늘 됩니다.
+let keysOn = true;
+try { keysOn = localStorage.getItem("qse-keys") !== "off"; } catch (e) { /* storage unavailable: on */ }
+function keysPaint() {
+  const label = keysOn ? "한 글자 단축키 끄기" : "한 글자 단축키 켜기";
+  $("#keysbtn").textContent = label; $("#cmd-keys").textContent = label;
+  $("#cmd-help").innerHTML = "↑↓ 선택 · Enter 이동 · Esc 닫기 · " + (keysOn
+    ? "어디서나 <kbd>/</kbd> 또는 <kbd>⌘K</kbd> · 묶음 바로가기 <kbd>1</kbd>~<kbd>6</kbd> · 시장 전환 <kbd>M</kbd> · 도움말 <kbd>?</kbd>"
+    : "한 글자 단축키 꺼짐 · 명령창은 <kbd>⌘K</kbd>(Ctrl+K)로 엽니다");
+}
+function keysToggle() {
+  keysOn = !keysOn;
+  try { localStorage.setItem("qse-keys", keysOn ? "on" : "off"); } catch (e) { /* not remembered */ }
+  keysPaint();
+  if (typeof notify === "function") notify(keysOn ? "한 글자 단축키를 켰습니다." : "한 글자 단축키를 껐습니다. 명령창은 ⌘K(Ctrl+K)로 엽니다.", "info");
+}
 // 시장·탭 이름이나 도움말처럼 그 자체가 명령인 말
 function cmdIsCommand(low) {
   return CMD_HELP.includes(low) || Object.values(CMD_MARKETS).flat().includes(low) || cmdTabs().some((t) => [t.label, ...(CMD_ALIASES[t.tab] || [])].some((n) => n.toLowerCase() === low));
@@ -87,14 +103,24 @@ function cmdSymbols(raw) {
   }, 150);
 }
 function cmdPaint() {
-  $("#cmd-list").innerHTML = cmdItems.map((it, i) => `<li role="option" class="${i === cmdSel ? "on" : ""}" data-i="${i}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></li>`).join("")
+  $("#cmd-list").innerHTML = cmdItems.map((it, i) => `<li role="option" id="cmd-opt-${i}" aria-selected="${i === cmdSel}" class="${i === cmdSel ? "on" : ""}" data-i="${i}"><span>${esc(it.label)}</span><small>${esc(it.hint)}</small></li>`).join("")
     || '<li class="none">해당하는 이동이 없습니다.</li>';
+  const on = $("#cmd-opt-" + cmdSel);
+  on ? $("#cmd-q").setAttribute("aria-activedescendant", on.id) : $("#cmd-q").removeAttribute("aria-activedescendant");
+  if (on) on.scrollIntoView({ block: "nearest" });
 }
+// 열 때 초점이 있던 곳을 기억해 닫을 때 되돌립니다 (5차 묶음 P2-13).  고른 곳으로 이동할 때는 되돌리지 않습니다.
 function cmdOpen() {
+  cmdBack = document.activeElement && document.activeElement !== document.body ? document.activeElement : null;
   cmdEl.hidden = false; $("#cmd-q").value = ""; cmdItems = cmdParse(""); cmdSel = 0; cmdMoved = false; cmdSymbols(""); cmdPaint(); $("#cmd-q").focus();
 }
-function cmdClose() { cmdEl.hidden = true; }
-function cmdRun(i) { const it = cmdItems[i]; if (!it) return; cmdClose(); it.run(); window.scrollTo(0, 0); }
+function cmdClose(back = true) {
+  if (cmdEl.hidden) return;
+  cmdEl.hidden = true;
+  if (back && cmdBack && cmdBack.isConnected) cmdBack.focus();
+  cmdBack = null;
+}
+function cmdRun(i) { const it = cmdItems[i]; if (!it) return; cmdClose(false); it.run(); window.scrollTo(0, 0); }
 $("#cmd-q").addEventListener("input", (e) => { cmdItems = cmdParse(e.target.value); cmdSel = 0; cmdMoved = false; cmdPaint(); cmdSymbols(e.target.value); });
 $("#cmd-q").addEventListener("keydown", (e) => {
   if (e.key === "ArrowDown") { cmdSel = Math.min(cmdSel + 1, cmdItems.length - 1); cmdMoved = true; cmdPaint(); e.preventDefault(); }
@@ -102,13 +128,23 @@ $("#cmd-q").addEventListener("keydown", (e) => {
   else if (e.key === "Enter" && !e.isComposing) { cmdRun(cmdSel); e.preventDefault(); }
   else if (e.key === "Escape") cmdClose();
 });
+// 창이 열린 동안 Tab은 입력칸과 단축키 단추 사이에서만 돕니다.
+cmdEl.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && e.target.id !== "cmd-q") return cmdClose();
+  if (e.key !== "Tab") return;
+  e.preventDefault();
+  (document.activeElement === $("#cmd-q") ? $("#cmd-keys") : $("#cmd-q")).focus();
+});
+$("#cmd-keys").onclick = keysToggle;
+$("#keysbtn").onclick = keysToggle;
+keysPaint();
 $("#cmd-list").addEventListener("click", (e) => { const li = e.target.closest("li[data-i]"); if (li) cmdRun(+li.dataset.i); });
 cmdEl.addEventListener("click", (e) => { if (e.target === cmdEl) cmdClose(); });
 
 function typing(e) { const t = e.target; return t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)); }
 document.addEventListener("keydown", (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); cmdEl.hidden ? cmdOpen() : cmdClose(); return; }
-  if (!cmdEl.hidden || typing(e) || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
+  if (!keysOn || !cmdEl.hidden || typing(e) || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
   if (e.key === "/") { e.preventDefault(); cmdOpen(); return; }
   if (e.key === "?") { e.preventDefault(); cmdOpen(); return; }
   if (/^[1-9]$/.test(e.key)) { const g = document.querySelectorAll(".groups button")[+e.key - 1]; if (g) { showGroup(g.dataset.group); window.scrollTo(0, 0); } return; }

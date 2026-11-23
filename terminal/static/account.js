@@ -104,11 +104,11 @@ async function renderAccount() {
   try { d = await api("/api/account"); } catch (e) { el.innerHTML = errBox(e); return; }
   state.loaded.account = true;
   const t = d.total, rate = t.usdkrw;
-  const parts = d.accounts.map((a) => `<tr><td class="l"><b>${a.label}</b> <span class="meta m0">${a.currency === "KRW" ? "원" : "달러"}${a.records ? "" : " · 기록 없음"}</span></td>
+  const parts = d.accounts.map((a) => `<tr><td class="l"><b>${esc(a.label)}</b> <span class="meta m0">${a.currency === "KRW" ? "원" : "달러"}${a.records ? "" : " · 기록 없음"}</span></td>
     <td class="num">${acctCur(a.equity, a.currency)}${a.complete ? "" : " " + badge("STALE")}</td><td class="num">${acctTotal(a.equity_krw, rate)}</td>
     <td class="num">${isNum(a.equity_krw) && t.krw ? ((a.equity_krw / t.krw) * 100).toFixed(1) + "%" : DASH}</td><td class="num">${acctCur(a.cash, a.currency)}</td>
     <td class="num">${acctCur(a.market_value, a.currency)}</td><td class="num">${acctPnl(a.total_pnl_krw, rate)}</td>
-    <td>${a.market === "COIN" ? "" : `<button type="button" class="ghost acct-detail" data-m="${a.market}">자세히</button>`}</td></tr>`).join("");
+    <td>${a.market === "COIN" ? "" : `<button type="button" class="ghost acct-detail" data-m="${esc(a.market)}">자세히</button>`}</td></tr>`).join("");
   el.innerHTML = `
     ${d.integrity.status !== "OK" ? `<div class="notice">거래 기록 무결성 오류: ${esc(d.integrity.reason || "")}. 새 기록 추가가 중단됩니다.</div>` : ""}
     <div class="panel"><h2>내 계좌 <span class="meta m0">미국 주식 · 한국 주식 · 코인</span>

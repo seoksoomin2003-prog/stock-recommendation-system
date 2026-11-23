@@ -1,7 +1,7 @@
 // 시장 지도 탭: 업종별 히트맵(크기 = 시가총액, 색 = 등락 또는 점수).  읽기 전용.
 "use strict";
 const heat = { mode: "1d", strategy: "SWING", data: null, rects: [] };
-try { const v = JSON.parse(localStorage.getItem("heatView") || "null"); if (v && v.mode) Object.assign(heat, { mode: v.mode, strategy: v.strategy || "SWING" }); } catch (e) { /* default view */ }
+try { const v = JSON.parse(localStorage.getItem("qse-heat-view") || "null"); if (v && v.mode) Object.assign(heat, { mode: v.mode, strategy: v.strategy || "SWING" }); } catch (e) { /* default view */ }
 const HEAT_MODES = { "1d": ["1일", 0.03], "5d": ["5일", 0.08], "1m": ["1개월", 0.15], score: ["QSF 점수", null] };
 
 // Squarified treemap (Bruls et al.): rows of tiles kept close to square.  Items need .value > 0; returns {item, x, y, w, h}.
@@ -52,7 +52,7 @@ async function renderMap() {
     <div id="map-more"></div>`;
   const pick = (id, key) => ($(id).onclick = (e) => {
     const b = e.target.closest("button"); if (!b) return; heat[key] = b.dataset.k;
-    try { localStorage.setItem("heatView", JSON.stringify({ mode: heat.mode, strategy: heat.strategy })); } catch (err) { /* not remembered */ }
+    try { localStorage.setItem("qse-heat-view", JSON.stringify({ mode: heat.mode, strategy: heat.strategy })); } catch (err) { /* not remembered */ }
     $(id).querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
     key === "strategy" ? loadHeat() : heatDraw();
   });
@@ -65,7 +65,7 @@ async function loadHeat() {
   try {
     const d = await api(mq(`/api/qsf/heatmap?strategy=${heat.strategy}`));
     if (want !== state.market + heat.strategy) return;
-    heat.data = d; heatDraw(); redrawers.add(heatDraw);
+    heat.data = d; heatDraw(); redrawOn("map", "heat", heatDraw);
     $("#heat-meta").innerHTML = d.status === "REAL"
       ? meta(d.source, null, `스캔 거래일 ${esc(d.session)} · ${esc(d.model_version || "")} · ${esc(d.basis)}${d.without_cap.length ? ` · 시가총액 없음: ${esc(d.without_cap.join(", "))}` : ""}`)
       : `<div class="empty">${badge("UNAVAILABLE")} 스캔 결과가 없습니다.</div>`;
@@ -74,7 +74,7 @@ async function loadHeat() {
 function heatDraw() {
   const cv = $("#heat-cv"), d = heat.data;
   if (!cv || !cv.isConnected || !d || d.status !== "REAL") return;
-  const H = window.innerWidth < 600 ? 520 : 620, { ctx, w, h } = setupCanvas(cv, H);
+  const H = isPhone() ? 520 : 620, { ctx, w, h } = setupCanvas(cv, H);
   const groups = {};
   d.items.filter((i) => isNum(i.market_cap)).forEach((i) => { const k = i.sector || "업종 없음"; (groups[k] = groups[k] || []).push(i); });
   const sectors = Object.entries(groups).map(([name, its]) => ({ name, its, value: its.reduce((s, i) => s + i.market_cap, 0) }));

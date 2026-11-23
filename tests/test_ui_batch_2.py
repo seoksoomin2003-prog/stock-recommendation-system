@@ -104,7 +104,7 @@ def test_the_ranking_fits_by_width_without_losing_judgement_or_entry():
     phone = media(CSS, "max-width: 640px")
     assert ".qsf-rank-tbl .w, .qsf-rank-tbl .w2, .asst-cand .w { display: none; }" in phone
     assert ".qsf-rank-tbl .qr-m2, .asst-cand .qr-m2 { display: block;" in phone and "word-break: keep-all" in phone
-    assert ".qsf-rank-tbl .w, .qsf-rank-tbl .w2" not in media(CSS, "max-width: 760px")
+    assert ".qsf-rank-tbl .w, .qsf-rank-tbl .w2" not in media(CSS, "max-width: 1023px")
     row = body(QSF, "function qsfRankRow(")
     assert '<div class="qr-m2">${qsfLabel(r)} ${entry}</div>' in row and '<td class="l w2">${entry}</td>' in row
     assert row.count("qd-col") == 1 and row.count("qr-dcol") == 1 and 'class="w qd-col"' in body(QSF, "async function qsfRank(")
@@ -132,7 +132,7 @@ console.log(JSON.stringify([rows.map(qsfRiskLines), qsfBuybackChip({ buyback: tr
 
 
 def test_the_new_marks_are_readable_in_both_themes():
-    light = _tokens(CSS[:CSS.index("@media (prefers-color-scheme: dark)")])
+    light = _tokens(CSS[:CSS.index(':root[data-theme="dark"]')])
     dark = _tokens(CSS[CSS.index(':root[data-theme="dark"]'):CSS.index("* { box-sizing")])
     for t in (light, dark):
         for ground in ("--panel", "--chip", "--bg"):

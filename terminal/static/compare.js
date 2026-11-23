@@ -1,6 +1,6 @@
 // 비교 탭: 여러 종목과 지수를 같은 출발점(0%)에서 배당 포함 수익률로 겹쳐 본다.  읽기 전용.
 "use strict";
-const CMP_KEY = "compareTickers";
+const CMP_KEY = "qse-compare";
 const CMP_INDEX = { "^GSPC": "S&P 500", "^IXIC": "나스닥 종합", "^KS11": "코스피", "^KQ11": "코스닥" };
 const cmp = { list: null, slots: {}, range: "1y", data: null };
 
@@ -57,7 +57,7 @@ async function renderCompare() {
   try {
     const d = await api(`/api/compare?t=${encodeURIComponent(cmp.list.join(","))}&range=${cmp.range}`);
     if (want !== cmp.list.join(",") + "|" + cmp.range) return;
-    cmp.data = d; cmpDraw(); redrawers.add(cmpDraw); cmpTables(d); cmpRoll(); redrawers.add(cmpRoll);
+    cmp.data = d; cmpDraw(); redrawOn("compare", "main", cmpDraw); cmpTables(d); cmpRoll(); redrawOn("compare", "roll", cmpRoll);
     const miss = d.missing && d.missing.length ? ` · <span class="err">가격 없음: ${esc(d.missing.join(", "))}</span>` : "";
     $("#cmp-meta").innerHTML = d.status === "REAL"
       ? meta(d.source, d.fetched_at, `${esc(d.dates[0])} ~ ${esc(d.dates[d.dates.length - 1])} · ${esc(d.basis)}${d.mixed_markets ? " 미국과 한국을 섞으면 두 시장이 모두 연 날만 남습니다." : ""}${miss}`)
@@ -73,7 +73,7 @@ function cmpChips() {
 function cmpDraw() {
   const cv = $("#cmp-cv"), d = cmp.data;
   if (!cv || !cv.isConnected || !d || d.status !== "REAL") return;
-  const H = window.innerWidth < 600 ? 280 : 380, { ctx, w, h } = setupCanvas(cv, H);
+  const H = isPhone() ? 280 : 380, { ctx, w, h } = setupCanvas(cv, H);
   const n = d.dates.length, labels = d.series.length <= 4, padR = labels ? 92 : 52, padT = 10, padB = 20, pw = w - padR, ph = h - padT - padB;
   let lo = 0, hi = 0;
   d.series.forEach((s) => s.points.forEach((v) => { lo = Math.min(lo, v); hi = Math.max(hi, v); }));
@@ -121,7 +121,7 @@ function cmpRoll() {
   }
   cv.hidden = false;
   $("#cmp-roll-h").textContent = `${cmpName(d.rolling_base)} 기준 · 최근 ${d.rolling_window}거래일씩`;
-  const { ctx, w, h } = setupCanvas(cv, window.innerWidth < 600 ? 200 : 240), n = d.dates.length, padR = 40, pw = w - padR, ph = h - 22;
+  const { ctx, w, h } = setupCanvas(cv, isPhone() ? 200 : 240), n = d.dates.length, padR = 40, pw = w - padR, ph = h - 22;
   const x = (i) => (n > 1 ? (i / (n - 1)) * pw : 0), y = (v) => 6 + (1 - (v + 1) / 2) * (ph - 6), grid = cssVar("--grid"), muted = cssVar("--muted");
   ctx.font = "11px -apple-system, sans-serif"; ctx.textBaseline = "middle";
   [-1, -0.5, 0, 0.5, 1].forEach((v) => { ctx.strokeStyle = v === 0 ? muted : grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(pw, y(v)); ctx.stroke(); ctx.fillStyle = muted; ctx.fillText(v.toFixed(1), pw + 6, y(v)); });

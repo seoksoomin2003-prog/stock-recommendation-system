@@ -185,8 +185,9 @@ def test_the_screens_read_the_new_fields():
     row = body(qsf, "function qsfRankRow(", "\n}")
     assert row.count("<td") == 10 and row.count("QSF_RANK_DOMAINS.map(dom)") == 1 and 'colspan="${QSF_RANK_COLS}"' in row     # 8 cells + 4 domain cells = 12, and the fold
     asst = (ROOT / "terminal" / "static" / "assistant.js").read_text(encoding="utf-8")
-    today = body(asst, "async function renderToday(", "\n}")
+    today = body(asst, "async function asstBrief(", "\n}")          # batch 5: the list is drawn by asstBrief, first visit and return
     assert "d.headline_main || d.headline" in today and "asstTiles(d.tiles)" in today and "asstCands(d.candidates, d.note)" in today and "i.ops" in today
-    assert "redrawers.delete(asstSparks)" in today and "spark(cv" in today
+    assert 'redrawOn("today", "sparks", sparks)' in today and "spark(cv" in today
     css = (ROOT / "terminal" / "static" / "style.css").read_text(encoding="utf-8")
-    assert ".qsf-rank-tbl .w, .qsf-rank-tbl .w2, .asst-cand .w { display: none; }" in body(css, "@media (max-width: 640px) {", "\n}") and ".qsf-balance {" in css
+    rule = ".qsf-rank-tbl .w, .qsf-rank-tbl .w2, .asst-cand .w { display: none; }"          # inside a phone block (several since batch 5)
+    assert rule in css and css[:css.index(rule)].rsplit("@media", 1)[1].startswith(" (max-width: 640px) {") and ".qsf-balance {" in css

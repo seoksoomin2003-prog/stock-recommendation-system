@@ -70,7 +70,6 @@ function asstCands(c, note) {
   };
   return `<h3>오늘의 후보 ${c.session ? `<span class="badge">${esc(c.session)}</span>` : ""}</h3>${note ? `<div class="notice">${esc(note)}</div>` : ""}<div class="asst-cands">${one("SWING")}${one("LONG_TERM")}</div><div class="meta">${esc(c.note || "")}</div>`;
 }
-let asstSparks = null;
 async function renderToday() {
   const box = $("#tab-today");
   state.loaded.today = true;
@@ -89,10 +88,28 @@ async function renderToday() {
     if (tk && tk.dataset.ticker) return openTicker(tk.dataset.ticker);
   };
   if (asstPending) { const q = asstPending; asstPending = null; asstAsk(q); }
-  const brief = $("#asst-brief");
+  await asstBrief(false);
+}
+// 오늘 탭에 돌아왔을 때 (5차 묶음 P2-22, 사용자 결정 2026-11-23): 앞서 그린 화면을 그대로 두고 흐리게 한 뒤 '갱신 중'을 띄우고,
+// 새 목록이 오면 바꿉니다.  받지 못하면 앞 화면이 언제 것인지 적어 둡니다.  묻고 답한 칸은 그대로입니다.
+function asstReturn(scrollY) {
+  window.scrollTo(0, scrollY);
+  if (asstPending) { const q = asstPending; asstPending = null; asstAsk(q); window.scrollTo(0, 0); }
+  asstBrief(true);
+}
+let asstBriefToken = 0;
+async function asstBrief(again) {
+  const brief = $("#asst-brief"), mk = isCoin() ? "코인" : isKR() ? "한국" : "미국", market = state.market, token = ++asstBriefToken;
+  if (!brief) return;
+  const had = again && brief.dataset.at ? brief.dataset.at : "";
+  if (had) {
+    brief.querySelectorAll(".asst-refresh").forEach((x) => x.remove());
+    brief.classList.add("refreshing");
+    brief.insertAdjacentHTML("afterbegin", `<div class="asst-refresh" role="status">갱신 중… 아래는 ${esc(stamp(had) || had)}에 만든 목록입니다.</div>`);
+  }
   try {
-    const d = await api(`/api/assistant/today?market=${state.market}`);
-    if (state.tab !== "today" || !$("#asst-brief")) return;
+    const d = await api(`/api/assistant/today?market=${market}`);
+    if (token !== asstBriefToken || market !== state.market || !brief.isConnected) return;
     // 자동 실행·기록 상태는 아래 '작업 상태'로 따로 모읍니다(시장에 대해 할 일과 섞지 않습니다). 할 일 수준이 있으면 펼쳐 둡니다.
     const main = d.items.filter((i) => !i.ops), ops = d.items.filter((i) => i.ops);
     const groups = ASST_LEVELS.map((lv) => {
@@ -101,12 +118,21 @@ async function renderToday() {
     }).join("");
     const opsBox = ops.length ? `<details class="asst-ops"${ops.some((i) => i.level === "ACT") ? " open" : ""}><summary>작업 상태 (자동 실행·기록) <span class="badge">${ops.length}</span></summary><ul class="asst-list">${ops.map(asstItem).join("")}</ul></details>` : "";
     const unread = (d.unread_parts || []).length ? `<div class="msg err">읽지 못한 부분: ${d.unread_parts.map((p) => esc(p.label)).join(", ")}. 이 부분의 항목은 이 화면에 빠져 있습니다.</div>` : "";
+    brief.classList.remove("refreshing");
+    brief.dataset.at = d.generated_at || "";
     brief.innerHTML = `<h2>${esc(d.headline_main || d.headline)}</h2><div class="meta mt-0">${mk} 시장 · 기준 거래일 ${esc(d.session || "기록 없음")} · ${when(d.generated_at)} 기준</div>
       ${unread}${asstTiles(d.tiles)}${asstCands(d.candidates, d.note)}${groups ? `<h3>할 일과 알림</h3>${groups}` : '<div class="meta">보여 줄 항목이 없습니다.</div>'}${opsBox}${d.candidates && d.candidates.styles ? "" : `<div class="meta">${esc(d.note)}</div>`}`;
-    if (asstSparks) redrawers.delete(asstSparks);
-    asstSparks = () => brief.querySelectorAll("canvas[data-spark]").forEach((cv) => spark(cv, JSON.parse(cv.dataset.spark)));
-    asstSparks(); redrawers.add(asstSparks);
-  } catch (e) { brief.innerHTML = `<div class="msg err">오늘 목록을 만들지 못했습니다: ${esc(errKo(e))}</div>`; }
+    const sparks = () => brief.querySelectorAll("canvas[data-spark]").forEach((cv) => spark(cv, JSON.parse(cv.dataset.spark)));
+    redrawOn("today", "sparks", sparks);
+    if (state.tab === "today") sparks(); else redrawLater.add("today:sparks");      // 숨은 탭의 캔버스는 폭이 0입니다
+  } catch (e) {
+    if (token !== asstBriefToken || !brief.isConnected) return;
+    if (had) {
+      brief.classList.remove("refreshing");
+      brief.querySelectorAll(".asst-refresh").forEach((x) => x.remove());
+      brief.insertAdjacentHTML("afterbegin", `<div class="msg err">새 목록을 받지 못했습니다: ${esc(errKo(e))}. 아래는 ${esc(stamp(had) || had)}에 만든 목록입니다.</div>`);
+    } else brief.innerHTML = `<div class="msg err">오늘 목록을 만들지 못했습니다: ${esc(errKo(e))}</div>`;
+  }
 }
 RENDER.today = renderToday;
-ALWAYS_FRESH.add("today");
+RETURN.today = asstReturn;

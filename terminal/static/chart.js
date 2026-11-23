@@ -1,7 +1,7 @@
 // 차트분석 탭 (CHART-1, 2026-11-23): 캔들·OHLC, 이동평균, 볼린저밴드, 거래량, RSI, MACD와 고전 신호.  읽기 전용이며 점수와 섞지 않는다.
 // 계산은 서버(terminal/chart_analysis.py)가 하고, 이 파일은 그리기만 한다.  설정 숫자(기간·기준선)는 서버가 보낸 값을 쓴다.
 "use strict";
-const CHA_KEY = "chartAnalysis";
+const CHA_KEY = "qse-chart";
 const CHA_RANGES = { "3mo": "3개월", "6mo": "6개월", "1y": "1년", "3y": "3년", "5y": "5년", "10y": "10년" };
 const CHA_TYPES = { candle: "캔들", ohlc: "OHLC", line: "선" };
 const CHA_HOME = { US: ["^GSPC", "^IXIC"], KR: ["^KS11", "^KQ11"] };
@@ -66,7 +66,7 @@ async function renderChart() {
     if (want !== `${chaTicker()}|${cha.range}|${(cha.ma[mk] || []).join(",")}` || mk !== state.market || !$("#cha-stack")) return;
     cha.data = d;
     if (d.status !== "UNAVAILABLE" && !t.startsWith("^")) rememberTicker(t);
-    chaControls(d); chaDraw(); redrawers.add(chaDraw); chaText(d);
+    chaControls(d); chaDraw(); redrawOn("chart", "main", chaDraw); chaText(d);
   } catch (e) { $("#cha-meta").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; }
 }
 function chaControls(d) {
@@ -111,7 +111,7 @@ function chaText(d) {
 function chaDraw() {
   const d = cha.data, cv = $("#cha-price");
   if (!d || !cv || !cv.isConnected || !d.bars.length) return;
-  const phone = window.innerWidth < 600, bars = d.bars, n = bars.length, padR = 58;
+  const phone = isPhone(), bars = d.bars, n = bars.length, padR = 58;
   const P = setupCanvas(cv, phone ? 300 : 400), V = setupCanvas($("#cha-vol"), phone ? 70 : 90), R = setupCanvas($("#cha-rsi"), phone ? 80 : 100), M = setupCanvas($("#cha-macd"), phone ? 90 : 110);
   const pw = P.w - padR, bw = pw / n, x = (i) => i * bw + bw / 2;
   cha.x = { bw, pw, n };

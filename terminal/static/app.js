@@ -1,6 +1,21 @@
 // 퀀트 터미널 (TERMINAL-1) — vanilla JS, no external libraries.  Missing values are shown as "—", never 0.
 "use strict";
 const $ = (s, el = document) => el.querySelector(s);
+// 저장 키 이름 (5차 묶음 P3-6): 이 브라우저에 남기는 설정은 모두 qse-로 시작합니다.  옛 이름의 값은 한 번 옮기고 옛 키는 지웁니다.
+const STORE_RENAMES = [["recentTickers", "qse-recent"], ["qsfView", "qse-qsf-view"], ["qsfFolds", "qse-qsf-folds"], ["heatView", "qse-heat-view"],
+  ["chartAnalysis", "qse-chart"], ["compareTickers", "qse-compare"]];
+try {
+  for (const [old, now] of STORE_RENAMES) {
+    const v = localStorage.getItem(old);
+    if (v === null) continue;
+    if (localStorage.getItem(now) === null) localStorage.setItem(now, v);
+    localStorage.removeItem(old);
+  }
+} catch (e) { /* storage unavailable: defaults */ }
+// 화면 너비 단계 (5차 묶음 P2-11): 폰 640px 이하 · 태블릿 641~1023 · 컴퓨터 1024~1599 · 넓은 화면 1600 이상.  JS는 이 한 곳에서 묻습니다.
+const isPhone = () => window.matchMedia("(max-width: 640px)").matches;
+// 바깥 주소 링크는 http(s)만 엽니다 (5차 묶음 P3-8).  다른 스킴이면 링크를 만들지 않습니다.
+const safeUrl = (u) => (/^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "");
 const STATUS_KO = { REAL: "실데이터", STALE: "지연·오래됨", UNAVAILABLE: "데이터 없음", FROZEN: "고정", EXPERIMENTAL: "실험" };
 const state = { tab: "overview", ticker: null, card: null, range: "1y", loaded: {}, market: "US" };
 try { const m = localStorage.getItem("qse-market"); if (m === "KR" || m === "COIN") state.market = m; } catch (e) { /* storage unavailable */ }
@@ -222,7 +237,7 @@ function paintGroups(tab) {
   const g = groupOf(tab);
   if (!g) return;
   groupTab[g] = tab;
-  document.querySelectorAll(".groups button").forEach((b) => { b.classList.toggle("on", b.dataset.group === g); b.hidden = !groupShown(b.dataset.group); });
+  document.querySelectorAll(".groups button").forEach((b) => { b.classList.toggle("on", b.dataset.group === g); b.toggleAttribute("aria-current", b.dataset.group === g); b.hidden = !groupShown(b.dataset.group); });
   const mine = [...document.querySelectorAll(".tabs button")].filter((b) => { b.hidden = b.dataset.group !== g || (!groupShown(g) && !ANY_MARKET.has(b.dataset.tab)); return !b.hidden; });
   document.querySelector(".tabs").hidden = mine.length < 2;
   paintBar(g);
@@ -230,7 +245,7 @@ function paintGroups(tab) {
 // 폰 아래 막대 (3차 묶음 P1-11, 사용자 결정 2026-11-23): 640px 이하에서는 윗줄 묶음 대신 오늘·종목·점수·내 계좌·더보기를 화면 아래에
 // 둡니다.  코인 시장에서는 종목·점수 자리에 코인이 옵니다.  더보기는 나머지 묶음(시장, 차트, 검증·기록)과 머리줄에서 뺀 단추를 엽니다.
 const BAR_GROUPS = ["today", "stock", "score", "coin", "account"];
-const MORE_ACTS = [["collect", "지금 수집"], ["phonebtn", "폰 연결"], ["cmdbtn", "명령창"], ["theme", "화면 테마"]];
+const MORE_ACTS = [["collect", "지금 수집"], ["phonebtn", "폰 연결"], ["cmdbtn", "명령창"], ["theme", "화면 테마"], ["keysbtn", "한 글자 단축키"]];
 function paintBar(g) {
   const bar = $("#bottombar");
   if (!bar) return;
@@ -251,10 +266,10 @@ function moreClose() {
 function moreOpen() {
   const sh = $("#moresheet");
   const groups = [...document.querySelectorAll(".groups button")].filter((b) => !BAR_GROUPS.includes(b.dataset.group) && groupShown(b.dataset.group));
-  const acts = MORE_ACTS.filter(([id]) => { const b = $("#" + id); return b && !b.hidden && !(id === "collect" && document.documentElement.classList.contains("on-phone")); });
+  const acts = MORE_ACTS.filter(([id]) => { const b = $("#" + id); return b && (!b.hidden || id === "keysbtn") && !(id === "collect" && document.documentElement.classList.contains("on-phone")); });
   sh.innerHTML = `<div class="ms-title">다른 묶음</div><div class="ms-row">${groups.map((b) => `<button type="button" data-group="${b.dataset.group}" class="${b.classList.contains("on") ? "on" : ""}">${esc(b.textContent)}</button>`).join("")
       || '<span class="meta m0">이 시장에는 다른 묶음이 없습니다.</span>'}</div>
-    <div class="ms-title">도구</div><div class="ms-row">${acts.map(([id, label]) => `<button type="button" data-act="${id}">${esc(id === "phonebtn" ? $("#phonebtn").textContent : label)}</button>`).join("")}</div>`;
+    <div class="ms-title">도구</div><div class="ms-row">${acts.map(([id, label]) => `<button type="button" data-act="${id}">${esc(id === "phonebtn" || id === "keysbtn" ? $("#" + id).textContent : label)}</button>`).join("")}</div>`;
   sh.hidden = false;
   $("#bottombar [data-more]").setAttribute("aria-expanded", "true");
 }
@@ -297,6 +312,15 @@ function tabHash(tab) {
   if (tab === "qsf" && state.card && marketOf(state.card) === state.market) return `qsf/${state.card}`;
   return tab;
 }
+// 표가 많은 화면은 넓은 화면에서 1680px까지 씁니다 (5차 묶음 P2-11, 사용자 결정 2026-11-23).  나머지 화면은 1280px 그대로입니다.
+const WIDE_TABS = new Set(["qsf", "committee", "portfolio", "watch", "lab", "model", "coin"]);
+// 화면마다 h1 하나 (5차 묶음 P3-4): 화면 읽기 프로그램이 지금 어느 화면인지 읽습니다.  보이는 제목은 그대로입니다.
+function paintTitle(tab) {
+  const b = document.querySelector(`.tabs button[data-tab="${tab}"]`), name = b ? b.textContent.trim() : "";
+  $("#pagetitle").textContent = name ? `${name} · 퀀트 터미널` : "퀀트 터미널";
+  document.title = $("#pagetitle").textContent;
+  document.querySelectorAll(".tabs button").forEach((x) => x.toggleAttribute("aria-current", x === b));
+}
 function show(tab, push = true) {
   if (!ANY_MARKET.has(tab) && !groupShown(groupOf(tab) || "today")) tab = isCoin() ? "coin" : "today";       // 지금 시장에 없는 탭이면 그 시장의 첫 화면으로
   if (tab !== state.tab) tabScroll[state.tab] = window.scrollY;
@@ -306,10 +330,13 @@ function show(tab, push = true) {
   document.querySelectorAll(".tabs button").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
   paintGroups(tab);
   document.querySelectorAll(".tab").forEach((s) => s.classList.toggle("on", s.id === "tab-" + tab));
+  $("main").classList.toggle("wide", WIDE_TABS.has(tab));
+  paintTitle(tab);
   if (push) location.hash = tabHash(tab);
-  if (tab === "stock") return renderStock();
-  if (!state.loaded[tab] || ALWAYS_FRESH.has(tab)) RENDER[tab]();
-  else if (RETURN[tab]) RETURN[tab](tabScroll[tab] || 0);          // 이미 그려 둔 탭: 다시 만들지 않고 돌아왔다고만 알립니다
+  if (tab === "stock") { const r = renderStock(); redrawShown(tab); return r; }
+  if (!state.loaded[tab] || ALWAYS_FRESH.has(tab)) return RENDER[tab]();
+  redrawShown(tab);                                                  // 숨어 있는 동안 크기나 테마가 바뀌었으면 지금 다시 그립니다
+  if (RETURN[tab]) RETURN[tab](tabScroll[tab] || 0);                 // 이미 그려 둔 탭: 다시 만들지 않고 돌아왔다고만 알립니다
 }
 // Price colours by market (user decision 2026-11-23): Korean red up / blue down on Korean screens; screens that mix markets keep the
 // international pair.  Set before a tab draws, since the charts read the colours when they draw.
@@ -329,7 +356,7 @@ function setMarket(m, render = true) {
   try { localStorage.setItem("qse-market", m); } catch (e) { /* storage unavailable */ }
   paintMarket();
   state.loaded = {};
-  redrawers.clear();
+  redrawers.clear(); redrawLater.clear();
   document.querySelectorAll(".tab").forEach((s) => (s.innerHTML = ""));
   if (state.ticker && marketOf(state.ticker) !== m) state.ticker = null;
   if (render) show(state.tab);
@@ -337,9 +364,9 @@ function setMarket(m, render = true) {
 // Recently opened stocks, on this browser only.  Shown as shortcuts on the empty stock tab.
 // A ticker is stored only once it is known to exist: a scanned stock at once, any other after its chart came back with prices
 // (loadChart).  A mistyped code is therefore never a shortcut or a default of the compare tab.
-function recentTickers() { try { return JSON.parse(localStorage.getItem("recentTickers") || "[]").filter((x) => typeof x === "string"); } catch (e) { return []; } }
+function recentTickers() { try { return JSON.parse(localStorage.getItem("qse-recent") || "[]").filter((x) => typeof x === "string"); } catch (e) { return []; } }
 function rememberTicker(t) {
-  try { localStorage.setItem("recentTickers", JSON.stringify([t, ...recentTickers().filter((x) => x !== t)].slice(0, 12))); } catch (e) { /* not remembered */ }
+  try { localStorage.setItem("qse-recent", JSON.stringify([t, ...recentTickers().filter((x) => x !== t)].slice(0, 12))); } catch (e) { /* not remembered */ }
 }
 // Shortcuts saved before that guard came (2026-11-22) can hold a code that never existed, such as the mistyped 'APPL'.  Once per page,
 // a shortcut outside the scanned stocks is asked for its chart; it is dropped only when the price source gave no prices for it while
@@ -349,7 +376,7 @@ const noPrices = (d) => !!d && d.status === "UNAVAILABLE" && !!d.cache && d.cach
 // The chart answer carries when its prices were fetched (fetched_at), not their age; server and page run on the same machine.
 const freshPrices = (d) => !!d && d.status !== "UNAVAILABLE" && !!d.cache && d.cache.status === "REAL" && !!d.cache.fetched_at && Date.now() - Date.parse(d.cache.fetched_at) < 120000;
 function forgetTicker(t) {
-  try { localStorage.setItem("recentTickers", JSON.stringify(recentTickers().filter((x) => x !== t))); } catch (e) { /* not stored */ }
+  try { localStorage.setItem("qse-recent", JSON.stringify(recentTickers().filter((x) => x !== t))); } catch (e) { /* not stored */ }
 }
 async function pruneRecentTickers() {
   const chart = (t) => api(`/api/chart?t=${encodeURIComponent(t)}&range=3mo`).catch(() => null);
@@ -475,20 +502,61 @@ function prefillTicker(input) {
   input.value = state.ticker; input.dataset.prefill = state.ticker;
 }
 document.addEventListener("click", (e) => { const el = e.target.closest("[data-ticker]"); if (el && !e.target.closest("button.x")) openTicker(el.dataset.ticker); });
+// 누르면 열리는 줄과 글자 (5차 묶음 P2-12, 사용자 결정 2026-11-23): 줄 어디를 눌러도 열리는 것은 그대로 두고, Tab으로 가서 Enter나
+// 스페이스로도 열리게 합니다.  화면이 새로 그려질 때마다 표시를 붙입니다.  단추와 링크는 원래 키보드로 됩니다.
+const KEYABLE = "tr.click, tr[data-coin], tr[data-fund], div.card[data-ticker], b[data-ticker], span[data-ticker], .fold > div > .panel > h2";
+function markKeyable(root) {
+  if (!root.querySelectorAll) return;
+  const els = [...root.querySelectorAll(KEYABLE)];
+  if (root.matches && root.matches(KEYABLE)) els.push(root);
+  for (const el of els) {
+    if (el.hasAttribute("tabindex")) continue;
+    el.tabIndex = 0;
+    if (el.tagName !== "TR") el.setAttribute("role", "button");      // 표의 줄은 줄로 남겨 둡니다(열 이름과 함께 읽힘)
+  }
+  els.filter((el) => el.tagName === "H2").forEach((h) => h.setAttribute("aria-expanded", h.closest(".fold").classList.contains("open")));
+  root.querySelectorAll(".seg button").forEach((b) => b.setAttribute("aria-pressed", b.classList.contains("on")));
+}
+new MutationObserver((list) => {
+  for (const m of list) {
+    if (m.type === "attributes") {
+      const t = m.target;
+      if (t.matches(".seg button")) t.setAttribute("aria-pressed", t.classList.contains("on"));
+      else if (t.matches(".fold")) { const h = $(":scope > div > .panel > h2", t); if (h) h.setAttribute("aria-expanded", t.classList.contains("open")); }
+    } else m.addedNodes.forEach((n) => n.nodeType === 1 && markKeyable(n));
+  }
+}).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+markKeyable(document.body);
+document.addEventListener("keydown", (e) => {
+  if ((e.key !== "Enter" && e.key !== " ") || e.isComposing || e.target.tabIndex !== 0 || !e.target.matches || !e.target.matches(KEYABLE)) return;
+  e.preventDefault();
+  e.target.click();
+});
 
-// theme: auto (OS) → light → dark
+// theme: auto (OS) → light → dark.  The page always carries data-theme, so style.css keeps one copy of the dark colours (batch 5 P2-21);
+// theme.js sets it before the first paint, and 'auto' follows the device setting when it changes.
 const THEMES = ["auto", "light", "dark"];
+const systemDark = () => !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
 function applyTheme(t) {
-  if (t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.dataset.theme = t;
+  document.documentElement.dataset.theme = t === "dark" || (t === "auto" && systemDark()) ? "dark" : "light";
+  document.documentElement.dataset.themeChoice = t;
   $("#theme").title = "화면 테마: " + { auto: "시스템", light: "밝게", dark: "어둡게" }[t];
   redrawAll();
 }
 let theme = "auto";
 try { theme = localStorage.getItem("qse-theme") || "auto"; } catch (e) { /* storage unavailable */ }
 $("#theme").onclick = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % 3]; try { localStorage.setItem("qse-theme", theme); } catch (e) {} applyTheme(theme); };
-const redrawers = new Set();
-function redrawAll() { redrawers.forEach((f) => f()); }
-window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redrawAll);
+// 다시 그리기 (5차 묶음 P2-22): "탭:부분" 이름마다 함수 하나.  같은 탭을 다시 그려도 쌓이지 않습니다.  지금 보이는 탭만 바로
+// 그리고, 숨은 탭은 표시만 해 두었다가 그 탭으로 돌아올 때 그립니다(숨은 캔버스는 폭이 0이라 그려도 소용이 없습니다).
+const redrawers = new Map(), redrawLater = new Set();
+function redrawOn(tab, part, fn) { redrawers.set(`${tab}:${part}`, fn); }
+function redrawAll() {
+  redrawers.forEach((f, k) => { if (k.startsWith(state.tab + ":")) f(); else redrawLater.add(k); });
+}
+function redrawShown(tab) {
+  for (const k of [...redrawLater]) if (k.startsWith(tab + ":")) { redrawLater.delete(k); const f = redrawers.get(k); if (f) f(); }
+}
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => (theme === "auto" ? applyTheme("auto") : redrawAll()));
 let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(redrawAll, 120); });
 
 // ------------------------------------------------------------------ 시장 개요
@@ -501,7 +569,7 @@ async function renderOverview() {
       d.groups.map((g) => `<div class="panel"><h2>${esc(g.title)}</h2><div class="grid">${g.items.map(card).join("")}</div></div>`).join("") +
       `<div class="panel">${meta(d.source, d.cache.fetched_at, badge(d.cache.status))}<div class="meta">${esc(d.basis)}</div></div>`;
     const draw = () => el.querySelectorAll("canvas[data-spark]").forEach((cv) => spark(cv, JSON.parse(cv.dataset.spark)));
-    draw(); redrawers.add(draw);
+    draw(); redrawOn("overview", "sparks", draw);
   } catch (e) { el.innerHTML = errBox(e); }
 }
 function card(i) {
@@ -555,7 +623,7 @@ async function loadChart(t) {
     const c = await api(`/api/chart?t=${encodeURIComponent(t)}&range=${state.range}`);
     if (c.status !== "UNAVAILABLE") rememberTicker(t);          // 가격이 온 종목만 '최근 본 종목'에 남깁니다
     if (state.ticker !== t) return;
-    lastChart = c; drawPrice(); redrawers.add(drawPrice);
+    lastChart = c; drawPrice(); redrawOn("stock", "price", drawPrice);
     const L = c.last || {};
     $("#c-meta").innerHTML = c.bars.length ? meta(c.source, c.cache.fetched_at, `${badge(c.status)} ${liveBadge(L.intraday)} 마지막 일봉 ${esc(L.date)}`) :
       `<div class="empty">${badge("UNAVAILABLE")} 가격 데이터를 받지 못했습니다. 종목 코드를 확인하세요.</div>`;
@@ -577,7 +645,7 @@ function renderProfile(c) {
   $("#s-head").innerHTML = `<div class="head"><h2 class="m0">${esc(p.longName || p.shortName || c.ticker)} <span class="meta m0">${esc(c.ticker)} · ${esc(p.exchange || "")}</span></h2>
       <span><button class="ghost" id="addw">＋ 관심종목</button> <button class="ghost" id="addc" type="button">비교 차트</button> <button class="ghost" id="adda" type="button" title="이동평균·볼린저밴드·RSI·MACD와 고전 신호를 봅니다">차트분석</button> <button class="ghost" id="addq" type="button" title="점수 탭에서 이 종목의 점수 카드를 엽니다">점수 카드</button></span></div>
     <div class="head" id="s-price"></div>
-    <div class="meta">${esc([sectorKo(p.sector), p.industry].filter(Boolean).join(" · "))}${p.website ? ` · <a href="${esc(p.website)}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>
+    <div class="meta">${esc([sectorKo(p.sector), p.industry].filter(Boolean).join(" · "))}${safeUrl(p.website) ? ` · <a href="${esc(safeUrl(p.website))}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>
     <div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span><b class="num">${v}</b></div>`).join("")}</div>
     ${p.longBusinessSummary ? `<details class="co-sum" id="sum"><summary>회사 설명 <span class="meta m0">Yahoo 영문 원문</span> <span class="co-lead" lang="en">${esc(p.longBusinessSummary)}</span></summary><div class="summary open" lang="en">${esc(p.longBusinessSummary)}</div></details>` : ""}
     ${meta(c.profile.source, c.profile.fetched_at, badge(c.profile.status))}`;
@@ -613,7 +681,7 @@ function renderFilings(f) {
   if (f.status === "UNAVAILABLE") { el.innerHTML = `<h2>최근 ${name} 공시 ${badge("UNAVAILABLE")}</h2><div class="empty">${esc(f.reason || "")}</div>`; return; }
   el.innerHTML = `<h2>최근 ${name} 공시 ${badge(f.status)}</h2><div class="tbl-wrap"><table><thead><tr><th>제출일</th><th class="l">양식</th><th class="l">설명</th><th class="l">원문</th></tr></thead>
     <tbody>${f.items.map((i) => `<tr><td>${esc(i.filing_date)}</td><td class="l"><b>${esc(i.form)}</b> <span class="meta m0">${esc(FORM_KO[i.form] || "")}</span></td>
-      <td class="l">${esc(i.description || "")}</td><td class="l">${i.url ? `<a href="${esc(i.url)}" target="_blank" rel="noopener noreferrer">열기 ↗</a>` : DASH}</td></tr>`).join("")}</tbody></table></div>
+      <td class="l">${esc(i.description || "")}</td><td class="l">${safeUrl(i.url) ? `<a href="${esc(safeUrl(i.url))}" target="_blank" rel="noopener noreferrer">열기 ↗</a>` : DASH}</td></tr>`).join("")}</tbody></table></div>
     ${meta(f.source, f.fetched_at)}`;
 }
 
@@ -621,7 +689,7 @@ function renderFilings(f) {
 function drawPrice() {
   const cv = $("#pc"), c = lastChart;
   if (!cv || !c || !c.bars.length || !cv.isConnected) return;
-  const H = window.innerWidth < 600 ? 300 : 420;
+  const H = isPhone() ? 300 : 420;
   const { ctx, w, h } = setupCanvas(cv, H);
   const bars = c.bars, n = bars.length, padR = 58, padT = 8, volH = Math.round(h * 0.18), gap = 18, priceH = h - volH - gap - padT - 18;
   const pw = w - padR, bw = pw / n;
@@ -687,7 +755,7 @@ async function renderMacro() {
       <canvas data-m="${esc(m.id)}"></canvas></div>`).join("")}</div>
       <div class="meta">${mk === "KR" ? "소비자물가" : "CPI"}는 전년 동월 대비 상승률(%)로 계산해 표시합니다. 차트는 최근 약 260개 관측치입니다.</div>${meta(d.source)}</div>`;
     const draw = () => d.items.forEach((m) => { const cv = el.querySelector(`canvas[data-m="${m.id}"]`); if (cv && cv.isConnected) mini(cv, m.series); });
-    draw(); redrawers.add(draw);
+    draw(); redrawOn("macro", "minis", draw);
     if (typeof loadCalendar === "function") loadCalendar($("#econcal"));
   } catch (e) { el.innerHTML = errBox(e); }
 }
@@ -724,7 +792,7 @@ async function renderWatch() {
       ${d.qsf_scan && d.qsf_scan.status === "REAL" ? `<div class="meta">점수는 ${esc(d.qsf_scan.session)} 거래일 스캔(${esc(d.qsf_scan.model_version)})에 기록된 값입니다. 스캔 대상이 아닌 종목은 비워 둡니다. 점수 탭에서 다시 계산할 수 있습니다.</div>` : ""}
       ${d.cache ? meta(d.source, d.cache.fetched_at) : ""}<div class="meta">관심종목은 이 Mac의 data/terminal/watchlist.json 에만 저장됩니다.</div></div>`;
     const draw = () => el.querySelectorAll("canvas[data-spark]").forEach((cv) => spark(cv, JSON.parse(cv.dataset.spark)));
-    draw(); redrawers.add(draw);
+    draw(); redrawOn("watch", "sparks", draw);
     $("#wadd").onsubmit = (e) => { e.preventDefault(); watchOp("add", $("#wq").value); };
     el.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = (e) => { e.stopPropagation(); watchOp("remove", b.dataset.rm); }));
   } catch (e) { el.innerHTML = errBox(e); }
@@ -837,7 +905,7 @@ async function renderModel() {
   } catch (e) { el.innerHTML = errBox(e); }
 }
 
-const ALWAYS_FRESH = new Set(["watch", "account", "portfolio", "assist", "paper", "model"]);
+const ALWAYS_FRESH = new Set(["watch", "account", "portfolio", "assist", "paper", "model"]);      // 오늘 탭은 RETURN으로 돌아옵니다 (assistant.js)
 const RENDER = { overview: renderOverview, macro: renderMacro, watch: renderWatch, model: renderModel, stock: renderStock };
 const RETURN = {};          // 다시 그리지 않고 돌아온 탭이 할 일 (탭 이름 -> 함수(떠날 때의 스크롤 위치)).  점수 탭이 씁니다 (qsf.js).
 

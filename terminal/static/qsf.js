@@ -9,10 +9,21 @@ const qsfEntry = (status, strategy) => (status === "ENTRY_NOW" && strategy === "
 const qsfMissTag = (r) => (!r.missing_factors ? "" : ` <span class="badge info" title="점수에 드는 요인 가운데 ${r.missing_factors}개는 자료가 없어 나머지로만 계산했습니다.${r.band_held_back ? " 없는 부분을 '보통'으로 치면 구간이 내려가, 더 낮은 구간으로 보여 줍니다." : ""} 자료가 없다는 것은 좋다는 뜻이 아닙니다.">자료 없는 요인 ${r.missing_factors}</span>`);
 const QSF_CONF = { HIGH: "높음", MEDIUM: "보통", LOW: "낮음", INSUFFICIENT: "부족" };
 const QSF_EXIT = { HOLD: "보유", HOLD_AND_REVIEW: "보유하며 재검토", PARTIAL_TAKE_PROFIT: "일부 차익 실현 검토", REDUCE: "비중 축소 검토", EXIT: "청산 검토", THESIS_INVALIDATED: "투자 논리 무효", TIME_STOP_REVIEW: "시간 손절 재평가" };
-const qsfState = { get market() { return state.market; }, strategy: "SWING", view: (() => { try { return localStorage.getItem("qsfView") || "rank"; } catch (e) { return "rank"; } })(), fresh: {}, detail: null, evals: {}, rankToken: 0, evalToken: 0 };
+const qsfState = { get market() { return state.market; }, strategy: "SWING", view: (() => { try { return localStorage.getItem("qse-qsf-view") || "rank"; } catch (e) { return "rank"; } })(), fresh: {}, detail: null, evals: {}, rankToken: 0, evalToken: 0 };
 
+// 점수 구간의 경계와 이름은 서버의 설정(config.BANDS)에서 받습니다 (5차 묶음 P3-12).  이 파일에는 숫자를 다시 적지 않습니다.
+// 받기 전에는 구간 색을 칠하지 않고(중립), 받은 뒤 처음 그리는 화면부터 칠합니다.
+const QSF_BAND_TONE = { STRONG_BUY_CANDIDATE: "act-buy", BUY_CANDIDATE: "act-buy", HOLD_WATCH: "act-hold", WEAK_REDUCE: "act-reduce", SELL_AVOID: "act-sell" };
+let qsfBands = null;          // [{start, key, label}] 높은 구간부터
+api("/api/qsf/bands").then((d) => { if (Array.isArray(d.bands) && d.bands.length) qsfBands = d.bands; }).catch(() => {});
+function qsfBandKey(v) {
+  if (!isNum(v) || !qsfBands) return null;
+  const b = qsfBands.find((x) => v >= x.start);
+  return b ? b.key : null;
+}
 function qsfClass(a, score) {
-  if (a === "AVOID" && score !== null && score >= 40) return "act-reduce";   // 40-54.99 is the orange band; red starts below 40
+  const band = qsfBandKey(score);
+  if (a === "AVOID" && band && band !== "SELL_AVOID") return "act-reduce";   // AVOID above the lowest band shows the orange of its band
   return QSF_ACTION_CLASS[a] || "act-hold";
 }
 // Tables show whole scores (UI batch 1, user decision 2026-11-23); the stored score, the sort and the band edges are unchanged.
@@ -58,7 +69,7 @@ async function qsfStrip() {
 }
 function qsfBar(v) {
   if (v === null || v === undefined) return '<span class="missing">데이터 없음</span>';
-  const tone = v >= 70 ? "act-buy" : v >= 55 ? "act-hold" : v >= 40 ? "act-reduce" : "act-sell";
+  const tone = QSF_BAND_TONE[qsfBandKey(v)] || "act-hold";
   return `<span class="qsf-bar ${tone}"><i style="width:${Math.max(2, Math.min(100, v))}%"></i></span> <b class="num">${v.toFixed(0)}</b>`;
 }
 
@@ -69,7 +80,7 @@ function qsfSetView(v) {
   qsfState.view = v;
   document.querySelectorAll("#tab-qsf [data-view]").forEach((el) => { el.hidden = el.dataset.view !== v; });
   document.querySelectorAll("#qsfview button").forEach((b) => b.classList.toggle("on", b.dataset.v === v));
-  try { localStorage.setItem("qsfView", v); } catch (e) { /* private mode: the view is simply not remembered */ }
+  try { localStorage.setItem("qse-qsf-view", v); } catch (e) { /* private mode: the view is simply not remembered */ }
   qsfLoadView(v);
 }
 // A view is fetched when first shown, and again after the market or strategy changes; hidden views cost nothing.
@@ -163,7 +174,7 @@ async function qsfLoadRecord() {
 
 // 긴 화면은 제목만 보이고, 제목을 누르면 펼쳐집니다.  펼친 것은 이 브라우저가 기억합니다.  처음에는 판정 일정만 펼쳐 둡니다.
 const QSF_FOLD_OPEN = ["readings"];
-function qsfFoldState() { try { const v = JSON.parse(localStorage.getItem("qsfFolds") || "null"); return Array.isArray(v) ? v : QSF_FOLD_OPEN; } catch (e) { return QSF_FOLD_OPEN; } }
+function qsfFoldState() { try { const v = JSON.parse(localStorage.getItem("qse-qsf-folds") || "null"); return Array.isArray(v) ? v : QSF_FOLD_OPEN; } catch (e) { return QSF_FOLD_OPEN; } }
 function qsfFolds(el) {
   const open = new Set(qsfFoldState());
   el.querySelectorAll(".fold").forEach((f) => f.classList.toggle("open", open.has(f.dataset.fold)));
@@ -172,7 +183,7 @@ function qsfFolds(el) {
     if (!h || e.target.closest("button, a, input, select")) return;
     const f = h.closest(".fold");
     f.classList.toggle("open");
-    try { localStorage.setItem("qsfFolds", JSON.stringify([...el.querySelectorAll(".fold.open")].map((x) => x.dataset.fold))); } catch (err) { /* private mode: not remembered */ }
+    try { localStorage.setItem("qse-qsf-folds", JSON.stringify([...el.querySelectorAll(".fold.open")].map((x) => x.dataset.fold))); } catch (err) { /* private mode: not remembered */ }
     if (f.classList.contains("open")) redrawAll();          // 접힌 동안 그리지 못한 그래프를 지금 그립니다
   };
 }
@@ -206,7 +217,7 @@ async function renderQsf(keep = false) {
     </div>
     <div data-view="rank"><form id="qsfform" class="qsf-form">
       <input id="qsfticker" placeholder="${isKR() ? "종목코드 (예: 005930)" : "티커 (예: AAPL)"}" autocomplete="off" aria-label="종목">
-      <button class="btn-primary">평가</button></form><div id="qsfmsg" class="meta"></div><div id="qsfdetail"></div><div id="qsfrank"></div><div class="fold" data-fold="cap"><div id="qsfcap"></div></div><div class="fold" data-fold="changes"><div id="qsfchanges"></div></div></div>
+      <button class="btn-primary">평가</button></form><div id="qsfmsg" class="meta" role="status" aria-live="polite"></div><div class="qsf-split"><div id="qsfdetail"></div><div id="qsfrank"></div></div><div class="fold" data-fold="cap"><div id="qsfcap"></div></div><div class="fold" data-fold="changes"><div id="qsfchanges"></div></div></div>
     <div data-view="screen"><div id="qsfscreen"></div></div>
     <div data-view="exec"><div id="qsfplan"></div><div id="qsfpaper"></div></div>
     <div data-view="track"><div class="fold" data-fold="readings"><div id="qsfreadings"></div></div><div class="fold" data-fold="top3"><div id="qsftop3"></div></div><div class="fold" data-fold="fcast"><div id="qsffcast"></div></div>
@@ -259,6 +270,9 @@ async function qsfEvaluate(t, market, push = true) {
   } catch (e) { if (token === qsfState.evalToken && $("#qsfmsg")) $("#qsfmsg").textContent = "평가 실패: " + errKo(e); }
 }
 // 종목 화면의 '점수 카드' 버튼과 #qsf/코드 주소가 부릅니다: 점수 탭의 오늘 순위 보기에서 그 종목을 평가합니다.
+// 넓은 화면(1600px 이상)에서는 카드가 순위표 오른쪽에 붙어 있습니다 (5차 묶음 P2-11, 사용자 결정 2026-11-23).  순위에서 카드를 열어도
+// 페이지를 위로 옮기지 않아 보던 줄이 그대로 남습니다.
+const qsfBeside = () => window.matchMedia("(min-width: 1600px)").matches;
 function qsfOpenCard(ticker, push = true) {
   const t = String(ticker).toUpperCase();
   setMarket(marketOf(t), false);
@@ -626,7 +640,7 @@ async function qsfChanges() {
     ${qsfChangeTable("새로 매수 후보가 된 종목", d.entered_buy)}${qsfChangeTable("매수 후보에서 빠진 종목", d.left_buy)}
     <details class="qsf-today-fold"><summary>점수가 크게 움직인 종목</summary>${qsfChangeTable("오른 종목", d.up, "상위만")}${qsfChangeTable("내린 종목", d.down, "상위만")}</details>
     ${d.new_in_scan.length || d.gone_from_scan.length ? `<div class="meta">스캔에 새로 들어옴 ${d.new_in_scan.length}개, 빠짐 ${d.gone_from_scan.length}개</div>` : ""}</div>`;
-  box.querySelectorAll(".qs-open").forEach((b) => { b.onclick = () => { qsfEvaluate(b.dataset.t, mk); $("#qsfmsg").scrollIntoView({ block: "start" }); }; });
+  box.querySelectorAll(".qs-open").forEach((b) => { b.onclick = () => { qsfEvaluate(b.dataset.t, mk); if (!qsfBeside()) $("#qsfmsg").scrollIntoView({ block: "start" }); }; });
 }
 
 // ------------------------------------------------------------------ 스크리너
@@ -762,10 +776,10 @@ function qsfTodayHtml(d) {
   const warn = d.events_status !== "REAL" ? '<div class="meta">공시 경고를 확인하지 못했습니다.</div>'
     : d.warnings.length ? `<ul class="rec-alerts">${d.warnings.map((w) => `<li class="${esc(w.level)}">${esc(w.date)} ${esc(w.label)}</li>`).join("")}</ul>`
     : '<div class="meta">점수 기준일 이후 새로 확인된 공시 경고는 없습니다.</div>';
-  const filings = f.items && f.items.length ? `<ul class="qsf-list">${f.items.map((x) => `<li>${esc(x.filing_date || "")} ${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">${esc(x.form || "공시")}</a>` : esc(x.form || "공시")}${x.description ? ` <span class="meta m0">${esc(x.description)}</span>` : ""}</li>`).join("")}</ul>`
+  const filings = f.items && f.items.length ? `<ul class="qsf-list">${f.items.map((x) => `<li>${esc(x.filing_date || "")} ${safeUrl(x.url) ? `<a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer">${esc(x.form || "공시")}</a>` : esc(x.form || "공시")}${x.description ? ` <span class="meta m0">${esc(x.description)}</span>` : ""}</li>`).join("")}</ul>`
     : `<div class="meta">${f.status === "UNAVAILABLE" ? `공시를 받지 못했습니다${f.reason ? `: ${esc(f.reason)}` : ""}` : "점수 기준일 이후 공시가 없습니다."}</div>`;
   const news = n.status === "UNAVAILABLE" ? `<div class="meta">뉴스를 받지 못했습니다${n.error === "NO_NAME" ? " (종목명을 찾지 못함)" : ""}.</div>`
-    : n.items.length ? `${n.status === "STALE" ? '<div class="meta">새 뉴스를 받지 못해 이전에 받은 목록을 보여 줍니다.</div>' : ""}<ul class="qsf-news">${n.items.map((x) => `<li><a href="${esc(x.link)}" target="_blank" rel="noopener noreferrer">${esc(x.title)}</a><span class="meta m0">${esc(x.source || "")} · ${x.published ? when(x.published) : "시각 없음"}</span></li>`).join("")}</ul><div class="meta">출처: ${esc(n.provider || "")} · 받아온 시각 ${when(n.fetched_at)}</div>`
+    : n.items.length ? `${n.status === "STALE" ? '<div class="meta">새 뉴스를 받지 못해 이전에 받은 목록을 보여 줍니다.</div>' : ""}<ul class="qsf-news">${n.items.map((x) => `<li>${safeUrl(x.link) ? `<a href="${esc(safeUrl(x.link))}" target="_blank" rel="noopener noreferrer">${esc(x.title)}</a>` : esc(x.title)}<span class="meta m0">${esc(x.source || "")} · ${x.published ? when(x.published) : "시각 없음"}</span></li>`).join("")}</ul><div class="meta">출처: ${esc(n.provider || "")} · 받아온 시각 ${when(n.fetched_at)}</div>`
     : '<div class="meta">최근 뉴스가 없습니다.</div>';
   return `<div class="qsf-today"><h3>시세</h3>${quote}<h3>공시 경고</h3>${warn}<h3>최근 공시</h3>${filings}<h3>뉴스 제목</h3>${news}<div class="meta">${esc(d.note)}</div></div>`;
 }

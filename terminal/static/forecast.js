@@ -59,7 +59,7 @@ function fcTouchLines(d, levels) {
   const head = `<h3>기준에 닿을 가능성 <span class="meta m0">예측 층 FC-2 · 종가 기준</span> ${fcTouchBadge(t.test)}</h3>`;
   if (!t.table) return `${head}<div class="meta">닿을 가능성은 ${esc(t.first)} 거래일 기록부터 보입니다. 지금 보이는 기록(${esc(d.session)})은 그 전에 쓴 것이라 표가 없습니다. 비워 둔 것이며 0이 아닙니다.</div>`;
   const rows = levels.map((l) => { const cs = hs.map((h) => fcTouchCell(d, l, h)), far = cs[cs.length - 1];
-    return `<tr><td class="l"><b>스윙 ${l.name}</b></td><td class="num">${qsfPrice(l.v, d.market)}</td>
+    return `<tr><td class="l"><b>스윙 ${esc(l.name)}</b></td><td class="num">${qsfPrice(l.v, d.market)}</td>
       <td class="num" title="${hs[hs.length - 1]}거래일 변동성의 몇 배 거리인가">${isNum(far.dist) ? far.dist.toFixed(2) + "배" : DASH}</td>
       ${cs.map((c) => `<td class="num">${isNum(c.p) ? `<b>${c.text}</b>` : c.text}</td>`).join("")}
       <td class="num">${isNum(far.past) ? fcPct(far.past, 0) : DASH}</td></tr>`; }).join("");
@@ -102,7 +102,7 @@ function fcLevelLines(d, levels) {
   const hs = FC_HORIZONS.filter((h) => d.ranges[h]);
   if (!levels.length || !hs.length) return "";
   const where = (l, h) => { const r = d.ranges[h], a = Math.abs(l.log); return a <= r.log_half50 ? 0 : a <= r.log_half80 ? 1 : 2; };
-  const rows = levels.map((l) => `<tr><td class="l"><b>스윙 ${l.name}</b></td><td class="num">${qsfPrice(l.v, d.market)}</td><td class="num">${fcSigned(l.pct)}</td>${hs.map((h) => `<td class="l">${FC_WHERE[where(l, h)]}</td>`).join("")}</tr>`).join("");
+  const rows = levels.map((l) => `<tr><td class="l"><b>스윙 ${esc(l.name)}</b></td><td class="num">${qsfPrice(l.v, d.market)}</td><td class="num">${fcSigned(l.pct)}</td>${hs.map((h) => `<td class="l">${FC_WHERE[where(l, h)]}</td>`).join("")}</tr>`).join("");
   return `<div class="tbl-wrap"><table class="fc-table"><thead><tr><th class="l">스윙 카드의 기준</th><th>가격</th><th title="카드의 조회 시세 대비 거리">시세 대비</th>${hs.map((h) => `<th class="l">${h}거래일 범위에서</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
     <div class="meta">읽는 법(위·아래를 합친 크기 기준): '50% 범위 폭 안쪽'이면 그 거래일 수 뒤 종가가 이 거리보다 멀리 가 있을 경우가 절반을 넘고, '80% 범위 밖'이면 다섯 번에 한 번보다 적습니다. ${esc(d.path_note || "")} 손절·목표 기준과 주문 계획은 이 범위로 바뀌지 않습니다.</div>`;
 }

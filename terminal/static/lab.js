@@ -116,12 +116,12 @@ async function renderLab() {
     drawLab();
   };
   $("#costseg").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; labCost = b.dataset.c; $("#costseg").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); fill(); };
-  fill(); redrawers.add(drawLab);
+  fill(); redrawOn("lab", "main", drawLab);
 }
 function drawLab() {
   const cv = $("#labc"), d = labData;
   if (!cv || !cv.isConnected || !d) return;
-  const { ctx, w, h } = setupCanvas(cv, window.innerWidth < 600 ? 240 : 320);
+  const { ctx, w, h } = setupCanvas(cv, isPhone() ? 240 : 320);
   const series = Object.keys(d.models).map((c) => ({ c, s: d.models[c][labCost] })).filter((x) => x.s && x.s.nav);
   series.push({ c: "SPY", s: d.benchmark });
   const all = series.flatMap((x) => x.s.nav).filter(isNum).map((v) => Math.log(v));

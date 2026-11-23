@@ -31,6 +31,6 @@ async function loadCalendar(box) {
     ${ui.table({ cls: "cal", cols: ["날짜", "시각", "나라", "일정"].map((label) => ({ label, cls: "l" })), rows: rows.map(line), empty: "60일 안에 공식 발표된 일정이 없습니다." })}
     ${d.series.filter((s) => s.runs_out || s.stale).map((s) => ui.notice(`${esc(s.name)}: 공식 일정은 ${esc(s.covers_until)}까지만 들어 있습니다${s.stale ? ` (마지막 확인 ${esc(s.checked)}, 갱신 필요)` : ""}. ${esc(s.note || "")}`)).join("")}
     <div class="meta">${esc(d.basis)} 실적 발표일은 ${mk === "KR" ? "한국" : "미국"} 보유·관심 종목 가운데 스캔 때 저장한 날짜만 보입니다${d.earnings_status && d.earnings_status !== "REAL" ? ` (지금은 읽지 못함: ${esc(d.earnings_status)})` : ""}.
-      출처: ${d.series.map((s) => `<a href="${esc(s.source)}" target="_blank" rel="noopener">${esc(s.name)}</a> (${esc(s.checked)} 확인)`).join(" · ")}</div>`;
+      출처: ${d.series.map((s) => `${safeUrl(s.source) ? `<a href="${esc(safeUrl(s.source))}" target="_blank" rel="noopener">${esc(s.name)}</a>` : esc(s.name)} (${esc(s.checked)} 확인)`).join(" · ")}</div>`;
   box.querySelectorAll("[data-ticker]").forEach((b) => (b.onclick = () => openTicker(b.dataset.ticker)));
 }

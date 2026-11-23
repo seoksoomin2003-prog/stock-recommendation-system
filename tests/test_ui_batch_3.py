@@ -25,7 +25,7 @@ def test_type_layers_and_corners_read_the_tokens():
         assert k in root, k
     assert not re.search(r"font-size:\s*\d", CSS) and not re.search(r"z-index:\s*\d", CSS)          # every size and layer is a token
     assert not re.search(r"border-radius:\s*(4|6|8|10|12|14)px", CSS)
-    assert ":root { --fs-display: 24px; }" in media(CSS, "max-width: 600px")                         # the phone lowers the display size
+    assert ":root { --fs-display: 24px; }" in media(CSS, "max-width: 640px")                         # the phone lowers the display size
 
 
 # ---------------------------------------------------------------- P2-2 one field style whose edge can be seen
@@ -33,12 +33,12 @@ def test_every_field_shares_one_rule_and_its_edge_passes_three_to_one():
     rule = CSS[CSS.index("/* UI batch 3 P2-2"):CSS.index("/* TERMINAL-2")]
     assert 'input[type="search"]' in rule and "select, textarea {" in rule and "border: 1px solid var(--line-strong)" in rule
     assert ":focus-visible { outline: 2px solid var(--accent)" in rule
-    light = _tokens(CSS[:CSS.index("@media (prefers-color-scheme: dark)")])
+    light = _tokens(CSS[:CSS.index(':root[data-theme="dark"]')])
     dark = _tokens(CSS[CSS.index(':root[data-theme="dark"]'):CSS.index("* { box-sizing")])
     for t in (light, dark):
         for surface in ("--panel", "--bg"):
             assert _contrast(t["--line-strong"], t[surface]) >= 3, surface
-    assert CSS.count("--line-strong: #6b7686") == 2                                                 # both dark blocks
+    assert CSS.count("--line-strong: #6b7686") == 1                                                 # one dark block since batch 5
 
 
 # ---------------------------------------------------------------- P2-3 utility classes for the common inline styles

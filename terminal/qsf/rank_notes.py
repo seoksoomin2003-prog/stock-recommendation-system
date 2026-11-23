@@ -21,6 +21,13 @@ def band_edges() -> List[float]:
     return sorted({float(b[0]) for b in cfg.BANDS if b[0] > 0}, reverse=True)
 
 
+def bands() -> Dict[str, Any]:
+    """Every score band (start, key, Korean name), highest first, read from the engine's settings.  The page colours score bars and
+    action labels from this list instead of keeping its own copy of the edges (UI batch 5 P3-12).  Display only; edges unchanged."""
+    from terminal.qsf import config as cfg
+    return {"bands": [{"start": float(s), "key": k, "label": lab} for s, k, lab in sorted(cfg.BANDS, key=lambda b: -b[0])]}
+
+
 def _name(fid: str) -> str:
     from terminal.assistant import FACTOR_KO          # the Korean factor names live with the assistant; imported late to avoid a cycle
     return FACTOR_KO.get(fid, fid)

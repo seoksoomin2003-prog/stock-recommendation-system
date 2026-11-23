@@ -66,7 +66,7 @@ async function checkAlerts() {
   const missed = {};
   d.notes.forEach((n) => (missed[n.reason] = (missed[n.reason] || new Set()).add(n.ticker)));
   box.innerHTML = `<h3>지금 확인한 결과 <span class="meta m0">${alTime(d.checked_at)} · 조건 ${d.rules}개</span></h3>
-    ${d.alerts.length ? `<ul class="alerts">${d.alerts.map((a) => `<li class="${a.level}">${a.market === "KR" ? "[한국] " : ""}${esc(a.text)}</li>`).join("")}</ul>` : ui.empty("지금 발동할 조건이 없습니다.")}
+    ${d.alerts.length ? `<ul class="alerts">${d.alerts.map((a) => `<li class="${esc(a.level)}">${a.market === "KR" ? "[한국] " : ""}${esc(a.text)}</li>`).join("")}</ul>` : ui.empty("지금 발동할 조건이 없습니다.")}
     ${Object.keys(missed).length ? `<div class="meta">확인하지 못한 종목: ${Object.entries(missed).map(([k, s]) => `${AL_NOTE[k] || k} ${[...s].slice(0, 8).map(esc).join(", ")}${s.size > 8 ? ` 외 ${s.size - 8}개` : ""}`).join(" · ")}</div>` : ""}
     <div class="meta">미리보기일 뿐 보내지 않고 기록하지도 않습니다. 실제 알림은 다음 자동 실행 때 나갑니다.</div>`;
 }
