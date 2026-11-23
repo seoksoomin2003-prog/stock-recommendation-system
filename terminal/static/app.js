@@ -209,7 +209,8 @@ function rememberTicker(t) {
 // the same source, asked right after, did give fresh prices for a known stock.  Offline both come back empty, so nothing is dropped.
 const PRUNE_PROBE = { US: "SPY", KR: "005930" };
 const noPrices = (d) => !!d && d.status === "UNAVAILABLE" && !!d.cache && d.cache.error === "EMPTY_RESPONSE";
-const freshPrices = (d) => !!d && d.status !== "UNAVAILABLE" && !!d.cache && d.cache.status === "REAL" && isNum(d.cache.age_s) && d.cache.age_s < 120;
+// The chart answer carries when its prices were fetched (fetched_at), not their age; server and page run on the same machine.
+const freshPrices = (d) => !!d && d.status !== "UNAVAILABLE" && !!d.cache && d.cache.status === "REAL" && !!d.cache.fetched_at && Date.now() - Date.parse(d.cache.fetched_at) < 120000;
 function forgetTicker(t) {
   try { localStorage.setItem("recentTickers", JSON.stringify(recentTickers().filter((x) => x !== t))); } catch (e) { /* not stored */ }
 }
