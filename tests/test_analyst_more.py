@@ -195,4 +195,9 @@ def test_a_screener_row_opens_its_score_card_in_the_view_that_shows_it():
     click = next(line for line in page.splitlines() if 'body.querySelectorAll(".qs-open")' in line)      # the screener's rows (the change list's rows are already in the rank view)
     assert click.index('qsfSetView("rank")') < click.index("qsfEvaluate(b.dataset.t, mk)")
     rank_view = page[page.index('<div data-view="rank">'):page.index('<div id="qsfrank">')]
-    assert '<div id="qsfdetail"></div>' in rank_view and '<form id="qsfform"' in rank_view                      # the panel the card is drawn into lives in the rank view
+    assert '<form id="qsfform"' in rank_view
+    # workstation stage 4: the card's panel sits in the right column outside every view host, so it shows in the rank and screener
+    # views alike; a one-column screener still sends the click to the rank view (above), and two columns keep the screener (D2)
+    right = page[page.index('<div class="ws-right"'):page.index('<div class="ws-lower">')]
+    assert '<div id="qsfdetail" class="ws-first"></div>' in right and "data-view" not in right
+    assert "if (qsfBeside()) return pickRow(b.dataset.t);" in click

@@ -762,13 +762,14 @@ function redrawShown(tab) {
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => (theme === "auto" ? applyTheme("auto") : redrawAll()));
 let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(redrawAll, 120); });
 // The workspace grid (style.css .ws, workstation stage 2) splits into two columns when the content column is 1120 px or wider.
-// JS asks here; the menu (full / rail) changes that width without a window resize, so a width change of .content redraws too.
+// JS asks here; the menu (full / rail) changes that width without a window resize, so a width change of .content redraws too,
+// and moves the score tab's status strip between the top line and the right column (qsf.js qsfDockStrip, stage 4).
 const wsCanSplit = () => { const c = $(".content"); if (!c) return false; const cs = getComputedStyle(c);
   return c.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) >= 1120; };
 if (window.ResizeObserver && $(".content")) {
   let wsW = 0;
   new ResizeObserver((es) => { const w = Math.round(es[0].contentRect.width); if (w === wsW) return; const first = !wsW; wsW = w;
-    if (!first) { clearTimeout(rz); rz = setTimeout(() => { setTopH(); redrawAll(); }, 120); } }).observe($(".content"));
+    if (!first) { clearTimeout(rz); rz = setTimeout(() => { setTopH(); if (typeof qsfDockStrip === "function") qsfDockStrip(); redrawAll(); }, 120); } }).observe($(".content"));
 }
 
 // ------------------------------------------------------------------ 시장 개요

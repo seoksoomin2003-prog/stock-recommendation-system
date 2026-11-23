@@ -504,16 +504,9 @@ details[open] > summary .fold-hint { display: none; }
 .qr-risk { color: var(--warn); font-size: var(--fs-sm); font-weight: 600; margin-top: 2px; word-break: keep-all; }
 .badge.info { color: var(--muted); font-weight: 500; }
 .qsf-rank-tbl .qr-out, .qs-table .qr-out { color: var(--warn); font-weight: 700; font-size: var(--fs-sm); white-space: normal; word-break: keep-all; border-left: 3px solid var(--warn); padding-left: 6px; margin-top: 2px; }
-/* P1-10: below the full content width (1248 px) the four area columns go (they are in the card); tablets also put the day's
-   change under the score; phones put judgement and entry on a second line. */
+/* P1-10: phones put judgement and entry on a second line.  The ranking's other width steps (area columns, the day's change under
+   the score, wrapping entry and reason cells) follow the ranking's own column since workstation stage 4: see "column sets" below. */
 .qr-m2 { display: none; }
-@media (max-width: 1279px) { .qsf-rank-tbl .qd-col { display: none; } }
-@media (max-width: 1023px) {
-  .qsf-rank-tbl .qr-dcol { display: none; }
-  .qsf-rank-tbl .qr-md { display: block; }                                   /* the day's change sits under the score */
-  .qsf-rank-tbl .qr-why { white-space: normal; min-width: 100px; }
-  .qsf-rank-tbl td.w2 { white-space: normal; word-break: keep-all; min-width: 84px; }
-}
 @media (max-width: 640px) {
   .qsf-rank-tbl .w, .qsf-rank-tbl .w2, .asst-cand .w { display: none; }
   .qsf-rank-tbl .qr-m2, .asst-cand .qr-m2 { display: block; margin-top: 4px; font-size: var(--fs-sm); word-break: keep-all; }
@@ -605,17 +598,9 @@ tr[tabindex]:focus-visible { outline-offset: -2px; }
 .cmd-keys { padding: 0 16px 10px; }
 .asst-refresh { color: var(--muted); font-size: var(--fs-sm); margin-bottom: var(--sp-2); }
 #asst-brief.refreshing [data-brief] > :not(.asst-refresh) { opacity: 0.55; }      /* the question box is never dimmed */
-/* Table screens use up to 1680 px (user decision 2026-11-23); from 1600 px the open score card sits beside the ranking and stays in
-   view while the ranking scrolls.  The ranking then drops the columns the card already shows, as it does on a tablet. */
+/* Table screens not yet in a workspace grid use up to 1680 px (user decision 2026-11-23).  The score card beside the ranking (from
+   1600 px until 2026-11-24) is now the right column of the score tab's workspace grid (workstation stage 4, below). */
 main.wide > .tab:not(:has(> .ws)) { max-width: var(--content-max-wide); }
-@media (min-width: 1600px) {
-  .qsf-split:has(> #qsfdetail > .panel) { display: grid; grid-template-columns: minmax(0, 1fr) 560px; gap: var(--sp-4); align-items: start; }
-  .qsf-split:has(> #qsfdetail > .panel) > #qsfrank { grid-column: 1; grid-row: 1; min-width: 0; }
-  .qsf-split:has(> #qsfdetail > .panel) > #qsfdetail { grid-column: 2; grid-row: 1; position: sticky; top: calc(var(--sticky-top, 0px) + var(--sp-2));
-    max-height: calc(100vh - var(--sticky-top, 0px) - var(--sp-4)); overflow-y: auto; overscroll-behavior: contain; }
-  .qsf-split:has(> #qsfdetail > .panel) .qsf-rank-tbl .qd-col, .qsf-split:has(> #qsfdetail > .panel) .qsf-rank-tbl .qr-dcol { display: none; }
-  .qsf-split:has(> #qsfdetail > .panel) .qsf-rank-tbl .qr-md { display: block; }
-}
 
 /* UI batch 6 (2026-11-24): workflow.  The stance picker sits in the view row (user request); link-like buttons for "code opens the
    stock screen"; one line per Today item; committee status as numbers; the heatmap's unused toggle dimmed. */
@@ -759,11 +744,6 @@ main.wide > .tab:not(:has(> .ws)) { max-width: var(--content-max-wide); }
   .nav-grp.cur:not([hidden]) { display: flex; flex-wrap: wrap; gap: 2px; }
   .tabs[data-single-cur] { display: none; }
 }
-/* Until the screens move into their workspace grids (later stages), the ranking keeps the room it had before the menu column:
-   below the old widths it scrolls inside its own box instead of spilling past the content column or under the open card. */
-@container content (max-width: 1279px) { .qsf-rank-tbl .qd-col { display: none; } }
-@container content (max-width: 1023px) { .tbl-wrap:has(> .qsf-rank-tbl) { overflow-x: auto; } }
-@container content (max-width: 1599px) { .qsf-split:has(> #qsfdetail > .panel) .tbl-wrap:has(> .qsf-rank-tbl) { overflow-x: auto; } }
 
 /* Workstation redesign stage 2 (2026-11-24): shared parts.  Nothing here moves a screen; later stages put screens into these.
 
@@ -919,4 +899,42 @@ tr.me > td:first-child, #qsfplan tr.hl > td:first-child, .qsf-rrow[aria-expanded
 @media (max-width: 640px) {
   .ws-ctx > .asst-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ws-ctx > .asst-tiles .card canvas { display: none; }
+}
+
+/* Workstation stage 4 (2026-11-24): 순위·카드 in its workspace grid (layout spec 2.7, 3.13; owner decisions U-5, D2).
+   Context line: the status strip (when it is not in the right column), the view / strategy / stance row, and the ticker box of 오늘 순위.
+   Main: the view's table.  Right: the score card (#qsfdetail) and, in two columns, the status strip moved under it (qsfDockStrip),
+   open while no card is shown.  Lower: 이전 대상 and 달라진 점 (rank view), the paper book (exec view).  주문 계획 and 판정 일정 are one
+   column (qsfSetView adds .ws--single) and hide the card; the screener hides it in one column too, as before (the card lived in the
+   rank view).  In two columns a ranking or screener row selects (tr[aria-selected], stage 2 colours) and its card fills the right column. */
+.ws[data-ws="qsf"] > .ws-ctx > .qsf-nav, .ws[data-ws="qsf"] > .ws-ctx > [data-view] { flex-basis: 100%; margin: 0; }
+.ws[data-ws="qsf"] > .ws-ctx .qsf-form { margin: 0; max-width: 560px; }
+.ws[data-ws="qsf"] > .ws-ctx #qsfmsg:empty { display: none; }
+.ws-right > .qsf-strip { margin: 0; }
+.ws-right > .qsf-strip .qsf-state .meta { overflow-wrap: anywhere; }
+.ws[data-ws="qsf"]:is([data-view="exec"], [data-view="track"]) #qsfdetail { display: none; }
+@container content (max-width: 1119px) { .ws[data-ws="qsf"][data-view="screen"] #qsfdetail { display: none; } }
+@container content (min-width: 1120px) {
+  .qsf-srow { cursor: pointer; }
+  .qsf-srow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+}
+@media (hover: hover) { @container content (min-width: 1120px) { .qsf-srow:hover > td { background: var(--row-hover); } } }
+/* column sets of the ranking by its own column's width (2.7): Full 12 columns from 1184 px; Medium (860-1183) drops the four area bars
+   (the card shows them) and puts the day's change under the score; Compact (640-859) also wraps entry and reasons and puts the
+   band-edge mark under the score; Narrow (< 640) is the phone set.  The table fits each set, so its header stays sticky (QR-36). */
+@container wsmain (max-width: 1183px) {
+  .qsf-rank-tbl .qd-col, .qsf-rank-tbl .qr-dcol { display: none; }
+  .qsf-rank-tbl .qr-md { display: block; }                                   /* the day's change sits under the score */
+}
+@container wsmain (max-width: 859px) {
+  .qsf-rank-tbl .qr-why { white-space: normal; min-width: 100px; }
+  .qsf-rank-tbl td.w2 { white-space: normal; word-break: keep-all; min-width: 84px; }
+  .qsf-rank-tbl .badge.near-edge { display: block; width: max-content; margin: 2px 0 0 auto; }
+}
+@container wsmain (max-width: 735px) { .tbl-wrap:has(> .qsf-rank-tbl) { overflow-x: auto; } }
+@container wsmain (max-width: 639px) {
+  .qsf-rank-tbl .w, .qsf-rank-tbl .w2 { display: none; }
+  .qsf-rank-tbl .qr-m2 { display: block; margin-top: 4px; font-size: var(--fs-sm); word-break: keep-all; }
+  .qsf-rank-tbl .qr-why { white-space: normal; min-width: 84px; }
+  .qsf-rank-tbl .qr-name { min-width: 90px; }
 }

@@ -16,9 +16,9 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 """
 
 
-def media(css, query):
-    """Every @media block with this query, joined."""
-    head, out, i = f"@media ({query}) {{", [], 0
+def media(css, query, at="@media ({}) {{"):
+    """Every @media block with this query, joined (with at="@container {} {{", every such @container block)."""
+    head, out, i = at.format(query), [], 0
     while (i := css.find(head, i)) >= 0:
         depth, j = 0, css.index("{", i)
         for k in range(j, len(css)):
@@ -98,9 +98,13 @@ def test_the_menu_folds_the_card_but_a_card_link_and_back_forward_do_not():
 
 # ---------------------------------------------------------------- P1-10 judgement and entry at every width
 def test_the_ranking_fits_by_width_without_losing_judgement_or_entry():
-    assert ".qsf-rank-tbl .qd-col { display: none; }" in media(CSS, "max-width: 1279px")
-    tablet = media(CSS, "max-width: 1023px")
-    assert ".qsf-rank-tbl .qr-dcol { display: none; }" in tablet and ".qsf-rank-tbl .qr-md { display: block; }" in tablet
+    # workstation stage 4 (layout spec 2.7): the steps follow the ranking's own column (container wsmain), not the window
+    medium = media(CSS, "wsmain (max-width: 1183px)", "@container {} {{")
+    assert ".qsf-rank-tbl .qd-col, .qsf-rank-tbl .qr-dcol { display: none; }" in medium and ".qsf-rank-tbl .qr-md { display: block; }" in medium
+    compact = media(CSS, "wsmain (max-width: 859px)", "@container {} {{")
+    assert ".qsf-rank-tbl .qr-why { white-space: normal; min-width: 100px; }" in compact and "td.w2 { white-space: normal; word-break: keep-all;" in compact
+    assert ".qsf-rank-tbl .qr-m2 { display: block;" in media(CSS, "wsmain (max-width: 639px)", "@container {} {{")
+    assert "@media (max-width: 1279px) { .qsf-rank-tbl" not in CSS and ".qsf-rank-tbl .qr-dcol { display: none; }" not in media(CSS, "max-width: 1023px")
     phone = media(CSS, "max-width: 640px")
     assert ".qsf-rank-tbl .w, .qsf-rank-tbl .w2, .asst-cand .w { display: none; }" in phone
     assert ".qsf-rank-tbl .qr-m2, .asst-cand .qr-m2 { display: block;" in phone and "word-break: keep-all" in phone

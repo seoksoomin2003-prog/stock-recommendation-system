@@ -40,12 +40,15 @@ def test_table_screens_widen_and_the_card_sits_beside_the_ranking():
     assert "--content-max-wide: 1680px;" in CSS and "main.wide > .tab:not(:has(> .ws)) { max-width: var(--content-max-wide); }" in CSS      # workstation stage 3: a screen in a .ws grid uses --ws-max
     assert 'const WIDE_TABS = new Set(["qsf", "committee", "portfolio", "watch", "lab", "model", "coin"]);' in APP
     assert '$("main").classList.toggle("wide", WIDE_TABS.has(tab));' in body(APP, "function show(tab")
-    wide = media(CSS, "min-width: 1600px")
-    assert ".qsf-split:has(> #qsfdetail > .panel) { display: grid; grid-template-columns: minmax(0, 1fr) 560px;" in wide
-    assert "position: sticky" in wide and ".qsf-rank-tbl .qd-col" in wide and ".qsf-rank-tbl .qr-md { display: block; }" in wide
-    assert '<div class="qsf-split"><div id="qsfdetail"></div><div id="qsfrank"></div></div>' in QSF
-    assert 'const qsfBeside = () => window.matchMedia("(min-width: 1600px)").matches;' in QSF
+    # workstation stage 4 (2026-11-24): the card sits in the score tab's right column whenever the workspace grid has two columns
+    # (content column 1120 px or wider) instead of beside the ranking from a 1600 px window; the old .qsf-split block is gone
+    assert ".qsf-split:has(" not in CSS and "qsf-split" not in media(CSS, "min-width: 1600px")
+    tpl = body(QSF, "async function renderQsf(")
+    assert '<div class="ws-body qsf-split"><div class="ws-main">' in tpl and '<div data-view="rank"><div id="qsfrank"></div></div>' in tpl
+    assert '<div class="ws-right" role="complementary" aria-label="점수 카드와 시장 상태"><div id="qsfdetail" class="ws-first"></div></div>' in tpl
+    assert 'const qsfBeside = () => wsCanSplit() && (qsfState.view === "rank" || qsfState.view === "screen");' in QSF
     assert 'if (!qsfBeside()) $("#qsfmsg").scrollIntoView' in QSF                                      # the ranking keeps its place
+    assert ".ws-right > * { order: 1; min-width: 0; }" in CSS and "position: sticky; top: calc(var(--sticky-top, 0px) + var(--gutter));" in CSS   # right column sticks
 
 
 # ---------------------------------------------------------------- P2-12 rows and fold titles open from the keyboard
