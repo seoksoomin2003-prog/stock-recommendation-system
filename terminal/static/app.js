@@ -772,14 +772,19 @@ if (window.ResizeObserver && $(".content")) {
 }
 
 // ------------------------------------------------------------------ 시장 개요
+// 작업 화면 개편 3단계 (배치 명세 3.2): 맨 위 줄에 제목과 출처·받아온 시각·상태·기준, 장중이면 그 알림.  묶음이 셋이면 가운데 것
+// (미국 금리·환율·원자재, 한국 환율·대표 ETF)이 오른쪽 칸으로 가고 지수와 업종 ETF가 가운데 칸에 남습니다.  좁은 화면은 한 줄로 차례대로.
 async function renderOverview() {
   const el = $("#tab-overview"), m = state.market; el.innerHTML = loading;
   try {
     const d = await api(mq("/api/overview")); if (m !== state.market) return; state.loaded.overview = true;
     const live = d.groups.some((g) => g.items.some((i) => i.intraday));
-    el.innerHTML = (live ? '<div class="notice">정규장이 진행 중입니다. 오늘 일봉은 지연된 장중 값이며 확정되지 않았습니다.</div>' : "") +
-      d.groups.map((g) => `<div class="panel"><h2>${esc(g.title)}</h2><div class="grid">${g.items.map(card).join("")}</div></div>`).join("") +
-      `<div class="panel">${meta(d.source, d.cache.fetched_at, badge(d.cache.status))}<div class="meta">${esc(d.basis)}</div></div>`;
+    const group = (g) => `<div class="panel"><h2>${esc(g.title)}</h2><div class="grid">${g.items.map(card).join("")}</div></div>`;
+    const side = d.groups.length === 3 ? d.groups[1] : null;
+    el.innerHTML = ui.ws({ name: "overview", label: side ? side.title : "",
+      ctx: `<h2>시장 개요 <span class="badge">${isKR() ? "한국" : "미국"}</span></h2>${meta(d.source, d.cache.fetched_at, badge(d.cache.status))}<div class="meta">${esc(d.basis)}</div>` +
+        (live ? '<div class="notice">정규장이 진행 중입니다. 오늘 일봉은 지연된 장중 값이며 확정되지 않았습니다.</div>' : ""),
+      main: d.groups.filter((g) => g !== side).map(group).join(""), right: side ? group(side) : "" });
     const draw = () => el.querySelectorAll("canvas[data-spark]").forEach((cv) => spark(cv, JSON.parse(cv.dataset.spark)));
     draw(); redrawOn("overview", "sparks", draw);
   } catch (e) { el.innerHTML = errBox(e); }

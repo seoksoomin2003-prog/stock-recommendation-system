@@ -90,17 +90,25 @@ function asstCands(c, note) {
     return `<div class="asst-cand"><h4>${ASST_STYLE[k]} <span class="meta m0">${ready} ${s.total}종목 · 그중 매수 후보 구간(70점 이상) ${s.buy_band}</span></h4>
       ${rows ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>점수</th><th class="l w">구간</th><th class="l w">업종</th><th class="l">가점 / 감점</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="meta">${ready}인 종목이 없습니다.</div>`}</div>`;
   };
-  return `<h3>오늘의 후보 ${c.session ? `<span class="badge">${esc(c.session)}</span>` : ""}</h3>${note ? `<div class="notice">${esc(note)}</div>` : ""}<div class="asst-cands">${one("SWING")}${one("LONG_TERM")}</div><div class="meta">${esc(c.note || "")}</div>`;
+  return `<h2>오늘의 후보 ${c.session ? `<span class="badge">${esc(c.session)}</span>` : ""}</h2>${note ? `<div class="notice">${esc(note)}</div>` : ""}<div class="asst-cands">${one("SWING")}${one("LONG_TERM")}</div><div class="meta">${esc(c.note || "")}</div>`;
 }
+// 작업 화면 (작업 화면 개편 3단계, 배치 명세 3.1 · 결정 D5): 맨 위 줄에 제목·요약 문장·시장 숫자 타일, 가운데에 묻는 칸과 답·할 일,
+// 오른쪽에 오늘의 후보, 아래에 작업 상태.  뼈대는 한 번만 만들고 목록(asstBrief)은 data-brief가 붙은 네 칸만 채우므로, 목록을 새로
+// 받아도 묻고 답한 칸은 지워지지 않습니다.  좁은 화면(내용 폭 1120px 미만)은 한 줄로: 맨 위 줄 → 묻기·답 → 할 일 → 후보 → 작업 상태.
+const asstTitle = (mk) => `<h2>오늘 <span class="badge">${mk}</span></h2>`;
 async function renderToday() {
   const box = $("#tab-today");
   state.loaded.today = true;
   const mk = isCoin() ? "코인" : isKR() ? "한국" : "미국";
-  box.innerHTML = `<div class="panel"><h2>오늘 <span class="badge">${mk}</span></h2>
-      <form id="asst-form" class="asst-ask" autocomplete="off"><input id="asst-q" maxlength="200" placeholder="${isCoin() ? "물어보기 (예: 코인 상위는? · 비트코인 분석해 줘 · help)" : `물어보기 (예: ${isKR() ? "삼성전자" : "AAPL"} 점수 왜 낮아? · 오늘 뭐 해야 해? · help)`}" aria-label="비서에게 묻기">
+  box.innerHTML = `<div class="ws" data-ws="today" id="asst-brief">
+    <div class="ws-ctx" id="asst-ctx" data-brief>${asstTitle(mk)}<div class="meta">불러오는 중…</div></div>
+    <div class="ws-body"><div class="ws-main">
+      <div class="panel" id="asst-askp"><form id="asst-form" class="asst-ask" autocomplete="off"><input id="asst-q" maxlength="200" placeholder="${isCoin() ? "물어보기 (예: 코인 상위는? · 비트코인 분석해 줘 · help)" : `물어보기 (예: ${isKR() ? "삼성전자" : "AAPL"} 점수 왜 낮아? · 오늘 뭐 해야 해? · help)`}" aria-label="비서에게 묻기">
         <button class="btn-primary" type="submit">묻기</button><button class="ghost" type="button" id="asst-help">물어볼 수 있는 것</button></form>
       <div id="asst-out"></div></div>
-    <div class="panel" id="asst-brief">${loading}</div>`;
+      <div id="asst-items" data-brief></div></div>
+      <div class="ws-right" role="complementary" aria-label="오늘의 후보" id="asst-cands" data-brief></div></div>
+    <div class="ws-lower" id="asst-ops" data-brief></div></div>`;
   $("#asst-form").onsubmit = (e) => { e.preventDefault(); asstAsk($("#asst-q").value); };
   $("#asst-help").onclick = () => asstAsk("help");
   box.onclick = (e) => {
@@ -123,11 +131,11 @@ let asstBriefToken = 0;
 async function asstBrief(again) {
   const brief = $("#asst-brief"), mk = isCoin() ? "코인" : isKR() ? "한국" : "미국", market = state.market, token = ++asstBriefToken;
   if (!brief) return;
-  const had = again && brief.dataset.at ? brief.dataset.at : "";
+  const ctx = $("#asst-ctx"), had = again && brief.dataset.at ? brief.dataset.at : "";
   if (had) {
     brief.querySelectorAll(".asst-refresh").forEach((x) => x.remove());
     brief.classList.add("refreshing");
-    brief.insertAdjacentHTML("afterbegin", `<div class="asst-refresh" role="status">갱신 중… 아래는 ${esc(stamp(had) || had)}에 만든 목록입니다.</div>`);
+    ctx.insertAdjacentHTML("afterbegin", `<div class="asst-refresh" role="status">갱신 중… 아래는 ${esc(stamp(had) || had)}에 만든 목록입니다.</div>`);
   }
   try {
     const d = await api(`/api/assistant/today?market=${market}`);
@@ -140,10 +148,14 @@ async function asstBrief(again) {
     }).join("");
     const opsBox = ops.length ? `<details class="asst-ops"${ops.some((i) => i.level === "ACT") ? " open" : ""}><summary>작업 상태 (자동 실행·기록) <span class="badge">${ops.length}</span></summary><ul class="asst-list">${ops.map(asstItem).join("")}</ul></details>` : "";
     const unread = (d.unread_parts || []).length ? `<div class="msg err">읽지 못한 부분: ${d.unread_parts.map((p) => esc(p.label)).join(", ")}. 이 부분의 항목은 이 화면에 빠져 있습니다.</div>` : "";
+    const cands = asstCands(d.candidates, d.note), note = d.candidates && d.candidates.styles ? "" : `<div class="meta">${esc(d.note)}</div>`;
     brief.classList.remove("refreshing");
     brief.dataset.at = d.generated_at || "";
-    brief.innerHTML = `<h2>${esc(d.headline_main || d.headline)}</h2><div class="meta mt-0">${mk} 시장 · 기준 거래일 ${esc(d.session || "기록 없음")} · ${when(d.generated_at)} 기준</div>
-      ${unread}${asstTiles(d.tiles)}${asstCands(d.candidates, d.note)}${groups ? `<h3>할 일과 알림</h3>${groups}` : '<div class="meta">보여 줄 항목이 없습니다.</div>'}${opsBox}${d.candidates && d.candidates.styles ? "" : `<div class="meta">${esc(d.note)}</div>`}`;
+    ctx.innerHTML = `${asstTitle(mk)}<div class="asst-headline">${esc(d.headline_main || d.headline)}</div><div class="meta">${mk} 시장 · 기준 거래일 ${esc(d.session || "기록 없음")} · ${when(d.generated_at)} 기준</div>
+      ${unread}${asstTiles(d.tiles)}`;
+    $("#asst-items").innerHTML = `<div class="panel">${groups ? `<h2>할 일과 알림</h2>${groups}` : '<div class="meta mt-0">보여 줄 항목이 없습니다.</div>'}</div>`;
+    $("#asst-cands").innerHTML = cands ? `<div class="panel asst-candp">${cands}</div>` : "";            // 후보가 없으면(코인 시장 등) 오른쪽 칸 없이 한 줄
+    $("#asst-ops").innerHTML = opsBox || note ? `<div class="panel span-all asst-lowp">${opsBox}${note}</div>` : "";
     const sparks = () => brief.querySelectorAll("canvas[data-spark]").forEach((cv) => spark(cv, JSON.parse(cv.dataset.spark)));
     redrawOn("today", "sparks", sparks);
     if (state.tab === "today") sparks(); else redrawLater.add("today:sparks");      // 숨은 탭의 캔버스는 폭이 0입니다
@@ -152,8 +164,11 @@ async function asstBrief(again) {
     if (had) {
       brief.classList.remove("refreshing");
       brief.querySelectorAll(".asst-refresh").forEach((x) => x.remove());
-      brief.insertAdjacentHTML("afterbegin", `<div class="msg err">새 목록을 받지 못했습니다: ${esc(errKo(e))}. 아래는 ${esc(stamp(had) || had)}에 만든 목록입니다.</div>`);
-    } else brief.innerHTML = `<div class="msg err">오늘 목록을 만들지 못했습니다: ${esc(errKo(e))}</div>`;
+      ctx.insertAdjacentHTML("afterbegin", `<div class="msg err">새 목록을 받지 못했습니다: ${esc(errKo(e))}. 아래는 ${esc(stamp(had) || had)}에 만든 목록입니다.</div>`);
+    } else {
+      ctx.innerHTML = asstTitle(mk);
+      $("#asst-items").innerHTML = `<div class="panel"><div class="msg err mt-0">오늘 목록을 만들지 못했습니다: ${esc(errKo(e))}</div></div>`;
+    }
   }
 }
 RENDER.today = renderToday;

@@ -107,7 +107,13 @@ button:disabled { opacity: .55; cursor: default; }
                background: none; color: var(--muted); white-space: nowrap; font-size: var(--fs-md); }
 .tabs button.on { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
 .tabs[hidden], .tabs button[hidden] { display: none; }
-main { padding: var(--sp-4); max-width: var(--content-max); margin: 0 auto; }
+/* Workstation stage 3 (layout spec 1.4, 2.5): the page padding sits on .content, so the container "content" is the column the
+   workspace grids measure; main has no width cap.  A screen in a workspace grid (.ws) is capped by --ws-max (1760); a screen not
+   yet converted keeps its reading width (1280, or 1680 for the table screens in WIDE_TABS) and stays centred. */
+.content { padding: var(--page-pad) var(--page-pad) 0; }
+main { padding: 0; max-width: none; margin: 0; }
+main > .tab { max-width: var(--content-max); margin-inline: auto; }
+main > .tab:has(> .ws) { max-width: none; }
 .tab { display: none; } .tab.on { display: block; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-4);
          min-width: 0; }
@@ -165,13 +171,12 @@ tr.click { cursor: pointer; }
 .addrow input { flex: 1; min-width: 0; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
                 background: var(--bg); color: var(--ink); text-transform: uppercase; }
 .x { padding: 2px 8px; color: var(--muted); }
-.foot { color: var(--muted); font-size: var(--fs-sm); padding: var(--sp-3) var(--sp-4) var(--sp-5); max-width: var(--content-max); margin: 0 auto; }
+.foot { color: var(--muted); font-size: var(--fs-sm); padding: var(--sp-3) 0 var(--sp-5); max-width: var(--ws-max); margin: 0 auto; }
 .tip { position: fixed; pointer-events: none; z-index: var(--z-popover); background: var(--elevated); border: 1px solid var(--line);
        border-radius: var(--r-md); padding: 6px 8px; font-size: var(--fs-sm); box-shadow: var(--shadow-2); white-space: nowrap; }
 a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
 @media (max-width: 640px) {
   :root { --fs-display: 24px; }
-  main { padding: var(--sp-3) var(--sp-4); }
   .search { max-width: none; order: 3; flex-basis: 100%; }
 }
 /* UI batch 3 P2-2 (2026-11-23): every text field and select looks the same, and its edge passes 3:1 (--line-strong). */
@@ -476,9 +481,6 @@ details[open] > summary .fold-hint { display: none; }
 .asst-ops > summary { cursor: pointer; font-weight: 600; }
 @media (max-width: 1023px) {
   .qsf-balance, .asst-cands { grid-template-columns: 1fr; }
-  .asst-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-  .asst-tiles .card canvas { display: none; }
-  .asst-tiles .card .px { font-size: var(--fs-lg); }
 }
 
 /* UI batch 1 (2026-11-23): an index tile's two changes each carry their period and keep it on their own line. */
@@ -602,10 +604,10 @@ tr[tabindex]:focus-visible { outline-offset: -2px; }
 #cmd-q:focus-visible { box-shadow: inset 0 -2px 0 var(--accent); }
 .cmd-keys { padding: 0 16px 10px; }
 .asst-refresh { color: var(--muted); font-size: var(--fs-sm); margin-bottom: var(--sp-2); }
-#asst-brief.refreshing > :not(.asst-refresh) { opacity: 0.55; }
+#asst-brief.refreshing [data-brief] > :not(.asst-refresh) { opacity: 0.55; }      /* the question box is never dimmed */
 /* Table screens use up to 1680 px (user decision 2026-11-23); from 1600 px the open score card sits beside the ranking and stays in
    view while the ranking scrolls.  The ranking then drops the columns the card already shows, as it does on a tablet. */
-main.wide { max-width: var(--content-max-wide); }
+main.wide > .tab:not(:has(> .ws)) { max-width: var(--content-max-wide); }
 @media (min-width: 1600px) {
   .qsf-split:has(> #qsfdetail > .panel) { display: grid; grid-template-columns: minmax(0, 1fr) 560px; gap: var(--sp-4); align-items: start; }
   .qsf-split:has(> #qsfdetail > .panel) > #qsfrank { grid-column: 1; grid-row: 1; min-width: 0; }
@@ -807,6 +809,13 @@ main.wide { max-width: var(--content-max-wide); }
     max-height: calc(100vh - var(--sticky-top, 0px) - 2 * var(--gutter)); overflow-y: auto; overscroll-behavior: contain;
     container: wsright / inline-size; }
 }
+/* 오늘, one column (chief): the question box, then the candidates, then 할 일과 알림 — so the candidates do not sink under a long list */
+.ws[data-ws="today"] > .ws-body > .ws-main { display: contents; }
+#asst-askp { order: -2; }
+#asst-items { order: 2; }
+@container content (min-width: 1120px) {
+  .ws[data-ws="today"]:not(.ws--single) > .ws-body:has(> .ws-right > :not([hidden]):not(:empty)) > .ws-main { display: flex; }
+}
 @container content (min-width: 1320px) { .ws { --ws-right: 420px; } }
 @container content (min-width: 1560px) { .ws { --ws-right: 480px; } }
 @container wsright (max-width: 520px) {
@@ -885,3 +894,29 @@ tr.me > td:first-child, #qsfplan tr.hl > td:first-child, .qsf-rrow[aria-expanded
 .rmeter { position: relative; display: inline-block; width: 100%; max-width: 160px; min-width: 80px; height: 8px; border-radius: var(--r-pill); background: var(--viz-track); vertical-align: middle; }
 .rmeter::after { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--axis); }
 .rmeter i { position: absolute; top: 0; bottom: 0; background: var(--viz-bar); }
+
+/* Workstation stage 3 (2026-11-24): the two dashboard screens in their workspace grids (layout spec 3.1, 3.2; owner decision D5).
+   오늘: the context strip holds the title, the headline, the data line and the market tiles (156 px minimum, so 6-9 sit in one row);
+   main holds the question box, the answer and the day's items; the right column holds the candidates; lower holds the job fold.
+   시장 개요: the context strip holds the source line and the live-session notice; the index and sector groups are in main and the
+   rates / FX group in the right column (one card per row at 360 px, two from 420 px).  A context line after the title stays on the
+   title's row where it fits (2.5). */
+.ws-ctx > h2 + .meta, .ws-ctx > h2 + .asst-headline { flex: 0 1 auto; min-width: 0; }
+.ws-ctx > .asst-refresh, .ws-ctx > .asst-tiles { flex-basis: 100%; margin: 0; }
+.asst-headline { font-size: var(--fs-lg); font-weight: 600; line-height: var(--lh-ui); word-break: keep-all; overflow-wrap: anywhere; }
+.ws-ctx > .asst-tiles { grid-template-columns: repeat(auto-fit, minmax(156px, 1fr)); gap: var(--sp-2); }
+.ws-ctx > .asst-tiles .card { padding: var(--sp-2) var(--sp-3); }
+.ws-ctx > .asst-tiles .card .px { font-size: var(--fs-lg); }
+.ws-ctx > .asst-tiles .card canvas { width: 56px; }
+#asst-askp .asst-answer:first-child { margin-top: var(--sp-3); }
+.asst-candp > h2 { margin-bottom: var(--sp-1); }
+.asst-lowp .asst-ops { margin-top: 0; padding-top: 0; border-top: 0; }
+.asst-lowp > .meta:first-child { margin-top: 0; }
+.ws[data-ws="overview"] .ws-main .grid, .ws[data-ws="overview"] .ws-right .grid { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); }
+@media (max-width: 1023px) {
+  .ws-ctx > .asst-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .ws-ctx > .asst-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ws-ctx > .asst-tiles .card canvas { display: none; }
+}

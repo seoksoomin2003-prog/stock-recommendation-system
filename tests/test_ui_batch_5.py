@@ -37,7 +37,7 @@ def test_four_widths_only():
 
 
 def test_table_screens_widen_and_the_card_sits_beside_the_ranking():
-    assert "--content-max-wide: 1680px;" in CSS and "main.wide { max-width: var(--content-max-wide); }" in CSS
+    assert "--content-max-wide: 1680px;" in CSS and "main.wide > .tab:not(:has(> .ws)) { max-width: var(--content-max-wide); }" in CSS      # workstation stage 3: a screen in a .ws grid uses --ws-max
     assert 'const WIDE_TABS = new Set(["qsf", "committee", "portfolio", "watch", "lab", "model", "coin"]);' in APP
     assert '$("main").classList.toggle("wide", WIDE_TABS.has(tab));' in body(APP, "function show(tab")
     wide = media(CSS, "min-width: 1600px")
@@ -128,7 +128,7 @@ def test_today_shows_the_previous_list_while_it_refreshes():
     assert 'brief.classList.add("refreshing")' in brief and "갱신 중… 아래는 ${esc(stamp(had) || had)}에 만든 목록입니다." in brief
     assert "새 목록을 받지 못했습니다" in brief and 'brief.dataset.at = d.generated_at || "";' in brief
     assert "token !== asstBriefToken || market !== state.market" in brief
-    assert "#asst-brief.refreshing > :not(.asst-refresh) { opacity: 0.55; }" in CSS
+    assert "#asst-brief.refreshing [data-brief] > :not(.asst-refresh) { opacity: 0.55; }" in CSS      # workstation stage 3: only the four brief hosts dim
 
 
 # ---------------------------------------------------------------- P3-4 h1, palette name, single-key switch
