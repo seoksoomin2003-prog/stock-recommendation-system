@@ -2,7 +2,7 @@
 // 주문을 보내지 않고, 실제 포트폴리오 기록과 다른 파일에 저장합니다. 수수료·세금은 토스증권 공시값으로 자동 계산합니다.
 const PT_KIND_KO = { BUY: "매수", SELL: "매도", DEPOSIT: "모의 자금 넣기", WITHDRAW: "모의 자금 빼기", VOID: "취소" };
 const PT_FIELDS = { BUY: ["ticker", "qty", "price", "fee"], SELL: ["ticker", "qty", "price", "fee"], DEPOSIT: ["amount"], WITHDRAW: ["amount"] };
-let ptPrefill = null;
+let ptPrefill = null, ptBusy = false;
 
 function ptPct(v) { return isNum(v) ? `<span class="${v > 0 ? "up" : v < 0 ? "down" : ""}">${v > 0 ? "+" : ""}${v.toFixed(2)}%</span>` : DASH; }
 function ptSigned(v, d) { return isNum(v) ? `<span class="${v > 0 ? "up" : v < 0 ? "down" : ""}">${v > 0 ? "+" : ""}${money(v, d).replace(/^-/, "−")}</span>` : DASH; }
@@ -62,14 +62,18 @@ function ptWireForm(d, mk) {
   ["ticker", "qty", "price", "fee"].forEach((n) => (form.elements[n].oninput = later));
   form.onsubmit = async (e) => {
     e.preventDefault();
+    if (ptBusy) return;                 // 앞의 기록을 보내는 중 (작업 화면 개편 7단계: 두 번 눌러 두 줄이 붙지 않게)
     const kind = get("kind"), body = { kind, date: get("date"), note: get("note"), market: mk };
     PT_FIELDS[kind].forEach((n) => { body[n] = n === "ticker" ? get(n).toUpperCase() : get(n).replace(/[,_\s]/g, ""); });
+    const btn = form.querySelector("button.btn-primary");
+    ptBusy = true; btn.disabled = true; form.setAttribute("aria-busy", "true");
     try {
       await api("/api/paper-trade/add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       ptPrefill = null;
       if (body.ticker) setMarket(marketOf(body.ticker), false);
-      renderPaper();
-    } catch (err) { msg.innerHTML = `<span class="down">${esc(errKo(err))}</span>`; }
+      renderPaper();                    // 새 양식이 이 양식을 바꿉니다
+    } catch (err) { msg.innerHTML = `<span class="down">${esc(errKo(err))}</span>`; btn.disabled = false; form.removeAttribute("aria-busy"); }
+    finally { ptBusy = false; }
   };
   fields(); show();
 }
@@ -90,8 +94,8 @@ async function renderPaper() {
   const title = `<h2>모의 매매 기록 <span class="badge">가상의 계좌</span> <span class="badge risk-note">주문을 보내지 않습니다</span></h2>`;
   const about = `<div class="meta">직접 고른 종목을 직접 정한 가격에 사고판 것으로 적어 두면, 수수료와 세금을 빼고 얼마가 남았는지 계산해 둡니다. ${esc(d.note)}</div>
     <div class="meta">수수료 기준: ${esc(d.fee_basis)}. 프로그램이 자동으로 사고파는 기록은 순위·카드 탭의 '주문 계획·가상 장부'에 따로 있습니다.</div>`;
-  if (d.status !== "REAL") {
-    el.innerHTML = `<div class="panel">${title}<div class="notice">모의 매매 기록 파일에 문제가 있어 새 기록을 받을 수 없습니다: ${esc((d.integrity || {}).reason || "")}. data/terminal/paper_journal.jsonl 을 확인하세요.</div>${about}</div>`;
+  if (d.status !== "REAL") {          // 맨 위 줄만 (지금처럼 양식 없이)
+    el.innerHTML = ui.ws({ name: "paper", single: true, ctx: `${title}<div class="notice">모의 매매 기록 파일에 문제가 있어 새 기록을 받을 수 없습니다: ${esc((d.integrity || {}).reason || "")}. data/terminal/paper_journal.jsonl 을 확인하세요.</div>${about}` });
     return;
   }
   const s = d.stats, dec = mk === "KR" ? 0 : 2;
@@ -113,14 +117,18 @@ async function renderPaper() {
     <td class="num">${isNum(r.price) ? money(r.price) : isNum(r.amount) ? money(r.amount, dec) : ""}</td>
     <td class="num"${r.fee_parts ? ` title="${esc(ptFeeText(r.fee_parts).replace(/<[^>]+>/g, ""))}"` : ""}>${isNum(r.fee) ? `${money(r.fee)} <span class="meta m0">${r.fee_auto ? "자동" : "직접"}</span>` : ""}</td>
     <td class="l">${esc(r.note || "")}</td><td>${r.kind !== "VOID" && !r.voided ? `<button type="button" data-void="${esc(r.id)}">취소</button>` : ""}</td></tr>`).join("");
-  el.innerHTML = `<div class="panel">${title}${about}${d.records ? tiles : ""}</div>
-    <div class="panel"><h2>${d.records ? "기록 추가" : "시작하기: 모의 자금을 먼저 넣으세요"}</h2>${ptFormHtml(d)}</div>
-    <div class="panel"><h2>보유 중 ${d.positions.length}종목</h2>${prow ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>수량</th><th>평균 매수가</th><th>최근 종가</th><th>평가액</th><th>평가 손익</th><th>팔 때 수수료·세금</th><th class="l">첫 매수일</th><th></th></tr></thead><tbody>${prow}</tbody></table></div>
+  // 작업 화면 개편 7단계 (배치 명세 3.12): 맨 위 줄에 제목과 설명, 가운데 칸에 보유 중과 끝난 거래, 오른쪽 칸에 숫자 타일과 기록 양식
+  // (한 칸에서는 둘 다 맨 앞, 지금 순서), 아래 줄에 기록 표.
+  el.innerHTML = ui.ws({ name: "paper", label: "모의 계좌 숫자와 기록 양식",
+    ctx: `${title}${about}`,
+    main: `<div class="panel"><h2>보유 중 ${d.positions.length}종목</h2>${prow ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>수량</th><th>평균 매수가</th><th>최근 종가</th><th>평가액</th><th>평가 손익</th><th>팔 때 수수료·세금</th><th class="l">첫 매수일</th><th></th></tr></thead><tbody>${prow}</tbody></table></div>
       <div class="meta">최근 종가는 지연 시세입니다. 평가 손익은 매수 수수료까지 넣은 금액 대비이고, 팔 때의 수수료·세금은 아직 빼지 않았습니다.</div>` : `<div class="empty">보유 중인 모의 종목이 없습니다.</div>`}</div>
     <div class="panel"><h2>끝난 거래 ${s.count}건</h2>${crow ? `<div class="tbl-wrap"><table><thead><tr><th class="l">매도일</th><th class="l">종목</th><th>수량</th><th title="매수 평균가(수수료 제외)">매수가</th><th>매도가</th><th>산 금액</th><th>판 금액</th><th title="매수 때와 매도 때의 수수료·세금 합">수수료·세금</th><th title="판 금액 − 산 금액 − 수수료·세금">순손익</th><th title="순손익 ÷ (산 금액 + 매수 수수료)">순수익률</th><th>보유</th></tr></thead><tbody>${crow}</tbody></table></div>
-      <div class="meta">합계: 수수료 전 손익 ${ptSigned(s.gross, dec)}, 수수료·세금 ${money(s.fees, dec)}, 순손익 ${ptSigned(s.net, dec)}${isNum(s.win_rate_pct) ? `, 이익 거래 비율 ${s.win_rate_pct.toFixed(0)}%` : ""}. ${s.count < 20 ? "거래 수가 적어 이 수치로 실력이나 방법을 판단하기는 이릅니다." : ""}</div>` : `<div class="empty">아직 매도까지 끝난 거래가 없습니다.</div>`}</div>
-    <div class="panel"><h2>기록 ${d.records}건</h2>${jrow ? `<div class="tbl-wrap"><table><thead><tr><th class="l">날짜</th><th class="l">종류</th><th class="l">종목</th><th>수량</th><th>가격 / 금액</th><th>수수료·세금</th><th class="l">메모</th><th></th></tr></thead><tbody>${jrow}</tbody></table></div>
-      <div class="meta">잘못 적은 기록은 지우지 않고 '취소'로 무효화합니다. 기록은 이 Mac의 data/terminal/paper_journal.jsonl 에만 저장됩니다.</div>` : `<div class="empty">기록이 없습니다.</div>`}</div>`;
+      <div class="meta">합계: 수수료 전 손익 ${ptSigned(s.gross, dec)}, 수수료·세금 ${money(s.fees, dec)}, 순손익 ${ptSigned(s.net, dec)}${isNum(s.win_rate_pct) ? `, 이익 거래 비율 ${s.win_rate_pct.toFixed(0)}%` : ""}. ${s.count < 20 ? "거래 수가 적어 이 수치로 실력이나 방법을 판단하기는 이릅니다." : ""}</div>` : `<div class="empty">아직 매도까지 끝난 거래가 없습니다.</div>`}</div>`,
+    right: `${d.records ? `<div class="panel ws-first"><h2>모의 계좌 <span class="meta m0">가상의 금액</span></h2>${tiles}</div>` : ""}
+    <div class="panel ws-first" id="ptform-panel"><h2>${d.records ? "기록 추가" : "시작하기: 모의 자금을 먼저 넣으세요"}</h2>${ptFormHtml(d)}</div>`,
+    lower: `<div class="panel span-all"><h2>기록 ${d.records}건</h2>${jrow ? `<div class="tbl-wrap"><table><thead><tr><th class="l">날짜</th><th class="l">종류</th><th class="l">종목</th><th>수량</th><th>가격 / 금액</th><th>수수료·세금</th><th class="l">메모</th><th></th></tr></thead><tbody>${jrow}</tbody></table></div>
+      <div class="meta">잘못 적은 기록은 지우지 않고 '취소'로 무효화합니다. 기록은 이 Mac의 data/terminal/paper_journal.jsonl 에만 저장됩니다.</div>` : `<div class="empty">기록이 없습니다.</div>`}</div>` });
   ptWireForm(d, mk);
   el.querySelectorAll("[data-void]").forEach((b) => (b.onclick = () => ptVoid(b.dataset.void)));
   el.querySelectorAll("[data-sell]").forEach((b) => (b.onclick = () => {

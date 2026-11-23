@@ -560,6 +560,7 @@ function tabHash(tab) {
   if (tab === "stock" && state.ticker) return `stock/${state.ticker}`;
   if (tab === "qsf" && typeof qsfState !== "undefined" && qsfState.view && qsfState.view !== "rank") return `qsf:${qsfState.view}`;     // 보기 (6차 묶음 P2-18)
   if (tab === "qsf" && state.card && marketOf(state.card) === state.market) return `qsf/${state.card}`;
+  if (tab === "committee" && typeof icState !== "undefined" && icState.view && icState.view !== "dash") return `committee:${icState.view}`;     // 위원회 보기 (O-7)
   return tab;
 }
 // 표가 많은 화면은 넓은 화면에서 1680px까지 씁니다 (5차 묶음 P2-11, 사용자 결정 2026-11-23).  나머지 화면은 1280px 그대로입니다.
@@ -823,8 +824,17 @@ const wsCanSplit = () => { const c = $(".content"); if (!c) return false; const 
 if (window.ResizeObserver && $(".content")) {
   let wsW = 0;
   new ResizeObserver((es) => { const w = Math.round(es[0].contentRect.width); if (w === wsW) return; const first = !wsW; wsW = w;
-    if (!first) { clearTimeout(rz); rz = setTimeout(() => { setTopH(); if (typeof qsfDockStrip === "function") qsfDockStrip(); watchMark(); redrawAll(); }, 120); } }).observe($(".content"));
+    if (!first) { clearTimeout(rz); rz = setTimeout(() => { setTopH(); if (typeof qsfDockStrip === "function") qsfDockStrip(); watchMark(); wsSideMarks(); redrawAll(); }, 120); } }).observe($(".content"));
 }
+
+// 보유 종목 줄 고르기(7단계, 통합 계좌와 시장별 자세히): 두 칸이 되거나 한 칸이 될 때 고른 줄 표시와 오른쪽 칸을 맞춥니다.
+function wsSideMarks() {
+  if (typeof acctSide === "function" && state.tab === "account") acctSide(); else if (typeof acctMark === "function") acctMark();
+  if (typeof pfSide === "function" && state.tab === "portfolio") pfSide(); else if (typeof pfMark === "function") pfMark();
+}
+
+// 방금 고른 줄의 요약은 오른쪽 칸 맨 위에 섭니다: 그 칸을 스스로 내려 두었으면 위로 되돌려 요약이 보이게 합니다.
+function wsRightTop(sel) { const b = $(sel), r = b && b.closest(".ws-right"); if (r) r.scrollTop = 0; }
 
 // ------------------------------------------------------------------ 시장 개요
 // 작업 화면 개편 3단계 (배치 명세 3.2): 맨 위 줄에 제목과 출처·받아온 시각·상태·기준, 장중이면 그 알림.  묶음이 셋이면 가운데 것
@@ -1242,22 +1252,26 @@ async function renderModel() {
   try {
     const [d, cap] = await Promise.all([api(mq("/api/model")), api(mq("/api/capital"))]); if (mk !== state.market) return; state.loaded.model = true;
     const b = d.baseline, t = d.tracking;
-    el.innerHTML = `<div class="panel"><h2>${esc(b.name)} ${badge(b.status || "FROZEN")} <span class="meta m0">${esc(b.role)}</span></h2>
-      <div class="form" style="margin:8px 0 12px"><label>투자 자본금 (${esc(cap.currency)})<input id="capInput" inputmode="decimal" autocomplete="off" value="${isNum(cap.amount) ? cap.amount : ""}" placeholder="금액 입력"></label><button id="capSave">저장</button>${mk === "KR" ? '<button id="capRun" type="button" title="저장된 금액으로 한국 모델 스캔을 실행합니다">스캔 실행</button>' : ""}<div class="wide meta m0" id="capNote"></div><div class="wide meta m0" id="capRunNote"></div></div>
+    // 작업 화면 개편 7단계 (배치 명세 3.15): 맨 위 줄에 모델 이름, 오른쪽 칸(한 칸에서는 맨 앞)에 자본금과 마지막 스캔, 가운데 칸에 상위 종목 표,
+    // 아래 줄에 전향적 추적과 도전자 모델(미국은 lab.js가 비교 표로 바꿈).  설정(자본금)과 결과(표)가 따로 섭니다.
+    el.innerHTML = ui.ws({ name: "model", label: "자본금과 마지막 스캔",
+      ctx: `<h2>${esc(b.name)} ${badge(b.status || "FROZEN")} <span class="meta m0">${esc(b.role)}</span></h2>`,
+      right: `<div class="panel ws-first"><h2>투자 자본금과 마지막 스캔</h2>
+      <div class="form" style="margin:0 0 12px"><label>투자 자본금 (${esc(cap.currency)})<input id="capInput" inputmode="decimal" autocomplete="off" value="${isNum(cap.amount) ? cap.amount : ""}" placeholder="금액 입력"></label><button id="capSave">저장</button>${mk === "KR" ? '<button id="capRun" type="button" title="저장된 금액으로 한국 모델 스캔을 실행합니다">스캔 실행</button>' : ""}<div class="wide meta m0" id="capNote"></div><div class="wide meta m0" id="capRunNote"></div></div>
       ${b.newer_empty_scan ? `<div class="notice">더 최근 스캔(${when(b.newer_empty_scan.executed_at)}, 기준 거래일 ${esc(b.newer_empty_scan.latest_session || "")})은 그날 시세가 아직 다 나오지 않아 채점한 종목이 없었습니다. 아래는 그 전의 마지막 유효 결과입니다.</div>` : ""}
       ${b.run_id ? `<div class="kv"><div><span>최근 전체 스캔</span><b>${when(b.executed_at)}</b></div>${b.latest_session ? `<div><span>기준 거래일</span><b>${esc(b.latest_session)}</b></div>` : ""}<div><span>결과</span><b>${esc(REC_KO[b.recommendation_status] || b.recommendation_status)}</b></div>
-        <div><span>시장 국면</span><b>${esc(REGIME_KO[b.regime] || b.regime || "—")}</b></div><div><span>기준 자본</span><b class="num">${isNum(b.capital) ? b.capital.toLocaleString("ko-KR") + " " + esc(b.currency || "") : DASH}</b></div></div>
-      <h3>모델 상위 종목</h3><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th class="l">섹터</th><th>기준가</th><th title="모델이 순위를 매기는 데 쓰는 값입니다. 수익률이 아닙니다.">${mk === "KR" ? "모델 점수(순위용)" : "모델 알파(순위용)"}</th><th>목표 비중</th><th>목표 금액</th><th>주수</th><th>손절가</th><th>보유 기간</th></tr></thead>
+        <div><span>시장 국면</span><b>${esc(REGIME_KO[b.regime] || b.regime || "—")}</b></div><div><span>기준 자본</span><b class="num">${isNum(b.capital) ? b.capital.toLocaleString("ko-KR") + " " + esc(b.currency || "") : DASH}</b></div></div>` : ""}</div>`,
+      main: `<div class="panel">${b.run_id ? `<h2>모델 상위 종목</h2><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">종목</th><th class="l">섹터</th><th>기준가</th><th title="모델이 순위를 매기는 데 쓰는 값입니다. 수익률이 아닙니다.">${mk === "KR" ? "모델 점수(순위용)" : "모델 알파(순위용)"}</th><th>목표 비중</th><th>목표 금액</th><th>주수</th><th>손절가</th><th>보유 기간</th></tr></thead>
       <tbody>${(b.top5 || []).map((r) => `<tr class="click" data-ticker="${esc(r.ticker)}"><td>${esc(r.recommendation_rank)}</td><td class="l"><b>${esc(r.ticker)}</b> <span class="meta m0">${esc(r.name || "")}</span></td>
         <td class="l">${esc(sectorKo(r.sector))}</td><td class="num">${fmt(r.close, mk === "KR" ? 0 : 2)}</td><td class="num">${fmt(r.alpha, 3)}</td><td class="num">${isNum(r.target_weight) ? (r.target_weight * 100).toFixed(1) + "%" : DASH}</td>
         <td class="num" data-cap-amount data-w="${isNum(r.target_weight) ? r.target_weight : ""}">${DASH}</td><td class="num" data-cap-shares data-w="${isNum(r.target_weight) ? r.target_weight : ""}" data-close="${isNum(r.close) ? r.close : ""}">${DASH}</td>
         <td class="num">${fmt(r.hard_stop)}</td><td>${isNum(r.horizon_days) ? r.horizon_days + "거래일" : DASH}</td></tr>`).join("") || '<tr><td colspan="10" class="empty">추천 종목 없음</td></tr>'}</tbody></table></div>
-      <div class="meta"><span class="tech-id">실행 ID ${esc(b.run_id)}</span> · 읽기 전용 표시입니다. 이 화면은 모델을 실행하거나 변경하지 않습니다.</div>` : '<div class="empty">기록된 전체 스캔이 없습니다.</div>'}</div>
-      <div class="panel"><h2>전향적 추적 ${badge(t.status)}</h2>${t.status === "REAL" ? `<div class="kv"><div><span>기록된 실행</span><b>${esc(t.runs)}</b></div><div><span>관찰 건수</span><b>${esc(t.observations)}</b></div>${t.excluded_runs ? `<div title="같은 거래일을 두 번 스캔한 기록입니다. 지우지 않고 집계에서만 뺍니다."><span>집계 제외 (중복 스캔)</span><b>실행 ${esc(t.excluded_runs)}개 · ${esc(t.excluded_observations)}건</b></div>` : ""}
+      <div class="meta"><span class="tech-id">실행 ID ${esc(b.run_id)}</span> · 읽기 전용 표시입니다. 이 화면은 모델을 실행하거나 변경하지 않습니다.</div>` : '<h2>모델 상위 종목</h2><div class="empty">기록된 전체 스캔이 없습니다.</div>'}</div>`,
+      lower: `<div class="panel"><h2>전향적 추적 ${badge(t.status)}</h2>${t.status === "REAL" ? `<div class="kv"><div><span>기록된 실행</span><b>${esc(t.runs)}</b></div><div><span>관찰 건수</span><b>${esc(t.observations)}</b></div>${t.excluded_runs ? `<div title="같은 거래일을 두 번 스캔한 기록입니다. 지우지 않고 집계에서만 뺍니다."><span>집계 제외 (중복 스캔)</span><b>실행 ${esc(t.excluded_runs)}개 · ${esc(t.excluded_observations)}건</b></div>` : ""}
         <div><span>최근 갱신</span><b>${esc(t.latest_update || "—")}</b></div></div>
         ${t.outcome_states ? `<div class="kv">${Object.entries(t.outcome_states).map(([k, v]) => `<div><span>${esc(outKo(k))}</span><b>${esc(v)}</b></div>`).join("")}</div>` : ""}
         <div class="meta">표본이 충분히 쌓이기 전에는 성과를 판단할 수 없습니다.</div>` : `<div class="empty">추적 데이터를 읽지 못했습니다. ${esc(t.error ? errKo({ message: t.error }) : "")}</div>`}</div>
-      <div class="panel"><h2>도전자 모델</h2><div class="empty">${esc(d.challenger_note)}</div></div>`;
+      <div class="panel"><h2>도전자 모델</h2><div class="empty">${esc(d.challenger_note)}</div></div>` });
     wireCapital(el, cap, b, mk);
   } catch (e) { el.innerHTML = errBox(e); }
 }
@@ -1349,6 +1363,19 @@ function fromHash() {
     const v = QSF_VIEWS[view] ? view : "rank";
     if (booted && state.tab === "qsf") { if (v !== qsfState.view) qsfSetView(v); return; }
     qsfState.view = v;
+  }
+  // #committee:ports 처럼 투자위원회의 보기 (작업 화면 개편 7단계, O-7): 같은 탭이면 보기만 바꾸고, 이미 그려 둔 탭이면 연 뒤 보기를 맞춥니다.
+  if (tab === "committee" && typeof icState !== "undefined") {
+    const v = IC_VIEWS[view] ? view : "dash";
+    if (booted && state.tab === "committee") { if (v !== icState.view) icSetView(v); return; }
+    if (!$("#icview")) icState.view = v;
+    else if (v !== icState.view) { booted = true; show("committee", false); icSetView(v); return; }
+  }
+  // #assist:alerts 처럼 매매 보조의 한 부분: 그 부분으로 내려간 화면을 엽니다.  같은 탭이면 내려가기만 합니다.
+  if (tab === "assist" && typeof assistState !== "undefined" && ASSIST_SECTIONS[view]) {
+    assistState.section = view;
+    if (booted && state.tab === "assist" && $("#szform")) { assistScroll(); return; }
+    booted = true; show("assist", false); return;
   }
   // 화면이 이미 그 주소대로면 다시 그리지 않습니다.  종목이 없는 #stock도 같다고 봅니다: 다시 그리면 방금 띄운 '혹시 이 종목인가요?' 목록이 지워집니다.
   if (booted && tab === state.tab && (tab !== "stock" || (tk || "").toUpperCase() === (state.ticker || "")) && (!card || card === state.card)) return;

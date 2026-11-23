@@ -11,7 +11,7 @@ RENDER.model = async function () {
   if (isKR()) return;                  // challengers and the research lab are US only so far
   const host = $("#tab-model");
   const panel = document.createElement("div");
-  panel.className = "panel"; panel.id = "cmp"; panel.innerHTML = loading;
+  panel.className = "panel span-all"; panel.id = "cmp"; panel.innerHTML = loading;          // 넓은 표: 아래 줄의 한 줄 전체 (배치 명세 3.15)
   // replace the stage-1 placeholder panel ("도전자 모델") with the comparison
   const old = [...host.querySelectorAll(".panel")].find((p) => p.querySelector("h2") && p.querySelector("h2").textContent.trim() === "도전자 모델");
   if (old) old.replaceWith(panel); else host.appendChild(panel);
@@ -140,6 +140,13 @@ function drawLab() {
   ctx.textAlign = "left";
   vizDates(ctx, d.benchmark.dates, (i) => (i / (n - 1)) * (w - padR), h - 14, w, T.tick);
   series.forEach(({ c, s }) => { const m = s.nav.length; line(ctx, s.nav, (i) => (i / (m - 1)) * (w - padR), y, cssVar(LAB_COLORS[c]), c === "SPY" ? 1.3 : 1.8); });
+  // 십자선과 날마다의 값 (6단계에서 미룬 연구실 그림, 시각화 명세 1.6): 포인터·손가락·키보드.  값은 시작 대비 누적 수익률, 표와 같은 비용 기준입니다.
+  const pw = w - padR, xs = (i) => (i / (n - 1)) * pw, at = (s, i) => { const m = s.nav.length; return m ? s.nav[Math.round((i / Math.max(1, n - 1)) * (m - 1))] : null; };
+  const name = (c) => (c === "SPY" ? "SPY" : d.models_meta[c].name);
+  vizHover(cv, { count: n, xOf: xs, indexAt: (px) => (px > pw ? -1 : Math.min(n - 1, Math.max(0, Math.round((px / pw) * (n - 1))))),
+    html: (i) => `<b>${esc(d.benchmark.dates[i])}</b> <span class="muted">비용 ${esc(labCost)} bps</span><br>${series.map(({ c, s }) => { const v = at(s, i);
+      return `<i class="key-line" style="background:var(${LAB_COLORS[c]})"></i>${esc(name(c))} ${vizPct(isNum(v) ? (v - 1) * 100 : null, 1)}`; }).join("<br>")}` });
+  cv.setAttribute("aria-label", `과거 시뮬레이션 누적 수익률, ${d.benchmark.dates[0]}~${d.benchmark.dates[n - 1]}, 비용 ${labCost} bps. 왼쪽·오른쪽 화살표로 날짜를 옮깁니다.`);
 }
 
 // ------------------------------------------------------------------ 전향 기록 현황판
@@ -192,8 +199,11 @@ async function renderRecord() {
     <div class="meta">${a.steps.map((s) => `${esc(s.name)}: ${esc(stat[s.status] || "기록 없음")}`).join(" · ")}</div>
     <div class="meta">${esc(d.note)}</div></div>`;
 }
+// 작업 화면 개편 7단계 (배치 명세 3.16): 가운데 칸에 과거 시뮬레이션, 오른쪽 칸에 전향 기록 현황(한 칸에서는 맨 앞, 지금 순서).  한국은
+// 가운데 칸이 한 문장뿐이라 한 칸(.ws--single)으로 기록을 넓게 먼저 보여 줍니다.
 RENDER.lab = async function () {
-  $("#tab-lab").innerHTML = '<div id="recpanel"></div><div id="labbody"></div>';
+  $("#tab-lab").innerHTML = `<div class="${isKR() ? "ws ws--single" : "ws"}" data-ws="lab"><div class="ws-body"><div class="ws-main" id="labbody"></div>
+    <div class="ws-right" role="complementary" aria-label="전향 기록 현황"><div id="recpanel" class="ws-first"></div></div></div></div>`;
   renderRecord();
   await renderLab();
 };

@@ -109,22 +109,29 @@ async function icPlace(btn) {
 }
 
 // ---------------------------------------------------------------- 투자위원회 탭
+// 작업 화면 개편 7단계 (배치 명세 3.14, 사용자 결정 O-7): 맨 위 줄에 제목, 설명, 보기 단추.  보기마다 #icbody(.ws-body)에 가운데 칸과
+// 오른쪽 칸을 씁니다(icWs).  보기는 주소에 실립니다: #committee:ports 처럼(현황은 #committee).  단추로 바꾼 보기는 기록에 남아 뒤로 가기로 돌아옵니다.
 function renderCommittee() {
   const el = $("#tab-committee");
   icState.market = icMarket();
-  el.innerHTML = `<div class="panel"><h2>투자위원회 <span class="meta m0">${icState.market === "KR" ? "한국" : "미국"} · 다섯 투자자 엔진과 통합 위원회 · 규칙 IC-1</span></h2>
+  el.innerHTML = `<div class="ws" data-ws="committee"><div class="ws-ctx"><h2>투자위원회 <span class="meta m0">${icState.market === "KR" ? "한국" : "미국"} · 다섯 투자자 엔진과 통합 위원회 · 규칙 IC-1</span></h2>
     <div class="meta">버핏식·멍거식·그레이엄식·린치식·드러켄밀러식 다섯 규칙이 종목마다 따로 판단하고, 위원회가 그 다섯을 읽어 하나의 판정을 냅니다. 실존 투자자의 의견이 아니고, 수익으로 검증하지 않았으며, QSF 점수와 섞지 않고, 주문을 내지 않습니다.</div>
     <div class="qsf-nav"><span class="seg" id="icview" role="group" aria-label="보기">${Object.entries(IC_VIEWS).map(([k, v]) => `<button type="button" data-v="${k}">${v}</button>`).join("")}</span></div></div>
-    <div id="icbody"></div>`;
-  $("#icview").querySelectorAll("button").forEach((b) => (b.onclick = () => icSetView(b.dataset.v)));
+    <div class="ws-body" id="icbody"></div></div>`;
+  $("#icview").querySelectorAll("button").forEach((b) => (b.onclick = () => icSetView(b.dataset.v, true)));
   icSetView(icState.view);
 }
 
-function icSetView(v) {
+// push: 사용자가 단추로 고른 보기는 주소 기록에 남깁니다 (순위·카드의 qsfSetView와 같은 방식)
+function icSetView(v, push = false) {
   icState.view = IC_VIEWS[v] ? v : "dash";
+  if (push && state.tab === "committee" && location.hash !== "#" + tabHash("committee")) history.pushState(null, "", "#" + tabHash("committee"));
   $("#icview").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === icState.view));
   ({ dash: icDash, ports: icPorts, compare: icCompare, perf: icPerf })[icState.view]();
 }
+// 한 보기의 두 칸.  right가 비면 한 칸입니다.  rightLabel은 화면 읽기 프로그램이 읽는 오른쪽 칸 이름입니다.
+const icWs = (main, right, rightLabel = "요약") => `<div class="ws-main">${main}</div>${right ? `<div class="ws-right" role="complementary" aria-label="${esc(rightLabel)}">${right}</div>` : ""}`;
+const icWait = (text = "불러오는 중…") => icWs(`<div class="panel"><div class="meta">${esc(text)}</div></div>`);
 
 function icOpenRows(box, mk) {
   box.querySelectorAll(".qs-open").forEach((b) => { b.onclick = () => qsfOpenCard(b.dataset.t); });
@@ -133,27 +140,28 @@ const icTicker = (t, name) => `<button type="button" class="qs-open" data-t="${e
 
 async function icDash() {
   const box = $("#icbody"), mk = icState.market;
-  box.innerHTML = `<div class="panel"><div class="meta">불러오는 중…</div></div>`;
+  box.innerHTML = icWait();
   let d;
-  try { d = await api(`/api/committee/dashboard?market=${mk}`); } catch (e) { box.innerHTML = errBox(e); return; }
+  try { d = await api(`/api/committee/dashboard?market=${mk}`); } catch (e) { box.innerHTML = icWs(errBox(e)); return; }
   if (icState.view !== "dash" || mk !== icState.market) return;
-  if (d.status !== "OK") { box.innerHTML = `<div class="panel"><div class="empty">${esc(d.reason || "기록이 없습니다.")}</div></div>`; return; }
+  if (d.status !== "OK") { box.innerHTML = icWs(`<div class="panel"><div class="empty">${esc(d.reason || "기록이 없습니다.")}</div></div>`); return; }
   const chips = (o) => Object.entries(o || {}).map(([k, n]) => `<span class="badge">${esc(k)} ${n}</span>`).join(" ") || "없음";
   const top = d.top.map((r) => `<tr><td class="l">${icTicker(r.ticker, r.name)}</td><td class="l">${esc(r.sector || "")}</td><td class="l">${esc(r.decision_ko)}</td><td class="num">${icNum(r.attractiveness)}</td><td class="num">${icNum(r.confidence)}</td>
     <td class="l">${esc((r.supporters || []).join(", "))}</td><td class="l">${r.strongest_for ? esc(r.strongest_for.text) : ""}</td><td class="l">${r.strongest_against ? esc(r.strongest_against.investor + ": " + r.strongest_against.text) : ""}</td></tr>`).join("");
   // 큰 숫자 넷 + 자세히 (6차 묶음 P2-20): 판정한 종목, 매수 조건 종목, 의견 일치, 시장 상태.  나머지 분포는 접어 둡니다.
   const stat = (label, v, unit = "") => `<div class="ic-stat"><span>${label}</span><b class="num">${v}${unit ? `<small>${unit}</small>` : ""}</b></div>`;
-  box.innerHTML = `<div class="panel"><h2>위원회 현황 <span class="meta m0">${esc(d.session)} 기록</span></h2>
+  // 오른쪽 칸(한 칸에서는 맨 앞): 큰 숫자 넷과 접힌 분포.  가운데 칸: 매수 조건으로 본 종목 표.
+  const stats = `<div class="panel ws-first"><h2>위원회 현황 <span class="meta m0">${esc(d.session)} 기록</span></h2>
       <div class="ic-stats">${stat("판정한 종목", d.judged)}${stat("매수 조건으로 본 종목", d.buy_count)}${stat("의견 일치(평균)", icNum(d.average_agreement), "/100")}${stat("시장 상태", icNum(d.market_state), "/100")}</div>
       <details class="ic-more"><summary>분포와 국면 자세히</summary>
       <div class="meta"><b>시장 상태</b> ${icNum(d.market_state)}/100 · 국면: ${(d.regimes || []).map((r) => `${esc(r.label)}(확신 ${r.confidence})`).join(", ") || "뚜렷한 국면 없음"} · 읽지 못한 국면: ${esc((d.regimes_not_told || []).join(", "))}</div>
       <div class="meta"><b>위원회 판정의 분포</b> ${chips(d.decisions)}</div>
       <div class="meta"><b>의견 일치(평균)</b> ${icNum(d.average_agreement)}/100 · <b>의견이 갈린 종류</b> ${chips(d.disagreements)}</div>
-      <div class="meta"><b>자주 나온 위험</b> ${chips(d.risks)}</div></details></div>
-    <div class="panel"><h2>위원회가 매수 조건으로 본 종목 <span class="meta m0">${d.buy_count}종목 가운데 매력 순 ${d.top.length}종목 · 줄을 누르면 점수 카드</span></h2>
+      <div class="meta"><b>자주 나온 위험</b> ${chips(d.risks)}</div></details></div>`;
+  box.innerHTML = icWs(`<div class="panel"><h2>위원회가 매수 조건으로 본 종목 <span class="meta m0">${d.buy_count}종목 가운데 매력 순 ${d.top.length}종목 · 줄을 누르면 점수 카드</span></h2>
       ${top ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th class="l">업종</th><th class="l">판정</th><th>매력</th><th title="자료 양 50%, 다섯 규칙의 자료 확인 30%, 의견 일치 20%를 섞은 값입니다. 맞을 확률이 아닙니다.">자료·일치</th><th class="l">찬성한 관점</th><th class="l">찬성 논거</th><th class="l">반대 논거</th></tr></thead><tbody>${top}</tbody></table></div>`
         : `<div class="empty">위원회가 매수 조건으로 본 종목이 없습니다. 억지로 채우지 않습니다.</div>`}
-      <div class="meta">${esc(d.note)}</div></div>`;
+      <div class="meta">${esc(d.note)}</div></div>`, stats, "위원회 현황");
   icOpenRows(box, mk);
 }
 
@@ -187,12 +195,13 @@ function icPortsDraw(d, mk) {
   const box = $("#icbody");
   const tabs = d.portfolios.map((p) => `<button type="button" data-p="${p.key}">${esc(p.name.replace(" 포트폴리오", ""))} <span class="meta m0">${p.count}</span></button>`).join("");
   const over = (d.overlap || []).filter((o) => o.count).map((o) => `${esc(o.a.replace(" 포트폴리오", ""))}–${esc(o.b.replace(" 포트폴리오", ""))} ${o.count}종목`).join(" · ");
-  box.innerHTML = `<div class="panel"><h2>여섯 포트폴리오 <span class="meta m0">${esc(d.session)} 기록으로 작성 · 가상(주문 없음)</span>
-      <button type="button" class="ghost" id="icportsget">다시 받아보기</button></h2>
-      <div class="meta">${esc(d.made)}</div>
-      <div class="meta"><b>겹치는 종목</b> ${over || "여섯 포트폴리오 사이에 겹치는 종목이 없습니다"}</div>
-      <div class="qsf-nav"><span class="seg" id="icporttabs" role="group" aria-label="포트폴리오">${tabs}</span></div></div>
-    <div id="icport"></div><div class="panel"><div class="meta">${esc(d.note)}</div></div>`;
+  // 오른쪽 칸(한 칸에서는 맨 앞): 여섯 이름(세로 목록)과 다시 받아보기, 겹치는 종목.  가운데 칸: 고른 포트폴리오.
+  box.innerHTML = icWs(`<div id="icport"></div><div class="panel"><div class="meta">${esc(d.note)}</div></div>`,
+    `<div class="panel ws-first"><h2>여섯 포트폴리오 <span class="meta m0">${esc(d.session)} 기록으로 작성 · 가상(주문 없음)</span>
+      <span class="ph-actions"><button type="button" class="ghost" id="icportsget">다시 받아보기</button></span></h2>
+      <div class="meta">${esc(d.made)} 계산만 하고 저장하지 않습니다.</div>
+      <div class="qsf-nav"><span class="seg" id="icporttabs" role="group" aria-label="포트폴리오">${tabs}</span></div>
+      <div class="meta"><b>겹치는 종목</b> ${over || "여섯 포트폴리오 사이에 겹치는 종목이 없습니다"}</div></div>`, "여섯 포트폴리오");
   const show = (key) => {
     icState.port = key;
     $("#icporttabs").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.p === key));
@@ -205,12 +214,16 @@ function icPortsDraw(d, mk) {
 }
 
 // 여섯 포트폴리오는 이 버튼을 눌렀을 때만 만듭니다. 탭을 여는 것만으로는 만들지 않습니다.
+// 작성 중에는 다시 누르지 않습니다(점수 카드의 '포트폴리오 받아보기'와 같은 막음).  누른 단추는 응답까지 눌리지 않습니다.
 async function icPortsGet() {
-  const box = $("#icbody"), mk = icState.market;
-  box.innerHTML = `<div class="panel"><div class="meta">여섯 포트폴리오를 작성하고 있습니다…</div></div>`;
+  const box = $("#icbody"), mk = icState.market, btn = $("#icportsget");
+  if (icState.getting) return;
+  icState.getting = true;
+  if (btn) { btn.disabled = true; btn.textContent = "작성 중…"; }
+  box.innerHTML = icWait("여섯 포트폴리오를 작성하고 있습니다…");
   let d;
-  try { d = await api(`/api/committee/portfolios?market=${mk}`); } catch (e) { box.innerHTML = errBox(e); return; }
-  if (d.status !== "OK") { box.innerHTML = `<div class="panel"><div class="empty">${esc(d.reason || "만들지 못했습니다.")}</div></div>`; return; }
+  try { d = await api(`/api/committee/portfolios?market=${mk}`); } catch (e) { box.innerHTML = icWs(errBox(e)); return; } finally { icState.getting = false; }
+  if (d.status !== "OK") { box.innerHTML = icWs(`<div class="panel"><div class="empty">${esc(d.reason || "만들지 못했습니다.")}</div></div>`); return; }
   icState.ports[mk] = d;
   if (icState.view === "ports" && mk === icState.market) icPortsDraw(d, mk);
 }
@@ -218,59 +231,60 @@ async function icPortsGet() {
 function icPorts() {
   const mk = icState.market, kept = icState.ports[mk];
   if (kept) { icPortsDraw(kept, mk); return; }
-  $("#icbody").innerHTML = `<div class="panel"><h2>여섯 포트폴리오</h2>
+  $("#icbody").innerHTML = icWs(`<div class="panel"><h2>여섯 포트폴리오</h2>
     <div class="meta">버핏식(오래 가져갈 좋은 사업), 멍거식(탁월한 사업 몇 개), 그레이엄식(싸고 튼튼한 종목을 넓게), 린치식(성장에 비해 값이 적당한 종목), 드러켄밀러식(시장·이익·추세가 맞는 곳), 투자위원회(위험을 따져 합친 것).
       여섯은 서로 다른 규칙으로 종목을 고르고 비중을 정합니다. 조건을 채운 종목이 없으면 현금으로 둡니다.</div>
     <div class="my-3"><button type="button" class="btn-primary" id="icportsget">여섯 포트폴리오 받아보기</button>
-      <span class="meta" style="margin:0 0 0 8px">누르면 지금 기록으로 작성합니다. 누르기 전에는 만들지 않습니다.</span></div>
-    <div class="meta">주문을 내지 않는 가상 포트폴리오입니다. 금액과 수량은 계산하지 않습니다.</div></div>`;
+      <span class="meta" style="margin:0 0 0 8px">누르면 지금 기록으로 작성합니다. 누르기 전에는 만들지 않습니다. 계산만 하고 저장하지 않습니다.</span></div>
+    <div class="meta">주문을 내지 않는 가상 포트폴리오입니다. 금액과 수량은 계산하지 않습니다.</div></div>`);
   $("#icportsget").onclick = () => icPortsGet();
 }
 
 async function icCompare(asked) {
   const box = $("#icbody"), mk = icState.market;
-  box.innerHTML = `<div class="panel"><div class="meta">불러오는 중…</div></div>`;
+  box.innerHTML = icWait();
   let d;
-  try { d = await api(`/api/committee/compare?market=${mk}${asked ? `&t=${encodeURIComponent(asked)}` : ""}`); } catch (e) { box.innerHTML = errBox(e); return; }
+  try { d = await api(`/api/committee/compare?market=${mk}${asked ? `&t=${encodeURIComponent(asked)}` : ""}`); } catch (e) { box.innerHTML = icWs(errBox(e)); return; }
   if (icState.view !== "compare" || mk !== icState.market) return;
-  if (d.status !== "OK") { box.innerHTML = `<div class="panel"><div class="empty">${esc(d.reason || "기록이 없습니다.")}</div></div>`; return; }
+  if (d.status !== "OK") { box.innerHTML = icWs(`<div class="panel"><div class="empty">${esc(d.reason || "기록이 없습니다.")}</div></div>`); return; }
   const names = d.rows.length ? d.rows[0].views.map((v) => v.name) : Object.keys(d.tally);
   const rows = d.rows.map((r) => `<tr><td class="l">${icTicker(r.ticker, r.name)}</td>${r.views.map((v) => `<td class="l" title="${esc(v.valuation)} · ${esc(v.horizon)}">${icBadge(v.recommendation, v.recommendation_ko)} <span class="num">${icNum(v.score)}</span></td>`).join("")}
     <td class="l"><b>${esc(r.committee)}</b></td><td class="num">${icNum(r.attractiveness)}</td><td class="num">${icNum(r.agreement)}</td><td class="num">${icNum(r.growth)}</td><td class="num">${icNum(r.downside)}</td></tr>`).join("");
   const tally = Object.entries(d.tally).map(([n, o]) => `<div class="meta"><b>${esc(n)}</b> ${Object.entries(o).sort((a, b) => b[1] - a[1]).map(([k, c]) => `${esc(k)} ${c}`).join(" · ")}</div>`).join("");
-  box.innerHTML = `<div class="panel"><h2>투자자 비교 <span class="meta m0">${esc(d.session)} 기록 · ${d.asked ? "고른 종목" : "위원회 매력 상위 20종목"}</span></h2>
+  box.innerHTML = icWs(`<div class="panel"><h2>투자자 비교 <span class="meta m0">${esc(d.session)} 기록 · ${d.asked ? "고른 종목" : "위원회 매력 상위 20종목"}</span></h2>
       <form id="iccmpform" class="search" style="margin:0 0 8px"><input id="iccmpq" placeholder="${mk === "KR" ? "005930, 000660" : "AAPL, NVDA, MSFT"}" value="${esc(asked || "")}" aria-label="비교할 종목 코드(쉼표로 구분)"><button>비교</button></form>
       ${(d.not_found || []).length ? `<div class="notice">스캔 기록에 없는 종목: ${esc(d.not_found.join(", "))}</div>` : ""}
       <div class="tbl-wrap"><table><thead><tr><th class="l">종목</th>${names.map((n) => `<th class="l">${esc(n)}</th>`).join("")}<th class="l">위원회</th><th>매력</th><th>일치</th><th>성장</th><th>하방 위험</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <div class="meta">칸에 마우스를 올리면 그 관점의 가격 판단과 보는 기간이 나옵니다. 숫자는 그 관점의 점수(0~100)입니다.</div></div>
-    <div class="panel"><h2>관점마다 판정이 어떻게 갈리나 <span class="meta m0">${d.judged}종목</span></h2>${tally}<div class="meta">${esc(d.note)}</div></div>`;
+      <div class="meta">칸에 마우스를 올리면 그 관점의 가격 판단과 보는 기간이 나옵니다. 숫자는 그 관점의 점수(0~100)입니다.</div></div>`,
+    `<div class="panel"><h2>관점마다 판정이 어떻게 갈리나 <span class="meta m0">${d.judged}종목</span></h2>${tally}<div class="meta">${esc(d.note)}</div></div>`, "관점마다 판정");
   $("#iccmpform").onsubmit = (e) => { e.preventDefault(); icCompare($("#iccmpq").value.trim().toUpperCase()); };
   icOpenRows(box, mk);
 }
 
 async function icPerf() {
   const box = $("#icbody"), mk = icState.market;
-  box.innerHTML = `<div class="panel"><div class="meta">불러오는 중…</div></div>`;
+  box.innerHTML = icWait();
   let d;
-  try { d = await api(`/api/committee/performance?market=${mk}`); } catch (e) { box.innerHTML = errBox(e); return; }
+  try { d = await api(`/api/committee/performance?market=${mk}`); } catch (e) { box.innerHTML = icWs(errBox(e)); return; }
   if (icState.view !== "perf" || mk !== icState.market) return;
   const rd = d.reading || {};
   const reading = `<div class="meta"><b>한 번의 읽기</b> ${esc(rd.rule || "")} ${rd.verdict ? `읽은 결과: <b>${esc(rd.verdict)}</b>` : `앞으로 약 ${rd.left}거래일.`} 규칙: ${esc(rd.protocol || "")}</div>${(rd.reasons || []).map((x) => `<div class="meta">${esc(x)}</div>`).join("")}`;
-  const head = `<h2>여섯 포트폴리오의 가상 성과 <span class="badge c-warn">가상 기록</span></h2>
-    <div class="meta">${esc(d.kind_ko)} · ${esc(d.not_this)}</div><div class="meta">${esc(d.method)} 거래 비용은 편도 ${icPct(d.one_way_cost, 2)}로 계산합니다. 비교 지수: ${esc(d.benchmark)}.</div>`;
+  // 오른쪽 칸(한 칸에서는 맨 앞): 무슨 기록인지, 방법과 비용, 한 번의 읽기.  가운데 칸: 성과 표.
+  const head = `<h2>여섯 포트폴리오의 가상 성과 <span class="badge c-warn">가상 기록</span></h2>`;
+  const side = `<div class="panel ws-first"><h3>무슨 기록인가</h3><div class="meta">${esc(d.kind_ko)} · ${esc(d.not_this)}</div><div class="meta">${esc(d.method)} 거래 비용은 편도 ${icPct(d.one_way_cost, 2)}로 계산합니다. 비교 지수: ${esc(d.benchmark)}.</div>${reading}</div>`;
   if (d.status !== "OK") {
-    box.innerHTML = `<div class="panel">${head}<div class="empty">${esc(d.reason || "기록이 없습니다.")}</div>
-      <div class="meta">매일 작업이 그날의 여섯 포트폴리오를 한 줄씩 기록합니다. 기록 ${d.records}거래일${d.first_session ? `(${esc(d.first_session)} ~ ${esc(d.last_session)})` : ""}.</div>${reading}</div>`;
+    box.innerHTML = icWs(`<div class="panel">${head}<div class="empty">${esc(d.reason || "기록이 없습니다.")}</div>
+      <div class="meta">매일 작업이 그날의 여섯 포트폴리오를 한 줄씩 기록합니다. 기록 ${d.records}거래일${d.first_session ? `(${esc(d.first_session)} ~ ${esc(d.last_session)})` : ""}.</div></div>`, side, "기록 방법과 읽기");
     return;
   }
   const rows = Object.entries(d.portfolios).map(([k, s]) => `<tr><td class="l"><b>${esc((d.names || {})[k] || k)}</b></td><td class="num">${s.days}</td><td class="num">${icPct(s.total_return, 2)}</td><td class="num">${icPct(s.benchmark_return, 2)}</td>
     <td class="num">${icPct(s.max_drawdown, 2)}</td><td class="num">${icPct(s.win_rate, 0)}</td><td class="num">${icPct(s.cagr, 1)}</td><td class="num">${icPct(s.volatility, 1)}</td><td class="num">${icNum(s.sharpe, 2)}</td><td class="num">${icNum(s.sortino, 2)}</td>
     <td class="num">${icNum(s.calmar, 2)}</td><td class="num">${icPct(s.alpha, 1)}</td><td class="num">${icNum(s.beta, 2)}</td><td class="num">${icPct(s.turnover_per_day, 1)}</td><td class="num">${icNum(s.average_holding_sessions, 1)}</td><td class="num">${icPct(s.cost_total, 2)}</td></tr>`).join("");
   const first = Object.values(d.portfolios)[0] || {};
-  box.innerHTML = `<div class="panel">${head}
+  box.innerHTML = icWs(`<div class="panel">${head}
     <div class="tbl-wrap"><table><thead><tr><th class="l">포트폴리오</th><th>거래일</th><th>수익</th><th>지수</th><th>최대 낙폭</th><th>오른 날</th><th>연환산</th><th>변동성</th><th>샤프</th><th>소르티노</th><th>칼마</th><th>알파</th><th>베타</th><th>하루 교체</th><th>평균 보유일</th><th>비용 합</th></tr></thead><tbody>${rows}</tbody></table></div>
     ${first.ratios ? `<div class="meta">${esc(first.ratios)}</div>` : ""}
-    <div class="meta">기록 ${d.records}거래일(${esc(d.first_session)} ~ ${esc(d.last_session)}). 표본이 짧을 때의 수익은 우연과 구별되지 않습니다. 이 성과를 보고 규칙을 고치지 않습니다.</div>${reading}</div>`;
+    <div class="meta">기록 ${d.records}거래일(${esc(d.first_session)} ~ ${esc(d.last_session)}). 표본이 짧을 때의 수익은 우연과 구별되지 않습니다. 이 성과를 보고 규칙을 고치지 않습니다.</div></div>`, side, "기록 방법과 읽기");
 }
 
 RENDER.committee = renderCommittee;

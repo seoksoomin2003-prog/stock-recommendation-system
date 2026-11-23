@@ -13,8 +13,11 @@ async function renderCoin() {
   if (state.tab !== "coin") return;
   const caveats = (d.caveats || []).map((x) => `<li>${esc(x)}</li>`).join("");
   const head = `<details class="notice qsf-caveat"><summary><b>대상 코인끼리의 순위입니다. 오를지 내릴지를 말하지 않습니다.</b> <span class="fold-hint">자세히</span></summary><ul class="qsf-list">${caveats}</ul></details>`;
+  // 작업 화면 개편 7단계 (배치 명세 3.17): 맨 위 줄에 제목·상태·마감 시각, 간이 순위 알림, 주의 접기, 오래된 시세 경고, 읽는 법.  가운데 칸에 순위 표,
+  // 오른쪽 칸에 코인 시장.  자료가 없으면 맨 위 줄과 빈 문장만 한 칸으로.
   if (d.status === "UNAVAILABLE") {
-    el.innerHTML = `<div class="panel"><h2>코인 상대 순위 ${badge("UNAVAILABLE")}</h2>${head}${ui.empty(d.reason || "자료를 읽지 못했습니다.")}<div class="meta">출처: ${esc(d.source || "")}</div></div>`;
+    el.innerHTML = ui.ws({ name: "coin", single: true, ctx: `<h2>코인 상대 순위 ${badge("UNAVAILABLE")}</h2>${head}`,
+      main: `<div class="panel">${ui.empty(d.reason || "자료를 읽지 못했습니다.")}<div class="meta">출처: ${esc(d.source || "")}</div></div>` });
     return;
   }
   const simple = d.mode === "SIMPLE";
@@ -38,16 +41,17 @@ async function renderCoin() {
     : `기대 상대 폭은 앞으로 7일 동안 대상의 중간 코인보다 더 움직일 것으로 본 값입니다. 왕복 비용 ${(d.cost_round_trip * 100).toFixed(2)}%를 넘으면 표시가 붙습니다.`;
   const column = simple ? '<th title="세 신호의 순위를 같은 비중으로 합친 값 (0~100). 등록된 점수가 아닙니다">간이 점수</th>' : '<th title="7일 동안 대상의 중간 코인 대비">기대 상대 폭</th>';
   const foot = simple ? "등록된 점수 아님 · 신호 셋의 수치는 horizon_bot_beta와 같은 정의로 터미널이 계산했습니다." : `점수 v${esc(d.version)} · 신호 셋의 수치는 터미널이 예측기의 봉 자료에서 같은 정의로 다시 계산한 참고값입니다.`;
-  el.innerHTML = `<div class="panel"><h2>${title} ${badge(d.status)} <span class="badge">${coinWhen(d.close_ms)} 마감 · 4시간봉</span></h2>${mode}${head}${stale}
-      <div class="meta mt-2">${how} 행을 누르면 비서가 그 코인을 설명합니다.</div>
-      <div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">코인</th>${column}<th>가격(USDT)</th><th>1일</th><th>7일</th><th>30일</th>
+  el.innerHTML = ui.ws({ name: "coin", label: "코인 시장",
+    ctx: `<h2>${title} ${badge(d.status)} <span class="badge">${coinWhen(d.close_ms)} 마감 · 4시간봉</span></h2>${mode}${head}${stale}
+      <div class="meta">${how} 행을 누르면 비서가 그 코인을 설명합니다.</div>`,
+    main: `<div class="panel flush"><h2>순위 <span class="meta m0">${d.rows.length}종</span></h2><div class="tbl-wrap"><table><thead><tr><th>순위</th><th class="l">코인</th>${column}<th>가격(USDT)</th><th>1일</th><th>7일</th><th>30일</th>
         <th title="8시간마다 롱이 숏에게 내는 비율. 낮을수록 점수에 유리">자금조달비</th><th title="하루 변동성. 낮을수록 점수에 유리">변동성</th><th title="대상 평균 대비 민감도. 낮을수록 점수에 유리">베타</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <div class="meta">출처: ${esc(d.source)} · ${foot}</div></div>
-    <div class="panel"><h2>코인 시장 ${ui.badge("참고")}</h2>
+      <div class="meta">출처: ${esc(d.source)} · ${foot}</div></div>`,
+    right: `<div class="panel"><h2>코인 시장 ${ui.badge("참고")}</h2>
       ${ui.kv([["비트코인", coinPrice(m.btc_price) + " USDT"], ["7일", coinPct(m.btc_change_7d, 1)], ["30일", coinPct(m.btc_change_30d, 1)], ["200일 평균 대비", coinPct(m.btc_vs_200d, 1)],
         ["1년 고점 대비", coinPct(m.btc_from_high_1y, 1)], ["7일 동안 내린 코인", `${m.falling_7d} / ${m.coins}`], ["200일 평균 위", `${m.above_200d} / ${m.above_200d_of}`],
         ["평균 자금조달비(8시간)", isNum(m.funding_mean) ? (m.funding_mean * 100).toFixed(4) + "%" : DASH]])}
-      <div class="meta">${esc(m.note || "")}</div></div>`;
+      <div class="meta">${esc(m.note || "")}</div></div>` });
   el.onclick = (e) => { const row = e.target.closest(".coin-row"); if (row) askAssistant(`${row.dataset.coin} 분석해 줘`); };
 }
 RENDER.coin = renderCoin;

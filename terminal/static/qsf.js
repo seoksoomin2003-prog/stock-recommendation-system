@@ -227,7 +227,7 @@ async function renderQsf(keep = false) {
     <div class="qsf-nav">
       <span class="seg" id="qsfview" role="group" aria-label="보기">${Object.entries(QSF_VIEWS).map(([k, v]) => `<button type="button" data-v="${k}">${v}</button>`).join("")}</span>
       <span class="seg" id="qsfstratseg" role="group" aria-label="전략"><button type="button" data-s="SWING">스윙</button><button type="button" data-s="LONG_TERM">장기</button></span>
-      <span class="qsf-stance-pick"><span class="meta m0">${isKR() ? "한국" : "미국"} 성향</span><span class="seg" id="qsfstanceseg" role="group" aria-label="성향"></span></span>
+      <span class="qsf-stance-pick"><span class="meta m0">${isKR() ? "한국" : "미국"} 성향</span><span class="seg" id="qsfstanceseg" role="group" aria-label="성향"></span><span class="meta m0 phone-why" id="qsfstancewhy">성향은 컴퓨터에서 바꿉니다</span></span>
     </div>
     <div data-view="rank"><form id="qsfform" class="qsf-form">
       <input id="qsfticker" placeholder="${isKR() ? "종목코드 (예: 005930)" : "티커 (예: AAPL)"}" autocomplete="off" aria-label="종목">
@@ -652,7 +652,9 @@ async function qsfStanceDraw() {
     `<tr><td class="l">${h}</td>${d.levels.map((x) => `<td class="l">${esc(x.what[i].replace(/^[^:]+: /, ""))}</td>`).join("")}</tr>`).join("");
   // 성향 단추는 펼치지 않아도 보이는 보기 줄에 둡니다 (사용자 요청 2026-11-24).  여기(펼친 띠 안)에는 설명과 단계별 차이만 남깁니다.
   const seg = $("#qsfstanceseg");
-  if (seg) seg.innerHTML = d.levels.map((x) => `<button type="button" data-level="${x.level}" class="${x.level === d.level ? "on" : ""}"
+  // 휴대폰에서는 서버가 성향 바꾸기를 받지 않습니다(PHONE_MAC_ONLY): 단추를 보이되 눌리지 않게 하고 이유를 옆에 적습니다 (UX 명세 11.1, 7단계).
+  const phone = qsfOnPhone();
+  if (seg) seg.innerHTML = d.levels.map((x) => `<button type="button" data-level="${x.level}" class="${x.level === d.level ? "on" : ""}"${phone ? ' disabled aria-describedby="qsfstancewhy"' : ""}
     title="${esc(x.label)}: ${esc(x.what.join(" · "))}">${esc(x.label)}</button>`).join("");
   box.innerHTML = `<div class="qsf-stance"><b>${isKR() ? "한국" : "미국"} 성향 · ${esc((d.levels.find((x) => x.level === d.level) || {}).label || d.level)}</b>
       <span class="meta m0">${d.level === "NORMAL" ? "기본: 아무것도 바꾸지 않은 상태입니다." : `${esc(d.label)}: 후보 표시와 주문 크기가 달라집니다. 점수는 그대로입니다.`}</span>
@@ -660,13 +662,15 @@ async function qsfStanceDraw() {
       <div class="meta">${esc(d.note)} 시장마다 따로 고릅니다. ${esc(d.adverse_note || "")}</div></details>
       ${d.damaged_note ? `<div class="notice">${esc(d.damaged_note)}</div>` : ""}</div>`;
   (seg || box).querySelectorAll("button[data-level]").forEach((b) => { b.onclick = async () => {
-    if (b.dataset.level === d.level) return;
+    if (b.dataset.level === d.level || qsfOnPhone()) return;
     try {
       await qsfStanceSet(mk, b.dataset.level);
       qsfStanceUndo(mk, d.level, d.levels);
     } catch (e) { notify(errKo(e)); }
   }; });
 }
+// 연결된 휴대폰인지 (phone.js가 html에 on-phone을 붙입니다).  컴퓨터에서만 되는 단추를 눌리지 않게 할 때 씁니다.
+const qsfOnPhone = () => document.documentElement.classList.contains("on-phone");
 // 성향 고르기: 서버에 저장하고, 보고 있는 순위 화면을 열린 카드째 다시 그립니다.  다른 화면에 있으면 돌아올 때 다시 그립니다.
 async function qsfStanceSet(mk, level) {
   await api("/api/qsf/stance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ market: mk, level }) });
@@ -1307,8 +1311,8 @@ async function qsfReadings() {
     : r.state === "DUE" ? `<span class="badge risk-note">읽을 때가 됨</span>${r.attempts ? ` <span class="meta m0">시도 ${r.attempts}번, 아직 조건 미달</span>` : ""}`
     : `<span class="badge">기다리는 중</span> <span class="meta m0">${isNum(r.left) ? `${r.left}거래일 남음 · ${esc(r.expected)} 무렵` : ""}</span>`);
   const sw = (r) => (!r.switch ? "" : !r.switch.can_switch ? `<div class="meta m0">${r.state === "READ" ? "설정 파일(.env)의 QSF_FUND_PERIOD가 재무 기준을 정하고 있어 버튼을 쓰지 않습니다." : "재무 기준을 바꾸는 버튼은 판정이 나온 뒤 여기에 생깁니다. 판정은 스스로 아무것도 바꾸지 않습니다."}</div>`
-    : `<div class="meta m0"><button type="button" class="qsf-fund-switch" data-market="${esc(r.switch.market)}" data-period="${r.switch.live_period === "TRAILING" ? "ANNUAL" : "TRAILING"}">${r.switch.live_period === "TRAILING" ? "연간 보고서 기준으로 되돌리기" : "최근 4분기 기준으로 바꾸기"}</button>
-        지금: ${r.switch.live_period === "TRAILING" ? "최근 4분기" : "연간 보고서"} 기준. 누르면 다음 스캔부터 이 시장의 점수가 그 기준을 읽습니다.</div>`);
+    : `<div class="meta m0"><button type="button" class="qsf-fund-switch" data-market="${esc(r.switch.market)}" data-period="${r.switch.live_period === "TRAILING" ? "ANNUAL" : "TRAILING"}"${qsfOnPhone() ? " disabled" : ""}>${r.switch.live_period === "TRAILING" ? "연간 보고서 기준으로 되돌리기" : "최근 4분기 기준으로 바꾸기"}</button>
+        <span class="phone-why">재무 기준은 컴퓨터에서 바꿉니다.</span> 지금: ${r.switch.live_period === "TRAILING" ? "최근 4분기" : "연간 보고서"} 기준. 누르면 다음 스캔부터 이 시장의 점수가 그 기준을 읽습니다.</div>`);
   const row = (r) => `<tr><td class="l"><b>${esc(r.label)}</b> <span class="badge${r.primary ? " ok" : ""}" title="${r.primary ? "점수가 통하는지에 답하는 네 판정 가운데 하나입니다." : "참고 판정입니다. 판정이 서른 개쯤이라 몇은 우연히 기준을 넘을 수 있어, 점수가 통하는지는 실전 점수 판정 넷으로 답합니다."}">${r.primary ? "주된 판정" : "참고"}</span>${r.applies_itself ? ' <span class="badge">스스로 적용</span>' : ""}</td>
     <td class="num">${isNum(r.records) ? r.records : DASH} / ${r.wanted}</td><td class="l">${state(r)}${sw(r)}</td><td class="l"><span class="meta m0">${esc(r.after)}</span></td>
     <td class="l"><span class="meta m0">${esc(r.state === "READ" ? r.report : r.protocol)}</span></td></tr>`;
@@ -1321,6 +1325,7 @@ async function qsfReadings() {
     ${now.length ? table(now) : ""}
     <details class="qsf-readings-all"${wasOpen ? " open" : ""}><summary>전체 일정 보기 (${d.total}개)</summary><div class="meta">${esc(d.note)} 안내: ${esc(d.guide)}</div>${table(d.readings)}</details></div>`;
   box.querySelectorAll(".qsf-fund-switch").forEach((b) => { b.onclick = async () => {
+    if (qsfOnPhone()) return;                 // 휴대폰: 서버가 받지 않습니다(PHONE_MAC_ONLY).  단추는 눌리지 않게 보이고 이유가 옆에 있습니다
     const to = b.dataset.period === "TRAILING" ? "최근 4분기" : "연간 보고서";
     if (!(await uiConfirm(`${b.dataset.market === "KR" ? "한국" : "미국"} 점수가 읽는 재무 기준을 '${to}'로 바꿉니다. 다음 스캔부터 스윙과 장기 점수 모두에 적용됩니다. 바꿀까요?`, { okLabel: "바꾸기" }))) return;
     try {

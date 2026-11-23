@@ -1027,3 +1027,36 @@ td.corr-cell { background: color-mix(in srgb, var(--viz-bar) calc(var(--r, 0) * 
   .qb-axis > .qb-ticks { grid-column: 1; }
 }
 @media (forced-colors: active) { canvas { border: 1px solid CanvasText; } .viz-box { outline: 2px solid Highlight; } }
+
+/* Workstation stage 7 (2026-11-24): portfolio, account and the remaining screens (layout spec 3.9-3.12, 3.14-3.17; UX spec 7.2, 7.3, 9.2, 11.1;
+   owner decisions U-5, U-7, O-7).  통합 계좌: totals and the trade form on the right, accounts and holdings in main, journal below; a picked
+   holding (#acct-pick) tops the right column in two columns.  시장별 자세히: account summaries and sectors on the right, holdings and 보유 판정 in
+   main, risk / equity / performance / journal below; a picked holding (#pf-pick) is the 보유 점검 block.  매매 보조: calculator and plan in
+   main, settings on the right, alerts and earnings below, section chips in the context line.  모의 매매, 투자위원회, 모델, 연구실, 코인 per spec.
+   Phone: computer-only buttons (stance, fund basis) stay visible but greyed with the reason beside them (.phone-why). */
+.ws-ctx > .panel { flex-basis: 100%; margin: 0; }
+.ws-ctx > .as-nav { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.as-nav .chip { cursor: pointer; }
+.ws-ctx > .qsf-nav { flex-basis: 100%; margin: 0; }
+.acct-total .head { margin-top: 0; }
+@container content (max-width: 1119px) { #acct-pick, #pf-pick { display: none; } }
+.ws-right > #acct-pick, .ws-right > #pf-pick { order: -2; }      /* the row just picked leads the right column */
+@container content (min-width: 1120px) {
+  .acct-pickable, .pf-hold tbody tr { cursor: pointer; }
+  .acct-pickable:focus-visible, .pf-hold tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+}
+@media (hover: hover) { @container content (min-width: 1120px) { .acct-pickable:hover > td { background: var(--row-hover); } } }
+#acct-pick > h2 .linkish, #pf-pick > h2 .linkish { min-height: 0; }
+.pf-pick-act { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-1); }
+#acct-pick-score:empty, #pf-pick-score:empty { display: none; }
+.ws[data-ws="portfolio"] > .ws-lower, .ws[data-ws="model"] > .ws-lower { grid-auto-flow: row dense; }
+.ws[data-ws="model"] > .ws-lower > .panel:has(+ #cmp) { grid-column: 1 / -1; }
+.ws[data-ws="committee"] .ws-right #icporttabs { display: flex; flex-direction: column; align-items: stretch; width: 100%; }
+.ws[data-ws="committee"] .ws-right #icporttabs button { text-align: left; justify-content: space-between; display: flex; }
+.ws[data-ws="committee"] .ws-right .qsf-nav { margin: var(--sp-2) 0; }
+.ws[data-ws="committee"] .ws-right .ic-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ws[data-ws="lab"] .ws-right #recpanel > .panel { margin-bottom: 0; }
+.ws[data-ws="lab"] .ws-main > .panel { margin-bottom: 0; }
+.phone-why { display: none; }
+.on-phone .phone-why { display: inline; }
+.on-phone #qsfstanceseg button, .on-phone .qsf-fund-switch { opacity: 0.55; cursor: not-allowed; }

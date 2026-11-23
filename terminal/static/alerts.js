@@ -33,8 +33,12 @@ async function renderAlerts(box) {
     const t = f.type.value, body = { type: t, ticker: f.ticker.value.trim(), market: state.market };
     if (AL_VALUE[t]) { const n = Number(f.value.value.replace(/,/g, "")); body.value = t === "EARNINGS_SOON" ? Math.round(n) : n; }
     if (t === "BAND_CHANGE") body.strategy = f.strategy.value;
+    const btn = f.querySelector('button[type="submit"]');
+    if (btn.disabled) return;           // 앞의 조건을 보내는 중 (작업 화면 개편 7단계: 두 번 눌러 같은 조건이 둘 붙지 않게)
+    btn.disabled = true; f.setAttribute("aria-busy", "true");
     try { await alPost("/api/alerts/add", body); $("#al-msg").className = "msg ok"; $("#al-msg").textContent = "추가했습니다."; f.value.value = ""; loadAlerts(); }
     catch (err) { $("#al-msg").className = "msg err"; $("#al-msg").textContent = AL_ERR[err.message] || errKo(err); }
+    finally { btn.disabled = false; f.removeAttribute("aria-busy"); }
   };
   $("#al-check").onclick = checkAlerts;
   loadAlerts();

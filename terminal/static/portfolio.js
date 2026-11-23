@@ -21,6 +21,11 @@ function todayET() { return new Intl.DateTimeFormat("en-CA", { timeZone: isKR() 
 const post = (path, body) => api(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 // ------------------------------------------------------------------ 포트폴리오
+// 작업 화면 개편 7단계 (배치 명세 3.10, 사용자 결정 U-5): 맨 위 줄에 제목, 무결성 알림, 기록이 없을 때의 '시작하기'.  가운데 칸에 경고, 장기·스윙·
+// 구분 없음 보유 표, 보유 판정.  오른쪽 칸에 두 계좌 합계와 이 시장 계좌 요약(한 칸에서는 맨 앞), 섹터 비중.  아래 줄에 위험 분석, 수익률 곡선,
+// 매매 성과, 기록 양식으로 가는 단추, 거래 기록, 각주.  두 칸일 때 보유 줄을 누르면(또는 Enter) 오른쪽 칸 맨 위(#pf-pick)에 그 종목의 보유 점검
+// (표와 보유 판정의 값, 기록된 스캔의 점수 요약, 이동 단추)이 나오고 종목 이름 단추가 종목 화면을 엽니다.  한 칸에서는 전처럼 줄이 종목 화면을 엽니다.
+const pfState = { d: null, sel: null, sig: {} };
 async function renderPortfolio() {
   const el = $("#tab-portfolio"), mk = state.market;
   if (!el.innerHTML) el.innerHTML = loading;
@@ -28,14 +33,21 @@ async function renderPortfolio() {
   try { d = await api(mq("/api/portfolio")); } catch (e) { if (mk === state.market) el.innerHTML = errBox(e); return; }
   if (mk !== state.market) return;
   state.loaded.portfolio = true;
+  pfState.d = d; pfState.sig = {};
+  if (!d.holdings.some((h) => h.ticker === pfState.sel)) pfState.sel = null;
   const s = d.summary, fx = d.fx, empty = !d.journal.length;
   const krw = (v) => (mk === "US" && isNum(v) && isNum(fx.usdkrw) ? `<span class="meta m0">≈ ₩${Math.round(v * fx.usdkrw).toLocaleString("ko-KR")}</span>` : "");
-  el.innerHTML = `
+  el.innerHTML = ui.ws({ name: "portfolio", label: "계좌 요약과 비중",
+    ctx: `<h2>시장별 자세히 <span class="badge">${mk === "KR" ? "한국" : "미국"}</span></h2>
     ${d.integrity.status !== "OK" ? `<div class="notice">거래 기록 무결성 오류: ${esc(d.integrity.reason || "")}${d.integrity.line ? ` (${d.integrity.line}번째 줄)` : ""}. 새 기록 추가가 중단됩니다. data/terminal/journal.jsonl 을 확인하세요.</div>` : ""}
-    ${empty ? `<div class="panel"><h2>시작하기</h2><div class="meta">1) 아래 '통합 계좌에서 기록하기'를 눌러 <b>입금</b>을 먼저 기록하고 2) 실제로 체결된 <b>매수·매도</b>를 기록하세요.
-      보유 종목·평균단가·손익은 기록으로부터 자동 계산됩니다. 기록은 이 Mac에만 저장되며, 잘못 입력한 기록은 삭제 대신 '취소'로 무효화합니다.</div></div>` : ""}
+    ${empty ? `<div class="panel pf-start"><h2>시작하기</h2><div class="meta">1) 아래 '통합 계좌에서 기록하기'를 눌러 <b>입금</b>을 먼저 기록하고 2) 실제로 체결된 <b>매수·매도</b>를 기록하세요.
+      보유 종목·평균단가·손익은 기록으로부터 자동 계산됩니다. 기록은 이 Mac에만 저장되며, 잘못 입력한 기록은 삭제 대신 '취소'로 무효화합니다.</div></div>` : ""}`,
+    main: `${d.alerts.length ? `<div class="panel"><h2>경고 <span class="meta m0">${d.alerts.length}건 · 화면 표시만 하며 주문하지 않습니다</span></h2>
+      <ul class="alerts">${d.alerts.map((a) => `<li class="${esc(a.level)}">${esc(a.text)}</li>`).join("")}</ul></div>` : ""}
+    ${holdingsHtml(d)}`,
+    right: `<div class="panel" id="pf-pick" hidden></div>
     ${totalHtml(d.total)}
-    <div class="panel"><h2>${mk === "KR" ? "한국(원화)" : "미국(달러)"} 계좌 요약 ${s.complete ? "" : badge("STALE")}</h2>
+    <div class="panel ws-first"><h2>${mk === "KR" ? "한국(원화)" : "미국(달러)"} 계좌 요약 ${s.complete ? "" : badge("STALE")}</h2>
       ${s.complete ? "" : `<div class="notice">시세가 없는 종목(${esc(s.missing_prices.join(", "))})이 있어 총액을 확정할 수 없습니다.</div>`}
       <div class="head"><span class="big num">${money(s.equity)}</span> ${krw(s.equity)}</div>
       <div class="kv">
@@ -51,13 +63,10 @@ async function renderPortfolio() {
       </div>
       ${s.unprotected.length ? `<div class="meta">손절가 미설정 종목은 손실 합계에 포함되지 않습니다: ${esc(s.unprotected.join(", "))}</div>` : ""}
       ${meta(d.source, d.cache && d.cache.fetched_at, isNum(fx.usdkrw) ? `원/달러 ${fmt(fx.usdkrw)} (${esc(fx.date || "")})` : "")}</div>
-    ${d.alerts.length ? `<div class="panel"><h2>경고 <span class="meta m0">${d.alerts.length}건 · 화면 표시만 하며 주문하지 않습니다</span></h2>
-      <ul class="alerts">${d.alerts.map((a) => `<li class="${esc(a.level)}">${esc(a.text)}</li>`).join("")}</ul></div>` : ""}
-    ${holdingsHtml(d)}
     ${Object.keys(d.sectors).length ? `<div class="panel"><h2>섹터 비중 <span class="meta m0">한도 ${d.settings.max_sector_pct}%</span></h2><table><tbody>
       ${Object.entries(d.sectors).map(([k, v]) => `<tr><td>${esc(sectorKo(k))}</td><td style="width:60%"><div class="bar ${v > d.settings.max_sector_pct ? "over" : ""}"><i style="width:${Math.min(100, v).toFixed(1)}%"></i></div></td><td class="num">${v.toFixed(1)}%</td></tr>`).join("")}
-      </tbody></table></div>` : ""}
-    ${d.holdings.length ? '<div class="panel" id="risk-panel"><h2>위험 분석</h2><div class="meta">불러오는 중…</div></div>' : ""}
+      </tbody></table></div>` : ""}`,
+    lower: `${d.holdings.length ? '<div class="panel span-all" id="risk-panel"><h2>위험 분석</h2><div class="meta">불러오는 중…</div></div>' : ""}
     <div class="panel"><h2>계좌 수익률 vs ${esc(d.benchmark)}</h2><div id="eq-sum" class="meta">불러오는 중…</div><div class="chart"><canvas id="eqc"></canvas></div><div id="eq-meta"></div><div id="eq-twin"></div></div>
     <div class="panel"><h2>매매 성과 (매도 건 기준)</h2>${statsHtml(d.stats)}
       ${d.stats.count ? styleStatsHtml(d.stats_by_style) : ""}
@@ -65,10 +74,10 @@ async function renderPortfolio() {
       <tbody>${d.closed.slice(0, 50).map((c) => `<tr><td>${esc(c.date)}</td><td class="l"><b>${esc(c.ticker)}</b></td><td class="l">${esc(STYLE_KO[c.style] || "미지정")}</td><td class="num">${qtyFmt(c.qty)}</td><td class="num">${money(c.avg_cost)}</td><td class="num">${money(c.price)}</td><td>${pnl(c.pnl)}</td><td>${pct(c.return_pct, 1)}</td><td class="num">${c.hold_days}일</td></tr>`).join("")}</tbody></table></div>` : ""}</div>
     <div class="panel" id="jform-panel"><h2>거래 기록 추가</h2><div class="meta">거래 기록은 통합 계좌의 양식 하나에서 적습니다. 누르면 ${mk === "KR" ? "한국" : "미국"} 계좌가 골라진 양식으로 갑니다.</div>
       <button type="button" class="btn-primary mt-2" id="jgo">통합 계좌에서 기록하기</button></div>
-    <div class="panel"><h2>거래 기록 <span class="meta m0">${d.journal.length}건 · 추가만 가능, 취소는 별도 기록으로 남습니다</span></h2>
+    <div class="panel span-all"><h2>거래 기록 <span class="meta m0">${d.journal.length}건 · 추가만 가능, 취소는 별도 기록으로 남습니다</span></h2>
       ${d.journal.length ? `<div class="tbl-wrap"><table><thead><tr><th>날짜</th><th class="l">종류</th><th class="l">종목</th><th>수량</th><th>가격</th><th>금액</th><th class="l">메모</th><th></th></tr></thead>
       <tbody>${d.journal.map(journalRow).join("")}</tbody></table></div>` : '<div class="empty">기록이 없습니다.</div>'}</div>
-    <div class="panel meta">${esc(d.note)}</div>`;
+    <div class="panel meta">${esc(d.note)}</div>` });
   $("#jgo").onclick = () => acctRecord(mk);
   loadSignals();
   el.querySelectorAll("[data-void]").forEach((b) => (b.onclick = async (e) => {
@@ -76,9 +85,58 @@ async function renderPortfolio() {
     if (!(await uiConfirm("이 기록을 취소할까요? 원래 기록은 남고, 취소 기록이 추가됩니다.", { okLabel: "기록 취소", danger: true }))) return;
     try { await post("/api/journal/void", { ref: b.dataset.void }); renderPortfolio(); } catch (err) { notify(errKo(err)); }
   }));
+  // 두 칸: 줄을 누르면 고르기(문서의 '종목 화면 열기'로 가지 않게 멈춤).  이름 단추와 한 칸은 전처럼 종목 화면을 엽니다.
+  el.querySelectorAll(".pf-hold tbody").forEach((tb) => tb.addEventListener("click", (e) => {
+    if (!wsCanSplit() || e.target.closest("button, a")) return;
+    const tr = e.target.closest("tr[data-ticker]");
+    if (!tr) return;
+    e.stopPropagation();
+    pfState.sel = tr.dataset.ticker; pfSide(); wsRightTop("#pf-pick");
+  }));
+  pfSide();
   loadEquity();
   if (d.holdings.length) loadRisk();
 }
+// 고른 줄 표시는 두 칸일 때만 (한 칸에서는 줄이 종목 화면을 엽니다).  내용 폭이 바뀔 때도 부릅니다.
+function pfMark() {
+  const on = wsCanSplit() ? pfState.sel : null;
+  document.querySelectorAll("#tab-portfolio .pf-hold tbody tr[data-ticker]").forEach((tr) => { if (on && tr.dataset.ticker === on) tr.setAttribute("aria-selected", "true"); else tr.removeAttribute("aria-selected"); });
+  const box = $("#pf-pick");
+  if (box) box.hidden = !on;
+}
+// 보유 점검 (UX 명세 7.2): 표와 보유 판정이 이미 가진 값만 옮깁니다.  새로 계산하는 값은 없습니다.  점수 요약은 순위가 쓰는 기록된 스캔입니다.
+function pfSide() {
+  pfMark();
+  const box = $("#pf-pick"), d = pfState.d, t = pfState.sel, h = d && t && d.holdings.find((x) => x.ticker === t);
+  if (!box || box.hidden || !h) return;
+  const sig = pfState.sig[t], swing = h.style === "SWING";
+  const act = !sig ? `<span class="meta m0">계산 중…</span>` : sig.status !== "REAL" ? `<span class="missing">${sig.status === "NO_STYLE" ? "구분 필요" : "계산 불가"}</span>`
+    : `<span class="qsf-act ${pfTone(sig.exit.action)}"><i></i>${esc(QSF_EXIT[sig.exit.action] || sig.exit.action)}</span>`;
+  const left = sig && sig.status === "REAL" ? (swing ? `${sig.sessions_left}거래일 (${esc(sig.time_limit)})` : sig.earnings_date ? `실적 ${esc(sig.earnings_date)}` : "분기 실적 공시 후") : DASH;
+  box.innerHTML = `<h2><button type="button" class="linkish" data-ticker="${esc(t)}" title="종목 화면(차트·재무·공시)을 엽니다">${tickerLabel(t, h.name)}</button> <span class="meta m0">${esc(STYLE_KO[h.style] || "구분 없음")}</span>
+      <span class="ph-actions"><button type="button" class="ghost" id="pf-pick-x" title="고른 줄을 풉니다">닫기</button></span></h2>
+    <div class="pf-pick-act"><span class="meta m0">보유 판정</span> ${act}${sig && sig.status === "REAL" ? ` <span class="meta m0">점수 <b class="num">${sig.score === null ? "-" : sig.score.toFixed(0)}</b></span>` : ""}</div>
+    ${sig && sig.status === "REAL" && sig.exit.action !== "HOLD" ? `<div class="meta">${esc(sig.exit.reason)}</div>` : ""}
+    <div class="w-facts">
+      <div><span class="lbl">손절가(거리)</span><b class="num">${h.stop ? `${money(h.stop)} <span class="meta m0">(${pct(h.stop_distance_pct, 1, false)})</span>` : '<span class="missing">미설정</span>'}</b></div>
+      ${swing ? `<div><span class="lbl">목표가</span><b class="num">${h.target ? money(h.target) : DASH}</b></div><div><span class="lbl">남은 기간</span><b>${left}</b></div>` : `<div><span class="lbl">다음 점검</span><b>${left}</b></div>`}
+      <div><span class="lbl">미실현 손익</span><b>${pnl(h.unrealized)} ${pct(h.unrealized_pct, 1)}</b></div><div><span class="lbl">오늘</span><b>${pct(h.change_pct)}</b> ${liveBadge(h.intraday)}</div>
+      <div><span class="lbl">비중</span><b class="num">${isNum(h.weight_pct) ? h.weight_pct.toFixed(1) + "%" : DASH}</b></div><div><span class="lbl">수량</span><b class="num">${qtyFmt(h.qty)}</b></div>
+      <div><span class="lbl">평균단가</span><b class="num">${money(h.avg_cost)}</b></div><div><span class="lbl">현재가</span><b class="num">${money(h.close)}</b>${h.status !== "REAL" ? " " + badge(h.status) : ""}</div>
+      <div><span class="lbl">평가액</span><b class="num">${money(h.value)}</b></div><div><span class="lbl">섹터</span><b>${esc(sectorKo(h.sector) || "미분류")}</b></div>
+    </div>
+    <div class="qsf-sum-acts"><button type="button" class="btn-primary" id="pf-ask" title="오늘 탭에서 비서가 보유 판정 규칙으로 답합니다">팔아야 해? 묻기</button>
+      <button type="button" class="ghost" data-ticker="${esc(t)}">종목 화면</button><button type="button" class="ghost" id="pf-alert" title="매매 보조 탭의 알림 센터에 이 종목을 적어 둡니다">알림 걸기</button></div>
+    <div id="pf-pick-score" class="mt-2"></div>`;
+  $("#pf-pick-x").onclick = () => {
+    pfState.sel = null; pfMark();
+    const tr = document.querySelector(`#tab-portfolio .pf-hold tr[data-ticker="${CSS.escape(t)}"]`); if (tr) tr.focus();
+  };
+  $("#pf-ask").onclick = () => askAssistant(`${t} 팔아야 해?`);
+  $("#pf-alert").onclick = () => assistGo("alerts", t);
+  if (typeof qsfScanSummary === "function") qsfScanSummary($("#pf-pick-score"), t, state.market, { compact: true, still: () => pfState.sel === t && state.tab === "portfolio" });
+}
+const pfTone = (a) => ({ EXIT: "act-sell", THESIS_INVALIDATED: "act-sell", REDUCE: "act-reduce", PARTIAL_TAKE_PROFIT: "act-reduce", TIME_STOP_REVIEW: "act-reduce" }[a] || "act-hold");
 // 위험 기여 막대 (작업 화면 개편 2단계, 시각화 명세 1.7): 값이 없으면 막대 없이 —만(0% 막대는 '기여 0'으로 읽힘), 음수(헤지)가 하나라도
 // 있으면 모든 줄을 가운데 눈금에서 좌우로 자라는 막대로 그립니다.  음수를 0으로 깎아 그리지 않습니다.
 function riskShare(v, diverging) {
@@ -90,7 +148,7 @@ function riskShare(v, diverging) {
 function totalHtml(t) {
   if (!t) return "";
   const won = (v) => (isNum(v) ? `₩${Math.round(v).toLocaleString("ko-KR")}` : DASH);
-  return `<div class="panel"><h2>주식 두 계좌 합계 <span class="meta m0">원화 환산 · 코인은 빠져 있습니다. 세 계좌 전체는 위의 '내 계좌'에서 봅니다.</span></h2>
+  return `<div class="panel ws-first"><h2>주식 두 계좌 합계 <span class="meta m0">원화 환산 · 코인은 빠져 있습니다. 세 계좌 전체는 위의 '내 계좌'에서 봅니다.</span></h2>
     <div class="head"><span class="big num">${won(t.krw)}</span></div>
     ${isNum(t.krw) ? "" : '<div class="notice">시세나 환율이 없는 항목이 있어 합계를 확정할 수 없습니다.</div>'}
     <div class="kv"><div><span>한국 계좌</span><b class="num">${won(t.kr_equity)}</b></div>
@@ -100,7 +158,7 @@ function totalHtml(t) {
 function holdingRow(h) {
   const stop = h.stop ? `${money(h.stop)} <span class="meta m0">(${pct(h.stop_distance_pct, 1, false)})</span>` : '<span class="missing">미설정</span>';
   const swing = h.style === "SWING";
-  return `<tr class="click" data-ticker="${esc(h.ticker)}"><td>${tickerLabel(h.ticker, h.name)} ${liveBadge(h.intraday)}${h.status !== "REAL" ? " " + badge(h.status) : ""}</td>
+  return `<tr class="click" data-ticker="${esc(h.ticker)}"><td><button type="button" class="linkish" data-ticker="${esc(h.ticker)}" title="종목 화면(차트·재무·공시)을 엽니다">${tickerLabel(h.ticker, h.name)}</button> ${liveBadge(h.intraday)}${h.status !== "REAL" ? " " + badge(h.status) : ""}</td>
     <td class="num">${isNum(h.weight_pct) ? h.weight_pct.toFixed(1) + "%" : DASH}</td><td class="num" data-sig="score" data-t="${esc(h.ticker)}">${DASH}</td><td class="l" data-sig="action" data-t="${esc(h.ticker)}">${DASH}</td><td class="num">${stop}</td>
     ${swing ? `<td class="num">${h.target ? money(h.target) : DASH}</td><td class="l" data-sig="left" data-t="${esc(h.ticker)}">${DASH}</td>` : `<td class="l" data-sig="review" data-t="${esc(h.ticker)}">${DASH}</td>`}
     <td>${pnl(h.unrealized)} ${pct(h.unrealized_pct, 1)}</td><td>${pct(h.change_pct)}</td><td class="num">${qtyFmt(h.qty)}</td><td class="num">${money(h.avg_cost)}</td><td class="num">${money(h.close)}</td><td class="num">${money(h.value)}</td>
@@ -110,7 +168,7 @@ function holdingTable(title, rows, style, sum, target) {
   if (!rows.length) return "";
   const swing = style === "SWING";
   const head = sum ? `<span class="meta m0">${rows.length}개 · 평가액 ${money(sum.value)}${isNum(sum.share_pct) ? ` · 주식 중 ${sum.share_pct.toFixed(0)}%` : ""}${isNum(target) ? ` (목표 ${target.toFixed(0)}%)` : ""}${isNum(sum.unrealized_pct) ? ` · 미실현 ${sum.unrealized_pct > 0 ? "+" : ""}${sum.unrealized_pct.toFixed(1)}%` : ""}</span>` : `<span class="meta m0">${rows.length}개 · 구분을 정하면 보유 판정이 계산됩니다</span>`;
-  return `<div class="panel"><h2>${title} ${head}</h2><div class="tbl-wrap"><table><thead><tr><th>종목</th><th>비중</th><th>점수</th><th class="l">판정</th><th>손절가(거리)</th>
+  return `<div class="panel"><h2>${title} ${head}</h2><div class="tbl-wrap"><table class="pf-hold"><thead><tr><th>종목</th><th>비중</th><th>점수</th><th class="l">판정</th><th>손절가(거리)</th>
     ${swing ? '<th>목표가</th><th class="l">남은 기간</th>' : '<th class="l">다음 점검</th>'}<th>미실현 손익</th><th>오늘</th><th>수량</th><th>평균단가</th><th>현재가</th><th>평가액</th><th class="l">섹터</th></tr></thead><tbody>${rows.map(holdingRow).join("")}</tbody></table></div></div>`;
 }
 function holdingsHtml(d) {
@@ -129,8 +187,9 @@ async function loadSignals() {
     const notes = [];
     d.items.forEach((s) => {
       const t = s.ticker;
+      pfState.sig[t] = s;
       if (s.status !== "REAL") { const c = cell("action", t); if (c) c.innerHTML = `<span class="missing">${s.status === "NO_STYLE" ? "구분 필요" : "계산 불가"}</span>`; return; }
-      const a = s.exit.action, tone = { EXIT: "act-sell", THESIS_INVALIDATED: "act-sell", REDUCE: "act-reduce", PARTIAL_TAKE_PROFIT: "act-reduce", TIME_STOP_REVIEW: "act-reduce" }[a] || "act-hold";
+      const a = s.exit.action, tone = pfTone(a);
       cell("score", t).textContent = s.score === null ? "-" : s.score.toFixed(0);
       cell("action", t).innerHTML = `<span class="qsf-act ${tone}"><i></i>${esc(QSF_EXIT[a] || a)}</span>`;
       const left = cell("left", t); if (left) left.textContent = `${s.sessions_left}거래일 (${s.time_limit})`;
@@ -139,6 +198,7 @@ async function loadSignals() {
     });
     const noRank = d.items.filter((s) => s.rank_basis === "NO_SCAN").map((s) => s.ticker);
     const financed = d.items.filter((s) => s.filing_events && s.filing_events.financing).map((s) => s.ticker);
+    if (pfState.sel) pfSide();                       // 고른 종목의 보유 판정이 방금 들어왔습니다
     out.innerHTML = `${notes.length ? `<ul class="alerts">${notes.join("")}</ul>` : "조치가 필요한 종목이 없습니다."}<div class="meta">${esc(d.note)}</div>${financed.length ? `<div class="meta">${esc(financed.join(", "))}: 최근 252거래일 안에 자금조달 결정 공시가 있습니다. 참고용이며 판정과 점수에 반영되지 않습니다.</div>` : ""}${noRank.length ? `<div class="meta">${esc(noRank.join(", "))}: ${QSF_RANK_NOTE.NO_SCAN}</div>` : ""}`;
   } catch (e) { out.innerHTML = `<span class="err">판정을 계산하지 못했습니다: ${esc(errKo(e))}</span>`; }
 }
@@ -191,14 +251,41 @@ function drawEquity() {
 }
 
 // ------------------------------------------------------------------ 매매 보조
+// 작업 화면 개편 7단계 (배치 명세 3.11, UX 명세 7.3, 사용자 결정 O-7): 가운데 칸에 크기 계산기와 그 계산기를 채우는 P6-11B 계획 대조(미국),
+// 오른쪽 칸에 계산기가 쓰는 위험 관리 설정, 아래 줄에 알림 센터와 다가오는 실적 발표.  맨 위 줄의 단추는 그 부분으로 내려갑니다.
+// #assist:size|alerts|earn|settings|plan 주소는 그 부분으로 내려간 매매 보조를 엽니다(app.js fromHash).  한 칸 순서: 계산기, 계획, 설정, 알림, 실적.
+const ASSIST_SECTIONS = { size: ["as-size", "크기 계산기"], alerts: ["alertc", "알림 센터"], earn: ["earncal", "실적 발표"], settings: ["as-settings", "위험 관리 설정"], plan: ["plan", "P6-11B 계획 대조"] };
+const assistState = { section: null, alertTicker: null };
+// 다른 화면에서 매매 보조의 한 부분으로: 주소를 #assist:부분으로 바꾸면 fromHash가 엽니다(뒤로 가기로 돌아옴).  ticker는 알림 칸에 적어 둡니다.
+function assistGo(section, ticker) {
+  assistState.alertTicker = ticker || null;
+  const h = "#assist:" + section;
+  if (location.hash === h) { assistState.section = section; show("assist", false); } else location.hash = h;
+}
+// 그린 뒤 고른 부분으로 내려갑니다(한 번만).  오른쪽 칸 안의 부분이면 그 칸이 스스로 내려갑니다.
+function assistScroll() {
+  const sec = assistState.section, el = sec && ASSIST_SECTIONS[sec] && document.getElementById(ASSIST_SECTIONS[sec][0]);
+  assistState.section = null;
+  const f = $("#al-form");
+  if (assistState.alertTicker && f && f.ticker) { f.ticker.value = assistState.alertTicker; f.ticker.dataset.prefill = assistState.alertTicker; }
+  assistState.alertTicker = null;
+  if (!el) return;
+  el.scrollIntoView({ block: "start" });
+  const h = el.querySelector("h2"); if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); }
+}
 async function renderAssist() {
   const el = $("#tab-assist");
   if (!el.innerHTML) el.innerHTML = loading;
   let st;
   try { st = await api("/api/settings"); } catch (e) { el.innerHTML = errBox(e); return; }
   state.loaded.assist = true;
-  el.innerHTML = `
-    <div class="panel"><h2>포지션 크기 계산기</h2>
+  const nav = Object.entries(ASSIST_SECTIONS).filter(([k]) => k !== "plan" || !isKR())
+    .map(([k, [, label]]) => `<button type="button" class="chip" data-sec="${k}">${label}</button>`).join("");
+  el.innerHTML = ui.ws({ name: "assist", label: "위험 관리 설정",
+    ctx: `<h2>매매 보조 <span class="badge">${isKR() ? "한국" : "미국"}</span></h2><span class="meta">주문을 내지 않습니다. 계산하고 기록을 돕기만 합니다.</span>
+      <nav class="as-nav" aria-label="매매 보조의 부분">${nav}</nav>`,
+    main: `
+    <div class="panel" id="as-size"><h2>포지션 크기 계산기</h2>
       <form class="form" id="szform" autocomplete="off">
         <label>종목 코드<input name="t" maxlength="15" class="upper" placeholder="${isKR() ? "예: 005930" : "예: AAPL"}"></label>
         <label>구분<select name="style"><option value="">보유 구분 또는 공통</option><option value="LONG">장기</option><option value="SWING">스윙</option></select></label>
@@ -207,9 +294,8 @@ async function renderAssist() {
         <label>계좌 금액(${curSym()}, 선택)<input name="equity" inputmode="decimal" placeholder="비우면 거래 기록 기준"></label>
         <div><button class="btn-primary" type="submit">계산</button></div>
       </form><div id="szout"></div></div>
-    <div class="panel" id="alertc"></div>
-    <div class="panel" id="earncal">${loading}</div>
-    <div class="panel"><h2>위험 관리 설정</h2>
+    <div class="panel" id="plan">${loading}</div>`,
+    right: `<div class="panel" id="as-settings"><h2>위험 관리 설정</h2>
       <form class="form" id="stform">
         <label>장기 1회 위험(%)<input name="risk_long_pct" inputmode="decimal" value="${st.risk_long_pct}"></label>
         <label>장기 종목당 최대 비중(%)<input name="max_position_long_pct" inputmode="decimal" value="${st.max_position_long_pct}"></label>
@@ -229,8 +315,14 @@ async function renderAssist() {
         <label>섹터당 최대 비중(%)<input name="max_sector_pct" inputmode="decimal" value="${st.max_sector_pct}"></label>
         <label>손절 근접 경고(%)<input name="near_stop_pct" inputmode="decimal" value="${st.near_stop_pct}"></label>
         <div><button type="submit">저장</button></div></form>
-      <div class="meta">1회 거래 위험: 손절가에 도달했을 때 잃는 금액을 계좌의 몇 %로 제한할지 정합니다. 이 값들은 계산기와 경고에 쓰입니다.</div><div class="msg" id="stmsg"></div></div>
-    <div class="panel" id="plan">${loading}</div>`;
+      <div class="meta">1회 거래 위험: 손절가에 도달했을 때 잃는 금액을 계좌의 몇 %로 제한할지 정합니다. 이 값들은 계산기와 경고에 쓰입니다.</div><div class="msg" id="stmsg"></div></div>`,
+    lower: `<div class="panel" id="alertc"></div>
+    <div class="panel" id="earncal">${loading}</div>` });
+  el.querySelectorAll(".as-nav [data-sec]").forEach((b) => { b.onclick = () => {
+    const id = ASSIST_SECTIONS[b.dataset.sec][0], to = document.getElementById(id);
+    history.replaceState(null, "", "#assist:" + b.dataset.sec);          // 주소만 맞춥니다(뒤로 가기 기록을 쌓지 않음)
+    if (to) { to.scrollIntoView({ block: "start" }); const h = to.querySelector("h2"); if (h) { h.tabIndex = -1; h.focus({ preventScroll: true }); } }
+  }; });
   prefillTicker($("#szform").elements.t);          // 열어 둔 종목을 미리 적어 둡니다.  계산은 버튼을 눌러야 합니다.
   if (state.sizeFill) {          // 점수 카드의 '크기 계산기에 넣기' (6차 묶음 P1-13): 코드·구분·스윙 손절 기준을 채우고 한 번 계산합니다
     const f = $("#szform"), s = state.sizeFill; state.sizeFill = null;
@@ -247,6 +339,7 @@ async function renderAssist() {
   loadPlan();
   loadEarnings();
   if (typeof renderAlerts === "function") renderAlerts($("#alertc"));
+  assistScroll();
 }
 // 스캔 때 저장한 실적 일정만 읽습니다. 날짜가 없는 종목은 '발표 없음'이 아니라 '일정 모름'입니다.
 async function loadEarnings() {
@@ -342,7 +435,7 @@ async function loadRisk() {
           <td class="num">${p(h.volatility)}</td><td class="num">${fmt(h.beta, 2)}</td></tr>`).join("")}</tbody></table></div>
       ${r.short_history.length ? `<div class="meta">가격 이력이 짧아 계산에서 뺀 종목: ${esc(r.short_history.join(", "))}</div>` : ""}
       ${corr && corr.tickers.length > 1 ? `<h3>종목 간 상관계수</h3><div class="tbl-wrap"><table><thead><tr><th class="l"></th>${corr.tickers.map((t) => `<th>${esc(t)}</th>`).join("")}</tr></thead><tbody>
-        ${corr.tickers.map((t, i) => `<tr><td class="l">${esc(t)}</td>${corr.matrix[i].map((v, j) => `<td class="num">${i === j ? DASH : fmt(v, 2)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : ""}
+        ${corr.tickers.map((t, i) => `<tr><td class="l">${esc(t)}</td>${corr.matrix[i].map((v, j) => cmpCorrCell(v, i === j)).join("")}</tr>`).join("")}</tbody></table></div>` : ""}
       <div class="meta">위험 기여는 계좌 전체 변동 중 그 종목 몫입니다. 실질 종목 수는 비중 쏠림을 반영한 종목 수입니다. ${esc(r.basis)}</div>
       ${meta(r.source, r.fetched_at)}`;
   } catch (e) { if ($("#risk-panel")) $("#risk-panel").innerHTML = `<h2>위험 분석</h2>${errBox(e)}`; }
