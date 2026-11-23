@@ -130,7 +130,7 @@ def snap(ticker, market, strategy, score, liq=0.9, **kw):
                factor("liquidity", "RISK", 5, liq, raw={"adv_value": 3.77e12}), factor("trend_structure", "TECHNICAL", 0, 0.95, scored=False),
                factor("earnings_calendar", "EVENTS", 4, 1.0, raw={"next_earnings": "2027-01-27", "sessions": 44, "basis": "ESTIMATE", "from": "2026-01-29"})]
     return {"ticker": ticker, "market": market, "strategy": strategy, "score": score, "data_date": "2026-11-20", "price": px, "stop": px * 0.86335, "target": px * 1.14113,
-            "entry_status": "NO_VALID_ENTRY_SETUP", "coverage": 0.925, "gates": [], "factors": factors, "model_version": "QSF-1.4.1", "provenance": {"fund_filed": "2026-03-10"},
+            "entry_status": "NO_VALID_ENTRY_SETUP", "actionability": "ACTIONABLE", "coverage": 0.925, "gates": [], "factors": factors, "model_version": "QSF-1.4.1", "provenance": {"fund_filed": "2026-03-10"},
             "domains": {"RISK": {"score_100": 26.2, "points": 5.2}, "FUNDAMENTAL": {"score_100": 85.9, "points": 8.6}, "REGIME": {"score_100": 25.4, "points": 0.0, "reference": True}},
             "holding": {"reward_risk": 0.96, "invalidation": ["종가가 158,079.30 아래로 마감"], "gap_note": "손절은 체결을 보장하지 않습니다.", "stop_method": "2 ATR 시나리오",
                         "exit_triggers": ["종가 손절선 이탈", "목표 도달"], "expected_sessions": 5, "first_review": "2026-11-30"}, **kw}
@@ -405,15 +405,19 @@ def test_the_days_list_opens_with_the_market_and_names_a_macro_date_within_three
 
 
 def test_stock_answers_come_from_the_stored_scan(term):
+    sec = lambda a, t: next(s["lines"] for s in a["sections"] if s["title"].startswith(t))      # noqa: E731
     buy = A.answer(term, "AAPL 사도 돼?", "KR")
-    table = buy["sections"][0]["lines"]
-    assert buy["intent"] == "BUY_CHECK" and len(table) == 7 and table[0].startswith("○ 점수 구간: 스윙 71.5점") and table[1].startswith("○ 진입 판단: '지금 진입 가능 구간'") and table[5].startswith("✕ 시장 상태")
-    assert "7개 중 6개가 걸림 없이 통과" in buy["summary"] and "걸린 것은 시장 상태입니다" in buy["summary"] and "살지 말지에 대한 답이 아닙니다" in buy["summary"]
+    table = sec(buy, "점검표")
+    assert buy["intent"] == "BUY_CHECK" and len(table) == 7 and table[0].startswith("○ 성향 후보: 스윙 71.5점") and table[1].startswith("○ 진입 판단: '지금 진입 가능 구간'") and table[5].startswith("✕ 시장 상태")
+    # the conclusion comes first (user decision 2026-11-24): the default stance NORMAL (line 70), entry now, nothing blocks
+    assert buy["verdict"]["key"] == "OK" and buy["summary"].startswith("사도 됨 (스윙, 프로그램 규칙 기준) — ") and "7개 중 6개 통과" in next(s["title"] for s in buy["sections"] if s["title"].startswith("점검표"))
+    assert any("성향 '기본'의 후보 선 70점" in x for x in sec(buy, "결론 자세히")) and any("주문은 직접 정합니다" in x for x in sec(buy, "결론 자세히"))
     for word in ("사세요", "매수하세요", "파세요", "매도하세요", "추천합니다"):
         assert word not in json.dumps(buy, ensure_ascii=False)
     kr = A.answer(term, "삼성전자 사도 돼?", "KR")
-    assert kr["sections"][0]["lines"][4].startswith("○ 회피 표시: 없음") and any("자사주 취득 공시" in x for x in kr["sections"][1]["lines"])       # a buyback is a note, not a mark against
-    assert "'유효한 진입 근거 없음'" in kr["sections"][0]["lines"][1] and "지금 손익비는 0.96입니다" in kr["sections"][0]["lines"][1]
+    assert sec(kr, "점검표")[4].startswith("○ 회피 표시: 없음") and any("자사주 취득 공시" in x for x in sec(kr, "참고"))       # a buyback is a note, not a mark against
+    assert "'유효한 진입 근거 없음'" in sec(kr, "점검표")[1] and "지금 손익비는 0.96입니다" in sec(kr, "점검표")[1]
+    assert kr["verdict"]["key"] == "NO" and kr["verdict"]["label"] == "사지 않음"
     risk = A.answer(term, "LG에너지솔루션 위험해?", "KR")
     by = {s["title"]: s["lines"] for s in risk["sections"]}
     assert "차단 조건 1건, 회피 표시 2건" in risk["summary"] and "횡령·배임" in by["차단 조건"][0] and "고위험 표시" in by["회피 표시"][0] and "자금 조달 공시" in by["회피 표시"][1]
@@ -487,7 +491,7 @@ def test_the_assistant_asks_no_network_and_is_wired_into_the_server_and_the_firs
     assert html.index('data-tab="today"') < html.index('data-tab="overview"') and 'id="tab-today" class="tab on"' in html and html.index("assistant.js") < html.index("command.js")
     js = (server.STATIC / "assistant.js").read_text(encoding="utf-8")
     assert "RENDER.today = renderToday" in js and "/api/assistant/ask" in js and "esc(first)" in js and "esc(rest)" in js and "innerHTML = a." not in js
-    assert 'class="asst-sum">${esc(a.summary)}' in js and "a.sections.map((s) => `<h4>${esc(s.title)}</h4>" in js and "이어서 물어보기" in js and "esc(a.basis)" in js      # every text goes through esc
+    assert 'class="asst-sum">${esc(a.summary)}' in js and ".map((s) => `<h4>${esc(s.title)}</h4>${list(s.lines)}`)" in js and "이어서 물어보기" in js and "esc(a.basis)" in js      # every text goes through esc
     assert 'RENDER.today ? "today" : "overview"' in (server.STATIC / "app.js").read_text(encoding="utf-8")
     cmd = (server.STATIC / "command.js").read_text(encoding="utf-8")
     assert "askAssistant(q)" in cmd and 'today: ["오늘", "비서"' in cmd and 'askAssistant("help")' in cmd and '"도움말"' in cmd

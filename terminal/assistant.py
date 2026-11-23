@@ -1318,6 +1318,99 @@ def portfolio_answer(terminal: Any, stock: Dict[str, str], follow: List[str]) ->
                                                    "주문을 내지 않는 가상 포트폴리오입니다. 금액과 수량은 계산하지 않습니다.", p["note"]]}], "committee", follow)
 
 
+# ---------------------------------------------------------------------- '사도 돼?': 결론 먼저 (사용자 결정 2026-11-24)
+# 점검표만 보여 주던 답을, 프로그램이 이미 쓰는 규칙으로 내린 결론 하나로 시작합니다.  새 계산은 없습니다: 차단 조건, 회피 표시,
+# 관찰 기준(구간 경계 55점), 지금 고른 성향의 후보 판정(stance.judge, 순위표의 '성향 후보'와 같은 함수), 기록된 진입 판단을 읽기만 합니다.
+#   사지 않음: 차단 조건 · 회피 표시 · 실행 대상 아님 · 관찰 기준 미만 · 유효한 진입 근거 없음
+#   기다림:   성향 후보가 아님(선 미달, 신뢰도, 큰 움직임) · 눌림/돌파 확인/실적 대기 · 지금 가격에서 비쌈 · 스윙 실적 임박
+#   사도 됨:  위에 걸린 것이 없고 진입 판단이 '지금 진입 가능'
+# 나쁜 날(미국)은 결론을 바꾸지 않고 '크기 절반'을 덧붙입니다(2026-11-16 결정과 같음).  점수와 기록은 바뀌지 않습니다.
+VERDICT_KO = {"OK": "사도 됨", "WAIT": "기다림", "NO": "사지 않음"}
+VERDICT_CAVEAT = "프로그램 규칙이 내린 결론입니다. 점수가 높은 종목의 수익이 더 좋았다는 근거는 아직 확인되지 않았고, 주문은 직접 정합니다."
+
+
+def pullback_zone(snap: Dict[str, Any]) -> Optional[List[float]]:
+    """The swing rule's waiting zone around the 20-day line (terminal/qsf/holding.py ``_zone(pull, atr, 0.5)``), rebuilt from the
+    values the record kept: the 20-day line and the daily range as a share of the price.  None when either is missing."""
+    from terminal.qsf import holding
+    raw = {f.get("factor"): f.get("raw") for f in snap.get("factors") or [] if isinstance(f.get("raw"), dict)}
+    ma20, atr_pct, price = (raw.get("trend_structure") or {}).get("ma20"), (raw.get("atr_risk") or {}).get("atr_pct"), snap.get("price")
+    if not ma20 or not atr_pct or not price:
+        return None
+    z = holding._zone(float(ma20), float(atr_pct) * float(price), 0.5)
+    return [z["low"], z["high"]] if z else None
+
+
+def buy_verdict(snap: Dict[str, Any], strategy: str, market: str, *, gates: List[str], marks: List[str], earnings: Dict[str, Any],
+                soon: bool, level: str, wide: Iterable[str], state: Dict[str, Any], held: bool) -> Dict[str, Any]:
+    """The conclusion of '사도 돼?' for one strategy: key OK / WAIT / NO, the deciding reason, what would change it, the other
+    reasons of the same weight, notes and the stance line it was judged against."""
+    from terminal.qsf import config, stance as qs
+    p, label = qs.PRESETS[level], qs.LABELS[level]
+    score, entry = float(snap["score"]), snap.get("entry_status")
+    seen = snap.get("conservative_score")
+    hold_start = config.BANDS[2][0]
+    close = snap.get("price")
+    no: List[tuple] = []
+    wait: List[tuple] = []
+    if gates:
+        no.append(("차단 조건이 있습니다: " + "; ".join(gates) + ".", "차단 조건이 풀려야 다시 봅니다."))
+    for m in marks:
+        no.append((m, "이 표시가 없어져야 다시 봅니다."))
+    if snap.get("actionability") != "ACTIONABLE" and not gates:
+        no.append(("자료가 모자라 실행 대상이 아닙니다.", "빠진 자료가 채워지면 다시 봅니다."))
+    if score < hold_start:
+        no.append((f"점수 {score:.1f}점이 관찰 기준 {hold_start:g}점 미만입니다.", f"{hold_start:g}점 이상으로 오르면 다시 봅니다."))
+    elif entry == "NO_VALID_ENTRY_SETUP" and not gates:
+        no.append((f"진입 판단이 '{entry_ko(entry, strategy)}'입니다. {entry_meaning(entry, strategy)}".strip(), "진입 근거가 생기면 다시 봅니다."))
+    why = qs.judge(snap, level, set(wide))
+    if why == "LINE":
+        low = seen is not None and float(seen) < score
+        used = min(score, float(seen)) if low else score
+        wait.append((f"점수 {used:.1f}점" + (f"(자료가 빠진 요인을 낮게 본 점수, 기록된 점수는 {score:.1f}점)" if low else "")
+                     + f"이 지금 고른 성향 '{label}'의 후보 선 {p['line']:g}점에 {p['line'] - used:.1f}점 모자랍니다.", f"{p['line']:g}점 이상이 되면 다시 봅니다."))
+    elif why == "CONFIDENCE":
+        wait.append((f"자료 신뢰도가 낮아 '{label}' 성향의 후보에서 빠집니다.", "자료가 채워지거나 성향을 바꾸면 달라집니다."))
+    elif why == "VOLATILE":
+        wait.append((f"하루 움직임이 큰 쪽 3분의 1에 들어 '{label}' 성향의 후보에서 빠집니다.", "움직임이 줄거나 성향을 바꾸면 달라집니다."))
+    rr = (snap.get("holding") or {}).get("reward_risk")
+    if entry == "WAIT_FOR_PULLBACK":
+        zone, need = pullback_zone(snap), config.SWING["min_reward_risk"]
+        pct = lambda v: f"{(v / close - 1) * 100:+.1f}%".replace("-0.0%", "0.0%").replace("+0.0%", "0.0%")      # noqa: E731
+        where = f"20일선 부근 {price(zone[0], market)}~{price(zone[1], market)}" if zone else ""
+        if zone and close and close > zone[1]:
+            to = f"가격이 {where}(지금보다 {pct(zone[0])}~{pct(zone[1])})로 내려오면 손익비가 나아지는지 규칙이 다시 봅니다."
+        elif zone and close:
+            # 이미 그 부근이거나 아래: 가격이 더 내려오는 것이 답이 아니라, 목표까지의 여유가 모자란 것입니다
+            to = f"가격이 이미 {where}이거나 그 아래입니다. 목표까지의 여유가 작아 손익비가 모자란 것이라, 손익비가 {need:g} 이상으로 계산되는 날 규칙이 다시 진입을 봅니다."
+        else:
+            to = f"가격이 20일선 부근으로 내려오거나 손익비가 {need:g} 이상으로 계산되면 규칙이 다시 진입을 봅니다."
+        wait.append(("지금 가격에서는 손익비가 모자라 눌림을 기다리는 자리입니다" + (f"(지금 {rr:.2f}, 기준 {need:g})." if rr is not None else "."), to))
+    elif entry == "WAIT_FOR_BREAKOUT_CONFIRMATION":
+        wait.append(("고점을 넘었지만 거래량이 붙지 않아 돌파를 확인하는 중입니다.", "거래량이 붙은 돌파가 확인되면 다시 봅니다."))
+    elif entry == "WAIT_FOR_EARNINGS":
+        wait.append(("실적 발표를 확인하고 판단하는 자리입니다.", f"실적 발표({earnings.get('next_earnings') or '날짜 미상'}) 뒤에 다시 봅니다."))
+    elif entry == "OVERVALUED_AT_CURRENT_PRICE":
+        wait.append(("지금 가격에서는 비싸게 읽혀 진입을 막습니다.", "가격이 내려오거나 이익이 늘어 밸류에이션이 기준 안으로 들어오면 다시 봅니다."))
+    if strategy == "SWING" and soon and entry != "WAIT_FOR_EARNINGS":
+        wait.append((f"실적 발표가 {earnings.get('next_earnings')}({earnings.get('sessions')}거래일 뒤)로 임박했습니다.", "발표 뒤에 다시 봅니다."))
+    if not no and not wait and entry != "ENTRY_NOW":
+        wait.append(("기록에 진입 판단이 없습니다.", "다음 기록에서 다시 봅니다."))
+    key = "NO" if no else "WAIT" if wait else "OK"
+    reasons = no or wait or [(f"점수 {score:.1f}점이 '{label}' 성향의 후보 선 {p['line']:g}점 이상이고, 진입 판단이 '{entry_ko(entry, strategy)}'이며 막는 조건이 없습니다.", None)]
+    notes = []
+    if key == "OK" and strategy == "LONG_TERM":
+        notes.append(entry_meaning(entry, strategy))
+    if float(state.get("size_factor") or 1) < 1 and state.get("score_100") is not None:
+        notes.append(f"오늘은 시장 상태가 {state['score_100']:.0f}/100({state.get('label')})이라 새 주문 크기를 {float(state['size_factor']):g}배로 줄여 계산합니다.")
+    if held:
+        notes.append("이미 보유 중입니다. 더 사는 것은 종목 비중 한도를 먼저 보세요.")
+    lines = " · ".join(f"{qs.LABELS[k]} {qs.PRESETS[k]['line']:g}" for k in qs.LEVELS)
+    basis = f"기준: 지금 고른 {MARKET_KO.get(market, market)} 성향 '{label}'의 후보 선 {p['line']:g}점입니다({lines}). 성향은 순위·카드 탭 위 줄에서 바꾸고, 바꾸면 이 결론도 달라질 수 있습니다."
+    return {"key": key, "label": VERDICT_KO[key], "why": reasons[0][0], "change": reasons[0][1], "also": [r[0] for r in reasons[1:]], "notes": notes,
+            "basis": basis, "stance": level, "line": p["line"], "candidate": why is None}
+
+
 def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: str) -> Dict[str, Any]:
     """One stock, from the stored scan only: nothing is fetched and nothing is scored again."""
     from terminal.qsf import config
@@ -1484,10 +1577,24 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
         return reply(f"{head} 매도 점검", f"{name}의 보유 판단은 '{EXIT_KO.get(ex['action'], ex['action'])}'입니다. {ex['reason']}",
                      [{"title": "걸린 조건", "lines": hit or ["없음."]}, {"title": "읽을 때 주의", "lines": ["판단은 규칙이 읽은 것이고 자동 매도는 없습니다. 주문은 직접 정합니다."]}], "portfolio", follow, basis)
 
-    # BUY_CHECK: a checklist, never an answer of yes or no
+    # BUY_CHECK: the conclusion first (user decision 2026-11-24), then the checklist it came from
+    from terminal.qsf import stance as qs
     state = terminal.market_state(market)
     soon = raw.get("sessions") is not None and raw["sessions"] <= block
-    checks = [("점수 구간", score >= BUY_LINE, f"{kind} {score:.1f}점('{row.get('band_label')}'), {standing}. 매수 후보 구간은 {BUY_LINE:g}점 이상입니다."),
+    level = qs.level(Path(terminal.base), market)
+    session = snap.get("data_date")
+    wide = qs.volatile(_snaps(terminal, market, session)) if qs.PRESETS[level]["drop_volatile"] and session else set()
+    judged = dict(gates=gates, marks=marks, earnings=raw, soon=soon, level=level, wide=wide, state=state, held=held)
+    v = buy_verdict(snap, strategy, market, **judged)
+    other_snap = _snap(terminal, stock, "LONG_TERM" if strategy == "SWING" else "SWING")
+    other_line = ""
+    if other_snap is not None and other_snap.get("score") is not None:
+        ov = buy_verdict(other_snap, other_snap["strategy"], market, **{**judged, "gates": [g.get("text") or g.get("code") for g in other_snap.get("gates") or []]})
+        other_line = f"{STRATEGY_KO[other_snap['strategy']]}: {ov['label']} · " + ("" if ov["why"].startswith("점수") else f"점수 {float(other_snap['score']):.1f}점 · ") + ov["why"]
+    stance_why = {"LINE": f"후보 선 {v['line']:g}점 미만", "CONFIDENCE": "자료 신뢰도 미달", "VOLATILE": "움직임이 큰 쪽", "NOT_ACTIONABLE": "실행 대상 아님"}
+    pick = qs.judge(snap, level, set(wide))
+    checks = [("성향 후보", pick is None, f"{kind} {score:.1f}점('{row.get('band_label')}' 구간), {standing}. 지금 성향 '{qs.LABELS[level]}'의 후보 선은 {v['line']:g}점입니다"
+               + (f"({stance_why.get(pick, pick)})." if pick else ".")),
               ("진입 판단", entry == "ENTRY_NOW", f"'{entry_ko(entry, strategy)}'. {entry_meaning(entry, strategy)}" + (f" 지금 손익비는 {hold['reward_risk']:.2f}입니다." if hold.get("reward_risk") is not None else "")),
               ("차단 조건", not gates, ("; ".join(gates) + ". 점수와 상관없이 매수 후보에서 빠집니다.") if gates else "없음."),
               ("실적 발표", (not soon) if raw.get("next_earnings") else None, (f"{raw['next_earnings']}({raw.get('sessions')}거래일 뒤)" + ("로 임박했습니다. 발표 전후에는 가격이 크게 움직일 수 있습니다." if soon else "로 임박하지 않았습니다."))
@@ -1498,15 +1605,16 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
                                                                          "이 시장에서는 과거에 이 값이 이후 수익을 가르지 못했습니다." if state.get("state") == "ADVERSE" else "")) if state.get("score_100") is not None else "자료 없음."),
               ("보유 여부", not held, "이미 보유 중입니다. 추가 매수는 종목 비중 한도를 먼저 보세요." if held else "보유 기록 없음.")]
     mark = lambda ok: "○" if ok else "✕" if ok is False else "–"      # noqa: E731
-    failed = [label for label, ok, _ in checks if ok is False]
     passed = sum(1 for _, ok, _ in checks if ok)
-    summary = (f"{name} 매수 전 점검({kind}): {len(checks)}개 중 {passed}개가 걸림 없이 통과했습니다." + (f" 걸린 것은 {', '.join(failed)}입니다." if failed else "")
-               + " 이 점검표는 살지 말지에 대한 답이 아닙니다.")
-    return reply(f"{head} 매수 전 점검표({kind})", summary,
-                 [{"title": "점검표 (○ 통과 · ✕ 걸림 · – 확인 못 함)", "lines": [f"{mark(ok)} {label}: {text}" for label, ok, text in checks]},
-                  {"title": "참고", "lines": ([still] if still else []) + notes + unknown},
-                  {"title": "다음에 볼 것", "lines": ["수량, 지정가 상한, 손절은 '내 계좌'에 계좌를 기록하면 '주문 계획'에 계좌 기준으로 나옵니다.",
-                                                "점수 구간의 수익 근거는 아직 확인되지 않았습니다. 점검표는 프로그램의 규칙에 걸리는 것이 있는지 보는 용도입니다."]}], "stock", follow, basis)
+    summary = f"{v['label']} ({kind}, 프로그램 규칙 기준) — {v['why']}"
+    ans = reply(f"{head} 사도 돼? ({kind})", summary,
+                [{"title": "결론 자세히", "lines": ([f"바뀌는 조건: {v['change']}"] if v["change"] else []) + [f"함께 걸린 것: {x}" for x in v["also"]] + v["notes"] + [v["basis"], VERDICT_CAVEAT]},
+                 {"title": "다른 전략", "lines": [other_line]},
+                 {"title": f"점검표 ({len(checks)}개 중 {passed}개 통과 · ○ 통과 · ✕ 걸림 · – 확인 못 함)", "lines": [f"{mark(ok)} {label}: {text}" for label, ok, text in checks]},
+                 {"title": "참고", "lines": ([still] if still else []) + notes + unknown},
+                 {"title": "다음에 볼 것", "lines": ["수량, 지정가 상한, 손절은 '통합 계좌'에 계좌를 기록하면 '주문 계획'에 계좌 기준으로 나옵니다."]}], "stock", follow, basis)
+    ans["verdict"] = {"key": v["key"], "label": v["label"], "strategy": kind, "why": v["why"], "change": v["change"], "other": other_line}
+    return ans
 
 
 def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:

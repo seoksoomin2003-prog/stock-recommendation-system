@@ -18,6 +18,13 @@ function asstGo(tab, ticker, view) {
 // 할 일 한 줄 (6차 묶음 P2-20): 첫 문장을 제목으로, 나머지는 접어 둡니다.  수준은 왼쪽 띠의 색과 굵기로 봅니다.
 // 문장 끝은 한글이나 닫는 괄호 뒤의 마침표만 봅니다: 'Inc. ', 'Corp. ' 같은 영문 약어에서 끊지 않습니다.
 function asstFirst(text) { const m = String(text || "").match(/^.+?[가-힣)][.!?](?=\s|$)/); return m ? m[0] : String(text || ""); }
+// '사도 돼?'의 결론 (사용자 결정 2026-11-24): 사도 됨 · 기다림 · 사지 않음을 맨 위에 크게, 바로 아래 이유와 바뀌는 조건, 다른 전략 한 줄.
+// 판단 색(6차 묶음 P2-8): 사도 됨 보라, 기다림 회색, 사지 않음 주황.  가격 색은 쓰지 않습니다.
+const ASST_VERDICT_CLASS = { OK: "v-ok", WAIT: "v-wait", NO: "v-no" };
+function asstVerdict(v) {
+  return `<div class="asst-verdict ${ASST_VERDICT_CLASS[v.key] || "v-wait"}"><div class="asst-v-head"><b>${esc(v.label)}</b><span class="meta m0">${esc(v.strategy)} · 프로그램 규칙 기준</span></div>
+    <p class="asst-sum">${esc(v.why)}</p>${v.change ? `<div class="asst-v-change">바뀌는 조건: ${esc(v.change)}</div>` : ""}${v.other ? `<div class="meta">${esc(v.other)}</div>` : ""}</div>`;
+}
 function asstItem(i) {
   const view = ASST_VIEW[i.kind] || "", where = i.tab && i.tab !== "today" ? `<button type="button" class="ghost asst-go" data-tab="${esc(i.tab)}" data-view="${esc(view)}">${esc(ASST_TAB_KO[i.tab] || i.tab)} 탭에서 보기</button>` : "";
   const stock = i.ticker ? `<button type="button" class="chip" data-ticker="${esc(i.ticker)}">${esc(i.ticker)}</button>` : "";
@@ -28,13 +35,15 @@ function asstItem(i) {
 // 답: 결론 한 줄을 먼저, 그 아래 제목이 붙은 묶음들, 끝에 자료 기준과 이어서 물어볼 것.
 function asstAnswer(a) {
   const list = (rows) => `<ul>${rows.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
-  const body = (a.sections || []).length ? a.sections.map((s) => `<h4>${esc(s.title)}</h4>${list(s.lines)}`).join("") : a.summary ? "" : list(a.lines || []);
+  // 결론 상자에 이미 보인 '바뀌는 조건'과 '다른 전략'은 아래 목록에서 한 번 더 쓰지 않습니다 (글로만 받는 곳에는 둘 다 남아 있습니다)
+  const shown = (s) => (a.verdict ? { ...s, lines: s.title === "다른 전략" ? [] : s.lines.filter((x) => !String(x).startsWith("바뀌는 조건: ")) } : s);
+  const body = (a.sections || []).length ? a.sections.map(shown).filter((s) => s.lines.length).map((s) => `<h4>${esc(s.title)}</h4>${list(s.lines)}`).join("") : a.summary ? "" : list(a.lines || []);
   const chips = (rows, cls) => `<div class="chips">${rows.map((x) => `<button type="button" class="chip ${cls}">${esc(x)}</button>`).join("")}</div>`;
   const follow = (a.follow || []).length ? `<h4>이어서 물어보기</h4>${chips(a.follow, "asst-ex")}` : "";
   const more = (a.examples || []).length ? `<h4>눌러서 물어보기</h4>${chips(a.examples, "asst-ex")}` : "";
   const go = a.tab && a.tab !== "today" ? `<button type="button" class="ghost asst-go" data-tab="${esc(a.tab)}" data-ticker="${esc(a.ticker || "")}">${esc(ASST_TAB_KO[a.tab] || a.tab)} 탭에서 보기</button>` : "";
   return `<div class="asst-answer ${a.status === "REAL" ? "" : "unknown"}"><div class="asst-q">${esc(a.question || "")}</div><h3>${esc(a.title || "")}</h3>
-    ${a.summary ? `<p class="asst-sum">${esc(a.summary)}</p>` : ""}${body}${a.basis ? `<div class="meta">${esc(a.basis)}</div>` : ""}${follow}${more}
+    ${a.verdict ? asstVerdict(a.verdict) : a.summary ? `<p class="asst-sum">${esc(a.summary)}</p>` : ""}${body}${a.basis ? `<div class="meta">${esc(a.basis)}</div>` : ""}${follow}${more}
     <div class="asst-act">${go}</div><div class="meta">${esc(a.note || "")}</div></div>`;
 }
 async function asstAsk(q) {

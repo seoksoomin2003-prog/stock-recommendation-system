@@ -599,3 +599,11 @@ main.wide { max-width: var(--content-max-wide); }
 .ic-stat b { font-size: var(--fs-xl); } .ic-stat small { font-size: var(--fs-sm); color: var(--muted); font-weight: 400; }
 .ic-more > summary { cursor: pointer; color: var(--accent); font-size: var(--fs-sm); }
 .seg.idle { opacity: 0.5; }
+
+/* '사도 돼?' conclusion (2026-11-24): judgement colours of UI batch 6, a text label always beside the colour. */
+.asst-verdict { border: 1px solid var(--line); border-left: 6px solid var(--v); border-radius: var(--r-md); padding: var(--sp-3); margin: var(--sp-2) 0 var(--sp-3); }
+.asst-verdict.v-ok { --v: var(--judge-buy); } .asst-verdict.v-wait { --v: var(--judge-hold); } .asst-verdict.v-no { --v: var(--warn); }
+.asst-v-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: var(--sp-2); }
+.asst-v-head b { font-size: var(--fs-xl); color: var(--v); }
+.asst-verdict .asst-sum { margin: var(--sp-1) 0; }
+.asst-v-change { font-weight: 600; margin-bottom: var(--sp-1); }
