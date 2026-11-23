@@ -38,30 +38,34 @@ async function renderCompare() {
   cmpInit();
   state.loaded.compare = true;
   const el = $("#tab-compare");
-  el.innerHTML = `<div class="panel"><h2>수익률 비교 <span class="seg" id="cmp-rng">${["3mo", "1y", "5y"].map((r) => `<button data-r="${r}" class="${r === cmp.range ? "on" : ""}">${{ "3mo": "3개월", "1y": "1년", "5y": "5년" }[r]}</button>`).join("")}</span></h2>
+  // 작업 화면 개편 6단계 (배치 명세 3.8): 맨 위 줄에 제목·기간·고른 종목·추가 칸, 가운데 칸에 수익률 차트, 오른쪽 칸에 기간 성과와 상관계수,
+  // 아래 줄에 상관계수의 변화.  한 칸이면 위 줄 → 차트 → 기간 성과 → 상관계수 → 변화(전과 같은 순서).
+  el.innerHTML = ui.ws({ name: "compare", label: "기간 성과와 상관계수",
+    ctx: `<h2>수익률 비교 <span id="cmp-badge"></span></h2><span class="seg" id="cmp-rng">${["3mo", "1y", "5y"].map((r) => `<button data-r="${r}" class="${r === cmp.range ? "on" : ""}">${{ "3mo": "3개월", "1y": "1년", "5y": "5년" }[r]}</button>`).join("")}</span>
     <div class="cmp-bar" id="cmp-chips"></div>
     <form id="cmp-add" class="cmp-bar" autocomplete="off"><input id="cmp-q" maxlength="15" placeholder="종목 코드 추가 (예: NVDA, 005930)" aria-label="비교할 종목 코드">
       <button type="submit">추가</button>
-      <span class="meta m0">지수: ${Object.entries(CMP_INDEX).map(([s, n]) => `<button type="button" class="chip" data-add="${esc(s)}">${esc(n)}</button>`).join(" ")}</span></form>
-    <canvas id="cmp-cv" class="chart" aria-label="수익률 비교 차트"></canvas><div class="legend" id="cmp-legend"></div><div id="cmp-meta"></div></div>
-    <div class="panel"><h2>기간 성과</h2><div id="cmp-stats"></div></div>
-    <div class="panel"><h2>일간 수익률 상관계수</h2><div id="cmp-corr"></div></div>
-    <div class="panel"><h2>상관계수의 변화 <span class="meta m0" id="cmp-roll-h"></span></h2><canvas id="cmp-roll" class="chart" aria-label="이동 상관계수 차트"></canvas><div class="legend" id="cmp-roll-legend"></div><div id="cmp-roll-meta"></div></div>`;
+      <span class="meta m0">지수: ${Object.entries(CMP_INDEX).map(([s, n]) => `<button type="button" class="chip" data-add="${esc(s)}">${esc(n)}</button>`).join(" ")}</span></form>`,
+    main: `<div class="panel"><div class="chart"><canvas id="cmp-cv" aria-label="수익률 비교 차트"></canvas></div><div class="legend" id="cmp-legend"></div><div id="cmp-meta"></div></div>`,
+    right: `<div class="panel"><h2>기간 성과</h2><div id="cmp-stats"></div></div>
+    <div class="panel"><h2>일간 수익률 상관계수</h2><div id="cmp-corr"></div></div>`,
+    lower: `<div class="panel"><h2>상관계수의 변화 <span class="meta m0" id="cmp-roll-h"></span></h2><div class="chart"><canvas id="cmp-roll" aria-label="이동 상관계수 차트"></canvas></div><div class="legend" id="cmp-roll-legend"></div><div id="cmp-roll-meta"></div></div>` });
   $("#cmp-rng").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; cmp.range = b.dataset.r; renderCompare(); };
   $("#cmp-add").onsubmit = (e) => { e.preventDefault(); cmpAdd($("#cmp-q").value); renderCompare(); };
   el.querySelectorAll("[data-add]").forEach((b) => (b.onclick = () => { cmpAdd(b.dataset.add); renderCompare(); }));
   cmpChips();
-  if (!cmp.list.length) { $("#cmp-meta").innerHTML = '<div class="empty">비교할 종목을 추가하세요.</div>'; return; }
+  if (!cmp.list.length) { $("#cmp-cv").hidden = true; $("#cmp-meta").innerHTML = '<div class="empty cmp-empty">비교할 종목을 추가하세요.</div>'; return; }
   $("#cmp-meta").innerHTML = '<div class="meta">불러오는 중…</div>';
   const want = cmp.list.join(",") + "|" + cmp.range;
   try {
     const d = await api(`/api/compare?t=${encodeURIComponent(cmp.list.join(","))}&range=${cmp.range}`);
     if (want !== cmp.list.join(",") + "|" + cmp.range) return;
     cmp.data = d; cmpDraw(); redrawOn("compare", "main", cmpDraw); cmpTables(d); cmpRoll(); redrawOn("compare", "roll", cmpRoll);
+    $("#cmp-badge").innerHTML = d.status === "REAL" ? "" : badge(d.status);
     const miss = d.missing && d.missing.length ? ` · <span class="err">가격 없음: ${esc(d.missing.join(", "))}</span>` : "";
     $("#cmp-meta").innerHTML = d.status === "REAL"
       ? meta(d.source, d.fetched_at, `${esc(d.dates[0])} ~ ${esc(d.dates[d.dates.length - 1])} · ${esc(d.basis)}${d.mixed_markets ? " 미국과 한국을 섞으면 두 시장이 모두 연 날만 남습니다." : ""}${miss}`)
-      : `<div class="empty">${badge("UNAVAILABLE")} 비교할 가격을 받지 못했습니다.${miss}</div>`;
+      : `<div class="empty cmp-empty">${badge("UNAVAILABLE")} 비교할 가격을 받지 못했습니다.${miss}</div>`;
   } catch (e) { $("#cmp-meta").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; }
 }
 function cmpChips() {
@@ -72,35 +76,38 @@ function cmpChips() {
 }
 function cmpDraw() {
   const cv = $("#cmp-cv"), d = cmp.data;
-  if (!cv || !cv.isConnected || !d || d.status !== "REAL") return;
-  const H = isPhone() ? 280 : 380, { ctx, w, h } = setupCanvas(cv, H);
-  const n = d.dates.length, labels = d.series.length <= 4, padR = labels ? 92 : 52, padT = 10, padB = 20, pw = w - padR, ph = h - padT - padB;
+  if (!cv || !cv.isConnected || !d) return;
+  cv.hidden = d.status !== "REAL";                     // no prices: the empty sentence stands in the plot's place (visualization spec 1.9)
+  if (cv.hidden) return;
+  const H = isPhone() ? 280 : isNarrow() ? 320 : 380, { ctx, w, h } = setupCanvas(cv, H);
+  // direct end labels for up to four lines when the plot is wide enough (spec 1.10); otherwise the legend carries the names
+  const n = d.dates.length, labels = d.series.length <= 4 && w >= 520, padR = labels ? 92 : 52, padT = 10, padB = 20, pw = w - padR, ph = h - padT - padB;
   let lo = 0, hi = 0;
-  d.series.forEach((s) => s.points.forEach((v) => { lo = Math.min(lo, v); hi = Math.max(hi, v); }));
+  d.series.forEach((s) => s.points.forEach((v) => { if (isNum(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } }));
   const pad = (hi - lo) * 0.06 || 0.01; lo -= pad; hi += pad;
   const x = (i) => (n > 1 ? (i / (n - 1)) * pw : 0), y = (v) => padT + (1 - (v - lo) / (hi - lo)) * ph;
   const T = vizTokens(), grid = T.grid, muted = T.tick;
-  ctx.font = vizFont(11); ctx.textBaseline = "middle";
-  for (let k = 0; k <= 4; k++) {
-    const v = lo + ((hi - lo) * k) / 4, yy = y(v);
+  // percent axis on round steps (niceTicks), right-aligned; the zero line one step stronger than the grid
+  const nt = niceTicks(lo * 100, hi * 100, 5);
+  ctx.font = vizFont(11); ctx.textBaseline = "middle"; ctx.textAlign = "right";
+  nt.ticks.forEach((v) => {
+    const yy = y(v / 100);
     ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(pw, yy); ctx.stroke();
-    ctx.fillStyle = muted; ctx.fillText(`${(v * 100).toFixed(0)}%`, pw + 6, yy);
-  }
-  ctx.strokeStyle = muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y(0)); ctx.lineTo(pw, y(0)); ctx.stroke();
+    ctx.fillStyle = muted; ctx.fillText(`${tickLabel(v, nt.digits)}%`, labels ? pw + 32 : w - 4, yy);
+  });
+  ctx.textAlign = "left";
+  ctx.strokeStyle = T.axis; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y(0)); ctx.lineTo(pw, y(0)); ctx.stroke();
   vizDates(ctx, d.dates, x, h - 14, w, muted);
+  ctx.lineJoin = ctx.lineCap = "round";
   d.series.forEach((s) => line(ctx, s.points, x, y, cmpColor(s.ticker), 2));
   // direct labels at the line ends, nudged 14 px apart and kept above the date row (6차 묶음 P3-9), in text ink beside a colour mark
   if (labels) vizEndTags(ctx, d.series.map((s) => ({ y: y(s.points[n - 1]), color: cmpColor(s.ticker), label: cmpName(s.ticker).slice(0, 7) })), pw + 36, -Infinity, h - 28, { gap: 14, font: vizFont(11), T });
   $("#cmp-legend").innerHTML = d.series.map((s) => `<span><span class="swatch" style="background:${cmpColor(s.ticker)}"></span>${esc(cmpName(s.ticker))} ${pct(s.total_return * 100, 1)}</span>`).join("");
-  cv.onmousemove = (e) => {
-    const r = cv.getBoundingClientRect(), i = Math.min(n - 1, Math.max(0, Math.round(((e.clientX - r.left) / pw) * (n - 1))));
-    const rows = d.series.map((s) => [s, s.points[i]]).sort((a, b) => b[1] - a[1]);
-    const tip = $("#tip"); tip.hidden = false;
-    tip.innerHTML = `<b>${esc(d.dates[i])}</b><br>${rows.map(([s, v]) => `<span class="swatch" style="background:${cmpColor(s.ticker)}"></span>${esc(cmpName(s.ticker))} ${pct(v * 100, 1)}`).join("<br>")}`;
-    const tx = e.clientX + 14 + tip.offsetWidth > window.innerWidth ? e.clientX - tip.offsetWidth - 14 : e.clientX + 14;
-    tip.style.left = tx + "px"; tip.style.top = e.clientY + 14 + "px";
-  };
-  cv.onmouseleave = () => ($("#tip").hidden = true);
+  cv.setAttribute("aria-label", `수익률 비교: 기간 ${d.dates[0]}~${d.dates[n - 1]}, 종목별 기간 수익률 ${d.series.map((s) => `${cmpName(s.ticker)} ${vizPct(isNum(s.total_return) ? s.total_return * 100 : null, 1)}`).join(", ")}`);
+  // every line at that day, highest first; a missing value says 없음 (vizHover: pointer, finger, keyboard)
+  vizHover(cv, { count: n, xOf: x, indexAt: (px) => (px > pw ? -1 : Math.min(n - 1, Math.max(0, Math.round((px / pw) * (n - 1))))), html: (i) => {
+    const rows = d.series.map((s) => [s, s.points[i]]).sort((a, b) => (isNum(b[1]) ? b[1] : -Infinity) - (isNum(a[1]) ? a[1] : -Infinity));
+    return `<b>${esc(d.dates[i])}</b><br>${rows.map(([s, v]) => `<i class="key-line" style="background:${cmpColor(s.ticker)}"></i>${esc(cmpName(s.ticker))} ${vizPct(isNum(v) ? v * 100 : null, 1)}`).join("<br>")}`; } });
 }
 // How the correlation with the first item moved: each day, the correlation of the last N daily returns (N from the server).
 function cmpRoll() {
@@ -112,23 +119,24 @@ function cmpRoll() {
   }
   cv.hidden = false;
   $("#cmp-roll-h").textContent = `${cmpName(d.rolling_base)} 기준 · 최근 ${d.rolling_window}거래일씩`;
-  const { ctx, w, h } = setupCanvas(cv, isPhone() ? 200 : 240), n = d.dates.length, padR = 40, pw = w - padR, ph = h - 22;
+  const { ctx, w, h } = setupCanvas(cv, isPhone() ? 200 : isNarrow() ? 220 : 240), n = d.dates.length, padR = 40, pw = w - padR, ph = h - 22;
   const T = vizTokens(), x = (i) => (n > 1 ? (i / (n - 1)) * pw : 0), y = (v) => 6 + (1 - (v + 1) / 2) * (ph - 6), grid = T.grid, muted = T.tick;
-  ctx.font = vizFont(11); ctx.textBaseline = "middle";
-  [-1, -0.5, 0, 0.5, 1].forEach((v) => { ctx.strokeStyle = v === 0 ? muted : grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(pw, y(v)); ctx.stroke(); ctx.fillStyle = muted; ctx.fillText(v.toFixed(1), pw + 6, y(v)); });
+  ctx.font = vizFont(11); ctx.textBaseline = "middle"; ctx.textAlign = "right";
+  [-1, -0.5, 0, 0.5, 1].forEach((v) => { ctx.strokeStyle = v === 0 ? T.axis : grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(pw, y(v)); ctx.stroke(); ctx.fillStyle = muted; ctx.fillText(v.toFixed(1), w - 4, y(v)); });
+  ctx.textAlign = "left";
   vizDates(ctx, d.dates, x, h - 14, w, muted);
+  ctx.lineJoin = ctx.lineCap = "round";
   d.rolling.forEach((r) => line(ctx, r.points, x, y, cmpColor(r.ticker), 2));
   const last = (r) => [...r.points].reverse().find(isNum);
   $("#cmp-roll-legend").innerHTML = d.rolling.map((r) => `<span><span class="swatch" style="background:${cmpColor(r.ticker)}"></span>${esc(cmpName(r.ticker))} 마지막 ${fmt(last(r), 2)}</span>`).join("");
-  $("#cmp-roll-meta").innerHTML = '<div class="meta">1에 가까울수록 그 기간에 같이 움직였고, 0 근처면 따로, -1에 가까우면 반대로 움직였습니다. 상관이 크게 흔들리면 "함께 움직인다"는 관계를 믿기 어렵습니다.</div>';
-  cv.onmousemove = (e) => {
-    const r = cv.getBoundingClientRect(), i = Math.min(n - 1, Math.max(0, Math.round(((e.clientX - r.left) / pw) * (n - 1))));
-    const tip = $("#tip"); tip.hidden = false;
-    tip.innerHTML = `<b>${esc(d.dates[i])}</b><br>${d.rolling.map((s) => `<span class="swatch" style="background:${cmpColor(s.ticker)}"></span>${esc(cmpName(s.ticker))} ${fmt(s.points[i], 2)}`).join("<br>")}`;
-    const tx = e.clientX + 14 + tip.offsetWidth > window.innerWidth ? e.clientX - tip.offsetWidth - 14 : e.clientX + 14;
-    tip.style.left = tx + "px"; tip.style.top = e.clientY + 14 + "px";
-  };
-  cv.onmouseleave = () => ($("#tip").hidden = true);
+  cv.setAttribute("aria-label", `${cmpName(d.rolling_base)} 기준 이동 상관계수: ${d.rolling.map((r) => `${cmpName(r.ticker)} 마지막 ${isNum(last(r)) ? last(r).toFixed(2) : "없음"}`).join(", ")}`);
+  // table twin: one row per month end (visualization spec V-10)
+  const ends = vizMonthEnds(d.dates);
+  $("#cmp-roll-meta").innerHTML = '<div class="meta">1에 가까울수록 그 기간에 같이 움직였고, 0 근처면 따로, -1에 가까우면 반대로 움직였습니다. 상관이 크게 흔들리면 "함께 움직인다"는 관계를 믿기 어렵습니다.</div>'
+    + vizTable([{ label: "월말", cls: "l" }, ...d.rolling.map((r) => ({ label: cmpName(r.ticker).slice(0, 8) }))],
+      ends.slice().reverse().map((i) => `<tr><td class="l">${esc(d.dates[i])}</td>${d.rolling.map((r) => `<td class="num">${fmt(r.points[i], 2)}</td>`).join("")}</tr>`), "각 달 마지막 거래일의 값입니다. 최신이 위입니다.");
+  vizHover(cv, { count: n, xOf: x, indexAt: (px) => (px > pw ? -1 : Math.min(n - 1, Math.max(0, Math.round((px / pw) * (n - 1))))),
+    html: (i) => `<b>${esc(d.dates[i])}</b><br>${d.rolling.map((s) => `<i class="key-line" style="background:${cmpColor(s.ticker)}"></i>${esc(cmpName(s.ticker))} ${isNum(s.points[i]) ? s.points[i].toFixed(2) : "없음"}`).join("<br>")}` });
 }
 function cmpTables(d) {
   if (d.status !== "REAL") { $("#cmp-stats").innerHTML = $("#cmp-corr").innerHTML = ""; return; }
@@ -140,7 +148,13 @@ function cmpTables(d) {
     <div class="meta">연환산은 1년 가까이 되는 기간에만 표시합니다. 과거 성과이며 앞으로의 수익을 뜻하지 않습니다.</div>`;
   const head = d.series.map((s) => `<th>${esc(cmpName(s.ticker).slice(0, 8))}</th>`).join("");
   $("#cmp-corr").innerHTML = d.series.length < 2 ? '<div class="empty">두 개 이상일 때 보입니다.</div>' : `<div class="tbl-wrap"><table><thead><tr><th class="l"></th>${head}</tr></thead><tbody>
-    ${d.series.map((s, i) => `<tr><td class="l">${esc(cmpName(s.ticker))}</td>${d.correlation[i].map((v, j) => `<td class="num">${i === j ? DASH : fmt(v, 2)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
-    <div class="meta">1에 가까울수록 같이 움직였고, 0 근처면 따로 움직였습니다. 같은 날 수익률끼리 비교합니다.</div>`;
+    ${d.series.map((s, i) => `<tr><td class="l">${esc(cmpName(s.ticker))}</td>${d.correlation[i].map((v, j) => cmpCorrCell(v, i === j)).join("")}</tr>`).join("")}</tbody></table></div>
+    <div class="meta">1에 가까울수록 같이 움직였고, 0 근처면 따로 움직였습니다. 같은 날 수익률끼리 비교합니다. 칸이 짙을수록 상관의 크기(절대값)가 큽니다. 부호는 숫자로 봅니다.</div>`;
+}
+// One correlation cell (visualization spec 6.4, owner decision U-8): a neutral wash by |r| (one hue for both signs: a blue/red pair would
+// clash with the up/down colours of both markets), the signed number in ink.  The diagonal and a missing value are — with no wash.
+function cmpCorrCell(v, diag) {
+  if (diag || !isNum(v)) return `<td class="num">${DASH}</td>`;
+  return `<td class="num corr-cell" style="--r:${Math.min(1, Math.abs(v)).toFixed(3)}">${v < 0 ? "−" : ""}${Math.abs(v).toFixed(2)}</td>`;
 }
 RENDER.compare = renderCompare;

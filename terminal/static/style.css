@@ -463,7 +463,7 @@ details[open] > summary .fold-hint { display: none; }
 .qr-md { display: none; font-size: var(--fs-sm); }
 .qd-bar { display: inline-block; width: 26px; height: 6px; margin-right: 4px; vertical-align: middle; background: var(--chip); border-radius: 3px; overflow: hidden; }
 .qd-bar i { display: block; height: 100%; background: var(--muted); border-radius: 3px; }
-.qsf-balance { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin: 8px 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-lg); }
+.qsf-balance { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px 16px; margin: 8px 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--r-lg); }
 .qsf-balance h4 { margin: 0 0 4px; font-size: var(--fs-md); }
 .qsf-balance ul { margin: 0; padding-left: 18px; }
 .qsf-balance li { margin: 3px 0; }
@@ -969,3 +969,61 @@ tr.me > td:first-child, #qsfplan tr.hl > td:first-child, .qsf-rrow[aria-expanded
 #w-score { margin-top: var(--sp-2); }
 @container content (max-width: 1119px) { #w-side { display: none; } }
 @container content (min-width: 1120px) { #wtbl tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; } }
+
+/* Workstation stage 6 (2026-11-24): the market screens and the chart work (layout spec 3.3, 3.4, 3.7, 3.8; visualization spec 1.4-1.11,
+   5.1, 6.1, 6.3, 6.4).  시장 지도: heatmap in the main column, the rotation graph (#map-rrg) on the right, the sector table and picks
+   below.  거시: indicator cards in the main column, the calendar (#econcal) on the right.  차트분석: the ticker form in the context line,
+   the four panes in the main column, 지금 상태 and 최근 신호 on the right.  비교: the controls in the context line, the return chart in the
+   main column, 기간 성과 and 상관계수 on the right, the rolling chart below.  Chart parts: the hovered tile or point outline (.viz-box),
+   the value tag in the price gutter (.viz-ytag), canvas focus, the dimmed refetch, table twins, correlation shading, balance bars. */
+.ws-ctx > .seg, .ws-ctx > .cmp-bar { margin: 0; }
+.ws[data-ws="compare"] > .ws-ctx > .cmp-bar { flex-basis: 100%; }
+.ws[data-ws="chart"] > .ws-ctx > #cha-form { margin-bottom: 0; }
+.ws[data-ws="chart"] .cha-ctl:first-child { margin-top: 0; }
+.ws[data-ws="macro"] .mgrid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.ws[data-ws="macro"] .ws-right table.cal td:last-child { white-space: normal; min-width: 120px; }
+.ws[data-ws="macro"] .ws-right table.cal td:first-child { white-space: normal; }
+.mcard { position: relative; }
+.mcard canvas { touch-action: pan-y; }
+#map-rrg:empty { display: none; }
+.map-more { display: contents; }
+.map-more > .panel, #map-rrg > .panel { margin-bottom: 0; }
+.ws[data-ws="map"] .ws-right .rrg-wrap { max-width: 560px; }
+.cmp-empty, .ws[data-ws="map"] #heat-meta > .empty { min-height: 160px; display: flex; align-items: center; justify-content: center; gap: var(--sp-2); }
+.chart.refreshing { opacity: 0.45; }
+.viz-box { position: absolute; pointer-events: none; box-shadow: inset 0 0 0 2px var(--ink); border-radius: 1px; }
+.viz-box.round { border-radius: 50%; box-shadow: 0 0 0 2px var(--ink); }
+.viz-box[hidden], .viz-ytag[hidden] { display: none; }
+.viz-ytag { position: absolute; pointer-events: none; height: 16px; line-height: 16px; padding: 0 4px; transform: translateY(-50%); background: var(--ink); color: var(--viz-surface);
+  font-size: var(--fs-xs); font-weight: 600; border-radius: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+canvas:focus-visible, .cha-stack:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+details.viz-table { margin: var(--sp-2) 0 0; }
+details.viz-table > summary { cursor: pointer; color: var(--muted); font-size: var(--fs-sm); }
+details.viz-table .tbl-wrap { max-height: 360px; overflow: auto; margin-top: var(--sp-1); }
+.qh-chart { margin: var(--sp-1) 0 2px; }
+.qh-key { font-size: var(--fs-xs); }
+/* 6.4: |r| as a neutral wash (one hue for both signs), the signed number in ink; diagonal and missing cells stay plain */
+td.corr-cell { background: color-mix(in srgb, var(--viz-bar) calc(var(--r, 0) * 60%), transparent); color: var(--ink); }
+/* 5.1: the evidence balance as bars from a centre line (50-point middle): label 40 %, bar 40 %, value 20 %; a narrow card puts the label
+   on its own line */
+.qsf-balance.qb-div { container: qb / inline-size; }
+.qb-list { list-style: none; margin: 0; padding: 0 !important; }
+.qb-row { display: grid; grid-template-columns: 40% 40% 20%; align-items: center; column-gap: 0; }
+.qb-list .qb-row { margin: 4px 0; }
+.qb-lab { min-width: 0; padding-right: var(--sp-2); }
+.qb-row > .pts { text-align: right; font-variant-numeric: tabular-nums; }
+.qb-bar { position: relative; height: 8px; }
+.qb-bar::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--axis); }
+.qb-bar i { position: absolute; top: 0; bottom: 0; background: var(--viz-bar); }
+.qb-bar i.pos { left: 50%; border-radius: 0 var(--r-pill) var(--r-pill) 0; }
+.qb-bar i.neg { right: 50%; border-radius: var(--r-pill) 0 0 var(--r-pill); }
+.qb-axis { font-size: var(--fs-xs); color: var(--tick); }
+.qb-ticks { display: flex; justify-content: space-between; }
+@container qb (max-width: 420px) {
+  .qb-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .qb-row > .qb-lab { grid-column: 1 / -1; padding-right: 0; }
+  .qb-axis > span:first-child, .qb-axis > span:last-child { display: none; }
+  .qb-axis { grid-template-columns: minmax(0, 1fr) 4.5em; }
+  .qb-axis > .qb-ticks { grid-column: 1; }
+}
+@media (forced-colors: active) { canvas { border: 1px solid CanvasText; } .viz-box { outline: 2px solid Highlight; } }

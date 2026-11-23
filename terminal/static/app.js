@@ -14,6 +14,7 @@ try {
 } catch (e) { /* storage unavailable: defaults */ }
 // 화면 너비 단계 (5차 묶음 P2-11): 폰 640px 이하 · 태블릿 641~1023 · 컴퓨터 1024~1599 · 넓은 화면 1600 이상.  JS는 이 한 곳에서 묻습니다.
 const isPhone = () => window.matchMedia("(max-width: 640px)").matches;
+const isNarrow = () => window.matchMedia("(max-width: 1023px)").matches;          // 태블릿 이하: 차트 높이를 한 단계 낮춥니다 (시각화 명세 1.10)
 // 바깥 주소 링크는 http(s)만 엽니다 (5차 묶음 P3-8).  다른 스킴이면 링크를 만들지 않습니다.
 const safeUrl = (u) => (/^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "");
 const STATUS_KO = { REAL: "실데이터", STALE: "지연·오래됨", UNAVAILABLE: "데이터 없음", FROZEN: "고정", EXPERIMENTAL: "실험" };
@@ -230,11 +231,12 @@ function vizTokens() {
 // Canvas text in the page's Korean fallback faces (a bare "-apple-system, sans-serif" falls to another face on Windows).
 const vizFont = (px = 11, weight = 400) => `${weight} ${px}px -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif`;
 // The one date axis: about 4 labels under 600 px of canvas, 7 above; 26.11 style, 2026-11 when there are more than 600 bars;
-// no label in the last third of a step (it would crowd the right edge).
+// no label in the last third of a step (it would crowd the right edge).  Stage 6: 70 dates or fewer (about three months: a short compare,
+// the paper book's first weeks) read as 11.24 (month.day), since a month label would repeat on every tick.
 function vizDates(ctx, dates, x, y, w, color) {
-  const n = dates.length, step = Math.max(1, Math.round(n / (w < 600 ? 4 : 7))), long = n > 600;
+  const n = dates.length, step = Math.max(1, Math.round(n / (w < 600 ? 4 : 7))), long = n > 600, short = n <= 70;
   ctx.save(); ctx.textBaseline = "top"; ctx.textAlign = "center"; ctx.fillStyle = color || vizTokens().tick; ctx.font = vizFont(11);
-  for (let i = step; i < n - step / 3; i += step) { const d = String(dates[i] || ""); if (d) ctx.fillText(long ? d.slice(0, 7) : d.slice(2, 7).replace("-", "."), x(i), y); }
+  for (let i = step; i < n - step / 3; i += step) { const d = String(dates[i] || ""); if (d) ctx.fillText(long ? d.slice(0, 7) : short ? d.slice(5, 10).replace("-", ".") : d.slice(2, 7).replace("-", "."), x(i), y); }
   ctx.restore();
 }
 // Direct end tags: items [{ y, color, label, dot: [x, y] }] are sorted by y and pushed apart by gap px inside top..bottom, then drawn
@@ -268,38 +270,90 @@ function vizTip(html, cx, cy, touch) {
   const ty = touch ? cy - tip.offsetHeight - 16 : cy + 14;
   tip.style.left = Math.max(4, tx) + "px"; tip.style.top = Math.min(Math.max(8, ty), window.innerHeight - tip.offsetHeight - 8) + "px";
 }
-function vizHover(cv, { count, xOf, indexAt, html, text, host = cv.parentElement } = {}) {
+// Stage 6 widens it to every chart family (visualization spec 1.6).  indexAt(px, py) gets both canvas coordinates.  box(i) -> {x, y, w, h,
+// round} draws a DOM outline (.viz-box: the hovered heatmap tile, the RRG head) instead of the day line; open(i) is the click and
+// Enter action (open the ticker, load the sector); yTag(i) -> {x, y, text} puts the value tag in the right gutter (.viz-ytag).  With
+// host === cv the target is its own position: relative wrapper (차트분석's four-pane stack: one line over every pane).
+function vizHover(cv, { count, xOf, indexAt, html, text, host = cv.parentElement, box, open, yTag } = {}) {
   if (!cv || !count) return;
-  let xl = host && host.querySelector(":scope > .viz-xline");
-  if (host && !xl) { xl = document.createElement("div"); xl.className = "viz-xline"; xl.hidden = true; host.appendChild(xl); }
+  const self = host === cv;
+  const part = (cls) => { if (!host) return null; let el = host.querySelector(`:scope > .${cls}`); if (!el) { el = document.createElement("div"); el.className = cls; el.hidden = true; host.appendChild(el); } return el; };
+  const xl = box ? null : part("viz-xline"), bx = box ? part("viz-box") : null, yt = yTag ? part("viz-ytag") : null;
   const at = indexAt || ((px) => { let best = 0; for (let i = 1; i < count; i++) if (Math.abs(xOf(i) - px) < Math.abs(xOf(best) - px)) best = i; return best; });
-  const hide = () => { if (xl) xl.hidden = true; $("#tip").hidden = true; };
+  const ox = () => (self ? 0 : cv.offsetLeft), oy = () => (self ? 0 : cv.offsetTop);
+  const hide = () => { [xl, bx, yt].forEach((el) => el && (el.hidden = true)); $("#tip").hidden = true; cv.style.cursor = ""; };
   const show = (i, cx, cy, touch) => {
     cv._vizI = i;
-    if (xl) { xl.hidden = false; xl.style.left = (cv.offsetLeft + xOf(i)) + "px"; xl.style.top = cv.offsetTop + "px"; xl.style.height = cv.offsetHeight + "px"; }
+    if (xl) { xl.hidden = false; xl.style.left = (ox() + xOf(i)) + "px"; xl.style.top = oy() + "px"; xl.style.height = cv.offsetHeight + "px"; }
+    if (bx) { const r = box(i); bx.hidden = false; bx.classList.toggle("round", !!r.round);
+      Object.assign(bx.style, { left: ox() + r.x + "px", top: oy() + r.y + "px", width: Math.max(4, r.w) + "px", height: Math.max(4, r.h) + "px" }); }
+    if (yt) { const t = yTag(i); yt.hidden = !(t && isNum(t.y)); if (!yt.hidden) { yt.textContent = t.text; yt.style.left = (ox() + t.x) + "px"; yt.style.top = (oy() + t.y) + "px"; } }
     vizTip(html(i), cx, cy, touch);
+    if (open) cv.style.cursor = "pointer";
   };
+  const local = (e) => { const r = cv.getBoundingClientRect(); return at(e.clientX - r.left, e.clientY - r.top); };
   const move = (e) => {
-    const r = cv.getBoundingClientRect(), i = at(e.clientX - r.left);
+    const i = local(e);
     if (!(i >= 0 && i < count)) return hide();
     show(i, e.clientX, e.clientY, e.pointerType === "touch");
   };
   cv.onpointermove = move; cv.onpointerdown = move; cv.onpointerleave = hide; cv.onpointercancel = hide;
   cv.onmousemove = null; cv.onmouseleave = null;
+  cv.onclick = open ? (e) => { const i = local(e); if (i >= 0 && i < count) { hide(); open(i); } } : null;
   cv.tabIndex = 0;
   cv.onblur = hide;
   cv.onkeydown = (e) => {
-    const k = e.key, cur = isNum(cv._vizI) ? cv._vizI : count - 1, jump = e.shiftKey ? 10 : 1;
-    let i = k === "ArrowLeft" ? cur - jump : k === "ArrowRight" ? cur + jump : k === "Home" ? 0 : k === "End" ? count - 1 : null;
+    const k = e.key, cur = isNum(cv._vizI) ? cv._vizI : box ? -1 : count - 1, jump = e.shiftKey ? 10 : 1;
     if (k === "Escape") { hide(); return; }
+    if (k === "Enter" && open && isNum(cv._vizI)) { e.preventDefault(); e.stopPropagation(); const i = cv._vizI; hide(); open(i); return; }
+    let i = k === "ArrowLeft" ? cur - jump : k === "ArrowRight" ? cur + jump : k === "Home" ? 0 : k === "End" ? count - 1 : null;
     if (i === null) return;
     e.preventDefault(); e.stopPropagation();
     i = Math.min(count - 1, Math.max(0, i));
-    const r = cv.getBoundingClientRect();
-    show(i, r.left + xOf(i), r.top + 20, false);
+    const r = cv.getBoundingClientRect(), b = box ? box(i) : null;
+    show(i, b ? r.left + b.x + b.w / 2 : r.left + xOf(i), b ? r.top + b.y + b.h / 2 : r.top + 20, false);
     const t = $("#tip");
     vizLive(text ? text(i) : (t.innerText || t.textContent).replace(/\s+/g, " ").trim());
   };
+}
+// Signed percent for chart readouts and end tags: a sign always, "없음" for a missing value (never 0), no price colour.
+const vizPct = (v, d = 2) => (isNum(v) ? `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v).toFixed(d)}%` : "없음");
+// The table twin of a chart (visualization spec 1.11): its numbers without hover, from the same payload, folded under the chart.
+function vizTable(cols, rows, note = "") {
+  return `<details class="viz-table"><summary>표로 보기</summary>${ui.table({ cols, rows })}${note ? `<div class="meta">${note}</div>` : ""}</details>`;
+}
+// Index positions of each month's last date (month-end rows for a table twin).
+const vizMonthEnds = (dates) => dates.map((d, i) => i).filter((i) => i === dates.length - 1 || String(dates[i + 1]).slice(0, 7) !== String(dates[i]).slice(0, 7));
+// Lines indexed to 0 % (account vs benchmark, the paper book; visualization spec V-16 and 6.1).  series[0] is the story (ink, 2 px),
+// the rest context.  Value axis by niceTicks on the right, zero line in --axis, vizDates, an end tag with each line's last value, and
+// a crosshair listing every line (diff: the first minus the second, signed, plain ink).  A non-number is a gap.  Returns false when
+// there is nothing to draw (fewer than two dates or no number), so the caller can show its empty sentence.
+function vizPctChart(cv, { dates, series, h, diff, label } = {}) {
+  const n = (dates || []).length, nums = series.flatMap((s) => s.vals).filter(isNum);
+  if (n < 2 || !nums.length) return false;
+  if (label) cv.setAttribute("aria-label", label);
+  const { ctx, w } = setupCanvas(cv, h), T = vizTokens();
+  let lo = Math.min(0, ...nums), hi = Math.max(0, ...nums); const pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
+  const lastI = (s) => { for (let i = n - 1; i >= 0; i--) if (isNum(s.vals[i])) return i; return -1; };
+  const tag = (s) => `${s.label} ${vizPct(s.vals[lastI(s)], 1)}`;
+  ctx.font = vizFont(10, 600);
+  const padR = Math.max(48, Math.min(Math.round(w * 0.4), 18 + Math.max(...series.map((s) => ctx.measureText(tag(s)).width)))), pw = w - padR, ph = h - 26;
+  const x = (i) => (i / (n - 1)) * pw, y = (v) => 6 + (1 - (v - lo) / (hi - lo)) * ph;
+  const nt = niceTicks(lo, hi, 4);
+  ctx.font = vizFont(11); ctx.textBaseline = "middle"; ctx.textAlign = "right"; ctx.lineWidth = 1;
+  nt.ticks.forEach((v) => { ctx.strokeStyle = T.grid; ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(pw, y(v)); ctx.stroke(); ctx.fillStyle = T.tick; ctx.fillText(`${tickLabel(v, nt.digits)}%`, w - 4, y(v)); });
+  ctx.textAlign = "left";
+  ctx.strokeStyle = T.axis; ctx.beginPath(); ctx.moveTo(0, y(0)); ctx.lineTo(pw, y(0)); ctx.stroke();
+  vizDates(ctx, dates, x, h - 14, w, T.tick);
+  ctx.lineJoin = ctx.lineCap = "round";
+  series.slice().reverse().forEach((s) => line(ctx, s.vals, x, y, s.color, s.lw || 1.5));
+  vizEndTags(ctx, series.map((s) => { const i = lastI(s); return i < 0 ? null : { y: y(s.vals[i]), color: s.color, label: tag(s), dot: [x(i), y(s.vals[i])] }; }).filter(Boolean),
+    pw + 4, 8, ph, { box: true, T });
+  vizHover(cv, { count: n, xOf: x, indexAt: (px) => (px > pw ? -1 : Math.min(n - 1, Math.max(0, Math.round((px / pw) * (n - 1))))), html: (i) => {
+    const a = series[0] && series[0].vals[i], b = series[1] && series[1].vals[i];
+    return `<b>${esc(dates[i])}</b><br>${series.map((s) => `<i class="key-line" style="background:${s.color}"></i>${esc(s.label)} ${vizPct(s.vals[i])}`).join("<br>")}`
+      + (diff && isNum(a) && isNum(b) ? `<br>차이 ${a - b > 0 ? "+" : a - b < 0 ? "−" : ""}${Math.abs(a - b).toFixed(2)}%p` : ""); } });
+  return true;
 }
 function spark(cv, vals) {
   const all = vals || [], v = all.filter(isNum);
@@ -954,7 +1008,7 @@ function drawPrice() {
   nt.ticks.forEach((v) => {
     const yy = y(v);
     ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(pw, yy); ctx.stroke();
-    ctx.fillStyle = muted; ctx.fillText(tickLabel(v, nt.digits), pw + 6, yy);
+    ctx.fillStyle = muted; ctx.textAlign = "right"; ctx.fillText(tickLabel(v, nt.digits), w - 4, yy); ctx.textAlign = "left";      // right-aligned: the digits line up
   });
   const b0 = bars[0], b1 = bars[n - 1], px = (v) => (isNum(v) ? v.toLocaleString("ko-KR", { maximumFractionDigits: 2 }) : "없음");
   cv.setAttribute("aria-label", `${tickerText(state.ticker || "", "")} 가격 차트: ${b0.date}부터 ${b1.date}까지, 종가 ${px(b0.close)}에서 ${px(b1.close)}`);
@@ -977,7 +1031,8 @@ function drawPrice() {
   vizEndTags(ctx, MAS.map(([k, p]) => { let i = n - 1; while (i >= 0 && !isNum(bars[i][k])) i--; return i < 0 ? null : { y: y(bars[i][k]), color: T.ma[p], label: String(p), dot: [x(i), y(bars[i][k])] }; }).filter(Boolean),
     pw + 4, padT + 6, padT + priceH - 6, { box: true, T });
   // crosshair: pointer, finger and keyboard (vizHover)
-  vizHover(cv, { count: n, xOf: x, indexAt: (px) => (px > pw ? -1 : Math.min(n - 1, Math.max(0, Math.floor(px / bw)))), html: (i) => { const b = bars[i];
+  vizHover(cv, { count: n, xOf: x, indexAt: (px) => (px > pw ? -1 : Math.min(n - 1, Math.max(0, Math.floor(px / bw)))),
+    yTag: (i) => (isNum(bars[i].close) ? { x: pw + 2, y: y(bars[i].close), text: tickLabel(bars[i].close, Math.max(nt.digits, isKR() ? 0 : 2)) } : null), html: (i) => { const b = bars[i];
     return `<b>${esc(b.date)}</b><br>시 ${goodOpen(b) || !isNum(b.open) ? fmt(b.open) : "없음(원자료 이상)"} 고 ${fmt(b.high)} 저 ${fmt(b.low)} 종 ${fmt(b.close)}<br>거래량 ${big(b.volume, "")}<br>
       <i class="key-line" style="background:var(--sma20)"></i>20일 ${fmt(b.sma20)} · <i class="key-line" style="background:var(--sma50)"></i>50일 ${fmt(b.sma50)} · <i class="key-line" style="background:var(--sma200)"></i>200일 ${fmt(b.sma200)}`; } });
 }
@@ -988,18 +1043,23 @@ function line(ctx, vals, x, y, color, lw) {
 }
 
 // ------------------------------------------------------------------ 거시
+// 작업 화면 개편 6단계 (배치 명세 3.4): 맨 위 줄에 제목과 이유 알림, 가운데 칸에 지표 카드와 각주, 오른쪽 칸에 경제 일정(#econcal).
+// 한 칸이면 제목 → 지표 → 일정 순서입니다(일정이 지표 위에 있던 것을 아래로 옮김, 거시 화면 약점 1).
 async function renderMacro() {
   const el = $("#tab-macro"), mk = state.market; el.innerHTML = loading;
   try {
     const d = await api(mq("/api/macro")); if (mk !== state.market) return; state.loaded.macro = true;
-    el.innerHTML = `${d.reason ? `<div class="notice">${esc(d.reason)}</div>` : ""}<div class="panel" id="econcal"></div><div class="panel"><h2>${mk === "KR" ? "한국" : "미국"} 거시 지표</h2><div class="mgrid">${d.items.map((m) => `<div class="mcard">
+    el.innerHTML = ui.ws({ name: "macro", label: "경제 일정",
+      ctx: `<h2>${mk === "KR" ? "한국" : "미국"} 거시 지표</h2>${d.reason ? `<div class="notice">${esc(d.reason)}</div>` : ""}`,
+      main: `<div class="panel"><div class="mgrid">${d.items.map((m) => `<div class="mcard">
       <div class="nm meta m0">${esc(m.label)} <span>${esc(m.id)}</span> ${m.status !== "REAL" ? badge(m.status) : ""}</div>
       <div class="row" style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><span class="px num" style="font-size:20px;font-weight:650">${fmtMacro(m, m.value)}</span>
         <span class="meta m0">${esc(m.date || "")}</span></div>
       <div class="meta m0">직전 ${fmtMacro(m, m.previous)} · 1년 전 ${fmtMacro(m, m.value_1y_ago)}</div>
       <canvas data-m="${esc(m.id)}"></canvas></div>`).join("")}</div>
-      <div class="meta">${mk === "KR" ? "소비자물가" : "CPI"}는 전년 동월 대비 상승률(%)로 계산해 표시합니다. 차트는 최근 약 260개 관측치입니다.</div>${meta(d.source)}</div>`;
-    const draw = () => d.items.forEach((m) => { const cv = el.querySelector(`canvas[data-m="${m.id}"]`); if (cv && cv.isConnected) mini(cv, m.series); });
+      <div class="meta">${mk === "KR" ? "소비자물가" : "CPI"}는 전년 동월 대비 상승률(%)로 계산해 표시합니다. 차트는 최근 약 260개 관측치입니다.</div>${meta(d.source)}</div>`,
+      right: '<div class="panel" id="econcal"></div>' });
+    const draw = () => d.items.forEach((m) => { const cv = el.querySelector(`canvas[data-m="${m.id}"]`); if (cv && cv.isConnected) mini(cv, m.series, m); });
     draw(); redrawOn("macro", "minis", draw);
     if (typeof loadCalendar === "function") loadCalendar($("#econcal"));
   } catch (e) { el.innerHTML = errBox(e); }
@@ -1012,11 +1072,13 @@ function fmtMacro(m, v) {
 }
 // 거시 작은 차트.  값이 없는 관측치는 빼지 않고 끊어 그리며(시간이 줄지 않게), 값이 둘보다 적으면 그리지 않고 '관측치 부족'이라고 씁니다.
 // 선은 잉크색입니다: 파랑은 한국 화면에서 내림 색이고 강조색이라 자료 선으로 쓰지 않습니다(시각화 명세 8절 13).
-function mini(cv, series) {
+function mini(cv, series, m) {
   const all = series || [], pts = all.filter((p) => isNum(p[1]));
   const few = cv.nextElementSibling && cv.nextElementSibling.classList.contains("mini-few") ? cv.nextElementSibling : null;
   if (pts.length < 2) { cv.hidden = true; if (!few) cv.insertAdjacentHTML("afterend", '<div class="meta mini-few">관측치 부족</div>'); return; }
   cv.hidden = false; if (few) few.remove();
+  // 이름은 자료 요약(시각화 명세 1.11): 무엇의, 언제부터 언제까지, 처음과 마지막 값
+  if (m) cv.setAttribute("aria-label", `${m.label} 차트: ${pts[0][0]}부터 ${pts[pts.length - 1][0]}까지, ${fmtMacro(m, pts[0][1]).replace(/<[^>]+>/g, "")}에서 ${fmtMacro(m, pts[pts.length - 1][1]).replace(/<[^>]+>/g, "")}`);
   const { ctx, w, h } = setupCanvas(cv, 90), T = vizTokens();
   const v = pts.map((p) => p[1]), lo = Math.min(...v), hi = Math.max(...v), rg = hi - lo || 1;
   const x = (i) => (i / (all.length - 1)) * (w - 2) + 1, y = (val) => 4 + (1 - (val - lo) / rg) * (h - 18);
@@ -1024,6 +1086,9 @@ function mini(cv, series) {
   line(ctx, all.map((p) => p[1]), x, y, T.ink, 1.5);
   ctx.fillStyle = T.tick; ctx.font = vizFont(10); ctx.textBaseline = "bottom";
   ctx.fillText(String(all[0][0]).slice(0, 7), 1, h); ctx.textAlign = "right"; ctx.fillText(String(all[all.length - 1][0]).slice(0, 7), w - 1, h); ctx.textAlign = "left";
+  // 관측치마다 값 (포인터·손가락·키보드).  값이 없는 관측치는 '없음'
+  if (m) vizHover(cv, { count: all.length, xOf: x, indexAt: (px) => Math.min(all.length - 1, Math.max(0, Math.round(((px - 1) / (w - 2)) * (all.length - 1)))),
+    html: (i) => `<b>${esc(all[i][0])}</b><br>${esc(m.label)} ${isNum(all[i][1]) ? fmtMacro(m, all[i][1]) : "없음"}` });
 }
 
 // ------------------------------------------------------------------ 관심종목

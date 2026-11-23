@@ -474,6 +474,8 @@ function qsfDrawDetail(d, r) {
 }
 
 // 기록된 점수 이력: 원장에 남은 값을 그대로 보여 줍니다. 다시 계산하지 않습니다.
+// 작업 화면 개편 6단계 (시각화 명세 6.3, 사용자 결정 U-8): 표 위에 전략마다 작은 선 그림.  세로축은 0~100 고정에 구간 경계선, 점은 잉크색.
+// 모델 버전이 바뀐 기록(model_changed)마다 선을 끊고 세로선을 긋습니다: 양쪽은 다른 공식이라 이으면 공식 변경이 점수 변화처럼 보입니다.
 async function qsfHistory(box, t, market) {
   const h = await api(`/api/qsf/history?t=${encodeURIComponent(t)}&market=${market}`).catch(() => null);
   if (!box.isConnected || !qsfState.detail || qsfState.detail.ticker !== t) return;
@@ -481,12 +483,50 @@ async function qsfHistory(box, t, market) {
   const table = (strategy, rows) => {
     const changed = rows.some((r) => r.model_changed);
     const body = rows.slice().reverse().map((r) => `<tr><td class="l">${esc(r.session)}</td><td class="num">${qsfNum(r.score)}</td><td class="l"><span class="qsf-act ${qsfClass(r.action, r.score)}"><i></i>${esc(r.action_label || r.action || "")}</span></td><td class="l">${esc(QSF_CONF[r.confidence] || "")}</td><td class="num">${qsfPrice(r.price, market)}</td><td class="l">${esc(r.model_version || "")}${r.model_changed ? " *" : ""}</td></tr>`).join("");
-    return `<h3 class="qc-title">${QSF_STRAT[strategy] || esc(strategy)} <span class="meta m0">${rows.length}개 거래일</span></h3>
+    const plot = rows.filter((r) => isNum(r.score)).length >= 2
+      ? `<div class="chart qh-chart"><canvas data-qh="${esc(strategy)}"></canvas></div><div class="meta m0 qh-key">점 = 기록된 점수 · 가로선 = 구간 경계 · 세로선 = 공식 변경(선을 끊음) · 표가 같은 값입니다</div>` : "";
+    return `<h3 class="qc-title">${QSF_STRAT[strategy] || esc(strategy)} <span class="meta m0">${rows.length}개 거래일</span></h3>${plot}
       ${changed ? `<div class="meta">* 앞 기록과 모델 버전이 다릅니다. 이 점수 차이에는 수식과 입력 수정이 섞여 있습니다.</div>` : ""}
       <div class="tbl-wrap"><table class="qs-table"><thead><tr><th class="l">거래일</th><th>점수</th><th class="l">판단</th><th class="l">신뢰도</th><th>기록 가격</th><th class="l">모델</th></tr></thead><tbody>${body}</tbody></table></div>`;
   };
   box.innerHTML = `<details class="qsf-today-fold"><summary>기록된 점수 이력</summary><div class="meta">스캔 때 원장에 남긴 값입니다. 최신이 위입니다. 점수가 오르내린 기록이 앞으로의 수익을 말해 주지는 않습니다.</div>
     ${["SWING", "LONG_TERM"].filter((k) => h.strategies[k]).map((k) => table(k, h.strategies[k])).join("")}</details>`;
+  const draw = () => box.querySelectorAll("canvas[data-qh]").forEach((cv) => { if (cv.isConnected && cv.parentElement.clientWidth) qsfHistDraw(cv, h.strategies[cv.dataset.qh], cv.dataset.qh, market); });
+  const fold = box.querySelector("details");
+  fold.addEventListener("toggle", () => { if (fold.open) draw(); });
+  draw(); redrawOn("qsf", "history", draw);
+}
+function qsfHistDraw(cv, rows, strategy, market) {
+  const n = rows.length, { ctx, w, h } = setupCanvas(cv, isPhone() ? 100 : isNarrow() ? 110 : 120), T = vizTokens();
+  const padR = 30, padT = 14, padB = 16, pw = w - padR - 8, ph = h - padT - padB;
+  const x = (i) => 8 + (n > 1 ? (i / (n - 1)) * pw : pw / 2), y = (v) => padT + (1 - v / 100) * ph;
+  ctx.font = vizFont(10); ctx.textBaseline = "middle"; ctx.lineWidth = 1;
+  // the band edges from the server (no edge lines before /api/qsf/bands has arrived); 0 and 100 frame the plot
+  const edges = qsfBands ? qsfBands.map((b) => b.start).filter((v) => v > 0 && v < 100) : [];
+  [0, 100, ...edges].forEach((v) => { ctx.strokeStyle = T.grid; ctx.beginPath(); ctx.moveTo(8, y(v)); ctx.lineTo(8 + pw, y(v)); ctx.stroke(); });
+  ctx.fillStyle = T.tick; ctx.textAlign = "right";
+  let lastY = -Infinity;          // close edges (a 7-point band is 8 px here): a label that would touch the one above is left out
+  edges.slice().sort((a, b) => b - a).forEach((v) => { if (y(v) - lastY < 11) return; lastY = y(v); ctx.fillText(String(v), w - 4, y(v)); });
+  // a model change: a vertical rule between the two records and, where there is room, the tag
+  ctx.textAlign = "center"; ctx.textBaseline = "top"; let lastTag = -Infinity;
+  rows.forEach((r, i) => {
+    if (!i || !r.model_changed) return;
+    const xm = (x(i - 1) + x(i)) / 2;
+    ctx.strokeStyle = T.axis; ctx.beginPath(); ctx.moveTo(xm, padT); ctx.lineTo(xm, padT + ph); ctx.stroke();
+    const tw = ctx.measureText("공식 변경").width;
+    if (xm - tw / 2 > lastTag + 4 && xm + tw / 2 < w) { ctx.fillStyle = T.tick; ctx.fillText("공식 변경", xm, 0); lastTag = xm + tw / 2; }
+  });
+  // the line, lifted at every model change and every missing score; ink points with a surface ring
+  ctx.strokeStyle = T.ink; ctx.lineWidth = 1.5; ctx.lineJoin = ctx.lineCap = "round"; ctx.beginPath(); let pen = false;
+  rows.forEach((r, i) => { if (!isNum(r.score) || r.model_changed) pen = false; if (!isNum(r.score)) return; pen ? ctx.lineTo(x(i), y(r.score)) : ctx.moveTo(x(i), y(r.score)); pen = true; });
+  ctx.stroke();
+  rows.forEach((r, i) => { if (!isNum(r.score)) return; ctx.fillStyle = T.ink; ctx.strokeStyle = T.surface; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x(i), y(r.score), 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+  ctx.fillStyle = T.tick; ctx.textBaseline = "bottom"; ctx.textAlign = "left"; ctx.fillText(String(rows[0].session).slice(5), 8, h);
+  ctx.textAlign = "right"; ctx.fillText(String(rows[n - 1].session).slice(5), 8 + pw, h); ctx.textAlign = "left";
+  const scored = rows.filter((r) => isNum(r.score)), changes = rows.filter((r, i) => i && r.model_changed).length;
+  cv.setAttribute("aria-label", `${QSF_STRAT[strategy] || strategy} 점수 이력: ${n}개 거래일(${rows[0].session}~${rows[n - 1].session}), 첫 점수 ${scored[0].score.toFixed(1)}, 마지막 ${scored[scored.length - 1].score.toFixed(1)}, 공식 변경 ${changes}번. 값은 아래 표에 있습니다.`);
+  vizHover(cv, { count: n, xOf: x, indexAt: (px) => Math.min(n - 1, Math.max(0, Math.round(((px - 8) / pw) * (n - 1)))), html: (i) => { const r = rows[i];
+    return `<b>${esc(r.session)}</b><br>점수 ${isNum(r.score) ? r.score.toFixed(1) : "없음"} · ${esc(r.action_label || r.action || "")}<br>신뢰도 ${esc(QSF_CONF[r.confidence] || "없음")} · 기록 가격 ${qsfPrice(r.price, market)}<br>모델 ${esc(r.model_version || "")}${r.model_changed ? " · 앞 기록과 공식이 다름" : ""}`; } });
 }
 
 // The holding plan follows the remembered fold like the other sections; the card of a stock the user holds opens it.
@@ -514,12 +554,21 @@ function qsfFundPeriodNote(c) {
 }
 
 // 근거 균형: 중간(50점)에서 각 요인이 더하거나 뺀 점수. 모든 요인의 값을 더하면 총점 − 50 (terminal/qsf/rank_notes.py).
+// 작업 화면 개편 6단계 (시각화 명세 5.1): 가운데 0선(50점 중간)에서 좌우로 자라는 막대.  색은 하나(중립)이고 쪽과 부호가 방향을
+// 말합니다: 가점·감점은 가격이 아니므로 가격 색을 쓰지 않습니다.  눈금은 카드 하나에 공통(가장 큰 |점수|를 둥근 값으로 올림).
+// 자료가 없어 빠진 요인은 막대 없이 글로만 적습니다(0 길이 막대를 그리지 않음).  막대는 화면 읽기에서 숨기고 숫자가 글로 있습니다.
 function qsfBalance(b) {
   if (!b || !isNum(b.points_sum)) return "";
-  const li = (x) => `<li><b>${esc(x.label)}</b> <span class="num pts">${x.points >= 0 ? "+" : "−"}${Math.abs(x.points).toFixed(1)}점</span>${x.text ? `<div class="meta m0">${bigInText(esc(x.text))}</div>` : ""}</li>`;
-  const side = (title, rows, none) => `<div><h4>${title}</h4>${rows.length ? `<ul>${rows.map(li).join("")}</ul>` : `<div class="meta m0">${none}</div>`}</div>`;
-  return `<div class="qsf-balance">${side("점수를 올린 요인", b.plus, "강점으로 칠 요인(0.6 이상)이 없습니다.")}${side("점수를 깎은 요인", b.minus, "약점으로 칠 요인(0.4 이하)이 없습니다.")}
-    <div class="meta qb-note">중간(50점)에서 각 요인이 더하거나 뺀 점수입니다. 모든 요인을 더하면 50 ${b.points_sum >= 0 ? "+" : "−"} ${Math.abs(b.points_sum).toFixed(1)} = ${(50 + b.points_sum).toFixed(1)}점.${b.missing.length ? ` 자료가 없어 점수에서 빠진 요인: ${b.missing.map(esc).join(", ")}.` : ""}</div></div>`;
+  const all = [...b.plus, ...b.minus].map((x) => Math.abs(x.points)).filter(isNum), top = all.length ? Math.max(...all) : 0;
+  const nt = niceTicks(0, top || 1, 2), step = nt.ticks.length > 1 ? nt.ticks[1] - nt.ticks[0] : top || 1, M = Math.max(step, Math.ceil((top || 1) / step - 1e-9) * step);
+  const bar = (p) => `<span class="qb-bar" aria-hidden="true">${isNum(p) && p ? `<i class="${p > 0 ? "pos" : "neg"}" style="width:${Math.min(50, (Math.abs(p) / M) * 50).toFixed(1)}%"></i>` : ""}</span>`;
+  const li = (x) => `<li class="qb-row"><div class="qb-lab"><b>${esc(x.label)}</b>${x.text ? `<div class="meta m0">${bigInText(esc(x.text))}</div>` : ""}</div>${bar(x.points)}<span class="num pts">${x.points >= 0 ? "+" : "−"}${Math.abs(x.points).toFixed(1)}점</span></li>`;
+  const sort = (rows) => rows.slice().sort((p, q) => Math.abs(q.points) - Math.abs(p.points));
+  const side = (title, rows, none) => `<div><h4>${title}</h4>${rows.length ? `<ul class="qb-list">${sort(rows).map(li).join("")}</ul>` : `<div class="meta m0">${none}</div>`}</div>`;
+  const ml = tickLabel(M, nt.digits);
+  return `<div class="qsf-balance qb-div"><div class="qb-row qb-axis" aria-hidden="true"><span></span><span class="qb-ticks"><span>−${ml}</span><span>0</span><span>+${ml}</span></span><span></span></div>
+    ${side("점수를 올린 요인", b.plus, "강점으로 칠 요인(0.6 이상)이 없습니다.")}${side("점수를 깎은 요인", b.minus, "약점으로 칠 요인(0.4 이하)이 없습니다.")}
+    <div class="meta qb-note">중간(50점)에서 각 요인이 더하거나 뺀 점수입니다. 막대는 가운데 선(50점)에서 오른쪽이 가점, 왼쪽이 감점입니다. 모든 요인을 더하면 50 ${b.points_sum >= 0 ? "+" : "−"} ${Math.abs(b.points_sum).toFixed(1)} = ${(50 + b.points_sum).toFixed(1)}점.${b.missing.length ? ` 자료가 없어 점수에서 빠진 요인: ${b.missing.map(esc).join(", ")}.` : ""}</div></div>`;
 }
 function qsfCard(c) {
   const h = c.holding, m = c.market, e = c.entry, names = (c.balance && c.balance.labels) || {};
@@ -1171,6 +1220,31 @@ function qsfRankBookHtml(rb) {
       <span class="qsf-turnover-said">지금: ${rb.active ? "규칙을 쓰는 중" : "쓰지 않음"}. 누르면 다음 기록부터 가상 장부, 주문 계획, 보유 종목 판단에 반영됩니다.</span></div>`;
   return `<h3>순위 규칙 비교 <span class="meta">(RK-1${rb.active ? " · 규칙 적용 중" : ""})</span></h3>${body}${sw}${qsfBookWarn(rb, "QSF_RANK_RULES")}${force}${what}`;
 }
+// 가상 장부의 곡선 (작업 화면 개편 6단계, 시각화 명세 6.1, 사용자 결정 U-8): 서버가 이미 보내는 curve(거래일, 평가액, 기준 지수 종가)를
+// 첫 거래일 = 0%로 맞춰 그립니다(표시용 변환, 새 지표 아님; 칸의 수익률은 서버 값 그대로).  기준 지수 종가가 없는 날은 끊기고, 종가가
+// 2거래일에 못 미치면 기준선은 그리지 않고 그렇다고 적습니다.
+function qsfPaperCurve(d) {
+  const c = Array.isArray(d.curve) ? d.curve : [], dates = c.map((p) => p.session);
+  const e0 = (c.find((p) => isNum(p.equity) && p.equity > 0) || {}).equity, b0 = (c.find((p) => isNum(p.benchmark_close) && p.benchmark_close > 0) || {}).benchmark_close;
+  const book = c.map((p) => (isNum(p.equity) && e0 ? (p.equity / e0 - 1) * 100 : null)), bench = c.map((p) => (isNum(p.benchmark_close) && b0 ? (p.benchmark_close / b0 - 1) * 100 : null));
+  return { dates, book, bench, benchOk: bench.filter(isNum).length >= 2 };
+}
+function qsfPaperCurveHtml(d) {
+  const k = qsfPaperCurve(d);
+  if (k.dates.length < 2) return '<div class="meta">곡선은 기록이 2거래일 이상 쌓이면 그립니다.</div>';
+  const rows = k.dates.map((s, i) => i).slice(-20).reverse().map((i) => `<tr><td class="l">${esc(k.dates[i])}</td><td class="num">${pct(k.book[i])}</td><td class="num">${k.benchOk ? pct(k.bench[i]) : DASH}</td></tr>`);
+  return `<h3>평가액 곡선 <span class="meta m0">첫 기록일 = 0% · 가상</span></h3><div class="chart"><canvas id="qsf-pb-cv"></canvas></div>
+    <div class="meta">${k.benchOk ? `기준선은 ${esc(d.benchmark)} 종가를 첫 기록일에 맞춘 것입니다. 종가가 없는 날은 선이 끊깁니다.` : `${esc(d.benchmark)} 종가 기록이 2거래일에 못 미쳐 기준선은 그리지 않았습니다.`} 위 칸의 수익률은 서버가 계산한 값입니다.</div>
+    ${vizTable([{ label: "거래일", cls: "l" }, { label: "가상 장부" }, { label: `기준 ${d.benchmark}` }], rows, "최근 20거래일, 최신이 위입니다. 첫 기록일 대비 누적 변화입니다.")}`;
+}
+function qsfPaperDraw(d) {
+  const cv = $("#qsf-pb-cv");
+  if (!cv || !cv.isConnected || !cv.parentElement.clientWidth) return;
+  const k = qsfPaperCurve(d), T = vizTokens(), last = (a) => [...a].reverse().find(isNum);
+  vizPctChart(cv, { dates: k.dates, h: isPhone() ? 200 : isNarrow() ? 220 : 240, diff: k.benchOk,
+    label: `가상 장부 평가액 곡선: ${k.dates[0]}~${k.dates[k.dates.length - 1]}, 장부 ${vizPct(last(k.book))}${k.benchOk ? `, 기준 ${d.benchmark} ${vizPct(last(k.bench))}` : ""}`,
+    series: [{ label: "가상 장부", vals: k.book, color: T.ink, lw: 2 }, ...(k.benchOk ? [{ label: `기준 ${d.benchmark}`, vals: k.bench, color: T.bench, lw: 1.5 }] : [])] });
+}
 function qsfPaperHtml(d, tb, rb) {
   const title = `<h2>가상 체결 장부 <span class="badge">판정 전 참고</span> <span class="badge risk-note">가상의 금액 · 주문을 보내지 않습니다</span></h2>`;
   const rules = `<div class="meta"><b>규칙</b>: 시작 금액 ${money(d.start_cash, 0)}. 매일 위와 같은 방식의 주문 계획을 만들고, 다음 거래일 시가에 체결된 것으로 봅니다(시가가 지정가 상한보다 높거나 손절가 이하면 체결하지 않음).
@@ -1196,6 +1270,7 @@ function qsfPaperHtml(d, tb, rb) {
   const un = Object.entries(d.unfilled_counts || {}).map(([k, n]) => `${esc(d.unfilled_labels[k] || k)} ${n}건`).join(", ");
   return `<div class="panel">${title}
     <div class="meta">기록 ${d.sessions}거래일(${esc(d.started)} ~ ${esc(d.last)}) · 기록 연결 ${d.integrity === "OK" ? "정상" : "깨짐"} · 체결 ${d.fills}건${un ? ` · 미체결: ${un}` : ""}</div>${tiles}
+    ${qsfPaperCurveHtml(d)}
     <h3>보유 ${d.positions.length}종목</h3>
     ${prow ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>스타일</th><th>수량</th><th title="슬리피지를 넣은 체결가">매수가</th><th>최근 종가</th><th title="수수료를 넣은 매수 금액 대비">평가 손익</th><th>비중</th><th>손절</th><th>목표</th><th>보유 거래일</th><th class="l">매수일</th></tr></thead><tbody>${prow}</tbody></table></div>` : `<div class="meta">보유 종목이 없습니다.</div>`}
     <h3>다음 거래일 시가의 주문 계획 <span class="meta">(${esc(d.last)} 종가 기준)</span></h3>${qsfPlanState(plan.market_state)}${planHtml}${qsfSkipLine(plan.skipped_counts, d.skip_labels)}
@@ -1211,6 +1286,7 @@ async function qsfPaper() {
     api(`/api/qsf/rank-book?market=${mk}`).catch(() => null)]);
   if (mk !== state.market) return;
   box.innerHTML = d ? qsfPaperHtml(d, tb, rb) : "";
+  if (d && d.status === "REAL") { const draw = () => qsfPaperDraw(d); draw(); redrawOn("qsf", "paper", draw); }
   box.querySelectorAll(".qsf-rule-switch").forEach((b) => { b.onclick = async () => {
     const said = b.parentElement.querySelector(".qsf-turnover-said");
     b.disabled = true;

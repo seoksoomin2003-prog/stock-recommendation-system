@@ -131,8 +131,14 @@ function drawLab() {
   const y = (v) => 6 + (1 - (Math.log(v) - lo) / (hi - lo)) * (h - 26);
   const T = vizTokens();
   ctx.font = vizFont(11); ctx.fillStyle = T.tick; ctx.textBaseline = "middle";
-  for (let k = 0; k <= 4; k++) { const lv = lo + ((hi - lo) * k) / 4, v = Math.exp(lv), yy = y(v); ctx.strokeStyle = T.grid; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(w - padR, yy); ctx.stroke(); ctx.fillText(((v - 1) * 100).toFixed(0) + "%", w - padR + 6, yy); }
-  ctx.textBaseline = "bottom"; ctx.fillText(d.benchmark.dates[0], 0, h); ctx.textAlign = "right"; ctx.fillText(d.benchmark.dates[n - 1], w - padR, h); ctx.textAlign = "left";
+  // round percent steps placed on the log scale (visualization spec 1.4): niceTicks on the return range, each at y(1 + v/100);
+  // a step that would sit closer than 14 px to the one before is skipped, so the compressed top of a log axis does not pile up
+  const nt = niceTicks((Math.exp(lo) - 1) * 100, (Math.exp(hi) - 1) * 100, 5);
+  ctx.textAlign = "right"; let prevY = Infinity;
+  nt.ticks.forEach((v) => { const yy = y(1 + v / 100); if (!(1 + v / 100 > 0) || prevY - yy < 14) return; prevY = yy;
+    ctx.strokeStyle = v === 0 ? T.axis : T.grid; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(w - padR, yy); ctx.stroke(); ctx.fillText(`${v > 0 ? "+" : ""}${tickLabel(v, nt.digits)}%`, w - 4, yy); });
+  ctx.textAlign = "left";
+  vizDates(ctx, d.benchmark.dates, (i) => (i / (n - 1)) * (w - padR), h - 14, w, T.tick);
   series.forEach(({ c, s }) => { const m = s.nav.length; line(ctx, s.nav, (i) => (i / (m - 1)) * (w - padR), y, cssVar(LAB_COLORS[c]), c === "SPY" ? 1.3 : 1.8); });
 }
 

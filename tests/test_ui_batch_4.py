@@ -73,7 +73,8 @@ const f = (a, b) => { const q = niceTicks(a, b); return q.ticks.map((v) => tickL
 console.log(JSON.stringify([f(54000, 386000), f(171.3, 236.8), f(0.812, 1.034), f(99.5, 101.2), f(5, 5)]));""")
     assert got[0] == "100,000 150,000 200,000 250,000 300,000 350,000" and got[1] == "180 190 200 210 220 230"
     assert got[2] == "0.85 0.90 0.95 1.00" and got[3].startswith("99.50 99.75 100.00") and got[4] == ""
-    assert "tickLabel(v, nt.digits), pw + 6" in APP and "chaGrid(P.ctx, pw, lo, hi, py, grid, muted, (v) => tickLabel(v, nt.digits), 4, nt.ticks);" in JS["chart.js"]
+    # workstation stage 6: the price ticks are right-aligned at the canvas edge (the digits line up); chaGrid does the same inside
+    assert "tickLabel(v, nt.digits), w - 4, yy)" in APP and 'ctx.textAlign = "right"' in body(JS["chart.js"], "function chaGrid(") and "chaGrid(P.ctx, pw, lo, hi, py, grid, muted, (v) => tickLabel(v, nt.digits), 4, nt.ticks);" in JS["chart.js"]
 
 
 def test_charts_have_names_and_sparklines_a_start_line():

@@ -6,15 +6,19 @@ const RRG_Q = { LEADING: ["선도", "--s3"], WEAKENING: ["약화", "--s2"], LAGG
 const rrg = { data: null, heads: [] };
 
 async function renderRotation(box) {
-  box.innerHTML = `<div class="panel"><h2>업종 순환 그래프</h2><canvas id="rrg-cv" class="chart" aria-label="업종 순환 그래프"></canvas>
+  box.innerHTML = `<div class="panel"><h2>업종 순환 그래프 <span id="rrg-badge"></span></h2><div class="chart rrg-wrap"><canvas id="rrg-cv" aria-label="업종 순환 그래프"></canvas></div>
     <div class="legend" id="rrg-legend"></div><div id="rrg-meta">${loading}</div></div>
     <div class="panel"><h2>업종 상대 성과 <span class="meta m0">업종을 누르면 점수 상위 종목이 나옵니다</span></h2><div id="rrg-table"></div></div>
     <div class="panel" id="rrg-picks" hidden></div>`;
+  // 작업 화면 개편 6단계 (배치 명세 3.3): 그래프 패널은 시장 지도의 오른쪽 칸(#map-rrg)으로 갑니다.  그 칸이 없는 화면이면 그대로 둡니다.
+  const side = $("#map-rrg");
+  if (side && box.firstElementChild) side.append(box.firstElementChild);
   const want = state.market;
   try {
     const d = await api(mq("/api/rotation"));
     if (want !== state.market) return;
     rrg.data = d; rrgDraw(); redrawOn("map", "rrg", rrgDraw); rrgTable(d);
+    $("#rrg-badge").innerHTML = d.status === "REAL" ? "" : badge(d.status);
     $("#rrg-meta").innerHTML = d.status === "REAL"
       ? meta(d.source, d.fetched_at, `기준 지수 ${esc(d.benchmark)} · 마지막 주 ${esc(d.as_of)} · ${esc(d.method)}${d.missing.length ? ` · 가격 없음: ${esc(d.missing.join(", "))}` : ""}`)
       : `<div class="empty">${badge("UNAVAILABLE")} 업종 가격을 받지 못했습니다.</div>`;
@@ -22,8 +26,11 @@ async function renderRotation(box) {
 }
 function rrgDraw() {
   const cv = $("#rrg-cv"), d = rrg.data;
-  if (!cv || !cv.isConnected || !d || d.status !== "REAL") return;
-  const size = Math.min(cv.parentElement.clientWidth, 640), { ctx, w, h } = setupCanvas(cv, isPhone() ? size : Math.min(560, size));
+  if (!cv || !cv.isConnected || !d) return;
+  cv.hidden = d.status !== "REAL";
+  if (cv.hidden) return;
+  // a square: as wide as its column (the wrapper has no padding), at most 560 px; on a phone the full width
+  const size = cv.parentElement.clientWidth || 320, { ctx, w, h } = setupCanvas(cv, isPhone() ? size : Math.min(560, size));
   let span = 2;
   d.funds.forEach((f) => f.tail.forEach((p) => { span = Math.max(span, Math.abs(p.ratio - 100), Math.abs(p.momentum - 100)); }));
   span *= 1.12;
@@ -39,10 +46,16 @@ function rrgDraw() {
   });
   ctx.textAlign = "left";
   ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.strokeRect(pad, pad, w - 2 * pad, h - 2 * pad);
-  ctx.strokeStyle = muted; ctx.beginPath(); ctx.moveTo(cx, pad); ctx.lineTo(cx, h - pad); ctx.moveTo(pad, cy); ctx.lineTo(w - pad, cy); ctx.stroke();
+  ctx.strokeStyle = T.axis; ctx.beginPath(); ctx.moveTo(cx, pad); ctx.lineTo(cx, h - pad); ctx.moveTo(pad, cy); ctx.lineTo(w - pad, cy); ctx.stroke();
+  // tick values 100 - span/2, 100, 100 + span/2 on both axes (visualization spec V-13)
+  ctx.fillStyle = muted; ctx.font = vizFont(10);
+  [100 - span / 2, 100, 100 + span / 2].forEach((v) => {
+    ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(v.toFixed(1), x(v), h - pad + 3);
+    ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText(v.toFixed(1), pad - 3, y(v));
+  });
   ctx.fillStyle = muted; ctx.font = vizFont(11); ctx.textBaseline = "middle";
-  ctx.textAlign = "center"; ctx.fillText("상대강도 비율 →", w / 2, h - 10);
-  ctx.save(); ctx.translate(10, h / 2); ctx.rotate(-Math.PI / 2); ctx.fillText("모멘텀 →", 0, 0); ctx.restore(); ctx.textAlign = "left";
+  ctx.textAlign = "center"; ctx.fillText("상대강도 비율 →", x(100 + span / 4), h - 8);
+  ctx.save(); ctx.translate(8, y(100 + span / 4)); ctx.rotate(-Math.PI / 2); ctx.fillText("모멘텀 →", 0, 0); ctx.restore(); ctx.textAlign = "left";
   rrg.heads = [];
   d.funds.forEach((f) => {
     ctx.strokeStyle = muted; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.6; ctx.beginPath();
@@ -67,21 +80,16 @@ function rrgDraw() {
   });
   $("#rrg-legend").innerHTML = Object.values(RRG_Q).map(([n, v]) => `<span><span class="swatch" style="background:${cssVar(v)};border-radius:50%"></span>${n}</span>`).join("")
     + "<span>· 회색 선은 최근 8주의 이동 경로, 점이 이번 주입니다. 보통 개선 → 선도 → 약화 → 침체 순으로 돕니다.</span>";
-  cv.onmousemove = (e) => {
-    const b = cv.getBoundingClientRect(), mx = e.clientX - b.left, my = e.clientY - b.top, tip = $("#tip");
-    const hit = rrg.heads.find((q) => Math.hypot(q.hx - mx, q.hy - my) < 10);
-    if (!hit) { tip.hidden = true; return; }
-    const f = hit.f, p = f.tail[f.tail.length - 1]; tip.hidden = false;
-    tip.innerHTML = `<b>${esc(f.name)}</b> ${esc(f.symbol.replace(".KS", ""))}<br>${RRG_Q[f.quadrant][0]} · 비율 ${fmt(p.ratio, 1)} · 모멘텀 ${fmt(p.momentum, 1)}<br>
-      지수 대비 4주 ${pct(isNum(f.relative["4w"]) ? f.relative["4w"] * 100 : null, 1)} · 13주 ${pct(isNum(f.relative["13w"]) ? f.relative["13w"] * 100 : null, 1)}`;
-    const tx = e.clientX + 14 + tip.offsetWidth > window.innerWidth ? e.clientX - tip.offsetWidth - 14 : e.clientX + 14;
-    tip.style.left = tx + "px"; tip.style.top = e.clientY + 14 + "px";
-  };
-  cv.onmouseleave = () => ($("#tip").hidden = true);
-  cv.onclick = (e) => {
-    const b = cv.getBoundingClientRect(), hit = rrg.heads.find((q) => Math.hypot(q.hx - (e.clientX - b.left), q.hy - (e.clientY - b.top)) < 10);
-    if (hit) { $("#tip").hidden = true; loadSectorPicks(hit.f); }
-  };
+  const count = (q) => d.funds.filter((f) => f.quadrant === q).length;
+  cv.setAttribute("aria-label", `업종 순환: 선도 ${count("LEADING")}, 개선 ${count("IMPROVING")}, 약화 ${count("WEAKENING")}, 침체 ${count("LAGGING")}. ←/→로 업종을 옮기고 Enter로 점수 상위 종목을 봅니다.`);
+  // the nearest head within 12 px (a 24 px target for the 5 px dot and its ring); click or Enter loads the sector's picks
+  vizHover(cv, { count: rrg.heads.length,
+    indexAt: (mx, my) => { let best = -1, bd = 12; rrg.heads.forEach((q, k) => { const dd = Math.hypot(q.hx - mx, q.hy - my); if (dd < bd) { bd = dd; best = k; } }); return best; },
+    box: (k) => ({ x: rrg.heads[k].hx - 9, y: rrg.heads[k].hy - 9, w: 18, h: 18, round: true }),
+    open: (k) => loadSectorPicks(rrg.heads[k].f),
+    html: (k) => { const f = rrg.heads[k].f, p = f.tail[f.tail.length - 1];
+      return `<b>${esc(f.name)}</b> ${esc(f.symbol.replace(".KS", ""))}<br>${RRG_Q[f.quadrant][0]} · 비율 ${fmt(p.ratio, 1)} · 모멘텀 ${fmt(p.momentum, 1)}<br>
+      지수 대비 4주 ${pct(isNum(f.relative["4w"]) ? f.relative["4w"] * 100 : null, 1)} · 13주 ${pct(isNum(f.relative["13w"]) ? f.relative["13w"] * 100 : null, 1)}`; } });
 }
 function rrgTable(d) {
   if (d.status !== "REAL") { $("#rrg-table").innerHTML = ""; return; }

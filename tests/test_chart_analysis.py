@@ -174,7 +174,9 @@ def test_the_page_has_the_chart_group_and_draws_from_the_servers_settings():
     assert '<button type="button" data-group="chart">차트</button>' in html and '<button data-tab="chart" data-group="chart">차트분석</button>' in html
     assert '<button data-tab="compare" data-group="chart">비교</button>' in html and html.index("compare.js") < html.index("chart.js") < html.index("command.js")
     assert "RENDER.chart = renderChart;" in js and "errKo(e)" in js and not re.findall(r"\be\.message\b", js)
-    assert "s.ma_choices" in js and "s.caveat" in js and "box.onpointermove" in js                    # numbers come from the server; a finger drag works
+    # numbers come from the server; a finger drag works (workstation stage 6: the stack's pointer handlers come from vizHover, which
+    # assigns onpointermove / onpointerdown on the stack itself, so one line runs over the four panes)
+    assert "s.ma_choices" in js and "s.caveat" in js and "vizHover(box, { host: box," in js
     assert 'const CHA_ON_PRICE = new Set(["GOLDEN_CROSS", "DEAD_CROSS", "BB_UPPER", "BB_LOWER"]);' in js                       # other signals sit on their own pane
     css = (ROOT / "terminal" / "static" / "style.css").read_text(encoding="utf-8")
     # light and dark (one dark block since UI batch 5); 50 and 120 also have the Korean-screen override (visualization spec 2.3, stage 2)

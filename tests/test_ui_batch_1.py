@@ -44,7 +44,7 @@ console.log(JSON.stringify([goodOpen({open: 0, low: 171500, high: 178500}), good
 
 def test_both_price_charts_skip_the_body_and_say_so():
     draw = body(APP, "function drawPrice(") if "function drawPrice(" in APP else APP
-    assert "if (okOpen) ctx.fillRect(" in draw and "없음(원자료 이상)" in APP and "tickLabel(v, nt.digits), pw + 6" in APP
+    assert "if (okOpen) ctx.fillRect(" in draw and "없음(원자료 이상)" in APP and "tickLabel(v, nt.digits), w - 4, yy)" in APP
     chart = (STATIC / "chart.js").read_text(encoding="utf-8")
     assert "const okOpen = goodOpen(b)" in chart and "if (!okOpen) {" in chart
 

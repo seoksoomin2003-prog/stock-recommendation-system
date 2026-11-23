@@ -58,7 +58,7 @@ async function renderPortfolio() {
       ${Object.entries(d.sectors).map(([k, v]) => `<tr><td>${esc(sectorKo(k))}</td><td style="width:60%"><div class="bar ${v > d.settings.max_sector_pct ? "over" : ""}"><i style="width:${Math.min(100, v).toFixed(1)}%"></i></div></td><td class="num">${v.toFixed(1)}%</td></tr>`).join("")}
       </tbody></table></div>` : ""}
     ${d.holdings.length ? '<div class="panel" id="risk-panel"><h2>위험 분석</h2><div class="meta">불러오는 중…</div></div>' : ""}
-    <div class="panel"><h2>계좌 수익률 vs ${esc(d.benchmark)}</h2><div id="eq-sum" class="meta">불러오는 중…</div><div class="chart"><canvas id="eqc"></canvas></div><div id="eq-meta"></div></div>
+    <div class="panel"><h2>계좌 수익률 vs ${esc(d.benchmark)}</h2><div id="eq-sum" class="meta">불러오는 중…</div><div class="chart"><canvas id="eqc"></canvas></div><div id="eq-meta"></div><div id="eq-twin"></div></div>
     <div class="panel"><h2>매매 성과 (매도 건 기준)</h2>${statsHtml(d.stats)}
       ${d.stats.count ? styleStatsHtml(d.stats_by_style) : ""}
       ${d.closed.length ? `<div class="tbl-wrap"><table><thead><tr><th>매도일</th><th class="l">종목</th><th class="l">구분</th><th>수량</th><th>평균단가</th><th>매도가</th><th>실현 손익</th><th>수익률</th><th>보유 일수</th></tr></thead>
@@ -169,28 +169,25 @@ async function loadEquity() {
     const mk = state.market, d = await api(mq("/api/portfolio/equity"));
     if (mk !== state.market) return;
     eqData = d;
+    $("#eqc").hidden = d.points.length < 2;           // no empty axes (visualization spec 1.9): the sentence stands in the chart's place
     if (!d.points.length) { $("#eq-sum").innerHTML = "거래 기록이 생기면 계좌 가치 곡선을 그립니다."; return; }
     $("#eq-sum").innerHTML = `시작 ${esc(d.start)} 이후 · 내 계좌(TWR) ${pct(d.twr_pct)} · ${esc(d.benchmark)} ${pct(d.bench_pct)}`;
     $("#eq-meta").innerHTML = meta(d.source, d.fetched_at, esc(d.method));
     drawEquity(); redrawOn("portfolio", "equity", drawEquity);
   } catch (e) { $("#eq-sum").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; }
 }
+// 작업 화면 개편 6단계 (시각화 명세 V-16): 0%에서 시작하는 두 선, 둥근 값의 % 눈금, 날짜 축, 선 끝의 이름과 마지막 값(그림 안의
+// '● 내 계좌' 글자 대신), 날마다 두 값과 차이를 읽는 십자선(포인터·손가락·키보드), 월말 값의 표.  내 계좌는 잉크, 기준 지수는 --bench.
 function drawEquity() {
   const cv = $("#eqc"), d = eqData;
   if (!cv || !cv.isConnected || !d || d.points.length < 2) return;
-  const { ctx, w, h } = setupCanvas(cv, 220);
-  const pts = d.points, vals = pts.flatMap((p) => [p.twr_pct, p.bench_pct]).filter(isNum);
-  if (!vals.length) return;
-  let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals); const pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
-  const padR = 48, x = (i) => (i / (pts.length - 1)) * (w - padR), y = (v) => 6 + (1 - (v - lo) / (hi - lo)) * (h - 26);
-  const T = vizTokens();      // the account line is ink (blue is the accent and the Korean falling colour), the benchmark --bench
-  ctx.font = vizFont(11); ctx.fillStyle = T.tick; ctx.textBaseline = "middle";
-  for (let k = 0; k <= 4; k++) { const v = lo + ((hi - lo) * k) / 4; ctx.strokeStyle = T.grid; ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(w - padR, y(v)); ctx.stroke(); ctx.fillText(v.toFixed(1) + "%", w - padR + 6, y(v)); }
-  ctx.strokeStyle = T.axis; ctx.beginPath(); ctx.moveTo(0, y(0)); ctx.lineTo(w - padR, y(0)); ctx.stroke();
-  ctx.textBaseline = "bottom"; ctx.fillText(pts[0].date, 0, h); ctx.textAlign = "right"; ctx.fillText(pts[pts.length - 1].date, w - padR, h); ctx.textAlign = "left";
-  line(ctx, pts.map((p) => p.bench_pct), x, y, T.bench, 1.3);
-  line(ctx, pts.map((p) => p.twr_pct), x, y, T.ink, 2);
-  ctx.fillStyle = T.ink; ctx.fillText("● 내 계좌", 4, 18); ctx.fillStyle = T.bench; ctx.fillText("● " + d.benchmark, 80, 18);
+  const pts = d.points, dates = pts.map((p) => p.date), T = vizTokens();
+  const drawn = vizPctChart(cv, { dates, h: isPhone() ? 200 : isNarrow() ? 220 : 240, diff: true,
+    label: `내 계좌 TWR ${vizPct(d.twr_pct)}, 기준 지수 ${d.benchmark} ${vizPct(d.bench_pct)}, 기간 ${dates[0]}~${dates[dates.length - 1]}`,
+    series: [{ label: "내 계좌", vals: pts.map((p) => p.twr_pct), color: T.ink, lw: 2 }, { label: d.benchmark, vals: pts.map((p) => p.bench_pct), color: T.bench, lw: 1.5 }] });
+  const twin = $("#eq-twin");
+  if (twin) twin.innerHTML = drawn ? vizTable([{ label: "월말", cls: "l" }, { label: "내 계좌" }, { label: d.benchmark }],
+    vizMonthEnds(dates).reverse().map((i) => `<tr><td class="l">${esc(dates[i])}</td><td class="num">${pct(pts[i].twr_pct)}</td><td class="num">${pct(pts[i].bench_pct)}</td></tr>`), "각 달 마지막 기록일의 누적 수익률입니다. 최신이 위입니다.") : "";
 }
 
 // ------------------------------------------------------------------ 매매 보조

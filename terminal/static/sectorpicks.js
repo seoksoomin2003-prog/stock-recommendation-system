@@ -13,7 +13,7 @@ async function loadSectorPicks(f) {
   box.hidden = false;
   const title = `${f.name} 업종 점수 상위 종목`;
   box.innerHTML = ui.head({ title }) + loading;
-  box.scrollIntoView({ behavior: "smooth", block: "start" });
+  box.scrollIntoView({ behavior: "smooth", block: "nearest" });      // 두 칸이면 표 옆에 나오므로 화면이 뛰지 않게 (배치 명세 3.3)
   const mk = state.market;
   let d;
   try { d = await api(mq(`/api/qsf/sector-picks?fund=${encodeURIComponent(f.symbol)}`)); } catch (e) { box.innerHTML = ui.head({ title }) + errBox(e); return; }
