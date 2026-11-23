@@ -204,6 +204,25 @@ function recentTickers() { try { return JSON.parse(localStorage.getItem("recentT
 function rememberTicker(t) {
   try { localStorage.setItem("recentTickers", JSON.stringify([t, ...recentTickers().filter((x) => x !== t)].slice(0, 12))); } catch (e) { /* not remembered */ }
 }
+// Shortcuts saved before that guard came (2026-11-22) can hold a code that never existed, such as the mistyped 'APPL'.  Once per page,
+// a shortcut outside the scanned stocks is asked for its chart; it is dropped only when the price source gave no prices for it while
+// the same source, asked right after, did give fresh prices for a known stock.  Offline both come back empty, so nothing is dropped.
+const PRUNE_PROBE = { US: "SPY", KR: "005930" };
+const noPrices = (d) => !!d && d.status === "UNAVAILABLE" && !!d.cache && d.cache.error === "EMPTY_RESPONSE";
+const freshPrices = (d) => !!d && d.status !== "UNAVAILABLE" && !!d.cache && d.cache.status === "REAL" && isNum(d.cache.age_s) && d.cache.age_s < 120;
+function forgetTicker(t) {
+  try { localStorage.setItem("recentTickers", JSON.stringify(recentTickers().filter((x) => x !== t))); } catch (e) { /* not stored */ }
+}
+async function pruneRecentTickers() {
+  const chart = (t) => api(`/api/chart?t=${encodeURIComponent(t)}&range=3mo`).catch(() => null);
+  for (const t of recentTickers()) {
+    const mk = marketOf(t);
+    if (t.startsWith("^") || !PRUNE_PROBE[mk]) continue;
+    const s = await api(`/api/symbols?q=${encodeURIComponent(t)}&market=${mk}`).catch(() => null);
+    if (!s || (s.exact && String(s.exact.ticker).toUpperCase() === t)) continue;
+    if (noPrices(await chart(t)) && freshPrices(await chart(PRUNE_PROBE[mk]))) forgetTicker(t);
+  }
+}
 function tickerChips(list) { return list.map((t) => `<button type="button" class="chip" data-ticker="${esc(t)}">${esc(t)}</button>`).join(""); }
 function openTicker(t) {
   state.ticker = String(t).toUpperCase(); state.loaded.stock = null;
@@ -702,6 +721,7 @@ function loadHealth() {
   }).catch(() => {});
 }
 loadHealth();
+setTimeout(() => pruneRecentTickers().catch(() => {}), 3000);      // 첫 화면을 그린 뒤에
 setInterval(loadHealth, 5 * 60 * 1000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - healthAt > 30000) loadHealth(); });
 let booted = false;
