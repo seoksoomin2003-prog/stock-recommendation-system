@@ -141,7 +141,7 @@ async function renderAccount() {
   $("#acctunit").querySelectorAll("button").forEach((b) => { b.onclick = () => { acctUnit = b.dataset.u; try { localStorage.setItem("qse-acct-unit", acctUnit); } catch (e) { /* not remembered */ } renderAccount(); }; });
   el.querySelectorAll(".acct-detail").forEach((b) => { b.onclick = () => { setMarket(b.dataset.m, false); show("portfolio"); }; });
   el.querySelectorAll("[data-void]").forEach((b) => { b.onclick = async () => {
-    if (!confirm("이 기록을 취소합니다. 지우지 않고 '취소' 기록을 덧붙입니다.")) return;
+    if (!(await uiConfirm("이 기록을 취소합니다. 지우지 않고 '취소' 기록을 덧붙입니다.", { okLabel: "기록 취소", danger: true }))) return;
     try { await post("/api/journal/void", { ref: b.dataset.void }); renderAccount(); } catch (err) { notify(errKo(err)); }
   }; });
   acctBind(d);

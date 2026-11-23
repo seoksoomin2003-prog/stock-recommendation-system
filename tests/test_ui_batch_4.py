@@ -80,7 +80,10 @@ def test_charts_have_names_and_sparklines_a_start_line():
     setup = body(APP, "function setupCanvas(")
     assert 'cv.setAttribute("role", "img")' in setup and 'cv.getAttribute("aria-hidden") !== "true"' in setup
     sp = body(APP, "function spark(")
-    assert sp.index('cv.setAttribute("aria-hidden", "true")') < sp.index("setupCanvas(") and "ctx.setLineDash([2, 3])" in sp
+    # stage 2 (visualization spec section 8 items 18-19): the start line is a faint solid line (a dashed one reads as a threshold),
+    # and a missing day is a gap in the line, not a day taken out of the time axis
+    assert sp.index('cv.setAttribute("aria-hidden", "true")') < sp.index("setupCanvas(") and "setLineDash" not in sp
+    assert "line(ctx, all, (i) => (i / (all.length - 1)) * w" in sp and "all = vals || []" in sp
     assert 'cv.setAttribute("aria-label", `${tickerText(state.ticker' in body(APP, "function drawPrice(")
     assert "${sparkRange(i.spark)}" in body(APP, "function card(") and "그래프 폭" in body(APP, "function sparkRange(")
 
@@ -113,7 +116,14 @@ def test_date_fields_say_which_calendar_they_use():
 def test_messages_stay_inside_the_page_and_confirms_stay_for_records():
     for name, src in JS.items():
         assert not re.search(r"(?<![\w.])alert\(", src), name
-    assert sum(src.count("confirm(") for src in JS.values()) == 5                                     # voiding records, phone off, basis switch
+    # workstation stage 2 (2026-11-24, owner decision U-6): the five confirmations (voiding records three times, phone off, basis
+    # switch) stay, but in the page's own dialog; the browser's confirm window is gone
+    assert not any(re.search(r"(?<![\w.])confirm\(", src) for src in JS.values())
+    for name in ("account.js", "paper.js", "portfolio.js", "phone.js", "qsf.js"):
+        assert JS[name].count("await uiConfirm(") == 1, name
+    dlg = body(JS["ui.js"], "function uiConfirm(")
+    assert 'role="alertdialog" aria-modal="true"' in dlg and 'e.key === "Escape"' in dlg and 'e.key === "Tab"' in dlg and "back.focus()" in dlg
+    assert "document.body.appendChild(wrap)" in dlg and "ui.escape(message)" in dlg
     assert '<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>' in HTML
     note = body(APP, "function notify(")
     assert 'el.setAttribute("role", tone === "err" ? "alert" : "status")' in note and "esc(text)" in note

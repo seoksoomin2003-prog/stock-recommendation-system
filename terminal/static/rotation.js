@@ -1,6 +1,8 @@
 // 업종 순환 그래프(RRG 근사): 업종 ETF의 지수 대비 상대강도(가로)와 그 모멘텀(세로), 최근 8주 꼬리.  읽기 전용.
 "use strict";
-const RRG_Q = { LEADING: ["선도", "--s3"], WEAKENING: ["약화", "--s4"], LAGGING: ["침체", "--s8"], IMPROVING: ["개선", "--s1"] };
+// Quadrant colours (visualization spec 2.4): three series hues and a neutral grey for 침체.  The old set made 침체 red and 개선 blue,
+// which on Korean screens read as up and down, the reverse of the phase.  The quadrant is also told by position and its corner name.
+const RRG_Q = { LEADING: ["선도", "--s3"], WEAKENING: ["약화", "--s2"], LAGGING: ["침체", "--viz-bar"], IMPROVING: ["개선", "--s7"] };
 const rrg = { data: null, heads: [] };
 
 async function renderRotation(box) {
@@ -26,19 +28,19 @@ function rrgDraw() {
   d.funds.forEach((f) => f.tail.forEach((p) => { span = Math.max(span, Math.abs(p.ratio - 100), Math.abs(p.momentum - 100)); }));
   span *= 1.12;
   const pad = 28, x = (v) => pad + ((v - (100 - span)) / (2 * span)) * (w - 2 * pad), y = (v) => h - pad - ((v - (100 - span)) / (2 * span)) * (h - 2 * pad);
-  const muted = cssVar("--muted"), ink = cssVar("--ink"), grid = cssVar("--grid"), panel = cssVar("--panel");
+  const T = vizTokens(), muted = T.tick, ink = T.ink, grid = T.grid, panel = T.surface;
   ctx.fillStyle = panel; ctx.fillRect(0, 0, w, h);
   // quadrants: faint fill of each quadrant's colour, its name in a corner
   const cx = x(100), cy = y(100);
   [["IMPROVING", pad, pad, cx - pad, cy - pad], ["LEADING", cx, pad, w - pad - cx, cy - pad], ["LAGGING", pad, cy, cx - pad, h - pad - cy], ["WEAKENING", cx, cy, w - pad - cx, h - pad - cy]].forEach(([q, qx, qy, qw, qh]) => {
     ctx.globalAlpha = 0.07; ctx.fillStyle = cssVar(RRG_Q[q][1]); ctx.fillRect(qx, qy, qw, qh); ctx.globalAlpha = 1;
-    ctx.fillStyle = muted; ctx.font = "600 12px -apple-system, sans-serif"; ctx.textBaseline = "top";
+    ctx.fillStyle = muted; ctx.font = vizFont(12, 600); ctx.textBaseline = "top";
     ctx.textAlign = qx === pad ? "left" : "right"; ctx.fillText(RRG_Q[q][0], qx === pad ? qx + 6 : qx + qw - 6, qy === pad ? qy + 6 : qy + qh - 20);
   });
   ctx.textAlign = "left";
   ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.strokeRect(pad, pad, w - 2 * pad, h - 2 * pad);
   ctx.strokeStyle = muted; ctx.beginPath(); ctx.moveTo(cx, pad); ctx.lineTo(cx, h - pad); ctx.moveTo(pad, cy); ctx.lineTo(w - pad, cy); ctx.stroke();
-  ctx.fillStyle = muted; ctx.font = "11px -apple-system, sans-serif"; ctx.textBaseline = "middle";
+  ctx.fillStyle = muted; ctx.font = vizFont(11); ctx.textBaseline = "middle";
   ctx.textAlign = "center"; ctx.fillText("상대강도 비율 →", w / 2, h - 10);
   ctx.save(); ctx.translate(10, h / 2); ctx.rotate(-Math.PI / 2); ctx.fillText("모멘텀 →", 0, 0); ctx.restore(); ctx.textAlign = "left";
   rrg.heads = [];
@@ -53,7 +55,7 @@ function rrgDraw() {
     rrg.heads.push({ f, hx, hy });
   });
   // names beside the dots, moved down a line while they would overlap a name already placed
-  ctx.fillStyle = ink; ctx.font = "11px -apple-system, sans-serif";
+  ctx.fillStyle = ink; ctx.font = vizFont(11);
   const placed = [];
   [...rrg.heads].sort((a, b) => a.hy - b.hy).forEach(({ f, hx, hy }) => {
     const tw = ctx.measureText(f.name).width, lx = hx + 8 > w - pad - tw ? hx - 8 - tw : hx + 8;

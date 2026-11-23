@@ -67,7 +67,7 @@ console.log(JSON.stringify([
     assert got[2] == "<i>&lt;s&gt;</i><u>ok</u>&lt;a&gt;<b>"
     assert got[3] == '<div class="empty">없음</div>'
     assert got[4] == '<div class="tbl-wrap"><table class="cal"><thead><tr><th>A&lt;</th></tr></thead><tbody><tr><td>1</td></tr></tbody></table></div>'
-    assert got[5] == '<h2>제목&lt; <span class="meta m0">부제</span> <button>b</button></h2>'
+    assert got[5] == '<h2>제목&lt; <span class="meta m0">부제</span> <span class="ph-actions"><button>b</button></span></h2>'      # actions at the right end (stage 2)
     assert 'aria-pressed="false">미국' in got[6] and 'class="on" aria-pressed="true">한국' in got[6] and 'aria-label="시장"' in got[6]
     assert got[7] == '<div class="kv"><div><span>이름</span><b><b>값</b></b></div></div>'
     assert HTML.index('<script src="ui.js">') < HTML.index('<script src="app.js">')

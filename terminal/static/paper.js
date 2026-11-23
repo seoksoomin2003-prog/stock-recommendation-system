@@ -75,7 +75,7 @@ function ptWireForm(d, mk) {
 }
 
 async function ptVoid(id) {
-  if (!confirm("이 기록을 취소할까요? 기록은 지워지지 않고 '취소됨'으로 남습니다.")) return;
+  if (!(await uiConfirm("이 기록을 취소할까요? 기록은 지워지지 않고 '취소됨'으로 남습니다.", { okLabel: "기록 취소", danger: true }))) return;
   try { await api("/api/paper-trade/void", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ref: id }) }); renderPaper(); }
   catch (e) { notify(errKo(e)); }
 }

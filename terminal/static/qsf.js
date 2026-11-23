@@ -409,7 +409,7 @@ function qsfFundPeriodNote(c) {
 // 근거 균형: 중간(50점)에서 각 요인이 더하거나 뺀 점수. 모든 요인의 값을 더하면 총점 − 50 (terminal/qsf/rank_notes.py).
 function qsfBalance(b) {
   if (!b || !isNum(b.points_sum)) return "";
-  const li = (x) => `<li><b>${esc(x.label)}</b> <span class="num ${x.points >= 0 ? "up" : "down"}">${x.points >= 0 ? "+" : "−"}${Math.abs(x.points).toFixed(1)}점</span>${x.text ? `<div class="meta m0">${bigInText(esc(x.text))}</div>` : ""}</li>`;
+  const li = (x) => `<li><b>${esc(x.label)}</b> <span class="num pts">${x.points >= 0 ? "+" : "−"}${Math.abs(x.points).toFixed(1)}점</span>${x.text ? `<div class="meta m0">${bigInText(esc(x.text))}</div>` : ""}</li>`;
   const side = (title, rows, none) => `<div><h4>${title}</h4>${rows.length ? `<ul>${rows.map(li).join("")}</ul>` : `<div class="meta m0">${none}</div>`}</div>`;
   return `<div class="qsf-balance">${side("점수를 올린 요인", b.plus, "강점으로 칠 요인(0.6 이상)이 없습니다.")}${side("점수를 깎은 요인", b.minus, "약점으로 칠 요인(0.4 이하)이 없습니다.")}
     <div class="meta qb-note">중간(50점)에서 각 요인이 더하거나 뺀 점수입니다. 모든 요인을 더하면 50 ${b.points_sum >= 0 ? "+" : "−"} ${Math.abs(b.points_sum).toFixed(1)} = ${(50 + b.points_sum).toFixed(1)}점.${b.missing.length ? ` 자료가 없어 점수에서 빠진 요인: ${b.missing.map(esc).join(", ")}.` : ""}</div></div>`;
@@ -506,11 +506,26 @@ async function qsfStanceDraw() {
   (seg || box).querySelectorAll("button[data-level]").forEach((b) => { b.onclick = async () => {
     if (b.dataset.level === d.level) return;
     try {
-      await api("/api/qsf/stance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ market: mk, level: b.dataset.level }) });
-      qsfDropLatest();
-      renderQsf(true);
+      await qsfStanceSet(mk, b.dataset.level);
+      qsfStanceUndo(mk, d.level, d.levels);
     } catch (e) { notify(errKo(e)); }
   }; });
+}
+// 성향 고르기: 서버에 저장하고, 보고 있는 순위 화면을 열린 카드째 다시 그립니다.  다른 화면에 있으면 돌아올 때 다시 그립니다.
+async function qsfStanceSet(mk, level) {
+  await api("/api/qsf/stance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ market: mk, level }) });
+  qsfDropLatest();
+  if (state.tab === "qsf" && qsfState.market === mk) renderQsf(true); else state.loaded.qsf = false;
+}
+// 성향을 바꾼 뒤 6초 동안 '되돌리기' (작업 화면 개편 2단계, 사용자 결정 U-6): 같은 POST로 바로 전 성향을 다시 고릅니다.  성향이 하는 일은 그대로입니다.
+function qsfStanceUndo(mk, was, levels) {
+  const name = (lv) => (levels.find((x) => x.level === lv) || {}).label || lv;
+  notify(`${mk === "KR" ? "한국" : "미국"} 성향을 바꿨습니다. 되돌리면 '${name(was)}'(으)로 돌아갑니다.`, "info", { label: "되돌리기", ms: 6000, run: async () => {
+    try {
+      await qsfStanceSet(mk, was);
+      notify(`${mk === "KR" ? "한국" : "미국"} 성향을 '${name(was)}'(으)로 되돌렸습니다.`, "info");
+    } catch (e) { notify(errKo(e)); }
+  } });
 }
 // 순위 표(UI 점검 2026-11-23, 사용자 결정): 50줄 한 표. 줄을 누르면 그 아래에 카드가 펼쳐집니다.
 const QSF_RANK_DOMAINS = ["TECHNICAL", "FUNDAMENTAL", "RISK", "EVENTS"];
@@ -551,7 +566,8 @@ function qsfDelta(score, n) {
   if (!n || !isNum(score)) return DASH;
   if (!isNum(n.prev)) return '<span class="meta m0" title="직전 기록 거래일에 이 스타일 점수가 없었습니다">새로</span>';
   const v = score - n.prev;
-  return `<span class="num ${v >= 1 ? "up" : v <= -1 ? "down" : "flat"}">${v >= 0.05 ? "+" : v <= -0.05 ? "−" : ""}${Math.abs(v).toFixed(1)}</span>`;
+  // a score change is not a price move (stage 2, visualization spec section 8 item 2): ink with its sign, grey under one point
+  return `<span class="num ${Math.abs(v) >= 1 ? "pts" : "flat"}">${v >= 0.05 ? "+" : v <= -0.05 ? "−" : ""}${Math.abs(v).toFixed(1)}</span>`;
 }
 function qsfRankRow(r, isTop, n, sector, edges, common) {
   const out = r.actionability !== "ACTIONABLE", dm = r.domains || {};
@@ -559,7 +575,7 @@ function qsfRankRow(r, isTop, n, sector, edges, common) {
   const why = out ? (r.gates.length ? r.gates.map((g) => esc(QSF_GATE[g] || g)).join(", ") : esc(QSF_ACT[r.actionability] || "실행 대상 아님")) : "";
   const entry = `${esc(qsfEntry(r.entry_status, r.strategy || qsfState.strategy) || "")}${why ? `<div class="qr-out">실행 대상 아님 · ${why}</div>` : ""}`;
   return `<tr class="qsf-rrow" data-qsf="${esc(r.ticker)}" tabindex="0" aria-expanded="false">
-      <td class="num qr-rank" title="${isNum(r.pct) ? `그날 점수가 나온 종목 가운데 상위 ${r.pct}%` : ""}">${r.rank}${isTop ? '<div><span class="badge ok" title="위험 게이트와 자료 부족을 뺀 점수 상위 3">상위 3</span></div>' : ""}</td>
+      <td class="num qr-rank" title="${isNum(r.pct) ? `그날 점수가 나온 종목 가운데 상위 ${r.pct}%` : ""}">${r.rank}${isTop ? '<div><span class="badge rank" title="위험 게이트와 자료 부족을 뺀 점수 상위 3">상위 3</span></div>' : ""}</td>
       <td class="l qr-name"><button type="button" class="linkish" data-ticker="${esc(r.ticker)}" title="종목 화면(차트·재무·공시)을 엽니다. 줄의 다른 곳을 누르면 점수 카드가 펼쳐집니다.">${tickerLabel(r.ticker, r.name)}</button>${r.confidence !== "HIGH" ? ` <span class="badge info" title="자료가 얼마나 있는지를 말합니다. 맞을 확률이 아닙니다.">자료 ${QSF_CONF[r.confidence] || ""}</span>` : ""}${qsfBuybackChip(r.filing_events)}${qsfStanceTag(r.stance, r.band)}${qsfMissTag(r)}${qsfRiskLines(r)}
         <div class="qr-m2">${qsfLabel(r)} ${entry}</div></td>
       <td class="l w">${esc(qsfSector(sector) || "")}</td>
@@ -864,7 +880,7 @@ function qsfRegimeHtml(d, mk) {
         국면 − 고정 차이는 ${f4(m.ic_diff)}(t ${isNum(m.ic_diff_t) ? m.ic_diff_t.toFixed(2) : "없음"}, 기준 ${d.settings.min_t} 이상)이고, 국면 쪽이 높았던 시험일은 ${(m.ic_diff_positive_share * 100).toFixed(0)}%입니다.
         ${ok ? "기준을 충족했지만 라이브 점수 반영은 사용자 결정 사항입니다." : "<b>고정 가중치보다 낫다는 근거가 없어 라이브 점수에는 쓰지 않습니다.</b>"}</div>`
     : `<div class="meta">시험일이 ${m.tested || 0}개뿐이라 판정하지 않았습니다.</div>`;
-  const crow = conds.map((c) => `<tr><td class="l">${esc(c.label)}</td><td class="l">${esc(c.need)}</td><td class="l">${qsfRegimeValue(c)}</td><td>${c.passed ? '<span class="up">충족</span>' : '<span class="down">미달</span>'}</td></tr>`).join("");
+  const crow = conds.map((c) => `<tr><td class="l">${esc(c.label)}</td><td class="l">${esc(c.need)}</td><td class="l">${qsfRegimeValue(c)}</td><td>${c.passed ? '<span class="c-ok">충족</span>' : '<span class="c-bad">미달</span>'}</td></tr>`).join("");
   const w = (x) => (isNum(x) ? (x * 100).toFixed(0) + "%" : DASH);
   const today = (m.record.today || {}).state;
   const trow = [`<tr><td class="l">고정 가중치(라이브 배점)</td>${d.domains.map((k) => `<td class="num">${w(m.static[k])}</td>`).join("")}<td class="num">${DASH}</td></tr>`]
@@ -1112,7 +1128,7 @@ async function qsfReadings() {
     <details class="qsf-readings-all"${wasOpen ? " open" : ""}><summary>전체 일정 보기 (${d.total}개)</summary><div class="meta">${esc(d.note)} 안내: ${esc(d.guide)}</div>${table(d.readings)}</details></div>`;
   box.querySelectorAll(".qsf-fund-switch").forEach((b) => { b.onclick = async () => {
     const to = b.dataset.period === "TRAILING" ? "최근 4분기" : "연간 보고서";
-    if (!confirm(`${b.dataset.market === "KR" ? "한국" : "미국"} 점수가 읽는 재무 기준을 '${to}'로 바꿉니다. 다음 스캔부터 스윙과 장기 점수 모두에 적용됩니다. 바꿀까요?`)) return;
+    if (!(await uiConfirm(`${b.dataset.market === "KR" ? "한국" : "미국"} 점수가 읽는 재무 기준을 '${to}'로 바꿉니다. 다음 스캔부터 스윙과 장기 점수 모두에 적용됩니다. 바꿀까요?`, { okLabel: "바꾸기" }))) return;
     try {
       const res = await api("/api/qsf/fund-period", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ market: b.dataset.market, period: b.dataset.period }) });
       notify(res.status === "OK" ? res.note : res.reason || "바꾸지 못했습니다.", res.status === "OK" ? "info" : "err");

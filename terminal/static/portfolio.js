@@ -73,11 +73,19 @@ async function renderPortfolio() {
   loadSignals();
   el.querySelectorAll("[data-void]").forEach((b) => (b.onclick = async (e) => {
     e.stopPropagation();
-    if (!confirm("이 기록을 취소할까요? 원래 기록은 남고, 취소 기록이 추가됩니다.")) return;
+    if (!(await uiConfirm("이 기록을 취소할까요? 원래 기록은 남고, 취소 기록이 추가됩니다.", { okLabel: "기록 취소", danger: true }))) return;
     try { await post("/api/journal/void", { ref: b.dataset.void }); renderPortfolio(); } catch (err) { notify(errKo(err)); }
   }));
   loadEquity();
   if (d.holdings.length) loadRisk();
+}
+// 위험 기여 막대 (작업 화면 개편 2단계, 시각화 명세 1.7): 값이 없으면 막대 없이 —만(0% 막대는 '기여 0'으로 읽힘), 음수(헤지)가 하나라도
+// 있으면 모든 줄을 가운데 눈금에서 좌우로 자라는 막대로 그립니다.  음수를 0으로 깎아 그리지 않습니다.
+function riskShare(v, diverging) {
+  if (!isNum(v)) return "";
+  if (!diverging) return `<div class="bar" aria-hidden="true"><i style="width:${Math.min(100, v * 100).toFixed(1)}%"></i></div>`;
+  const wd = Math.min(50, Math.abs(v) * 50).toFixed(1);
+  return `<span class="rmeter" aria-hidden="true"><i style="${v >= 0 ? `left:50%;width:${wd}%` : `right:50%;width:${wd}%`}"></i></span>`;
 }
 function totalHtml(t) {
   if (!t) return "";
@@ -175,13 +183,14 @@ function drawEquity() {
   if (!vals.length) return;
   let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals); const pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
   const padR = 48, x = (i) => (i / (pts.length - 1)) * (w - padR), y = (v) => 6 + (1 - (v - lo) / (hi - lo)) * (h - 26);
-  ctx.font = "11px -apple-system, sans-serif"; ctx.fillStyle = cssVar("--muted"); ctx.textBaseline = "middle";
-  for (let k = 0; k <= 4; k++) { const v = lo + ((hi - lo) * k) / 4; ctx.strokeStyle = cssVar("--grid"); ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(w - padR, y(v)); ctx.stroke(); ctx.fillText(v.toFixed(1) + "%", w - padR + 6, y(v)); }
-  ctx.strokeStyle = cssVar("--line"); ctx.beginPath(); ctx.moveTo(0, y(0)); ctx.lineTo(w - padR, y(0)); ctx.stroke();
+  const T = vizTokens();      // the account line is ink (blue is the accent and the Korean falling colour), the benchmark --bench
+  ctx.font = vizFont(11); ctx.fillStyle = T.tick; ctx.textBaseline = "middle";
+  for (let k = 0; k <= 4; k++) { const v = lo + ((hi - lo) * k) / 4; ctx.strokeStyle = T.grid; ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(w - padR, y(v)); ctx.stroke(); ctx.fillText(v.toFixed(1) + "%", w - padR + 6, y(v)); }
+  ctx.strokeStyle = T.axis; ctx.beginPath(); ctx.moveTo(0, y(0)); ctx.lineTo(w - padR, y(0)); ctx.stroke();
   ctx.textBaseline = "bottom"; ctx.fillText(pts[0].date, 0, h); ctx.textAlign = "right"; ctx.fillText(pts[pts.length - 1].date, w - padR, h); ctx.textAlign = "left";
-  line(ctx, pts.map((p) => p.bench_pct), x, y, cssVar("--muted"), 1.3);
-  line(ctx, pts.map((p) => p.twr_pct), x, y, cssVar("--accent"), 2);
-  ctx.fillStyle = cssVar("--accent"); ctx.fillText("● 내 계좌", 4, 18); ctx.fillStyle = cssVar("--muted"); ctx.fillText("● " + d.benchmark, 80, 18);
+  line(ctx, pts.map((p) => p.bench_pct), x, y, T.bench, 1.3);
+  line(ctx, pts.map((p) => p.twr_pct), x, y, T.ink, 2);
+  ctx.fillStyle = T.ink; ctx.fillText("● 내 계좌", 4, 18); ctx.fillStyle = T.bench; ctx.fillText("● " + d.benchmark, 80, 18);
 }
 
 // ------------------------------------------------------------------ 매매 보조
@@ -332,7 +341,7 @@ async function loadRisk() {
       </div>
       <div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>비중</th><th>위험 기여</th><th>연 변동성</th><th>베타</th></tr></thead><tbody>
         ${r.holdings.map((h) => `<tr class="click" data-ticker="${esc(h.ticker)}"><td class="l"><b>${esc(h.name || h.ticker)}</b> <span class="meta m0">${esc(h.ticker)}</span></td><td class="num">${p(h.weight)}</td>
-          <td style="width:30%"><div class="bar"><i style="width:${isNum(h.risk_share) ? Math.max(0, Math.min(100, h.risk_share * 100)).toFixed(1) : 0}%"></i></div> <span class="num">${p(h.risk_share)}</span></td>
+          <td style="width:30%">${riskShare(h.risk_share, r.holdings.some((x) => isNum(x.risk_share) && x.risk_share < 0))} <span class="num">${p(h.risk_share)}</span></td>
           <td class="num">${p(h.volatility)}</td><td class="num">${fmt(h.beta, 2)}</td></tr>`).join("")}</tbody></table></div>
       ${r.short_history.length ? `<div class="meta">가격 이력이 짧아 계산에서 뺀 종목: ${esc(r.short_history.join(", "))}</div>` : ""}
       ${corr && corr.tickers.length > 1 ? `<h3>종목 간 상관계수</h3><div class="tbl-wrap"><table><thead><tr><th class="l"></th>${corr.tickers.map((t) => `<th>${esc(t)}</th>`).join("")}</tr></thead><tbody>

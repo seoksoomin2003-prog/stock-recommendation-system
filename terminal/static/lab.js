@@ -1,6 +1,7 @@
 // TERMINAL-3: 도전자 모델 전향적 비교(모델 탭) + 연구실 탭.  Uses helpers from app.js.
 "use strict";
-const LAB_COLORS = { MOM_12_1: "--sma20", LOWVOL_252: "--ok", TREND_SWING: "--sma200", BASE_EW: "--sma50", SPY: "--muted" };
+// Model colours are categorical series slots (visualization spec 2.5): not the status green, not a moving-average colour.  SPY is the benchmark.
+const LAB_COLORS = { MOM_12_1: "--s1", LOWVOL_252: "--s2", TREND_SWING: "--s3", BASE_EW: "--s4", SPY: "--bench" };
 const pctR = (v, d = 2) => (isNum(v) ? pct(v * 100, d) : DASH);
 
 // ------------------------------------------------------------------ 모델 탭: 전향적 비교
@@ -98,7 +99,7 @@ async function renderLab() {
       <div class="head my-2"><span class="meta m0">거래 비용(편도)</span>
         <span class="seg" id="costseg">${d.costs_bps.map((c) => `<button data-c="${c}" class="${String(c) === labCost ? "on" : ""}">${c} bps</button>`).join("")}</span></div>
       <div class="chart"><canvas id="labc"></canvas></div>
-      <div class="legend mt-2">${codes.map((c) => `<span><i style="background:var(${LAB_COLORS[c]})"></i>${esc(d.models_meta[c].name)}</span>`).join("")}<span><i style="background:var(--muted)"></i>SPY</span></div>
+      <div class="legend mt-2">${codes.map((c) => `<span><i style="background:var(${LAB_COLORS[c]})"></i>${esc(d.models_meta[c].name)}</span>`).join("")}<span><i style="background:var(--bench)"></i>SPY</span></div>
       <div class="meta">${esc(d.method)} · 유니버스 ${d.universe_size}종목 · 데이터 마지막 날 ${esc(d.panel_last)}
         · 지수 편입일 적용 ${d.membership && d.membership.pit ? `예 (${esc(d.membership.source || "")}, ${when(d.membership.retrieved_at)})` : '<b class="err">아니오</b>'}</div></div>
     <div class="panel"><h2>성과 지표 <span class="meta m0" id="costlbl">비용 ${labCost} bps</span></h2><div class="tbl-wrap"><table id="labtbl"></table></div>
@@ -109,7 +110,7 @@ async function renderLab() {
   const fill = () => {
     $("#costlbl").textContent = `비용 ${labCost} bps`;
     $("#labtbl").innerHTML = `<thead><tr><th>모델</th><th>누적</th><th>연환산</th><th>변동성</th><th>샤프</th><th>최대 낙폭</th><th>회전율</th></tr></thead><tbody>
-      ${codes.map((c) => row(d.models_meta[c].name, d.models[c][labCost], LAB_COLORS[c])).join("")}${row("SPY (매수 후 보유)", d.benchmark, "--muted")}</tbody>`;
+      ${codes.map((c) => row(d.models_meta[c].name, d.models[c][labCost], LAB_COLORS[c])).join("")}${row("SPY (매수 후 보유)", d.benchmark, "--bench")}</tbody>`;
     $("#labyr").innerHTML = `<thead><tr><th>모델</th>${yrs.map((y) => `<th>${y}</th>`).join("")}</tr></thead><tbody>
       ${codes.map((c) => `<tr><td>${esc(d.models_meta[c].name)}</td>${yrs.map((y) => `<td>${pctR((d.models[c][labCost].excess_by_year || {})[y], 1)}</td>`).join("")}</tr>`).join("")}
       <tr><td class="meta">SPY 수익률</td>${yrs.map((y) => `<td>${pctR(d.benchmark.by_year[y], 1)}</td>`).join("")}</tr></tbody>`;
@@ -128,8 +129,9 @@ function drawLab() {
   let lo = Math.min(...all), hi = Math.max(...all); const pad = (hi - lo) * 0.05 || 0.1; lo -= pad; hi += pad;
   const padR = 52, n = d.benchmark.nav.length;
   const y = (v) => 6 + (1 - (Math.log(v) - lo) / (hi - lo)) * (h - 26);
-  ctx.font = "11px -apple-system, sans-serif"; ctx.fillStyle = cssVar("--muted"); ctx.textBaseline = "middle";
-  for (let k = 0; k <= 4; k++) { const lv = lo + ((hi - lo) * k) / 4, v = Math.exp(lv), yy = y(v); ctx.strokeStyle = cssVar("--grid"); ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(w - padR, yy); ctx.stroke(); ctx.fillText(((v - 1) * 100).toFixed(0) + "%", w - padR + 6, yy); }
+  const T = vizTokens();
+  ctx.font = vizFont(11); ctx.fillStyle = T.tick; ctx.textBaseline = "middle";
+  for (let k = 0; k <= 4; k++) { const lv = lo + ((hi - lo) * k) / 4, v = Math.exp(lv), yy = y(v); ctx.strokeStyle = T.grid; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(w - padR, yy); ctx.stroke(); ctx.fillText(((v - 1) * 100).toFixed(0) + "%", w - padR + 6, yy); }
   ctx.textBaseline = "bottom"; ctx.fillText(d.benchmark.dates[0], 0, h); ctx.textAlign = "right"; ctx.fillText(d.benchmark.dates[n - 1], w - padR, h); ctx.textAlign = "left";
   series.forEach(({ c, s }) => { const m = s.nav.length; line(ctx, s.nav, (i) => (i / (m - 1)) * (w - padR), y, cssVar(LAB_COLORS[c]), c === "SPY" ? 1.3 : 1.8); });
 }

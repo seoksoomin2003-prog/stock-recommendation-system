@@ -79,29 +79,18 @@ function cmpDraw() {
   d.series.forEach((s) => s.points.forEach((v) => { lo = Math.min(lo, v); hi = Math.max(hi, v); }));
   const pad = (hi - lo) * 0.06 || 0.01; lo -= pad; hi += pad;
   const x = (i) => (n > 1 ? (i / (n - 1)) * pw : 0), y = (v) => padT + (1 - (v - lo) / (hi - lo)) * ph;
-  const grid = cssVar("--grid"), muted = cssVar("--muted"), ink = cssVar("--ink");
-  ctx.font = "11px -apple-system, sans-serif"; ctx.textBaseline = "middle";
+  const T = vizTokens(), grid = T.grid, muted = T.tick;
+  ctx.font = vizFont(11); ctx.textBaseline = "middle";
   for (let k = 0; k <= 4; k++) {
     const v = lo + ((hi - lo) * k) / 4, yy = y(v);
     ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(pw, yy); ctx.stroke();
     ctx.fillStyle = muted; ctx.fillText(`${(v * 100).toFixed(0)}%`, pw + 6, yy);
   }
   ctx.strokeStyle = muted; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y(0)); ctx.lineTo(pw, y(0)); ctx.stroke();
-  ctx.textBaseline = "top"; ctx.textAlign = "center"; ctx.fillStyle = muted;
-  const step = Math.max(1, Math.round(n / (w < 600 ? 4 : 7)));
-  for (let i = step; i < n - step / 3; i += step) ctx.fillText(d.dates[i].slice(2, 7).replace("-", "."), x(i), h - 14);
-  ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  vizDates(ctx, d.dates, x, h - 14, w, muted);
   d.series.forEach((s) => line(ctx, s.points, x, y, cmpColor(s.ticker), 2));
-  if (labels) {      // direct labels at the line ends, nudged apart, in text ink beside a colour mark
-    const ends = d.series.map((s) => ({ s, yy: y(s.points[n - 1]) })).sort((a, b) => a.yy - b.yy);
-    for (let i = 1; i < ends.length; i++) ends[i].yy = Math.max(ends[i].yy, ends[i - 1].yy + 14);
-    const floor = h - 28;                                         // 아래로 밀려 날짜 줄과 겹치거나 밖으로 나가면 위로 되밀어 올립니다 (6차 묶음 P3-9)
-    for (let i = ends.length - 1; i >= 0; i--) ends[i].yy = Math.min(ends[i].yy, i === ends.length - 1 ? floor : ends[i + 1].yy - 14);
-    ends.forEach(({ s, yy }) => {
-      ctx.fillStyle = cmpColor(s.ticker); ctx.fillRect(pw + 36, yy - 4, 8, 8);
-      ctx.fillStyle = ink; ctx.fillText(cmpName(s.ticker).slice(0, 7), pw + 48, yy);
-    });
-  }
+  // direct labels at the line ends, nudged 14 px apart and kept above the date row (6차 묶음 P3-9), in text ink beside a colour mark
+  if (labels) vizEndTags(ctx, d.series.map((s) => ({ y: y(s.points[n - 1]), color: cmpColor(s.ticker), label: cmpName(s.ticker).slice(0, 7) })), pw + 36, -Infinity, h - 28, { gap: 14, font: vizFont(11), T });
   $("#cmp-legend").innerHTML = d.series.map((s) => `<span><span class="swatch" style="background:${cmpColor(s.ticker)}"></span>${esc(cmpName(s.ticker))} ${pct(s.total_return * 100, 1)}</span>`).join("");
   cv.onmousemove = (e) => {
     const r = cv.getBoundingClientRect(), i = Math.min(n - 1, Math.max(0, Math.round(((e.clientX - r.left) / pw) * (n - 1))));
@@ -124,13 +113,10 @@ function cmpRoll() {
   cv.hidden = false;
   $("#cmp-roll-h").textContent = `${cmpName(d.rolling_base)} 기준 · 최근 ${d.rolling_window}거래일씩`;
   const { ctx, w, h } = setupCanvas(cv, isPhone() ? 200 : 240), n = d.dates.length, padR = 40, pw = w - padR, ph = h - 22;
-  const x = (i) => (n > 1 ? (i / (n - 1)) * pw : 0), y = (v) => 6 + (1 - (v + 1) / 2) * (ph - 6), grid = cssVar("--grid"), muted = cssVar("--muted");
-  ctx.font = "11px -apple-system, sans-serif"; ctx.textBaseline = "middle";
+  const T = vizTokens(), x = (i) => (n > 1 ? (i / (n - 1)) * pw : 0), y = (v) => 6 + (1 - (v + 1) / 2) * (ph - 6), grid = T.grid, muted = T.tick;
+  ctx.font = vizFont(11); ctx.textBaseline = "middle";
   [-1, -0.5, 0, 0.5, 1].forEach((v) => { ctx.strokeStyle = v === 0 ? muted : grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y(v)); ctx.lineTo(pw, y(v)); ctx.stroke(); ctx.fillStyle = muted; ctx.fillText(v.toFixed(1), pw + 6, y(v)); });
-  ctx.textBaseline = "top"; ctx.textAlign = "center"; ctx.fillStyle = muted;
-  const step = Math.max(1, Math.round(n / (w < 600 ? 4 : 7)));
-  for (let i = step; i < n - step / 3; i += step) ctx.fillText(d.dates[i].slice(2, 7).replace("-", "."), x(i), h - 14);
-  ctx.textAlign = "left";
+  vizDates(ctx, d.dates, x, h - 14, w, muted);
   d.rolling.forEach((r) => line(ctx, r.points, x, y, cmpColor(r.ticker), 2));
   const last = (r) => [...r.points].reverse().find(isNum);
   $("#cmp-roll-legend").innerHTML = d.rolling.map((r) => `<span><span class="swatch" style="background:${cmpColor(r.ticker)}"></span>${esc(cmpName(r.ticker))} 마지막 ${fmt(last(r), 2)}</span>`).join("");

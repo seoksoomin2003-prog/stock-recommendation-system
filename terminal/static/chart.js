@@ -22,7 +22,8 @@ function chaSave() {
   try { localStorage.setItem(CHA_KEY, JSON.stringify({ range: cha.range, type: cha.type, ma: cha.ma, bb: cha.bb, sig: cha.sig, ticker: cha.ticker })); } catch (e) { /* not remembered */ }
 }
 const chaName = (t) => (typeof CMP_INDEX !== "undefined" && CMP_INDEX[t]) || t;
-const chaMaColor = (n) => cssVar(`--ma${n}`) || cssVar("--muted");
+// Per-market MA colours (visualization spec 2.3: Korean screens move 50 to aqua and 120 to grey) come from the tokens.
+const chaMaColor = (n, T) => (T ? T.ma[n] : cssVar(`--ma${n}`)) || (T ? T.muted : cssVar("--muted"));
 function chaTicker() {
   const mk = state.market;
   if (cha.ticker[mk]) return cha.ticker[mk];
@@ -96,7 +97,7 @@ function chaText(d) {
     <div class="meta">마지막 일봉(${esc(bars[bars.length - 1].date)}) 기준입니다. 골든·데드크로스는 ${esc(s.cross_pair[state.market].join("일선과 "))}일선으로 봅니다(이동평균 선택과 상관없음).</div>`;
   const sig = d.signals.slice().reverse();
   $("#cha-sig-n").textContent = `이 기간 ${d.signal_count}건`;
-  const row = (g) => `<tr><td>${esc(g.date)}</td><td class="l" title="${esc(g.text)}"><span class="${g.side === "up" ? "up" : g.side === "down" ? "down" : ""}">${g.side === "up" ? "▲" : g.side === "down" ? "▼" : "●"}</span> ${esc(g.label)}</td>
+  const row = (g) => `<tr><td>${esc(g.date)}</td><td class="l" title="${esc(g.text)}"><span aria-hidden="true">${g.side === "up" ? "▲" : g.side === "down" ? "▼" : "●"}</span> ${esc(g.label)}</td>
     <td class="num">${fmt(g.close, isKR() ? 0 : 2)}</td></tr>`;
   const head = '<thead><tr><th>날짜</th><th class="l">신호</th><th>그날 종가</th></tr></thead>';
   const kinds = [...new Map(d.signals.map((g) => [g.kind, g])).values()];
@@ -115,7 +116,9 @@ function chaDraw() {
   const P = setupCanvas(cv, phone ? 300 : 400), V = setupCanvas($("#cha-vol"), phone ? 70 : 90), R = setupCanvas($("#cha-rsi"), phone ? 80 : 100), M = setupCanvas($("#cha-macd"), phone ? 90 : 110);
   const pw = P.w - padR, bw = pw / n, x = (i) => i * bw + bw / 2;
   cha.x = { bw, pw, n };
-  const grid = cssVar("--grid"), muted = cssVar("--muted"), up = cssVar("--up"), dn = cssVar("--down"), ink = cssVar("--ink"), acc = cssVar("--accent");
+  // colours through vizTokens (stage 2).  Signals are untested classic rules, not price moves: ink triangles, the shape gives the side;
+  // the RSI and MACD lines are ink (the accent is not a data series); the MACD bars are the neutral bar colour, their side is the sign.
+  const T = vizTokens(), grid = T.grid, muted = T.tick, up = T.up, dn = T.down, ink = T.ink;
   const mas = (d.ma || []).map(String);
   // price pane
   let lo = Infinity, hi = -Infinity;
@@ -149,11 +152,13 @@ function chaDraw() {
     else if (cha.type === "candle") ctx.fillRect(x(i) - bw * 0.35, py(Math.max(o, b.close)), Math.max(1, bw * 0.7), Math.max(1, Math.abs(py(o) - py(b.close))));
     else { ctx.beginPath(); ctx.moveTo(x(i) - bw * 0.4, py(o)); ctx.lineTo(x(i), py(o)); ctx.moveTo(x(i), py(b.close)); ctx.lineTo(x(i) + bw * 0.4, py(b.close)); ctx.stroke(); }
   });
-  mas.forEach((k) => line(ctx, bars.map((b) => b.ma[k]), x, py, chaMaColor(k), 1.4));
+  mas.forEach((k) => line(ctx, bars.map((b) => b.ma[k]), x, py, chaMaColor(k, T), 1.4));
+  vizEndTags(ctx, mas.map((k) => { let i = n - 1; while (i >= 0 && !isNum(bars[i].ma[k])) i--; return i < 0 ? null : { y: py(bars[i].ma[k]), color: chaMaColor(k, T), label: k, dot: [x(i), py(bars[i].ma[k])] }; }).filter(Boolean),
+    pw + 4, 12, ph - 6, { box: true, T });
   if (cha.sig) d.signals.forEach((g) => {
     if (!CHA_ON_PRICE.has(g.kind) || (!cha.bb && g.kind.startsWith("BB_")) || g.i < 0 || g.i >= n) return;      // band breaks go with the band
     const b = bars[g.i], upSide = g.side === "up", yy = upSide ? py(isNum(b.low) ? b.low : b.close) + 9 : py(isNum(b.high) ? b.high : b.close) - 9;
-    chaMark(ctx, x(g.i), yy, upSide, upSide ? up : dn);
+    chaMark(ctx, x(g.i), yy, upSide, ink);
   });
   // volume pane
   let vmax = 0; bars.forEach((b) => { if (isNum(b.volume)) vmax = Math.max(vmax, b.volume); });
@@ -165,39 +170,34 @@ function chaDraw() {
     V.ctx.fillRect(i * bw + bw * 0.1, vy(b.volume), Math.max(1, bw * 0.8), V.h - 2 - vy(b.volume)); V.ctx.globalAlpha = 1;
   });
   line(V.ctx, bars.map((b) => b.vol_avg), x, vy, ink, 1.2);
-  if (cha.sig) d.signals.forEach((g) => { if (g.kind === "VOLUME_SPIKE" && g.i >= 0 && g.i < n) { V.ctx.fillStyle = cssVar("--warn"); V.ctx.beginPath(); V.ctx.arc(x(g.i), Math.max(4, vy(bars[g.i].volume) - 4), 3, 0, Math.PI * 2); V.ctx.fill(); } });
+  if (cha.sig) d.signals.forEach((g) => { if (g.kind === "VOLUME_SPIKE" && g.i >= 0 && g.i < n) { V.ctx.fillStyle = ink; V.ctx.strokeStyle = T.surface; V.ctx.lineWidth = 2; V.ctx.beginPath(); V.ctx.arc(x(g.i), Math.max(6, vy(bars[g.i].volume) - 6), 4, 0, Math.PI * 2); V.ctx.fill(); V.ctx.stroke(); } });
   // RSI pane
   const s = d.settings, ry = (v) => 3 + (1 - v / 100) * (R.h - 6);
   R.ctx.fillStyle = muted; R.ctx.globalAlpha = 0.07; R.ctx.fillRect(0, ry(s.rsi.high), pw, ry(s.rsi.low) - ry(s.rsi.high)); R.ctx.globalAlpha = 1;
   chaGrid(R.ctx, pw, 0, 100, ry, grid, muted, (v) => v.toFixed(0), 0, [s.rsi.low, 50, s.rsi.high]);
-  line(R.ctx, bars.map((b) => b.rsi), x, ry, acc, 1.4);
-  if (cha.sig) d.signals.forEach((g) => { if (g.kind.startsWith("RSI_") && g.i >= 0 && g.i < n && isNum(bars[g.i].rsi)) chaMark(R.ctx, x(g.i), ry(bars[g.i].rsi) + (g.side === "up" ? 8 : -8), g.side === "up", g.side === "up" ? up : dn); });
+  line(R.ctx, bars.map((b) => b.rsi), x, ry, ink, 1.4);
+  if (cha.sig) d.signals.forEach((g) => { if (g.kind.startsWith("RSI_") && g.i >= 0 && g.i < n && isNum(bars[g.i].rsi)) chaMark(R.ctx, x(g.i), ry(bars[g.i].rsi) + (g.side === "up" ? 8 : -8), g.side === "up", ink); });
   // MACD pane
   let mlo = 0, mhi = 0; bars.forEach((b) => [b.macd, b.macd_signal, b.macd_hist].forEach((v) => { if (isNum(v)) { mlo = Math.min(mlo, v); mhi = Math.max(mhi, v); } }));
   const mpad = (mhi - mlo) * 0.08 || 1, my = (v) => 4 + (1 - (v - (mlo - mpad)) / (mhi - mlo + 2 * mpad)) * (M.h - 22);
   chaGrid(M.ctx, pw, mlo - mpad, mhi + mpad, my, grid, muted, (v) => v.toLocaleString("ko-KR", { maximumFractionDigits: Math.abs(v) >= 10 ? 0 : 2 }), 2, [0]);
-  bars.forEach((b, i) => { if (!isNum(b.macd_hist)) return; M.ctx.fillStyle = b.macd_hist >= 0 ? up : dn; M.ctx.globalAlpha = 0.45; const y0 = my(0), y1 = my(b.macd_hist); M.ctx.fillRect(i * bw + bw * 0.15, Math.min(y0, y1), Math.max(1, bw * 0.7), Math.max(1, Math.abs(y1 - y0))); M.ctx.globalAlpha = 1; });
-  line(M.ctx, bars.map((b) => b.macd), x, my, acc, 1.3); line(M.ctx, bars.map((b) => b.macd_signal), x, my, chaMaColor(20), 1.3);
-  if (cha.sig) d.signals.forEach((g) => { if (g.kind.startsWith("MACD_") && g.i >= 0 && g.i < n && isNum(bars[g.i].macd)) chaMark(M.ctx, x(g.i), my(bars[g.i].macd) + (g.side === "up" ? 8 : -8), g.side === "up", g.side === "up" ? up : dn); });
+  bars.forEach((b, i) => { if (!isNum(b.macd_hist)) return; M.ctx.fillStyle = T.bar; M.ctx.globalAlpha = 0.45; const y0 = my(0), y1 = my(b.macd_hist); M.ctx.fillRect(i * bw + bw * 0.15, Math.min(y0, y1), Math.max(1, bw * 0.7), Math.max(1, Math.abs(y1 - y0))); M.ctx.globalAlpha = 1; });
+  line(M.ctx, bars.map((b) => b.macd), x, my, ink, 1.3); line(M.ctx, bars.map((b) => b.macd_signal), x, my, chaMaColor(20, T), 1.3);
+  if (cha.sig) d.signals.forEach((g) => { if (g.kind.startsWith("MACD_") && g.i >= 0 && g.i < n && isNum(bars[g.i].macd)) chaMark(M.ctx, x(g.i), my(bars[g.i].macd) + (g.side === "up" ? 8 : -8), g.side === "up", ink); });
   chaDates(M.ctx, bars, x, M.h - 14, M.w, muted);
   // legend
-  $("#cha-legend").innerHTML = [...mas.map((k) => `<span><i style="background:${chaMaColor(k)}"></i>${k}일선</span>`),
+  $("#cha-legend").innerHTML = [...mas.map((k) => `<span><i style="background:${chaMaColor(k, T)}"></i>${k}일선</span>`),
     cha.bb ? `<span><i style="background:${muted}"></i>볼린저밴드(${s.bollinger.n}일, ±${s.bollinger.k}표준편차)</span>` : "",
-    `<span><i style="background:${ink}"></i>거래량 ${s.volume.n}일 평균</span>`, `<span><i style="background:${acc}"></i>RSI·MACD선</span>`, `<span><i style="background:${chaMaColor(20)}"></i>MACD 시그널</span>`,
-    cha.sig ? `<span><b class="up">▲</b> 오름 쪽 · <b class="down">▼</b> 내림 쪽 신호 · <b class="c-warn">●</b> 거래량 급증 (모두 검증 안 됨)</span>` : ""].join("");
+    `<span><i style="background:${ink}"></i>거래량 ${s.volume.n}일 평균</span>`, `<span><i style="background:${ink}"></i>RSI·MACD선</span>`, `<span><i style="background:${chaMaColor(20, T)}"></i>MACD 시그널</span>`,
+    cha.sig ? `<span><b>▲</b> 오름 쪽 · <b>▼</b> 내림 쪽 신호 · <b>●</b> 거래량 급증 (모두 검증 안 됨)</span>` : ""].join("");
   chaHover();
 }
 function chaGrid(ctx, pw, lo, hi, y, grid, muted, label, rows = 4, at = null) {
-  ctx.font = "11px -apple-system, sans-serif"; ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.lineWidth = 1;
+  ctx.font = vizFont(11); ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.lineWidth = 1;
   const vals = at || Array.from({ length: rows + 1 }, (_, k) => lo + ((hi - lo) * k) / rows);
   vals.forEach((v) => { const yy = y(v); ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(0, yy); ctx.lineTo(pw, yy); ctx.stroke(); ctx.fillStyle = muted; ctx.fillText(label(v), pw + 6, yy); });
 }
-function chaDates(ctx, bars, x, yy, w, muted) {
-  const n = bars.length, step = Math.max(1, Math.round(n / (w < 600 ? 4 : 7))), long = n > 600;
-  ctx.textBaseline = "top"; ctx.textAlign = "center"; ctx.fillStyle = muted; ctx.font = "11px -apple-system, sans-serif";
-  for (let i = step; i < n - step / 3; i += step) ctx.fillText(long ? bars[i].date.slice(0, 7) : bars[i].date.slice(2, 7).replace("-", "."), x(i), yy);
-  ctx.textAlign = "left";
-}
+function chaDates(ctx, bars, x, yy, w, muted) { vizDates(ctx, bars.map((b) => b.date), x, yy, w, muted); }
 function chaMark(ctx, x, y, upSide, col) {
   ctx.fillStyle = col; ctx.beginPath();
   if (upSide) { ctx.moveTo(x, y - 5); ctx.lineTo(x - 4.5, y + 3); ctx.lineTo(x + 4.5, y + 3); } else { ctx.moveTo(x, y + 5); ctx.lineTo(x - 4.5, y - 3); ctx.lineTo(x + 4.5, y - 3); }
@@ -216,7 +216,7 @@ function chaHover() {
     const tip = $("#tip"); tip.hidden = false;
     tip.innerHTML = `<b>${esc(b.date)}</b><br>시 ${fmt(b.open, dg)} 고 ${fmt(b.high, dg)} 저 ${fmt(b.low, dg)} 종 ${fmt(b.close, dg)}<br>
       거래량 ${big(b.volume, "")}${isNum(b.volume) && isNum(b.vol_avg) && b.vol_avg ? ` (20일 평균의 ${(b.volume / b.vol_avg).toFixed(1)}배)` : ""}<br>
-      ${(d.ma || []).map((k) => `<span class="swatch" style="background:${chaMaColor(k)}"></span>${k}일 ${fmt(b.ma[String(k)], dg)}`).join(" · ")}<br>
+      ${(d.ma || []).map((k) => `<i class="key-line" style="background:${chaMaColor(k)}"></i>${k}일 ${fmt(b.ma[String(k)], dg)}`).join(" · ")}<br>
       볼린저 ${fmt(b.bb_low, dg)} ~ ${fmt(b.bb_up, dg)} · RSI ${fmt(b.rsi, 1)} · MACD ${fmt(b.macd, 2)} / 시그널 ${fmt(b.macd_signal, 2)}
       ${sigs.length ? `<br>${sigs.map((s) => `${s.side === "up" ? "▲" : s.side === "down" ? "▼" : "●"} ${esc(s.label)}`).join(" · ")}` : ""}`;
     const tx = e.clientX + 14 + tip.offsetWidth > window.innerWidth ? e.clientX - tip.offsetWidth - 14 : e.clientX + 14;

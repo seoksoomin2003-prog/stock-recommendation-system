@@ -34,7 +34,7 @@ async function phonePaint(d) {
     try { phonePaint(await fn(b)); } catch (e) { b.disabled = false; notify(errKo(e)); }
   }; });
   act("#phoneon", () => phonePost("/api/phone/switch", { on: true }));
-  act("#phoneoff", () => (confirm("휴대폰 연결을 끕니다. 연결된 기기도 모두 끊깁니다.") ? phonePost("/api/phone/switch", { on: false }) : api("/api/phone/status")));
+  act("#phoneoff", async () => ((await uiConfirm("휴대폰 연결을 끕니다. 연결된 기기도 모두 끊깁니다.", { okLabel: "연결 끄기", danger: true })) ? phonePost("/api/phone/switch", { on: false }) : api("/api/phone/status")));
   act("#phonecode", () => phonePost("/api/phone/code"));
   act(".phone-unpair", (b) => phonePost("/api/phone/unpair", { id: b.dataset.id }));
   const x = $("#phoneclose");

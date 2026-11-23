@@ -33,12 +33,15 @@ function rgbOf(c) {
 }
 const mixRgb = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
 const lumOf = ([r, g, b]) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-function heatColor(it) {
-  const dark = lumOf(rgbOf(cssVar("--panel"))) < 0.5, mid = dark ? [58, 63, 71] : [205, 209, 215];
+// Which theme is showing (the colour-blind pair has a shade per theme).  Read from the page's theme mark, not from a colour.
+const heatDark = () => document.documentElement.dataset.theme === "dark";
+// Score mode is one neutral ramp (stage 2, visualization spec section 8 item 8): blue is the falling colour on Korean screens.
+function heatColor(it, T = vizTokens()) {
+  const dark = heatDark(), mid = rgbOf(T.heatMid);
   if (heat.mode === "score") {
     if (!isNum(it.score)) return null;
-    const t = Math.min(1, Math.max(0, (it.score - 40) / 40));                                 // 40 or lower lightest, 80 or higher darkest
-    return mixRgb(dark ? [40, 52, 74] : [222, 232, 250], rgbOf(dark ? "#6d9bff" : "#1d4fc4"), t);
+    const t = Math.min(1, Math.max(0, (it.score - 40) / 40));                                 // 40 or lower at one end, 80 or higher at the other
+    return mixRgb(rgbOf(T.heatLo), rgbOf(T.heatHi), t);
   }
   const v = it.change[heat.mode];
   if (!isNum(v)) return null;
@@ -57,7 +60,7 @@ async function renderMap() {
   const el = $("#tab-map");
   el.innerHTML = `<div class="panel"><h2>시장 히트맵 <span class="seg" id="heat-mode">${Object.entries(HEAT_MODES).map(([k, [n]]) => `<button data-k="${k}" class="${k === heat.mode ? "on" : ""}">${n}</button>`).join("")}</span>
       <span class="seg" id="heat-strat">${[["SWING", "스윙"], ["LONG_TERM", "장기"]].map(([k, n]) => `<button data-k="${k}" class="${k === heat.strategy ? "on" : ""}">${n} 점수</button>`).join("")}</span>
-      <span class="seg" id="heat-pal" title="색: 기본은 시장의 상승·하락 색, 파랑·주황은 색각 친화 색입니다">${[["std", "기본 색"], ["cb", "파랑·주황"]].map(([k, n]) => `<button data-k="${k}" class="${k === heat.palette ? "on" : ""}">${n}</button>`).join("")}</span></h2>
+      <span class="seg" id="heat-pal" title="${isKR() ? "색: 기본은 한국 색(빨강 오름·파랑 내림)이고, 이미 색각 친화입니다. 파랑·주황은 미국 화면용 색이라 여기서 고르면 파랑이 오름을 뜻합니다." : "색: 기본은 시장의 상승·하락 색, 파랑·주황은 색각 친화 색입니다"}">${[["std", "기본 색"], ["cb", "파랑·주황"]].map(([k, n]) => `<button data-k="${k}" class="${k === heat.palette ? "on" : ""}">${n}</button>`).join("")}</span></h2>
     <canvas id="heat-cv" class="chart" aria-label="시장 히트맵"></canvas><div class="legend" id="heat-legend"></div><div id="heat-meta">${loading}</div></div>
     <div id="map-more"></div>`;
   const pick = (id, key) => ($(id).onclick = (e) => {
@@ -90,22 +93,23 @@ function heatDraw() {
   const groups = {};
   d.items.filter((i) => isNum(i.market_cap)).forEach((i) => { const k = i.sector || "업종 없음"; (groups[k] = groups[k] || []).push(i); });
   const sectors = Object.entries(groups).map(([name, its]) => ({ name, its, value: its.reduce((s, i) => s + i.market_cap, 0) }));
-  const panel = cssVar("--panel"), ink = cssVar("--ink"), muted = cssVar("--muted"), empty = cssVar("--chip");
+  const T = vizTokens(), panel = T.surface, ink = T.ink, muted = T.tick;
   ctx.fillStyle = panel; ctx.fillRect(0, 0, w, h);
   heat.rects = [];
-  ctx.font = "11px -apple-system, sans-serif"; ctx.textBaseline = "top";
+  ctx.font = vizFont(11); ctx.textBaseline = "top";
   squarify(sectors, 0, 0, w, h).forEach((s) => {
     const head = s.h > 40 && s.w > 50 ? 14 : 0;
     if (head) { ctx.fillStyle = muted; ctx.fillText(sectorKo(s.item.name).slice(0, Math.max(3, Math.floor(s.w / 7))), s.x + 3, s.y + 1); }
     squarify(s.item.its.map((i) => ({ ...i, value: i.market_cap })), s.x, s.y + head, s.w, s.h - head).forEach((r) => {
-      const col = heatColor(r.item);
-      ctx.fillStyle = col ? `rgb(${col.join(",")})` : empty;
+      const col = heatColor(r.item, T);
+      ctx.fillStyle = col ? `rgb(${col.join(",")})` : T.missing;
       ctx.fillRect(r.x + 1, r.y + 1, Math.max(0, r.w - 2), Math.max(0, r.h - 2));          // a 2px surface gap between tiles
+      if (!col && r.w > 4 && r.h > 4) { ctx.strokeStyle = T.missingEdge; ctx.lineWidth = 1; ctx.strokeRect(r.x + 1.5, r.y + 1.5, r.w - 3, r.h - 3); }   // no value: an empty tile, never a low score or a flat 0%
       heat.rects.push(r);
       if (r.w > 34 && r.h > 18) {
         ctx.fillStyle = col && lumOf(col) < 0.55 ? "#ffffff" : col ? "#14171c" : ink;
         const label = isKR() ? (r.item.name || r.item.ticker) : r.item.ticker;
-        ctx.font = `${r.w > 90 && r.h > 40 ? 600 : 400} ${r.w > 90 && r.h > 40 ? 12 : 10}px -apple-system, sans-serif`;
+        ctx.font = vizFont(r.w > 90 && r.h > 40 ? 12 : 10, r.w > 90 && r.h > 40 ? 600 : 400);
         ctx.fillText(label.slice(0, Math.max(2, Math.floor(r.w / (isKR() ? 11 : 7)))), r.x + 4, r.y + 4);
         const v = heat.mode === "score" ? r.item.score : r.item.change[heat.mode];
         if (r.h > 34 && isNum(v)) ctx.fillText(heat.mode === "score" ? v.toFixed(0) : `${v >= 0 ? "+" : ""}${(v * 100).toFixed(1)}%`, r.x + 4, r.y + 19);
@@ -114,9 +118,11 @@ function heatDraw() {
     ctx.strokeStyle = panel; ctx.lineWidth = 2; ctx.strokeRect(s.x, s.y, s.w, s.h);
   });
   const span = HEAT_MODES[heat.mode][1];
+  // legend: a gradient key with plain text (stage 2, visualization spec section 8 item 16): no text in a series colour
+  const none = '<span><i class="heat-none"></i>테두리만 있는 칸은 값 없음</span>';
   $("#heat-legend").innerHTML = heat.mode === "score"
-    ? `<span>타일 크기: 시가총액 · 색: ${heat.strategy === "SWING" ? "스윙" : "장기"} 점수 (40 이하 옅게 → 80 이상 진하게, 회색은 점수 없음)</span>`
-    : `<span>타일 크기: 시가총액 · 색: ${HEAT_MODES[heat.mode][0]} 등락 (<span style="color:${heatSide(false, lumOf(rgbOf(cssVar("--panel"))) < 0.5)}">−${(span * 100).toFixed(0)}%</span> ~ 0 회색 ~ <span style="color:${heatSide(true, lumOf(rgbOf(cssVar("--panel"))) < 0.5)}">+${(span * 100).toFixed(0)}%</span>, 그 너머는 같은 색)</span>`;
+    ? `<span>타일 크기: 시가총액 · 색: ${heat.strategy === "SWING" ? "스윙" : "장기"} 점수 40 이하<i class="heat-key seq"></i>80 이상</span>${none}`
+    : `<span>타일 크기: 시가총액 · 색: ${HEAT_MODES[heat.mode][0]} 등락 −${(span * 100).toFixed(0)}%<i class="heat-key chg" style="--hk-down:${heatSide(false, heatDark())};--hk-up:${heatSide(true, heatDark())}"></i>+${(span * 100).toFixed(0)}% (가운데 회색은 0, 그 너머는 같은 색)</span>${none}`;
   cv.onmousemove = (e) => {
     const b = cv.getBoundingClientRect(), mx = e.clientX - b.left, my = e.clientY - b.top;
     const r = heat.rects.find((q) => mx >= q.x && mx < q.x + q.w && my >= q.y && my < q.y + q.h), tip = $("#tip");

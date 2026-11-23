@@ -78,8 +78,9 @@ function asstTiles(t) {
 const ASST_STYLE = { SWING: "스윙", LONG_TERM: "장기" };
 function asstCands(c, note) {
   if (!c || !c.styles) return "";
-  const why = (r) => (r.plus ? `<div class="up">▲ ${esc(r.plus.label)} +${r.plus.points.toFixed(1)}</div>` : "") + (r.minus ? `<div class="down">▼ ${esc(r.minus.label)} −${Math.abs(r.minus.points).toFixed(1)}</div>` : "") || DASH;
-  const moved = (r) => (isNum(r.prev) ? ` <small class="${r.score - r.prev >= 1 ? "up" : r.score - r.prev <= -1 ? "down" : "flat"}" title="직전 기록 거래일과의 차이(1점 미만은 회색)">${r.score - r.prev >= 0 ? "+" : "−"}${Math.abs(r.score - r.prev).toFixed(1)}</small>` : "");
+  // points and score changes are not price moves (stage 2, visualization spec section 8 item 2): ink with ▲▼ and a sign, grey under one point
+  const why = (r) => (r.plus ? `<div class="pts">▲ ${esc(r.plus.label)} +${r.plus.points.toFixed(1)}</div>` : "") + (r.minus ? `<div class="pts">▼ ${esc(r.minus.label)} −${Math.abs(r.minus.points).toFixed(1)}</div>` : "") || DASH;
+  const moved = (r) => (isNum(r.prev) ? ` <small class="${Math.abs(r.score - r.prev) >= 1 ? "pts" : "flat"}" title="직전 기록 거래일과의 차이(1점 미만은 회색)">${r.score - r.prev >= 0 ? "+" : "−"}${Math.abs(r.score - r.prev).toFixed(1)}</small>` : "");
   const one = (k) => {
     const s = c.styles[k];
     if (!s) return "";

@@ -160,6 +160,8 @@ def test_heatmap_colour_choice_and_idle_toggle():
 
 # ---------------------------------------------------------------- P3-9 compare labels stay inside; FC-1 axis has middle ticks
 def test_compare_labels_stay_inside_and_the_range_axis_has_five_ticks():
-    assert "const floor = h - 28;" in CMP and "Math.min(ends[i].yy" in CMP
+    # workstation stage 2: the compare end labels use the shared routine (vizEndTags), still kept above the date row at h - 28
+    assert "if (labels) vizEndTags(ctx, d.series.map(" in CMP and "pw + 36, -Infinity, h - 28, { gap: 14" in CMP
+    assert "Math.min(tags[i].yy, i === tags.length - 1 ? bottom" in body(APP, "function vizEndTags(")
     axis = FC[FC.index('<div class="fc-axis">'):FC.index("</d", FC.index('<div class="fc-axis">'))]
     assert axis.count("<span>") == 5 and "기준 종가 0%" in axis

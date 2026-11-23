@@ -110,7 +110,7 @@ state.tab = "today"; state.market = "US"; paintColorRule(); seen.push(ds.color |
     assert show.index("paintColorRule();") < show.index("RENDER[tab]()") and "paintColorRule();" in body(APP, "function paintMarket() {")
 
 
-def test_text_on_the_accent_passes_and_a_selected_segment_is_a_neutral_inversion():
+def test_text_on_the_accent_passes_and_a_selected_segment_is_a_raised_neutral():
     light = _tokens(CSS[:CSS.index(':root[data-theme="dark"]')])
     dark = _tokens(CSS[CSS.index(':root[data-theme="dark"]'):CSS.index("* { box-sizing")])
     # workstation redesign 2026-11-24: filled accents use --accent-fill (DESIGN_SYSTEM_SPECIFICATION.md section 2); --accent stays for text and lines
@@ -118,8 +118,11 @@ def test_text_on_the_accent_passes_and_a_selected_segment_is_a_neutral_inversion
     for sel in (".search button {", ".btn-primary {", ".g-A {"):
         rule = CSS[CSS.index(sel):CSS.index("}", CSS.index(sel))]
         assert "color: var(--on-accent)" in rule and "#fff" not in rule and "background: var(--accent-fill)" in rule
-    assert ".seg button.on { background: var(--ink); color: var(--panel);" in CSS
-    assert _contrast(dark["--ink"], dark["--panel"]) >= 7 and _contrast(light["--ink"], light["--panel"]) >= 7
+    # workstation stage 2 (2026-11-24, chief decision from DESIGN_SYSTEM_SPECIFICATION.md 11.3): the on segment is a raised neutral
+    # surface with a 3:1 edge and bold text instead of a full inversion, which in the dark default made bright blocks in every view row
+    assert ".seg button.on { background: var(--seg-on); color: var(--ink); font-weight: 600; box-shadow: inset 0 0 0 1px var(--line-strong); }" in CSS
+    for t in (light, dark):
+        assert _contrast(t["--ink"], t["--seg-on"]) >= 7 and _contrast(t["--line-strong"], t["--seg-on"]) >= 3
 
 
 # ---------------------------------------------------------------- P1-1 no certification words on unvalidated outputs
@@ -179,7 +182,8 @@ console.log(JSON.stringify([qsfInt(69.8), qsfInt(70.2), qsfNear(69.8, E) !== "",
     assert node(js) == ["70", "70", True, True, "", "", ""]
     row = body(QSF, "function qsfRankRow(")
     assert "<b>${qsfInt(r.score)}</b>${qsfNear(r.score, edges)}" in row and "notes && notes.band_edges, common)" in QSF
-    assert 'v >= 1 ? "up" : v <= -1 ? "down" : "flat"' in body(QSF, "function qsfDelta(") and "점수 변화(전일)</th>" in QSF
+    # stage 2 (visualization spec section 8 item 2): a score change is ink with its sign, grey under one point, never a price colour
+    assert 'Math.abs(v) >= 1 ? "pts" : "flat"' in body(QSF, "function qsfDelta(") and '"up"' not in body(QSF, "function qsfDelta(") and "점수 변화(전일)</th>" in QSF
     assert "[80" not in QSF and "70, 67" not in QSF          # the edges are not kept in the page
 
 
@@ -188,4 +192,5 @@ def test_light_theme_green_and_amber_pass_on_the_chip_and_kr_moves_the_50_day_li
     light = _tokens(CSS[:CSS.index(':root[data-theme="dark"]')])
     for k in ("--up-intl", "--ok", "--down-intl", "--up-kr", "--down-kr", "--warn"):
         assert _contrast(light[k], light["--chip"]) >= 4.5 and _contrast(light[k], light["--panel"]) >= 4.5, k
-    assert ':root[data-color="kr"] { --sma50: var(--ma60); }' in CSS
+    # stage 2: the per-market MA map of the visualization spec (2.3) moves --ma50 itself, so the chart-analysis lines follow too
+    assert ':root[data-color="kr"] { --ma50: var(--ma60); --ma120: var(--ma120-kr); }' in CSS and "--sma50: var(--ma50);" in CSS

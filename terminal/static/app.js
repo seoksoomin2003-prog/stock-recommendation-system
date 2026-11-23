@@ -87,18 +87,20 @@ function when(iso) {
 function meta(source, fetched, extra = "") {
   return `<div class="meta">출처: ${esc(source)}${fetched ? ` · 받아온 시각 ${when(fetched)}` : ""}${extra ? " · " + extra : ""}</div>`;
 }
-// 화면 안 알림 (4차 묶음 P3-5): 브라우저 기본 경고창 대신 화면 아래에 잠깐 띄웁니다.  되돌릴 수 없는 동작의 확인(confirm)은 그대로입니다.
+// 화면 안 알림 (4차 묶음 P3-5): 브라우저 기본 경고창 대신 화면 아래에 잠깐 띄웁니다.  되돌릴 수 없는 동작의 확인은 화면 안 확인 창(uiConfirm)이 합니다.
+// act = { label, run, ms }: 알림에 단추 하나를 더합니다(성향을 바꾼 뒤 '되돌리기', 작업 화면 개편 2단계).  누르면 알림을 닫고 run()을 부릅니다.
 let toastTimer = null;
-function notify(text, tone = "err") {
+function notify(text, tone = "err", act = null) {
   const el = $("#toast");
   if (!el) return;
   el.className = `toast ${tone}`;
   el.setAttribute("role", tone === "err" ? "alert" : "status");
-  el.innerHTML = `<span>${esc(text)}</span><button type="button" class="ghost">닫기</button>`;
+  el.innerHTML = `<span>${esc(text)}</span>${act ? `<button type="button" class="toast-act">${esc(act.label)}</button>` : ""}<button type="button" class="ghost">닫기</button>`;
   el.hidden = false;
-  el.querySelector("button").onclick = () => { el.hidden = true; };
+  el.querySelector("button.ghost").onclick = () => { el.hidden = true; };
+  if (act) el.querySelector(".toast-act").onclick = () => { el.hidden = true; clearTimeout(toastTimer); act.run(); };
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.hidden = true; }, tone === "err" ? 9000 : 5000);
+  toastTimer = setTimeout(() => { el.hidden = true; }, act && act.ms ? act.ms : tone === "err" ? 9000 : 5000);
 }
 // 서버가 응답하지 않으면 화면 위에 알린다.  요청 실패가 '기록 없음'으로 읽히지 않게 하려는 것이다.
 let netTimer = null;
@@ -200,7 +202,7 @@ function sparkRange(vals) {
   const v = (vals || []).filter(isNum);
   if (v.length < 2) return "";
   const lo = Math.min(...v), hi = Math.max(...v);
-  return lo > 0 ? `<span class="nw" title="그래프(최근 ${v.length}거래일 종가)의 최저와 최고의 차이입니다. 점선은 그래프 첫날 값입니다.">그래프 폭 ${((hi / lo - 1) * 100).toFixed(1)}%</span>` : "";
+  return lo > 0 ? `<span class="nw" title="그래프(최근 ${v.length}거래일 종가)의 최저와 최고의 차이입니다. 가는 가로선은 그래프 첫날 값입니다.">그래프 폭 ${((hi / lo - 1) * 100).toFixed(1)}%</span>` : "";
 }
 // 가격 축 눈금 (4차 묶음 P2-6): 1·2·2.5·5 × 10ⁿ 간격의 값에 천 단위 쉼표.  소수 자리는 간격에 맞춥니다.
 function niceTicks(lo, hi, n = 5) {
@@ -213,20 +215,105 @@ function niceTicks(lo, hi, n = 5) {
   return { ticks, digits: Math.max(0, -e + (Math.abs(step / 10 ** e - 2.5) < 1e-9 ? 1 : 0)) };
 }
 const tickLabel = (v, digits) => v.toLocaleString("ko-KR", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+// ------------------------------------------------------------------ chart foundation (FINANCIAL_VISUALIZATION_SPECIFICATION.md section 1)
+// vizTokens(): every chart colour, read once per draw from the page's tokens.  Call it inside each draw, never at load, so a theme
+// toggle (applyTheme -> redrawAll) or a market switch (data-color: Korean red up / blue down) paints the current values.
+const VIZ_MA = [5, 10, 20, 50, 60, 120, 200];
+function vizTokens() {
+  const cs = getComputedStyle(document.documentElement), v = (n) => cs.getPropertyValue(n).trim();
+  return { surface: v("--viz-surface") || v("--panel"), grid: v("--grid"), axis: v("--axis"), tick: v("--tick") || v("--muted"), ink: v("--ink"), ink2: v("--ink-2"),
+    muted: v("--muted"), cross: v("--cross"), up: v("--up"), down: v("--down"), bench: v("--bench") || v("--muted"), bar: v("--viz-bar"), track: v("--viz-track"),
+    missing: v("--viz-missing"), missingEdge: v("--viz-missing-edge"), s: [1, 2, 3, 4, 5, 6, 7, 8].map((k) => v(`--s${k}`)),
+    ma: Object.fromEntries(VIZ_MA.map((k) => [k, v(`--ma${k}`)])), warn: v("--warn"), bad: v("--bad"), ok: v("--ok"),
+    judgeBuy: v("--judge-buy"), judgeHold: v("--judge-hold"), heatMid: v("--heat-mid"), heatLo: v("--heat-seq-lo"), heatHi: v("--heat-seq-hi") };
+}
+// Canvas text in the page's Korean fallback faces (a bare "-apple-system, sans-serif" falls to another face on Windows).
+const vizFont = (px = 11, weight = 400) => `${weight} ${px}px -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif`;
+// The one date axis: about 4 labels under 600 px of canvas, 7 above; 26.11 style, 2026-11 when there are more than 600 bars;
+// no label in the last third of a step (it would crowd the right edge).
+function vizDates(ctx, dates, x, y, w, color) {
+  const n = dates.length, step = Math.max(1, Math.round(n / (w < 600 ? 4 : 7))), long = n > 600;
+  ctx.save(); ctx.textBaseline = "top"; ctx.textAlign = "center"; ctx.fillStyle = color || vizTokens().tick; ctx.font = vizFont(11);
+  for (let i = step; i < n - step / 3; i += step) { const d = String(dates[i] || ""); if (d) ctx.fillText(long ? d.slice(0, 7) : d.slice(2, 7).replace("-", "."), x(i), y); }
+  ctx.restore();
+}
+// Direct end tags: items [{ y, color, label, dot: [x, y] }] are sorted by y and pushed apart by gap px inside top..bottom, then drawn
+// at x0 as an 8 px colour swatch and the label in ink (text never takes the series colour).  box: a surface-coloured plate under
+// each tag, for tags that sit in a gutter over tick labels.  dot: a 6 px dot with a surface ring where the line ends.
+function vizEndTags(ctx, items, x0, top, bottom, { gap = 12, font = vizFont(10, 600), box = false, T = vizTokens() } = {}) {
+  const tags = items.filter((t) => isNum(t.y)).map((t) => ({ ...t, yy: t.y })).sort((a, b) => a.yy - b.yy);
+  for (let i = 0; i < tags.length; i++) tags[i].yy = Math.max(tags[i].yy, i ? tags[i - 1].yy + gap : top);
+  for (let i = tags.length - 1; i >= 0; i--) tags[i].yy = Math.min(tags[i].yy, i === tags.length - 1 ? bottom : tags[i + 1].yy - gap);
+  ctx.save(); ctx.font = font; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+  tags.forEach((t) => {
+    if (t.dot) { ctx.fillStyle = t.color; ctx.strokeStyle = T.surface; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(t.dot[0], t.dot[1], 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+    if (box) { ctx.fillStyle = T.surface; ctx.fillRect(x0 - 2, t.yy - gap / 2, 14 + ctx.measureText(t.label).width, gap); }
+    ctx.fillStyle = t.color; ctx.fillRect(x0, t.yy - 4, 8, 8);
+    ctx.fillStyle = T.ink; ctx.fillText(t.label, x0 + 12, t.yy);
+  });
+  ctx.restore();
+}
+// One pointer, touch and keyboard crosshair for index charts.  opts: count, xOf(i) (canvas px), indexAt(px) (-1 = none, e.g. the
+// gutter), html(i) for the tooltip (#tip), text(i) for the polite live region (#viz-live; defaults to the tooltip's text).  A DOM line
+// (.viz-xline) inside the chart's position: relative wrapper marks the day; moving it never repaints the canvas.  The canvas takes
+// focus: ←/→ one day, Shift+←/→ ten, Home/End the ends, Esc hides.  Handlers are assigned (not added), so a redraw does not stack them.
+function vizLive(text) {
+  let el = $("#viz-live");
+  if (!el) { el = document.createElement("div"); el.id = "viz-live"; el.className = "sr-only"; el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+  el.textContent = text;
+}
+function vizTip(html, cx, cy, touch) {
+  const tip = $("#tip"); tip.innerHTML = html; tip.hidden = false;
+  const tx = cx + 14 + tip.offsetWidth > window.innerWidth ? cx - tip.offsetWidth - 14 : cx + 14;
+  const ty = touch ? cy - tip.offsetHeight - 16 : cy + 14;
+  tip.style.left = Math.max(4, tx) + "px"; tip.style.top = Math.min(Math.max(8, ty), window.innerHeight - tip.offsetHeight - 8) + "px";
+}
+function vizHover(cv, { count, xOf, indexAt, html, text, host = cv.parentElement } = {}) {
+  if (!cv || !count) return;
+  let xl = host && host.querySelector(":scope > .viz-xline");
+  if (host && !xl) { xl = document.createElement("div"); xl.className = "viz-xline"; xl.hidden = true; host.appendChild(xl); }
+  const at = indexAt || ((px) => { let best = 0; for (let i = 1; i < count; i++) if (Math.abs(xOf(i) - px) < Math.abs(xOf(best) - px)) best = i; return best; });
+  const hide = () => { if (xl) xl.hidden = true; $("#tip").hidden = true; };
+  const show = (i, cx, cy, touch) => {
+    cv._vizI = i;
+    if (xl) { xl.hidden = false; xl.style.left = (cv.offsetLeft + xOf(i)) + "px"; xl.style.top = cv.offsetTop + "px"; xl.style.height = cv.offsetHeight + "px"; }
+    vizTip(html(i), cx, cy, touch);
+  };
+  const move = (e) => {
+    const r = cv.getBoundingClientRect(), i = at(e.clientX - r.left);
+    if (!(i >= 0 && i < count)) return hide();
+    show(i, e.clientX, e.clientY, e.pointerType === "touch");
+  };
+  cv.onpointermove = move; cv.onpointerdown = move; cv.onpointerleave = hide; cv.onpointercancel = hide;
+  cv.onmousemove = null; cv.onmouseleave = null;
+  cv.tabIndex = 0;
+  cv.onblur = hide;
+  cv.onkeydown = (e) => {
+    const k = e.key, cur = isNum(cv._vizI) ? cv._vizI : count - 1, jump = e.shiftKey ? 10 : 1;
+    let i = k === "ArrowLeft" ? cur - jump : k === "ArrowRight" ? cur + jump : k === "Home" ? 0 : k === "End" ? count - 1 : null;
+    if (k === "Escape") { hide(); return; }
+    if (i === null) return;
+    e.preventDefault(); e.stopPropagation();
+    i = Math.min(count - 1, Math.max(0, i));
+    const r = cv.getBoundingClientRect();
+    show(i, r.left + xOf(i), r.top + 20, false);
+    const t = $("#tip");
+    vizLive(text ? text(i) : (t.innerText || t.textContent).replace(/\s+/g, " ").trim());
+  };
+}
 function spark(cv, vals) {
-  const v = (vals || []).filter(isNum);
+  const all = vals || [], v = all.filter(isNum);
   cv.setAttribute("aria-hidden", "true");
   if (v.length < 2) return;
-  const { ctx, w, h } = setupCanvas(cv, cv.clientHeight || 28);
+  const { ctx, w, h } = setupCanvas(cv, cv.clientHeight || 28), T = vizTokens();
   const lo = Math.min(...v), hi = Math.max(...v), rg = hi - lo || 1;
-  // 4차 묶음 P2-24: 첫날 값의 점선 기준선.  카드마다 최저~최고로 늘려 그리므로, 흔들림의 크기는 카드의 '그래프 폭'으로 읽습니다.
+  // 4차 묶음 P2-24: 첫날 값의 기준선.  카드마다 최저~최고로 늘려 그리므로, 흔들림의 크기는 카드의 '그래프 폭'으로 읽습니다.
+  // 작업 화면 개편 2단계(시각화 명세 8절 18·19): 기준선은 문턱처럼 읽히는 점선 대신 옅은 실선이고, 값이 없는 날은 빼지 않고 끊어 그립니다(시간이 줄지 않게).
   const by = h - 2 - ((v[0] - lo) / rg) * (h - 4);
-  ctx.save(); ctx.setLineDash([2, 3]); ctx.globalAlpha = 0.6; ctx.strokeStyle = cssVar("--muted"); ctx.lineWidth = 1;
+  ctx.save(); ctx.globalAlpha = 0.5; ctx.strokeStyle = T.muted; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(0, by); ctx.lineTo(w, by); ctx.stroke(); ctx.restore();
-  ctx.strokeStyle = cssVar(cv.hasAttribute("data-plain") ? "--ink" : v[v.length - 1] >= v[0] ? "--up" : "--down"); ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  v.forEach((x, i) => { const px = (i / (v.length - 1)) * w, py = h - 2 - ((x - lo) / rg) * (h - 4); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
-  ctx.stroke();
+  const col = cssVar(cv.hasAttribute("data-plain") ? "--ink" : v[v.length - 1] >= v[0] ? "--up" : "--down");
+  line(ctx, all, (i) => (i / (all.length - 1)) * w, (x) => h - 2 - ((x - lo) / rg) * (h - 4), col, 1.4);
 }
 
 // ------------------------------------------------------------------ tabs & routing
@@ -674,6 +761,15 @@ function redrawShown(tab) {
 }
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => (theme === "auto" ? applyTheme("auto") : redrawAll()));
 let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(redrawAll, 120); });
+// The workspace grid (style.css .ws, workstation stage 2) splits into two columns when the content column is 1120 px or wider.
+// JS asks here; the menu (full / rail) changes that width without a window resize, so a width change of .content redraws too.
+const wsCanSplit = () => { const c = $(".content"); if (!c) return false; const cs = getComputedStyle(c);
+  return c.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) >= 1120; };
+if (window.ResizeObserver && $(".content")) {
+  let wsW = 0;
+  new ResizeObserver((es) => { const w = Math.round(es[0].contentRect.width); if (w === wsW) return; const first = !wsW; wsW = w;
+    if (!first) { clearTimeout(rz); rz = setTimeout(() => { setTopH(); redrawAll(); }, 120); } }).observe($(".content"));
+}
 
 // ------------------------------------------------------------------ 시장 개요
 async function renderOverview() {
@@ -816,8 +912,8 @@ function drawPrice() {
   bars.forEach((b) => { for (const k of ["low", "high", "close", "sma20", "sma50", "sma200"]) if (isNum(b[k])) { lo = Math.min(lo, b[k]); hi = Math.max(hi, b[k]); } if (isNum(b.volume)) vmax = Math.max(vmax, b.volume); });
   const pad = (hi - lo) * 0.04 || 1; lo -= pad; hi += pad;
   const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * priceH, x = (i) => i * bw + bw / 2;
-  const grid = cssVar("--grid"), muted = cssVar("--muted"), up = cssVar("--up"), dn = cssVar("--down");
-  ctx.font = "11px -apple-system, sans-serif"; ctx.textBaseline = "middle";
+  const T = vizTokens(), grid = T.grid, muted = T.tick, up = T.up, dn = T.down;
+  ctx.font = vizFont(11); ctx.textBaseline = "middle";
   const nt = niceTicks(lo, hi);
   nt.ticks.forEach((v) => {
     const yy = y(v);
@@ -826,11 +922,7 @@ function drawPrice() {
   });
   const b0 = bars[0], b1 = bars[n - 1], px = (v) => (isNum(v) ? v.toLocaleString("ko-KR", { maximumFractionDigits: 2 }) : "없음");
   cv.setAttribute("aria-label", `${tickerText(state.ticker || "", "")} 가격 차트: ${b0.date}부터 ${b1.date}까지, 종가 ${px(b0.close)}에서 ${px(b1.close)}`);
-  // date labels
-  ctx.textBaseline = "top"; ctx.textAlign = "center";
-  const step = Math.max(1, Math.round(n / (w < 600 ? 4 : 7)));
-  for (let i = step; i < n - step / 3; i += step) ctx.fillText(bars[i].date.slice(2, 7).replace("-", "."), x(i), h - 14);
-  ctx.textAlign = "left";
+  vizDates(ctx, bars.map((b) => b.date), x, h - 14, w, muted);
   const candle = bw >= 1.8;
   bars.forEach((b, i) => {
     const okOpen = goodOpen(b), o = okOpen ? b.open : b.close, col = !okOpen && isNum(b.open) ? muted : b.close >= o ? up : dn;
@@ -842,18 +934,16 @@ function drawPrice() {
     }
     if (isNum(b.volume) && vmax) { ctx.globalAlpha = 0.45; const vh = (b.volume / vmax) * volH; ctx.fillRect(i * bw + bw * 0.1, h - 18 - vh, Math.max(1, bw * 0.8), vh); ctx.globalAlpha = 1; }
   });
-  if (!candle) line(ctx, bars.map((b) => b.close), x, y, cssVar("--ink"), 1.3);
-  [["sma20", "--sma20"], ["sma50", "--sma50"], ["sma200", "--sma200"]].forEach(([k, v]) => line(ctx, bars.map((b) => b[k]), x, y, cssVar(v), 1.2));
-  // crosshair
-  cv.onmousemove = (e) => {
-    const r = cv.getBoundingClientRect(), i = Math.min(n - 1, Math.max(0, Math.floor((e.clientX - r.left) / bw))), b = bars[i];
-    const tip = $("#tip"); tip.hidden = false;
-    tip.innerHTML = `<b>${esc(b.date)}</b><br>시 ${goodOpen(b) || !isNum(b.open) ? fmt(b.open) : "없음(원자료 이상)"} 고 ${fmt(b.high)} 저 ${fmt(b.low)} 종 ${fmt(b.close)}<br>거래량 ${big(b.volume, "")}<br>
-      <span style="color:var(--sma20)">20일</span> ${fmt(b.sma20)} · <span style="color:var(--sma50)">50일</span> ${fmt(b.sma50)} · <span style="color:var(--sma200)">200일</span> ${fmt(b.sma200)}`;
-    const tx = e.clientX + 14 + tip.offsetWidth > window.innerWidth ? e.clientX - tip.offsetWidth - 14 : e.clientX + 14;
-    tip.style.left = tx + "px"; tip.style.top = e.clientY + 14 + "px";
-  };
-  cv.onmouseleave = () => ($("#tip").hidden = true);
+  if (!candle) line(ctx, bars.map((b) => b.close), x, y, T.ink, 1.3);
+  const MAS = [["sma20", 20], ["sma50", 50], ["sma200", 200]];
+  MAS.forEach(([k, p]) => line(ctx, bars.map((b) => b[k]), x, y, T.ma[p], 1.2));
+  // every MA line ends in a tag with its period (owner decision, visualization spec 2.3): the colour is never the only cue
+  vizEndTags(ctx, MAS.map(([k, p]) => { let i = n - 1; while (i >= 0 && !isNum(bars[i][k])) i--; return i < 0 ? null : { y: y(bars[i][k]), color: T.ma[p], label: String(p), dot: [x(i), y(bars[i][k])] }; }).filter(Boolean),
+    pw + 4, padT + 6, padT + priceH - 6, { box: true, T });
+  // crosshair: pointer, finger and keyboard (vizHover)
+  vizHover(cv, { count: n, xOf: x, indexAt: (px) => (px > pw ? -1 : Math.min(n - 1, Math.max(0, Math.floor(px / bw)))), html: (i) => { const b = bars[i];
+    return `<b>${esc(b.date)}</b><br>시 ${goodOpen(b) || !isNum(b.open) ? fmt(b.open) : "없음(원자료 이상)"} 고 ${fmt(b.high)} 저 ${fmt(b.low)} 종 ${fmt(b.close)}<br>거래량 ${big(b.volume, "")}<br>
+      <i class="key-line" style="background:var(--sma20)"></i>20일 ${fmt(b.sma20)} · <i class="key-line" style="background:var(--sma50)"></i>50일 ${fmt(b.sma50)} · <i class="key-line" style="background:var(--sma200)"></i>200일 ${fmt(b.sma200)}`; } });
 }
 function line(ctx, vals, x, y, color, lw) {
   ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.beginPath(); let pen = false;
@@ -884,16 +974,20 @@ function fmtMacro(m, v) {
   if (m.unit === "원") return v.toLocaleString("ko-KR", { maximumFractionDigits: 1 });
   return `${v.toFixed(2)}${m.unit}`;
 }
+// 거시 작은 차트.  값이 없는 관측치는 빼지 않고 끊어 그리며(시간이 줄지 않게), 값이 둘보다 적으면 그리지 않고 '관측치 부족'이라고 씁니다.
+// 선은 잉크색입니다: 파랑은 한국 화면에서 내림 색이고 강조색이라 자료 선으로 쓰지 않습니다(시각화 명세 8절 13).
 function mini(cv, series) {
-  const pts = (series || []).filter((p) => isNum(p[1]));
-  if (pts.length < 2) return;
-  const { ctx, w, h } = setupCanvas(cv, 90);
+  const all = series || [], pts = all.filter((p) => isNum(p[1]));
+  const few = cv.nextElementSibling && cv.nextElementSibling.classList.contains("mini-few") ? cv.nextElementSibling : null;
+  if (pts.length < 2) { cv.hidden = true; if (!few) cv.insertAdjacentHTML("afterend", '<div class="meta mini-few">관측치 부족</div>'); return; }
+  cv.hidden = false; if (few) few.remove();
+  const { ctx, w, h } = setupCanvas(cv, 90), T = vizTokens();
   const v = pts.map((p) => p[1]), lo = Math.min(...v), hi = Math.max(...v), rg = hi - lo || 1;
-  const x = (i) => (i / (pts.length - 1)) * (w - 2) + 1, y = (val) => 4 + (1 - (val - lo) / rg) * (h - 18);
-  if (lo < 0 && hi > 0) { ctx.strokeStyle = cssVar("--line"); ctx.beginPath(); ctx.moveTo(0, y(0)); ctx.lineTo(w, y(0)); ctx.stroke(); }
-  line(ctx, v, x, y, cssVar("--accent"), 1.5);
-  ctx.fillStyle = cssVar("--muted"); ctx.font = "10px -apple-system, sans-serif"; ctx.textBaseline = "bottom";
-  ctx.fillText(pts[0][0].slice(0, 7), 1, h); ctx.textAlign = "right"; ctx.fillText(pts[pts.length - 1][0].slice(0, 7), w - 1, h); ctx.textAlign = "left";
+  const x = (i) => (i / (all.length - 1)) * (w - 2) + 1, y = (val) => 4 + (1 - (val - lo) / rg) * (h - 18);
+  if (lo < 0 && hi > 0) { ctx.strokeStyle = T.axis; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y(0)); ctx.lineTo(w, y(0)); ctx.stroke(); }
+  line(ctx, all.map((p) => p[1]), x, y, T.ink, 1.5);
+  ctx.fillStyle = T.tick; ctx.font = vizFont(10); ctx.textBaseline = "bottom";
+  ctx.fillText(String(all[0][0]).slice(0, 7), 1, h); ctx.textAlign = "right"; ctx.fillText(String(all[all.length - 1][0]).slice(0, 7), w - 1, h); ctx.textAlign = "left";
 }
 
 // ------------------------------------------------------------------ 관심종목

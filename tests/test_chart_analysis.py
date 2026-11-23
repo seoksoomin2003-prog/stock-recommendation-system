@@ -177,5 +177,6 @@ def test_the_page_has_the_chart_group_and_draws_from_the_servers_settings():
     assert "s.ma_choices" in js and "s.caveat" in js and "box.onpointermove" in js                    # numbers come from the server; a finger drag works
     assert 'const CHA_ON_PRICE = new Set(["GOLDEN_CROSS", "DEAD_CROSS", "BB_UPPER", "BB_LOWER"]);' in js                       # other signals sit on their own pane
     css = (ROOT / "terminal" / "static" / "style.css").read_text(encoding="utf-8")
-    assert all(css.count(f"--ma{n}:") == 2 for n in ca.MA_CHOICES)                                  # light and dark (one dark block since UI batch 5)
+    # light and dark (one dark block since UI batch 5); 50 and 120 also have the Korean-screen override (visualization spec 2.3, stage 2)
+    assert all(css.count(f"--ma{n}:") == (3 if n in (50, 120) else 2) for n in ca.MA_CHOICES)
     assert "chartWith(c.ticker)" in (ROOT / "terminal" / "static" / "app.js").read_text(encoding="utf-8")
