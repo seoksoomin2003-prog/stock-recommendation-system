@@ -7,14 +7,14 @@ import math
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
 from terminal import TERMINAL_VERSION, alert_rules, chart_analysis, portfolio as pf, sources
 from terminal.cache import FileCache
 from terminal.services_model import ModelViews
 
-TTL = {"quote": 900, "chart": 900, "info": 20 * 3600, "facts": 20 * 3600, "filings": 3600, "macro": 6 * 3600}
+TTL = {"quote": 900, "chart": 900, "intraday": 20, "info": 20 * 3600, "facts": 20 * 3600, "filings": 3600, "macro": 6 * 3600}
 STALE_DAYS = 5          # a daily bar older than this many calendar days is shown as STALE
 
 OVERVIEW = [
@@ -348,25 +348,51 @@ class Terminal(ModelViews):
     COMPARE_MAX = 8
     ROLLING_WINDOW, ROLLING_SHORT = 60, 20          # sessions in the moving correlation; the short one for a three-month view
 
-    def chart_analysis(self, ticker: str, rng: str = "1y", ma: str = "") -> Dict[str, Any]:
-        """The chart-analysis tab (CHART-1): classic indicators and signals on one stock or index.  Reference only, never a score."""
+    def intraday(self, ticker: str) -> Dict[str, Any]:
+        """The open (or the last) session's one-minute bars for the chart screen (terminal/live_chart.py).  Reference only."""
+        from terminal import live_chart
+        ticker = clean_ticker(ticker)
+        sym, market = self._chart_sym(ticker)
+        res = self.cache.cached(f"intra:{sym}", TTL["intraday"], lambda: self.src.yahoo_intraday(sym))
+        return {**live_chart.view(res["data"] or {}, market, self.now(), res), "ticker": ticker, "name": self.COMPARE_INDEX.get(ticker)}
+
+    def _chart_sym(self, ticker: str) -> Tuple[str, str]:
+        sym = ticker if ticker in self.COMPARE_INDEX else self._sym(ticker)
+        market = "KR" if ticker in ("^KS11", "^KQ11") else "US" if ticker in self.COMPARE_INDEX else pf.market_of(ticker)
+        return sym, market
+
+    def chart_analysis(self, ticker: str, rng: str = "1y", ma: str = "", live: str = "") -> Dict[str, Any]:
+        """The chart-analysis tab (CHART-1): classic indicators and signals on one stock or index.  Reference only, never a score.
+        ``live`` "1": during an open session the last daily bar is brought up to the last one-minute bar (terminal/live_chart.py)."""
         ticker = clean_ticker(ticker)
         period, keep = chart_analysis.RANGES.get(rng, (None, None))
         if not period:
             raise ValueError("INVALID_RANGE")
-        sym = ticker if ticker in self.COMPARE_INDEX else self._sym(ticker)
-        market = "KR" if ticker in ("^KS11", "^KQ11") else "US" if ticker in self.COMPARE_INDEX else pf.market_of(ticker)
+        sym, market = self._chart_sym(ticker)
         periods = chart_analysis.ma_periods(ma, market)
         res = self.cache.cached(f"chart:{sym}:{period}", TTL["chart"], lambda: self.src.yahoo_history([sym], period))
         rows, source = (res["data"] or {}).get(sym) or [], "Yahoo Finance (분할 조정 일봉, 지연)"
         if market == "KR" and ticker not in self.COMPARE_INDEX and rows:
             rows, source = self._kr_chart_rows(ticker, rows, period)
+        now_live = None
+        if live == "1" and rows:
+            from terminal import live_chart
+            if live_chart.open_now(market, self.now()):
+                try:
+                    v = self.intraday(ticker)
+                    rows = live_chart.merge_daily(rows, v)
+                    now_live = {k: v.get(k) for k in ("live", "note", "age_min", "session", "refresh_s")} | {"time": (v.get("last") or {}).get("time")}
+                except Exception as exc:                 # the daily chart stands without it; the kind of failure is named
+                    now_live = {"live": False, "note": f"1분봉을 받지 못해 일봉만 그렸습니다({type(exc).__name__}).", "refresh_s": live_chart.REFRESH_S}
+                if now_live.get("live"):
+                    source += " · 오늘 일봉은 Yahoo 1분봉으로 이어 그림"
         out = chart_analysis.analyse(rows, market, keep, periods)
         bars = out["bars"]
         status = self._bar_status(bars[-1]["date"], res["status"]) if bars else "UNAVAILABLE"
         return {**out, "ticker": ticker, "name": self.COMPARE_INDEX.get(ticker), "market": market, "range": rng, "status": status,
                 "intraday": self._intraday(bars[-1]["date"], market) if bars else None, "short_history": bool(bars) and len(bars) < keep,
-                "settings": chart_analysis.settings(), "cache": {k: res.get(k) for k in ("status", "fetched_at", "error")}, "source": source}
+                "settings": chart_analysis.settings(), "cache": {k: res.get(k) for k in ("status", "fetched_at", "error")}, "source": source,
+                "live_now": now_live}
 
     def _kr_chart_rows(self, ticker: str, rows: List[Dict[str, Any]], period: str) -> Any:
         """A Korean stock's bars rebuilt from the KRX daily copy the score uses (QSF-1.1.8: Yahoo's Korean history has missing days and

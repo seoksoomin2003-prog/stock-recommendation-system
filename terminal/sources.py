@@ -137,6 +137,31 @@ def yahoo_history(symbols: List[str], period: str = "1y", download=_yf_download)
     return out
 
 
+def _yf_intraday(symbol: str):
+    import yfinance as yf
+    t = yf.Ticker(symbol)
+    data = t.history(period="1d", interval="1m", prepost=False, auto_adjust=False, actions=False)
+    return data, t.get_history_metadata()
+
+
+def yahoo_intraday(symbol: str, fetch=_yf_intraday) -> Dict[str, Any]:
+    """The open (or the last) session's one-minute bars in the exchange's own time: {"rows": [{time, ts, open, high, low, close,
+    volume}], "prev_close"}.  Raw traded prices; no adjustment is needed inside one day."""
+    import pandas as pd
+    data, meta = fetch(symbol)
+    rows = []
+    if data is not None and not data.empty:
+        for ts, r in data.iterrows():
+            c = _num(r.get("Close"))
+            if c is None or c <= 0:
+                continue
+            t = pd.Timestamp(ts)
+            rows.append({"time": t.strftime("%Y-%m-%d %H:%M"), "ts": int(t.timestamp()), "open": _num(r.get("Open")),
+                         "high": _num(r.get("High")), "low": _num(r.get("Low")), "close": c, "volume": _num(r.get("Volume"))})
+    meta = meta or {}
+    return {"rows": rows, "prev_close": _num(meta.get("chartPreviousClose") if meta.get("chartPreviousClose") is not None else meta.get("previousClose"))}
+
+
 INFO_FIELDS = ("longName", "shortName", "sector", "industry", "exchange", "currency", "marketCap",
                "trailingPE", "forwardPE", "priceToBook", "dividendYield", "beta", "fiftyTwoWeekHigh",
                "fiftyTwoWeekLow", "sharesOutstanding", "averageVolume", "website", "longBusinessSummary",

@@ -2,12 +2,15 @@
 // 계산은 서버(terminal/chart_analysis.py)가 하고, 이 파일은 그리기만 한다.  설정 숫자(기간·기준선)는 서버가 보낸 값을 쓴다.
 "use strict";
 const CHA_KEY = "qse-chart";
-const CHA_RANGES = { "3mo": "3개월", "6mo": "6개월", "1y": "1년", "3y": "3년", "5y": "5년", "10y": "10년" };
+const CHA_RANGES = { "1d": "오늘(1분봉)", "3mo": "3개월", "6mo": "6개월", "1y": "1년", "3y": "3년", "5y": "5년", "10y": "10년" };
 const CHA_TYPES = { candle: "캔들", ohlc: "OHLC", line: "선" };
 const CHA_HOME = { US: ["^GSPC", "^IXIC"], KR: ["^KS11", "^KQ11"] };
 // Each signal is marked on the pane of the indicator it comes from, so the price chart carries only the crossings and band breaks.
 const CHA_ON_PRICE = new Set(["GOLDEN_CROSS", "DEAD_CROSS", "BB_UPPER", "BB_LOWER"]);
-const cha = { ticker: {}, range: "1y", type: "candle", ma: {}, bb: true, sig: true, data: null, x: null };
+const cha = { ticker: {}, range: "1y", type: "candle", ma: {}, bb: true, sig: true, data: null, x: null, timer: null, tick: 0, busy: false };
+// 장중에 차트가 움직이게 (2026-11-25): 30초마다 다시 받습니다.  장이 닫혀 있으면 5분마다 열렸는지만 봅니다.  가격이 몇 분 전 것인지는
+// 서버가 마지막 1분봉 시각으로 재서 보내고, 화면은 그 문장을 그대로 보여 줍니다(늦은 가격을 지금 가격처럼 보이지 않게).
+const CHA_REFRESH_MS = 30000, CHA_CLOSED_EVERY = 10;
 try {
   const v = JSON.parse(localStorage.getItem(CHA_KEY) || "null");
   if (v && typeof v === "object") {
@@ -64,14 +67,45 @@ async function renderChart() {
   $("#cha-type").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; cha.type = b.dataset.k; chaSave(); $("#cha-type").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); chaDraw(); };
   $("#cha-bb").onchange = (e) => { cha.bb = e.target.checked; chaSave(); chaDraw(); };
   $("#cha-sig").onchange = (e) => { cha.sig = e.target.checked; chaSave(); chaDraw(); };
-  const want = `${t}|${cha.range}|${(cha.ma[mk] || []).join(",")}`;
+  const minute = cha.range === "1d";
+  // 1분봉에는 일봉 기준 지표가 없으므로 그 칸과 선택지를 숨깁니다(display: 클래스 규칙이 hidden 속성보다 앞섭니다).
+  [$("#cha-ma"), $("#cha-rsi-h"), $("#cha-rsi"), $("#cha-macd-h"), $("#cha-macd"), $("#cha-bb").closest("label"), $("#cha-sig").closest("label")]
+    .forEach((el) => (el.style.display = minute ? "none" : ""));
+  const want = chaWant();
+  cha.data = null; clearInterval(cha.timer);
   try {
-    const d = await api(`/api/chart/analysis?t=${encodeURIComponent(t)}&range=${cha.range}${cha.ma[mk] ? `&ma=${cha.ma[mk].join(",")}` : ""}`);
-    if (want !== `${chaTicker()}|${cha.range}|${(cha.ma[mk] || []).join(",")}` || mk !== state.market || !$("#cha-stack")) return;
-    cha.data = d;
+    const d = await api(chaUrl(t, mk));
+    if (want !== chaWant() || mk !== state.market || !$("#cha-stack")) return;
     if (d.status !== "UNAVAILABLE" && !t.startsWith("^")) rememberTicker(t);
-    chaControls(d); chaDraw(); redrawOn("chart", "main", chaDraw); chaText(d);
+    if (!minute) chaControls(d);
+    chaTake(d); redrawOn("chart", "main", chaDraw); chaPoll();
   } catch (e) { $("#cha-meta").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; }
+}
+const chaWant = () => `${chaTicker()}|${cha.range}|${(cha.ma[state.market] || []).join(",")}|${state.market}`;
+function chaUrl(t, mk) {
+  return cha.range === "1d" ? `/api/chart/intraday?t=${encodeURIComponent(t)}`
+    : `/api/chart/analysis?t=${encodeURIComponent(t)}&range=${cha.range}${cha.ma[mk] ? `&ma=${cha.ma[mk].join(",")}` : ""}&live=1`;
+}
+function chaTake(d) {
+  d.minute = cha.range === "1d";
+  cha.data = d; chaDraw();
+  d.minute ? chaTextMinute(d) : chaText(d);
+}
+const chaLiveOn = (d) => !!d && (d.minute ? d.live : !!(d.live_now && d.live_now.live));
+// 한 타이머만 돕니다.  차트 탭이 아니거나 창이 가려져 있으면 받지 않고, 받는 사이 종목·기간이 바뀌었으면 버립니다.
+function chaPoll() {
+  clearInterval(cha.timer); cha.tick = 0;
+  cha.timer = setInterval(async () => {
+    cha.tick++;
+    if (state.tab !== "chart" || document.hidden || !$("#cha-stack") || cha.busy || !cha.data) return;
+    if (!chaLiveOn(cha.data) && cha.tick % CHA_CLOSED_EVERY) return;
+    const mk = state.market, want = chaWant();
+    cha.busy = true;
+    try {
+      const d = await api(chaUrl(chaTicker(), mk));
+      if (want === chaWant() && $("#cha-stack")) chaTake(d);
+    } catch (e) { /* 그려진 차트는 그대로 두고 다음 차례에 다시 받습니다 */ } finally { cha.busy = false; }
+  }, CHA_REFRESH_MS);
 }
 function chaControls(d) {
   const s = d.settings, mk = state.market, on = new Set(d.ma || []);
@@ -102,7 +136,8 @@ function chaText(d) {
       <td class="num">${big(b.volume, "")}</td><td class="num">${fmt(b.rsi, 1)}</td><td class="num">${fmt(b.macd, 2)}</td><td class="num">${fmt(b.macd_signal, 2)}</td></tr>`),
     "최근 30거래일, 최신이 위입니다. 시가가 원자료 이상인 날은 비워 둡니다.");
   const short = d.short_history ? ` · 가격 기록이 고른 기간보다 짧아 있는 ${bars.length}거래일만 그렸습니다` : "";
-  $("#cha-meta").innerHTML = meta(d.source, d.cache.fetched_at, `${badge(d.status)} ${liveBadge(d.intraday)} ${esc(bars[0].date)} ~ ${esc(bars[bars.length - 1].date)}${short}`);
+  const lv = d.live_now ? ` · ${esc(d.live_now.note)}${d.live_now.live ? " 30초마다 다시 받습니다." : ""}` : "";
+  $("#cha-meta").innerHTML = meta(d.source, d.cache.fetched_at, `${badge(d.status)} ${liveBadge(d.intraday)} ${esc(bars[0].date)} ~ ${esc(bars[bars.length - 1].date)}${short}${lv}`);
   $("#cha-lines").innerHTML = `${d.lines.map((l) => `<p class="cha-line"><b>${esc(l.name)}</b> ${esc(l.text)}</p>`).join("")}
     <div class="meta">마지막 일봉(${esc(bars[bars.length - 1].date)}) 기준입니다. 골든·데드크로스는 ${esc(s.cross_pair[state.market].join("일선과 "))}일선으로 봅니다(이동평균 선택과 상관없음).</div>`;
   const sig = d.signals.slice().reverse();
@@ -120,6 +155,7 @@ function chaText(d) {
 
 // ---------------------------------------------------------------- drawing
 function chaDraw() {
+  if (cha.data && cha.data.minute) return chaDrawMinute();
   const d = cha.data, cv = $("#cha-price");
   if (!d || !cv || !cv.isConnected || !d.bars.length) return;
   const phone = isPhone(), bars = d.bars, n = bars.length, padR = 58;
@@ -243,5 +279,80 @@ function chaHover(py, digits) {
       ${(d.ma || []).map((k) => `<i class="key-line" style="background:${chaMaColor(k)}"></i>${k}일 ${fmt(b.ma[String(k)], dg)}`).join(" · ")}<br>
       볼린저 ${fmt(b.bb_low, dg)} ~ ${fmt(b.bb_up, dg)} · RSI ${fmt(b.rsi, 1)} · MACD ${fmt(b.macd, 2)} / 시그널 ${fmt(b.macd_signal, 2)}
       ${sigs.length ? `<br>${sigs.map((s) => `${s.side === "up" ? "▲" : s.side === "down" ? "▼" : "●"} ${esc(s.label)}`).join(" · ")}` : ""}`; } });
+}
+// ---------------------------------------------------------------- today's one-minute bars (2026-11-25)
+// 가로축은 정규장 전체(미국 09:30~16:00, 한국 09:00~15:30)라서 장이 흐르는 만큼 왼쪽부터 채워집니다.  점선은 전일 종가입니다.
+function chaTextMinute(d) {
+  const L = d.last || {}, dg = isKR() ? 0 : 2, bars = d.bars || [];
+  $("#cha-caveat").textContent = "1분봉은 차트를 읽는 참고 자료이며 점수와 섞지 않고, 매매 지시가 아닙니다. 지표·신호는 일봉 기준 규칙이라 1분봉에는 그리지 않습니다.";
+  $("#cha-badge").innerHTML = `${d.status !== "REAL" ? badge(d.status) : ""}${d.live ? ` <span class="badge live" title="${esc(d.note)}">장중 · ${esc(String(Math.round(d.age_min)))}분 전 가격</span>` : ""}`;
+  $("#cha-sig-n").textContent = "";
+  $("#cha-sigs").innerHTML = '<div class="empty">1분봉에는 고전 신호를 표시하지 않습니다. 일봉 기간을 고르면 볼 수 있습니다.</div>';
+  $("#cha-legend").innerHTML = bars.length ? `<span><i style="background:${cssVar("--muted")}"></i>점선: 전일 종가</span>` : "";
+  if (d.status === "UNAVAILABLE" || !bars.length) {
+    $("#cha-stack").hidden = true; $("#cha-twin").innerHTML = "";
+    $("#cha-meta").innerHTML = `<div class="empty">${badge("UNAVAILABLE")} ${esc(d.note || "1분봉을 받지 못했습니다.")}</div>`;
+    $("#cha-lines").innerHTML = ""; return;
+  }
+  $("#cha-meta").innerHTML = meta(d.source, d.cache.fetched_at, `${badge(d.status)} ${esc(d.session)} · ${esc(d.note)}${d.live ? " 30초마다 다시 받습니다." : ""}`);
+  const chg = isNum(L.change_pct) ? `${L.change_pct >= 0 ? "+" : ""}${L.change_pct.toFixed(2)}%` : DASH;
+  $("#cha-lines").innerHTML = `<p class="cha-line"><b>마지막 가격</b> ${fmt(L.close, dg)} (${esc(String(L.time).slice(11, 16))}${d.live ? "" : ", 장 마감 뒤"})</p>
+    <p class="cha-line"><b>전일 종가 대비</b> ${chg}${isNum(L.prev_close) ? ` · 전일 종가 ${fmt(L.prev_close, dg)}` : ""}</p>
+    <p class="cha-line"><b>오늘</b> 시 ${fmt(L.open, dg)} · 고 ${fmt(L.high, dg)} · 저 ${fmt(L.low, dg)}</p>
+    <p class="cha-line"><b>거래량</b> ${big(L.volume, "")} <span class="meta m0">(1분봉 합계라 거래소 집계와 다를 수 있음)</span></p>
+    <div class="meta">${esc(d.note)}</div>`;
+  const tail = bars.slice(-30).reverse();
+  $("#cha-twin").innerHTML = vizTable([{ label: "시각", cls: "l" }, { label: "시" }, { label: "고" }, { label: "저" }, { label: "종" }, { label: "거래량" }],
+    tail.map((b) => `<tr><td class="l">${esc(b.time.slice(11, 16))}</td><td class="num">${fmt(b.open, dg)}</td><td class="num">${fmt(b.high, dg)}</td><td class="num">${fmt(b.low, dg)}</td><td class="num">${fmt(b.close, dg)}</td><td class="num">${big(b.volume, "")}</td></tr>`),
+    "최근 30개 1분봉, 최신이 위입니다.");
+}
+function chaDrawMinute() {
+  const d = cha.data, cv = $("#cha-price");
+  if (!d || !cv || !cv.isConnected || !d.bars.length) return;
+  const phone = isPhone(), narrow = !phone && isNarrow(), bars = d.bars, n = bars.length, padR = 58, slots = d.slots || n;
+  $("#cha-stack").hidden = false;
+  const P = setupCanvas(cv, phone ? 300 : narrow ? 360 : 400), V = setupCanvas($("#cha-vol"), phone ? 70 : narrow ? 80 : 90);
+  const pw = P.w - padR, bw = pw / slots, x = (m) => m * bw + bw / 2, xi = (i) => x(bars[i].m);
+  cha.x = { bw, pw, n };
+  const T = vizTokens(), grid = T.grid, muted = T.tick, up = T.up, dn = T.down, ink = T.ink, ctx = P.ctx, dg = isKR() ? 0 : 2;
+  const prev = d.last && isNum(d.last.prev_close) ? d.last.prev_close : null;
+  let lo = Infinity, hi = -Infinity;
+  bars.forEach((b) => [b.low, b.high, b.close].forEach((v) => { if (isNum(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } }));
+  if (prev !== null) { lo = Math.min(lo, prev); hi = Math.max(hi, prev); }
+  const pad = (hi - lo) * 0.05 || Math.abs(hi) * 0.002 || 1; lo -= pad; hi += pad;
+  const ph = P.h - 22, py = (v) => 6 + (1 - (v - lo) / (hi - lo)) * (ph - 6);
+  const nt = niceTicks(lo, hi);
+  chaGrid(ctx, pw, lo, hi, py, grid, muted, (v) => tickLabel(v, nt.digits), 4, nt.ticks);
+  chaClock(ctx, d, x, P.h - 14, muted);
+  if (prev !== null) { ctx.save(); ctx.strokeStyle = muted; ctx.setLineDash([4, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, py(prev)); ctx.lineTo(pw, py(prev)); ctx.stroke(); ctx.restore(); }
+  if (cha.type === "line" || bw < 2.2) {
+    ctx.strokeStyle = ink; ctx.lineWidth = 1.4; ctx.beginPath(); bars.forEach((b, i) => (i ? ctx.lineTo(xi(i), py(b.close)) : ctx.moveTo(xi(i), py(b.close)))); ctx.stroke();
+  } else bars.forEach((b, i) => {
+    const o = isNum(b.open) ? b.open : b.close, col = b.close >= o ? up : dn, hv = isNum(b.high) ? b.high : Math.max(o, b.close), lv = isNum(b.low) ? b.low : Math.min(o, b.close);
+    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(xi(i), py(hv)); ctx.lineTo(xi(i), py(lv)); ctx.stroke();
+    if (cha.type === "candle") ctx.fillRect(xi(i) - bw * 0.35, py(Math.max(o, b.close)), Math.max(1, bw * 0.7), Math.max(1, Math.abs(py(o) - py(b.close))));
+    else { ctx.beginPath(); ctx.moveTo(xi(i) - bw * 0.4, py(o)); ctx.lineTo(xi(i), py(o)); ctx.moveTo(xi(i), py(b.close)); ctx.lineTo(xi(i) + bw * 0.4, py(b.close)); ctx.stroke(); }
+  });
+  const L = bars[n - 1];
+  vizEndTags(ctx, [{ y: py(L.close), color: ink, label: tickLabel(L.close, Math.max(nt.digits, dg)), dot: [xi(n - 1), py(L.close)] }], pw + 4, 12, ph - 6, { box: true, T });
+  let vmax = 0; bars.forEach((b) => { if (isNum(b.volume)) vmax = Math.max(vmax, b.volume); });
+  const vt = niceTicks(0, vmax || 1, 2), vtop = Math.max(vmax || 1, vt.ticks[vt.ticks.length - 1] || 0), vy = (v) => V.h - 2 - (v / vtop) * (V.h - 8);
+  chaGrid(V.ctx, pw, 0, vtop, vy, grid, muted, (v) => big(v, ""), 2, vt.ticks.filter((v) => v > 0));
+  bars.forEach((b) => { if (!isNum(b.volume)) return; const o = isNum(b.open) ? b.open : b.close; V.ctx.fillStyle = b.close >= o ? up : dn; V.ctx.globalAlpha = 0.5;
+    V.ctx.fillRect(b.m * bw + bw * 0.1, vy(b.volume), Math.max(1, bw * 0.8), V.h - 2 - vy(b.volume)); V.ctx.globalAlpha = 1; });
+  cv.setAttribute("aria-label", `${chaName(chaTicker())} ${d.session} 1분봉: 마지막 ${L.time.slice(11, 16)} ${tickLabel(L.close, dg)}${prev !== null ? `, 전일 종가 ${tickLabel(prev, dg)}` : ""}. ${d.note}`);
+  const box = $("#cha-stack");
+  vizHover(box, { host: box, count: n, xOf: xi,
+    indexAt: (px) => { if (px > pw) return -1; const m = Math.floor(px / bw); let k = 0; for (let i = 1; i < n; i++) if (Math.abs(bars[i].m - m) < Math.abs(bars[k].m - m)) k = i; return k; },
+    yTag: (i) => ({ x: pw + 2, y: py(bars[i].close), text: tickLabel(bars[i].close, Math.max(nt.digits, dg)) }),
+    html: (i) => { const b = bars[i]; return `<b>${esc(b.time.slice(11, 16))}</b><br>시 ${fmt(b.open, dg)} 고 ${fmt(b.high, dg)} 저 ${fmt(b.low, dg)} 종 ${fmt(b.close, dg)}<br>거래량 ${big(b.volume, "")}`; } });
+}
+// The session's hour marks under the minute chart (10:00, 11:00, ...).
+function chaClock(ctx, d, x, yy, color) {
+  const [h0, m0] = d.open_hm || [9, 30], start = h0 * 60 + m0;
+  ctx.save(); ctx.textBaseline = "top"; ctx.textAlign = "center"; ctx.fillStyle = color; ctx.font = vizFont(11);
+  for (let m = (60 - (start % 60)) % 60; m < d.slots; m += 60) if (m > 10 && m < d.slots - 10) ctx.fillText(`${String(Math.floor((start + m) / 60)).padStart(2, "0")}:${String((start + m) % 60).padStart(2, "0")}`, x(m), yy);
+  ctx.restore();
 }
 RENDER.chart = renderChart;
