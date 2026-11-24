@@ -1,0 +1,64 @@
+{
+ "US/SWING": {
+  "actionable": 485,
+  "in_buy_band": 21,
+  "buy_band_with_missing": 1,
+  "held_back": 2,
+  "top20_raw_with_missing": 1,
+  "missing_factor_counts": {
+   "earnings_calendar": 11,
+   "profitability": 3,
+   "cash_flow_quality": 2,
+   "balance_sheet": 2,
+   "earnings_revenue_quality": 1
+  },
+  "raw_minus_conservative_max": 1.24,
+  "entry_now_with_missing_valuation": 0
+ },
+ "US/LONG_TERM": {
+  "actionable": 495,
+  "in_buy_band": 75,
+  "buy_band_with_missing": 7,
+  "held_back": 3,
+  "top20_raw_with_missing": 3,
+  "missing_factor_counts": {
+   "free_cash_flow": 37,
+   "leverage": 9,
+   "capital_allocation": 3,
+   "insider_ownership": 1,
+   "financial_resilience": 1
+  },
+  "raw_minus_conservative_max": 2.53,
+  "entry_now_with_missing_valuation": 0
+ },
+ "KR/SWING": {
+  "actionable": 289,
+  "in_buy_band": 0,
+  "buy_band_with_missing": 0,
+  "held_back": 0,
+  "top20_raw_with_missing": 1,
+  "missing_factor_counts": {
+   "earnings_revenue_quality": 3,
+   "cash_flow_quality": 2,
+   "earnings_calendar": 1
+  },
+  "raw_minus_conservative_max": 0.94,
+  "entry_now_with_missing_valuation": 0
+ },
+ "KR/LONG_TERM": {
+  "actionable": 289,
+  "in_buy_band": 28,
+  "buy_band_with_missing": 9,
+  "held_back": 4,
+  "top20_raw_with_missing": 8,
+  "missing_factor_counts": {
+   "capital_allocation": 65,
+   "growth_quality": 33,
+   "insider_ownership": 27,
+   "free_cash_flow": 10,
+   "valuation": 1
+  },
+  "raw_minus_conservative_max": 3.37,
+  "entry_now_with_missing_valuation": 0
+ }
+}

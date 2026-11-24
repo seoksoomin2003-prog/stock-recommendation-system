@@ -1,0 +1,4 @@
+BIIB SWING 74.7 BUY_CANDIDATE WAIT_FOR_PULLBACK False None -> 기다림 | 지금 가격에서는 손익비가 모자라 눌림을 기다리는 자리입니다(지금 1.34, 기준 1.5). | 가격이 20일선 부근 $247.11~$252.75(지금보다 -3.7%~-1.5%)로 내려오면 손익비가 나아지는지 규칙이 다시 봅니다.
+BIIB LONG_TERM 69.7 HOLD_WATCH ENTRY_NOW False None -> 사도 됨 | 점수 69.7점이 '공격적' 성향의 후보 선 67점 이상이고, 진입 판단이 '진입을 막는 조건 없음'이며 막는 조건이 없습니다. | None
+TECH SWING 76.8 BUY_CANDIDATE WAIT_FOR_PULLBACK False None -> 기다림 | 지금 가격에서는 손익비가 모자라 눌림을 기다리는 자리입니다(지금 0.23, 기준 1.5). | 가격이 20일선 부근 $72.66~$72.76(지금보다 -0.2%~0.0%)로 내려오면 손익비가 나아지는지 규칙이 다시 봅니다.
+TECH LONG_TERM 65.7 HOLD_WATCH OVERVALUED_AT_CURRENT_PRICE False None -> 기다림 | 점수 65.7점이 지금 고른 성향 '공격적'의 후보 선 67점에 1.3점 모자랍니다. | 67점 이상이 되면 다시 봅니다.

@@ -1,0 +1,25 @@
+KR_UNIVERSE LONG ic t reading 0.052 2.457 NO_EVIDENCE
+CORRECTED_OOS early {'dates': 11, 'ic': 0.0708}
+CORRECTED_OOS late {'dates': 11, 'ic': -0.0443}
+CORRECTED_OOS checks {'ic': False, 't': False}
+CORRECTED_OOS top keys ['status', 'protocol', 'primary', 'tables', 'note']
+PICKS keys ['status', 'protocol', 'variant', 'evaluations', 'evaluation_days', 'seed', 'note', 'picks', 'power']
+PICKS power {"rule": "\ud3c9\uade0 > 0 \uc774\uace0 t >= 2", "trials": 100000, "tables": {"SWING|5": {"days": 152, "observed_mean_ic": 0.022162663196846608, "ic_sd": 0.24532344809517853, "sessions_per_sample": 5, "rate": {"0": {"12": 0.03465, "24": 0.02858, "36": 0.02654, "60": 0.02502, "120": 0.02473}, "0.01": {"12": 0.04571, "24": 0.04412, "36": 0.04461, "60": 0.04997, "120": 0.06142}, "0.02": {"12": 0.06003, "24": 0.06437, "36": 0.07178, "60": 0.09057, "120": 0.13766}, "0.03": {"12": 0.07934, "24": 0.09215, "36": 0.11294, "60": 0.15161, "120": 0.25856}, "0.05": {"12": 0.12589, "24": 0.17348, "36": 0.22
+QSF_CORRECTED_RESEARCH.json ['vol_252']
+QSF_CORRECTED_RESEARCH_RUN1.json ['vol_252']
+QSF_CORRECTED_SWING.json ['breakout_vol', 'ivol_21', 'vol_252', 'vol_surge']
+QSF_CORRECTED_SWING_RUN1.json ['breakout_vol', 'ivol_21', 'vol_252', 'vol_surge']
+QSF_FORECAST_TEST.json ['by_vol']
+QSF_FORECAST_TOUCH_TEST.json ['by_vol']
+QSF_KR_DIAGNOSTICS.json ['ic_inside_size_quintile', 'score_quintiles', 'size_quintiles', 'theme_quintiles', 'turnover']
+QSF_KR_FUND.json ['quintiles', 'turnover']
+QSF_KR_METHOD_SELECTION.json ['max_drawdown']
+QSF_KR_RISK_GRADE.json ['drawdown', 'vol', 'volatility']
+QSF_KR_TECH_EARLY.json ['breakout_volume', 'volatility_structure']
+QSF_MARKET_STATE.json ['annual_vol', 'max_drawdown', 'signal_vs_vol', 'vol']
+QSF_PICKS_SIMULATION.json ['max_drawdown']
+QSF_REGIME_WEIGHTS.json ['vol_n', 'vol_ref_n']
+QSF_RESEARCH_SCORE_DEV.json ['vol_252']
+QSF_SWING_DEV.json ['breakout_vol', 'ivol_21', 'vol_252', 'vol_surge']
+frozen_core_after.json ['LIQUIDITY_MIN_VOLUME', 'low_volatility']
+frozen_core_before.json ['LIQUIDITY_MIN_VOLUME', 'low_volatility']

@@ -1,0 +1,9 @@
+US non-blocked long cards 501 cards with a hidden bad factor 132
+   by factor {'financial_resilience': 83, 'valuation': 22, 'growth_quality': 15, 'business_quality': 13, 'capital_allocation': 7, 'balance_dilution': 1}
+   missing raw keys behind them {'financial_resilience:interest_cover': 75, 'financial_resilience:current_ratio': 25, 'valuation:fcf_yield': 13, 'business_quality:gross_margin': 12, 'valuation:pb': 9, 'growth_quality:eps_cagr3': 9, 'capital_allocation:returns_capital': 7, 'growth_quality:rev_cagr3': 6, 'growth_quality:rev_growth': 6, 'financial_resilience:cash_debt': 1}
+KR non-blocked long cards 289 cards with a hidden bad factor 168
+   by factor {'financial_resilience': 111, 'business_quality': 77, 'balance_dilution': 74, 'growth_quality': 34, 'valuation': 4, 'long_trend': 3, 'momentum_persistence': 1}
+   missing raw keys behind them {'financial_resilience:interest_cover': 111, 'business_quality:gross_margin': 77, 'balance_dilution:share_change': 74, 'growth_quality:eps_cagr3': 20, 'growth_quality:rev_cagr3': 16, 'growth_quality:rev_growth': 8, 'valuation:fcf_yield': 4, 'long_trend:ma200_slope': 3, 'business_quality:op_margin': 2, 'momentum_persistence:ret_12_1': 1}
+--- with the three-sentence cap of plain._sides
+US cards where a hidden bad factor would be among the three spoken: 124 | in the buy band: 3
+KR cards where a hidden bad factor would be among the three spoken: 164 | in the buy band: 1

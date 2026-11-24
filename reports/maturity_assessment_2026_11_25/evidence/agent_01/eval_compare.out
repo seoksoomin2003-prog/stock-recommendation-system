@@ -1,0 +1,12 @@
+status REAL rank_basis UNIVERSE top keys ['committee', 'committee_note', 'deals', 'filing_events', 'held_strategy', 'high_risk', 'market', 'name', 'p6_reference', 'price_audit', 'rank_basis', 'risk_grade', 'status', 'ticker']
+SWING | live: QSF-1.5.2 2026-11-23 55.323 HOLD_WATCH WATCH HIGH deal_held False earnings_unknown False stale_fund_days None
+      | record: QSF-1.5.2 2026-11-23 55.322 HOLD_WATCH WATCH HIGH
+      | price source live: KRX 일별 시세로 만든 일봉
+      | non-REAL factors live: [('vkospi_regime', 'MISSING'), ('insider_activity', 'MISSING')]
+LONG_TERM | live: QSF-1.5.2 2026-11-23 64.331 HOLD_WATCH WATCH MEDIUM deal_held False earnings_unknown False stale_fund_days None
+      | record: QSF-1.5.2 2026-11-23 64.331 HOLD_WATCH WATCH MEDIUM
+      | price source live: KRX 일별 시세로 만든 일봉
+      | non-REAL factors live: [('vkospi_regime', 'MISSING')]
+-- factors that differ (record, live), normalized:
+SWING exact scores (live, record): 55.32276490731939 55.322004908401844 {'breakout_volume': (0.25042, 0.25042), 'credit_liquidity': (0.33347, 0.34852), 'momentum': (0.10621, 0.10618), 'risk_reward': (0.08877, 0.08882), 'usdkrw_regime': (0.9815, 0.97891)}
+LONG_TERM exact scores (live, record): 64.33135908625783 64.33135908625783 {'credit_liquidity': (0.33347, 0.34852), 'usdkrw_regime': (0.9815, 0.97891)}

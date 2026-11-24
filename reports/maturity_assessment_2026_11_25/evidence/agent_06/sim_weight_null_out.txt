@@ -1,0 +1,5 @@
+factors 16 weights [10.0, 10.0, 5.0, 10.0, 5.0, 3.0, 2.0, 3.0, 2.0, 6.0, 5.0, 5.0, 4.0, 4.0, 3.0, 3.0]
+independent            +-19%: rho p5 mean over 20 matrices 0.989
+independent            +-50%: rho p5 mean over 20 matrices 0.932
+common component 0.6   +-19%: rho p5 mean over 20 matrices 1.000
+common component 0.6   +-50%: rho p5 mean over 20 matrices 0.998

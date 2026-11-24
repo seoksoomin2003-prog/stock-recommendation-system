@@ -1,0 +1,307 @@
+
+===== PHM (US) fiscal ends ['2022-12-31', '2023-12-31', '2024-12-31', '2025-12-31'] cache stored_at day; bases None
+  revenue              [('2023-12', 16061.58, 'RevenueFromContractWithCusto'), ('2024-12', 17946.95, 'RevenueFromContractWithCusto'), ('2025-12', 17311.95, 'RevenueFromContractWithCusto')]
+  gross_profit         []
+  op_income            []
+  net_income           [('2023-12', 2602.37, 'NetIncomeLoss'), ('2024-12', 3083.26, 'NetIncomeLoss'), ('2025-12', 2218.73, 'NetIncomeLoss')]
+  net_income_all       -- not in stored series
+  equity               [('2023-12', 10383.26, 'StockholdersEquity'), ('2024-12', 12121.96, 'StockholdersEquity'), ('2025-12', 12985.44, 'StockholdersEquity')]
+  equity_all           -- not in stored series
+  assets               [('2023-12', 16087.05, 'Assets'), ('2024-12', 17363.76, 'Assets'), ('2025-12', 18048.42, 'Assets')]
+  liabilities          [('2023-12', 5703.79, 'Liabilities'), ('2024-12', 5241.8, 'Liabilities'), ('2025-12', 5062.98, 'Liabilities')]
+  current_assets       []
+  current_liabilities  []
+  cash                 [('2023-12', 1849.18, 'CashCashEquivalentsRestricte'), ('2024-12', 1613.33, 'CashAndCashEquivalentsAtCarr'), ('2025-12', 1980.87, 'CashAndCashEquivalentsAtCarr')]
+  ocf                  [('2023-12', 2196.76, 'NetCashProvidedByUsedInOpera'), ('2024-12', 1680.79, 'NetCashProvidedByUsedInOpera'), ('2025-12', 1871.25, 'NetCashProvidedByUsedInOpera')]
+  capex                [('2023-12', 92.2, 'PaymentsToAcquirePropertyPla'), ('2024-12', 118.55, 'PaymentsToAcquirePropertyPla'), ('2025-12', 122.72, 'PaymentsToAcquirePropertyPla')]
+  interest             [('2023-12', 469000.0, 'InterestExpense'), ('2024-12', 479000.0, 'InterestExpense'), ('2025-12', 605000.0, 'InterestExpense')]
+  debt_total           []
+  debt_long            [('2023-12', 73.5, 'LongTermDebt'), ('2024-12', 31.1, 'LongTermDebt'), ('2025-12', 43.9, 'LongTermDebt')]
+  debt_short           []
+  debt_borrow          []
+  eps                  [('2023-12', 11.72, 'EarningsPerShareDiluted'), ('2024-12', 14.69, 'EarningsPerShareDiluted'), ('2025-12', 11.12, 'EarningsPerShareDiluted')]
+  shares_avg           [('2023-12', 221.16, 'WeightedAverageNumberOfDilut'), ('2024-12', 209.83, 'WeightedAverageNumberOfDilut'), ('2025-12', 199.54, 'WeightedAverageNumberOfDilut')]
+  buyback              [('2023-12', 1000.0, 'PaymentsForRepurchaseOfCommo'), ('2024-12', 1200.0, 'PaymentsForRepurchaseOfCommo'), ('2025-12', 1200.0, 'PaymentsForRepurchaseOfCommo')]
+  dividends            [('2023-12', 142.46, 'PaymentsOfDividends'), ('2024-12', 167.71, 'PaymentsOfDividends'), ('2025-12', 176.68, 'PaymentsOfDividends')]
+  price 126.38999938964844 | long score 75.89830250353964 BUY_CANDIDATE ENTRY_NOW | swing 57.724370498778 | filed 2026-02-04
+  figure               hand        stored
+  roe                              0.1709        0.1709
+  op_margin                          None          None
+  gross_margin                       None          None
+  rev_growth                      -0.0354       -0.0354
+  ocf_to_ni                        0.8434        0.8434
+  fcf_margin                        0.101         0.101
+  current_ratio                      None          None
+  interest_cover                     None          None
+  equity_assets                    0.7195          None
+  liab_equity                      0.3899        0.1256  <-- differs
+  roe_prev                         0.2544          None
+  share_change                     -0.049        -0.049
+  eps_growth_reported              -0.243        -0.243
+  pe_price_over_eps                11.366        11.366
+  rev_cagr3                        0.0266        0.0266
+  implied_shares_from_pb(M)      184.0868          None
+  other stored: {'fcf_yield': 0.0752, 'pb': 1.7918, 'roe_years_positive': 1.0, 'eps_cagr3': 0.0033, 'fcf_years_positive': 1.0, 'cash_debt': 1.2144, 'insider_pct': 0.0071, 'returns_capital': True}
+
+===== JPM (US) fiscal ends ['2022-12-31', '2023-12-31', '2024-12-31', '2025-12-31'] cache stored_at day; bases None
+  revenue              [('2023-12', 158104.0, 'Revenues'), ('2024-12', 177556.0, 'Revenues'), ('2025-12', 182447.0, 'Revenues')]
+  gross_profit         []
+  op_income            []
+  net_income           [('2023-12', 49552.0, 'NetIncomeLoss'), ('2024-12', 58471.0, 'NetIncomeLoss'), ('2025-12', 57048.0, 'NetIncomeLoss')]
+  net_income_all       -- not in stored series
+  equity               [('2023-12', 327878.0, 'StockholdersEquity'), ('2024-12', 344758.0, 'StockholdersEquity'), ('2025-12', 362438.0, 'StockholdersEquity')]
+  equity_all           -- not in stored series
+  assets               [('2023-12', 3875393.0, 'Assets'), ('2024-12', 4002814.0, 'Assets'), ('2025-12', 4424900.0, 'Assets')]
+  liabilities          [('2023-12', 3547515.0, 'Liabilities'), ('2024-12', 3658056.0, 'Liabilities'), ('2025-12', 4062462.0, 'Liabilities')]
+  current_assets       []
+  current_liabilities  []
+  cash                 [('2023-12', 624151.0, 'CashCashEquivalentsRestricte'), ('2024-12', 469317.0, 'CashCashEquivalentsRestricte'), ('2025-12', 343338.0, 'CashCashEquivalentsRestricte')]
+  ocf                  [('2023-12', 12974.0, 'NetCashProvidedByUsedInOpera'), ('2024-12', -42012.0, 'NetCashProvidedByUsedInOpera'), ('2025-12', -147782.0, 'NetCashProvidedByUsedInOpera')]
+  capex                []
+  interest             []
+  debt_total           []
+  debt_long            [('2023-12', 391825.0, 'LongTermDebtAndCapitalLeaseO'), ('2024-12', 401418.0, 'LongTermDebtAndCapitalLeaseO'), ('2025-12', 435206.0, 'LongTermDebtAndCapitalLeaseO')]
+  debt_short           []
+  debt_borrow          [('2023-12', 44712.0, 'ShortTermBorrowings'), ('2024-12', 52893.0, 'ShortTermBorrowings'), ('2025-12', 64776.0, 'ShortTermBorrowings')]
+  eps                  [('2023-12', 16.23, 'EarningsPerShareDiluted'), ('2024-12', 19.75, 'EarningsPerShareDiluted'), ('2025-12', 20.02, 'EarningsPerShareDiluted')]
+  shares_avg           [('2023-12', 2943.1, 'WeightedAverageNumberOfDilut'), ('2024-12', 2879.0, 'WeightedAverageNumberOfDilut'), ('2025-12', 2781.5, 'WeightedAverageNumberOfDilut')]
+  buyback              [('2023-12', 9824.0, 'PaymentsForRepurchaseOfCommo'), ('2024-12', 18830.0, 'PaymentsForRepurchaseOfCommo'), ('2025-12', 31591.0, 'PaymentsForRepurchaseOfCommo')]
+  dividends            [('2023-12', 13463.0, 'PaymentsOfDividends'), ('2024-12', 14783.0, 'PaymentsOfDividends'), ('2025-12', 16625.0, 'PaymentsOfDividends')]
+  price 316.6600036621094 | long score 64.03536265939935 HOLD_WATCH ENTRY_NOW | swing 45.42947448787469 | filed 2026-02-13
+  figure               hand        stored
+  roe                              0.1574        0.1574
+  op_margin                          None          None
+  gross_margin                       None          None
+  rev_growth                       0.0275        0.0275
+  ocf_to_ni                       -2.5905          None
+  fcf_margin                         None          None
+  current_ratio                      None          None
+  interest_cover                     None          None
+  equity_assets                    0.0819        0.0819
+  liab_equity                     11.2087          None
+  roe_prev                         0.1696          None
+  share_change                    -0.0339       -0.0339
+  eps_growth_reported              0.0137        0.0137
+  pe_price_over_eps               15.8172       15.8172
+  rev_cagr3                        0.1234        0.1234
+  implied_shares_from_pb(M)     2655.6095          None
+  other stored: {'pb': 2.3202, 'roe_years_positive': 1.0, 'eps_cagr3': 0.1831, 'insider_pct': 0.0042, 'returns_capital': True}
+
+===== NVDA (US) fiscal ends ['2023-01-29', '2024-01-28', '2025-01-26', '2026-01-25'] cache stored_at day; bases None
+  revenue              [('2024-01', 60922.0, 'Revenues'), ('2025-01', 130497.0, 'Revenues'), ('2026-01', 215938.0, 'Revenues')]
+  gross_profit         [('2024-01', 44301.0, 'GrossProfit'), ('2025-01', 97858.0, 'GrossProfit'), ('2026-01', 153463.0, 'GrossProfit')]
+  op_income            [('2024-01', 32972.0, 'OperatingIncomeLoss'), ('2025-01', 81453.0, 'OperatingIncomeLoss'), ('2026-01', 130387.0, 'OperatingIncomeLoss')]
+  net_income           [('2024-01', 29760.0, 'NetIncomeLoss'), ('2025-01', 72880.0, 'NetIncomeLoss'), ('2026-01', 120067.0, 'NetIncomeLoss')]
+  net_income_all       -- not in stored series
+  equity               [('2024-01', 42978.0, 'StockholdersEquity'), ('2025-01', 79327.0, 'StockholdersEquity'), ('2026-01', 157293.0, 'StockholdersEquity')]
+  equity_all           -- not in stored series
+  assets               [('2024-01', 65728.0, 'Assets'), ('2025-01', 111601.0, 'Assets'), ('2026-01', 206803.0, 'Assets')]
+  liabilities          [('2024-01', 22750.0, 'Liabilities'), ('2025-01', 32274.0, 'Liabilities'), ('2026-01', 49510.0, 'Liabilities')]
+  current_assets       [('2024-01', 44345.0, 'AssetsCurrent'), ('2025-01', 80126.0, 'AssetsCurrent'), ('2026-01', 125605.0, 'AssetsCurrent')]
+  current_liabilities  [('2024-01', 10631.0, 'LiabilitiesCurrent'), ('2025-01', 18047.0, 'LiabilitiesCurrent'), ('2026-01', 32163.0, 'LiabilitiesCurrent')]
+  cash                 [('2024-01', 7280.0, 'CashCashEquivalentsRestricte'), ('2025-01', 8589.0, 'CashAndCashEquivalentsAtCarr'), ('2026-01', 10605.0, 'CashAndCashEquivalentsAtCarr')]
+  ocf                  [('2024-01', 28090.0, 'NetCashProvidedByUsedInOpera'), ('2025-01', 64089.0, 'NetCashProvidedByUsedInOpera'), ('2026-01', 102718.0, 'NetCashProvidedByUsedInOpera')]
+  capex                [('2024-01', 1069.0, 'PaymentsToAcquireProductiveA'), ('2025-01', 3236.0, 'PaymentsToAcquireProductiveA'), ('2026-01', 6042.0, 'PaymentsToAcquireProductiveA')]
+  interest             [('2024-01', 257.0, 'InterestExpenseNonoperating'), ('2025-01', 247.0, 'InterestExpenseNonoperating'), ('2026-01', 259.0, 'InterestExpenseNonoperating')]
+  debt_total           []
+  debt_long            [('2024-01', 8459.0, 'LongTermDebtNoncurrent'), ('2025-01', 8463.0, 'LongTermDebtNoncurrent'), ('2026-01', 7469.0, 'LongTermDebtNoncurrent')]
+  debt_short           [('2024-01', 1250.0, 'LongTermDebtCurrent'), ('2025-01', 0.0, 'LongTermDebtCurrent'), ('2026-01', 999.0, 'LongTermDebtCurrent')]
+  debt_borrow          [('2023-01', 0.0, 'CommercialPaper'), ('2024-01', 0.0, 'CommercialPaper'), ('2025-01', 0.0, 'CommercialPaper')]
+  eps                  [('2024-01', 1.19, 'EarningsPerShareDiluted'), ('2025-01', 2.94, 'EarningsPerShareDiluted'), ('2026-01', 4.9, 'EarningsPerShareDiluted')]
+  shares_avg           [('2024-01', 24940.0, 'WeightedAverageNumberOfDilut'), ('2025-01', 24804.0, 'WeightedAverageNumberOfDilut'), ('2026-01', 24514.0, 'WeightedAverageNumberOfDilut')]
+  buyback              [('2024-01', 9533.0, 'PaymentsForRepurchaseOfCommo'), ('2025-01', 33706.0, 'PaymentsForRepurchaseOfCommo'), ('2026-01', 40086.0, 'PaymentsForRepurchaseOfCommo')]
+  dividends            [('2024-01', 395.0, 'PaymentsOfDividends'), ('2025-01', 834.0, 'PaymentsOfDividends'), ('2026-01', 974.0, 'PaymentsOfDividends')]
+  price 165.0500030517578 | long score 71.56417399236601 BUY_CANDIDATE OVERVALUED_AT_CURRENT_PRICE | swing 33.104145132869164 | filed 2026-02-25
+  figure               hand        stored
+  roe                              0.7633        0.7633
+  op_margin                        0.6038        0.6038
+  gross_margin                     0.7107        0.7107
+  rev_growth                       0.6547        0.6547
+  ocf_to_ni                        0.8555        0.8555
+  fcf_margin                       0.4477        0.4477
+  current_ratio                    3.9053        3.9053
+  interest_cover                 503.4247      503.4247
+  equity_assets                    0.7606          None
+  liab_equity                      0.3148        0.0538  <-- differs
+  roe_prev                         0.9187          None
+  share_change                    -0.0117       -0.0117
+  eps_growth_reported              0.6667        0.6667
+  pe_price_over_eps               33.6837       33.6837
+  rev_cagr3                        1.0005        1.0005
+  implied_shares_from_pb(M)       24147.0          None
+  other stored: {'fcf_yield': 0.0243, 'pb': 25.3378, 'roe_years_positive': 1.0, 'eps_cagr3': 2.0661, 'fcf_years_positive': 1.0, 'cash_debt': 1.2524, 'insider_pct': 0.0404, 'returns_capital': True}
+
+===== O (US) fiscal ends ['2022-12-31', '2023-12-31', '2024-12-31', '2025-12-31'] cache stored_at day; bases None
+  revenue              [('2023-12', 4078.99, 'Revenues'), ('2024-12', 5271.14, 'Revenues'), ('2025-12', 5749.38, 'Revenues')]
+  gross_profit         []
+  op_income            []
+  net_income           [('2023-12', 872.31, 'NetIncomeLoss'), ('2024-12', 860.77, 'NetIncomeLoss'), ('2025-12', 1058.59, 'NetIncomeLoss')]
+  net_income_all       -- not in stored series
+  equity               [('2023-12', 33106.97, 'StockholdersEquityIncludingP'), ('2024-12', 38840.74, 'StockholdersEquity'), ('2025-12', 39438.69, 'StockholdersEquity')]
+  equity_all           -- not in stored series
+  assets               [('2023-12', 57779.36, 'Assets'), ('2024-12', 68835.04, 'Assets'), ('2025-12', 72795.61, 'Assets')]
+  liabilities          [('2023-12', 24672.39, 'Liabilities'), ('2024-12', 29783.35, 'Liabilities'), ('2025-12', 32671.64, 'Liabilities')]
+  current_assets       []
+  current_liabilities  []
+  cash                 [('2023-12', 292.18, 'CashCashEquivalentsRestricte'), ('2024-12', 444.96, 'CashAndCashEquivalentsAtCarr'), ('2025-12', 434.84, 'CashAndCashEquivalentsAtCarr')]
+  ocf                  [('2023-12', 2958.77, 'NetCashProvidedByUsedInOpera'), ('2024-12', 3573.28, 'NetCashProvidedByUsedInOpera'), ('2025-12', 3994.75, 'NetCashProvidedByUsedInOpera')]
+  capex                [('2023-12', 68.69, 'PaymentsForCapitalImprovemen'), ('2024-12', 121.41, 'PaymentsForCapitalImprovemen'), ('2025-12', 131.8, 'PaymentsForCapitalImprovemen')]
+  interest             []
+  debt_total           []
+  debt_long            []
+  debt_short           []
+  debt_borrow          []
+  eps                  [('2023-12', 1.26, 'EarningsPerShareDiluted'), ('2024-12', 0.98, 'EarningsPerShareDiluted'), ('2025-12', 1.17, 'EarningsPerShareDiluted')]
+  shares_avg           [('2023-12', 693.02, 'WeightedAverageNumberOfDilut'), ('2024-12', 863.79, 'WeightedAverageNumberOfDilut'), ('2025-12', 908.33, 'WeightedAverageNumberOfDilut')]
+  buyback              []
+  dividends            [('2023-12', 2111.79, 'PaymentsOfDividendsCommonSto'), ('2024-12', 2691.72, 'PaymentsOfDividendsCommonSto'), ('2025-12', 2920.89, 'PaymentsOfDividendsCommonSto')]
+  price 58.59000015258789 | long score 56.238441467266085 HOLD_WATCH ENTRY_NOW | swing 54.10763283893524 | filed 2026-02-25
+  figure               hand        stored
+  roe                              0.0268        0.0268
+  op_margin                          None          None
+  gross_margin                       None          None
+  rev_growth                       0.0907        0.0907
+  ocf_to_ni                        3.7737        3.7737
+  fcf_margin                       0.6719        0.6719
+  current_ratio                      None          None
+  interest_cover                     None          None
+  equity_assets                    0.5418          None
+  liab_equity                      0.8284        0.8284
+  roe_prev                         0.0222          None
+  share_change                     0.0516        0.0516
+  eps_growth_reported              0.1939        0.1939
+  pe_price_over_eps               50.0769       50.0769
+  rev_cagr3                         0.198         0.198
+  implied_shares_from_pb(M)       950.997          None
+  other stored: {'fcf_yield': 0.0693, 'pb': 1.4128, 'roe_years_positive': 1.0, 'eps_cagr3': -0.0625, 'fcf_years_positive': 1.0, 'cash_debt': 0.0133, 'insider_pct': 0.0014, 'returns_capital': True}
+
+===== MO (US) fiscal ends ['2022-12-31', '2023-12-31', '2024-12-31', '2025-12-31'] cache stored_at day; bases None
+  revenue              [('2023-12', 24483.0, 'RevenueFromContractWithCusto'), ('2024-12', 24018.0, 'RevenueFromContractWithCusto'), ('2025-12', 23279.0, 'RevenueFromContractWithCusto')]
+  gross_profit         [('2023-12', 14284.0, 'GrossProfit'), ('2024-12', 14367.0, 'GrossProfit'), ('2025-12', 14542.0, 'GrossProfit')]
+  op_income            [('2023-12', 11547.0, 'OperatingIncomeLoss'), ('2024-12', 11241.0, 'OperatingIncomeLoss'), ('2025-12', 9899.0, 'OperatingIncomeLoss')]
+  net_income           [('2023-12', 8130.0, 'NetIncomeLoss'), ('2024-12', 11264.0, 'NetIncomeLoss'), ('2025-12', 6947.0, 'NetIncomeLoss')]
+  net_income_all       -- not in stored series
+  equity               [('2023-12', -3490.0, 'StockholdersEquityIncludingP'), ('2024-12', -2238.0, 'StockholdersEquity'), ('2025-12', -3502.0, 'StockholdersEquity')]
+  equity_all           -- not in stored series
+  assets               [('2023-12', 38570.0, 'Assets'), ('2024-12', 35177.0, 'Assets'), ('2025-12', 35017.0, 'Assets')]
+  liabilities          [('2023-12', 42060.0, 'Liabilities'), ('2024-12', 37365.0, 'Liabilities'), ('2025-12', 38469.0, 'Liabilities')]
+  current_assets       [('2023-12', 5585.0, 'AssetsCurrent'), ('2024-12', 4513.0, 'AssetsCurrent'), ('2025-12', 5932.0, 'AssetsCurrent')]
+  current_liabilities  [('2023-12', 11319.0, 'LiabilitiesCurrent'), ('2024-12', 8781.0, 'LiabilitiesCurrent'), ('2025-12', 9154.0, 'LiabilitiesCurrent')]
+  cash                 [('2023-12', 3686.0, 'CashAndCashEquivalentsAtCarr'), ('2024-12', 3127.0, 'CashAndCashEquivalentsAtCarr'), ('2025-12', 4474.0, 'CashAndCashEquivalentsAtCarr')]
+  ocf                  [('2023-12', 9287.0, 'NetCashProvidedByUsedInOpera'), ('2024-12', 8753.0, 'NetCashProvidedByUsedInOpera'), ('2025-12', 9290.0, 'NetCashProvidedByUsedInOpera')]
+  capex                [('2023-12', 196.0, 'PaymentsToAcquirePropertyPla'), ('2024-12', 142.0, 'PaymentsToAcquirePropertyPla'), ('2025-12', 216.0, 'PaymentsToAcquirePropertyPla')]
+  interest             [('2023-12', 1149.0, 'InterestExpenseNonoperating'), ('2024-12', 1124.0, 'InterestExpenseNonoperating'), ('2025-12', 1177.0, 'InterestExpenseNonoperating')]
+  debt_total           []
+  debt_long            [('2023-12', 25112.0, 'LongTermDebtNoncurrent'), ('2024-12', 23399.0, 'LongTermDebtNoncurrent'), ('2025-12', 24140.0, 'LongTermDebtNoncurrent')]
+  debt_short           [('2023-12', 1121.0, 'LongTermDebtCurrent'), ('2024-12', 1527.0, 'LongTermDebtCurrent'), ('2025-12', 1569.0, 'LongTermDebtCurrent')]
+  debt_borrow          [('2023-12', 0.0, 'ShortTermBorrowings'), ('2024-12', 0.0, 'ShortTermBorrowings'), ('2025-12', 0.0, 'ShortTermBorrowings')]
+  eps                  [('2023-12', 4.57, 'EarningsPerShareDiluted'), ('2024-12', 6.54, 'EarningsPerShareDiluted'), ('2025-12', 4.12, 'EarningsPerShareDiluted')]
+  shares_avg           [('2023-12', 1777.0, 'WeightedAverageNumberOfDilut'), ('2024-12', 1718.0, 'WeightedAverageNumberOfDilut'), ('2025-12', 1683.0, 'WeightedAverageNumberOfDilut')]
+  buyback              [('2023-12', 1000.0, 'PaymentsForRepurchaseOfCommo'), ('2024-12', 3400.0, 'PaymentsForRepurchaseOfCommo'), ('2025-12', 1000.0, 'PaymentsForRepurchaseOfCommo')]
+  dividends            [('2023-12', 6779.0, 'PaymentsOfDividendsCommonSto'), ('2024-12', 6845.0, 'PaymentsOfDividendsCommonSto'), ('2025-12', 6960.0, 'PaymentsOfDividendsCommonSto')]
+  price 73.80000305175781 | long score 70.81088824467807 BUY_CANDIDATE ENTRY_NOW | swing 64.26798568379532 | filed 2026-02-25
+  figure               hand        stored
+  roe                             -1.9837          None
+  op_margin                        0.4252        0.4252
+  gross_margin                     0.6247        0.6247
+  rev_growth                      -0.0308       -0.0308
+  ocf_to_ni                        1.3373        1.3373
+  fcf_margin                       0.3898        0.3898
+  current_ratio                     0.648         0.648
+  interest_cover                   8.4104        8.4104
+  equity_assets                      -0.1          None
+  liab_equity                    -10.9849          99.0  <-- differs
+  roe_prev                        -5.0331          None
+  share_change                    -0.0204       -0.0204
+  eps_growth_reported               -0.37         -0.37
+  pe_price_over_eps               17.9126       17.9126
+  rev_cagr3                       -0.0247       -0.0247
+  other stored: {'fcf_yield': 0.0739, 'pb': None, 'roe_years_positive': 1.0, 'eps_cagr3': 0.089, 'fcf_years_positive': 1.0, 'cash_debt': 0.174, 'insider_pct': 0.0015, 'returns_capital': True}
+
+===== EOG (US) fiscal ends ['2022-12-31', '2023-12-31', '2024-12-31', '2025-12-31'] cache stored_at day; bases None
+  revenue              [('2023-12', 24186.0, 'Revenues'), ('2024-12', 23698.0, 'Revenues'), ('2025-12', 22632.0, 'Revenues')]
+  gross_profit         []
+  op_income            [('2023-12', 9603.0, 'OperatingIncomeLoss'), ('2024-12', 8082.0, 'OperatingIncomeLoss'), ('2025-12', 6385.0, 'OperatingIncomeLoss')]
+  net_income           [('2023-12', 7594.0, 'NetIncomeLoss'), ('2024-12', 6403.0, 'NetIncomeLoss'), ('2025-12', 4980.0, 'NetIncomeLoss')]
+  net_income_all       -- not in stored series
+  equity               [('2023-12', 28090.0, 'StockholdersEquity'), ('2024-12', 29351.0, 'StockholdersEquity'), ('2025-12', 29833.0, 'StockholdersEquity')]
+  equity_all           -- not in stored series
+  assets               [('2023-12', 43857.0, 'Assets'), ('2024-12', 47186.0, 'Assets'), ('2025-12', 51799.0, 'Assets')]
+  liabilities          []
+  current_assets       [('2023-12', 9935.0, 'AssetsCurrent'), ('2024-12', 11230.0, 'AssetsCurrent'), ('2025-12', 7656.0, 'AssetsCurrent')]
+  current_liabilities  [('2023-12', 4074.0, 'LiabilitiesCurrent'), ('2024-12', 5354.0, 'LiabilitiesCurrent'), ('2025-12', 4691.0, 'LiabilitiesCurrent')]
+  cash                 [('2023-12', 5278.0, 'CashCashEquivalentsRestricte'), ('2024-12', 7092.0, 'CashAndCashEquivalentsAtCarr'), ('2025-12', 3396.0, 'CashAndCashEquivalentsAtCarr')]
+  ocf                  [('2023-12', 11340.0, 'NetCashProvidedByUsedInOpera'), ('2024-12', 12143.0, 'NetCashProvidedByUsedInOpera'), ('2025-12', 10044.0, 'NetCashProvidedByUsedInOpera')]
+  capex                []
+  interest             [('2023-12', 148.0, 'InterestExpense'), ('2024-12', 138.0, 'InterestExpense'), ('2025-12', 235.0, 'InterestExpense')]
+  debt_total           []
+  debt_long            [('2023-12', 3765.0, 'LongTermDebtNoncurrent'), ('2024-12', 4220.0, 'LongTermDebtNoncurrent'), ('2025-12', 7909.0, 'LongTermDebtNoncurrent')]
+  debt_short           [('2023-12', 34.0, 'LongTermDebtCurrent'), ('2024-12', 532.0, 'LongTermDebtCurrent'), ('2025-12', 27.0, 'LongTermDebtCurrent')]
+  debt_borrow          []
+  eps                  [('2023-12', 13.0, 'EarningsPerShareDiluted'), ('2024-12', 11.25, 'EarningsPerShareDiluted'), ('2025-12', 9.12, 'EarningsPerShareDiluted')]
+  shares_avg           [('2023-12', 584.0, 'WeightedAverageNumberOfDilut'), ('2024-12', 569.0, 'WeightedAverageNumberOfDilut'), ('2025-12', 546.0, 'WeightedAverageNumberOfDilut')]
+  buyback              [('2023-12', 1038.0, 'PaymentsForRepurchaseOfCommo'), ('2024-12', 3246.0, 'PaymentsForRepurchaseOfCommo'), ('2025-12', 2564.0, 'PaymentsForRepurchaseOfCommo')]
+  dividends            [('2023-12', 3386.0, 'PaymentsOfOrdinaryDividends'), ('2024-12', 2087.0, 'PaymentsOfOrdinaryDividends'), ('2025-12', 2161.0, 'PaymentsOfOrdinaryDividends')]
+  price 145.33999633789062 | long score 73.9857691884756 BUY_CANDIDATE ENTRY_NOW | swing 57.42208418186883 | filed 2026-02-24
+  figure               hand        stored
+  roe                              0.1669        0.1669
+  op_margin                        0.2821        0.2821
+  gross_margin                       None          None
+  rev_growth                       -0.045        -0.045
+  ocf_to_ni                        2.0169        2.0169
+  fcf_margin                         None          None
+  current_ratio                    1.6321        1.6321
+  interest_cover                  27.1702       27.1702
+  equity_assets                    0.5759          None
+  liab_equity                        None         0.266
+  roe_prev                         0.2182          None
+  share_change                    -0.0404       -0.0404
+  eps_growth_reported             -0.1893       -0.1893
+  pe_price_over_eps               15.9364       15.9364
+  rev_cagr3                       -0.0415       -0.0415
+  implied_shares_from_pb(M)      518.4842          None
+  other stored: {'fcf_yield': None, 'pb': 2.5259, 'roe_years_positive': 1.0, 'eps_cagr3': -0.1164, 'cash_debt': 0.4279, 'insider_pct': 0.0029, 'returns_capital': True}
+
+===== CME (US) fiscal ends ['2022-12-31', '2023-12-31', '2024-12-31', '2025-12-31'] cache stored_at day; bases None
+  revenue              [('2023-12', 5578.9, 'Revenues'), ('2024-12', 6130.1, 'Revenues'), ('2025-12', 6520.6, 'Revenues')]
+  gross_profit         []
+  op_income            [('2023-12', 3435.7, 'OperatingIncomeLoss'), ('2024-12', 3931.5, 'OperatingIncomeLoss'), ('2025-12', 4229.5, 'OperatingIncomeLoss')]
+  net_income           [('2023-12', 3226.0, 'NetIncomeLoss'), ('2024-12', 3525.8, 'NetIncomeLoss'), ('2025-12', 4072.2, 'NetIncomeLoss')]
+  net_income_all       -- not in stored series
+  equity               [('2023-12', 26737.9, 'StockholdersEquity'), ('2024-12', 26486.9, 'StockholdersEquity'), ('2025-12', 28728.2, 'StockholdersEquity')]
+  equity_all           -- not in stored series
+  assets               [('2023-12', 129706.1, 'Assets'), ('2024-12', 137447.0, 'Assets'), ('2025-12', 198424.2, 'Assets')]
+  liabilities          [('2023-12', 102968.2, 'Liabilities'), ('2024-12', 110960.1, 'Liabilities'), ('2025-12', 169696.0, 'Liabilities')]
+  current_assets       [('2023-12', 94890.2, 'AssetsCurrent'), ('2024-12', 103033.5, 'AssetsCurrent'), ('2025-12', 165359.3, 'AssetsCurrent')]
+  current_liabilities  [('2023-12', 93416.9, 'LiabilitiesCurrent'), ('2024-12', 102313.9, 'LiabilitiesCurrent'), ('2025-12', 160296.7, 'LiabilitiesCurrent')]
+  cash                 [('2023-12', 2912.0, 'CashAndCashEquivalentsAtCarr'), ('2024-12', 2892.4, 'CashAndCashEquivalentsAtCarr'), ('2025-12', 4416.9, 'CashAndCashEquivalentsAtCarr')]
+  ocf                  [('2023-12', 3453.8, 'NetCashProvidedByUsedInOpera'), ('2024-12', 3690.5, 'NetCashProvidedByUsedInOpera'), ('2025-12', 4277.1, 'NetCashProvidedByUsedInOpera')]
+  capex                [('2023-12', 76.4, 'PaymentsToAcquirePropertyPla'), ('2024-12', 94.0, 'PaymentsToAcquirePropertyPla'), ('2025-12', 83.5, 'PaymentsToAcquirePropertyPla')]
+  interest             [('2023-12', 159.4, 'InterestAndDebtExpense'), ('2024-12', 160.9, 'InterestAndDebtExpense'), ('2025-12', 173.4, 'InterestAndDebtExpense')]
+  debt_total           []
+  debt_long            []
+  debt_short           []
+  debt_borrow          [('2023-12', 0.0, 'ShortTermBorrowings'), ('2024-12', 749.8, 'ShortTermBorrowings'), ('2025-12', 0.0, 'ShortTermBorrowings')]
+  eps                  [('2023-12', 8.86, 'EarningsPerShareDiluted'), ('2024-12', 9.67, 'EarningsPerShareDiluted'), ('2025-12', 11.16, 'EarningsPerShareDiluted')]
+  shares_avg           [('2023-12', 359.5, 'WeightedAverageNumberOfDilut'), ('2024-12', 359.94, 'WeightedAverageNumberOfDilut'), ('2025-12', 360.31, 'WeightedAverageNumberOfDilut')]
+  buyback              []
+  dividends            [('2023-12', 3235.5, 'PaymentsOfDividends'), ('2024-12', 3584.2, 'PaymentsOfDividends'), ('2025-12', 3933.0, 'PaymentsOfDividends')]
+  price 304.42999267578125 | long score 73.24144024533452 BUY_CANDIDATE ENTRY_NOW | swing 65.52438144518194 | filed 2026-02-26
+  figure               hand        stored
+  roe                              0.1417        0.1417
+  op_margin                        0.6486        0.6486
+  gross_margin                       None          None
+  rev_growth                       0.0637        0.0637
+  ocf_to_ni                        1.0503        1.0503
+  fcf_margin                       0.6431        0.6431
+  current_ratio                    1.0316        1.0316
+  interest_cover                  24.3916       24.3916
+  equity_assets                    0.1448          None
+  liab_equity                      5.9069        0.1191  <-- differs
+  roe_prev                         0.1331          None
+  share_change                      0.001         0.001
+  eps_growth_reported              0.1541        0.1541
+  pe_price_over_eps               27.2787       27.2787
+  rev_cagr3                        0.0911        0.0911
+  implied_shares_from_pb(M)      357.9307          None
+  other stored: {'fcf_yield': 0.0385, 'pb': 3.793, 'roe_years_positive': 1.0, 'eps_cagr3': 0.1468, 'fcf_years_positive': 1.0, 'cash_debt': 1.2906, 'insider_pct': 0.0044, 'returns_capital': True}

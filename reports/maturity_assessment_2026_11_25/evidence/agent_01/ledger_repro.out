@@ -1,0 +1,25 @@
+verify: {'status': 'OK', 'shards': 32, 'voided': 3, 'bad_files': []}
+live code model version: QSF-1.5.2
+index row keys: ['file', 'hash', 'market', 'model_version', 'prev_hash', 'records', 'seq', 'session', 'sha256']
+US sessions: 14
+    2026-11-12 ['QSF-1.3.2']
+    2026-11-13 ['QSF-1.3.2']
+    2026-11-16 ['QSF-1.4.1']
+    2026-11-17 ['QSF-1.4.1']
+    2026-11-18 ['QSF-1.4.1']
+    2026-11-19 ['QSF-1.4.1']
+    2026-11-20 ['QSF-1.4.1']
+    2026-11-23 ['QSF-1.5.2']
+US 2026-11-23 snapshots 1008 recomputed 1008 max abs diff 4.263256414560601e-14 None mismatches 0 versions ['QSF-1.5.2']
+US fields present: {'input_coverage': True, 'conservative_score': True, 'band_held_back': True, 'band_kept': False, 'deal_pin': False, 'deal_held': False} deal_pin rows 0 deal_held rows 0
+KR sessions: 14
+    2026-11-12 ['QSF-1.3.2']
+    2026-11-13 ['QSF-1.3.2']
+    2026-11-16 ['QSF-1.4.1']
+    2026-11-17 ['QSF-1.4.1']
+    2026-11-18 ['QSF-1.4.1']
+    2026-11-19 ['QSF-1.4.1']
+    2026-11-20 ['QSF-1.4.1']
+    2026-11-23 ['QSF-1.5.2']
+KR 2026-11-23 snapshots 600 recomputed 600 max abs diff 2.842170943040401e-14 None mismatches 0 versions ['QSF-1.5.2']
+KR fields present: {'input_coverage': True, 'conservative_score': True, 'band_held_back': True, 'band_kept': False, 'deal_pin': False, 'deal_held': False} deal_pin rows 0 deal_held rows 0

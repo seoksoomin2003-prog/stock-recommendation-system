@@ -1,0 +1,36 @@
+{
+ "2026-11-24 15:00 KST": {
+  "quote_status": "REAL",
+  "quote_date": "2026-11-20",
+  "price_fill": {
+   "status": "REAL",
+   "date": "2026-11-20",
+   "exact": false
+  },
+  "alert_bar_used": true,
+  "cache_status": "REAL"
+ },
+ "2026-11-26 15:00 KST": {
+  "quote_status": "STALE",
+  "quote_date": "2026-11-20",
+  "price_fill": {
+   "status": "STALE",
+   "date": "2026-11-20",
+   "exact": false
+  },
+  "alert_bar_used": false,
+  "cache_status": "REAL"
+ },
+ "2026-11-27 15:00 KST": {
+  "quote_status": "STALE",
+  "quote_date": "2026-11-20",
+  "price_fill": {
+   "status": "STALE",
+   "date": "2026-11-20",
+   "exact": false
+  },
+  "alert_bar_used": false,
+  "cache_status": "REAL"
+ },
+ "kr_company_as_of_at_0800_KST": "2026-11-24 (UTC date used by QSF.kr_company; Seoul date is 2026-11-25)"
+}

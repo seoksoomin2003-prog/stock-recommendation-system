@@ -1,0 +1,15 @@
+US 2026-11-23 ENTRY_NOW long cards 301 no stored copy 0 meeting PROFITABILITY_DOWN: 10
+    ('NWSA', 0.134, 0.067, 69.4, 'HOLD_WATCH')
+    ('NWS', 0.134, 0.067, 68.1, 'HOLD_WATCH')
+    ('XYZ', 0.136, 0.059, 63.7, 'HOLD_WATCH')
+    ('OMC', 0.353, -0.005, 57.5, 'HOLD_WATCH')
+    ('KHC', 0.056, -0.14, 57.4, 'HOLD_WATCH')
+    ('CNC', 0.125, -0.334, 57.2, 'HOLD_WATCH')
+    ('COF', 0.078, 0.022, 55.5, 'HOLD_WATCH')
+    ('SNPS', 0.252, 0.047, 55.4, 'HOLD_WATCH')
+    ('GM', 0.095, 0.044, 55.2, 'HOLD_WATCH')
+    ('TRMB', 0.262, 0.073, 55.0, 'HOLD_WATCH')
+KR 2026-11-23 ENTRY_NOW long cards 125 no stored copy 0 meeting PROFITABILITY_DOWN: 3
+    ('011200', 0.136, 0.071, 71.4, 'BUY_CANDIDATE')
+    ('090430', 0.113, 0.043, 67.5, 'HOLD_WATCH')
+    ('051900', 0.034, -0.018, 58.1, 'HOLD_WATCH')

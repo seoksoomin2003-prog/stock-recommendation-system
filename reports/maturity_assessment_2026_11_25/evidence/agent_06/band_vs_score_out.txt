@@ -1,0 +1,8 @@
+2026-11-23 KR SWING QSF-1.5.2: rows 300 | score>=70 0 | buy band 0 | >=70 but no band 0 | band <70 0 | >=70 blocked 0 | >=70 entry statuses {}
+      top fifth: 60 rows, lowest score 53.8; in buy band 0
+2026-11-23 KR LONG_TERM QSF-1.5.2: rows 300 | score>=70 32 | buy band 29 | >=70 but no band 3 | band <70 0 | >=70 blocked 1 | >=70 entry statuses {'ENTRY_NOW': 31, 'NO_VALID_ENTRY_SETUP': 1}
+      top fifth: 60 rows, lowest score 67.2; in buy band 29
+2026-11-23 US SWING QSF-1.5.2: rows 501 | score>=70 23 | buy band 21 | >=70 but no band 2 | band <70 0 | >=70 blocked 0 | >=70 entry statuses {'WAIT_FOR_PULLBACK': 23}
+      top fifth: 100 rows, lowest score 63.5; in buy band 21
+2026-11-23 US LONG_TERM QSF-1.5.2: rows 498 | score>=70 77 | buy band 75 | >=70 but no band 2 | band <70 0 | >=70 blocked 0 | >=70 entry statuses {'ENTRY_NOW': 67, 'OVERVALUED_AT_CURRENT_PRICE': 10}
+      top fifth: 99 rows, lowest score 68.9; in buy band 75

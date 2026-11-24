@@ -1,0 +1,50 @@
+QSF_1_1_HISTORICAL_PRICE_ONLY.json: verdicts=[] passed_true=0/0 mtime=1793843135
+QSF_1_2_VALIDATION.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793864002
+QSF_CORRECTED_OOS.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793963232
+QSF_CORRECTED_OOS_RUN1.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793961420
+QSF_CORRECTED_OPEN.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793964562
+QSF_CORRECTED_OPEN_RUN1.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793962864
+QSF_CORRECTED_RESEARCH.json: verdicts=[] passed_true=0/0 mtime=1793963401
+QSF_CORRECTED_RESEARCH_RUN1.json: verdicts=[] passed_true=0/0 mtime=1793961587
+QSF_CORRECTED_SUE_TEST.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793966343
+QSF_CORRECTED_SWING.json: verdicts=[] passed_true=0/0 mtime=1793963440
+QSF_CORRECTED_SWING_RUN1.json: verdicts=[] passed_true=0/0 mtime=1793961627
+QSF_ENSEMBLE.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793981762
+QSF_FORECAST_TEST.json: verdicts=['RANGE_CALIBRATED'] passed_true=0/0 mtime=1794684187
+QSF_FORECAST_TOUCH_TEST.json: verdicts=['TOUCH_CALIBRATED'] passed_true=0/0 mtime=1794732103
+QSF_INSIDER_CIK_ALIASES.json: verdicts=[] passed_true=0/0 mtime=1793947256
+QSF_INSIDER_DEV.json: verdicts=[] passed_true=0/0 mtime=1793947351
+QSF_KR.json: verdicts=['WEAK_POSITIVE_EVIDENCE'] passed_true=0/0 mtime=1793990754
+QSF_KR_DIAGNOSTICS.json: verdicts=['WEAK_POSITIVE_EVIDENCE'] passed_true=0/0 mtime=1793991067
+QSF_KR_EVENTS.json: verdicts=['A_AND_B2', 'NO_EVIDENCE', 'WEAK_POSITIVE_EVIDENCE'] passed_true=0/0 mtime=1794075278
+QSF_KR_FUND.json: verdicts=['WEAK_POSITIVE_EVIDENCE'] passed_true=0/0 mtime=1794022726
+QSF_KR_HOLDER.json: verdicts=['A_AND_B2', 'NO_EVIDENCE', 'WEAK_POSITIVE_EVIDENCE'] passed_true=0/0 mtime=1794153752
+QSF_KR_LIVE_REPLAY.json: verdicts=['DISTINCT_FROM_RANDOM', 'NOT_DISTINCT_FROM_RANDOM', 'NO_EVIDENCE', 'RANK_ONLY', 'WEAK_POSITIVE_EVIDENCE'] passed_true=1/3 mtime=1794295807
+QSF_KR_LIVE_REPLAY_FIDELITY.json: verdicts=[] passed_true=1/1 mtime=1794295778
+QSF_KR_LONG_EARLY.json: verdicts=['NOT_CONFIRMED', 'NO_EVIDENCE', 'WEAK_POSITIVE_EVIDENCE'] passed_true=0/2 mtime=1794332337
+QSF_KR_METHOD_SELECTION.json: verdicts=['NO_PRIMARY'] passed_true=0/0 mtime=1794386565
+QSF_KR_RISK_GRADE.json: verdicts=['RISK_GRADE_SUPPORTED'] passed_true=0/0 mtime=1794386072
+QSF_KR_SUE.json: verdicts=['A_NOT_INDEPENDENT', 'NO_EVIDENCE', 'WEAK_POSITIVE_EVIDENCE'] passed_true=0/0 mtime=1794633280
+QSF_KR_TECH_EARLY.json: verdicts=['DROPPING_HELPED_AGAIN', 'NEGATIVE_AGAIN'] passed_true=0/0 mtime=1794330556
+QSF_KR_UNIVERSE_TEST.json: verdicts=['FITS_THE_HYPOTHESIS', 'NOT_DISTINCT_FROM_RANDOM', 'NO_EVIDENCE', 'WORSE_THAN_RANDOM'] passed_true=0/2 mtime=1794296948
+QSF_MARKET_STATE.json: verdicts=[] passed_true=0/0 mtime=1794800966
+QSF_NEWS_DEV.json: verdicts=[] passed_true=0/0 mtime=1793978268
+QSF_NEWS_TEST.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793978280
+QSF_OOS_TEST.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793941733
+QSF_OOS_UNIVERSE.json: verdicts=[] passed_true=0/0 mtime=1793941258
+QSF_OPEN_UNIVERSE.json: verdicts=[] passed_true=0/0 mtime=1793935723
+QSF_OPEN_VALIDATION.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793938353
+QSF_PICKS_SIMULATION.json: verdicts=['NOT_DISTINCT_FROM_RANDOM'] passed_true=0/0 mtime=1794289397
+QSF_PIT_VALIDATION.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793934273
+QSF_REGIME_WEIGHTS.json: verdicts=['NOT_SUPPORTED'] passed_true=0/0 mtime=1794450028
+QSF_RESEARCH_SCORE_DEV.json: verdicts=[] passed_true=0/0 mtime=1793865001
+QSF_SENTIMENT.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793982389
+QSF_SHORT_DEV.json: verdicts=[] passed_true=0/0 mtime=1793985802
+QSF_SURVIVORSHIP_SURVEY.json: verdicts=[] passed_true=0/0 mtime=1793932506
+QSF_SWING_DEV.json: verdicts=[] passed_true=0/0 mtime=1793945573
+QSF_SWING_TEST.json: verdicts=['NO_EVIDENCE'] passed_true=0/0 mtime=1793945599
+QSF_US_13F.json: verdicts=['NO_EVIDENCE', 'WEAK_POSITIVE_EVIDENCE'] passed_true=0/0 mtime=1794730499
+QSF_US_13F_PREPARE.json: verdicts=[] passed_true=0/0 mtime=1794730484
+frozen_core_after.json: verdicts=[] passed_true=0/0 mtime=1793852294
+frozen_core_before.json: verdicts=[] passed_true=0/0 mtime=1793842030
+files 49

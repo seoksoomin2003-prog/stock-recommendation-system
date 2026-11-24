@@ -1,0 +1,2390 @@
+{
+ "US_SWING": {
+  "n": 504,
+  "factors": 16,
+  "points": 80.0,
+  "reproduce_max_err": 2.842170943040401e-14,
+  "cons_max_err": 2.1316282072803006e-14,
+  "mean": 51.915624488714364,
+  "sd": 11.82836024373739,
+  "max": 76.83284717340555,
+  "ge70": 23,
+  "ge80": 0,
+  "ge67": 58,
+  "ge75": 2,
+  "within1_of70": 14,
+  "within2_of70": 32,
+  "share_ge70": 0.04563492063492063,
+  "buy_band_actionable": 21,
+  "held_back": 2,
+  "held_back_list": [
+   [
+    "ABBV",
+    70.23,
+    69.22
+   ],
+   [
+    "MTD",
+    70.25,
+    69.74
+   ]
+  ],
+  "entry_in_buy_band": {
+   "WAIT_FOR_PULLBACK": 21
+  },
+  "entry_all_actionable": {
+   "WAIT_FOR_PULLBACK": 202,
+   "NO_VALID_ENTRY_SETUP": 277,
+   "ENTRY_NOW": 6
+  },
+  "missing_factor_cards": {
+   "trend_structure": 3,
+   "relative_strength": 3,
+   "momentum": 0,
+   "breakout_volume": 0,
+   "volatility_structure": 1,
+   "earnings_revenue_quality": 4,
+   "profitability": 6,
+   "balance_sheet": 4,
+   "cash_flow_quality": 5,
+   "risk_reward": 0,
+   "atr_risk": 0,
+   "liquidity": 0,
+   "drawdown_gap": 0,
+   "earnings_calendar": 12,
+   "material_disclosures": 0,
+   "insider_activity": 0
+  },
+  "na_factor_cards": {
+   "trend_structure": 0,
+   "relative_strength": 0,
+   "momentum": 0,
+   "breakout_volume": 0,
+   "volatility_structure": 0,
+   "earnings_revenue_quality": 0,
+   "profitability": 0,
+   "balance_sheet": 0,
+   "cash_flow_quality": 53,
+   "risk_reward": 0,
+   "atr_risk": 0,
+   "liquidity": 0,
+   "drawdown_gap": 0,
+   "earnings_calendar": 0,
+   "material_disclosures": 0,
+   "insider_activity": 0
+  },
+  "factor_stats": {
+   "trend_structure": {
+    "w": 10.0,
+    "mean": 0.567,
+    "sd": 0.328,
+    "at0": 0.078,
+    "at1": 0.204,
+    "mode": 1.0,
+    "mode_share": 0.204,
+    "max": 1.0,
+    "rho_score": 0.886
+   },
+   "relative_strength": {
+    "w": 10.0,
+    "mean": 0.501,
+    "sd": 0.289,
+    "at0": 0.0,
+    "at1": 0.002,
+    "mode": 0.002,
+    "mode_share": 0.002,
+    "max": 1.0,
+    "rho_score": 0.817
+   },
+   "momentum": {
+    "w": 5.0,
+    "mean": 0.416,
+    "sd": 0.24,
+    "at0": 0.054,
+    "at1": 0.002,
+    "mode": 0.0,
+    "mode_share": 0.054,
+    "max": 1.0,
+    "rho_score": 0.401
+   },
+   "breakout_volume": {
+    "w": 10.0,
+    "mean": 0.419,
+    "sd": 0.187,
+    "at0": 0.0,
+    "at1": 0.0,
+    "mode": 0.3,
+    "mode_share": 0.046,
+    "max": 0.792,
+    "rho_score": 0.909
+   },
+   "volatility_structure": {
+    "w": 5.0,
+    "mean": 0.383,
+    "sd": 0.244,
+    "at0": 0.008,
+    "at1": 0.0,
+    "mode": 0.246,
+    "mode_share": 0.014,
+    "max": 0.992,
+    "rho_score": 0.47
+   },
+   "earnings_revenue_quality": {
+    "w": 3.0,
+    "mean": 0.627,
+    "sd": 0.224,
+    "at0": 0.016,
+    "at1": 0.042,
+    "mode": 1.0,
+    "mode_share": 0.042,
+    "max": 1.0,
+    "rho_score": -0.011
+   },
+   "profitability": {
+    "w": 2.0,
+    "mean": 0.699,
+    "sd": 0.298,
+    "at0": 0.036,
+    "at1": 0.255,
+    "mode": 1.0,
+    "mode_share": 0.255,
+    "max": 1.0,
+    "rho_score": 0.182
+   },
+   "balance_sheet": {
+    "w": 3.0,
+    "mean": 0.547,
+    "sd": 0.329,
+    "at0": 0.072,
+    "at1": 0.13,
+    "mode": 1.0,
+    "mode_share": 0.13,
+    "max": 1.0,
+    "rho_score": -0.113
+   },
+   "cash_flow_quality": {
+    "w": 2.0,
+    "mean": 0.825,
+    "sd": 0.222,
+    "at0": 0.018,
+    "at1": 0.368,
+    "mode": 1.0,
+    "mode_share": 0.368,
+    "max": 1.0,
+    "rho_score": 0.145
+   },
+   "risk_reward": {
+    "w": 6.0,
+    "mean": 0.055,
+    "sd": 0.155,
+    "at0": 0.758,
+    "at1": 0.006,
+    "mode": 0.0,
+    "mode_share": 0.76,
+    "max": 1.0,
+    "rho_score": -0.126
+   },
+   "atr_risk": {
+    "w": 5.0,
+    "mean": 0.597,
+    "sd": 0.268,
+    "at0": 0.052,
+    "at1": 0.0,
+    "mode": 0.0,
+    "mode_share": 0.052,
+    "max": 0.982,
+    "rho_score": 0.649
+   },
+   "liquidity": {
+    "w": 5.0,
+    "mean": 0.885,
+    "sd": 0.144,
+    "at0": 0.0,
+    "at1": 0.435,
+    "mode": 1.0,
+    "mode_share": 0.437,
+    "max": 1.0,
+    "rho_score": -0.116
+   },
+   "drawdown_gap": {
+    "w": 4.0,
+    "mean": 0.535,
+    "sd": 0.269,
+    "at0": 0.062,
+    "at1": 0.0,
+    "mode": 0.0,
+    "mode_share": 0.062,
+    "max": 0.964,
+    "rho_score": 0.639
+   },
+   "earnings_calendar": {
+    "w": 4.0,
+    "mean": 0.952,
+    "sd": 0.19,
+    "at0": 0.026,
+    "at1": 0.929,
+    "mode": 1.0,
+    "mode_share": 0.929,
+    "max": 1.0,
+    "rho_score": 0.054
+   },
+   "material_disclosures": {
+    "w": 3.0,
+    "mean": 0.587,
+    "sd": 0.061,
+    "at0": 0.0,
+    "at1": 0.0,
+    "mode": 0.6,
+    "mode_share": 0.95,
+    "max": 0.6,
+    "rho_score": 0.015
+   },
+   "insider_activity": {
+    "w": 3.0,
+    "mean": 0.263,
+    "sd": 0.32,
+    "at0": 0.536,
+    "at1": 0.071,
+    "mode": 0.0,
+    "mode_share": 0.542,
+    "max": 1.0,
+    "rho_score": -0.082
+   }
+  },
+  "pairs_ge_0_5": [
+   [
+    "atr_risk",
+    "drawdown_gap",
+    0.809
+   ],
+   [
+    "trend_structure",
+    "breakout_volume",
+    0.801
+   ],
+   [
+    "trend_structure",
+    "relative_strength",
+    0.787
+   ],
+   [
+    "relative_strength",
+    "breakout_volume",
+    0.693
+   ],
+   [
+    "breakout_volume",
+    "atr_risk",
+    0.69
+   ],
+   [
+    "breakout_volume",
+    "drawdown_gap",
+    0.69
+   ]
+  ],
+  "participation_ratio": 8.987346664016542,
+  "eig_gt1": 6,
+  "pr_independent_baseline": 15.54,
+  "eig_gt1_independent_baseline": 7.73,
+  "var_share_factor": {
+   "trend_structure": 0.306,
+   "relative_strength": 0.251,
+   "breakout_volume": 0.179,
+   "atr_risk": 0.094,
+   "drawdown_gap": 0.074,
+   "volatility_structure": 0.061,
+   "momentum": 0.05,
+   "profitability": 0.013,
+   "cash_flow_quality": 0.009,
+   "earnings_calendar": 0.003,
+   "earnings_revenue_quality": 0.002,
+   "material_disclosures": -0.0,
+   "liquidity": -0.007,
+   "insider_activity": -0.01,
+   "balance_sheet": -0.011,
+   "risk_reward": -0.016
+  },
+  "var_share_domain": {
+   "TECHNICAL": 0.847,
+   "FUNDAMENTAL": 0.013,
+   "RISK": 0.146,
+   "EVENTS": -0.006
+  },
+  "weight_share_domain": {
+   "TECHNICAL": 0.5,
+   "FUNDAMENTAL": 0.125,
+   "RISK": 0.25,
+   "EVENTS": 0.125
+  },
+  "eff_factors_by_share": 5.19,
+  "top3_share": 0.706,
+  "leave_domain_out": {
+   "TECHNICAL": {
+    "rho": 0.514,
+    "top20_kept": 5,
+    "top_quintile_kept": 0.45,
+    "ge70": 8
+   },
+   "FUNDAMENTAL": {
+    "rho": 0.987,
+    "top20_kept": 15,
+    "top_quintile_kept": 0.89,
+    "ge70": 26
+   },
+   "RISK": {
+    "rho": 0.978,
+    "top20_kept": 16,
+    "top_quintile_kept": 0.84,
+    "ge70": 61
+   },
+   "EVENTS": {
+    "rho": 0.991,
+    "top20_kept": 16,
+    "top_quintile_kept": 0.91,
+    "ge70": 29
+   }
+  },
+  "leave_factor_out": {
+   "trend_structure": {
+    "rho": 0.973,
+    "top20_kept": 18,
+    "ge70": 3
+   },
+   "relative_strength": {
+    "rho": 0.975,
+    "top20_kept": 17,
+    "ge70": 11
+   },
+   "momentum": {
+    "rho": 0.993,
+    "top20_kept": 17,
+    "ge70": 34
+   },
+   "breakout_volume": {
+    "rho": 0.995,
+    "top20_kept": 16,
+    "ge70": 31
+   },
+   "volatility_structure": {
+    "rho": 0.993,
+    "top20_kept": 16,
+    "ge70": 35
+   },
+   "earnings_revenue_quality": {
+    "rho": 0.997,
+    "top20_kept": 18,
+    "ge70": 26
+   },
+   "profitability": {
+    "rho": 0.998,
+    "top20_kept": 18,
+    "ge70": 21
+   },
+   "balance_sheet": {
+    "rho": 0.995,
+    "top20_kept": 14,
+    "ge70": 26
+   },
+   "cash_flow_quality": {
+    "rho": 0.999,
+    "top20_kept": 19,
+    "ge70": 19
+   },
+   "risk_reward": {
+    "rho": 0.996,
+    "top20_kept": 18,
+    "ge70": 81
+   },
+   "atr_risk": {
+    "rho": 0.994,
+    "top20_kept": 17,
+    "ge70": 18
+   },
+   "liquidity": {
+    "rho": 0.997,
+    "top20_kept": 18,
+    "ge70": 15
+   },
+   "drawdown_gap": {
+    "rho": 0.996,
+    "top20_kept": 18,
+    "ge70": 20
+   },
+   "earnings_calendar": {
+    "rho": 0.996,
+    "top20_kept": 18,
+    "ge70": 16
+   },
+   "material_disclosures": {
+    "rho": 1.0,
+    "top20_kept": 20,
+    "ge70": 25
+   },
+   "insider_activity": {
+    "rho": 0.995,
+    "top20_kept": 16,
+    "ge70": 40
+   }
+  },
+  "weight_perturbation": {
+   "pm20": {
+    "real": {
+     "rho_p5": 0.998,
+     "top20_p5": 17,
+     "top20_median": 19,
+     "ge70_p5_p50_p95": [
+      15,
+      24,
+      34
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.987,
+     "top20_p5": 16,
+     "top20_median": 18,
+     "ge70_p5_p50_p95": [
+      2,
+      3,
+      6
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.988,
+     "top20_p5": 16,
+     "top20_median": 18,
+     "ge70_p5_p50_p95": [
+      0,
+      1,
+      1
+     ]
+    }
+   },
+   "pm50": {
+    "real": {
+     "rho_p5": 0.985,
+     "top20_p5": 16,
+     "top20_median": 17,
+     "ge70_p5_p50_p95": [
+      4,
+      24,
+      58
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.924,
+     "top20_p5": 13,
+     "top20_median": 16,
+     "ge70_p5_p50_p95": [
+      1,
+      4,
+      12
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.934,
+     "top20_p5": 11,
+     "top20_median": 14,
+     "ge70_p5_p50_p95": [
+      0,
+      1,
+      4
+     ]
+    }
+   },
+   "x2_half": {
+    "real": {
+     "rho_p5": 0.974,
+     "top20_p5": 14,
+     "top20_median": 16,
+     "ge70_p5_p50_p95": [
+      3,
+      27,
+      69
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.878,
+     "top20_p5": 12,
+     "top20_median": 15,
+     "ge70_p5_p50_p95": [
+      0,
+      5,
+      18
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.888,
+     "top20_p5": 9,
+     "top20_median": 13,
+     "ge70_p5_p50_p95": [
+      0,
+      2,
+      6
+     ]
+    }
+   }
+  },
+  "equal_weights": {
+   "rho": 0.933,
+   "top20_kept": 16,
+   "ge70": 13
+  },
+  "max_single_factor_rho": [
+   "breakout_volume",
+   0.909
+  ],
+  "sector_eta2": 0.168,
+  "sector_table": [
+   {
+    "sector": "Healthcare",
+    "n": 60,
+    "share": 0.12,
+    "mean_minus_all": 7.8,
+    "ge70": 9
+   },
+   {
+    "sector": "Consumer Defensive",
+    "n": 31,
+    "share": 0.062,
+    "mean_minus_all": 5.7,
+    "ge70": 1
+   },
+   {
+    "sector": "Utilities",
+    "n": 31,
+    "share": 0.062,
+    "mean_minus_all": 3.9,
+    "ge70": 1
+   },
+   {
+    "sector": "Financial Services",
+    "n": 71,
+    "share": 0.141,
+    "mean_minus_all": 3.5,
+    "ge70": 6
+   },
+   {
+    "sector": "Real Estate",
+    "n": 30,
+    "share": 0.06,
+    "mean_minus_all": -0.3,
+    "ge70": 1
+   },
+   {
+    "sector": "Industrials",
+    "n": 76,
+    "share": 0.151,
+    "mean_minus_all": -0.7,
+    "ge70": 1
+   },
+   {
+    "sector": "Consumer Cyclical",
+    "n": 54,
+    "share": 0.108,
+    "mean_minus_all": -1.0,
+    "ge70": 0
+   },
+   {
+    "sector": "Basic Materials",
+    "n": 19,
+    "share": 0.038,
+    "mean_minus_all": -2.4,
+    "ge70": 1
+   },
+   {
+    "sector": "Energy",
+    "n": 21,
+    "share": 0.042,
+    "mean_minus_all": -5.2,
+    "ge70": 0
+   },
+   {
+    "sector": "Communication Services",
+    "n": 22,
+    "share": 0.044,
+    "mean_minus_all": -6.4,
+    "ge70": 0
+   },
+   {
+    "sector": "Technology",
+    "n": 87,
+    "share": 0.173,
+    "mean_minus_all": -6.9,
+    "ge70": 3
+   }
+  ],
+  "ge70_total_with_sector": 23,
+  "sector_demeaned_top_quintile_overlap": 0.68,
+  "rho_score_mcap": 0.089,
+  "financials": {
+   "n": 53,
+   "share": 0.105,
+   "ge70": 5,
+   "share_of_ge70": 0.217
+  }
+ },
+ "US_LONG_TERM": {
+  "n": 504,
+  "factors": 16,
+  "points": 90.0,
+  "reproduce_max_err": 2.842170943040401e-14,
+  "cons_max_err": 2.842170943040401e-14,
+  "mean": 60.91977619518171,
+  "sd": 9.163433174073816,
+  "max": 82.65952820157136,
+  "ge70": 79,
+  "ge80": 3,
+  "ge67": 131,
+  "ge75": 23,
+  "within1_of70": 32,
+  "within2_of70": 65,
+  "share_ge70": 0.15674603174603174,
+  "buy_band_actionable": 75,
+  "held_back": 3,
+  "held_back_list": [
+   [
+    "INCY",
+    82.53,
+    80.0
+   ],
+   [
+    "RL",
+    70.12,
+    68.55
+   ],
+   [
+    "VEEV",
+    71.54,
+    69.87
+   ]
+  ],
+  "entry_in_buy_band": {
+   "ENTRY_NOW": 67,
+   "OVERVALUED_AT_CURRENT_PRICE": 8
+  },
+  "entry_all_actionable": {
+   "OVERVALUED_AT_CURRENT_PRICE": 76,
+   "ENTRY_NOW": 301,
+   "NO_VALID_ENTRY_SETUP": 113,
+   "WAIT_FOR_EARNINGS": 5
+  },
+  "missing_factor_cards": {
+   "long_trend": 3,
+   "relative_strength": 3,
+   "momentum_persistence": 3,
+   "valuation": 3,
+   "business_quality": 4,
+   "growth_quality": 4,
+   "free_cash_flow": 41,
+   "balance_dilution": 3,
+   "financial_resilience": 4,
+   "downside_drawdown": 0,
+   "liquidity": 0,
+   "leverage": 12,
+   "governance": 0,
+   "material_events": 0,
+   "insider_ownership": 3,
+   "capital_allocation": 7
+  },
+  "na_factor_cards": {
+   "long_trend": 0,
+   "relative_strength": 0,
+   "momentum_persistence": 0,
+   "valuation": 0,
+   "business_quality": 0,
+   "growth_quality": 0,
+   "free_cash_flow": 53,
+   "balance_dilution": 0,
+   "financial_resilience": 0,
+   "downside_drawdown": 0,
+   "liquidity": 0,
+   "leverage": 53,
+   "governance": 0,
+   "material_events": 0,
+   "insider_ownership": 0,
+   "capital_allocation": 0
+  },
+  "factor_stats": {
+   "long_trend": {
+    "w": 5.0,
+    "mean": 0.558,
+    "sd": 0.291,
+    "at0": 0.048,
+    "at1": 0.076,
+    "mode": 1.0,
+    "mode_share": 0.078,
+    "max": 1.0,
+    "rho_score": 0.259
+   },
+   "relative_strength": {
+    "w": 3.0,
+    "mean": 0.501,
+    "sd": 0.289,
+    "at0": 0.0,
+    "at1": 0.002,
+    "mode": 0.002,
+    "mode_share": 0.002,
+    "max": 1.0,
+    "rho_score": 0.285
+   },
+   "momentum_persistence": {
+    "w": 2.0,
+    "mean": 0.566,
+    "sd": 0.23,
+    "at0": 0.0,
+    "at1": 0.0,
+    "mode": 0.792,
+    "mode_share": 0.1,
+    "max": 0.917,
+    "rho_score": 0.104
+   },
+   "valuation": {
+    "w": 15.0,
+    "mean": 0.479,
+    "sd": 0.26,
+    "at0": 0.014,
+    "at1": 0.012,
+    "mode": 0.667,
+    "mode_share": 0.016,
+    "max": 1.0,
+    "rho_score": 0.276
+   },
+   "business_quality": {
+    "w": 15.0,
+    "mean": 0.721,
+    "sd": 0.209,
+    "at0": 0.0,
+    "at1": 0.108,
+    "mode": 1.0,
+    "mode_share": 0.108,
+    "max": 1.0,
+    "rho_score": 0.545
+   },
+   "growth_quality": {
+    "w": 8.0,
+    "mean": 0.495,
+    "sd": 0.282,
+    "at0": 0.032,
+    "at1": 0.058,
+    "mode": 1.0,
+    "mode_share": 0.058,
+    "max": 1.0,
+    "rho_score": 0.298
+   },
+   "free_cash_flow": {
+    "w": 7.0,
+    "mean": 0.784,
+    "sd": 0.261,
+    "at0": 0.029,
+    "at1": 0.315,
+    "mode": 1.0,
+    "mode_share": 0.315,
+    "max": 1.0,
+    "rho_score": 0.612
+   },
+   "balance_dilution": {
+    "w": 5.0,
+    "mean": 0.717,
+    "sd": 0.232,
+    "at0": 0.004,
+    "at1": 0.1,
+    "mode": 0.5,
+    "mode_share": 0.138,
+    "max": 1.0,
+    "rho_score": 0.568
+   },
+   "financial_resilience": {
+    "w": 7.0,
+    "mean": 0.469,
+    "sd": 0.32,
+    "at0": 0.05,
+    "at1": 0.116,
+    "mode": 1.0,
+    "mode_share": 0.116,
+    "max": 1.0,
+    "rho_score": 0.499
+   },
+   "downside_drawdown": {
+    "w": 5.0,
+    "mean": 0.595,
+    "sd": 0.276,
+    "at0": 0.052,
+    "at1": 0.012,
+    "mode": 0.0,
+    "mode_share": 0.052,
+    "max": 1.0,
+    "rho_score": 0.197
+   },
+   "liquidity": {
+    "w": 4.0,
+    "mean": 0.885,
+    "sd": 0.144,
+    "at0": 0.0,
+    "at1": 0.435,
+    "mode": 1.0,
+    "mode_share": 0.437,
+    "max": 1.0,
+    "rho_score": 0.085
+   },
+   "leverage": {
+    "w": 4.0,
+    "mean": 0.623,
+    "sd": 0.349,
+    "at0": 0.159,
+    "at1": 0.107,
+    "mode": 0.0,
+    "mode_share": 0.159,
+    "max": 1.0,
+    "rho_score": 0.397
+   },
+   "governance": {
+    "w": 3.0,
+    "mean": 0.783,
+    "sd": 0.074,
+    "at0": 0.0,
+    "at1": 0.0,
+    "mode": 0.8,
+    "mode_share": 0.948,
+    "max": 0.8,
+    "rho_score": 0.089
+   },
+   "material_events": {
+    "w": 3.0,
+    "mean": 0.584,
+    "sd": 0.073,
+    "at0": 0.004,
+    "at1": 0.0,
+    "mode": 0.6,
+    "mode_share": 0.95,
+    "max": 0.6,
+    "rho_score": 0.108
+   },
+   "insider_ownership": {
+    "w": 2.0,
+    "mean": 0.191,
+    "sd": 0.278,
+    "at0": 0.0,
+    "at1": 0.062,
+    "mode": 1.0,
+    "mode_share": 0.062,
+    "max": 1.0,
+    "rho_score": -0.045
+   },
+   "capital_allocation": {
+    "w": 2.0,
+    "mean": 0.874,
+    "sd": 0.18,
+    "at0": 0.008,
+    "at1": 0.356,
+    "mode": 1.0,
+    "mode_share": 0.356,
+    "max": 1.0,
+    "rho_score": 0.272
+   }
+  },
+  "pairs_ge_0_5": [
+   [
+    "balance_dilution",
+    "leverage",
+    0.777
+   ],
+   [
+    "long_trend",
+    "momentum_persistence",
+    0.774
+   ],
+   [
+    "long_trend",
+    "relative_strength",
+    0.685
+   ],
+   [
+    "balance_dilution",
+    "financial_resilience",
+    0.591
+   ],
+   [
+    "financial_resilience",
+    "leverage",
+    0.585
+   ],
+   [
+    "business_quality",
+    "free_cash_flow",
+    0.541
+   ]
+  ],
+  "participation_ratio": 10.143994381854602,
+  "eig_gt1": 5,
+  "pr_independent_baseline": 15.53,
+  "eig_gt1_independent_baseline": 7.8,
+  "var_share_factor": {
+   "business_quality": 0.231,
+   "valuation": 0.149,
+   "financial_resilience": 0.135,
+   "free_cash_flow": 0.086,
+   "growth_quality": 0.085,
+   "balance_dilution": 0.082,
+   "long_trend": 0.057,
+   "downside_drawdown": 0.055,
+   "relative_strength": 0.035,
+   "leverage": 0.034,
+   "capital_allocation": 0.017,
+   "liquidity": 0.014,
+   "momentum_persistence": 0.009,
+   "material_events": 0.008,
+   "governance": 0.008,
+   "insider_ownership": -0.004
+  },
+  "var_share_domain": {
+   "TECHNICAL": 0.101,
+   "FUNDAMENTAL": 0.632,
+   "RISK": 0.238,
+   "EVENTS": 0.029
+  },
+  "weight_share_domain": {
+   "TECHNICAL": 0.111,
+   "FUNDAMENTAL": 0.556,
+   "RISK": 0.222,
+   "EVENTS": 0.111
+  },
+  "eff_factors_by_share": 8.11,
+  "top3_share": 0.512,
+  "leave_domain_out": {
+   "TECHNICAL": {
+    "rho": 0.944,
+    "top20_kept": 14,
+    "top_quintile_kept": 0.81,
+    "ge70": 96
+   },
+   "FUNDAMENTAL": {
+    "rho": 0.64,
+    "top20_kept": 6,
+    "top_quintile_kept": 0.51,
+    "ge70": 91
+   },
+   "RISK": {
+    "rho": 0.901,
+    "top20_kept": 8,
+    "top_quintile_kept": 0.75,
+    "ge70": 83
+   },
+   "EVENTS": {
+    "rho": 0.994,
+    "top20_kept": 18,
+    "top_quintile_kept": 0.97,
+    "ge70": 94
+   }
+  },
+  "leave_factor_out": {
+   "long_trend": {
+    "rho": 0.98,
+    "top20_kept": 16,
+    "ge70": 83
+   },
+   "relative_strength": {
+    "rho": 0.993,
+    "top20_kept": 18,
+    "ge70": 83
+   },
+   "momentum_persistence": {
+    "rho": 0.998,
+    "top20_kept": 18,
+    "ge70": 83
+   },
+   "valuation": {
+    "rho": 0.865,
+    "top20_kept": 8,
+    "ge70": 155
+   },
+   "business_quality": {
+    "rho": 0.914,
+    "top20_kept": 13,
+    "ge70": 52
+   },
+   "growth_quality": {
+    "rho": 0.954,
+    "top20_kept": 14,
+    "ge70": 105
+   },
+   "free_cash_flow": {
+    "rho": 0.982,
+    "top20_kept": 16,
+    "ge70": 57
+   },
+   "balance_dilution": {
+    "rho": 0.99,
+    "top20_kept": 19,
+    "ge70": 66
+   },
+   "financial_resilience": {
+    "rho": 0.955,
+    "top20_kept": 12,
+    "ge70": 92
+   },
+   "downside_drawdown": {
+    "rho": 0.976,
+    "top20_kept": 15,
+    "ge70": 81
+   },
+   "liquidity": {
+    "rho": 0.996,
+    "top20_kept": 18,
+    "ge70": 69
+   },
+   "leverage": {
+    "rho": 0.984,
+    "top20_kept": 19,
+    "ge70": 75
+   },
+   "governance": {
+    "rho": 0.999,
+    "top20_kept": 19,
+    "ge70": 76
+   },
+   "material_events": {
+    "rho": 1.0,
+    "top20_kept": 18,
+    "ge70": 84
+   },
+   "insider_ownership": {
+    "rho": 0.997,
+    "top20_kept": 19,
+    "ge70": 98
+   },
+   "capital_allocation": {
+    "rho": 0.999,
+    "top20_kept": 19,
+    "ge70": 74
+   }
+  },
+  "weight_perturbation": {
+   "pm20": {
+    "real": {
+     "rho_p5": 0.99,
+     "top20_p5": 17,
+     "top20_median": 18,
+     "ge70_p5_p50_p95": [
+      67,
+      80,
+      92
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.989,
+     "top20_p5": 16,
+     "top20_median": 18,
+     "ge70_p5_p50_p95": [
+      47,
+      57,
+      70
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.987,
+     "top20_p5": 17,
+     "top20_median": 18,
+     "ge70_p5_p50_p95": [
+      2,
+      3,
+      5
+     ]
+    }
+   },
+   "pm50": {
+    "real": {
+     "rho_p5": 0.941,
+     "top20_p5": 13,
+     "top20_median": 16,
+     "ge70_p5_p50_p95": [
+      54,
+      80,
+      118
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.93,
+     "top20_p5": 13,
+     "top20_median": 15,
+     "ge70_p5_p50_p95": [
+      41,
+      63,
+      97
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.923,
+     "top20_p5": 13,
+     "top20_median": 15,
+     "ge70_p5_p50_p95": [
+      2,
+      4,
+      6
+     ]
+    }
+   },
+   "x2_half": {
+    "real": {
+     "rho_p5": 0.904,
+     "top20_p5": 11,
+     "top20_median": 14,
+     "ge70_p5_p50_p95": [
+      53,
+      85,
+      139
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.892,
+     "top20_p5": 11,
+     "top20_median": 14,
+     "ge70_p5_p50_p95": [
+      39,
+      65,
+      109
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.885,
+     "top20_p5": 12,
+     "top20_median": 14,
+     "ge70_p5_p50_p95": [
+      2,
+      5,
+      9
+     ]
+    }
+   }
+  },
+  "equal_weights": {
+   "rho": 0.87,
+   "top20_kept": 9,
+   "ge70": 72
+  },
+  "max_single_factor_rho": [
+   "free_cash_flow",
+   0.612
+  ],
+  "sector_eta2": 0.176,
+  "sector_table": [
+   {
+    "sector": "Financial Services",
+    "n": 71,
+    "share": 0.141,
+    "mean_minus_all": 5.3,
+    "ge70": 24
+   },
+   {
+    "sector": "Healthcare",
+    "n": 60,
+    "share": 0.12,
+    "mean_minus_all": 3.4,
+    "ge70": 12
+   },
+   {
+    "sector": "Energy",
+    "n": 21,
+    "share": 0.042,
+    "mean_minus_all": 1.7,
+    "ge70": 1
+   },
+   {
+    "sector": "Technology",
+    "n": 87,
+    "share": 0.173,
+    "mean_minus_all": 1.6,
+    "ge70": 19
+   },
+   {
+    "sector": "Industrials",
+    "n": 76,
+    "share": 0.151,
+    "mean_minus_all": -0.4,
+    "ge70": 6
+   },
+   {
+    "sector": "Communication Services",
+    "n": 22,
+    "share": 0.044,
+    "mean_minus_all": -0.5,
+    "ge70": 5
+   },
+   {
+    "sector": "Consumer Defensive",
+    "n": 31,
+    "share": 0.062,
+    "mean_minus_all": -1.9,
+    "ge70": 3
+   },
+   {
+    "sector": "Consumer Cyclical",
+    "n": 54,
+    "share": 0.108,
+    "mean_minus_all": -2.2,
+    "ge70": 5
+   },
+   {
+    "sector": "Basic Materials",
+    "n": 19,
+    "share": 0.038,
+    "mean_minus_all": -3.9,
+    "ge70": 2
+   },
+   {
+    "sector": "Real Estate",
+    "n": 30,
+    "share": 0.06,
+    "mean_minus_all": -5.4,
+    "ge70": 0
+   },
+   {
+    "sector": "Utilities",
+    "n": 31,
+    "share": 0.062,
+    "mean_minus_all": -9.6,
+    "ge70": 0
+   }
+  ],
+  "ge70_total_with_sector": 77,
+  "sector_demeaned_top_quintile_overlap": 0.8,
+  "rho_score_mcap": 0.185,
+  "financials": {
+   "n": 53,
+   "share": 0.105,
+   "ge70": 16,
+   "share_of_ge70": 0.203
+  }
+ },
+ "US_swing_vs_long_rho": 0.363,
+ "KR_SWING": {
+  "n": 300,
+  "factors": 11,
+  "points": 40.0,
+  "reproduce_max_err": 1.4210854715202004e-14,
+  "cons_max_err": 1.4210854715202004e-14,
+  "mean": 45.87757375796139,
+  "sd": 8.87403745032672,
+  "max": 67.46613166946398,
+  "ge70": 0,
+  "ge80": 0,
+  "ge67": 1,
+  "ge75": 0,
+  "within1_of70": 0,
+  "within2_of70": 0,
+  "share_ge70": 0.0,
+  "buy_band_actionable": 0,
+  "held_back": 0,
+  "held_back_list": [],
+  "entry_in_buy_band": {},
+  "entry_all_actionable": {
+   "WAIT_FOR_PULLBACK": 24,
+   "ENTRY_NOW": 22,
+   "NO_VALID_ENTRY_SETUP": 243
+  },
+  "missing_factor_cards": {
+   "earnings_revenue_quality": 3,
+   "profitability": 0,
+   "balance_sheet": 0,
+   "cash_flow_quality": 3,
+   "risk_reward": 0,
+   "atr_risk": 0,
+   "liquidity": 0,
+   "drawdown_gap": 0,
+   "earnings_calendar": 2,
+   "material_disclosures": 0,
+   "insider_activity": 300
+  },
+  "na_factor_cards": {
+   "earnings_revenue_quality": 0,
+   "profitability": 0,
+   "balance_sheet": 0,
+   "cash_flow_quality": 28,
+   "risk_reward": 0,
+   "atr_risk": 0,
+   "liquidity": 0,
+   "drawdown_gap": 0,
+   "earnings_calendar": 0,
+   "material_disclosures": 0,
+   "insider_activity": 0
+  },
+  "factor_stats": {
+   "earnings_revenue_quality": {
+    "w": 3.0,
+    "mean": 0.522,
+    "sd": 0.297,
+    "at0": 0.108,
+    "at1": 0.081,
+    "mode": 0.0,
+    "mode_share": 0.108,
+    "max": 1.0,
+    "rho_score": 0.519
+   },
+   "profitability": {
+    "w": 2.0,
+    "mean": 0.412,
+    "sd": 0.309,
+    "at0": 0.11,
+    "at1": 0.06,
+    "mode": 0.0,
+    "mode_share": 0.11,
+    "max": 1.0,
+    "rho_score": 0.603
+   },
+   "balance_sheet": {
+    "w": 3.0,
+    "mean": 0.604,
+    "sd": 0.351,
+    "at0": 0.04,
+    "at1": 0.203,
+    "mode": 1.0,
+    "mode_share": 0.207,
+    "max": 1.0,
+    "rho_score": 0.351
+   },
+   "cash_flow_quality": {
+    "w": 2.0,
+    "mean": 0.501,
+    "sd": 0.359,
+    "at0": 0.234,
+    "at1": 0.097,
+    "mode": 0.0,
+    "mode_share": 0.234,
+    "max": 1.0,
+    "rho_score": 0.644
+   },
+   "risk_reward": {
+    "w": 6.0,
+    "mean": 0.153,
+    "sd": 0.24,
+    "at0": 0.51,
+    "at1": 0.027,
+    "mode": 0.0,
+    "mode_share": 0.51,
+    "max": 1.0,
+    "rho_score": 0.291
+   },
+   "atr_risk": {
+    "w": 5.0,
+    "mean": 0.153,
+    "sd": 0.21,
+    "at0": 0.47,
+    "at1": 0.0,
+    "mode": 0.0,
+    "mode_share": 0.47,
+    "max": 0.859,
+    "rho_score": 0.363
+   },
+   "liquidity": {
+    "w": 5.0,
+    "mean": 0.669,
+    "sd": 0.285,
+    "at0": 0.01,
+    "at1": 0.22,
+    "mode": 1.0,
+    "mode_share": 0.223,
+    "max": 1.0,
+    "rho_score": 0.241
+   },
+   "drawdown_gap": {
+    "w": 4.0,
+    "mean": 0.261,
+    "sd": 0.2,
+    "at0": 0.147,
+    "at1": 0.0,
+    "mode": 0.0,
+    "mode_share": 0.147,
+    "max": 0.86,
+    "rho_score": 0.26
+   },
+   "earnings_calendar": {
+    "w": 4.0,
+    "mean": 1.0,
+    "sd": 0.0,
+    "at0": 0.0,
+    "at1": 1.0,
+    "mode": 1.0,
+    "mode_share": 1.0,
+    "max": 1.0,
+    "rho_score": NaN
+   },
+   "material_disclosures": {
+    "w": 3.0,
+    "mean": 0.573,
+    "sd": 0.18,
+    "at0": 0.037,
+    "at1": 0.013,
+    "mode": 0.6,
+    "mode_share": 0.623,
+    "max": 1.0,
+    "rho_score": 0.394
+   },
+   "insider_activity": null
+  },
+  "pairs_ge_0_5": [
+   [
+    "atr_risk",
+    "drawdown_gap",
+    0.818
+   ],
+   [
+    "earnings_revenue_quality",
+    "cash_flow_quality",
+    0.58
+   ],
+   [
+    "earnings_revenue_quality",
+    "profitability",
+    0.518
+   ]
+  ],
+  "participation_ratio": 8.045128521566708,
+  "eig_gt1": 9,
+  "pr_independent_baseline": 8.76,
+  "eig_gt1_independent_baseline": 4.34,
+  "var_share_factor": {
+   "risk_reward": 0.17,
+   "earnings_revenue_quality": 0.144,
+   "balance_sheet": 0.12,
+   "cash_flow_quality": 0.113,
+   "profitability": 0.109,
+   "atr_risk": 0.108,
+   "liquidity": 0.096,
+   "drawdown_gap": 0.068,
+   "material_disclosures": 0.06,
+   "earnings_calendar": 0.013,
+   "insider_activity": 0.0
+  },
+  "var_share_domain": {
+   "FUNDAMENTAL": 0.485,
+   "RISK": 0.442,
+   "EVENTS": 0.073
+  },
+  "weight_share_domain": {
+   "FUNDAMENTAL": 0.25,
+   "RISK": 0.5,
+   "EVENTS": 0.25
+  },
+  "eff_factors_by_share": 8.5,
+  "top3_share": 0.434,
+  "leave_domain_out": {
+   "FUNDAMENTAL": {
+    "rho": 0.717,
+    "top20_kept": 12,
+    "top_quintile_kept": 0.617,
+    "ge70": 0
+   },
+   "RISK": {
+    "rho": 0.756,
+    "top20_kept": 3,
+    "top_quintile_kept": 0.433,
+    "ge70": 117
+   },
+   "EVENTS": {
+    "rho": 0.987,
+    "top20_kept": 16,
+    "top_quintile_kept": 0.95,
+    "ge70": 0
+   }
+  },
+  "leave_factor_out": {
+   "earnings_revenue_quality": {
+    "rho": 0.964,
+    "top20_kept": 18,
+    "ge70": 0
+   },
+   "profitability": {
+    "rho": 0.985,
+    "top20_kept": 17,
+    "ge70": 0
+   },
+   "balance_sheet": {
+    "rho": 0.947,
+    "top20_kept": 13,
+    "ge70": 0
+   },
+   "cash_flow_quality": {
+    "rho": 0.982,
+    "top20_kept": 16,
+    "ge70": 0
+   },
+   "risk_reward": {
+    "rho": 0.9,
+    "top20_kept": 8,
+    "ge70": 6
+   },
+   "atr_risk": {
+    "rho": 0.944,
+    "top20_kept": 13,
+    "ge70": 6
+   },
+   "liquidity": {
+    "rho": 0.901,
+    "top20_kept": 11,
+    "ge70": 1
+   },
+   "drawdown_gap": {
+    "rho": 0.969,
+    "top20_kept": 14,
+    "ge70": 3
+   },
+   "earnings_calendar": {
+    "rho": 0.999,
+    "top20_kept": 20,
+    "ge70": 0
+   },
+   "material_disclosures": {
+    "rho": 0.989,
+    "top20_kept": 16,
+    "ge70": 0
+   },
+   "insider_activity": {
+    "rho": 1.0,
+    "top20_kept": 20,
+    "ge70": 0
+   }
+  },
+  "weight_perturbation": {
+   "pm20": {
+    "real": {
+     "rho_p5": 0.99,
+     "top20_p5": 17,
+     "top20_median": 19,
+     "ge70_p5_p50_p95": [
+      0,
+      0,
+      0
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.988,
+     "top20_p5": 17,
+     "top20_median": 19,
+     "ge70_p5_p50_p95": [
+      1,
+      3,
+      3
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.986,
+     "top20_p5": 17,
+     "top20_median": 18,
+     "ge70_p5_p50_p95": [
+      4,
+      5,
+      6
+     ]
+    }
+   },
+   "pm50": {
+    "real": {
+     "rho_p5": 0.946,
+     "top20_p5": 13,
+     "top20_median": 15,
+     "ge70_p5_p50_p95": [
+      0,
+      0,
+      4
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.927,
+     "top20_p5": 14,
+     "top20_median": 17,
+     "ge70_p5_p50_p95": [
+      1,
+      2,
+      5
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.925,
+     "top20_p5": 14,
+     "top20_median": 16,
+     "ge70_p5_p50_p95": [
+      4,
+      6,
+      8
+     ]
+    }
+   },
+   "x2_half": {
+    "real": {
+     "rho_p5": 0.909,
+     "top20_p5": 11,
+     "top20_median": 14,
+     "ge70_p5_p50_p95": [
+      0,
+      0,
+      5
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.883,
+     "top20_p5": 13,
+     "top20_median": 16,
+     "ge70_p5_p50_p95": [
+      1,
+      3,
+      6
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.879,
+     "top20_p5": 13,
+     "top20_median": 15,
+     "ge70_p5_p50_p95": [
+      3,
+      6,
+      9
+     ]
+    }
+   }
+  },
+  "equal_weights": {
+   "rho": 0.953,
+   "top20_kept": 10,
+   "ge70": 0
+  },
+  "max_single_factor_rho": [
+   "cash_flow_quality",
+   0.644
+  ],
+  "sector_eta2": 0.079,
+  "sector_table": [
+   {
+    "sector": "필수소비재",
+    "n": 18,
+    "share": 0.06,
+    "mean_minus_all": 5.5,
+    "ge70": 0
+   },
+   {
+    "sector": "유틸리티",
+    "n": 2,
+    "share": 0.007,
+    "mean_minus_all": 4.1,
+    "ge70": 0
+   },
+   {
+    "sector": "금융",
+    "n": 27,
+    "share": 0.09,
+    "mean_minus_all": 3.9,
+    "ge70": 0
+   },
+   {
+    "sector": "커뮤니케이션",
+    "n": 15,
+    "share": 0.05,
+    "mean_minus_all": 2.8,
+    "ge70": 0
+   },
+   {
+    "sector": "경기소비재",
+    "n": 21,
+    "share": 0.07,
+    "mean_minus_all": 2.2,
+    "ge70": 0
+   },
+   {
+    "sector": "기술",
+    "n": 42,
+    "share": 0.14,
+    "mean_minus_all": 0.1,
+    "ge70": 0
+   },
+   {
+    "sector": "헬스케어",
+    "n": 35,
+    "share": 0.117,
+    "mean_minus_all": -1.3,
+    "ge70": 0
+   },
+   {
+    "sector": "지주회사",
+    "n": 26,
+    "share": 0.087,
+    "mean_minus_all": -1.4,
+    "ge70": 0
+   },
+   {
+    "sector": "산업재",
+    "n": 87,
+    "share": 0.29,
+    "mean_minus_all": -1.5,
+    "ge70": 0
+   },
+   {
+    "sector": "소재",
+    "n": 25,
+    "share": 0.083,
+    "mean_minus_all": -3.2,
+    "ge70": 0
+   },
+   {
+    "sector": "에너지",
+    "n": 2,
+    "share": 0.007,
+    "mean_minus_all": -6.4,
+    "ge70": 0
+   }
+  ],
+  "ge70_total_with_sector": 0,
+  "sector_demeaned_top_quintile_overlap": 0.817,
+  "rho_score_mcap": 0.374,
+  "financials": {
+   "n": 28,
+   "share": 0.093,
+   "ge70": 0,
+   "share_of_ge70": 0.0
+  }
+ },
+ "KR_LONG_TERM": {
+  "n": 300,
+  "factors": 16,
+  "points": 90.0,
+  "reproduce_max_err": 2.842170943040401e-14,
+  "cons_max_err": 2.842170943040401e-14,
+  "mean": 52.998637103530896,
+  "sd": 14.622719326347305,
+  "max": 83.27253710748872,
+  "ge70": 32,
+  "ge80": 3,
+  "ge67": 61,
+  "ge75": 12,
+  "within1_of70": 14,
+  "within2_of70": 28,
+  "share_ge70": 0.10666666666666667,
+  "buy_band_actionable": 28,
+  "held_back": 4,
+  "held_back_list": [
+   [
+    "032830",
+    71.33,
+    69.17
+   ],
+   [
+    "086790",
+    70.62,
+    68.54
+   ],
+   [
+    "005830",
+    83.27,
+    79.9
+   ],
+   [
+    "439260",
+    72.07,
+    69.62
+   ]
+  ],
+  "entry_in_buy_band": {
+   "ENTRY_NOW": 28
+  },
+  "entry_all_actionable": {
+   "ENTRY_NOW": 125,
+   "OVERVALUED_AT_CURRENT_PRICE": 13,
+   "NO_VALID_ENTRY_SETUP": 151
+  },
+  "missing_factor_cards": {
+   "long_trend": 1,
+   "relative_strength": 0,
+   "momentum_persistence": 0,
+   "valuation": 1,
+   "business_quality": 0,
+   "growth_quality": 35,
+   "free_cash_flow": 11,
+   "balance_dilution": 0,
+   "financial_resilience": 0,
+   "downside_drawdown": 0,
+   "liquidity": 0,
+   "leverage": 0,
+   "governance": 0,
+   "material_events": 0,
+   "insider_ownership": 27,
+   "capital_allocation": 69
+  },
+  "na_factor_cards": {
+   "long_trend": 0,
+   "relative_strength": 0,
+   "momentum_persistence": 0,
+   "valuation": 0,
+   "business_quality": 0,
+   "growth_quality": 0,
+   "free_cash_flow": 28,
+   "balance_dilution": 0,
+   "financial_resilience": 0,
+   "downside_drawdown": 0,
+   "liquidity": 0,
+   "leverage": 28,
+   "governance": 0,
+   "material_events": 0,
+   "insider_ownership": 0,
+   "capital_allocation": 0
+  },
+  "factor_stats": {
+   "long_trend": {
+    "w": 5.0,
+    "mean": 0.342,
+    "sd": 0.282,
+    "at0": 0.211,
+    "at1": 0.047,
+    "mode": 0.5,
+    "mode_share": 0.224,
+    "max": 1.0,
+    "rho_score": 0.224
+   },
+   "relative_strength": {
+    "w": 3.0,
+    "mean": 0.502,
+    "sd": 0.289,
+    "at0": 0.0,
+    "at1": 0.003,
+    "mode": 0.003,
+    "mode_share": 0.003,
+    "max": 1.0,
+    "rho_score": 0.329
+   },
+   "momentum_persistence": {
+    "w": 2.0,
+    "mean": 0.446,
+    "sd": 0.255,
+    "at0": 0.0,
+    "at1": 0.0,
+    "mode": 0.208,
+    "mode_share": 0.12,
+    "max": 0.917,
+    "rho_score": 0.16
+   },
+   "valuation": {
+    "w": 15.0,
+    "mean": 0.584,
+    "sd": 0.341,
+    "at0": 0.074,
+    "at1": 0.164,
+    "mode": 1.0,
+    "mode_share": 0.164,
+    "max": 1.0,
+    "rho_score": 0.573
+   },
+   "business_quality": {
+    "w": 15.0,
+    "mean": 0.492,
+    "sd": 0.252,
+    "at0": 0.05,
+    "at1": 0.01,
+    "mode": 0.0,
+    "mode_share": 0.05,
+    "max": 1.0,
+    "rho_score": 0.804
+   },
+   "growth_quality": {
+    "w": 8.0,
+    "mean": 0.446,
+    "sd": 0.335,
+    "at0": 0.132,
+    "at1": 0.113,
+    "mode": 0.0,
+    "mode_share": 0.132,
+    "max": 1.0,
+    "rho_score": 0.433
+   },
+   "free_cash_flow": {
+    "w": 7.0,
+    "mean": 0.511,
+    "sd": 0.318,
+    "at0": 0.146,
+    "at1": 0.077,
+    "mode": 0.0,
+    "mode_share": 0.146,
+    "max": 1.0,
+    "rho_score": 0.785
+   },
+   "balance_dilution": {
+    "w": 5.0,
+    "mean": 0.62,
+    "sd": 0.356,
+    "at0": 0.107,
+    "at1": 0.217,
+    "mode": 1.0,
+    "mode_share": 0.217,
+    "max": 1.0,
+    "rho_score": 0.476
+   },
+   "financial_resilience": {
+    "w": 7.0,
+    "mean": 0.477,
+    "sd": 0.328,
+    "at0": 0.02,
+    "at1": 0.12,
+    "mode": 1.0,
+    "mode_share": 0.12,
+    "max": 1.0,
+    "rho_score": 0.515
+   },
+   "downside_drawdown": {
+    "w": 5.0,
+    "mean": 0.148,
+    "sd": 0.212,
+    "at0": 0.48,
+    "at1": 0.0,
+    "mode": 0.0,
+    "mode_share": 0.483,
+    "max": 0.83,
+    "rho_score": 0.396
+   },
+   "liquidity": {
+    "w": 4.0,
+    "mean": 0.669,
+    "sd": 0.285,
+    "at0": 0.01,
+    "at1": 0.22,
+    "mode": 1.0,
+    "mode_share": 0.223,
+    "max": 1.0,
+    "rho_score": 0.009
+   },
+   "leverage": {
+    "w": 4.0,
+    "mean": 0.666,
+    "sd": 0.312,
+    "at0": 0.066,
+    "at1": 0.114,
+    "mode": 1.0,
+    "mode_share": 0.118,
+    "max": 1.0,
+    "rho_score": 0.524
+   },
+   "governance": {
+    "w": 3.0,
+    "mean": 0.762,
+    "sd": 0.144,
+    "at0": 0.0,
+    "at1": 0.0,
+    "mode": 0.8,
+    "mode_share": 0.933,
+    "max": 0.8,
+    "rho_score": 0.096
+   },
+   "material_events": {
+    "w": 3.0,
+    "mean": 0.564,
+    "sd": 0.194,
+    "at0": 0.06,
+    "at1": 0.013,
+    "mode": 0.6,
+    "mode_share": 0.623,
+    "max": 1.0,
+    "rho_score": 0.311
+   },
+   "insider_ownership": {
+    "w": 2.0,
+    "mean": 0.968,
+    "sd": 0.155,
+    "at0": 0.0,
+    "at1": 0.941,
+    "mode": 1.0,
+    "mode_share": 0.941,
+    "max": 1.0,
+    "rho_score": -0.132
+   },
+   "capital_allocation": {
+    "w": 2.0,
+    "mean": 0.977,
+    "sd": 0.116,
+    "at0": 0.0,
+    "at1": 0.961,
+    "mode": 1.0,
+    "mode_share": 0.961,
+    "max": 1.0,
+    "rho_score": 0.091
+   }
+  },
+  "pairs_ge_0_5": [
+   [
+    "balance_dilution",
+    "leverage",
+    0.995
+   ],
+   [
+    "long_trend",
+    "momentum_persistence",
+    0.822
+   ],
+   [
+    "financial_resilience",
+    "leverage",
+    0.799
+   ],
+   [
+    "balance_dilution",
+    "financial_resilience",
+    0.798
+   ],
+   [
+    "relative_strength",
+    "downside_drawdown",
+    0.641
+   ],
+   [
+    "business_quality",
+    "free_cash_flow",
+    0.605
+   ],
+   [
+    "business_quality",
+    "growth_quality",
+    0.584
+   ],
+   [
+    "valuation",
+    "downside_drawdown",
+    0.532
+   ]
+  ],
+  "participation_ratio": 8.69743944098222,
+  "eig_gt1": 6,
+  "pr_independent_baseline": 15.23,
+  "eig_gt1_independent_baseline": 7.74,
+  "var_share_factor": {
+   "valuation": 0.259,
+   "business_quality": 0.253,
+   "free_cash_flow": 0.099,
+   "financial_resilience": 0.094,
+   "balance_dilution": 0.069,
+   "growth_quality": 0.05,
+   "downside_drawdown": 0.033,
+   "leverage": 0.028,
+   "long_trend": 0.027,
+   "capital_allocation": 0.026,
+   "relative_strength": 0.025,
+   "material_events": 0.016,
+   "momentum_persistence": 0.009,
+   "governance": 0.006,
+   "insider_ownership": 0.004,
+   "liquidity": 0.002
+  },
+  "var_share_domain": {
+   "TECHNICAL": 0.061,
+   "FUNDAMENTAL": 0.729,
+   "RISK": 0.157,
+   "EVENTS": 0.053
+  },
+  "weight_share_domain": {
+   "TECHNICAL": 0.111,
+   "FUNDAMENTAL": 0.556,
+   "RISK": 0.222,
+   "EVENTS": 0.111
+  },
+  "eff_factors_by_share": 6.21,
+  "top3_share": 0.61,
+  "leave_domain_out": {
+   "TECHNICAL": {
+    "rho": 0.981,
+    "top20_kept": 17,
+    "top_quintile_kept": 0.833,
+    "ge70": 52
+   },
+   "FUNDAMENTAL": {
+    "rho": 0.64,
+    "top20_kept": 6,
+    "top_quintile_kept": 0.567,
+    "ge70": 28
+   },
+   "RISK": {
+    "rho": 0.965,
+    "top20_kept": 16,
+    "top_quintile_kept": 0.8,
+    "ge70": 49
+   },
+   "EVENTS": {
+    "rho": 0.997,
+    "top20_kept": 19,
+    "top_quintile_kept": 0.983,
+    "ge70": 25
+   }
+  },
+  "leave_factor_out": {
+   "long_trend": {
+    "rho": 0.993,
+    "top20_kept": 18,
+    "ge70": 43
+   },
+   "relative_strength": {
+    "rho": 0.997,
+    "top20_kept": 19,
+    "ge70": 34
+   },
+   "momentum_persistence": {
+    "rho": 0.999,
+    "top20_kept": 19,
+    "ge70": 37
+   },
+   "valuation": {
+    "rho": 0.912,
+    "top20_kept": 12,
+    "ge70": 32
+   },
+   "business_quality": {
+    "rho": 0.973,
+    "top20_kept": 13,
+    "ge70": 40
+   },
+   "growth_quality": {
+    "rho": 0.979,
+    "top20_kept": 15,
+    "ge70": 39
+   },
+   "free_cash_flow": {
+    "rho": 0.992,
+    "top20_kept": 18,
+    "ge70": 31
+   },
+   "balance_dilution": {
+    "rho": 0.99,
+    "top20_kept": 18,
+    "ge70": 28
+   },
+   "financial_resilience": {
+    "rho": 0.983,
+    "top20_kept": 15,
+    "ge70": 36
+   },
+   "downside_drawdown": {
+    "rho": 0.996,
+    "top20_kept": 18,
+    "ge70": 58
+   },
+   "liquidity": {
+    "rho": 0.995,
+    "top20_kept": 18,
+    "ge70": 36
+   },
+   "leverage": {
+    "rho": 0.996,
+    "top20_kept": 19,
+    "ge70": 27
+   },
+   "governance": {
+    "rho": 0.999,
+    "top20_kept": 20,
+    "ge70": 32
+   },
+   "material_events": {
+    "rho": 0.999,
+    "top20_kept": 20,
+    "ge70": 35
+   },
+   "insider_ownership": {
+    "rho": 0.999,
+    "top20_kept": 19,
+    "ge70": 32
+   },
+   "capital_allocation": {
+    "rho": 0.999,
+    "top20_kept": 19,
+    "ge70": 29
+   }
+  },
+  "weight_perturbation": {
+   "pm20": {
+    "real": {
+     "rho_p5": 0.995,
+     "top20_p5": 18,
+     "top20_median": 19,
+     "ge70_p5_p50_p95": [
+      29,
+      34,
+      40
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.987,
+     "top20_p5": 18,
+     "top20_median": 18,
+     "ge70_p5_p50_p95": [
+      9,
+      11,
+      15
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.988,
+     "top20_p5": 17,
+     "top20_median": 18,
+     "ge70_p5_p50_p95": [
+      1,
+      2,
+      3
+     ]
+    }
+   },
+   "pm50": {
+    "real": {
+     "rho_p5": 0.974,
+     "top20_p5": 14,
+     "top20_median": 17,
+     "ge70_p5_p50_p95": [
+      26,
+      35,
+      50
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.923,
+     "top20_p5": 14,
+     "top20_median": 17,
+     "ge70_p5_p50_p95": [
+      6,
+      12,
+      21
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.92,
+     "top20_p5": 13,
+     "top20_median": 16,
+     "ge70_p5_p50_p95": [
+      0,
+      2,
+      5
+     ]
+    }
+   },
+   "x2_half": {
+    "real": {
+     "rho_p5": 0.953,
+     "top20_p5": 14,
+     "top20_median": 16,
+     "ge70_p5_p50_p95": [
+      23,
+      36,
+      57
+     ]
+    },
+    "shuffled_columns": {
+     "rho_p5": 0.876,
+     "top20_p5": 12,
+     "top20_median": 16,
+     "ge70_p5_p50_p95": [
+      6,
+      13,
+      26
+     ]
+    },
+    "uniform_random": {
+     "rho_p5": 0.875,
+     "top20_p5": 10,
+     "top20_median": 15,
+     "ge70_p5_p50_p95": [
+      0,
+      2,
+      8
+     ]
+    }
+   }
+  },
+  "equal_weights": {
+   "rho": 0.911,
+   "top20_kept": 11,
+   "ge70": 39
+  },
+  "max_single_factor_rho": [
+   "business_quality",
+   0.804
+  ],
+  "sector_eta2": 0.144,
+  "sector_table": [
+   {
+    "sector": "금융",
+    "n": 27,
+    "share": 0.09,
+    "mean_minus_all": 11.9,
+    "ge70": 6
+   },
+   {
+    "sector": "필수소비재",
+    "n": 18,
+    "share": 0.06,
+    "mean_minus_all": 7.5,
+    "ge70": 2
+   },
+   {
+    "sector": "커뮤니케이션",
+    "n": 15,
+    "share": 0.05,
+    "mean_minus_all": 5.9,
+    "ge70": 3
+   },
+   {
+    "sector": "경기소비재",
+    "n": 21,
+    "share": 0.07,
+    "mean_minus_all": 2.8,
+    "ge70": 2
+   },
+   {
+    "sector": "지주회사",
+    "n": 26,
+    "share": 0.087,
+    "mean_minus_all": 2.2,
+    "ge70": 2
+   },
+   {
+    "sector": "기술",
+    "n": 42,
+    "share": 0.14,
+    "mean_minus_all": -0.3,
+    "ge70": 7
+   },
+   {
+    "sector": "산업재",
+    "n": 87,
+    "share": 0.29,
+    "mean_minus_all": -2.9,
+    "ge70": 6
+   },
+   {
+    "sector": "헬스케어",
+    "n": 35,
+    "share": 0.117,
+    "mean_minus_all": -5.2,
+    "ge70": 4
+   },
+   {
+    "sector": "유틸리티",
+    "n": 2,
+    "share": 0.007,
+    "mean_minus_all": -5.8,
+    "ge70": 0
+   },
+   {
+    "sector": "소재",
+    "n": 25,
+    "share": 0.083,
+    "mean_minus_all": -6.6,
+    "ge70": 0
+   },
+   {
+    "sector": "에너지",
+    "n": 2,
+    "share": 0.007,
+    "mean_minus_all": -18.8,
+    "ge70": 0
+   }
+  ],
+  "ge70_total_with_sector": 32,
+  "sector_demeaned_top_quintile_overlap": 0.7,
+  "rho_score_mcap": 0.163,
+  "financials": {
+   "n": 28,
+   "share": 0.093,
+   "ge70": 6,
+   "share_of_ge70": 0.188
+  }
+ },
+ "KR_swing_vs_long_rho": 0.74
+}

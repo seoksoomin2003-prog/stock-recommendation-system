@@ -1,0 +1,14 @@
+stale cards US 0 KR 0 stale_fund_days>0 US 0 KR 0
+== 1 strong ACGL Arch Capital Group Ltd. LONG_TERM score 82.7 | row band_label: 강력 매수 후보 | action: 매수 후보 | conf HIGH cov 1.0 | entry ENTRY_NOW | missing None | trailing 79.7 | stale [] stale_fund_days None
+   [한 줄로] 오래 들고 가는 관점(몇 달에서 몇 년)에서 100점 만점에 82.7점입니다. 이 프로그램의 기준에 아주 잘 맞는 편입니다. / 점수는 주가 흐름, 회사의 살림과 벌이, 위험, 최근 공시를 정해진 규칙으로 따져 더한 값입니다.
+   [걱정되는 점] 경영진이 가진 자기 회사 주식이 적습니다.
+   [지금 사도 되나] 오래 들고 갈 관점에서 지금 사는 것을 막는 조건이 없습니다. '좋은 때'라는 뜻이 아니라 '막는 이유가 없다'는 뜻입니다.
+== 2 insufficient 005830 DB손해보험 LONG_TERM score 83.3 | row band_label: 매수 후보 · 빠진 요인을 중간값으로 보면 79.9점 | action: 매수 후보 | conf LOW cov 0.9 | entry ENTRY_NOW | missing None | trailing 83.7 | stale [] stale_fund_days None
+   [한 줄로] 오래 들고 가는 관점(몇 달에서 몇 년)에서 100점 만점에 83.3점입니다. 이 프로그램의 기준에 잘 맞는 편입니다. / 점수는 주가 흐름, 회사의 살림과 벌이, 위험, 최근 공시를 정해진 규칙으로 따져 더한 값입니다. / 일부 자료가 없어서, 없는 부분을 '보통'으로 치면 79.9점쯤입니다. 그래서 더 낮은 구간으로 보여 줍니다.
+   [걱정되는 점] 뚜렷하게 걱정되는 점이 없습니다.
+   [지금 사도 되나] 오래 들고 갈 관점에서 지금 사는 것을 막는 조건이 없습니다. '좋은 때'라는 뜻이 아니라 '막는 이유가 없다'는 뜻입니다.
+== 4 stale none found
+== 5 valuation DXCM DexCom, Inc. LONG_TERM score 75.3 | row band_label: 매수 후보 | action: 매수 후보 | conf HIGH cov 1.0 | entry OVERVALUED_AT_CURRENT_PRICE | missing None | trailing 76.8 | stale [] stale_fund_days None
+   [한 줄로] 오래 들고 가는 관점(몇 달에서 몇 년)에서 100점 만점에 75.3점입니다. 이 프로그램의 기준에 잘 맞는 편입니다. / 점수는 주가 흐름, 회사의 살림과 벌이, 위험, 최근 공시를 정해진 규칙으로 따져 더한 값입니다.
+   [걱정되는 점] 회사가 버는 돈에 비해 주가가 비싼 편입니다. / 경영진이 가진 자기 회사 주식이 적습니다.
+   [지금 사도 되나] 회사가 버는 돈에 비해 지금 주가가 비쌉니다. 이 가격에서는 사지 않는다는 규칙입니다.

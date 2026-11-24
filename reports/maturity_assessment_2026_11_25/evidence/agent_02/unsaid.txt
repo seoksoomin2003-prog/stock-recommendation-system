@@ -1,0 +1,4 @@
+US 2026-11-23 long cards with a bad factor left unsaid: 132 | cards whose 'worries' would read 'none' though a factor is bad: 3 | of them in the buy band: 1
+    ('DAL', 72.0, 'BUY_CANDIDATE', 'ENTRY_NOW', [('financial_resilience', 0.18, 7)])
+KR 2026-11-23 long cards with a bad factor left unsaid: 168 | cards whose 'worries' would read 'none' though a factor is bad: 2 | of them in the buy band: 1
+    ('011200', 71.4, 'BUY_CANDIDATE', 'ENTRY_NOW', [('growth_quality', 0.0, 8)])

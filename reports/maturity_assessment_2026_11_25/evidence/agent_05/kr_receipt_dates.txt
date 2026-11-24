@@ -1,0 +1,3 @@
+rows 4618 median lag days 83.0 rows filed >120 days after FY end: 484
+examples of late receipt (likely amended reports): [('krfund3_082740_7', '2024-12-31', '2025-08-13'), ('krfund3_282720_6', '2024-12-31', '2026-01-21'), ('krfund3_141080_4', '2022-12-31', '2023-08-31'), ('krfund3_112610_e', '2022-12-31', '2023-08-31'), ('krfund3_112610_e', '2024-12-31', '2025-08-14'), ('krfund3_383220_9', '2022-12-31', '2023-08-31'), ('krfund3_317400_a', '2022-12-31', '2023-07-14'), ('krfund3_317400_a', '2024-12-31', '2025-07-25')]
+krlist2 copies 409 by end: {None: 405, '20261123': 3, '20261124': 1} age hours min/median/max 0 19 186

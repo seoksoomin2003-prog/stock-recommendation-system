@@ -1,0 +1,48 @@
+QSF_PIT_VALIDATION.json SWING|A|20
+    0-40 {'n': 9734, 'mean_vs_bench_net': -0.0007, 'mean_vs_average': 0.0022, 'beat_average_rate': 0.4991}
+    40-55 {'n': 21291, 'mean_vs_bench_net': -0.0046, 'mean_vs_average': -0.0011, 'beat_average_rate': 0.4863}
+    55-70 {'n': 26624, 'mean_vs_bench_net': -0.0035, 'mean_vs_average': 0.0003, 'beat_average_rate': 0.4977}
+    70-80 {'n': 8786, 'mean_vs_bench_net': -0.0047, 'mean_vs_average': -0.0006, 'beat_average_rate': 0.497}
+    80-100 {'n': 132, 'mean_vs_bench_net': -0.0069, 'mean_vs_average': -0.0052, 'beat_average_rate': 0.4697}
+QSF_PIT_VALIDATION.json SWING|C|20
+    0-40 {'n': 11147, 'mean_vs_bench_net': -0.0012, 'mean_vs_average': 0.0017, 'beat_average_rate': 0.4982}
+    40-55 {'n': 21096, 'mean_vs_bench_net': -0.0046, 'mean_vs_average': -0.0011, 'beat_average_rate': 0.4854}
+    55-70 {'n': 26759, 'mean_vs_bench_net': -0.0034, 'mean_vs_average': 0.0005, 'beat_average_rate': 0.5007}
+    70-80 {'n': 7495, 'mean_vs_bench_net': -0.0053, 'mean_vs_average': -0.0012, 'beat_average_rate': 0.4897}
+    80-100 {'n': 70, 'mean_vs_bench_net': -0.0029, 'mean_vs_average': -0.0013, 'beat_average_rate': 0.4429}
+QSF_PIT_VALIDATION.json LONG_TERM|A|252
+    0-40 {'n': 1825, 'mean_vs_bench_net': 0.0426, 'mean_vs_average': 0.0584, 'beat_average_rate': 0.4362}
+    40-55 {'n': 12094, 'mean_vs_bench_net': -0.0217, 'mean_vs_average': -0.0018, 'beat_average_rate': 0.453}
+    55-70 {'n': 32492, 'mean_vs_bench_net': -0.0284, 'mean_vs_average': -0.0063, 'beat_average_rate': 0.4663}
+    70-80 {'n': 11629, 'mean_vs_bench_net': -0.0148, 'mean_vs_average': 0.0095, 'beat_average_rate': 0.492}
+    80-100 {'n': 1929, 'mean_vs_bench_net': -0.0257, 'mean_vs_average': 0.005, 'beat_average_rate': 0.479}
+QSF_PIT_VALIDATION.json LONG_TERM|C|252
+    0-40 {'n': 2265, 'mean_vs_bench_net': 0.0231, 'mean_vs_average': 0.0397, 'beat_average_rate': 0.4773}
+    40-55 {'n': 16831, 'mean_vs_bench_net': -0.0227, 'mean_vs_average': -0.0009, 'beat_average_rate': 0.4589}
+    55-70 {'n': 32951, 'mean_vs_bench_net': -0.0246, 'mean_vs_average': -0.002, 'beat_average_rate': 0.4689}
+    70-80 {'n': 7039, 'mean_vs_bench_net': -0.0244, 'mean_vs_average': -0.0027, 'beat_average_rate': 0.4709}
+    80-100 {'n': 820, 'mean_vs_bench_net': -0.0096, 'mean_vs_average': 0.0114, 'beat_average_rate': 0.5341}
+QSF_CORRECTED_OPEN.json SWING|A|20
+    0-40 {'n': 10269, 'mean_vs_bench_net': -0.0017, 'mean_vs_average': 0.0013, 'beat_average_rate': 0.4983}
+    40-55 {'n': 22595, 'mean_vs_bench_net': -0.0047, 'mean_vs_average': -0.0011, 'beat_average_rate': 0.4862}
+    55-70 {'n': 28071, 'mean_vs_bench_net': -0.0034, 'mean_vs_average': 0.0005, 'beat_average_rate': 0.5}
+    70-80 {'n': 9319, 'mean_vs_bench_net': -0.0046, 'mean_vs_average': -0.0004, 'beat_average_rate': 0.497}
+    80-100 {'n': 146, 'mean_vs_bench_net': -0.0079, 'mean_vs_average': -0.0064, 'beat_average_rate': 0.4932}
+QSF_CORRECTED_OPEN.json SWING|C|20
+    0-40 {'n': 11779, 'mean_vs_bench_net': -0.0021, 'mean_vs_average': 0.0009, 'beat_average_rate': 0.4951}
+    40-55 {'n': 22400, 'mean_vs_bench_net': -0.0046, 'mean_vs_average': -0.0009, 'beat_average_rate': 0.4879}
+    55-70 {'n': 28250, 'mean_vs_bench_net': -0.0035, 'mean_vs_average': 0.0005, 'beat_average_rate': 0.5008}
+    70-80 {'n': 7899, 'mean_vs_bench_net': -0.0048, 'mean_vs_average': -0.0006, 'beat_average_rate': 0.494}
+    80-100 {'n': 72, 'mean_vs_bench_net': -0.011, 'mean_vs_average': -0.0101, 'beat_average_rate': 0.4444}
+QSF_CORRECTED_OPEN.json LONG_TERM|A|252
+    0-40 {'n': 1920, 'mean_vs_bench_net': 0.0274, 'mean_vs_average': 0.0445, 'beat_average_rate': 0.426}
+    40-55 {'n': 12411, 'mean_vs_bench_net': -0.0209, 'mean_vs_average': 0.0, 'beat_average_rate': 0.4514}
+    55-70 {'n': 34091, 'mean_vs_bench_net': -0.0308, 'mean_vs_average': -0.0075, 'beat_average_rate': 0.4668}
+    70-80 {'n': 13188, 'mean_vs_bench_net': -0.0111, 'mean_vs_average': 0.0134, 'beat_average_rate': 0.5002}
+    80-100 {'n': 2163, 'mean_vs_bench_net': -0.0345, 'mean_vs_average': -0.0028, 'beat_average_rate': 0.4748}
+QSF_CORRECTED_OPEN.json LONG_TERM|C|252
+    0-40 {'n': 2463, 'mean_vs_bench_net': 0.0113, 'mean_vs_average': 0.0282, 'beat_average_rate': 0.458}
+    40-55 {'n': 16751, 'mean_vs_bench_net': -0.0229, 'mean_vs_average': -0.0006, 'beat_average_rate': 0.4619}
+    55-70 {'n': 35945, 'mean_vs_bench_net': -0.0261, 'mean_vs_average': -0.0022, 'beat_average_rate': 0.4712}
+    70-80 {'n': 7667, 'mean_vs_bench_net': -0.0216, 'mean_vs_average': 0.0003, 'beat_average_rate': 0.4728}
+    80-100 {'n': 968, 'mean_vs_bench_net': -0.0083, 'mean_vs_average': 0.0168, 'beat_average_rate': 0.5496}

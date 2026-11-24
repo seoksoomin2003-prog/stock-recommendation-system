@@ -1,0 +1,235 @@
+== agent_01/big/eval_KR_005930.json  status REAL rank_basis UNIVERSE deals []
+  SWING     card   ('QSF-1.5.2', '2026-11-23', 55.3228, 55.323, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 55.322, 55.322, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, None)
+     atr_risk                 w=5 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw atr_pct 0.07032->0.07032, hist_vol 0.78049->0.78049
+     breakout_volume          w=0 status ('REAL', 'REAL') norm 0.25042 -> 0.25042 raw dist_high -0.52601->-0.52602, volume_ratio 1.07765->1.07767, gap_today -0.03004->-0.03005
+     credit_liquidity         w=0 status ('REAL', 'REAL') norm 0.33347 -> 0.34852 raw value 0.686->0.678, percentile 0.66653->0.65148
+     drawdown_gap             w=4 status ('REAL', 'REAL') norm 0.06056 -> 0.06056 raw max_drawdown_252 -0.51029->-0.5103
+     index_trend              w=0 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw close 4869.95996->4708.54004, ma50 6065.33023->6020.41063, ma200 6524.90938->6523.02782
+     momentum                 w=0 status ('REAL', 'REAL') norm 0.10621 -> 0.10618 raw rsi 27.61781->27.61697, macd_hist_pct -0.00575->-0.00575
+     relative_strength        w=0 status ('REAL', 'REAL') norm 0.45 -> 0.45 raw rel_126 0.02424->0.01341
+     risk_reward              w=6 status ('REAL', 'REAL') norm 0.08877 -> 0.08882 raw reward_risk 1.17754->1.17764, stop 152536.11699->152535.31998, target 208944.5648->208947.93151
+     trend_structure          w=0 status ('REAL', 'REAL') norm 0.16667 -> 0.16667 raw ma20 206288.28792->206291.46882, ma50 232508.93176->232512.62096, ma200 241686.75016->241690.63015, ma50_slope -0.08612->-0.08612
+     usdkrw_regime            w=0 status ('REAL', 'REAL') norm 0.9815 -> 0.97891 raw usdkrw 1342.08997->1344.31995, change_63 -0.02852->-0.02831
+     volatility_structure     w=0 status ('REAL', 'REAL') norm 0.31746 -> 0.31746 raw bandwidth 0.33446->0.33446
+     why card  : 55.3점 (보유·관찰). 이 판단이 깨지는 조건: 종가가 152,535.32 아래로 마감. 약점: ATR 7.0%, 연환산 변동성 78%
+     entry card: 현재 가격의 손익비 1.18가 기준 1.5 미만입니다. 20일선 부근이면 손익비가 개선됩니다.
+  LONG_TERM card   ('QSF-1.5.2', '2026-11-23', 64.3314, 64.331, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'MEDIUM', 'ENTRY_NOW', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 64.3314, 64.331, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'MEDIUM', 'ENTRY_NOW', False, None)
+     credit_liquidity         w=0 status ('REAL', 'REAL') norm 0.33347 -> 0.34852 raw value 0.686->0.678, percentile 0.66653->0.65148
+     downside_drawdown        w=5 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw downside_vol 0.51156->0.51156, max_drawdown_252 -0.51029->-0.5103
+     index_trend              w=0 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw close 4869.95996->4708.54004, ma50 6065.33023->6020.41063, ma200 6524.90938->6523.02782
+     long_trend               w=5 status ('REAL', 'REAL') norm 0.5 -> 0.5 raw ma200 241686.75016->241690.63015, ma200_slope 0.19016->0.19016
+     momentum_persistence     w=2 status ('REAL', 'REAL') norm 0.83333 -> 0.83333 raw ret_12_1 1.13569->1.13569
+     relative_strength        w=3 status ('REAL', 'REAL') norm 0.45 -> 0.45 raw rel_126 0.02424->0.01341
+     usdkrw_regime            w=0 status ('REAL', 'REAL') norm 0.9815 -> 0.97891 raw usdkrw 1342.08997->1344.31995, change_63 -0.02852->-0.02831
+     why card  : 64.3점 (보유·관찰). 이 판단이 깨지는 조건: 수익성 지속 악화 (ROE·영업이익률 하락). 약점: 하방 변동성 51%, 1년 최대 낙폭 -51.0%
+     entry card: 점수 64.3점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다.
+== agent_08/big/eval_t_005930_market_KR.json  status REAL rank_basis UNIVERSE deals []
+  SWING     card   ('QSF-1.5.2', '2026-11-23', 55.3228, 55.323, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 55.322, 55.322, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, None)
+     atr_risk                 w=5 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw atr_pct 0.07032->0.07032, hist_vol 0.78049->0.78049
+     breakout_volume          w=0 status ('REAL', 'REAL') norm 0.25042 -> 0.25042 raw dist_high -0.52601->-0.52602, volume_ratio 1.07765->1.07767, gap_today -0.03004->-0.03005
+     credit_liquidity         w=0 status ('REAL', 'REAL') norm 0.33347 -> 0.34852 raw value 0.686->0.678, percentile 0.66653->0.65148
+     drawdown_gap             w=4 status ('REAL', 'REAL') norm 0.06056 -> 0.06056 raw max_drawdown_252 -0.51029->-0.5103
+     index_trend              w=0 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw close 4869.95996->4708.54004, ma50 6065.33023->6020.41063, ma200 6524.90938->6523.02782
+     momentum                 w=0 status ('REAL', 'REAL') norm 0.10621 -> 0.10618 raw rsi 27.61781->27.61697, macd_hist_pct -0.00575->-0.00575
+     relative_strength        w=0 status ('REAL', 'REAL') norm 0.45 -> 0.45 raw rel_126 0.02424->0.01341
+     risk_reward              w=6 status ('REAL', 'REAL') norm 0.08877 -> 0.08882 raw reward_risk 1.17754->1.17764, stop 152536.11699->152535.31998, target 208944.5648->208947.93151
+     trend_structure          w=0 status ('REAL', 'REAL') norm 0.16667 -> 0.16667 raw ma20 206288.28792->206291.46882, ma50 232508.93176->232512.62096, ma200 241686.75016->241690.63015, ma50_slope -0.08612->-0.08612
+     usdkrw_regime            w=0 status ('REAL', 'REAL') norm 0.9815 -> 0.97891 raw usdkrw 1342.08997->1344.31995, change_63 -0.02852->-0.02831
+     volatility_structure     w=0 status ('REAL', 'REAL') norm 0.31746 -> 0.31746 raw bandwidth 0.33446->0.33446
+     why card  : 55.3점 (보유·관찰). 이 판단이 깨지는 조건: 종가가 152,535.32 아래로 마감. 약점: ATR 7.0%, 연환산 변동성 78%
+     entry card: 현재 가격의 손익비 1.18가 기준 1.5 미만입니다. 20일선 부근이면 손익비가 개선됩니다.
+  LONG_TERM card   ('QSF-1.5.2', '2026-11-23', 64.3314, 64.331, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'MEDIUM', 'ENTRY_NOW', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 64.3314, 64.331, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'MEDIUM', 'ENTRY_NOW', False, None)
+     credit_liquidity         w=0 status ('REAL', 'REAL') norm 0.33347 -> 0.34852 raw value 0.686->0.678, percentile 0.66653->0.65148
+     downside_drawdown        w=5 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw downside_vol 0.51156->0.51156, max_drawdown_252 -0.51029->-0.5103
+     index_trend              w=0 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw close 4869.95996->4708.54004, ma50 6065.33023->6020.41063, ma200 6524.90938->6523.02782
+     long_trend               w=5 status ('REAL', 'REAL') norm 0.5 -> 0.5 raw ma200 241686.75016->241690.63015, ma200_slope 0.19016->0.19016
+     momentum_persistence     w=2 status ('REAL', 'REAL') norm 0.83333 -> 0.83333 raw ret_12_1 1.13569->1.13569
+     relative_strength        w=3 status ('REAL', 'REAL') norm 0.45 -> 0.45 raw rel_126 0.02424->0.01341
+     usdkrw_regime            w=0 status ('REAL', 'REAL') norm 0.9815 -> 0.97891 raw usdkrw 1342.08997->1344.31995, change_63 -0.02852->-0.02831
+     why card  : 64.3점 (보유·관찰). 이 판단이 깨지는 조건: 수익성 지속 악화 (ROE·영업이익률 하락). 약점: 하방 변동성 51%, 1년 최대 낙폭 -51.0%
+     entry card: 점수 64.3점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다.
+== agent_07/big/eval_005380.json  status REAL rank_basis UNIVERSE deals []
+  SWING     card   ('QSF-1.5.2', '2026-11-23', 50.6466, 50.612, 'WEAK_REDUCE', 'AVOID', 'ACTIONABLE', 'MEDIUM', 'NO_VALID_ENTRY_SETUP', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 50.647, 50.612, 'WEAK_REDUCE', 'AVOID', 'ACTIONABLE', 'MEDIUM', 'NO_VALID_ENTRY_SETUP', False, None)
+     atr_risk                 w=5 status ('REAL', 'REAL') norm 0.04793 -> 0.04795 raw atr_pct 0.05757->0.05757, hist_vol 0.67902->0.67902
+     breakout_volume          w=0 status ('REAL', 'REAL') norm 0.3 -> 0.3 raw dist_high -0.68389->-0.68389, volume_ratio 0.67509->0.67508, gap_today -0.03529->-0.03528
+     credit_liquidity         w=0 status ('REAL', 'REAL') norm 0.33347 -> 0.34852 raw value 0.686->0.678, percentile 0.66653->0.65148
+     drawdown_gap             w=4 status ('REAL', 'REAL') norm 0.197 -> 0.197 raw max_drawdown_252 -0.66998->-0.66998
+     index_trend              w=0 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw close 4869.95996->4708.54004, ma50 6065.33023->6020.41063, ma200 6524.90938->6523.02782
+     momentum                 w=0 status ('REAL', 'REAL') norm 0.34462 -> 0.34466 raw rsi 33.72167->33.72277, macd_hist_pct 0.00081->0.00081
+     relative_strength        w=0 status ('REAL', 'REAL') norm 0.09667 -> 0.09667 raw rel_126 -0.4005->-0.36086
+     risk_reward              w=6 status ('REAL', 'REAL') norm 0.5171 -> 0.51706 raw reward_risk 2.03419->2.03412, stop 219000.61429->219001.37618, target 309453.29854->309449.54764
+     trend_structure          w=0 status ('REAL', 'REAL') norm 0.16667 -> 0.16667 raw ma20 274890.75591->274887.57394, ma50 313947.04159->313943.29622, ma200 461644.89632->461639.31569, ma50_slope -0.14366->-0.14366
+     usdkrw_regime            w=0 status ('REAL', 'REAL') norm 0.9815 -> 0.97891 raw usdkrw 1342.08997->1344.31995, change_63 -0.02852->-0.02831
+     volatility_structure     w=0 status ('REAL', 'REAL') norm 0.7381 -> 0.7381 raw bandwidth 0.18853->0.18852
+     why card  : 50.6점 (약세·축소 후보). 주요 감점: ATR 5.8%, 연환산 변동성 68%
+     entry card: 점수 50.6점이 관찰 기준 55점 미만입니다.
+  LONG_TERM card   ('QSF-1.5.2', '2026-11-23', 55.247, 54.839, 'HOLD_WATCH', 'HOLD', 'ACTIONABLE', 'LOW', 'ENTRY_NOW', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 55.247, 54.839, 'HOLD_WATCH', 'HOLD', 'ACTIONABLE', 'LOW', 'ENTRY_NOW', False, None)
+     credit_liquidity         w=0 status ('REAL', 'REAL') norm 0.33347 -> 0.34852 raw value 0.686->0.678, percentile 0.66653->0.65148
+     downside_drawdown        w=5 status ('REAL', 'REAL') norm 0.02064 -> 0.02064 raw downside_vol 0.43638->0.43638, max_drawdown_252 -0.66998->-0.66998
+     index_trend              w=0 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw close 4869.95996->4708.54004, ma50 6065.33023->6020.41063, ma200 6524.90938->6523.02782
+     long_trend               w=5 status ('REAL', 'REAL') norm 0.29666 -> 0.29666 raw ma200 461644.89632->461639.31569, ma200_slope 0.00933->0.00933
+     relative_strength        w=3 status ('REAL', 'REAL') norm 0.09667 -> 0.09667 raw rel_126 -0.4005->-0.36086
+     usdkrw_regime            w=0 status ('REAL', 'REAL') norm 0.9815 -> 0.97891 raw usdkrw 1342.08997->1344.31995, change_63 -0.02852->-0.02831
+     why card  : 55.2점 (보유·관찰). 이 판단이 깨지는 조건: 수익성 지속 악화 (ROE·영업이익률 하락). 약점: 하방 변동성 44%, 1년 최대 낙폭 -67.0%
+     entry card: 점수 55.2점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다.
+== agent_02/big/eval_KR_105560.json  status REAL rank_basis UNIVERSE deals []
+  SWING     card   ('QSF-1.5.2', '2026-11-23', 57.9058, 57.906, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'MEDIUM', 'WAIT_FOR_PULLBACK', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 57.9062, 57.906, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'MEDIUM', 'WAIT_FOR_PULLBACK', False, None)
+     atr_risk                 w=5 status ('REAL', 'REAL') norm 0.41848 -> 0.41847 raw atr_pct 0.04861->0.04861, hist_vol 0.40805->0.40806
+     breakout_volume          w=0 status ('REAL', 'REAL') norm 0.21637 -> 0.21637 raw dist_high -0.26119->-0.2612, volume_ratio 1.26832->1.26834, gap_today 0.00459->0.00458
+     credit_liquidity         w=0 status ('REAL', 'REAL') norm 0.33347 -> 0.34852 raw value 0.686->0.678, percentile 0.66653->0.65148
+     drawdown_gap             w=4 status ('REAL', 'REAL') norm 0.63946 -> 0.63944 raw max_drawdown_252 -0.22826->-0.22827
+     index_trend              w=0 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw close 4869.95996->4708.54004, ma50 6065.33023->6020.41063, ma200 6524.90938->6523.02782
+     momentum                 w=0 status ('REAL', 'REAL') norm 0.44631 -> 0.44625 raw rsi 41.08944->41.0875, macd_hist_pct -0.00102->-0.00102
+     relative_strength        w=0 status ('REAL', 'REAL') norm 0.82 -> 0.82 raw rel_126 0.55993->0.47374
+     risk_reward              w=6 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw reward_risk 0.89388->0.89402, stop 129728.93352->129728.75444, target 157630.80661->157633.0444
+     trend_structure          w=0 status ('REAL', 'REAL') norm 0.33333 -> 0.33333 raw ma20 153499.59328->153501.67043, ma50 161998.5661->162000.8251, ma200 160277.85887->160280.12404, ma50_slope -0.03658->-0.03658
+     usdkrw_regime            w=0 status ('REAL', 'REAL') norm 0.9815 -> 0.97891 raw usdkrw 1342.08997->1344.31995, change_63 -0.02852->-0.02831
+     volatility_structure     w=0 status ('REAL', 'REAL') norm 0.69048 -> 0.69048 raw bandwidth 0.10096->0.10097
+     why card  : 57.9점 (보유·관찰). 이 판단이 깨지는 조건: 종가가 129,728.75 아래로 마감. 약점: 비용 반영 손익비 0.89 (손절 129,728.75, 목표 157,633.04, 1년 내 저항선(스윙 고점))
+     entry card: 현재 가격의 손익비 0.89가 기준 1.5 미만입니다. 20일선 부근이면 손익비가 개선됩니다.
+  LONG_TERM card   ('QSF-1.5.2', '2026-11-23', 69.336, 67.378, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'LOW', 'ENTRY_NOW', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 69.3363, 67.378, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'LOW', 'ENTRY_NOW', False, None)
+     credit_liquidity         w=0 status ('REAL', 'REAL') norm 0.33347 -> 0.34852 raw value 0.686->0.678, percentile 0.66653->0.65148
+     downside_drawdown        w=5 status ('REAL', 'REAL') norm 0.6115 -> 0.61148 raw downside_vol 0.2824->0.2824, max_drawdown_252 -0.22826->-0.22827
+     index_trend              w=0 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw close 4869.95996->4708.54004, ma50 6065.33023->6020.41063, ma200 6524.90938->6523.02782
+     long_trend               w=5 status ('REAL', 'REAL') norm 0.57761 -> 0.57759 raw ma200 160277.85887->160280.12404, ma200_slope 0.07944->0.07944
+     momentum_persistence     w=2 status ('REAL', 'REAL') norm 0.63467 -> 0.63467 raw ret_12_1 0.20774->0.20773
+     relative_strength        w=3 status ('REAL', 'REAL') norm 0.82 -> 0.82 raw rel_126 0.55993->0.47374
+     usdkrw_regime            w=0 status ('REAL', 'REAL') norm 0.9815 -> 0.97891 raw usdkrw 1342.08997->1344.31995, change_63 -0.02852->-0.02831
+     why card  : 69.3점 (보유·관찰). 이 판단이 깨지는 조건: 수익성 지속 악화 (ROE·영업이익률 하락). 약점: 금융업 기준: 자기자본/자산 7.6%
+     entry card: 점수 69.3점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다.
+== agent_02/big/eval_KR_011200.json  status REAL rank_basis UNIVERSE deals []
+  SWING     card   ('QSF-1.5.2', '2026-11-23', 58.5956, 58.596, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 58.5961, 58.596, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, None)
+     atr_risk                 w=5 status ('REAL', 'REAL') norm 0.40205 -> 0.40202 raw atr_pct 0.04858->0.04858, hist_vol 0.42488->0.42488
+     breakout_volume          w=0 status ('REAL', 'REAL') norm 0.50787 -> 0.50782 raw dist_high -0.14607->-0.14609, volume_ratio 0.65639->0.65641, gap_today -0.03612->-0.03614
+     credit_liquidity         w=0 status ('REAL', 'REAL') norm 0.33347 -> 0.34852 raw value 0.686->0.678, percentile 0.66653->0.65148
+     index_trend              w=0 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw close 4869.95996->4708.54004, ma50 6065.33023->6020.41063, ma200 6524.90938->6523.02782
+     momentum                 w=0 status ('REAL', 'REAL') norm 0.41269 -> 0.41259 raw rsi 38.85199->38.8495, macd_hist_pct -0.00057->-0.00058
+     relative_strength        w=0 status ('REAL', 'REAL') norm 0.89667 -> 0.89667 raw rel_126 0.71251->0.65944
+     risk_reward              w=6 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw reward_risk 0.81808->0.81831, stop 19230.64241->19230.50838, target 23198.1449->23198.75482
+     trend_structure          w=0 status ('REAL', 'REAL') norm 0.83333 -> 0.83333 raw ma20 22043.21322->22043.76477, ma50 21845.96035->21846.52351, ma200 20914.54908->20915.09616, ma50_slope 0.00907->0.00907
+     usdkrw_regime            w=0 status ('REAL', 'REAL') norm 0.9815 -> 0.97891 raw usdkrw 1342.08997->1344.31995, change_63 -0.02852->-0.02831
+     volatility_structure     w=0 status ('REAL', 'REAL') norm 0.21825 -> 0.21825 raw bandwidth 0.18724->0.18724
+     why card  : 58.6점 (보유·관찰). 이 판단이 깨지는 조건: 종가가 19,230.51 아래로 마감. 약점: 비용 반영 손익비 0.82 (손절 19,230.51, 목표 23,198.75, 1년 내 저항선(스윙 고점))
+     entry card: 현재 가격의 손익비 0.82가 기준 1.5 미만입니다. 20일선 부근이면 손익비가 개선됩니다.
+  LONG_TERM card   ('QSF-1.5.2', '2026-11-23', 71.409, 71.409, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'MEDIUM', 'ENTRY_NOW', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 71.4092, 71.409, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'MEDIUM', 'ENTRY_NOW', False, None)
+     credit_liquidity         w=0 status ('REAL', 'REAL') norm 0.33347 -> 0.34852 raw value 0.686->0.678, percentile 0.66653->0.65148
+     downside_drawdown        w=5 status ('REAL', 'REAL') norm 0.56081 -> 0.56081 raw downside_vol 0.29467->0.29467
+     index_trend              w=0 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw close 4869.95996->4708.54004, ma50 6065.33023->6020.41063, ma200 6524.90938->6523.02782
+     long_trend               w=5 status ('REAL', 'REAL') norm 0.66169 -> 0.66165 raw ma200 20914.54908->20915.09616, ma200_slope 0.0262->0.0262
+     relative_strength        w=3 status ('REAL', 'REAL') norm 0.89667 -> 0.89667 raw rel_126 0.71251->0.65944
+     usdkrw_regime            w=0 status ('REAL', 'REAL') norm 0.9815 -> 0.97891 raw usdkrw 1342.08997->1344.31995, change_63 -0.02852->-0.02831
+     why card  : 71.4점 (매수 후보). 진입을 막는 조건이 없다고 본 이유: 점수 71.4점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다. 강점: PER 10.9, PBR 0.76, FCF 수익률 8.5%
+     entry card: 점수 71.4점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다.
+== agent_07/big/eval_TECH.json  status REAL rank_basis UNIVERSE deals ['DEFM14A', 'PREM14A']
+  SWING     card   ('QSF-1.5.2', '2026-11-23', 76.8328, 76.833, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'NO_VALID_ENTRY_SETUP', False, True)
+            record ('QSF-1.5.2', '2026-11-23', 76.8328, 76.833, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, None)
+     atr_risk                 w=5 status ('REAL', 'REAL') norm 0.77481 -> 0.77481 raw atr_pct 0.00193->0.00194, hist_vol 0.42519->0.42519
+     breakout_volume          w=10 status ('REAL', 'REAL') norm 0.7163 -> 0.7163 raw volume_ratio 1.25489->1.2549
+     credit_spread            w=0 status ('REAL', 'REAL') norm 0.03571 -> 0.05357 raw spread 3.76->3.63, percentile 0.96429->0.94643
+     earnings_calendar        w=4 status ('REAL', 'REAL') norm 1.0 -> 1.0 raw sessions 49.0->53.0
+     liquidity                w=5 status ('REAL', 'REAL') norm 0.76514 -> 0.76514 raw adv_value 234774777.42277->234774981.26278
+     relative_strength        w=10 status ('REAL', 'REAL') norm 0.97804 -> 0.97804 raw rel_126 0.57259->0.57259
+     risk_reward              w=6 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw reward_risk 0.22546->0.22862, stop 72.51858->72.51715, target 73.22214->73.22429
+     vix_regime               w=0 status ('REAL', 'REAL') norm 0.36435 -> 0.36435 raw percentile_5y 0.89181->0.89172
+     why card  : 76.8점 (보유·관찰 · 합병 절차로 가격이 묶여 매수 후보에서 뺌(합병 주주총회 위임장 2026-08-20, 20일 변동성 1.6%)). 이 판단이 깨지는 조건: 종가가 72.52 아래로 마감. 약점: 비용 반영 손익비 0.23 (손절 72.52, 목표 73.22,
+     entry card: 합병 절차로 가격이 묶인 종목입니다(합병 주주총회 위임장 2026-08-20, 최근 20거래일 변동성 연 1.6%). 오를 여지가 인수 가격까지뿐이라 진입을 찾지 않습니다.
+  LONG_TERM card   ('QSF-1.5.2', '2026-11-23', 65.7094, 65.709, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'NO_VALID_ENTRY_SETUP', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 65.7094, 65.709, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'OVERVALUED_AT_CURRENT_PRICE', False, None)
+     credit_spread            w=0 status ('REAL', 'REAL') norm 0.03571 -> 0.05357 raw spread 3.76->3.63, percentile 0.96429->0.94643
+     downside_drawdown        w=5 status ('REAL', 'REAL') norm 0.3957 -> 0.3957 raw downside_vol 0.28142->0.28142
+     liquidity                w=4 status ('REAL', 'REAL') norm 0.76514 -> 0.76514 raw adv_value 234774777.42277->234774981.26278
+     momentum_persistence     w=2 status ('REAL', 'REAL') norm 0.75913 -> 0.75913 raw ret_12_1 0.24064->0.24064
+     relative_strength        w=3 status ('REAL', 'REAL') norm 0.97804 -> 0.97804 raw rel_126 0.57259->0.57259
+     vix_regime               w=0 status ('REAL', 'REAL') norm 0.36435 -> 0.36435 raw percentile_5y 0.89181->0.89172
+     why card  : 65.7점 (보유·관찰). 이 판단이 깨지는 조건: 수익성 지속 악화 (ROE·영업이익률 하락). 약점: PER 62.8, PBR 5.42, FCF 수익률 2.3%
+     entry card: 합병 절차로 가격이 묶인 종목입니다(합병 주주총회 위임장 2026-08-20, 최근 20거래일 변동성 연 1.6%). 오를 여지가 인수 가격까지뿐이라 진입을 찾지 않습니다.
+== agent_08/big/eval_t_TECH_market_US.json  status REAL rank_basis UNIVERSE deals ['DEFM14A', 'PREM14A']
+  SWING     card   ('QSF-1.5.2', '2026-11-23', 76.8328, 76.833, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'NO_VALID_ENTRY_SETUP', False, True)
+            record ('QSF-1.5.2', '2026-11-23', 76.8328, 76.833, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, None)
+     atr_risk                 w=5 status ('REAL', 'REAL') norm 0.77481 -> 0.77481 raw atr_pct 0.00193->0.00194, hist_vol 0.42519->0.42519
+     breakout_volume          w=10 status ('REAL', 'REAL') norm 0.7163 -> 0.7163 raw volume_ratio 1.25489->1.2549
+     credit_spread            w=0 status ('REAL', 'REAL') norm 0.03571 -> 0.05357 raw spread 3.76->3.63, percentile 0.96429->0.94643
+     earnings_calendar        w=4 status ('REAL', 'REAL') norm 1.0 -> 1.0 raw sessions 49.0->53.0
+     liquidity                w=5 status ('REAL', 'REAL') norm 0.76514 -> 0.76514 raw adv_value 234774777.42277->234774981.26278
+     relative_strength        w=10 status ('REAL', 'REAL') norm 0.97804 -> 0.97804 raw rel_126 0.57259->0.57259
+     risk_reward              w=6 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw reward_risk 0.22546->0.22862, stop 72.51858->72.51715, target 73.22214->73.22429
+     vix_regime               w=0 status ('REAL', 'REAL') norm 0.36435 -> 0.36435 raw percentile_5y 0.89181->0.89172
+     why card  : 76.8점 (보유·관찰 · 합병 절차로 가격이 묶여 매수 후보에서 뺌(합병 주주총회 위임장 2026-08-20, 20일 변동성 1.6%)). 이 판단이 깨지는 조건: 종가가 72.52 아래로 마감. 약점: 비용 반영 손익비 0.23 (손절 72.52, 목표 73.22,
+     entry card: 합병 절차로 가격이 묶인 종목입니다(합병 주주총회 위임장 2026-08-20, 최근 20거래일 변동성 연 1.6%). 오를 여지가 인수 가격까지뿐이라 진입을 찾지 않습니다.
+  LONG_TERM card   ('QSF-1.5.2', '2026-11-23', 65.7094, 65.709, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'NO_VALID_ENTRY_SETUP', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 65.7094, 65.709, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'OVERVALUED_AT_CURRENT_PRICE', False, None)
+     credit_spread            w=0 status ('REAL', 'REAL') norm 0.03571 -> 0.05357 raw spread 3.76->3.63, percentile 0.96429->0.94643
+     downside_drawdown        w=5 status ('REAL', 'REAL') norm 0.3957 -> 0.3957 raw downside_vol 0.28142->0.28142
+     liquidity                w=4 status ('REAL', 'REAL') norm 0.76514 -> 0.76514 raw adv_value 234774777.42277->234774981.26278
+     momentum_persistence     w=2 status ('REAL', 'REAL') norm 0.75913 -> 0.75913 raw ret_12_1 0.24064->0.24064
+     relative_strength        w=3 status ('REAL', 'REAL') norm 0.97804 -> 0.97804 raw rel_126 0.57259->0.57259
+     vix_regime               w=0 status ('REAL', 'REAL') norm 0.36435 -> 0.36435 raw percentile_5y 0.89181->0.89172
+     why card  : 65.7점 (보유·관찰). 이 판단이 깨지는 조건: 수익성 지속 악화 (ROE·영업이익률 하락). 약점: PER 62.8, PBR 5.42, FCF 수익률 2.3%
+     entry card: 합병 절차로 가격이 묶인 종목입니다(합병 주주총회 위임장 2026-08-20, 최근 20거래일 변동성 연 1.6%). 오를 여지가 인수 가격까지뿐이라 진입을 찾지 않습니다.
+== agent_07/big/eval_GILD.json  status REAL rank_basis UNIVERSE deals ['SC TO-T', 'SC TO-T', 'SC TO-T']
+  SWING     card   ('QSF-1.5.2', '2026-11-23', 72.0634, 72.063, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 72.0636, 72.064, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, None)
+     atr_risk                 w=5 status ('REAL', 'REAL') norm 0.78623 -> 0.78623 raw hist_vol 0.27212->0.27212
+     breakout_volume          w=10 status ('REAL', 'REAL') norm 0.69072 -> 0.69071 raw volume_ratio 1.03202->1.03209, gap_today 0.00466->0.00469
+     credit_spread            w=0 status ('REAL', 'REAL') norm 0.03571 -> 0.05357 raw spread 3.76->3.63, percentile 0.96429->0.94643
+     liquidity                w=5 status ('REAL', 'REAL') norm 1.0 -> 1.0 raw adv_value 1088175164.26588->1088179104.89479
+     relative_strength        w=10 status ('REAL', 'REAL') norm 0.89421 -> 0.89421 raw rel_126 0.33507->0.33507
+     vix_regime               w=0 status ('REAL', 'REAL') norm 0.36435 -> 0.36435 raw percentile_5y 0.89181->0.89172
+     why card  : 72.1점 (매수 후보). 다만 지금은 진입 조건이 아닙니다: 현재 가격의 손익비 0.52가 기준 1.5 미만입니다. 20일선 부근이면 손익비가 개선됩니다. 강점: 추세 조건 6개 중 6개 충족 (종가 170.59, 50일선 157.74, 200일선 142.39)
+     entry card: 현재 가격의 손익비 0.52가 기준 1.5 미만입니다. 20일선 부근이면 손익비가 개선됩니다.
+  LONG_TERM card   ('QSF-1.5.2', '2026-11-23', 72.7007, 72.701, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'HIGH', 'ENTRY_NOW', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 72.7007, 72.701, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'HIGH', 'ENTRY_NOW', False, None)
+     credit_spread            w=0 status ('REAL', 'REAL') norm 0.03571 -> 0.05357 raw spread 3.76->3.63, percentile 0.96429->0.94643
+     downside_drawdown        w=5 status ('REAL', 'REAL') norm 0.79848 -> 0.79848 raw downside_vol 0.16591->0.16591
+     liquidity                w=4 status ('REAL', 'REAL') norm 1.0 -> 1.0 raw adv_value 1088175164.26588->1088179104.89479
+     relative_strength        w=3 status ('REAL', 'REAL') norm 0.89421 -> 0.89421 raw rel_126 0.33507->0.33507
+     vix_regime               w=0 status ('REAL', 'REAL') norm 0.36435 -> 0.36435 raw percentile_5y 0.89181->0.89172
+     why card  : 72.7점 (매수 후보). 진입을 막는 조건이 없다고 본 이유: 점수 72.7점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다. 강점: ROE 37.5%, 영업이익률 34.0%, 매출총이익률 없음, 흑자 지속 비율 100%
+     entry card: 점수 72.7점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다.
+== agent_08/big/eval_t_INCY_market_US.json  status REAL rank_basis UNIVERSE deals []
+  SWING     card   ('QSF-1.5.2', '2026-11-23', 65.6079, 65.608, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 65.6112, 65.611, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, None)
+     atr_risk                 w=5 status ('REAL', 'REAL') norm 0.68197 -> 0.68153 raw atr_pct 0.03187->0.03191
+     breakout_volume          w=10 status ('REAL', 'REAL') norm 0.54661 -> 0.54657 raw volume_ratio 0.93091->0.93114, gap_today 0.00497->-0.00052
+     credit_spread            w=0 status ('REAL', 'REAL') norm 0.03571 -> 0.05357 raw spread 3.76->3.63, percentile 0.96429->0.94643
+     liquidity                w=5 status ('REAL', 'REAL') norm 0.72303 -> 0.72304 raw adv_value 205015846.21418->205018204.94915
+     risk_reward              w=6 status ('REAL', 'REAL') norm 0.0 -> 0.0 raw reward_risk 0.77199->0.77109, stop 109.87071->109.86143
+     vix_regime               w=0 status ('REAL', 'REAL') norm 0.36435 -> 0.36435 raw percentile_5y 0.89181->0.89172
+     why card  : 65.6점 (보유·관찰). 이 판단이 깨지는 조건: 종가가 109.86 아래로 마감. 약점: 비용 반영 손익비 0.77 (손절 109.86, 목표 123.96, 1년 내 저항선(스윙 고점))
+     entry card: 현재 가격의 손익비 0.77가 기준 1.5 미만입니다. 20일선 부근이면 손익비가 개선됩니다.
+  LONG_TERM card   ('QSF-1.5.2', '2026-11-23', 82.5286, 79.999, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'MEDIUM', 'ENTRY_NOW', True, False)
+            record ('QSF-1.5.2', '2026-11-23', 82.5286, 79.999, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'MEDIUM', 'ENTRY_NOW', True, None)
+     credit_spread            w=0 status ('REAL', 'REAL') norm 0.03571 -> 0.05357 raw spread 3.76->3.63, percentile 0.96429->0.94643
+     liquidity                w=4 status ('REAL', 'REAL') norm 0.72303 -> 0.72304 raw adv_value 205015846.21418->205018204.94915
+     vix_regime               w=0 status ('REAL', 'REAL') norm 0.36435 -> 0.36435 raw percentile_5y 0.89181->0.89172
+     why card  : 82.5점 (매수 후보 · 빠진 요인을 중간값으로 보면 80.0점). 진입을 막는 조건이 없다고 본 이유: 점수 82.5점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다. 강점: ROE 24.9%, 영업이익률 29.5%, 매출총이익률 없음, 
+     entry card: 점수 82.5점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다.
+== agent_02/big/eval_US_EOG.json  status REAL rank_basis UNIVERSE deals []
+  SWING     card   ('QSF-1.5.2', '2026-11-23', 59.551, 59.551, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 57.4221, 57.051, 'HOLD_WATCH', 'WATCH', 'ACTIONABLE', 'HIGH', 'WAIT_FOR_PULLBACK', False, None)
+     atr_risk                 w=5 status ('REAL', 'REAL') norm 0.69612 -> 0.69612 raw hist_vol 0.30501->0.30501
+     breakout_volume          w=10 status ('REAL', 'REAL') norm 0.44881 -> 0.44881 raw volume_ratio 1.37685->1.37686
+     credit_spread            w=0 status ('REAL', 'REAL') norm 0.03571 -> 0.05357 raw spread 3.76->3.63, percentile 0.96429->0.94643
+     earnings_calendar        w=4 status ('MISSING', 'REAL') norm None -> 1.0 raw sessions None->62.0
+     liquidity                w=5 status ('REAL', 'REAL') norm 1.0 -> 1.0 raw adv_value 541505063.28282->541505237.69081
+     vix_regime               w=0 status ('REAL', 'REAL') norm 0.36435 -> 0.36435 raw percentile_5y 0.89181->0.89172
+     why card  : 59.6점 (보유·관찰). 이 판단이 깨지는 조건: 종가가 135.78 아래로 마감. 약점: 비용 반영 손익비 0.59 (손절 135.78, 목표 151.87, 1년 내 저항선(스윙 고점))
+     entry card: 현재 가격의 손익비 0.59가 기준 1.5 미만입니다. 20일선 부근이면 손익비가 개선됩니다.
+  LONG_TERM card   ('QSF-1.5.2', '2026-11-23', 73.9858, 72.12, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'MEDIUM', 'ENTRY_NOW', False, False)
+            record ('QSF-1.5.2', '2026-11-23', 73.9858, 72.12, 'BUY_CANDIDATE', 'BUY', 'ACTIONABLE', 'MEDIUM', 'ENTRY_NOW', False, None)
+     credit_spread            w=0 status ('REAL', 'REAL') norm 0.03571 -> 0.05357 raw spread 3.76->3.63, percentile 0.96429->0.94643
+     downside_drawdown        w=5 status ('REAL', 'REAL') norm 0.83061 -> 0.83061 raw downside_vol 0.21168->0.21168
+     liquidity                w=4 status ('REAL', 'REAL') norm 1.0 -> 1.0 raw adv_value 541505063.28282->541505237.69081
+     vix_regime               w=0 status ('REAL', 'REAL') norm 0.36435 -> 0.36435 raw percentile_5y 0.89181->0.89172
+     why card  : 74.0점 (매수 후보). 진입을 막는 조건이 없다고 본 이유: 점수 74.0점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다. 강점: ROE 16.7%, 영업이익률 28.2%, 매출총이익률 없음, 흑자 지속 비율 100%
+     entry card: 점수 74.0점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다.

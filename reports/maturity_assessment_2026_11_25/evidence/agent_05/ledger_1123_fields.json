@@ -1,0 +1,222 @@
+{
+ "US": {
+  "records": 1008,
+  "fields": {
+   "action": 1008,
+   "actionability": 1008,
+   "band": 1008,
+   "band_held_back": 1008,
+   "benchmark": 1008,
+   "cik": 1008,
+   "confidence": 1008,
+   "conservative_score": 1008,
+   "coverage": 1008,
+   "data_date": 1008,
+   "domains": 1008,
+   "entry_session": 1008,
+   "entry_status": 1008,
+   "factors": 1008,
+   "fund_period": 1002,
+   "gates": 1008,
+   "held": 1008,
+   "holding": 1008,
+   "input_coverage": 1008,
+   "market": 1008,
+   "model_version": 1008,
+   "price": 1008,
+   "profile": 1008,
+   "provenance": 1008,
+   "recorded_at": 1008,
+   "score": 1008,
+   "spec_version": 1008,
+   "stop": 1008,
+   "strategy": 1008,
+   "target": 1008,
+   "ticker": 1008
+  },
+  "gates": {
+   "EARNINGS_IMMINENT": 13,
+   "SEVERE_EVENT": 4,
+   "SHORT_HISTORY": 6,
+   "DATA_ANOMALY": 2
+  },
+  "confidence": {
+   "SWING/HIGH": 498,
+   "LONG_TERM/HIGH": 355,
+   "LONG_TERM/MEDIUM": 119,
+   "LONG_TERM/LOW": 24,
+   "SWING/MEDIUM": 3,
+   "LONG_TERM/INSUFFICIENT": 6,
+   "SWING/INSUFFICIENT": 3
+  },
+  "band_held_back": {
+   "SWING/False": 502,
+   "LONG_TERM/False": 501,
+   "SWING/True": 2,
+   "LONG_TERM/True": 3
+  },
+  "input_coverage_min_mean": [
+   0.1388888888888889,
+   0.9521677923576658
+  ],
+  "halt_gated": {},
+  "provenance_keys": {
+   "events": 1008,
+   "fund": 1008,
+   "fund_filed": 1008,
+   "price": 1008,
+   "price_date": 1008,
+   "regime": 1008
+  },
+  "cards_with_provenance_stale": 0,
+  "sample_stale": null,
+  "four_halted_2026_11_20": null
+ },
+ "KR": {
+  "records": 600,
+  "fields": {
+   "action": 600,
+   "actionability": 600,
+   "band": 600,
+   "band_held_back": 600,
+   "benchmark": 600,
+   "confidence": 600,
+   "conservative_score": 600,
+   "coverage": 600,
+   "data_date": 600,
+   "domains": 600,
+   "entry_session": 600,
+   "entry_status": 600,
+   "factors": 600,
+   "fund_period": 600,
+   "gates": 600,
+   "held": 600,
+   "holding": 600,
+   "input_coverage": 600,
+   "market": 600,
+   "model_version": 600,
+   "price": 600,
+   "profile": 600,
+   "provenance": 600,
+   "recorded_at": 600,
+   "score": 600,
+   "spec_version": 600,
+   "stop": 600,
+   "strategy": 600,
+   "target": 600,
+   "ticker": 600
+  },
+  "gates": {
+   "SEVERE_EVENT": 14,
+   "DATA_ANOMALY": 6,
+   "SHORT_HISTORY": 2,
+   "LOW_LIQUIDITY": 6
+  },
+  "confidence": {
+   "SWING/HIGH": 233,
+   "LONG_TERM/MEDIUM": 251,
+   "SWING/MEDIUM": 67,
+   "LONG_TERM/LOW": 49
+  },
+  "band_held_back": {
+   "SWING/False": 300,
+   "LONG_TERM/False": 296,
+   "LONG_TERM/True": 4
+  },
+  "input_coverage_min_mean": [
+   0.625925925925926,
+   0.8765988435693077
+  ],
+  "halt_gated": {
+   "000880": [
+    "최근 1년에 거래가 없던 날이 17거래일 이어져 있어(거래정지) 그 기간이 든 지표를 믿기 어렵습니다."
+   ],
+   "440110": [
+    "최근 1년에 거래가 없던 날이 29거래일 이어져 있어(거래정지) 그 기간이 든 지표를 믿기 어렵습니다."
+   ],
+   "183300": [
+    "최근 1년에 거래가 없던 날이 16거래일 이어져 있어(거래정지) 그 기간이 든 지표를 믿기 어렵습니다."
+   ]
+  },
+  "provenance_keys": {
+   "events": 600,
+   "fund": 600,
+   "fund_filed": 600,
+   "price": 600,
+   "price_date": 600,
+   "regime": 600
+  },
+  "cards_with_provenance_stale": 0,
+  "sample_stale": null,
+  "four_halted_2026_11_20": {
+   "000880": [
+    [
+     "SWING",
+     "BLOCKED",
+     "MEDIUM",
+     [
+      "DATA_ANOMALY"
+     ]
+    ],
+    [
+     "LONG_TERM",
+     "BLOCKED",
+     "LOW",
+     [
+      "DATA_ANOMALY"
+     ]
+    ]
+   ],
+   "183300": [
+    [
+     "SWING",
+     "BLOCKED",
+     "MEDIUM",
+     [
+      "DATA_ANOMALY"
+     ]
+    ],
+    [
+     "LONG_TERM",
+     "BLOCKED",
+     "MEDIUM",
+     [
+      "DATA_ANOMALY"
+     ]
+    ]
+   ],
+   "440110": [
+    [
+     "SWING",
+     "BLOCKED",
+     "HIGH",
+     [
+      "DATA_ANOMALY"
+     ]
+    ],
+    [
+     "LONG_TERM",
+     "BLOCKED",
+     "MEDIUM",
+     [
+      "DATA_ANOMALY"
+     ]
+    ]
+   ],
+   "207940": [
+    [
+     "SWING",
+     "ACTIONABLE",
+     "HIGH",
+     []
+    ],
+    [
+     "LONG_TERM",
+     "ACTIONABLE",
+     "MEDIUM",
+     []
+    ]
+   ]
+  }
+ }
+}

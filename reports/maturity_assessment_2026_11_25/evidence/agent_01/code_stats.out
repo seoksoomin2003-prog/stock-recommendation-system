@@ -1,0 +1,19 @@
+app.py               files    1 lines   1311
+terminal (all)       files  132 lines  33838
+terminal/qsf         files   82 lines  21044
+terminal/committee   files    8 lines   1882
+utils                files    9 lines   1277
+markets              files   18 lines   2576
+core                 files   26 lines   4302
+tests                files  176 lines  29973
+live code lines 39002 | functions 2292 | without docstring 1250 (55%) | lines > 160 chars 928 (2.4%) | except Exception 184 | functions > 60 lines 39
+largest functions: [(204, 'terminal/assistant.py:1425 stock_answer'), (195, 'terminal/qsf/fundamentals.py:260 metrics'), (179, 'terminal/assistant.py:1106 analyst_note'), (164, 'terminal/assistant.py:444 briefing'), (162, 'terminal/assistant.py:1631 plain_answer'), (157, 'terminal/server.py:250 make_handler'), (135, 'terminal/qsf/paper_book.py:95 step'), (105, 'terminal/qsf/engine.py:189 score')]
+research/validation modules in terminal/qsf: 23 lines 6603
+static js files 23 lines 6106 | lines > 200 chars 390 | longest 608
+tests: files 169 | test functions 2071
+source-text tests (read_text of terminal/ or app.py): 309
+lint/type config present: []
+app.py qsf actions (choices strings): 131
+module-level constants in terminal/qsf: 806 | in config.py: 48
+files that call Ledger._live_rows/_load outside ledger.py: 33
+logging calls in terminal/qsf: 0

@@ -1,0 +1,24 @@
+session 2026-11-23 QSF-1.5.2 cards 1008
+stocks 504 financial 53
+blank counts (of stocks): {'roe': 35, 'op_margin': 124, 'gross_margin': 317, 'rev_growth': 14, 'eps_growth': 49, 'rev_cagr3': 16, 'eps_cagr3': 94, 'ocf_to_ni': 81, 'fcf_margin': 95, 'fcf_yield': 94, 'pe': 4, 'pb': 34, 'debt_equity': 65, 'current_ratio': 85, 'interest_cover': 202, 'cash_debt': 71, 'share_change': 20, 'returns_capital': 26, 'equity_assets': 451, 'roe_years_positive': 4, 'fcf_years_positive': 94}
+long cards 504 business_quality>=0.7: 285
+long entry_status: Counter({'ENTRY_NOW': 301, 'NO_VALID_ENTRY_SETUP': 122, 'OVERVALUED_AT_CURRENT_PRICE': 76, 'WAIT_FOR_EARNINGS': 5})
+long band: Counter({'HOLD_WATCH': 310, 'WEAK_REDUCE': 111, 'BUY_CANDIDATE': 75, 'SELL_AVOID': 6, 'STRONG_BUY_CANDIDATE': 2})
+long action: Counter({'WATCH': 307, 'AVOID': 116, 'BUY': 75, 'INSUFFICIENT_DATA': 6})
+ocf_to_ni > 3: 48 [(61.43, 'CSGP'), (51.21, 'HPE'), (29.65, 'TWLO'), (17.55, 'DOC'), (14.83, 'PANW'), (14.54, 'ON'), (13.51, 'GPC'), (13.24, 'APTV'), (12.29, 'MGM'), (9.96, 'GM'), (9.75, 'DDOG'), (9.74, 'EL')]
+debt_equity < 0.02 non-financial: 7 [('CMG', 0.0, None), ('GEV', 0.0056, None), ('JKHY', 0.0195, None), ('LULU', 0.0, None), ('ODFL', 0.0093, 4598.125), ('P', 0.0, 34.019555555555556), ('SNDK', 0.0, 169.7123287671233)]
+loss-makers: 27 with valuation>=0.65: [('ALB', 0.67, 'NO_VALID_ENTRY_SETUP'), ('CNC', 0.66, 'ENTRY_NOW'), ('F', 0.67, 'NO_VALID_ENTRY_SETUP'), ('KHC', 0.67, 'ENTRY_NOW'), ('VTRS', 0.67, 'NO_VALID_ENTRY_SETUP')]
+cheap + sales and EPS falling: 9 of which buy band: 5 ENTRY_NOW: 9
+    ('PHM', 75.9, 'BUY_CANDIDATE', 'ENTRY_NOW', -0.035, -0.243)
+    ('EOG', 74.0, 'BUY_CANDIDATE', 'ENTRY_NOW', -0.045, -0.189)
+    ('GPN', 73.6, 'BUY_CANDIDATE', 'ENTRY_NOW', -0.004, -0.062)
+    ('NVR', 71.1, 'BUY_CANDIDATE', 'ENTRY_NOW', -0.019, -0.138)
+    ('MO', 70.8, 'BUY_CANDIDATE', 'ENTRY_NOW', -0.031, -0.37)
+    ('SLB', 68.5, 'HOLD_WATCH', 'ENTRY_NOW', -0.016, -0.244)
+    ('DHI', 67.2, 'HOLD_WATCH', 'ENTRY_NOW', -0.035, -0.126)
+    ('PFE', 64.4, 'HOLD_WATCH', 'ENTRY_NOW', -0.016, -0.035)
+    ('GM', 55.2, 'HOLD_WATCH', 'ENTRY_NOW', -0.013, -0.487)
+3y sales falling and last year falling, ENTRY_NOW: 25 [('ADM', 57.2, 'HOLD_WATCH', -0.075), ('AFL', 65.9, 'HOLD_WATCH', -0.036), ('AIG', 67.3, 'HOLD_WATCH', -0.037), ('BF-B', 70.6, 'BUY_CANDIDATE', -0.024), ('CVX', 60.4, 'HOLD_WATCH', -0.084), ('DHI', 67.2, 'HOLD_WATCH', -0.023), ('EOG', 74.0, 'BUY_CANDIDATE', -0.042), ('GPN', 73.6, 'BUY_CANDIDATE', -0.05), ('JBHT', 55.6, 'HOLD_WATCH', -0.068), ('KHC', 57.4, 'HOLD_WATCH', -0.02), ('MAS', 62.4, 'HOLD_WATCH', -0.045), ('MO', 70.8, 'BUY_CANDIDATE', -0.025)]
+swing growth factor reads 'sales and earnings rising' (>=0.65) though one fell: 18 of 249 ['AJG', 'AXON', 'BRO', 'CHRW', 'CMCSA', 'DDOG', 'FANG', 'META', 'MPC', 'MPWR']
+long growth reads 'steady growth' though 3y EPS CAGR < 0: 8 of 158 ['AMCR', 'AXON', 'COF', 'FANG', 'GEN', 'LVS', 'PANW', 'SW']
+deal pins: []

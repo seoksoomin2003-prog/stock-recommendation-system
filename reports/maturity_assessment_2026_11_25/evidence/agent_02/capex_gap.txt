@@ -1,0 +1,27 @@
+US non-financial with OCF/NI but no FCF margin: 37
+   ('INCY', 1.1, 0.8551254364878894, None, 82.5, 'BUY_CANDIDATE')
+   ('EOG', 2.02, 1.0, None, 74.0, 'BUY_CANDIDATE')
+   ('VEEV', 1.56, 1.0, None, 71.5, 'HOLD_WATCH')
+   ('RL', 1.23, 1.0, None, 70.1, 'HOLD_WATCH')
+   ('APA', 3.17, 1.0, None, 69.0, 'HOLD_WATCH')
+   ('ABNB', 1.85, 1.0, None, 68.2, 'HOLD_WATCH')
+   ('CI', 1.61, 1.0, None, 68.2, 'HOLD_WATCH')
+   ('ADP', 1.23, 1.0, None, 67.6, 'HOLD_WATCH')
+   ('ROP', 1.65, 1.0, None, 65.5, 'HOLD_WATCH')
+   ('PSX', 1.13, 0.8956555595211056, None, 65.3, 'HOLD_WATCH')
+   ('VZ', 2.16, 1.0, None, 64.2, 'HOLD_WATCH')
+   ('LLY', 0.81, 0.4494047619047619, None, 63.8, 'HOLD_WATCH')
+   ('COP', 2.48, 1.0, None, 63.6, 'HOLD_WATCH')
+   ('D', 1.79, 1.0, None, 63.6, 'HOLD_WATCH')
+   ('ED', 2.37, 1.0, None, 63.5, 'HOLD_WATCH')
+US ROE > 60%: 41 [('CL', 39.48, 60.9, 'HOLD_WATCH'), ('GDDY', 4.07, 60.5, 'HOLD_WATCH'), ('VRSK', 2.94, 59.3, 'HOLD_WATCH'), ('CLX', 2.52, 56.6, 'HOLD_WATCH'), ('IT', 2.28, 58.8, 'HOLD_WATCH'), ('TPR', 2.21, 66.8, 'HOLD_WATCH'), ('MA', 1.93, 68.4, 'HOLD_WATCH'), ('LYV', 1.83, 56.0, 'HOLD_WATCH'), ('APP', 1.56, 56.8, 'HOLD_WATCH'), ('FTNT', 1.5, 69.8, 'HOLD_WATCH'), ('STX', 1.47, 58.0, 'HOLD_WATCH'), ('KMB', 1.35, 50.4, 'WEAK_REDUCE')]
+US no-equity mark (99): 31 buy band: [('MO', 70.8, 'BUY_CANDIDATE', 'ENTRY_NOW')]
+KR non-financial with OCF/NI but no FCF margin: 6
+   ('008930', 0.4, 0.0, None, 62.6, 'HOLD_WATCH')
+   ('089860', -4.02, 0.0, None, 60.7, 'HOLD_WATCH')
+   ('039200', 0.15, 0.0, None, 58.8, 'HOLD_WATCH')
+   ('030200', 2.69, 1.0, None, 58.4, 'HOLD_WATCH')
+   ('375500', 0.63, 0.18154963227565793, None, 57.9, 'HOLD_WATCH')
+   ('036930', -0.86, 0.0, None, 47.7, 'WEAK_REDUCE')
+KR ROE > 60%: 1 [('278470', 0.65, 68.1, 'HOLD_WATCH')]
+KR no-equity mark (99): 0 buy band: []

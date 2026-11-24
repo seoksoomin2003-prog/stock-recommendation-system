@@ -1,0 +1,54 @@
+{
+ "US_SWING": {
+  "n": 504,
+  "rank_corr": 0.981,
+  "band_changed_share": 0.115,
+  "abs_change_median": 1.51,
+  "abs_change_p90": 4.35,
+  "ge70_before_after_kept": [
+   13,
+   23,
+   11
+  ],
+  "risk_reward_moved_by_0.5_or_more": 5
+ },
+ "US_LONG_TERM": {
+  "n": 504,
+  "rank_corr": 0.999,
+  "band_changed_share": 0.018,
+  "abs_change_median": 0.17,
+  "abs_change_p90": 0.71,
+  "ge70_before_after_kept": [
+   80,
+   79,
+   79
+  ],
+  "risk_reward_moved_by_0.5_or_more": null
+ },
+ "KR_SWING": {
+  "n": 295,
+  "rank_corr": 0.945,
+  "band_changed_share": 0.115,
+  "abs_change_median": 0.79,
+  "abs_change_p90": 3.83,
+  "ge70_before_after_kept": [
+   0,
+   0,
+   0
+  ],
+  "risk_reward_moved_by_0.5_or_more": 8
+ },
+ "KR_LONG_TERM": {
+  "n": 295,
+  "rank_corr": 0.999,
+  "band_changed_share": 0.041,
+  "abs_change_median": 0.21,
+  "abs_change_p90": 0.81,
+  "ge70_before_after_kept": [
+   35,
+   32,
+   32
+  ],
+  "risk_reward_moved_by_0.5_or_more": null
+ }
+}

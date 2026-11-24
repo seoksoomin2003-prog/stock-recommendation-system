@@ -1,0 +1,17 @@
+Agent 08 evidence notes (2026-11-25, commit 73c7886). GET only; no POST; no browser pane.
+Timings: see timings.txt (curl -w time_total against 127.0.0.1:8765).
+Today folded-view simulation: today_counts.txt (asstFirst regex from assistant.js:18 applied to /api/assistant/today items).
+Saved replies: big/ (latest scan replies are 430-740 KB).
+Key checks:
+- TECH scan row (latest US, session 2026-11-23, QSF-1.5.2): SWING 76.8 band '매수 후보', ACTIONABLE, deal=True.
+  TECH evaluate (same QSF-1.5.2): SWING band '보유·관찰 · 합병 절차로 가격이 묶여 매수 후보에서 뺌', entry NO_VALID_ENTRY_SETUP.
+  config.py:13 MODEL_VERSION unchanged by c73ab3e -> rank notice (qsf.js:801) does not fire; qsfScanNote (qsf.js:641-644) compares score only.
+- INCY LONG: annual 82.5 (매수 후보, ENTRY_NOW) vs trailing-4Q 64.8; plain explanation has no fund-period line (plain.py: no fund_period).
+- 005930 LONG: annual 64.3 vs trailing 84.9; committee AVOID; entry '진입을 막는 조건 없음'; committee_note None (service.py:1175-1188 only band-vs-committee).
+- US long ENTRY_NOW 301/504 (latest scan rows count).
+- Today US counts: 307 entry-ready (NO_ACCOUNT), '매수 구간 후보 23개' (CANDIDATE_MIX = swing>=70 actionable, assistant.py:398, word '스윙' absent),
+  '장기 매수 후보 77개' (FINANCIAL_SHARE, analyst_more.py:171), '장기 301건 중 67건' (NO_ACCOUNT), candidates panel swing 6 / buy 0.
+- KR tiles: 코스피/코스닥 date 2026-11-23, 코스피 200 2026-11-24 in the same row.
+- KR DUE items name holding by code only ('005380: ...').
+- automation status: missing_sessions ['2026-11-04'] -> time chip shows '빠진 거래일 1' (app.js:1383) every day.
+- live chart: tests/test_live_chart.py 7 passed. Signals table (chart.js:143-152) has no unfinished-candle mark.

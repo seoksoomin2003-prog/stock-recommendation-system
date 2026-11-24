@@ -1,0 +1,13 @@
+US DEFENSIVE state ADVERSE 27.3 -> size_factor used 0.25 cap 0.5
+US NORMAL state ADVERSE 27.3 -> size_factor used 0.5 cap 0.5
+US AGGRESSIVE state ADVERSE 27.3 -> size_factor used 0.5 cap 0.5
+   note: 공격적 성향: 주문 한 건의 위험 한도와 종목 비중 한도를 1배로 계산했습니다. 시장 상태 때문에 이미 0.5배인 날이라 합치면 0.5배입니다. 시장 상태가 나쁘거나 읽을 수 없는 날에는 공격적 성향의 1.5배를 쓰지 않습니다. 설정값이고 검증된 값이 아닙니다.
+KR DEFENSIVE state ADVERSE 26.3 -> size_factor used 0.5 cap 0.5
+KR NORMAL state ADVERSE 26.3 -> size_factor used 1.0 cap None
+KR AGGRESSIVE state ADVERSE 26.3 -> size_factor used 1.5 cap None
+   note: 공격적 성향: 주문 한 건의 위험 한도와 종목 비중 한도를 1.5배로 계산했습니다. 설정값이고 검증된 값이 아닙니다.
+all factors 0.499 -> 49.9 ADVERSE 0.5
+all factors 0.501 -> 50.1 FAVOURABLE 1.0
+all STALE -> FAVOURABLE 0.5
+trend/breadth 0, vix .8 term .83 credit .67 -> 50.0 FAVOURABLE
+today US 27.3 credit at middle -> 36.6

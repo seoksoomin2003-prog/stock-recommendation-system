@@ -1,0 +1,4 @@
+daily autocorrelation +0.0: program minus true over 240 days mean -0.001%  sd 0.031%  max |diff| 0.151%  turnover/day mean 0.00330
+daily autocorrelation -0.1: program minus true over 240 days mean +0.001%  sd 0.030%  max |diff| 0.106%  turnover/day mean 0.00330
+daily autocorrelation +0.1: program minus true over 240 days mean +0.005%  sd 0.036%  max |diff| 0.145%  turnover/day mean 0.00330
+with one-way cost 0.2%: recorded cost total 0.0016 (first purchase of 80% x 0.2% = 0.0016 expected if nothing else is traded)

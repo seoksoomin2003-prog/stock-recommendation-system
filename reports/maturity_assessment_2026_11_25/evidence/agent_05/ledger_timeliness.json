@@ -1,0 +1,646 @@
+[
+ {
+  "file": "2026-11-04_KR_000007.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-04",
+  "model": "QSF-1.1.1",
+  "records": 590,
+  "first_rec_local": "11-05 13:47 KST",
+  "last_rec_local": "11-05 13:48 KST",
+  "before_next_open": false,
+  "data_dates": {
+   "2026-11-04": 590
+  },
+  "confidence": {
+   "MEDIUM": 413,
+   "HIGH": 165,
+   "LOW": 10,
+   "INSUFFICIENT": 2
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 590
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-04_US_000008.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-04",
+  "model": "QSF-1.1.1",
+  "records": 1004,
+  "first_rec_local": "11-05 13:48 KST",
+  "last_rec_local": "11-05 13:48 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-04": 1004
+  },
+  "confidence": {
+   "HIGH": 986,
+   "MEDIUM": 11,
+   "INSUFFICIENT": 7
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1004
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-05_US_000009.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-05",
+  "model": "QSF-1.1.2",
+  "records": 1004,
+  "first_rec_local": "11-06 07:16 KST",
+  "last_rec_local": "11-06 07:25 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-05": 1004
+  },
+  "confidence": {
+   "HIGH": 986,
+   "MEDIUM": 11,
+   "INSUFFICIENT": 7
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1004
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-05_KR_000010.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-05",
+  "model": "QSF-1.1.2",
+  "records": 592,
+  "first_rec_local": "11-06 07:37 KST",
+  "last_rec_local": "11-06 07:44 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-05": 592
+  },
+  "confidence": {
+   "MEDIUM": 414,
+   "HIGH": 166,
+   "LOW": 10,
+   "INSUFFICIENT": 2
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 592
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-06_US_000011.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-06",
+  "model": "QSF-1.1.3",
+  "records": 1006,
+  "first_rec_local": "11-07 07:23 KST",
+  "last_rec_local": "11-07 07:38 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-06": 1006
+  },
+  "confidence": {
+   "HIGH": 1000,
+   "INSUFFICIENT": 4,
+   "MEDIUM": 2
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1006
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-06_KR_000012.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-06",
+  "model": "QSF-1.1.3",
+  "records": 592,
+  "first_rec_local": "11-07 07:57 KST",
+  "last_rec_local": "11-07 08:03 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-06": 592
+  },
+  "confidence": {
+   "MEDIUM": 415,
+   "HIGH": 167,
+   "LOW": 8,
+   "INSUFFICIENT": 2
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 592
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-09_KR_000013.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-09",
+  "model": "QSF-1.1.8",
+  "records": 590,
+  "first_rec_local": "11-10 11:52 KST",
+  "last_rec_local": "11-10 11:56 KST",
+  "before_next_open": false,
+  "data_dates": {
+   "2026-11-09": 590
+  },
+  "confidence": {
+   "MEDIUM": 331,
+   "HIGH": 253,
+   "LOW": 4,
+   "INSUFFICIENT": 2
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 590
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-09_US_000014.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-09",
+  "model": "QSF-1.1.8",
+  "records": 1006,
+  "first_rec_local": "11-10 12:33 KST",
+  "last_rec_local": "11-10 12:38 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-09": 1006
+  },
+  "confidence": {
+   "HIGH": 1000,
+   "INSUFFICIENT": 4,
+   "MEDIUM": 2
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1006
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-10_US_000015.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-10",
+  "model": "QSF-1.1.8",
+  "records": 1006,
+  "first_rec_local": "11-11 07:24 KST",
+  "last_rec_local": "11-11 07:31 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-10": 1006
+  },
+  "confidence": {
+   "HIGH": 1000,
+   "INSUFFICIENT": 4,
+   "MEDIUM": 2
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1006
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-10_KR_000016.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-10",
+  "model": "QSF-1.1.8",
+  "records": 4,
+  "first_rec_local": "11-11 07:32 KST",
+  "last_rec_local": "11-11 07:32 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-10": 4
+  },
+  "confidence": {
+   "MEDIUM": 3,
+   "HIGH": 1
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 4
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-10_KR_000017.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-10",
+  "model": "QSF-1.1.8",
+  "records": 592,
+  "first_rec_local": "11-11 07:58 KST",
+  "last_rec_local": "11-11 08:00 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-10": 592
+  },
+  "confidence": {
+   "MEDIUM": 332,
+   "HIGH": 254,
+   "LOW": 4,
+   "INSUFFICIENT": 2
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 592
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-11_US_000018.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-11",
+  "model": "QSF-1.3.1",
+  "records": 1008,
+  "first_rec_local": "11-12 07:26 KST",
+  "last_rec_local": "11-12 07:42 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-11": 1008
+  },
+  "confidence": {
+   "HIGH": 997,
+   "MEDIUM": 3,
+   "INSUFFICIENT": 8
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1008
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-11_KR_000019.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-11",
+  "model": "QSF-1.3.1",
+  "records": 600,
+  "first_rec_local": "11-12 07:45 KST",
+  "last_rec_local": "11-12 07:55 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-11": 600
+  },
+  "confidence": {
+   "MEDIUM": 337,
+   "HIGH": 260,
+   "LOW": 3
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 600
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-12_US_000020.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-12",
+  "model": "QSF-1.3.2",
+  "records": 1008,
+  "first_rec_local": "11-13 07:26 KST",
+  "last_rec_local": "11-13 07:49 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-12": 1008
+  },
+  "confidence": {
+   "HIGH": 997,
+   "MEDIUM": 3,
+   "INSUFFICIENT": 8
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1008
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-12_KR_000021.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-12",
+  "model": "QSF-1.3.2",
+  "records": 600,
+  "first_rec_local": "11-13 07:51 KST",
+  "last_rec_local": "11-13 08:00 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-12": 600
+  },
+  "confidence": {
+   "MEDIUM": 337,
+   "HIGH": 260,
+   "LOW": 3
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 600
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-13_US_000022.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-13",
+  "model": "QSF-1.3.2",
+  "records": 1008,
+  "first_rec_local": "11-14 07:25 KST",
+  "last_rec_local": "11-14 07:43 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-13": 1008
+  },
+  "confidence": {
+   "HIGH": 995,
+   "MEDIUM": 4,
+   "INSUFFICIENT": 9
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1008
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-13_KR_000023.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-13",
+  "model": "QSF-1.3.2",
+  "records": 600,
+  "first_rec_local": "11-14 07:47 KST",
+  "last_rec_local": "11-14 07:54 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-13": 600
+  },
+  "confidence": {
+   "MEDIUM": 336,
+   "HIGH": 261,
+   "LOW": 3
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 600
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-16_US_000024.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-16",
+  "model": "QSF-1.4.1",
+  "records": 1008,
+  "first_rec_local": "11-17 07:26 KST",
+  "last_rec_local": "11-17 07:34 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-16": 1008
+  },
+  "confidence": {
+   "HIGH": 994,
+   "MEDIUM": 5,
+   "INSUFFICIENT": 9
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1008
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-16_KR_000025.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-16",
+  "model": "QSF-1.4.1",
+  "records": 600,
+  "first_rec_local": "11-17 07:36 KST",
+  "last_rec_local": "11-17 07:43 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-16": 600
+  },
+  "confidence": {
+   "HIGH": 551,
+   "MEDIUM": 48,
+   "LOW": 1
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 600
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-17_KR_000026.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-17",
+  "model": "QSF-1.4.1",
+  "records": 600,
+  "first_rec_local": "11-18 10:04 KST",
+  "last_rec_local": "11-18 10:29 KST",
+  "before_next_open": false,
+  "data_dates": {
+   "2026-11-17": 600
+  },
+  "confidence": {
+   "HIGH": 551,
+   "MEDIUM": 48,
+   "LOW": 1
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 600
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-17_US_000027.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-17",
+  "model": "QSF-1.4.1",
+  "records": 1006,
+  "first_rec_local": "11-18 12:11 KST",
+  "last_rec_local": "11-18 12:22 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-17": 1006
+  },
+  "confidence": {
+   "HIGH": 992,
+   "MEDIUM": 5,
+   "INSUFFICIENT": 9
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1006
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-18_US_000028.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-18",
+  "model": "QSF-1.4.1",
+  "records": 1008,
+  "first_rec_local": "11-19 11:36 KST",
+  "last_rec_local": "11-19 13:24 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-18": 1006,
+   "2026-11-17": 2
+  },
+  "confidence": {
+   "HIGH": 994,
+   "MEDIUM": 5,
+   "INSUFFICIENT": 9
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1008
+  },
+  "cards_with_stale_inputs": 10
+ },
+ {
+  "file": "2026-11-18_KR_000029.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-18",
+  "model": "QSF-1.4.1",
+  "records": 600,
+  "first_rec_local": "11-19 13:28 KST",
+  "last_rec_local": "11-19 13:45 KST",
+  "before_next_open": false,
+  "data_dates": {
+   "2026-11-18": 600
+  },
+  "confidence": {
+   "HIGH": 549,
+   "MEDIUM": 50,
+   "LOW": 1
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 600
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-19_US_000030.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-19",
+  "model": "QSF-1.4.1",
+  "records": 1006,
+  "first_rec_local": "11-20 07:26 KST",
+  "last_rec_local": "11-20 07:27 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-19": 1006
+  },
+  "confidence": {
+   "HIGH": 992,
+   "MEDIUM": 5,
+   "INSUFFICIENT": 9
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1006
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-19_KR_000031.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-19",
+  "model": "QSF-1.4.1",
+  "records": 600,
+  "first_rec_local": "11-20 07:30 KST",
+  "last_rec_local": "11-20 07:31 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-19": 600
+  },
+  "confidence": {
+   "HIGH": 549,
+   "MEDIUM": 50,
+   "LOW": 1
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 600
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-20_US_000032.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-20",
+  "model": "QSF-1.4.1",
+  "records": 1008,
+  "first_rec_local": "11-21 07:25 KST",
+  "last_rec_local": "11-21 07:38 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-20": 1008
+  },
+  "confidence": {
+   "HIGH": 994,
+   "MEDIUM": 5,
+   "INSUFFICIENT": 9
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1008
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-20_KR_000033.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-20",
+  "model": "QSF-1.4.1",
+  "records": 600,
+  "first_rec_local": "11-21 07:41 KST",
+  "last_rec_local": "11-21 07:47 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-20": 600
+  },
+  "confidence": {
+   "HIGH": 550,
+   "MEDIUM": 49,
+   "LOW": 1
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 600
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-23_US_000034.jsonl.gz",
+  "market": "US",
+  "session": "2026-11-23",
+  "model": "QSF-1.5.2",
+  "records": 1008,
+  "first_rec_local": "11-24 07:27 KST",
+  "last_rec_local": "11-24 07:37 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-23": 1008
+  },
+  "confidence": {
+   "HIGH": 853,
+   "MEDIUM": 122,
+   "LOW": 24,
+   "INSUFFICIENT": 9
+  },
+  "price_label": {
+   "Yahoo Finance 일봉": 1008
+  },
+  "cards_with_stale_inputs": 0
+ },
+ {
+  "file": "2026-11-23_KR_000035.jsonl.gz",
+  "market": "KR",
+  "session": "2026-11-23",
+  "model": "QSF-1.5.2",
+  "records": 600,
+  "first_rec_local": "11-24 07:40 KST",
+  "last_rec_local": "11-24 07:46 KST",
+  "before_next_open": true,
+  "data_dates": {
+   "2026-11-23": 600
+  },
+  "confidence": {
+   "HIGH": 233,
+   "MEDIUM": 318,
+   "LOW": 49
+  },
+  "price_label": {
+   "KRX 일별 시세로 만든 일봉 (KRX가 아직 내지 않은 최근 1거래일은": 600
+  },
+  "cards_with_stale_inputs": 0
+ }
+]

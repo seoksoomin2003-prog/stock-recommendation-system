@@ -1,0 +1,22 @@
+session 2026-11-23 QSF-1.5.2 cards 600
+stocks 300 financial 28
+blank counts (of stocks): {'roe': 0, 'op_margin': 30, 'gross_margin': 300, 'rev_growth': 44, 'eps_growth': 81, 'rev_cagr3': 62, 'eps_cagr3': 155, 'ocf_to_ni': 78, 'fcf_margin': 39, 'fcf_yield': 40, 'pe': 1, 'pb': 1, 'debt_equity': 28, 'current_ratio': 28, 'interest_cover': 300, 'cash_debt': 29, 'share_change': 300, 'returns_capital': 69, 'equity_assets': 272, 'roe_years_positive': 0, 'fcf_years_positive': 39}
+long cards 300 business_quality>=0.7: 59
+long entry_status: Counter({'NO_VALID_ENTRY_SETUP': 162, 'ENTRY_NOW': 125, 'OVERVALUED_AT_CURRENT_PRICE': 13})
+long band: Counter({'HOLD_WATCH': 112, 'WEAK_REDUCE': 102, 'SELL_AVOID': 57, 'BUY_CANDIDATE': 27, 'STRONG_BUY_CANDIDATE': 2})
+long action: Counter({'AVOID': 159, 'WATCH': 111, 'BUY': 28, 'HOLD': 1, 'BLOCKED': 1})
+ocf_to_ni > 3: 43 [(1478.21, '004020'), (97.49, '131970'), (68.56, '035760'), (54.85, '373220'), (49.16, '036460'), (34.97, '001040'), (23.43, '023530'), (22.28, '010950'), (21.61, '007070'), (15.33, '004170'), (13.15, '112610'), (11.94, '298020')]
+debt_equity < 0.02 non-financial: 1 [('108490', 0.0179, None)]
+loss-makers: 50 with valuation>=0.65: [('004020', 0.67, 'NO_VALID_ENTRY_SETUP'), ('047040', 0.67, 'NO_VALID_ENTRY_SETUP'), ('051900', 0.67, 'ENTRY_NOW'), ('079160', 0.67, 'NO_VALID_ENTRY_SETUP'), ('097950', 0.67, 'NO_VALID_ENTRY_SETUP'), ('137310', 0.67, 'NO_VALID_ENTRY_SETUP')]
+cheap + sales and EPS falling: 7 of which buy band: 1 ENTRY_NOW: 3
+    ('011200', 71.4, 'BUY_CANDIDATE', 'ENTRY_NOW', -0.069, -0.61)
+    ('005290', 59.7, 'HOLD_WATCH', 'ENTRY_NOW', -0.152, -0.36)
+    ('011780', 58.7, 'HOLD_WATCH', 'ENTRY_NOW', -0.034, -0.152)
+    ('005300', 50.0, 'WEAK_REDUCE', 'NO_VALID_ENTRY_SETUP', -0.013, -0.201)
+    ('000080', 44.8, 'WEAK_REDUCE', 'NO_VALID_ENTRY_SETUP', -0.039, -0.567)
+    ('036460', 44.1, 'WEAK_REDUCE', 'NO_VALID_ENTRY_SETUP', -0.069, -0.889)
+    ('006360', 42.9, 'WEAK_REDUCE', 'NO_VALID_ENTRY_SETUP', -0.032, -0.629)
+3y sales falling and last year falling, ENTRY_NOW: 9 [('002380', 57.7, 'HOLD_WATCH', -0.015), ('005290', 59.7, 'HOLD_WATCH', -0.064), ('011200', 71.4, 'BUY_CANDIDATE', -0.163), ('011780', 58.7, 'HOLD_WATCH', -0.046), ('028050', 58.1, 'HOLD_WATCH', -0.035), ('036570', 57.0, 'HOLD_WATCH', -0.163), ('051900', 58.1, 'HOLD_WATCH', -0.04), ('078930', 56.5, 'HOLD_WATCH', -0.043), ('375500', 57.9, 'HOLD_WATCH', -0.004)]
+swing growth factor reads 'sales and earnings rising' (>=0.65) though one fell: 6 of 108 ['003490', '012450', '078930', '131290', '161390', '259960']
+long growth reads 'steady growth' though 3y EPS CAGR < 0: 3 of 79 ['003490', '032820', '277810']
+deal pins: []
