@@ -25,7 +25,7 @@ SHOWN_ORDERS = 3
 SWING_DAYS_LEFT = 3
 EX_DIVIDEND_DAYS = 5       # an ex-dividend date of a holding or a watched stock within this many days is listed
 PART_KO = {"committee": "가상 포트폴리오 알림", "context": "지수와 거시 일정", "account": "보유 종목 점검", "plan": "주문 계획", "market": "시장 상태", "earnings": "실적 일정", "alerts": "내 알림 조건", "job": "자료 수집 상태",
-           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시", "gaps": "재무 기준에 따른 점수 차이", "dividends": "배당락일"}
+           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시", "gaps": "재무 기준에 따른 점수 차이", "dividends": "배당락일", "filings": "장중 새 공시"}
 # the portfolio's own alert codes (terminal.portfolio.alerts) and the exit readings (automation.exit_alerts)
 ALERT_LEVEL = {"STOP_HIT": "ACT", "NEAR_STOP": "ACT", "QSF_EXIT": "ACT", "QSF_THESIS_INVALIDATED": "ACT", "QSF_REDUCE": "ACT",
                "TARGET_HIT": "DUE", "NO_STOP": "DUE", "OVERWEIGHT": "DUE", "NO_PRICE": "DUE", "NO_STYLE": "DUE", "SECTOR_OVER": "DUE",
@@ -431,6 +431,16 @@ def marked_items(rows: List[Dict[str, Any]], mine: List[str], market: str, new: 
     return out
 
 
+def filing_items(base: Path, at: datetime, market: str) -> List[Dict[str, Any]]:
+    """New important filings of held and watched stocks seen by the day's checks (terminal/filing_watch.py).  A fact to read,
+    never a score or an order."""
+    from terminal import filing_watch
+    rows = [r for r in filing_watch.recent(base, at) if r.get("market") == market]
+    return [item("DUE", "NEW_FILING", f"새 공시: {r.get('name') or r['ticker']}({r['ticker']}) {r['date']} {r['title']} — {r['label']}. "
+                 "공시 사실만 알리며 점수와 판단은 다음 기록에서 정해집니다.", r["ticker"], "stock", short=f"새 공시 {r.get('name') or r['ticker']} {r['label']}")
+            for r in rows[:8]]
+
+
 def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datetime]] = None) -> Dict[str, Any]:
     """The day's list for one market.  ``terminal``: terminal.services.Terminal.  Reads only; nothing is stored or sent."""
     if market == "COIN":
@@ -489,6 +499,7 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
     part("earnings", lambda: earnings_items(terminal.qsf.earnings_upcoming(market, 14)))
     part("alerts", lambda: alert_items(terminal.alerts_view().get("log") or [], at))
     part("job", lambda: job_items(automation.status(base), automation.STEP_NAMES))
+    part("filings", lambda: filing_items(base, at, market))
     part("top", lambda: top_items(terminal.qsf.top3(market), market, {r["ticker"] for r in terminal.qsf.latest(market).get("rows") or [] if r.get("deal")}))
 
     def records() -> List[Dict[str, Any]]:

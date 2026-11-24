@@ -445,8 +445,9 @@ def serve(port: int = 8765, base_dir: Path = Path("."), terminal: Optional[Termi
     if phone_listener:
         phone.start_if_on()
     if warm_up:
-        from terminal import warm
+        from terminal import filing_watch, warm
         warm.start(t)
+        filing_watch.start(t)           # new filings of held and watched stocks during the day; tells, never scores
     if background:
         threading.Thread(target=httpd.serve_forever, daemon=True).start()
     return httpd
