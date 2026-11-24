@@ -43,6 +43,7 @@ const api = () => new Promise(() => {});                 // the redraw after a r
 const notify = () => {}, errKo = (e) => String(e.message || e), show = () => {}, setMarket = () => {};
 let confirmed = [];
 const uiConfirm = (text) => { confirmed.push(text); return Promise.resolve(true); };
+const priceAuto = () => ({ run() {} });                 // app.js: the form price lookup (2026-11-24), not under test here
 """ + JS["account.js"]
 
 

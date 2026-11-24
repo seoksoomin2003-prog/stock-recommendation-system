@@ -21,7 +21,7 @@ from markets import session_data
 from terminal import plain
 from terminal import sources as default_sources
 from terminal.cache import FileCache
-from terminal.qsf import config, earnings_estimate, engine, events, fund_period, fund_trailing, fundamentals, holding, ledger, technicals
+from terminal.qsf import config, deal_pin, earnings_estimate, engine, events, fund_period, fund_trailing, fundamentals, holding, ledger, technicals
 from terminal.qsf.views import ScreenViews, _n
 from utils import nyse_calendar
 
@@ -748,6 +748,11 @@ class QSF(ScreenViews):
             ctx["fund"] = self._us_fund(ticker, bars, session)
             ctx["name"] = ctx["fund"].get("name")
             ctx["events"] = self._us_events(ctx["fund"].get("cik"), session)
+            try:                                            # the merger mark and, with the price, the deal pin (decision 14 (가), 2026-11-24)
+                ctx["deals"] = self.stored_deals(ctx["fund"].get("cik"), session)
+            except Exception:
+                ctx["deals"] = []
+            ctx["deal_pin"] = deal_pin.pin(ctx["deals"], bars)
         else:
             fe = self._kr_fund_events(ticker, ident, bars, session)
             ctx["fund"], ctx["events"] = fe["fund"], fe["events"]
@@ -1191,6 +1196,8 @@ def _why(c: Dict[str, Any]) -> str:
     said = _why_of(c)
     if c.get("stale_fund_note"):
         said = f"{c['stale_fund_note']} {said}"
+    if c.get("deal_held"):
+        said = f"{said.rstrip('. ')}. {deal_pin.why(c['deal_pin'])}"
     if c.get("band_held_back") and c["actionability"] == "ACTIONABLE":
         # QSF-1.5.1: the score stands, the buy label does not, and the card says which factors made the difference
         from terminal.assistant import FACTOR_KO          # the Korean factor names live with the assistant's answers; imported here to avoid a cycle

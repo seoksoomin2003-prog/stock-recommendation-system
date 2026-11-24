@@ -27,7 +27,7 @@ function ptFormHtml(d) {
     <label>날짜${isKR() ? "" : "(미국 기준)"}<input name="date" type="date" value="${esc(p.date || d.today || "")}" max="${esc(d.today || "")}"></label>
     <label>메모(선택)<input name="note" maxlength="200" value="${v("note")}"></label>
     <button class="btn-primary">기록</button>
-    <div class="wide meta m0" id="ptpreview"></div><div class="wide meta m0" id="ptmsg"></div></form>`;
+    <div class="wide meta m0" id="ptpricenote" aria-live="polite"></div><div class="wide meta m0" id="ptpreview"></div><div class="wide meta m0" id="ptmsg"></div></form>`;
 }
 
 function ptWireForm(d, mk) {
@@ -58,7 +58,8 @@ function ptWireForm(d, mk) {
       (isNum(total) ? ` · <b>${kind === "BUY" ? "나가는 돈" : "들어오는 돈"} ${money(total)}</b>` : "");
   };
   const later = () => { clearTimeout(timer); timer = setTimeout(show, 250); };
-  form.elements.kind.onchange = () => { fields(); show(); };
+  const auto = priceAuto(form, { kinds: ["BUY", "SELL"], market: () => "", note: $("#ptpricenote"), changed: later });
+  form.elements.kind.onchange = () => { fields(); show(); auto.run(); };
   ["ticker", "qty", "price", "fee"].forEach((n) => (form.elements[n].oninput = later));
   form.onsubmit = async (e) => {
     e.preventDefault();
@@ -75,7 +76,7 @@ function ptWireForm(d, mk) {
     } catch (err) { msg.innerHTML = `<span class="down">${esc(errKo(err))}</span>`; btn.disabled = false; form.removeAttribute("aria-busy"); }
     finally { ptBusy = false; }
   };
-  fields(); show();
+  fields(); show(); auto.run();
 }
 
 async function ptVoid(id) {

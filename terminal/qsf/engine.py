@@ -11,7 +11,7 @@ A profile's reference domains are computed and kept on the card with ``scored: F
 """
 from typing import Any, Dict, List, Optional, Sequence
 
-from terminal.qsf import config, factors, technicals
+from terminal.qsf import config, deal_pin, factors, technicals
 
 _QUALITY = {"REAL": 1.0, "STALE": 0.5}
 
@@ -266,6 +266,13 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
             held_back = True
             if action == "BUY" and low["band"] not in BUY_CODES:
                 action = "WATCH"
+    # A stock held near an agreed deal price (deal_pin, 2026-11-24): the score stands, the buy band is not given
+    pin, deal_held = ctx.get("deal_pin"), False
+    if pin and sufficient and shown["band"] in BUY_CODES:
+        shown = {"band": "HOLD_WATCH", "band_label": deal_pin.band_label(pin)}
+        kept, deal_held = False, True
+        if action == "BUY":
+            action = "WATCH"
     actionability = "INSUFFICIENT_DATA" if not sufficient else "BLOCKED" if gates else "ACTIONABLE"
     display = action
     if actionability == "BLOCKED" and action == "BUY":
@@ -277,7 +284,7 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
     return {"model_version": config.MODEL_VERSION, "spec_version": config.SPEC_VERSION, "profile": profile["id"],
             "market": market, "strategy": strategy, "held": held, "score": composite,
             "diagnostic_only": not sufficient, **shown, "band_kept": kept, "conservative_score": conservative, "band_held_back": held_back,
-            "action": display, "raw_action": action,
+            "deal_pin": pin, "deal_held": deal_held, "action": display, "raw_action": action,
             "action_label": config.ACTION_LABELS[display], "color": _color(display, composite), "actionability": actionability,
             "coverage": coverage, "input_coverage": input_coverage, "partial": partial_names, "confidence": confidence, "domains": domains, "market_state": market_state(rows, market), "factors": rows, "gates": gates,
             "short_domains": short, "missing": missing_names, "stale": stale_names,

@@ -158,6 +158,20 @@ def _watched(touched):
     return sorted(t for t in touched if t.split(os.sep, 1)[0] in WATCHED_DIRS)
 
 
+def _beside_open_folder(event, args):
+    """A path given relative to an open folder (``dir_fd``), as shutil.rmtree walks a tree: os.rmdir("research_data", dir_fd=..)
+    inside a temporary folder is not the project's research_data, and its real place is not known here.  The walk ends by removing
+    the top folder by its own path, so a test that deletes a protected tree is still seen.  (2026-11-24: a temporary restore copy
+    holding a "research_data" folder was read as the forward-record folder.)"""
+    if event not in ("os.remove", "os.rmdir", "os.mkdir"):          # their dir_fd place; os.chmod's second argument is a mode
+        return False
+    fd = args[2] if event == "os.mkdir" and len(args) > 2 else args[1] if len(args) > 1 else None
+    path = args[0]
+    if not (isinstance(fd, int) and fd >= 0 and isinstance(path, (str, bytes, os.PathLike))):
+        return False
+    return not os.path.isabs(os.fsdecode(os.fspath(path)))
+
+
 def _audit(event, args):
     """Every write this process makes under a protected directory, by any Python route (open, os, shutil, sqlite3)."""
     try:
@@ -166,7 +180,9 @@ def _audit(event, args):
             if (isinstance(flags, int) and flags & _WRITING) or (isinstance(mode, str) and any(c in mode for c in "wax+")):
                 _note(path)
         elif event in _ONE_PATH:
-            if not (event == "os.mkdir" and (_protected_rel(args[0]) or "").split(os.sep, 1)[0] in WATCHED_DIRS):
+            if _beside_open_folder(event, args):
+                pass
+            elif not (event == "os.mkdir" and (_protected_rel(args[0]) or "").split(os.sep, 1)[0] in WATCHED_DIRS):
                 _note(args[0])                        # an empty folder made in a watched place harms no record
         elif event in _TWO_PATHS:
             _note(args[0])

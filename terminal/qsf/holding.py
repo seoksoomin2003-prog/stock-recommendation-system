@@ -60,6 +60,9 @@ def entry_status(res: Dict, ctx: Dict) -> Dict[str, Any]:
         return {"status": "NO_VALID_ENTRY_SETUP", "reason": "위험 게이트: " + res["gates"][0]["text"], "zone": None}
     if (res["score"] or 0) < 55:
         return {"status": "NO_VALID_ENTRY_SETUP", "reason": f"점수 {res['score']:.1f}점이 관찰 기준 55점 미만입니다.", "zone": None}
+    pin = res.get("deal_pin")
+    if pin:                         # held near a deal price (deal_pin, 2026-11-24): the room above is the deal price, whatever the score
+        return {"status": "NO_VALID_ENTRY_SETUP", "reason": f"합병 절차로 가격이 묶인 종목입니다({pin['label']} {pin['date']}, 최근 20거래일 변동성 연 {pin['vol20']:.1f}%). 오를 여지가 인수 가격까지뿐이라 진입을 찾지 않습니다.", "zone": None}
     if strategy == "LONG_TERM":
         v = _factor(res, "valuation")
         if v is None:

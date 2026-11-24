@@ -134,7 +134,7 @@ async function api(path, opts) {
 }
 // What the server's error codes mean, in Korean.  A code that is not here is shown as it is, marked as a code.
 const ERR_KO = { INVALID_TICKER: "종목 코드 형식이 올바르지 않습니다.", WATCHLIST_FULL: "관심종목은 최대 100개입니다.", SERVER_UNREACHABLE: "터미널 서버에 연결되지 않습니다.",
-  INTERNAL_ERROR: "서버 내부 오류가 발생했습니다. 잠시 뒤 다시 해 보세요. 계속되면 터미널을 띄운 컴퓨터에서 프로그램을 껐다 켜세요(기록: data/terminal/logs/server_errors.log).", INVALID_RANGE: "기간 값이 올바르지 않습니다.",
+  INTERNAL_ERROR: "서버 내부 오류가 발생했습니다. 잠시 뒤 다시 해 보세요. 계속되면 터미널을 띄운 컴퓨터에서 프로그램을 껐다 켜세요(기록: data/terminal/logs/server_errors.log).", INVALID_RANGE: "기간 값이 올바르지 않습니다.", INVALID_DATE: "날짜 형식이 올바르지 않습니다(예: 2026-11-24).",
   BAD_RESPONSE: "서버의 답을 읽지 못했습니다. 화면을 새로 고쳐 보세요.", BAD_JSON: "보낸 내용을 서버가 읽지 못했습니다. 화면을 새로 고친 뒤 다시 해 보세요.",
   BAD_LENGTH: "보낸 내용이 너무 길거나 길이가 맞지 않습니다.", METHOD_NOT_ALLOWED: "이 주소는 그 방식의 요청을 받지 않습니다.", NOT_FOUND: "그런 주소가 없습니다. 화면을 새로 고쳐 보세요.",
   FORBIDDEN_HOST: "이 주소로는 터미널을 열 수 없습니다. 터미널을 띄운 컴퓨터에서는 127.0.0.1 주소로, 휴대폰에서는 '폰 연결'에 보이는 주소로 여세요.",
@@ -166,6 +166,45 @@ function errKo(e) {
   const h = /^HTTP_(\d+)$/.exec(m);
   if (h) return `서버가 요청을 처리하지 못했습니다(HTTP ${h[1]}).`;
   return /^[A-Z][A-Z0-9_]+$/.test(m) ? `오류 코드 ${m}` : m;
+}
+// 거래 기록 양식의 가격 자동 채우기 (사용자 요청 2026-11-24).  종목 코드와 날짜로 그날 종가를 /api/price에서 받아 가격 칸에 넣습니다.
+// 사람이 직접 친 가격은 덮지 않습니다(자동으로 넣은 값만 다시 바꿈).  무료 지연 종가라 실제 체결가와 다를 수 있다고 함께 적습니다.
+const PRICE_MISS_KO = { NOT_COVERED: "가격을 받는 코인 30종에 없는 코인이라 자동으로 채우지 못했습니다. 직접 넣으세요.",
+  BEFORE_HISTORY: "그 날짜는 가진 시세(주식 약 2년, 코인 약 250일)보다 앞이라 자동으로 채우지 못했습니다. 직접 넣으세요.",
+  NO_PRICE: "이 코드의 시세를 찾지 못했습니다. 코드를 확인하거나 가격을 직접 넣으세요.", NO_RATE: "환율을 받지 못해 원화 가격을 계산하지 못했습니다. 직접 넣으세요." };
+function priceFieldValue(v, cur) {
+  if (cur !== "KRW") return v.toFixed(2);
+  return v >= 100 ? String(Math.round(v)) : String(Number(v.toPrecision(6)));
+}
+function priceAuto(form, opts) {
+  const price = form.elements.price, note = opts.note;
+  if (!price || !note) return { run() {} };
+  let token = 0;
+  const manual = () => price.value.trim() && price.dataset.auto !== "1";
+  price.addEventListener("input", (e) => { if (e.isTrusted) { price.dataset.auto = ""; note.textContent = ""; } });
+  const run = async () => {
+    const t = form.elements.ticker.value.trim().toUpperCase();
+    if (!opts.kinds.includes(form.elements.kind.value) || !t) { if (price.dataset.auto === "1") note.textContent = ""; return; }
+    if (manual()) return;
+    const mk = opts.market(), day = form.elements.date ? form.elements.date.value : "", mine = ++token;
+    note.textContent = "가격을 찾는 중…";
+    let r;
+    try { r = await api(`/api/price?t=${encodeURIComponent(t)}&date=${encodeURIComponent(day)}${mk === "COIN" ? "&market=COIN" : ""}`); }
+    catch (e) { if (mine === token) note.textContent = `가격을 자동으로 채우지 못했습니다: ${errKo(e)}`; return; }
+    if (mine !== token || manual()) return;
+    if (!isNum(r.close)) {
+      if (price.dataset.auto === "1") { price.value = ""; price.dataset.auto = ""; }
+      note.textContent = PRICE_MISS_KO[r.reason] || PRICE_MISS_KO.NO_PRICE; if (opts.changed) opts.changed(); return;
+    }
+    price.value = priceFieldValue(r.close, r.currency); price.dataset.auto = "1";
+    const when = r.market === "COIN" ? `${r.at || r.date} 4시간봉 종가` : r.intraday ? `${r.date} 장중 지연 시세(확정 종가 아님)` : `${r.date} 종가`;
+    const gap = r.asked && r.exact === false ? ` (${r.asked}에는 거래가 없어 그 전 거래일 값)` : "";
+    note.textContent = `자동 입력: ${when}${gap} · ${r.source}${r.status === "STALE" ? " · 오래된 가격입니다" : ""}. 실제 체결가와 다르면 고쳐 쓰세요.${r.note ? " " + r.note : ""}`;
+    if (opts.changed) opts.changed();
+  };
+  form.elements.ticker.addEventListener("change", run);
+  if (form.elements.date) form.elements.date.addEventListener("change", run);
+  return { run };
 }
 // '쉽게 설명해줘': a stock card or a portfolio in everyday words.  terminal/plain.py writes the text; nothing is fetched here.
 function plainBlock(doc) {

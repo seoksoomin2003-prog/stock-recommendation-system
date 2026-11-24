@@ -53,6 +53,7 @@ function acctFormHtml(d) {
       : `<label data-f="${k}">${label[k]}<input name="${k}"${fill[k] !== undefined && fill[k] !== null ? ` value="${esc(fill[k])}"` : ""} ${k === "ticker" ? `maxlength="15" style="text-transform:uppercase" ${f.market === "COIN" ? 'list="acctcoins"' : ""}` : 'inputmode="decimal"'}></label>`).join("")}
     <datalist id="acctcoins">${coins}</datalist>
     <label class="wide">메모 (선택)<input name="note" maxlength="500"></label>
+    <div class="wide meta m0" id="acctpricenote" aria-live="polite"></div>
     <div class="wide"><button class="btn-primary" type="submit">기록 추가</button> <span class="meta" id="accthint"></span><div class="msg" id="acctmsg" role="status" aria-live="polite"></div></div>
   </form>`;
 }
@@ -71,9 +72,11 @@ function acctBind(d) {
   const redraw = () => { acctForm = { kind: f.kind.value, market: f.market.value, date: f.date.value }; $("#acctform-panel").querySelector("form").outerHTML = acctFormHtml(d); acctBind(d); };
   if (acctForm.scroll) { acctForm.scroll = false; $("#acctform-panel").scrollIntoView({ block: "start" }); (f.ticker.value ? f.qty : f.ticker).focus({ preventScroll: true }); }
   f.kind.onchange = redraw; f.market.onchange = redraw; sync();
+  const auto = priceAuto(f, { kinds: ["BUY", "SELL", "HOLD"], market: () => f.market.value, note: $("#acctpricenote") });
+  f._priceAuto = auto;
   f.ticker.onblur = () => {            // 주식 코드는 모양으로 시장이 정해집니다: 계좌 칸을 맞춰 줍니다
     const t = f.ticker.value.trim().toUpperCase();
-    if (t && f.market.value !== "COIN" && marketOf(t) !== f.market.value) { f.market.value = marketOf(t); const keep = t; redraw(); $("#acctform").ticker.value = keep; }
+    if (t && f.market.value !== "COIN" && marketOf(t) !== f.market.value) { f.market.value = marketOf(t); const keep = t; redraw(); $("#acctform").ticker.value = keep; $("#acctform")._priceAuto.run(); }
     // What the form cannot refuse but the user should know before saving (assessment 2026-11-23)
     const m = $("#acctform").market.value, covered = new Set((d.coins || []).map((c) => c.coin)), msg = $("#acctmsg");
     const warn = !t ? "" : /[가-힣]/.test(t) ? "종목 이름이 아니라 코드로 적어야 합니다(예: 삼성전자는 005930, 애플은 AAPL)."
@@ -103,6 +106,7 @@ function acctBind(d) {
     } catch (err) { msg.className = "msg err"; msg.textContent = errKo(err); btn.disabled = false; f.removeAttribute("aria-busy"); }
     finally { acctBusy = false; }
   };
+  auto.run();
   acctDone();
 }
 // '기록했습니다: 매수 AAPL 10주 · 미국 주식.'  보낸 칸에서만 만듭니다.

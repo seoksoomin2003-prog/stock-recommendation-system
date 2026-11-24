@@ -280,6 +280,70 @@ class Terminal(ModelViews):
                 "cache": {k: res[k] for k in ("status", "fetched_at", "error")},
                 "source": "Yahoo Finance (분할 조정 일봉)"}
 
+    def price_on(self, ticker: str, day: str = "", market: str = "") -> Dict[str, Any]:
+        """The close a trade form fills in (user request 2026-11-24): the last daily close on or before the form's date, from the
+        same bars as the chart (Korean stocks rebuilt from the KRX copy).  A suggestion to overwrite, never a fill price."""
+        from terminal import price_fill
+        want = price_fill.parse_day(day)
+        if market == "COIN":
+            return self._coin_price_on(ticker, want)
+        ticker = clean_ticker(ticker)
+        mk, sym = pf.market_of(ticker), self._sym(ticker)
+        res = self.cache.cached(f"chart:{sym}:2y", TTL["chart"], lambda: self.src.yahoo_history([sym], "2y"))
+        rows, source = (res["data"] or {}).get(sym) or [], "Yahoo Finance 일봉 종가(분할 조정, 지연)"
+        if mk == "KR":
+            rows, source = self._kr_raw_rows(ticker, rows)
+        today =self.now().astimezone(ZoneInfo("Asia/Seoul" if mk == "KR" else "America/New_York")).date()
+        got = price_fill.pick(rows, want, today)
+        if res["status"] != "REAL" and got["status"] == "REAL":
+            got["status"] = res["status"]
+        return {"ticker": ticker, "market": mk, "asked": want.isoformat() if want else None, **got,
+                "intraday": self._intraday(got["date"], mk), "currency": "KRW" if mk == "KR" else "USD", "source": source,
+                "note": price_fill.SPLIT_NOTE if mk == "US" else None}
+
+    def _kr_raw_rows(self, ticker: str, yahoo: List[Dict[str, Any]]) -> Any:
+        """Korean closes as traded, from the KRX copy; days KRX has not published yet (today) come from Yahoo's quote."""
+        from terminal import price_fill
+        from terminal.qsf import kr_bars
+        plain = "Yahoo Finance 일봉 종가(지연)"
+        try:
+            got = price_fill.kr_raw_closes(ticker, kr_bars.panel(self.base, self.now().date()), kr_bars.CLOSE)
+        except Exception as exc:                       # a broken copy never stops the form; the line names the kind of failure only
+            return yahoo, f"{plain} · 한국 거래소 일별 자료를 읽지 못함({type(exc).__name__})"
+        if not got:
+            return yahoo, f"{plain} · 한국 거래소 일별 자료에 없는 종목"
+        last = got[-1]["date"]
+        tail = [b for b in yahoo if b.get("close") and b["date"] > last]
+        return got + tail, f"한국 거래소 종가(그날 실제 가격, {last}까지)" + (" · 그 뒤는 Yahoo 시세(지연)" if tail else "")
+
+    def _coin_price_on(self, coin: str, want) -> Dict[str, Any]:
+        """A coin's won price for the form: the Binance USDT close of the last four-hour bar of that Korean day, times the won rate
+        of that day (the account's own method, so a form price and the account's price agree)."""
+        from terminal import coin_bridge, coin_source, price_fill
+        coin = str(coin or "").strip().upper()
+        if not re.fullmatch(r"[A-Z0-9]{1,15}", coin):
+            raise ValueError("INVALID_TICKER")
+        base = {"ticker": coin, "market": "COIN", "asked": want.isoformat() if want else None, "currency": "KRW",
+                "source": "바이낸스 USDT 4시간봉 종가 × 원/달러 환율(국내 거래소 가격과 몇 % 다를 수 있음)", "note": None, "intraday": False}
+        try:
+            doc = coin_source.load(self.base)
+        except Exception as exc:                                   # the coin part never stops a form
+            doc = {"error": type(exc).__name__}
+        bars = (doc.get("arrays") or {}).get("bars") or {}
+        sym = {coin_bridge.coin_of(s): s for s in bars}.get(coin)
+        today = self.now().astimezone(ZoneInfo("Asia/Seoul")).date()
+        got = price_fill.coin_close(bars.get(sym) if sym else None, coin_bridge.unit_of(sym) if sym else 1.0, coin_bridge.BAR_MS, want, today)
+        if not got:
+            return {**base, "status": "UNAVAILABLE", "close": None, "date": None, "reason": "NOT_COVERED" if not sym else "BEFORE_HISTORY"}
+        fx = self.cache.cached("chart:KRW=X:2y", TTL["chart"], lambda: self.src.yahoo_history(["KRW=X"], "2y"))
+        rate = price_fill.fx_on((fx["data"] or {}).get("KRW=X") or [], got["date"])
+        if not rate:
+            return {**base, "status": "UNAVAILABLE", "close": None, "date": got["date"], "reason": "NO_RATE"}
+        ref = want or today
+        old = (ref - datetime.strptime(got["date"], "%Y-%m-%d").date()).days > price_fill.STALE_DAYS or bool(doc.get("error"))
+        return {**base, "status": "STALE" if old else "REAL", "close": got["usd"] * rate["close"], "date": got["date"], "at": got["at"],
+                "exact": got["date"] == ref.isoformat(), "usd": got["usd"], "usdkrw": rate["close"], "fx_date": rate["date"]}
+
     COMPARE_INDEX = {"^GSPC": "S&P 500", "^IXIC": "나스닥 종합", "^KS11": "코스피", "^KQ11": "코스닥"}
     COMPARE_MAX = 8
     ROLLING_WINDOW, ROLLING_SHORT = 60, 20          # sessions in the moving correlation; the short one for a three-month view
