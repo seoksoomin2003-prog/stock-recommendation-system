@@ -54,7 +54,7 @@ function ptWireForm(d, mk) {
     }
     const value = qty * price;
     const total = isNum(fee) ? (kind === "BUY" ? value + fee : value - fee) : null;
-    preview.innerHTML = `거래 금액 ${money(value)} · ${typed === null ? (parts ? `${ptFeeText(parts)} (자동)` : "수수료를 계산하지 못했습니다") : `수수료·세금 ${money(typed)} (직접 입력)`}` +
+    preview.innerHTML = `거래 금액 ${money(value)} <span class="meta m0">(${qty}주 × ${money(price)})</span> · ${typed === null ? (parts ? `${ptFeeText(parts)} (자동)` : "수수료를 계산하지 못했습니다") : `수수료·세금 ${money(typed)} (직접 입력)`}` +
       (isNum(total) ? ` · <b>${kind === "BUY" ? "나가는 돈" : "들어오는 돈"} ${money(total)}</b>` : "");
   };
   const later = () => { clearTimeout(timer); timer = setTimeout(show, 250); };

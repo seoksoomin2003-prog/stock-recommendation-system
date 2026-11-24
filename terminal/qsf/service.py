@@ -12,6 +12,7 @@ import threading
 import time
 from collections import Counter
 from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -31,7 +32,7 @@ KR_MIN_UNIVERSE = 200       # a whole-market Korean scan with fewer stocks than 
 # "facts": US annual statements are read again at each day's first run, so a new 10-K is scored the next morning (it waited up to 7 days).
 # 20 hours, not 24: a copy stored at 07:15 must be old enough for the next day's 07:10 run.  Korean statements keep 7 days ("kr_facts").
 REGIME_MEMO_SECONDS = 30 * 60        # how long the process reuses a computed regime; its inputs have their own cache times below
-TTL = {"bars": 1800, "regime": 3600, "facts": 20 * 3600, "kr_facts": 7 * 86400, "subm": 20 * 3600, "info": 7 * 86400, "earn": 3 * 86400, "form4": 3650 * 86400}
+TTL = {"bars": 1800, "regime": 3600, "facts": 20 * 3600, "kr_facts": 7 * 86400, "subm": 20 * 3600, "kr_list_screen": 3600, "info": 7 * 86400, "earn": 3 * 86400, "form4": 3650 * 86400}
 # Korean quarterly reports, for the trailing-four-quarter record (reports/QSF_FUND_PERIOD_PROTOCOL.md).  A past year's report does not
 # change and is kept; this year's is read again monthly (an amended report); "not filed yet" is asked again the next morning.
 MASTER_DOWN = "한국 거래소 종목 목록을 받지 못했습니다. 인터넷 연결을 확인하세요. 기기에 저장된 목록이 없거나 7일보다 오래돼 대신 쓰지 못했습니다."
@@ -591,10 +592,7 @@ class QSF(ScreenViews):
             fund = fundamentals.blank_mixed_cash_flow(fundamentals.metrics(res["data"], bars[-1]["close"], as_of, source="OpenDART 사업보고서", **kw), code)
             other = self._kr_trailing(code, corp, klass, fm, as_of, res["data"], bars[-1]["close"], kw)
             fund = self._with_other_period("KR", fund, dict(fund, period_basis="ANNUAL") if other and other.get("annual_only") else other)
-        def fetch_list():               # every page of the year (QSF-1.4.1); the first page alone was read as the whole year before
-            bgn = (date.fromisoformat(as_of) - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")
-            return events.kr_filings(self.dart._get, corp, bgn, as_of.replace("-", ""))
-        rep = self.cache.cached(f"krlist2:{corp}", TTL["subm"], fetch_list)
+        rep = self._kr_filing_list(corp, date.fromisoformat(as_of), TTL["subm"], whole_day=True)       # every page of the year (QSF-1.4.1)
         ev = events.classify_kr_list(rep["data"], as_of)
         old_fund, old_list = _stale("DART 재무제표", res) if res["data"] else [], _stale("DART 공시 목록", rep)
         if old_fund:
@@ -636,6 +634,23 @@ class QSF(ScreenViews):
         rec = self.cache.read(key) if key else None
         return (rec or {}).get("data") or None
 
+    def _kr_filing_list(self, corp: str, as_of: date, ttl: float, whole_day: bool = False) -> Dict[str, Any]:
+        """A company's OpenDART filing list up to ``as_of``, stored under one key for the scan and the stock screen.  A stored list is
+        used only when it reaches ``as_of`` and is younger than ``ttl``.  Until 2026-11-24 any list younger than 20 hours was used,
+        whatever day it ended on: a filing made at 16:37 stayed off the stock screen until the next evening (user report, 현대자동차
+        자기주식처분결과보고서)."""
+        key, end = f"krlist2:{corp}", as_of.strftime("%Y%m%d")
+
+        def fetch_list():
+            bgn = (as_of - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")
+            return {**events.kr_filings(self.dart._get, corp, bgn, end), "end": end}
+        old = self.cache.read(key)
+        covers = bool(old) and str(((old.get("data") or {}).get("end")) or "") >= end
+        if covers and whole_day:        # the scan reads the whole session day: a list fetched during that day missed its evening
+            day_after = datetime.combine(as_of + timedelta(days=1), datetime.min.time(), tzinfo=ZoneInfo("Asia/Seoul")).timestamp()
+            covers = float(old.get("stored_at") or 0) >= day_after
+        return self.cache.cached(key, ttl if covers else 0, fetch_list)
+
     def kr_company(self, code: str) -> Dict[str, Any]:
         """Identity, annual statements and recent filings of one Korean company, for the stock screen."""
         ident, down = self._kr_identity_or_reason(code)
@@ -655,10 +670,7 @@ class QSF(ScreenViews):
         fm = fundamentals.fiscal_month_of(ident.get("fiscal_month"))
         res = self.cache.cached(_kr_fund_key(code, fm), TTL["kr_facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart, fiscal_month=fm)))
 
-        def fetch_list():
-            bgn = (as_of - timedelta(days=events.WINDOW_LONG)).strftime("%Y%m%d")
-            return events.kr_filings(self.dart._get, corp, bgn, as_of.strftime("%Y%m%d"))
-        rep = self.cache.cached(f"krlist2:{corp}", TTL["subm"], fetch_list)
+        rep = self._kr_filing_list(corp, as_of, TTL["kr_list_screen"])          # the stock screen: today's filings within the hour
         out.update(annual=res["data"], annual_status=res["status"], annual_fetched=res["fetched_at"], reports=(rep["data"] or {}).get("rows") if rep["data"] is not None else None,
                    reports_status=rep["status"], reports_fetched=rep["fetched_at"])
         return out

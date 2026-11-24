@@ -128,6 +128,16 @@ def universe(base: Path, market: str) -> List[Dict[str, Any]]:
     return list({r["ticker"]: {"ticker": r["ticker"], "name": r.get("name")} for r in rows}.values())
 
 
+def resume_at(folder: Path, n: int) -> int:
+    """Where the next run starts in the name list: the last run's ``next_start`` (the name it was refused at), else 0."""
+    try:
+        lines = (Path(folder) / "runs.jsonl").read_text(encoding="utf-8").splitlines()
+        got = int(json.loads(lines[-1]).get("next_start") or 0) if lines else 0
+    except (OSError, ValueError, TypeError, AttributeError):
+        return 0
+    return got if 0 <= got < n else 0
+
+
 def record(base: Path, market: str, http=requests, now: Optional[Callable[[], datetime]] = None, sleep: Callable[[float], None] = time.sleep, pause: Optional[float] = None) -> Dict[str, Any]:
     """Append headlines not seen before.  Nothing is backfilled: ``first_seen_at`` is when this record first knew of one.
     ``pause``: seconds between requests; by default the market's own (``pause_of``)."""
@@ -144,19 +154,25 @@ def record(base: Path, market: str, http=requests, now: Optional[Callable[[], da
     except (OSError, ValueError):
         seen = {}
     day, fresh, ok, failed, streak, stop = at.date().isoformat(), [], 0, 0, 0, None
+    # Resume where the last run stopped (2026-11-24).  A provider that refuses after about half the list used to cut the same
+    # tail every day: from 2026-11-19 the Korean record asked only the first 100-170 of 300 names and the rest never got a
+    # headline.  The number and pace of requests are unchanged; only the order turns.
+    start = resume_at(folder, len(names))
+    names = names[start:] + names[:start]
     client, ours = _client(http, market)
+    stopped_at = None
     for i, row in enumerate(names):
         if i:
             sleep(pause)
         try:
             items = fetch(row["ticker"], market, row.get("name"), client)["items"]
         except FeedRefused as exc:
-            failed, stop = failed + 1, f"REFUSED_{exc}"
+            failed, stop, stopped_at = failed + 1, f"REFUSED_{exc}", i
             break
         except Exception:
             failed, streak = failed + 1, streak + 1
             if streak >= ABORT_AFTER:
-                stop = "TOO_MANY_FAILURES"
+                stop, stopped_at = "TOO_MANY_FAILURES", i - streak + 1
                 break
             continue
         ok, streak = ok + 1, 0
@@ -176,7 +192,8 @@ def record(base: Path, market: str, http=requests, now: Optional[Callable[[], da
     tmp.replace(seen_file)
     good = stop is None and ok / len(names) >= MIN_OK_SHARE
     out = {"status": "OK" if good else "FAILED", "market": market, "at": at.isoformat(), "tickers": len(names), "ok": ok, "failed": failed,
-           "not_asked": len(names) - ok - failed, "new_items": len(fresh), "stopped": stop}
+           "not_asked": len(names) - ok - failed, "new_items": len(fresh), "stopped": stop,
+           "start": start, "next_start": (start + stopped_at) % len(names) if stopped_at is not None else start}
     with open(folder / "runs.jsonl", "a", encoding="utf-8") as fh:
         fh.write(json.dumps(out, ensure_ascii=False) + "\n")
     return out

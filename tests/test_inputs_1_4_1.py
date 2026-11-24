@@ -68,7 +68,9 @@ def test_a_list_too_long_to_read_whole_is_unavailable_not_clean():
 
 def test_the_scan_and_the_stock_screen_read_the_whole_list():
     src = (ROOT / "terminal" / "qsf" / "service.py").read_text(encoding="utf-8")
-    assert src.count("events.kr_filings(self.dart._get, corp, bgn,") == 2 and src.count('f"krlist2:{corp}"') == 3 and 'f"krlist:{corp}"' not in src          # the scan, the stock screen, the earnings-date estimate
+    # one whole-list fetch shared by the scan and the stock screen since 2026-11-24 (_kr_filing_list); the earnings estimate reads it
+    assert src.count("events.kr_filings(self.dart._get, corp, bgn,") == 1 and src.count('f"krlist2:{corp}"') == 2 and 'f"krlist:{corp}"' not in src
+    assert src.count("self._kr_filing_list(corp, ") == 2
     assert 'ev = events.classify_kr_list(rep["data"], as_of)' in src
 
 

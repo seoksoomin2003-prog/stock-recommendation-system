@@ -41,7 +41,7 @@ function acctRecord(market, fill) {
 function acctFormHtml(d) {
   const f = acctForm, cur = ACCT_CUR[f.market] === "KRW" ? "₩" : "$", fill = f.fill || {};
   const kinds = ["HOLD", "BUY", "SELL", "DEPOSIT", "WITHDRAW", "DIVIDEND", "FEE", "PLAN", "STYLE"];
-  const label = { ticker: f.market === "COIN" ? "코인 이름 (예: BTC)" : "종목 코드", style: "구분", qty: f.market === "COIN" ? "수량(개)" : "수량(주)", price: f.kind === "HOLD" ? `산 가격(${cur})` : `가격(${cur})`,
+  const label = { ticker: f.market === "COIN" ? "코인 이름 (예: BTC)" : "종목 코드", style: "구분", qty: f.market === "COIN" ? "수량(개)" : "수량(주)", price: f.kind === "HOLD" ? `산 가격(${f.market === "COIN" ? "1개당" : "1주당"}, ${cur})` : `가격(${f.market === "COIN" ? "1개당" : "1주당"}, ${cur})`,
     fee: `수수료(${cur})`, amount: `금액(${cur})`, stop: `손절가(${cur}, 선택)`, target: `목표가(${cur}, 선택)` };
   const styleSelect = `<select name="style"><option value="">선택</option>${Object.entries(STYLE_KO).map(([k, v]) => `<option value="${k}"${fill.style === k ? " selected" : ""}>${v}</option>`).join("")}</select>`;
   const coins = (d.coins || []).map((c) => `<option value="${esc(c.coin)}">${esc(c.name || "")}</option>`).join("");
@@ -54,6 +54,7 @@ function acctFormHtml(d) {
     <datalist id="acctcoins">${coins}</datalist>
     <label class="wide">메모 (선택)<input name="note" maxlength="500"></label>
     <div class="wide meta m0" id="acctpricenote" aria-live="polite"></div>
+    <div class="wide m0" id="accttotal" aria-live="polite"></div>
     <div class="wide"><button class="btn-primary" type="submit">기록 추가</button> <span class="meta" id="accthint"></span><div class="msg" id="acctmsg" role="status" aria-live="polite"></div></div>
   </form>`;
 }
@@ -72,7 +73,18 @@ function acctBind(d) {
   const redraw = () => { acctForm = { kind: f.kind.value, market: f.market.value, date: f.date.value }; $("#acctform-panel").querySelector("form").outerHTML = acctFormHtml(d); acctBind(d); };
   if (acctForm.scroll) { acctForm.scroll = false; $("#acctform-panel").scrollIntoView({ block: "start" }); (f.ticker.value ? f.qty : f.ticker).focus({ preventScroll: true }); }
   f.kind.onchange = redraw; f.market.onchange = redraw; sync();
-  const auto = priceAuto(f, { kinds: ["BUY", "SELL", "HOLD"], market: () => f.market.value, note: $("#acctpricenote") });
+  // 수량 × 1주당 가격 = 거래 금액 (사용자 요청 2026-11-24).  가격 칸은 1주당 가격 그대로 기록하고, 합계는 보여 주기만 합니다.
+  const total = () => {
+    const box = $("#accttotal"), k = f.kind.value; if (!box) return;
+    const num = (n) => { const t = (f[n] ? f[n].value : "").replace(/[,_\s]/g, ""); return t ? Number(t) : NaN; };
+    const q = num("qty"), p = num("price"), fee = num("fee"), cur = ACCT_CUR[f.market.value], unit = f.market.value === "COIN" ? "개" : "주";
+    if (!["BUY", "SELL", "HOLD"].includes(k) || !(q > 0 && p > 0)) { box.textContent = ""; return; }
+    const value = q * p, withFee = isNum(fee) && fee > 0 ? (k === "SELL" ? value - fee : value + fee) : null;
+    box.innerHTML = `${k === "HOLD" ? "산 금액" : "거래 금액"} <b>${acctCur(value, cur)}</b> <span class="meta">= ${qtyFmt(q)}${unit} × ${acctPrice(p, cur)}</span>`
+      + (withFee !== null ? ` · 수수료 넣으면 <b>${acctCur(withFee, cur)}</b> <span class="meta">(${k === "SELL" ? "들어오는 돈" : "나가는 돈"})</span>` : "");
+  };
+  ["qty", "price", "fee"].forEach((n) => { if (f[n] && f[n].addEventListener) f[n].addEventListener("input", total); });
+  const auto = priceAuto(f, { kinds: ["BUY", "SELL", "HOLD"], market: () => f.market.value, note: $("#acctpricenote"), changed: total });
   f._priceAuto = auto;
   f.ticker.onblur = () => {            // 주식 코드는 모양으로 시장이 정해집니다: 계좌 칸을 맞춰 줍니다
     const t = f.ticker.value.trim().toUpperCase();
@@ -106,7 +118,7 @@ function acctBind(d) {
     } catch (err) { msg.className = "msg err"; msg.textContent = errKo(err); btn.disabled = false; f.removeAttribute("aria-busy"); }
     finally { acctBusy = false; }
   };
-  auto.run();
+  auto.run(); total();
   acctDone();
 }
 // '기록했습니다: 매수 AAPL 10주 · 미국 주식.'  보낸 칸에서만 만듭니다.
