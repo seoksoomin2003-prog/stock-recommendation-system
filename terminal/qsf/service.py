@@ -873,6 +873,8 @@ class QSF(ScreenViews):
             out["fuller_inputs"] = kr_fuller.card_field(full_score, res["score"], fund["fuller"]["added"])
         _stale_statements(out, ctx)
         out["why_summary"] = _why(out)
+        if config.MARKET_INPUT_NOTES.get((market, strategy)):       # display only: inputs no stock of this market has (score audit 2026-11-25)
+            out["inputs_note"] = config.MARKET_INPUT_NOTES[(market, strategy)]
         if market == "US" and ctx.get("deal_unchecked"):
             out["deal_unchecked"] = True               # display only: not a ledger field
             out["why_summary"] = f"{out['why_summary'].rstrip()} 합병·공개 매수 서류가 있는지는 확인하지 못했습니다(받아 둔 SEC 공시 목록 없음)."

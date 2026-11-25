@@ -74,6 +74,7 @@ function icCardHtml(v, ticker, market) {
   if (!v) return "";
   if (v.status !== "OK") return `<div class="panel"><h3>다섯 투자자와 투자위원회</h3><div class="meta">${esc(v.reason || "판단할 자료가 없습니다.")}</div></div>`;
   return `<div class="panel"><h3>다섯 투자자와 투자위원회 <span class="meta m0">실존 투자자의 의견이 아닙니다 · 알려진 원칙을 규칙으로 옮긴 참고 · 점수와 무관 · 주문 없음</span></h3>
+    <div class="meta">'매수 조건 충족' 같은 말은 그 관점의 규칙을 채웠다는 뜻입니다. 이 규칙들이 수익에 도움이 되는지는 아직 판정 전입니다(가상 성과 240일 기록 뒤 한 번 읽음).</div>
     <div class="ic-grid">${v.investors.map(icInvestorHtml).join("")}</div>
     ${icCommitteeHtml(v.committee)}
     ${plainBlock(v.plain)}

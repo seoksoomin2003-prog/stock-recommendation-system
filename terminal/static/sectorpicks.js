@@ -69,8 +69,8 @@ async function loadPickPlan(t) {
         <div class="qsf-score num">${c.score === null ? "-" : c.score.toFixed(1)}<small>/100</small></div></div>
         <div>${qsfLabel(c)}<div class="meta mt-1">구간 ${esc(c.band_label)} · 신뢰도 ${QSF_CONF[c.confidence] || ""} · 시세 ${esc(c.data_date)} ${qsfPrice(px, mk)}</div></div></header>
       ${c.gates && c.gates.length ? `<div class="notice">위험 게이트: ${c.gates.map((g) => esc(g.text)).join(" ")}</div>` : ""}
-      <h3>매수 시기</h3><p>${buy}</p><h3>매도 시기</h3><p>${sell}</p>
-      <h3>계획상 수익률 <span class="meta m0">현재가 대비, 예측 아님</span></h3>${ret}</article>`;
+      <h3>진입 조건</h3><p>${buy}</p><h3>정리 조건</h3><p>${sell}</p>
+      <h3>계획상 값 <span class="meta m0">현재가 대비 · 규칙이 정한 가격까지의 거리이고 예측이 아닙니다</span></h3>${ret}</article>`;
   };
   box.innerHTML = `<h3>${esc(d.name || t)} <span class="meta m0">${esc(t)}</span> <button class="ghost" type="button" id="sp-open">종목 화면에서 자세히</button></h3>
     <div class="qsf-cards">${["SWING", "LONG_TERM"].filter((k) => d.cards[k]).map((k) => card(d.cards[k])).join("")}</div>

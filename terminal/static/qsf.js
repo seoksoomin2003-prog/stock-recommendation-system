@@ -579,8 +579,16 @@ function qsfFundPeriodNote(c) {
 function qsfRankNote(c) {
   const r = c.rank_in_scan;
   if (!r || !isNum(r.top_pct)) return "";
-  return `<div class="meta" title="${esc(r.session || "")} 스캔의 ${r.n}종목(${QSF_STRAT[c.strategy]}) 가운데 이 점수보다 높은 종목의 비율입니다. 점수는 기대 수익이 아니라 그날 같은 전략 안의 순서로 읽습니다.">그날 스캔 ${r.n}종목 중 <b>상위 ${r.top_pct.toFixed(r.top_pct < 10 ? 1 : 0)}%</b> 자리</div>`;
+  const read = c.market === "KR" && c.strategy === "SWING" ? (r.top_pct <= 20 ? " · 이 점수의 실전 판정이 읽는 묶음(그날 상위 5분의 1) 안" : " · 실전 판정이 읽는 묶음(그날 상위 5분의 1) 밖") : "";
+  return `<div class="meta" title="${esc(r.session || "")} 스캔의 ${r.n}종목(${QSF_STRAT[c.strategy]}) 가운데 이 점수보다 높은 종목의 비율입니다. 점수는 기대 수익이 아니라 그날 같은 전략 안의 순서로 읽습니다.">그날 스캔 ${r.n}종목 중 <b>상위 ${r.top_pct.toFixed(r.top_pct < 10 ? 1 : 0)}%</b> 자리${read}</div>`;
 }
+// 빠진 요인이 있는 카드에는 늘 '보수적 점수'를 함께 (점수 감사 2026-11-25 P1-4): 빠진 요인은 남은 요인의 평균으로 채워져 점수를 올릴 수 있습니다.
+function qsfConservative(c) {
+  if (!(c.missing || []).length || !isNum(c.conservative_score) || !isNum(c.score)) return "";
+  const d = c.conservative_score - c.score;
+  return `<div class="meta"><b>자료 없는 요인 ${c.missing.length}개</b> · 빠진 요인을 중간값(0.5)으로 보면 <b>${c.conservative_score.toFixed(1)}점</b>(${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)})입니다. 빠진 요인은 0점이 아니라 남은 요인의 평균으로 채워지므로, 없는 자료가 점수를 올릴 수 있습니다. 중간값도 후한 가정일 수 있습니다.</div>`;
+}
+const qsfInputsNote = (c) => (c.inputs_note ? `<div class="meta"><b>이 시장에 없는 입력</b> ${esc(c.inputs_note)}</div>` : "");
 // 요인 이름 위에 마우스를 올리면: 무엇을 재는지, 왜 넣었는지, 알려진 한계, 기록된 시험 (terminal/qsf/inventory.py)
 let qsfFactorNotes = null;
 function qsfFactorTip(id) {
@@ -638,7 +646,7 @@ function qsfCard(c) {
        <dt>손절 기준</dt><dd>${qsfPrice(h.stop, m)} · ${esc(h.stop_method || "")}</dd>
        <dt>목표 기준</dt><dd>${qsfPrice(h.target, m)} · ${esc(h.target_method || "")}</dd>
        <dt>비용 반영 손익비</dt><dd>${qsfNum(h.reward_risk, 2)} <span class="meta m0">${esc(h.cost_basis || "")}</span></dd>`
-    : `<dt>예상 보유</dt><dd>${h.range_months[0]}~${h.range_months[1]}개월 (강제 종료일 없음)</dd>
+    : `<dt>예상 보유</dt><dd>${h.range_months[0]}~${h.range_months[1]}개월 (강제 종료일 없음) <span class="meta m0">· 이 점수의 실전 판정은 보유 계획과 다른 기간, 63거래일(약 3개월) 뒤의 수익으로 읽습니다</span></dd>
        <dt>첫 재평가</dt><dd>${esc(h.first_review)}, 다음 ${esc(h.next_review)} · 분기마다</dd>
        <dt>점검 항목</dt><dd>${h.milestones.map(esc).join(" / ")}</dd>
        <dt>시나리오</dt><dd>${h.scenarios.status === "REAL" ? h.scenarios.cases.map((x) => `${esc(x.case)} ${qsfPrice(x.price, m)} (${esc(x.assumption)})`).join("<br>") : esc(h.scenarios.reason)}</dd>`;
@@ -653,7 +661,7 @@ function qsfCard(c) {
     ${qsfBalance(c.balance)}
     ${plainBlock(c.plain)}
     ${c.surface_note ? `<div class="meta"><b>엇갈림</b> ${esc(c.surface_note)}</div>` : ""}
-    ${qsfStaleNote(c)}${qsfFundPeriodNote(c)}${qsfFullerNote(c)}${qsfFundChecks(c)}
+    ${qsfConservative(c)}${qsfInputsNote(c)}${qsfStaleNote(c)}${qsfFundPeriodNote(c)}${qsfFullerNote(c)}${qsfFundChecks(c)}
     <h3>영역별 점수</h3><div class="qsf-domains">${Object.entries(c.domains).filter(([k]) => k !== "REGIME").map(([k, v]) => `<div><span>${esc(v.label)} <small class="meta m0">${v.reference ? "참고 · 점수 미반영" : v.max_points + "점"}${k === "RISK" ? " · 높을수록 좋음" : ""}</small></span>${qsfBar(v.score_100)}</div>`).join("")}</div>
     <h3>진입</h3><p><b>${qsfEntry(e.status, c.strategy)}</b>: ${esc(e.reason)}${e.zone ? ` 기준 구간 ${qsfPrice(e.zone.low, m)}~${qsfPrice(e.zone.high, m)}.` : ""}</p>
     ${c.exit ? `<h3>보유 종목 판단</h3><p><b>${QSF_EXIT[c.exit.action]}</b>: ${esc(c.exit.reason)}</p>` : ""}`, true)}
@@ -785,6 +793,18 @@ function qsfDelta(score, n) {
   // a score change is not a price move (stage 2, visualization spec section 8 item 2): ink with its sign, grey under one point
   return `<span class="num ${Math.abs(v) >= 1 ? "pts" : "flat"}">${v >= 0.05 ? "+" : v <= -0.05 ? "−" : ""}${Math.abs(v).toFixed(1)}</span>`;
 }
+// "오늘 70점은 어디인가" (점수 감사 2026-11-25 P1-1, P1-2): 70점의 자리는 점수마다, 날마다 다릅니다(미국 스윙 과거 0.2~27%).
+// 한국 스윙의 실전 판정은 70점이 아니라 그날 상위 5분의 1을 읽으므로 그 묶음의 문턱도 함께 적습니다.
+function qsfLineToday(rows, market) {
+  const scores = rows.map((r) => r.score).filter(isNum).sort((a, b) => b - a), n = scores.length;
+  if (n < 30) return "";
+  const at = scores.filter((v) => v >= 70).length, fifth = scores[Math.max(1, Math.ceil(n / 5)) - 1];
+  const share = (at / n) * 100;
+  const line = at ? `오늘 70점 이상은 <b>${at}종목</b>으로, 점수가 나온 ${n}종목 가운데 <b>상위 ${share.toFixed(share < 10 ? 1 : 0)}%</b>입니다.` : `오늘은 70점 이상인 종목이 없습니다(최고 ${scores[0].toFixed(1)}점).`;
+  const kr = market === "KR" && qsfState.strategy === "SWING"
+    ? ` 한국 스윙의 실전 판정은 70점이 아니라 <b>그날 상위 5분의 1</b>(오늘 ${Math.ceil(n / 5)}종목, ${fifth.toFixed(1)}점 이상)을 읽습니다.` : ` 그날 상위 5분의 1은 ${fifth.toFixed(1)}점 이상입니다.`;
+  return `<div class="meta qr-line70">${line}${kr} 70점의 자리는 점수 종류와 날에 따라 달라, 다른 점수나 다른 날의 70점과 같은 뜻이 아닙니다.</div>`;
+}
 function qsfRankRow(r, isTop, n, sector, edges, common) {
   const out = r.actionability !== "ACTIONABLE", dm = r.domains || {};
   const dom = (k) => `<td class="num w qd qd-col">${isNum(dm[k]) ? `<span class="qd-bar"><i style="width:${Math.max(2, Math.min(100, dm[k]))}%"></i></span>${dm[k].toFixed(0)}` : DASH}</td>`;
@@ -797,7 +817,7 @@ function qsfRankRow(r, isTop, n, sector, edges, common) {
       <td class="l w">${esc(qsfSector(sector) || "")}</td>
       <td class="num"><b>${qsfInt(r.score)}</b>${qsfNear(r.score, edges)}<div class="qr-md">${qsfDelta(r.score, n)}</div></td><td class="num w qr-dcol">${qsfDelta(r.score, n)}</td>
       ${QSF_RANK_DOMAINS.map(dom).join("")}
-      <td class="l w" title="구간: ${esc(r.band_label || "")}">${qsfLabel(r)}</td>
+      <td class="l w" title="구간: ${esc(r.band_label || "")}">${qsfLabel(r)}${isNum(r.pct) ? `<div class="meta m0 qr-pct" title="그날 점수가 나온 종목 가운데의 자리입니다. 점수는 그날 같은 전략 안의 순서로 읽습니다.">상위 ${r.pct}%</div>` : ""}</td>
       <td class="l w2">${entry}</td>
       <td class="l qr-why">${qsfReason(n, common)}</td></tr>
     <tr class="qsf-exp-row" hidden><td colspan="${QSF_RANK_COLS}"><div class="qsf-exp"></div></td></tr>`;
@@ -840,6 +860,7 @@ async function qsfRank() {
     ${commonLine}`;
   box.innerHTML = `<div class="panel"><h2>${QSF_STRAT[qsfState.strategy]} 순위 ${all.length}개 <span class="badge">${esc(d.session)}</span></h2>
     <div class="meta qr-caveat">점수순으로 보여 줄 뿐 수익이 더 좋다는 근거는 아닙니다.</div>
+    ${qsfLineToday(scoredRows, mk)}
     ${d.live_model_version && d.model_version && d.live_model_version !== d.model_version ? `<div class="notice">이 순위는 ${esc(d.model_version)} 공식으로 기록된 스캔입니다. 종목을 열면 카드는 지금 공식(${esc(d.live_model_version)})으로 다시 계산하므로 점수와 구간 표시가 다를 수 있습니다. 다음 스캔이 기록되면 같아집니다.</div>` : ""}
     <details class="qr-how" data-fold="rankhow"${qsfFoldOpen("rankhow", false) ? " open" : ""}><summary>읽는 법 <span class="meta m0">상위 3 · 줄 누르기 · 표시와 가점·감점 칸의 뜻</span></summary>${how}</details>
     ${all.length ? `<div class="tbl-wrap"><table class="qsf-rank-tbl"><thead>${head}</thead><tbody>${all.map((r) => qsfRankRow(r, top.includes(r), note(r), notes && notes.sectors[r.ticker], notes && notes.band_edges, common)).join("")}</tbody></table></div>` : '<div class="empty">순위에 올릴 종목이 없습니다.</div>'}

@@ -209,7 +209,8 @@ def annotate(orders: List[Dict[str, Any]], deals: Optional[Dict[str, Any]] = Non
     under = sum(1 for o in orders if o["band"] not in engine.BUY_CODES)
     return {"orders": len(orders), "under_buy_band": under, "buy_line": buy,
             "note": (f"계획 {len(orders)}종목 가운데 {under}종목은 점수 구간이 상위 구간({buy:g}점 이상)이 아닙니다. 주문 계획은 구간이 아니라 '진입 규칙 충족' 상태로 후보를 고르기 때문입니다. "
-                     "각 줄의 점수 아래에 구간을 적었습니다.") if under else None}
+                     "각 줄의 점수 아래에 구간을 적었습니다. 실전 판정은 70점 이상 묶음(한국 스윙은 그날 상위 5분의 1)을 정해진 기간 보유한 수익으로 읽습니다. "
+                     "이 줄들은 그 묶음이 아니어서, 판정이 통과해도 이 계획의 종목이 검증된 것은 아닙니다.") if under else None}
 
 
 def count_by(cands: List[Dict[str, Any]], buy: float = 70.0) -> Dict[str, Dict[str, int]]:

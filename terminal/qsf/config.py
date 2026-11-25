@@ -70,6 +70,15 @@ VALIDATION_NOTICE = ("과거 기록(미국 2014~2026, 한국 2019~2026)을 지�
 APPLY_BUTTONS = False
 APPLY_REFUSED = ("이 규칙을 켜는 버튼은 2026-11-25 결정으로 첫 실전 스윙 판정(2027년 12월쯤)까지 쓰지 않습니다. 비교 기록은 계속 쌓이고 판정 결과는 파일로 남습니다. "
                  "안내: reports/QSF_AFTER_VERDICT_RULES_2026_11_25.md")
+# Inputs no stock of a market has, said on every card of that profile (score audit 2026-11-25: on 2026-11-24 the Korean scan had no
+# gross margin for 300 of 300, no share-count change for 300 of 300, no interest cover for 272 of 272 non-financials, no insider
+# trade for 300 of 300; the factors read REAL from what is left).  Display only.  The fuller Korean inputs are recorded beside the
+# score (FI-1) and may enter it only after the first live verdict (formula freeze).
+MARKET_INPUT_NOTES = {
+    ("KR", "LONG_TERM"): "한국 장기 점수는 매출총이익률, 이자보상배율, 주식 수 변화 없이 계산합니다(한국 종목 전체에 이 입력이 없습니다). 그래서 '사업의 질'과 '재무 복원력'은 이름보다 좁은 것을 재고, "
+                          "'재무·희석'과 '부채'는 부채비율 하나를 두 번 셉니다. 내부자 지분 요인은 대부분 한 값입니다.",
+    ("KR", "SWING"): "한국 스윙 점수에는 가격 추세 요인이 없고(기술 영역은 참고), 내부자 매매 요인은 자료가 없어 늘 빠집니다. 배점의 절반 넘게가 위험 영역입니다.",
+}
 STYLE_TO_STRATEGY = {"LONG": "LONG_TERM", "SWING": "SWING"}
 # Which Korean stocks the live scan scores.  MARKET_CAP: the 300 largest by market value on the newest KRX day on file, by the rule of
 # reports/QSF_KR_CAP_UNIVERSE_PROTOCOL.md.  TRADED_VALUE: the 300 most traded over 20 sessions, the live rule until QSF-1.2.1; it is
