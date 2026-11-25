@@ -432,12 +432,12 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
                "kr-challenger-record", "kr-challenger-status", "kr-challenger-evaluate-swing", "kr-challenger-evaluate-long",
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
-               "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "paper-book-record", "paper-book-status", "turnover-book-record", "turnover-book-status", "rank-book-record", "rank-book-status", "entry-book-record", "entry-book-status",
+               "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "factor-inventory", "paper-book-record", "paper-book-status", "turnover-book-record", "turnover-book-status", "rank-book-record", "rank-book-status", "entry-book-record", "entry-book-status",
                "forecast-test", "forecast-record", "forecast-status", "forecast-touch-test", "score-split-record", "score-split-status", "score-split-evaluate",
                "fund-period-record", "fund-period-status", "fund-period-evaluate", "committee-evaluate",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-sue-prepare", "kr-sue-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
-               "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
+               "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "live-forward-early-60", "live-forward-early-120", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
 
 
 def _regime_weights_record(market: str):
@@ -773,6 +773,13 @@ def _qsf_forecast_touch(args) -> int:      # reports/QSF_FORECAST_TOUCH_PROTOCOL
     return 0 if res.get("status") in ("REAL", "ALREADY_RUN") else 1
 
 
+def _qsf_factor_inventory(args) -> int:      # writes reports/QSF_FACTOR_INVENTORY.md from terminal/qsf/inventory.py; reads no price and no record
+    from terminal.qsf import inventory
+    path = inventory.write(PROJECT_ROOT)
+    print(json.dumps({"status": "OK", "written": str(path.relative_to(PROJECT_ROOT)), "factors": len(inventory.factors())}, ensure_ascii=False))
+    return 0
+
+
 def _qsf_lookahead_audit(args) -> int:      # read-only on records; writes data/qsf/lookahead_audit.json
     from terminal.qsf import lookahead
     res = lookahead.run(PROJECT_ROOT)
@@ -1002,6 +1009,9 @@ def _qsf_live_forward(args, q, market) -> int:
         from terminal.qsf import kr_avoid_marks
         res = kr_avoid_marks.evaluate_once(PROJECT_ROOT, q._loader("KR", longest=True), bench_of("KR"), benches=benches_of("KR"))
         res = {k: res.get(k) for k in ("status", "sessions_used", "days", "verdict", "reading_1", "reading_2", "buy_band_filter")}
+    elif args.action.startswith("live-forward-early-"):     # the two early readings of the swing score (the protocol's "중간 읽기"); they decide nothing
+        res = live_forward.early_once(PROJECT_ROOT, market, int(args.action.rsplit("-", 1)[1]), q._loader(market, longest=True), bench_of(market), benches=benches_of(market))
+        res = {k: res.get(k) for k in ("status", "market", "kind", "horizon", "sessions_used", "verdict", "condition_a", "condition_b", "t_bar", "reasons")}
     else:
         res = live_forward.evaluate_once(PROJECT_ROOT, market, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader(market, longest=True), bench_of(market),
                                          benches=benches_of(market))
@@ -1072,6 +1082,7 @@ QSF_HANDLERS = {
     "entry-book-record": _qsf_turnover_book,
     "entry-book-status": _qsf_turnover_book,
     "lookahead-audit": _qsf_lookahead_audit,
+    "factor-inventory": _qsf_factor_inventory,
     "forecast-test": _qsf_forecast,
     "forecast-record": _qsf_forecast,
     "forecast-status": _qsf_forecast,
@@ -1101,6 +1112,8 @@ QSF_LIVE_HANDLERS = {
     "live-forward-status": _qsf_live_forward,
     "live-forward-evaluate-swing": _qsf_live_forward,
     "live-forward-evaluate-long": _qsf_live_forward,
+    "live-forward-early-60": _qsf_live_forward,
+    "live-forward-early-120": _qsf_live_forward,
     "kr-avoid-marks-evaluate": _qsf_live_forward,
     "validate": _qsf_validate,
     "verify": _qsf_verify,

@@ -1444,6 +1444,10 @@ def decision_cautions(terminal: Any, snap: Dict[str, Any], ticker: str, market: 
     line = ax.gap_line(snap.get("fund_period"), strategy)
     if line:
         out.append(line)
+    from terminal import fund_checks
+    fc = snap.get("fund_checks") or {}
+    if fc.get("pattern") in ("CHEAP_AND_WORSENING", "GOOD_BUT_DEAR") or fc.get("direction") == "DETERIORATING":
+        out += fund_checks.lines({**fc, "status": "REAL"}, 3)       # the falling figures, in the words a holder is told
     if key == "OK":
         try:
             from terminal.committee import service as cs

@@ -25,6 +25,6 @@ def test_the_longest_loader_gives_the_archive_when_it_is_as_fresh_and_starts_ear
 
 def test_the_verdict_handlers_ask_for_the_longer_series_and_five_years_of_the_index():
     app = (ROOT / "app.py").read_text(encoding="utf-8")
-    assert 'q._history(["^KS11"], "5y")' in app and app.count("q._loader(market, longest=True), bench_of(market)") == 1 and 'q._loader("KR", longest=True), bench_of("KR")' in app
+    assert 'q._history(["^KS11"], "5y")' in app and app.count("q._loader(market, longest=True), bench_of(market)") == 2 and 'q._loader("KR", longest=True), bench_of("KR")' in app
     views = (ROOT / "terminal" / "qsf" / "views.py").read_text(encoding="utf-8")
     assert "price_archive.loader(self.base, market, self._scan_loader(market), longest=longest)" in views

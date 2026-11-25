@@ -339,11 +339,17 @@ def _graham(f: Dict[str, Any], held: bool, p: Dict[str, Any]) -> Dict[str, Any]:
     if val["loss"]:
         opinion = "지금 적자입니다. 이익이 없는 회사를 보수적 가치로 평가할 수 없으므로 투자가 아니라 투기로 봅니다. 흑자가 여러 해 이어져야 다시 계산합니다."
     elif trap:
-        opinion = f"값은 싸 보입니다(안전마진 {mos * 100:+.0f}%). 그러나 {_de_text(f)}, {shown(f, 'fcf_margin')}라 싼 데 이유가 있는 '가치 함정'일 수 있어 피합니다. 부채와 현금흐름이 나아져야 다시 봅니다."
+        hit = ([f"{_de_text(f)}로 빚이 많음"] if (f.get("debt_equity") or 0) > G_TRAP_DEBT else []) + (["자본이 0 이하"] if f.get("no_equity") else []) \
+            + ([f"{shown(f, 'fcf_margin')}로 남는 현금이 없음"] if f.get("fcf_margin") is not None and f["fcf_margin"] < 0 else []) \
+            + (["영업현금이 순이익의 절반 미만"] if f.get("ocf_to_ni") is not None and f["ocf_to_ni"] < 0.5 else []) \
+            + ([f"주당이익 {f['eps_growth'] * 100:+.0f}%, 매출도 감소"] if (f.get("eps_growth") or 0) < -0.2 and (f.get("rev_growth") or 0) < 0 else [])
+        # the conditions of ``trap`` above, named: the sentence used to give debt and cash flow as the reason whichever one it was
+        opinion = (f"값은 싸 보입니다(안전마진 {mos * 100:+.0f}%). 그러나 걸리는 조건이 있습니다({'; '.join(hit) or '재무 수치 확인 필요'}). "
+                   "싼 데 이유가 있는 '가치 함정'일 수 있어 피합니다. 걸린 조건이 풀려야 다시 봅니다.")
     elif rec in BUY_SIDE:
-        opinion = f"보수적 가치보다 {mos * 100:.0f}% 싸게 거래됩니다({price}). 재무({'해당 없음' if st is None else f'{st:.0f}'})와 이익의 안정({sb:.0f})도 기준을 넘어 분석이 틀려도 버틸 여유가 있습니다. 값이 보수적 가치에 닿으면 줄입니다."
+        opinion = f"보수적 가치보다 {mos * 100:.0f}% 싸게 거래됩니다({price}). {'이익의 안정(' + f'{sb:.0f}' + ')이 기준을 넘습니다(재무 항목은 금융업이라 따지지 않았습니다).' if st is None else f'재무({st:.0f})와 이익의 안정({sb:.0f})도 기준을 넘어 분석이 틀려도 버틸 여유가 있습니다.'} 값이 보수적 가치에 닿으면 줄입니다."
     elif rec in (WAIT, HOLD) and not held:
-        opinion = (f"회사는 튼튼합니다(재무 {'해당 없음' if st is None else f'{st:.0f}'}, 이익의 안정 {sb:.0f}). 그러나 {price}는 보수적 가치 대비 안전마진이 {mos * 100:+.0f}%뿐이라 "
+        opinion = (f"{'이익은 안정적입니다(이익의 안정 ' + f'{sb:.0f}' + ', 재무 항목은 금융업이라 따지지 않음).' if st is None else f'회사는 튼튼합니다(재무 {st:.0f}, 이익의 안정 {sb:.0f}).'} 그러나 {price}는 보수적 가치 대비 안전마진이 {mos * 100:+.0f}%뿐이라 "
                    f"{'새로 사지는 않습니다' if rec == HOLD else '기다립니다'}. 안전마진이 {p['mos_buy'] * 100:.0f}% 이상이 되면 매수 조건입니다.")
     elif rec in (SELL, REDUCE, HOLD):
         opinion = (f"값이 보수적 가치에 닿았습니다(안전마진 {mos * 100:+.0f}%). 싸서 산 것이므로 {'일부를 줄일' if rec == REDUCE else '팔'} 조건입니다." if mos <= G_REDUCE_MOS and sound
@@ -446,7 +452,7 @@ def lynch(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] =
     basis, why = {FAST: (f"{growth}, {peg_text}", "성장에 비해 값이 지나치지 않습니다"), STALWART: (f"{growth}, {peg_text}", "성장에 비해 값이 지나치지 않습니다"),
                   SLOW: (f"배당수익률 {pct(f.get('dividend_yield'))}, PER {times(pe)}, 흑자 연도 {pct(f.get('profit_years'), 0)}", "배당과 안정으로 보는 종목이고 값이 무겁지 않습니다"),
                   CYCLICAL: (turn, "이익이 회복하는 방향이고 재무가 버팁니다. 낮은 PER은 정점일 수 있어 싸다고 읽지 않았습니다"), TURNAROUND: (turn, "돌아서는 증거가 숫자에 보이고 재무가 버팁니다"),
-                  ASSET: (f"PBR {times(f.get('pb'), 2)}, ROE {pct(f.get('roe'))}, {_de_text(f)}", "자산보다 싸게 거래되고 재무가 그 자산을 지킵니다")}[kind]
+                  ASSET: (f"PBR {times(f.get('pb'), 2)}, ROE {pct(f.get('roe'))}, {_de_text(f)}", "자산보다 싸게 거래됩니다(금융업이라 부채 기준은 따지지 않았습니다)" if f.get("is_financial") else "자산보다 싸게 거래되고 재무가 그 자산을 지킵니다")}[kind]
     if rec in BUY_SIDE:
         opinion = f"{KIND_KO[kind]}로 봅니다({basis}). {why}. 이야기가 꺾이면(이익과 매출이 함께 줄면) 팝니다."
     elif s >= L_BUY and not quality_ok and not story_broken and not dear:

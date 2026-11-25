@@ -1,0 +1,160 @@
+"""Every factor of the score in one place: what it measures, why it is there, what is known to be wrong with it, and what the
+recorded tests say (FACTOR-INV-1, 2026-11-25).  Rules of the document: reports/QSF_FACTOR_INVENTORY.md is written from here.
+
+The third maturity assessment found the score's parts computed correctly and described nowhere: weights without a written
+reason, factors whose name says more than they measure, and no single list of what has and has not been tested.  The score is
+frozen (reports/QSF_FORMULA_FREEZE_2026_11_25.md), so nothing here changes it.  This is the description a reader needs to weigh
+it: an honest one, limits first.  A test keeps it whole: every factor of every profile must have an entry.
+
+``evidence`` only repeats verdicts of result files already on record (reports/*RESULTS*, reports/qsf/*.json); "개별 시험 없음"
+means the factor was never tested by itself.  No factor has passed a pre-registered test in the universe it is used in.
+"""
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any, Dict, List
+
+from terminal.qsf import config
+
+VERSION = "FACTOR-INV-1"
+DOC = Path("reports") / "QSF_FACTOR_INVENTORY.md"
+NONE = "개별 시험 없음"
+US_TECH = "미국 기술 영역 전체의 순위 상관(IC)은 0에 가까웠습니다(NO_EVIDENCE). 한국에서는 음수가 두 번 나와 한국 스윙 점수에서 뺐습니다."
+US_FUND = "미국 재무 영역의 IC는 0에 가까웠습니다(NO_EVIDENCE). 한국 장기 점수는 예전 대상에서 순위 조건만 통과했고, 지금 대상에서는 근거 부족입니다."
+RISK = "미국 위험 영역의 IC는 0에 가까웠습니다. 한국 위험 등급(별도 기록)은 변동성을 맞히는 시험을 통과했지만 수익 방향의 근거는 아닙니다."
+REGIME = "점수에 들어가지 않습니다(QSF-1.4.0, 시장 상태로 따로 표시). 미국은 나쁜 날 뒤 지수 수익이 오히려 높고 변동성이 1.9배였고, 한국은 아무 차이도 없었습니다(MKT-1)."
+
+# factor id -> (재는 것, 넣은 이유, 알려진 한계, 기록된 시험)
+F: Dict[str, tuple] = {
+    "trend_structure": ("종가와 20·50·200일선의 여섯 가지 정배열 조건을 몇 개 채웠는지", "오르는 추세가 한동안 이어지는 경향(시계열 모멘텀)",
+                        "일곱 단계 값이라 거칠고, 스윙 점수와의 순위 상관이 0.89로 점수를 거의 혼자 끌고 갑니다. 돌파·거래량 요인과 겹칩니다(0.80).", US_TECH),
+    "relative_strength": ("같은 시장 종목들 가운데 6개월 수익률의 백분위", "많이 오른 종목이 계속 강한 경향(횡단면 모멘텀)",
+                          "최근 1개월을 빼지 않아 단기 되돌림이 섞입니다. 장기 점수에서는 12~36개월 보유를 6개월 신호로 설명합니다.", "미국에서 12-1개월 모멘텀 대조 시험의 IC는 0이었습니다."),
+    "momentum": ("RSI가 55~65일 때 가장 높고, MACD 막대의 크기를 더한 값", "과열 전의 오름세",
+                 "RSI의 '좋은 구간'은 관습이지 시험한 값이 아닙니다.", "미국 차트 요인 24개 시험은 NO_EVIDENCE였습니다."),
+    "breakout_volume": ("52주 고점까지의 거리, 돌파일 거래량, 갭 유지", "신고가 근처의 수급",
+                        "절반이 고점 거리라 추세 구조와 거의 같은 것을 잽니다. 스윙 점수와의 순위 상관이 가장 높습니다(0.91).", US_TECH),
+    "volatility_structure": ("볼린저 밴드 폭이 지난 1년 가운데 얼마나 좁은지", "변동성이 줄어든 뒤 커지는 경향",
+                             "어느 쪽으로 커지는지는 말하지 않는 신호를 매수 쪽에 더합니다. 합병으로 가격이 묶인 종목이 높게 나옵니다(그래서 거래 고정 규칙이 생겼습니다).", NONE),
+    "earnings_revenue_quality": ("매출 성장, 주당이익 성장, 영업현금÷순이익", "이익의 질",
+                                 "연간 재무로 5~20거래일 보유를 설명하려 합니다.", US_FUND),
+    "profitability": ("ROE 0~20%, 영업이익률 0~20%", "돈을 잘 버는 회사", "미국 종목의 4분의 1이 만점이라 가르는 힘이 약합니다.", US_FUND),
+    "balance_sheet": ("부채÷자본, 유동비율. 금융업은 자기자본÷자산", "빚이 적은 회사의 안정성", "한국의 '부채'는 차입금이 아니라 총부채입니다.", US_FUND),
+    "cash_flow_quality": ("영업현금÷순이익, 잉여현금흐름 마진", "장부 이익이 현금으로 들어오는지", "상한이 없어 순이익이 아주 작으면 값이 튑니다. 금융업은 해당 없음입니다.", US_FUND),
+    "risk_reward": ("(목표−진입−비용) ÷ (진입−손절+비용). 손절은 2 ATR, 목표는 위의 가장 가까운 1년 고점, 없으면 3 ATR", "잃을 것보다 얻을 것이 클 때만",
+                    "위에 저항선이 없는 종목(신고가 근처)은 구조상 0에 가까운 값만 나옵니다. 추세 요인과 반대로 움직여, 점수가 높은 스윙 종목이 '눌림 대기'가 됩니다.",
+                    NONE + ". 바로 진입하는 쪽과의 비교를 2026-11-25부터 옆에 기록합니다(EN-1)."),
+    "atr_risk": ("하루 변동 폭(ATR%) 6~1.5%, 연 변동성 70~20%", "덜 흔들리는 종목이 위험 대비 낫다는 경향",
+                 "두 시장에 같은 구간을 써서 한국 종목의 절반이 0점입니다.", RISK),
+    "liquidity": ("20거래일 평균 거래대금(로그)", "원하는 값에 사고팔 수 있는지", "회사 크기와 묶여 큰 회사가 유리합니다. 미국은 절반 가까이가 만점입니다.", NONE),
+    "drawdown_gap": ("1년 최대 낙폭, 60일 최대 갭", "크게 꺼진 적이 있는 종목의 꼬리 위험", "변동 폭 요인과 거의 같은 것을 잽니다(0.81).", RISK),
+    "earnings_calendar": ("다음 실적 발표까지 2~15거래일", "실적 발표 갭을 피하기", "거의 모든 종목이 만점이라 종목을 가르지 못합니다. 같은 일을 진입 규칙이 이미 합니다.", NONE),
+    "material_disclosures": ("기준값 0.6에 긍정 공시 +0.1, 부정 공시 −0.25", "공시 뒤 주가가 같은 방향으로 이어지는 경향",
+                             "기준값 0.6의 근거가 없고, 대부분의 종목이 0.6에 머뭅니다.", "한국 공시 사건 시험에서 '자금 조달 공시를 피하는 것'에는 근거가 있었고, 자사주 공시는 시장을 이기지 못했습니다(별도 신호)."),
+    "insider_activity": ("임원·대주주의 장내 순매수 비율. 거래가 없으면 0.5", "내부자가 사는 회사", "매도만 있으면 0점입니다. 한국은 자료를 모으지 않아 300종목 모두 비어 있습니다.", "미국 내부자 거래 연구는 NO_EVIDENCE였습니다."),
+    "long_trend": ("종가가 200일선에서 얼마나 위인지, 200일선의 기울기", "긴 추세", "모멘텀 지속 요인과 겹칩니다(0.8).", "한국 기술 영역의 252일 IC는 음수였습니다(−0.072). 그래도 장기 점수에 10점이 남아 있습니다."),
+    "momentum_persistence": ("12-1개월 수익률, 오른 달의 비율", "꾸준히 오른 종목", "긴 추세 요인과 겹칩니다.", "위와 같습니다."),
+    "valuation": ("PER 40~10, PBR 8~1.5, 잉여현금흐름 수익률 0~7%의 평균. 금융업은 PER과 PBR 2.5~0.8", "싸게 사기",
+                  "모든 업종에 같은 구간을 씁니다. 은행은 PBR이 낮아 높게 나오고, 성장주는 낮게 나옵니다. 업종 상대 방식은 시험에서 더 나빴습니다.", US_FUND),
+    "business_quality": ("ROE 3~25%, 영업이익률 0~25%, 매출총이익률 15~60%, 흑자 연도 비율", "좋은 사업",
+                         "한국은 매출총이익률을 읽지 못해 나머지로만 계산합니다(읽은 점수는 FI-1로 옆에 기록).", US_FUND),
+    "growth_quality": ("3년 매출·주당이익 연평균 성장, 최근 매출 성장", "꾸준한 성장", "적자면 주당이익 성장을 0으로 읽습니다. 한국 금융업은 통째로 비는 경우가 많습니다.", US_FUND),
+    "free_cash_flow": ("잉여현금흐름 마진 −2~18%, 흑자 연도 비율", "실제로 남는 현금",
+                       "금융업은 해당 없음입니다. 설비투자를 자체 이름으로 신고하는 미국 회사 약 17곳은 읽지 못합니다. 전력회사는 구조적으로 낮게 나옵니다.", US_FUND),
+    "balance_dilution": ("부채÷자본 2.0~0.3, 주식 수 변화 +5~−1%", "빚과 주식 발행으로 주주 몫이 줄지 않는 회사",
+                         "한국은 주식 수 변화를 읽지 못해 부채비율 하나입니다. 그래서 한국에서는 차입 요인과 같은 값입니다(0.995).", NONE),
+    "financial_resilience": ("유동비율, 이자보상배율 1.5~10, 현금÷부채. 금융업은 자기자본÷자산", "어려운 때 버틸 힘",
+                             "한국은 이자보상배율을 읽지 못합니다. 은행은 자기자본÷자산 하나로 읽습니다.", NONE),
+    "downside_drawdown": ("하방 변동성 45~12%, 1년 낙폭", "크게 잃지 않는 종목", "한국에서는 절반 가까이가 0점입니다.", RISK),
+    "leverage": ("부채÷자본 2.5~0.2", "차입 위험", "한국에서는 희석·차입 요인과 같은 값입니다.", NONE),
+    "governance": ("기준값 0.8에서 경고 공시 하나에 −0.3", "지배구조 문제 회피", "만점(1.0)이 나올 수 없고 대부분 0.8입니다.", NONE),
+    "material_events": ("기준값 0.6에 긍정 +0.1, 부정 −0.3", "사건 위험", "기준값의 근거가 없습니다.", NONE),
+    "insider_ownership": ("내부자 지분 0~10%, 장내 순매수", "경영진과 주주의 이해가 같은 회사", "한국은 지배주주 지분이라 거의 모두 만점입니다.", "한국 최대주주 지분 시험은 '약함, 코스닥에서만'이었습니다."),
+    "capital_allocation": ("주식 수 변화, 배당·자사주가 있으면 1.0 없으면 0.4", "주주에게 돌려주는 회사",
+                           "한국에서 배당·자사주 줄이 없는 회사는 '없음'이 아니라 '모름'이 되어 빠집니다.", "한국 자사주 공시는 시장을 이기지 못했습니다."),
+    # reference factors: shown as the market state, in no score since QSF-1.4.0
+    "vix_regime": ("VIX의 수준", "공포가 클 때의 위험", "점수 밖 참고값입니다.", REGIME),
+    "vix_term": ("VIX 기간 구조(단기÷3개월)", "단기 공포가 급한지", "점수 밖 참고값입니다.", REGIME),
+    "credit_spread": ("하이일드 채권 금리 차이의 약 3년 안 백분위", "신용 경색", "3년 창이 짧아 평범한 수준도 '높음'으로 읽힐 수 있습니다.", REGIME),
+    "index_trend_breadth": ("S&P 500의 추세와 200일선 위 종목 비율", "시장 전체의 방향", "지금 남아 있는 종목으로 과거 비율을 계산합니다.", REGIME),
+    "vkospi_regime": ("VKOSPI", "한국 변동성 지수", "합법적인 무료 출처가 없어 쓰지 않습니다. 값을 만들어 넣지 않습니다.", REGIME),
+    "index_trend": ("코스피의 추세", "시장 전체의 방향", "야후의 한국 지수가 하루 늦게 들어오는 날이 많습니다.", REGIME),
+    "breadth": ("200일선 위 한국 종목 비율", "시장의 폭", "지금 남아 있는 종목으로 계산합니다.", REGIME),
+    "credit_liquidity": ("한국 신용 스프레드", "자금 사정", "점수 밖 참고값입니다.", REGIME),
+    "usdkrw_regime": ("원/달러 환율의 수준과 방향", "외국인 자금 흐름", "한국 시장 상태 값이 환율에 크게 좌우됩니다.", REGIME),
+}
+WEIGHTS_WHY = [
+    "배점은 2026-11 초에 연구 기본값으로 정했습니다. 과거 수익에 맞춰 고른 값이 아니고, 그 뒤로도 수익을 보고 바꾼 적이 없습니다. 근거는 '이 스타일의 투자자가 보통 무엇을 더 본다'는 관습입니다.",
+    "스윙은 가격(기술 40)을, 장기는 회사(재무 50)를 주로 봅니다. 위험 20과 사건 10은 두 스타일에 같습니다. 한국 스윙은 기술 영역이 시험에서 반대로 움직여 0점으로 두고 참고로만 보여 줍니다.",
+    "배점이 옳다는 증거는 없습니다. 배점을 ±20% 흔들어도 순위가 거의 그대로인데, 이는 서로 무관한 난수 요인도 통과하는 성질이라 옳다는 근거가 아닙니다.",
+    "같은 배점으로도 실제 영향은 고르지 않습니다. 값이 거의 모든 종목에서 같은 요인(실적 일정, 지배구조, 공시 기준값)은 배점이 있어도 순위를 가르지 못하고, 스윙에서는 추세와 돌파 두 요인이 순위를 거의 정합니다.",
+]
+SCORE_MEANS = [
+    "점수는 '미리 정한 기준표를 얼마나 채웠는가'입니다. 같은 날, 같은 시장, 같은 스타일 안에서 종목의 순서를 읽는 데 씁니다.",
+    "점수는 기대 수익도 오를 확률도 아닙니다. 70점이 60점보다 수익이 좋았다는 기록은 없습니다.",
+    "70점 선의 자리는 스타일마다 다릅니다(2026-11-23: 미국 스윙 상위 4.6%, 미국 장기 15.7%, 한국 장기 10.7%, 한국 스윙은 닿은 종목 없음). 그래서 카드에 그날 스캔 안의 백분위를 함께 적습니다.",
+    "미국과 한국, 스윙과 장기의 점수는 서로 비교하지 않습니다.",
+]
+MISSING_RULES = [
+    ("해당 없음(NOT_APPLICABLE)", "그 회사에 뜻이 없는 항목(금융업의 잉여현금흐름·부채비율). 배점에서 빼고 나머지로 점수를 냅니다. 신뢰도를 깎지 않습니다."),
+    ("없음(MISSING)", "뜻은 있는데 자료가 없는 항목. 배점에서 빼고 나머지로 점수를 내되, 그 요인을 중간값으로 본 '보수적 점수'가 매수 구간에 못 미치면 구간과 진입 판단을 주지 않습니다."),
+    ("일부 수치(partial)", "요인의 입력 일부만 있는 경우. 있는 입력의 평균으로 계산합니다. 쉬운 설명은 그 요인을 좋다 나쁘다 말하지 않습니다."),
+    ("시장 전체에 없는 요인", "한국 스윙의 내부자 매매처럼 그 시장의 모든 종목에 없는 요인. 종목을 가르지 못하므로 보수적 점수의 벌점에서 뺍니다."),
+]
+
+
+def factors() -> Dict[str, Dict[str, Any]]:
+    """{factor id: {"measures", "why", "limit", "evidence", "weights": {"US_SWING": 10, ...}, "reference": bool}} for every factor of the four profiles."""
+    out: Dict[str, Dict[str, Any]] = {}
+    for market in ("US", "KR"):
+        for strategy in config.STRATEGIES:
+            p = config.profile_for(market, strategy)
+            for fs in p["domains"].values():
+                for fid, w in fs.items():
+                    out.setdefault(fid, {"weights": {}, "reference_in": []})["weights"][f"{market}_{strategy}"] = w
+            for fs in (p.get("reference") or {}).values():
+                for fid in fs:
+                    out.setdefault(fid, {"weights": {}, "reference_in": []})["reference_in"].append(f"{market}_{strategy}")
+    for fid, row in out.items():
+        m, why, limit, ev = F[fid]                        # a factor without an entry is an error: the test names it
+        row.update(measures=m, why=why, limit=limit, evidence=ev, reference=not row["weights"])
+    return out
+
+
+def markdown() -> str:
+    """The inventory as a document.  Written to ``DOC`` by ``write``; a test compares the two."""
+    from terminal.assistant import FACTOR_KO
+    rows = factors()
+    name = lambda f: f"{FACTOR_KO.get(f, f)} (`{f}`)"           # noqa: E731
+    head = [f"# QSF 요인 목록과 배점의 근거 ({VERSION}, 점수 공식 {config.MODEL_VERSION})", "",
+            "이 문서는 `terminal/qsf/inventory.py`에서 만들어집니다. 직접 고치지 말고 그 파일을 고친 뒤 `python app.py qsf factor-inventory`로 다시 적습니다.",
+            "점수 공식은 첫 실전 판정까지 동결입니다(`reports/QSF_FORMULA_FREEZE_2026_11_25.md`). 이 문서는 점수를 바꾸지 않고, 점수를 읽는 사람이 알아야 할 한계를 먼저 적습니다.", "",
+            "## 1. 점수는 무엇을 뜻하나", ""] + [f"- {x}" for x in SCORE_MEANS] + ["", "## 2. 배점은 어떻게 정했나", ""] + [f"- {x}" for x in WEIGHTS_WHY]
+    out = head + ["", "## 3. 자료가 없을 때", "", "| 경우 | 다루는 방법 |", "|---|---|"] + [f"| {a} | {b} |" for a, b in MISSING_RULES]
+    labels = {"US_SWING": "미국 스윙", "US_LONG_TERM": "미국 장기", "KR_SWING": "한국 스윙", "KR_LONG_TERM": "한국 장기"}
+    out += ["", "## 4. 요인 하나하나", "", "| 요인 | 배점 | 재는 것 | 넣은 이유 | 알려진 한계 | 기록된 시험 |", "|---|---|---|---|---|---|"]
+    for fid in sorted(rows, key=lambda f: (rows[f]["reference"], -max(rows[f]["weights"].values(), default=0), f)):
+        r = rows[fid]
+        w = ", ".join(f"{labels[k]} {v}" for k, v in r["weights"].items()) or "점수 밖(참고)"
+        out.append(f"| {name(fid)} | {w} | {r['measures']} | {r['why']} | {r['limit']} | {r['evidence']} |")
+    out += ["", "## 5. 통과한 요인은 몇 개인가", "",
+            "지금 쓰는 대상(미국 S&P 500, 한국 시가총액 상위 300)에서 미리 정한 기준을 개별로 통과한 요인은 없습니다. "
+            "시험해서 떨어진 것(미국 문헌 요인 17개, 차트 요인 24개, 미국 내부자, 국면 가중치)과 개별 시험이 없는 것이 섞여 있습니다. "
+            "점수 전체의 실전 판정은 2026-11-25 거래일 기록부터 세고, 첫 판정은 2027년 12월쯤입니다(중간 읽기는 `reports/QSF_LIVE_FORWARD_PROTOCOL.md`)."]
+    return "\n".join(out) + "\n"
+
+
+def write(base: Path) -> Path:
+    path = Path(base) / DOC
+    path.write_text(markdown(), encoding="utf-8")
+    return path
+
+
+def card_notes() -> Dict[str, Dict[str, str]]:
+    """{factor id: {"why", "limit"}} for the card's factor rows (a tooltip): why the factor is there and what is wrong with it."""
+    return {fid: {"measures": r["measures"], "why": r["why"], "limit": r["limit"], "evidence": r["evidence"]} for fid, r in factors().items()}
+
+
+def inventory() -> Dict[str, Any]:
+    return {"version": VERSION, "model_version": config.MODEL_VERSION, "score_means": SCORE_MEANS, "weights_why": WEIGHTS_WHY,
+            "missing_rules": [{"case": a, "rule": b} for a, b in MISSING_RULES], "factors": factors(), "doc": str(DOC)}

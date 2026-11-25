@@ -88,7 +88,7 @@ def _pct(v: float) -> str:
     return f"{abs(v):.1f}" if abs(v) < 1 else f"{abs(v):.0f}"
 
 
-DEBT = ("balance_sheet", "balance_dilution", "leverage")      # sentences about debt: not said of a bank, whose deposits are its debt
+DEBT = ("balance_sheet", "balance_dilution", "leverage", "financial_resilience")      # sentences about debt: not said of a bank, whose deposits are its debt
 LOSS_VALUE = "회사가 가진 재산에 비하면 주가가 낮은 편이지만, 지금은 적자라 '버는 돈에 비해 싸다'고 말할 수는 없습니다."
 LOSS_WORRY = "지금 적자입니다. 버는 돈이 없어 주가가 싼지 따질 수 없고, 이 프로그램은 이런 경우를 비싼 것으로 봅니다."
 NO_VALUE = "회사가 버는 돈에 비해 주가가 싼지 비싼지 따질 자료가 없어서, 지금 사도 되는지를 판단하지 않았습니다. 자료가 없다는 것은 값이 적당하다는 뜻이 아닙니다."
@@ -184,11 +184,21 @@ def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> 
     if card.get("entry_status") == "OVERVALUED_AT_CURRENT_PRICE" and not any(s in bad for s in (FACTOR["valuation"][1], LOSS_WORRY)):
         bad = [LOSS_WORRY if facts.get("loss") else FACTOR["valuation"][1]] + bad[:2]      # the entry rule says so: the worries must too
     parts.append({"h": "좋게 본 점", "lines": good or ["뚜렷하게 좋게 본 점이 없습니다."]})
+    from terminal import fund_checks
+    fc = card.get("fund_checks") or {}
+    moving = fund_checks.lines(fc)
+    if moving:
+        # A factor computed from part of its figures is not spoken for above, which left the worst fact unsaid: a company whose
+        # sales and profit were falling read "no worry" (assessment 2026-11-25, HMM).  These lines name each figure they read.
+        bad = bad + [m for m in moving if m not in bad][:max(0, 4 - len(bad))] if bad else moving
     none_bad = "뚜렷하게 걱정되는 점이 없습니다." + (" 다만 자료가 모자라거나 오래돼, 걱정할 점이 없다는 뜻으로 읽으면 안 됩니다." if card.get("confidence") == "LOW" else "")
     parts.append({"h": "걱정되는 점", "lines": bad or [none_bad]})
     if unsaid:
         parts.append({"h": "말하지 않은 것", "lines": [
             f"{'자료가 일부만 있거나, 금융 회사라 빚의 뜻이 다른' if facts.get('financial') else '자료가 일부만 있는'} 항목 {unsaid}개는 좋다 나쁘다를 여기서 말하지 않았습니다. 점수에는 있는 자료만으로 들어가 있습니다."]})
+    if fc.get("status") == "REAL" and fc.get("direction") != "UNKNOWN":
+        ups = [x["text"] for x in fc.get("flags") or [] if x.get("side") == "up"][:2]
+        parts.append({"h": "회사 숫자의 방향", "lines": [f"최근 재무 수치의 방향: {fc.get('direction_ko')}."] + ups + [fund_checks.NOTE]})
     if any("실적 발표" in s for s in good + bad):
         used.append("실적 발표")
     if any("공시" in s for s in good + bad):

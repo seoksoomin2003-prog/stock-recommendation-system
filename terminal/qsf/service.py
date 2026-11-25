@@ -858,6 +858,11 @@ class QSF(ScreenViews):
                 except Exception:
                     other_score = None
             out["fund_period"] = fund_period.card_field(fund["live_period"], res["score"], fund, other_score, other)
+        try:                                    # which way the figures move, said to an entrant as to a holder (display and record; never the score)
+            from terminal import fund_checks
+            out["fund_checks"] = fund_checks.read(fund, out)
+        except Exception:
+            pass
         if market == "US" and fund.get("status") in USABLE and not fund.get("is_financial") and fund.get("fcf") is None and fund.get("ocf_to_ni") is not None:
             out["capex_unread"] = True          # display only: operating cash flow is there, capital spending is not (filed under the company's own tag)
         if fund.get("fuller"):                  # the score with the lines the live Korean reader has no place for (side record FI-1; never the live score)
@@ -897,10 +902,24 @@ class QSF(ScreenViews):
         own = config.STYLE_TO_STRATEGY.get((pos or {}).get("style"))
         cards = {s: self.card(ctx, s, pos if own in (None, s) else None) for s in strategies}
         risky = self._high_risk(market)
+        self._rank_in_scan(market, cards)
         deals = self.stored_deals((ctx.get("fund") or {}).get("cik"), ctx["expected_session"]) if market == "US" else []     # a stated fact beside the cards, never scored
         committee = self._committee(ticker, market, cards)
         return {"status": "REAL", "ticker": ticker, "market": market, "name": ctx.get("name"), "deals": deals, "committee": committee, "committee_note": committee_note(cards, committee), "rank_basis": ctx["rank_basis"], "high_risk": {"session": risky["session"]} if ticker in risky["codes"] else None,
                 "risk_grade": self._risk_grade(ticker, market), "filing_events": self._filing_mark(self._filing_marks(market), ticker), "cards": cards, "held_strategy": own, "p6_reference": self.p6_reference(ticker) if market == "US" else None}
+
+    def _rank_in_scan(self, market: str, cards: Dict[str, Any]) -> None:
+        """Where each card's score stands among the newest scan's scores of its strategy (display only).  A score has no meaning
+        of its own: 70 is the top 5% of one profile and the top 16% of another (reports/QSF_FACTOR_INVENTORY.md)."""
+        try:
+            scan = self.latest(market)
+            rows = scan.get("rows") or []
+            for strategy, c in cards.items():
+                scores = [float(r["score"]) for r in rows if r.get("strategy") == strategy and r.get("score") is not None]
+                if len(scores) >= 50 and c.get("score") is not None:
+                    c["rank_in_scan"] = {"top_pct": round(100 * sum(1 for v in scores if v > c["score"]) / len(scores), 1), "n": len(scores), "session": scan.get("session")}
+        except Exception:
+            pass
 
     def signal(self, ticker: str, weight_pct: Optional[float] = None, max_weight_pct: Optional[float] = None, market: str = "US") -> Dict[str, Any]:
         """Score and exit reading of one held position, under the profile of its own style only."""

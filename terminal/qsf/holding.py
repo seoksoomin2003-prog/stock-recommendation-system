@@ -190,12 +190,15 @@ def _milestones(ctx: Dict) -> List[str]:
     f = ctx.get("fund") or {}
     out = []
     if f.get("rev_growth") is not None:
-        out.append(f"다음 실적의 매출 성장률이 최근 {f['rev_growth'] * 100:.1f}%를 유지하는지")
+        out.append(f"다음 실적의 매출 성장률이 최근 {f['rev_growth'] * 100:.1f}%를 유지하는지" if f["rev_growth"] >= 0 else
+                   f"다음 실적에서 매출 감소(최근 {f['rev_growth'] * 100:.1f}%)가 멈추는지")
     if f.get("op_margin") is not None:
         out.append(f"영업이익률 {f['op_margin'] * 100:.1f}% 유지 여부")
     if f.get("fcf_margin") is not None:
         out.append(f"FCF 마진 {f['fcf_margin'] * 100:.1f}% 유지 여부")
-    return out or ["재무 데이터가 없어 점검 항목을 정할 수 없습니다"]
+    if not out and f.get("roe") is not None:                 # a bank or an insurer: no sales or margin line, but its return on equity is there
+        out.append(f"다음 실적에서 자기자본이익률(ROE) {f['roe'] * 100:.1f}%가 유지되는지")
+    return out or ["매출·이익률·현금흐름 수치가 없어 점검 항목을 정할 수 없습니다"]
 
 
 def _scenarios(res: Dict, ctx: Dict) -> Dict[str, Any]:

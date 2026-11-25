@@ -229,3 +229,59 @@ def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str]
         res["pooled"] = pooled
     log(f"{market} {strategy}: {res['verdict']}")
     return res
+
+# ---------------------------------------------------------------------- early readings (pre-registered 2026-11-25)
+# User decision 2026-11-25 ("중간 판정 미리 등록"): the first verdict is a year away, so two earlier readings of the swing score
+# are fixed now, before the first session of the sample is recorded.  They read the five-session outcome of the first 60 and the
+# first 120 matured sessions, against a stricter bar because they are extra looks.  They decide nothing: the verdicts above stay
+# the ones that answer whether the score works.  Rules: reports/QSF_LIVE_FORWARD_PROTOCOL.md, "중간 읽기".
+EARLY = {60: 5, 120: 5}                 # matured sessions read -> the outcome's length in sessions
+EARLY_T = 2.5                           # nominal bar: four early looks (two markets, two days) together pass by chance about as often as ONE verdict at validate.MIN_T (2.3%); calibrated for the overlap like theirs
+EARLY_KO = {"EARLY_POSITIVE": "순위와 수익 조건을 모두 채움(이른 근거)", "EARLY_RANK_ONLY": "순위 조건만 채움", "EARLY_NOTHING": "구분되지 않음", "EARLY_AGAINST": "순위가 반대로 나옴(통계로 구분됨)"}
+
+
+def early_path(base: Path, market: str, n: int) -> Path:
+    return Path(base) / REPORT_DIR / f"QSF_LIVE_FORWARD_EARLY_{market}_SWING_{n}.json"
+
+
+def early_once(base: Path, market: str, n: int, loader: Callable[[str], List[Dict]], bench: List[Dict], log=print,
+               benches: Optional[Dict[str, List[Dict]]] = None) -> Dict[str, Any]:
+    """One early reading of the swing score: the first ``n`` matured sessions, five-session outcomes, read once."""
+    if n not in EARLY:
+        raise ValueError(n)
+    base, h = Path(base), EARLY[n]
+    top = (market, "SWING") in TOP_BAND
+    out = early_path(base, market, n)
+    if out.exists():
+        raise RuntimeError("중간 읽기는 한 번만 합니다. 이미 결과가 있습니다.")
+    led = Ledger(base)
+    if led.verify()["status"] != "OK":
+        raise RuntimeError("원장 검증에 실패해 읽지 않습니다.")
+    rows = session_rows(led, market, "SWING")
+    px = Prices(loader, bench, benches)
+    ready = matured_sessions(list(rows), px.calendar, h)
+    if len(ready) < n:
+        raise RuntimeError(f"아직 읽을 수 없습니다. 만기 거래일 {len(ready)}개, 기준 {n}개입니다.")
+    used = ready[:n]                                 # exactly the fixed sample, whenever this is run
+    cost = config.round_trip_cost(market)
+    days = [d for d in (day_stats(s, rows[s], px, h, cost) for s in used) if d]
+    if len(days) < n // 2:
+        raise RuntimeError(f"수익을 계산할 수 있는 날이 {len(days)}일뿐입니다. 시세를 확인하세요.")
+    s = summarize(days, h)
+    s["t_bar"], s["t_nominal"] = calibrate.bar(EARLY_T, len(days), h, 1, h), EARLY_T
+    r = reading(s, top)
+    against = s["t"] is not None and s["t"] <= -s["t_bar"]
+    verdict = "EARLY_AGAINST" if against else {"WEAK_POSITIVE_EVIDENCE": "EARLY_POSITIVE", "RANK_ONLY": "EARLY_RANK_ONLY"}.get(r["verdict"], "EARLY_NOTHING")
+    failed = [k for k, ok in r["condition_a"].items() if not ok]
+    t_txt = "계산할 수 없음" if s["t"] is None else f"{s['t']:+.2f}"
+    reasons = [f"처음 {len(used)}거래일({used[0]} ~ {used[-1]})의 스윙 점수와 그 뒤 {h}거래일 수익의 순위 상관: 평균 {s['ic']:+.3f}, t {t_txt} (기준 {s['t_bar']:g}. 주된 판정보다 엄격한 값입니다).",
+               "순위 조건 다섯 가지 가운데 못 채운 것: " + (", ".join(failed) if failed else "없음") + f". 수익 조건(매수 구간이 지수를 전·후반 모두 이김): {'채움' if r['condition_b'] else '못 채움'}.",
+               "이 읽기는 짧은 기록을 봅니다. 작은 효과는 잡지 못하고, '구분되지 않음'은 효과가 없다는 뜻이 아닙니다.",
+               "무엇이 나와도 점수, 규칙, 주된 판정(240거래일·20거래일 수익)은 바뀌지 않습니다."]
+    res = {"status": "REAL", "protocol": PROTOCOL, "kind": "EARLY", "market": market, "strategy": "SWING", "horizon": h, "sessions_used": len(used), "first": used[0], "last": used[-1],
+           "cost_round_trip_pct": cost * 100, "verdict": verdict, "condition_a": r["condition_a"], "condition_b": r["condition_b"], "band": r["band"], "t_bar": s["t_bar"],
+           "t_nominal": EARLY_T, "summary": s, "reasons": reasons, "applies_itself": False, "note": NOTE}
+    out.parent.mkdir(parents=True, exist_ok=True)
+    durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
+    log(f"{market} SWING early {n}: {verdict}")
+    return res

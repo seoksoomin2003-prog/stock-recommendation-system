@@ -37,7 +37,7 @@ def mean(vals: List[Optional[float]]) -> Optional[float]:
 
 
 def pct(x: Optional[float], d: int = 1) -> str:
-    return "없음" if x is None else f"{x * 100:.{d}f}%"
+    return "자료 없음" if x is None else f"{x * 100:.{d}f}%"
 
 
 def num(x: Optional[float], d: int = 2) -> str:

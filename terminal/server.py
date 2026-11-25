@@ -30,7 +30,7 @@ from terminal import assistant, automation, coin_bridge, model_scan, record_stat
 from terminal.committee import service as committee_service  # noqa: E402
 from terminal.qsf import rank_notes as qsf_rank_notes  # noqa: E402
 from terminal.qsf import changes as qsf_changes, forecast as qsf_forecast, kr_cap_view as qsf_cap_view, kr_method as qsf_kr_method, lookahead as qsf_lookahead, paper_book as qsf_paper_book, regime_weights as qsf_regime_weights, screen as qsf_screen, track_record as qsf_track_record, turnover_book as qsf_turnover_book  # noqa: E402
-from terminal.qsf import entry_book as qsf_entry_book, fund_period as qsf_fund_period, rank_book as qsf_rank_book, readings as qsf_readings, stance as qsf_stance  # noqa: E402
+from terminal.qsf import entry_book as qsf_entry_book, fund_period as qsf_fund_period, inventory as qsf_inventory, rank_book as qsf_rank_book, readings as qsf_readings, stance as qsf_stance  # noqa: E402
 
 HOST = "127.0.0.1"
 log = logging.getLogger("terminal")
@@ -212,6 +212,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[pho
         ("GET", "/api/qsf/kr-method"): lambda q, b: qsf_kr_method.status(t.base),
         ("GET", "/api/qsf/regime-weights"): lambda q, b: qsf_regime_weights.status(t.base),
         ("GET", "/api/qsf/lookahead"): lambda q, b: qsf_lookahead.status(t.base),
+        ("GET", "/api/qsf/factors"): lambda q, b: qsf_inventory.inventory(),
         ("GET", "/api/qsf/forecast"): lambda q, b: qsf_forecast.view(t.base, _market(q.get("market", "US"))),
         ("GET", "/api/qsf/forecast-stock"): lambda q, b: qsf_forecast.stock(t.base, _market(q.get("market", "US")), _code(q.get("t", ""), _market(q.get("market", "US")))),
         ("GET", "/api/qsf/paper-book"): lambda q, b: qsf_paper_book.status(t.base, _market(q.get("market", "US"))),

@@ -48,6 +48,12 @@ def _per_market(key: str, label: str, action: str, report: str, protocol: str, n
 REGISTRY: List[Dict[str, Any]] = [
     *_per_market("live_swing", "실전 점수 판정 · 스윙", "live-forward-evaluate-swing", "QSF_LIVE_FORWARD_{m}_SWING.json", "QSF_LIVE_FORWARD_PROTOCOL.md", 240, 20, ledger=True),
     *_per_market("live_long", "실전 점수 판정 · 장기", "live-forward-evaluate-long", "QSF_LIVE_FORWARD_{m}_LONG_TERM.json", "QSF_LIVE_FORWARD_PROTOCOL.md", 756, 63, ledger=True),
+    # Two early readings of the swing score (user decision 2026-11-25): five-session outcomes of the first 60 and 120 matured
+    # sessions, a stricter bar, and no consequence.  Reference readings: the four above stay the ones that answer.
+    *_per_market("early_swing_60", "실전 점수 중간 읽기 · 스윙 60일", "live-forward-early-60", "QSF_LIVE_FORWARD_EARLY_{m}_SWING_60.json", "QSF_LIVE_FORWARD_PROTOCOL.md", 60, 5, ledger=True,
+                 after="중간 읽기입니다. 무엇이 나와도 점수, 규칙, 주된 판정은 바뀌지 않습니다."),
+    *_per_market("early_swing_120", "실전 점수 중간 읽기 · 스윙 120일", "live-forward-early-120", "QSF_LIVE_FORWARD_EARLY_{m}_SWING_120.json", "QSF_LIVE_FORWARD_PROTOCOL.md", 120, 5, ledger=True,
+                 after="중간 읽기입니다. 무엇이 나와도 점수, 규칙, 주된 판정은 바뀌지 않습니다."),
     _e("kr_avoid_marks", "한국 회피 표시 판정", ["qsf", "kr-avoid-marks-evaluate"], "QSF_KR_AVOID_MARKS.json", "QSF_KR_AVOID_MARKS_PROTOCOL.md", 240, 20, ledger="KR",
        after="AVOID_RULE_SUPPORTED가 나와도 매수 후보에서 자동으로 빼지 않습니다. 화면의 회피 표시를 보고 직접 판단합니다."),
     *_per_market("score_split", "점수 분리 비교", "score-split-evaluate", "QSF_SCORE_SPLIT_{m}.json", "QSF_SCORE_SPLIT_PROTOCOL.md", 240, 20, store="score_split_{m}",
@@ -86,6 +92,10 @@ REGISTRY: List[Dict[str, Any]] = [
 ]
 
 VERDICT_KO = {
+    "EARLY_POSITIVE": "이른 근거가 있습니다(짧은 기록에서 순위 조건과 수익 조건을 모두 채움). 주된 판정은 따로 읽습니다",
+    "EARLY_RANK_ONLY": "짧은 기록에서 순위 조건만 채웠습니다(상위 종목의 수익 조건은 못 채움)",
+    "EARLY_NOTHING": "짧은 기록으로는 구분되지 않았습니다. 효과가 없다는 뜻이 아닙니다",
+    "EARLY_AGAINST": "짧은 기록에서 순위가 반대로 나왔고 통계로 구분됩니다. 주된 판정은 따로 읽습니다",
     "WEAK_POSITIVE_EVIDENCE": "약한 근거가 있습니다(순위 조건과 수익 조건을 모두 채움)",
     "RANK_ONLY": "순위 근거만 있습니다(상위 종목의 수익 조건은 채우지 못함)",
     "NO_EVIDENCE": "근거를 찾지 못했습니다. 효과가 없다는 뜻이 아니라 확인되지 않았다는 뜻입니다",
