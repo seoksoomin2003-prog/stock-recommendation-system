@@ -1336,10 +1336,21 @@ def portfolio_answer(terminal: Any, stock: Dict[str, str], follow: List[str]) ->
 #   사지 않음: 차단 조건 · 회피 표시 · 실행 대상 아님 · 관찰 기준 미만 · 유효한 진입 근거 없음
 #   기다림:   성향 후보가 아님(선 미달, 신뢰도, 큰 움직임) · 눌림/돌파 확인/실적 대기 · 지금 가격에서 비쌈 · 스윙 실적 임박
 #             · 신뢰도 낮음(어느 성향이든, 2026-11-25 결정) · 빠진 자료 때문에 구간을 낮춘 종목(2026-11-25 결정)
+#             · 재무 점검이 '값은 싼데 나빠지는 중'이거나 ROE 급락으로 읽은 종목(2026-11-25 결정, 진입 상태와 주문 계획은 그대로)
 #   사도 됨:  위에 걸린 것이 없고 진입 판단이 '지금 진입 가능'
 # 나쁜 날(미국)은 결론을 바꾸지 않고 '크기 절반'을 덧붙입니다(2026-11-16 결정과 같음).  점수와 기록은 바뀌지 않습니다.
 VERDICT_KO = {"OK": "사도 됨", "WAIT": "기다림", "NO": "사지 않음"}
 VERDICT_CAVEAT = "프로그램 규칙이 내린 결론입니다. 점수가 높은 종목의 수익이 더 좋았다는 근거는 아직 확인되지 않았고, 주문은 직접 정합니다."
+
+
+def _falling(fc: Optional[Dict[str, Any]]) -> Optional[str]:
+    """The line of the figures' check (terminal/fund_checks.py) that makes the buy check wait: the cheap-and-worsening pattern,
+    or the ROE fall the holding rule reads as a broken thesis.  None otherwise."""
+    fc = fc or {}
+    roe = next((x["text"] for x in fc.get("flags") or [] if x.get("code") == "ROE_DOWN"), None)
+    if fc.get("pattern") == "CHEAP_AND_WORSENING":
+        return fc.get("pattern_ko") or roe
+    return roe
 
 
 def pullback_zone(snap: Dict[str, Any]) -> Optional[List[float]]:
@@ -1394,6 +1405,12 @@ def buy_verdict(snap: Dict[str, Any], strategy: str, market: str, *, gates: List
         wait.append((f"자료 신뢰도가 낮아 '{label}' 성향의 후보에서 빠집니다.", "자료가 채워지거나 성향을 바꾸면 달라집니다."))
     elif why == "VOLATILE":
         wait.append((f"하루 움직임이 큰 쪽 3분의 1에 들어 '{label}' 성향의 후보에서 빠집니다.", "움직임이 줄거나 성향을 바꾸면 달라집니다."))
+    worse = _falling(snap.get("fund_checks"))
+    if worse:
+        # the entry rule reads price and valuation, not the direction of the figures; a stock this program itself marks as
+        # "cheap and worsening" or whose ROE fall would read "thesis invalidated" on a holder is not a "사도 됨" (user decision
+        # 2026-11-25; the entry status and the order plan are unchanged, and the rule is untested on returns)
+        wait.append((f"이 프로그램의 재무 점검이 '나빠지는 중'으로 읽었습니다: {worse}", "다음 실적에서 이 수치가 돌아서면 다시 봅니다."))
     if snap.get("confidence") == "LOW" and why != "CONFIDENCE":
         # whatever the stance: a score built on missing or old figures is not a "사도 됨" (user decision 2026-11-25)
         wait.append(("이 점수를 믿는 정도가 '낮음'입니다. 계산에 쓸 자료가 일부 없거나 오래됐습니다.", "자료가 채워져 신뢰도가 오르면 다시 봅니다."))

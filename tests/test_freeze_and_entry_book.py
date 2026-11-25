@@ -31,6 +31,15 @@ def test_the_score_formula_is_frozen_until_the_first_live_verdict():
     for (strategy, kind), want in golden.items():
         got = engine.score(ctx(fund=weak) if kind else ctx(), strategy)["score"]
         assert got == pytest.approx(want, abs=1e-9), (strategy, kind, FREEZE)
+    # the Korean profiles too (re-check 2026-11-25: the guard pinned four US scores only)
+    for strategy, want in (("SWING", 69.51164173197174), ("LONG_TERM", 84.78024780545142)):
+        assert engine.score(ctx(market="KR"), strategy)["score"] == pytest.approx(want, abs=1e-9), ("KR", strategy, FREEZE)
+    # and what the statement reader makes of a fixed filing: a change of the reading is a change of the score's input
+    facts = _facts({"Revenues": {2023: 1000.0, 2024: 1100.0, 2025: 1300.0}, "NetIncomeLoss": {2023: 100.0, 2024: 120.0, 2025: 150.0},
+                    "NetCashProvidedByUsedInOperatingActivities": {2023: 150.0, 2024: 160.0, 2025: 200.0}, "PaymentsToAcquirePropertyPlantAndEquipment": {2023: 40.0, 2024: 50.0},
+                    "PaymentsToAcquireOtherProductiveAssets": {2025: 60.0}})
+    m = F.metrics(F.drop_stale_series(F.extract_us(facts)), 100.0, "2026-11-25")
+    assert m["rev_growth"] == pytest.approx(1300 / 1100 - 1) and m["fcf"] == pytest.approx(140.0) and m["fcf_margin"] == pytest.approx(140 / 1300) and m["ocf_to_ni"] == pytest.approx(200 / 150), FREEZE
     assert (ROOT / FREEZE).exists() and "QSF-1.6.0" in src(*FREEZE.split("/")) and (ROOT / "reports" / "QSF_1_6_0_2026_11_25.md").exists()
 
 

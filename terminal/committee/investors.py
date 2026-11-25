@@ -452,7 +452,7 @@ def lynch(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] =
     basis, why = {FAST: (f"{growth}, {peg_text}", "성장에 비해 값이 지나치지 않습니다"), STALWART: (f"{growth}, {peg_text}", "성장에 비해 값이 지나치지 않습니다"),
                   SLOW: (f"배당수익률 {pct(f.get('dividend_yield'))}, PER {times(pe)}, 흑자 연도 {pct(f.get('profit_years'), 0)}", "배당과 안정으로 보는 종목이고 값이 무겁지 않습니다"),
                   CYCLICAL: (turn, "이익이 회복하는 방향이고 재무가 버팁니다. 낮은 PER은 정점일 수 있어 싸다고 읽지 않았습니다"), TURNAROUND: (turn, "돌아서는 증거가 숫자에 보이고 재무가 버팁니다"),
-                  ASSET: (f"PBR {times(f.get('pb'), 2)}, ROE {pct(f.get('roe'))}, {_de_text(f)}", "자산보다 싸게 거래됩니다(금융업이라 부채 기준은 따지지 않았습니다)" if f.get("is_financial") else "자산보다 싸게 거래되고 재무가 그 자산을 지킵니다")}[kind]
+                  ASSET: (f"PBR {times(f.get('pb'), 2)}, ROE {pct(f.get('roe'))}, {_de_text(f)}", "자산보다 싸게 거래됩니다(금융업이라 부채 기준은 따지지 않았습니다)" if f.get("kind") == "FINANCIAL" else "자산보다 싸게 거래되고 재무가 그 자산을 지킵니다")}[kind]
     if rec in BUY_SIDE:
         opinion = f"{KIND_KO[kind]}로 봅니다({basis}). {why}. 이야기가 꺾이면(이익과 매출이 함께 줄면) 팝니다."
     elif s >= L_BUY and not quality_ok and not story_broken and not dear:

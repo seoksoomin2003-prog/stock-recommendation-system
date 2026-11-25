@@ -913,11 +913,14 @@ class QSF(ScreenViews):
         of its own: 70 is the top 5% of one profile and the top 16% of another (reports/QSF_FACTOR_INVENTORY.md)."""
         try:
             scan = self.latest(market)
+            if scan.get("model_version") != config.MODEL_VERSION:       # a card of today's formula inside a scan of another one is not a rank (re-check 2026-11-25)
+                return
             rows = scan.get("rows") or []
             for strategy, c in cards.items():
                 scores = [float(r["score"]) for r in rows if r.get("strategy") == strategy and r.get("score") is not None]
                 if len(scores) >= 50 and c.get("score") is not None:
-                    c["rank_in_scan"] = {"top_pct": round(100 * sum(1 for v in scores if v > c["score"]) / len(scores), 1), "n": len(scores), "session": scan.get("session")}
+                    place = sum(1 for v in scores if v > c["score"]) + 1                # 1 = no scanned score is higher
+                    c["rank_in_scan"] = {"top_pct": round(min(100.0, 100 * place / len(scores)), 1), "place": place, "n": len(scores), "session": scan.get("session")}
         except Exception:
             pass
 

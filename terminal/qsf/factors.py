@@ -41,7 +41,7 @@ def pct(x: Optional[float], d: int = 1) -> str:
 
 
 def num(x: Optional[float], d: int = 2) -> str:
-    return "없음" if x is None else f"{x:,.{d}f}"
+    return "자료 없음" if x is None else f"{x:,.{d}f}"
 
 
 def missing(reason: str) -> Dict[str, Any]:

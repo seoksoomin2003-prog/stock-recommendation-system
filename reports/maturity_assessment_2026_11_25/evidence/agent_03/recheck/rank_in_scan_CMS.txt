@@ -1,0 +1,4 @@
+SWING QSF-1.6.0 R-1 57.62 HOLD_WATCH {'top_pct': 38.9, 'n': 504, 'session': '2026-11-24'} old 58.87193882709685
+  scan rank of new score excluding own old row: 196 of 504
+LONG_TERM QSF-1.6.0 R-1 46.46 WEAK_REDUCE {'top_pct': 92.1, 'n': 504, 'session': '2026-11-24'} old 54.95359985724178
+  scan rank of new score excluding own old row: 464 of 504

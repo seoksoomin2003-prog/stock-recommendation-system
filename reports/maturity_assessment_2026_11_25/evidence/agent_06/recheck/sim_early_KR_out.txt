@@ -1,0 +1,12 @@
+KR k=0.00000 sims=500: mean IC 5d -0.005, 20d +0.003 (sd of separate 20d IC 0.142) | early60 pass   0.0% rank-only-or-better   0.4% | early120 pass   0.2% rank   0.8% | either early pass   0.2% | AGAINST (any look)   2.0% | primary pass   1.4% rank   1.8% | P(primary pass | early pass) 100% (n=1)
+      early60 single conditions met: {'ic': '28%', 't': '0%', 'ic_both_halves': '22%', 'spread_both_halves': '6%', 'buy_band': '46%', 'money': '1%'}
+      (42 s)
+KR k=0.00030 sims=200: mean IC 5d +0.030, 20d +0.048 (sd of separate 20d IC 0.140) | early60 pass   1.5% rank-only-or-better   3.0% | early120 pass   0.0% rank   1.0% | either early pass   1.5% | AGAINST (any look)   0.0% | primary pass   8.5% rank   9.0% | P(primary pass | early pass) 33% (n=3)
+      early60 single conditions met: {'ic': '56%', 't': '3%', 'ic_both_halves': '44%', 'spread_both_halves': '18%', 'buy_band': '76%', 'money': '4%'}
+      (16 s)
+KR k=0.00060 sims=200: mean IC 5d +0.059, 20d +0.100 (sd of separate 20d IC 0.135) | early60 pass   7.0% rank-only-or-better   8.5% | early120 pass  11.5% rank  24.5% | either early pass  15.5% | AGAINST (any look)   0.0% | primary pass  51.5% rank  53.0% | P(primary pass | early pass) 94% (n=31)
+      early60 single conditions met: {'ic': '78%', 't': '8%', 'ic_both_halves': '68%', 'spread_both_halves': '38%', 'buy_band': '88%', 'money': '15%'}
+      (16 s)
+KR k=0.00100 sims=200: mean IC 5d +0.096, 20d +0.165 (sd of separate 20d IC 0.134) | early60 pass  21.0% rank-only-or-better  25.0% | early120 pass  37.0% rank  57.0% | either early pass  43.0% | AGAINST (any look)   0.0% | primary pass  93.0% rank  94.5% | P(primary pass | early pass) 95% (n=86)
+      early60 single conditions met: {'ic': '95%', 't': '25%', 'ic_both_halves': '85%', 'spread_both_halves': '64%', 'buy_band': '98%', 'money': '36%'}
+      (16 s)

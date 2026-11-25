@@ -1,0 +1,7 @@
+annual5_0000811156_52dc80e289. [('2023-12-31', 'SegmentExpenditureAdditionToLongLivedAss', 3280, 2309), ('2024-12-31', 'SegmentExpenditureAdditionToLongLivedAss', 3301, 2370), ('2025-12-31', 'SegmentExpenditureAdditionToLongLivedAss', 3970, 2235)]
+annual5_0000821189_1a9419711f. [('2023-12-31', 'PaymentsToAcquireOilAndGasPropertyAndEqu', 5385, 11340), ('2024-12-31', 'PaymentsToAcquireOilAndGasPropertyAndEqu', 5353, 12143), ('2025-12-31', 'PaymentsToAcquireOilAndGasPropertyAndEqu', 6115, 10044)]
+annual5_0000822416_158dd94ede. [('2023-12-31', 'PaymentsToAcquirePropertyPlantAndEquipme', 92, 2197), ('2024-12-31', 'PaymentsToAcquirePropertyPlantAndEquipme', 119, 1681), ('2025-12-31', 'PaymentsToAcquirePropertyPlantAndEquipme', 123, 1871)]
+annual5_0001035002_1f0de8d598. [('2023-12-31', 'PaymentsToAcquireProductiveAssets', 1916, 9229), ('2024-12-31', 'PaymentsToAcquireProductiveAssets', 2057, 6683), ('2025-12-31', 'SegmentExpenditureAdditionToLongLivedAss', 1885, 5826)]
+annual5_0001045810_e423ad8914. [('2024-01-28', 'PaymentsToAcquireProductiveAssets', 1069, 28090), ('2025-01-26', 'PaymentsToAcquireProductiveAssets', 3236, 64089), ('2026-01-25', 'PaymentsToAcquireProductiveAssets', 6042, 102718)]
+annual5_0001067701_660812bf96. [('2023-12-31', 'PaymentsToAcquireProductiveAssets', 3864, 4704), ('2024-12-31', 'PaymentsToAcquireProductiveAssets', 4130, 4546), ('2025-12-31', 'SegmentExpenditureAdditionToLongLivedAss', 4568, 5190)]
+annual5_0001163165_5efc47c01e. []

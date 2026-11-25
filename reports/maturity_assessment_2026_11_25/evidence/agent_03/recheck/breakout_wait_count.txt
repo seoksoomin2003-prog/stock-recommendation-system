@@ -1,0 +1,2 @@
+US 2026-11-24 QSF-1.5.2 swing 504 buy-band actionable 33 {'WAIT_FOR_PULLBACK': 30, 'WAIT_FOR_BREAKOUT_CONFIRMATION': 3} breakout_wait 18 all-swing WAIT 209
+KR 2026-11-24 QSF-1.5.2 swing 300 buy-band actionable 0 {} breakout_wait 0 all-swing WAIT 24

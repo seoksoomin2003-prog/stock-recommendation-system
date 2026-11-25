@@ -105,7 +105,8 @@ def read(fund: Optional[Dict[str, Any]], card: Optional[Dict[str, Any]] = None) 
     else:
         direction, ko = "STABLE", "큰 변화 없음"
     pattern, pko = _pattern(card or {}, direction, f)
-    return {"status": "REAL", "version": VERSION, "direction": direction, "direction_ko": ko, "flags": flags, "pattern": pattern, "pattern_ko": pko, "checked": checked, "note": NOTE}
+    return {"status": "REAL", "version": VERSION, "direction": direction, "direction_ko": ko, "flags": flags, "pattern": pattern, "pattern_ko": pko, "checked": checked,
+            "basis_note": _basis_note(card or {}), "note": NOTE}
 
 
 def _pattern(card: Dict[str, Any], direction: str, f: Dict[str, Any]):
@@ -118,6 +119,18 @@ def _pattern(card: Dict[str, Any], direction: str, f: Dict[str, Any]):
     if val is not None and val >= CHEAP and direction in ("IMPROVING", "FIRMING"):
         return "CHEAP_AND_IMPROVING", "값이 싸게 읽히고 재무가 좋아지는 방향입니다."
     return None, None
+
+
+def _basis_note(card: Dict[str, Any]) -> Optional[str]:
+    """The direction above is read from annual statements.  When the same card's score on trailing four quarters differs by ten
+    points or more, the newest quarters may point the other way, and the reader is told (re-check 2026-11-25: EOG read
+    "worsening" beside a trailing score twelve points higher)."""
+    fp = card.get("fund_period") or {}
+    a, t = (fp.get("annual") or {}).get("score"), (fp.get("trailing") or {}).get("score")
+    if a is None or t is None or not (fp.get("trailing") or {}).get("newer_quarter") or abs(t - a) < 10.0:
+        return None
+    way = "높아" if t > a else "낮아"
+    return f"이 방향은 연간 재무제표로 읽은 것입니다. 최근 4분기 재무로 계산한 점수는 {abs(t - a):.1f}점 {way}, 최근 분기는 다른 쪽으로 움직였을 수 있습니다."
 
 
 def lines(doc: Optional[Dict[str, Any]], limit: int = 3) -> List[str]:

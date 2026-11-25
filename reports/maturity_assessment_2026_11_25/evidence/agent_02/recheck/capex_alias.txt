@@ -1,0 +1,8 @@
+files 7 newest stored stamps sample 2026-11-25T12:04:22.670462 2026-11-25T12:58:59.609754
+newest-year capex alias: {'PaymentsToAcquireProductiveAssets': 1, 'SegmentExpenditureAdditionToLongLivedAssets': 3, 'PaymentsToAcquirePropertyPlantAndEquipment': 1, 'PaymentsToAcquireOilAndGasPropertyAndEquipment': 1}
+no capex in newest year (with OCF): 1
+fallback-read companies (CIK, tag, capex/OCF):
+   ('0000821189', 'PaymentsToAcquireOilAndGasPropertyAndEquipmen', 0.609)
+   ('0001035002', 'SegmentExpenditureAdditionToLongLivedAssets', 0.324)
+   ('0001067701', 'SegmentExpenditureAdditionToLongLivedAssets', 0.88)
+   ('0000811156', 'SegmentExpenditureAdditionToLongLivedAssets', 1.776)

@@ -594,7 +594,7 @@ function qsfFundChecks(c) {
   if (!f || f.status !== "REAL" || f.direction === "UNKNOWN") return "";
   const mark = { down: "▼", up: "▲", risk: "●" };
   const rows = (f.flags || []).map((x) => `<li><span aria-hidden="true">${mark[x.side] || "·"}</span> ${esc(x.text)}</li>`).join("");
-  return `<details class="qsf-fc"${f.pattern === "CHEAP_AND_WORSENING" || f.direction === "DETERIORATING" ? " open" : ""}><summary class="meta">재무 수치의 방향: <b>${esc(f.direction_ko)}</b>${f.pattern_ko ? ` · ${esc(f.pattern_ko)}` : ""}</summary>
+  return `<details class="qsf-fc"${f.pattern === "CHEAP_AND_WORSENING" || f.direction === "DETERIORATING" ? " open" : ""}><summary class="meta">재무 수치의 방향: <b>${esc(f.direction_ko)}</b>${f.pattern_ko ? ` · ${esc(f.pattern_ko)}` : ""}</summary>${f.basis_note ? `<div class="meta">${esc(f.basis_note)}</div>` : ""}
     ${rows ? `<ul class="meta">${rows}</ul>` : '<div class="meta">걸린 항목이 없습니다.</div>'}<div class="meta">${esc(f.note)}</div></details>`;
 }
 

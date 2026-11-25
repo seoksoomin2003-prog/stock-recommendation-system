@@ -198,7 +198,7 @@ def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> 
             f"{'자료가 일부만 있거나, 금융 회사라 빚의 뜻이 다른' if facts.get('financial') else '자료가 일부만 있는'} 항목 {unsaid}개는 좋다 나쁘다를 여기서 말하지 않았습니다. 점수에는 있는 자료만으로 들어가 있습니다."]})
     if fc.get("status") == "REAL" and fc.get("direction") != "UNKNOWN":
         ups = [x["text"] for x in fc.get("flags") or [] if x.get("side") == "up"][:2]
-        parts.append({"h": "회사 숫자의 방향", "lines": [f"최근 재무 수치의 방향: {fc.get('direction_ko')}."] + ups + [fund_checks.NOTE]})
+        parts.append({"h": "회사 숫자의 방향", "lines": [f"최근 재무 수치의 방향: {fc.get('direction_ko')}."] + ups + ([fc["basis_note"]] if fc.get("basis_note") else []) + [fund_checks.NOTE]})
     if any("실적 발표" in s for s in good + bad):
         used.append("실적 발표")
     if any("공시" in s for s in good + bad):
@@ -215,6 +215,13 @@ def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> 
         if status == "WAIT_FOR_EARNINGS":
             used.append("실적 발표")
         lines = [now]
+        if status == "ENTRY_NOW":
+            codes = {x.get("code") for x in fc.get("flags") or []}
+            if fc.get("pattern") == "CHEAP_AND_WORSENING" or "ROE_DOWN" in codes:
+                lines.append("다만 이 프로그램의 재무 점검은 이 회사를 '나빠지는 중'으로 읽었습니다. 진입 판단 규칙은 가격과 값만 보고 재무의 방향은 보지 않습니다. "
+                             "'사도 돼?'는 이런 종목에 '기다림'으로 답합니다.")
+            if card.get("confidence") == "LOW":
+                lines.append("이 점수를 믿는 정도가 '낮음'이라, '사도 돼?'는 '기다림'으로 답합니다.")
         if card.get("earnings_unknown"):
             lines.append("실적 발표 날짜를 받지 못했습니다. 발표가 코앞인지를 이 프로그램이 오늘은 확인하지 못했습니다.")
             used.append("실적 발표")

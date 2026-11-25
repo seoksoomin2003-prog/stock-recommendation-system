@@ -67,7 +67,7 @@ def test_the_plain_text_the_record_and_the_buy_check_carry_it_and_nothing_decide
 
 # ---------------------------------------------------------------------- sentences the assessment found wrong
 def test_the_wrong_sentences_are_gone():
-    assert factors.pct(None) == "자료 없음" and factors.pct(0.123) == "12.3%"                                       # no figure is not "none"
+    assert factors.pct(None) == "자료 없음" and factors.pct(0.123) == "12.3%" and factors.num(None) == "자료 없음"                                       # no figure is not "none"
     falling = holding._milestones({"fund": {"rev_growth": -0.069}})
     assert "유지하는지" not in falling[0] and "매출 감소(최근 -6.9%)가 멈추는지" in falling[0]                          # a fall is not something to keep
     assert "자기자본이익률(ROE) 9.0%" in holding._milestones({"fund": {"roe": 0.09}})[0]                             # a bank has figures: its return on equity
@@ -75,6 +75,7 @@ def test_the_wrong_sentences_are_gone():
     inv = src("terminal", "committee", "investors.py")
     assert "걸리는 조건이 있습니다(" in inv and "부채와 현금흐름이 나아져야 다시 봅니다" not in inv                    # the trap sentence names what made it a trap
     assert "재무 항목은 금융업이라 따지지 않았습니다" in inv and "금융업이라 부채 기준은 따지지 않았습니다" in inv
+    assert 'if f.get("kind") == "FINANCIAL" else "자산보다 싸게 거래되고 재무가 그 자산을 지킵니다"' in inv and 'f.get("is_financial")' not in inv      # the figures carry ``kind``: the first fix was dead code
 
 
 # ---------------------------------------------------------------------- the factor inventory
@@ -86,7 +87,7 @@ def test_every_factor_of_every_profile_is_described_and_the_document_is_the_modu
         assert all(r[k] for k in ("measures", "why", "limit", "evidence")), fid
     assert rows["trend_structure"]["weights"] == {"US_SWING": 10} and rows["vix_regime"]["reference"] is True
     assert src("reports", "QSF_FACTOR_INVENTORY.md") == inventory.markdown()                                        # written by `qsf factor-inventory`, never by hand
-    assert "기대 수익도 오를 확률도 아닙니다" in inventory.markdown() and "과거 수익에 맞춰 고른 값이 아니고" in inventory.markdown()
+    assert "기대 수익도 오를 확률도 아닙니다" in inventory.markdown() and "과거 수익에 맞춰 고른 값이 아닙니다" in inventory.markdown()
     from terminal import server
     assert ("GET", "/api/qsf/factors") in server.routes(object())
     js, svc = src("terminal", "static", "qsf.js"), src("terminal", "qsf", "service.py")
@@ -116,16 +117,21 @@ def test_the_statement_readers_do_not_read_a_later_filing_and_the_control_does(t
     for key in ("fundamentals.metrics.US", "fundamentals.metrics.KR", "events.classify_us", "events.classify_kr"):
         assert got[key]["ok"] and got[key]["moved"] == 0 and got[key]["days"] == 3, key
     c = got["control.metrics_without_a_day"]
-    assert c["control"] and c["ok"] and c["moved"] == c["days"] == 3                                                # a reader that ignores the day is caught
+    assert c["control"] and c["ok"] and c["moved"] == c["days"] == 6                                                # both markets' statements
+    e = got["control.events_without_a_day"]
+    assert e["control"] and e["ok"] and e["moved"] == e["days"] == 3                                                # a reader that ignores the day is caught
     leak = lookahead._statement_item("x", "x", [_annual()], lambda a: ["2026-02-14"], lambda a, d: sorted(r["val"] for r in a["revenue"])[-1], lookahead._later_statements)
     assert leak["ok"] is False and leak["moved"] == 1
+    _store(tmp_path, "annual4_0001_y", _annual())                    # the same company under the former key: not read twice
+    _store(tmp_path, "annual4_0002_y", _annual())                    # another company only under the former key: read
+    assert len(lookahead._stored(tmp_path, ("annual5", "annual4"), 80)) == 2
     assert lookahead.audit_statements(tmp_path / "empty")[0]["days"] == 0                                           # nothing stored: not checked, and not a problem
     assert "srow" in src("terminal", "static", "qsf.js") and '"statements": statements' in src("terminal", "qsf", "lookahead.py")
 
 
 # ---------------------------------------------------------------------- two early readings of the live swing score
 def test_the_early_readings_are_fixed_reference_readings_with_a_stricter_bar():
-    assert lf.EARLY == {60: 5, 120: 5} and lf.EARLY_T == 2.5 and lf.EARLY_T > lf.validate.MIN_T
+    assert lf.EARLY == {60: 5, 120: 5} and lf.EARLY_T == 2.75 and lf.EARLY_T > lf.validate.MIN_T
     rows = {e["key"]: e for e in rd.REGISTRY}
     for key in ("early_swing_60_kr", "early_swing_60_us", "early_swing_120_kr", "early_swing_120_us"):
         assert rows[key]["primary"] is False and rows[key]["horizon"] == 5 and "바뀌지 않습니다" in rows[key]["after"], key
@@ -146,7 +152,7 @@ def test_an_early_reading_reads_the_first_sessions_once_and_decides_nothing(led,
     assert weak["verdict"] == "EARLY_NOTHING" and weak["condition_a"]["t"] and not weak["condition_a"]["spread_both_halves"]      # ranks well, but five sessions do not pay the cost: not "positive"
     res = lf.early_once(tmp_path, "US", 60, loader(strength=0.004), flat_bench(), log=lambda *_: None)
     assert res["verdict"] == "EARLY_POSITIVE" and res["sessions_used"] == 60 and res["first"] == CAL[0] and res["last"] == CAL[59] and res["horizon"] == 5
-    assert res["t_bar"] > 2.5 and res["applies_itself"] is False and len(res["reasons"]) == 4 and "바뀌지 않습니다" in res["reasons"][-1]
+    assert res["t_bar"] > 2.75 and res["applies_itself"] is False and len(res["reasons"]) == 4 and "바뀌지 않습니다" in res["reasons"][-1]
     with pytest.raises(RuntimeError, match="한 번만"):
         lf.early_once(tmp_path, "US", 60, loader(strength=0.004), flat_bench())
     assert not lf.report_path(tmp_path, "US", "SWING").exists()                                                     # the verdict's own file is untouched
@@ -156,3 +162,32 @@ def test_an_early_reading_reads_the_first_sessions_once_and_decides_nothing(led,
     assert flat["verdict"] == "EARLY_NOTHING"
     with pytest.raises(ValueError):
         lf.early_once(tmp_path, "US", 90, loader(), flat_bench())
+
+
+# ---------------------------------------------------------------------- the re-check of the same evening
+def test_the_buy_check_waits_when_the_programs_own_check_says_the_figures_are_falling():
+    from tests.test_buy_verdict import snap, verdict
+    checks = fc.read(HMM, card())
+    kept = {k: checks[k] for k in ("flags", "pattern", "pattern_ko", "direction")}
+    v = verdict(snap(72.0, fund_checks=kept), "AGGRESSIVE")
+    assert v["key"] == "WAIT" and "재무 점검이 '나빠지는 중'" in v["why"] and "가치 함정" in v["why"] and "돌아서면" in v["change"]
+    roe_only = {"flags": [x for x in checks["flags"] if x["code"] == "ROE_DOWN"], "pattern": None}
+    assert verdict(snap(72.0, fund_checks=roe_only))["key"] == "WAIT"                                               # the holder's "thesis invalidated" condition alone
+    soft = fc.read({"status": "REAL", "roe": 0.2, "roe_prev": 0.2, "rev_growth": -0.02, "rev_cagr3": 0.05}, card())
+    assert verdict(snap(72.0, fund_checks=soft))["key"] == "OK"                                                     # one soft figure is not a reason to wait
+    assert verdict(snap(72.0))["key"] == "OK"
+    said = " ".join(line for part in plain.card_plain(card(fund_checks=checks, confidence="LOW"), {})["parts"] for line in part["lines"])
+    assert "'사도 돼?'는 이런 종목에 '기다림'으로 답합니다" in said and "믿는 정도가 '낮음'이라, '사도 돼?'는 '기다림'" in said
+    for name in ("holding.py", "order_plan.py", "engine.py"):
+        assert "fund_checks" not in src("terminal", "qsf", name), name                                             # entry status and the plan are as they were
+
+
+def test_the_direction_says_when_the_newest_quarters_point_elsewhere_and_a_rank_needs_one_formula():
+    fp = {"live": "ANNUAL", "annual": {"score": 62.0}, "trailing": {"score": 74.2, "newer_quarter": True}}
+    got = fc.read(HMM, card(fund_period=fp))
+    assert "연간 재무제표로 읽은 것" in got["basis_note"] and "12.2점 높아" in got["basis_note"]
+    assert fc.read(HMM, card())["basis_note"] is None
+    svc = src("terminal", "qsf", "service.py")
+    assert 'if scan.get("model_version") != config.MODEL_VERSION:' in svc and '"place": place' in svc              # never ranked inside a scan of another formula, never "top 0.0%"
+    md = inventory.markdown()
+    assert "수익을 보고 바꾼 적이 없습니다" not in md and "영역을 통째로 뺀 적은 두 번 있습니다" in md and "23개에서 81개" in md

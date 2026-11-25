@@ -236,7 +236,7 @@ def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str]
 # first 120 matured sessions, against a stricter bar because they are extra looks.  They decide nothing: the verdicts above stay
 # the ones that answer whether the score works.  Rules: reports/QSF_LIVE_FORWARD_PROTOCOL.md, "중간 읽기".
 EARLY = {60: 5, 120: 5}                 # matured sessions read -> the outcome's length in sessions
-EARLY_T = 2.5                           # nominal bar: four early looks (two markets, two days) together pass by chance about as often as ONE verdict at validate.MIN_T (2.3%); calibrated for the overlap like theirs
+EARLY_T = 2.75                          # nominal bar: a one-sided chance of 0.3% a look, so four early looks (two markets, two days) together pass by chance about as often as ONE verdict (1.25%); calibrated for the overlap like theirs
 EARLY_KO = {"EARLY_POSITIVE": "순위와 수익 조건을 모두 채움(이른 근거)", "EARLY_RANK_ONLY": "순위 조건만 채움", "EARLY_NOTHING": "구분되지 않음", "EARLY_AGAINST": "순위가 반대로 나옴(통계로 구분됨)"}
 
 

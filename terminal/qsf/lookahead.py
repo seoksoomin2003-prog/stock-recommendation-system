@@ -153,21 +153,24 @@ AS_OF_PER_STOCK = 3             # the days checked per stock: the day before eac
 
 
 def _stored(base: Path, prefixes: Sequence[str], limit: int) -> List[Dict[str, Any]]:
-    """The newest stored copies under the first prefix that has any (annual5 before annual4: the same series, the newer reading)."""
+    """The newest stored copies, ``limit`` companies in all: the first prefix's files, then the later prefixes' files of companies
+    not yet taken (annual5 before annual4: the same series under the newer reading; on the day a key changes only a handful of
+    companies have the new one, and the audit read seven)."""
     folder = Path(base) / "data" / "qsf" / "cache"
+    out, seen = [], set()
     for prefix in prefixes:
-        files = sorted(folder.glob(f"{prefix}_*.json"), key=lambda f: f.stat().st_mtime, reverse=True)[:limit]
-        out = []
-        for f in files:
+        for f in sorted(folder.glob(f"{prefix}_*.json"), key=lambda f: f.stat().st_mtime, reverse=True):
+            who = f.name[len(prefix) + 1:].rsplit("_", 1)[0]            # the key without its prefix and its hash: the company
+            if who in seen or len(out) >= limit:
+                continue
             try:
                 d = json.loads(f.read_text(encoding="utf-8")).get("data")
             except (OSError, ValueError):
                 continue
             if d:
+                seen.add(who)
                 out.append(d)
-        if out:
-            return out
-    return []
+    return out
 
 
 def _day_before(day: str) -> str:
@@ -250,8 +253,10 @@ def audit_statements(base: Path, limit: int = STATEMENT_STOCKS) -> List[Dict[str
         _statement_item("fundamentals.metrics.KR", "한국 재무 읽기(DART 접수일 기준): 그날 뒤에 접수된 재무제표를 읽지 않는지", kr_fund, filed_days, metrics, _later_statements),
         _statement_item("events.classify_us", "미국 공시 사건 분류: 그날 뒤의 공시를 읽지 않는지", us_list, us_days, lambda d, a: events.classify_us(d.get("filings") or [], a), us_later),
         _statement_item("events.classify_kr", "한국 공시 사건 분류: 그날 뒤의 공시를 읽지 않는지", kr_list, kr_days, lambda d, a: events.classify_kr(d.get("rows") or [], a), kr_later),
-        _statement_item("control.metrics_without_a_day", "대조: 날짜를 무시하고 가장 새 재무제표를 읽는 계산(미래를 읽는 것이 맞음)", us_fund or kr_fund, filed_days,
+        _statement_item("control.metrics_without_a_day", "대조: 날짜를 무시하고 가장 새 재무제표를 읽는 계산(미래를 읽는 것이 맞음)", us_fund + kr_fund, filed_days,
                         lambda annual, as_of: metrics(annual, "2999-12-31"), _later_statements, control=True),
+        _statement_item("control.events_without_a_day", "대조: 날짜를 무시하고 공시 사건을 분류하는 계산(미래를 읽는 것이 맞음)", us_list, us_days,
+                        lambda d, a: events.classify_us(d.get("filings") or [], max((f.get("date") or "" for f in d.get("filings") or []), default=a)), us_later, control=True),
     ]
 
 
@@ -299,7 +304,9 @@ def run(base: Path, prices: Optional[Dict[str, Any]] = None, now: Callable[[], d
     except Exception as exc:                # the statement part never costs the price part; its failure is a problem named by type
         st = [{"id": "statements", "label": f"재무·공시 읽기 점검을 돌리지 못했습니다({type(exc).__name__})", "control": False, "days": 0, "filled": 0, "moved": 0, "moved_rows": [], "ok": False}]
     statements = [f for f in st if not f["control"] and f["days"] > 0]              # a kind with no stored copy on this device is not checked, and not a problem
-    statement_control = next((f for f in st if f["control"] and f["days"] > 0), None)
+    controls = [f for f in st if f["control"] and f["days"] > 0]
+    statement_control = None if not controls else {**controls[0], "label": "대조: 날짜를 무시하는 재무·공시 계산(미래를 읽는 것이 맞음)", "days": sum(f["days"] for f in controls),
+                                                   "moved": sum(f["moved"] for f in controls), "ok": all(f["ok"] for f in controls), "parts": [f["id"] for f in controls]}
     problems = [f["id"] for f in checked if not f["ok"]] + ([control["id"]] if control and not control["ok"] else []) + [r["store"] for r in records if r["chain"] != "OK"]
     problems += [f["id"] for f in statements if not f["ok"]] + ([statement_control["id"]] if statement_control and not statement_control["ok"] else [])
     status = "NO_PRICES" if not fns else "OK" if not problems else "PROBLEM"

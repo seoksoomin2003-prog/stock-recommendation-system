@@ -1,0 +1,4 @@
+bars 3.78 3.32 3.33
+{'60': '0.655%', '120': '0.630%', 'either': '1.167%', 'primary': '1.285%', 'against_either': '1.121%', 'early_and_primary': '0.121%'}
+two markets, four looks (markets independent): any early pass by chance 2.320%; any early AGAINST by chance 2.229%
+one primary verdict 1.285%; P(primary passes | an early look passed) under noise 10.4%
