@@ -124,10 +124,10 @@ def test_the_median_spread_and_one_reference_line_are_figures_without_a_verdict(
     assert not {"t", "t_bar", "verdict", "passed"} & set(ref) and "통과도 탈락도 없" in ref["note"] and "공식을 바꾸지 않습니다" in ref["note"]
     one = lf.without_factor("risk_reward")([{"factors": factors(30)}, {"factors": factors(1)}, {"factors": []}])
     assert one[0] == pytest.approx(75.0) and one[1] == pytest.approx(2.5) and np.isnan(one[2])            # the reference-only row and the left-out factor do not count
-    assert lf.variant_of("LONG_TERM", None) == ("업종 평균을 뺀 점수(판정 날의 업종 분류)", None)                # no sector lookup: the line says it is unavailable
-    name, fn = lf.variant_of("LONG_TERM", lambda t: "A" if int(t[1:]) % 2 else "B")
+    assert lf.variant_of("LONG_TERM", None) == ("업종 평균을 뺀 점수(달마다 보관한 업종 분류, 없는 달은 판정 날의 분류)", None)                # no sector lookup: the line says it is unavailable
+    name, fn = lf.variant_of("LONG_TERM", lambda t, day=None: "A" if int(t[1:]) % 2 else "B")
     v = fn([{"ticker": f"T{k:02d}", "score": float(k)} for k in range(8)])
-    assert "판정 날의 업종 분류" in name and v[:4].tolist() == [-3.0, -3.0, -1.0, -1.0]                    # each score less its sector's mean that day
+    assert "없는 달은 판정 날의 분류" in name and v[:4].tolist() == [-3.0, -3.0, -1.0, -1.0]                    # each score less its sector's mean that day
     assert lf.reference_line([{"variant": None}], "x")["status"] == "UNAVAILABLE"
 
 
@@ -207,7 +207,7 @@ def test_the_rules_are_written_down_and_wired():
     acts = {f"live-forward-continue-{n}" for n in lf.CONTINUE}
     assert acts <= set(app.QSF_ACTIONS) and acts <= set(app.QSF_LIVE_HANDLERS)
     src = (ROOT / "app.py").read_text(encoding="utf-8")
-    assert "sector_of=lambda t: (q._sector_of(market, t) or {}).get(\"sector\")" in src
+    assert "sector_of=_dated_sector(q, market)" in src and "kept(t, day) or (q._sector_of(market, t) or {}).get(\"sector\")" in src
     live = (ROOT / "reports" / "QSF_LIVE_FORWARD_PROTOCOL.md").read_text(encoding="utf-8")
     assert "2026-11-25 덧붙임" in live and "QSF_AFTER_VERDICT_RULES_2026_11_25.md" in live and "배당" in live
 
@@ -243,3 +243,49 @@ def test_candidate_one_has_a_written_meaning_of_not_worse(led, tmp_path):
     from terminal import analyst_extra as ax
     line = ax.tilt_line({"top_n": 10, "vol_top": 0.2, "vol_all": 0.3, "near_high_top": 0.5, "near_high_all": 0.2})
     assert "덜 흔들렸지만" not in line and line.endswith("높은 점수가 더 오른다는 근거는 아직 확인되지 않았습니다.")       # no hypothesis cited before a reading is registered
+
+
+# ---------------------------------------------------------------------- roadmap P3 (user decisions 2026-11-25)
+def test_the_verdict_report_says_how_far_the_pay_off_carries_from_one_block_to_the_next(led, tmp_path):
+    res = lf.evaluate_once(tmp_path, "US", "SWING", loader(), bench(), log=quiet)
+    p = res["persistence"]
+    assert p["status"] == "REAL" and p["blocks"] == 12 and p["block_sessions"] == 20 and -1.0 <= p["lag1"] <= 1.0 and p["rough_by"] == pytest.approx(1 / 12 ** 0.5)
+    assert "바꾸지 않습니다" in p["note"] and "12개" in p["says"]
+    days = lambda ics: [{"ic": v} for v in ics for _ in range(20)]                   # noqa: E731
+    up = lf.persistence(days([0.10, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01]), 20)       # a slow drift: neighbours alike
+    assert up["lag1"] > 0.26 and up["beyond_table"] is True and up["false_pass_pct_about"] == 5.4 and "이상" in up["says"]
+    flip = lf.persistence(days([0.05, -0.05] * 5), 20)                               # neighbours opposite
+    assert flip["lag1"] < 0 and flip["false_pass_pct_about"] == 1.25 and "1.25%쯤" in flip["says"]
+    assert lf.persistence(days([0.05] * 5), 20)["status"] == "UNAVAILABLE" and lf.persistence(days([0.05] * 12), 20)["status"] == "UNAVAILABLE"      # too few blocks, or no variation: no figure
+    assert lf.PERSIST_POINTS[0] == (0.0, 1.25) and [round(float(np.interp(r, *zip(*lf.PERSIST_POINTS))), 2) for r in (0.09, 0.135)] == [2.5, 3.2]
+    flat = tmp_path / "flat"
+    lf.evaluate_once(flat, "US", "SWING", loader(strength=0.0), bench(), log=quiet)
+    assert lf.continue_once(flat, "US", 480, loader(strength=0.0), bench(), log=quiet)["persistence"]["blocks"] == 24
+
+
+def test_sectors_are_kept_once_a_month_and_the_verdict_asks_the_dated_copy_first(tmp_path):
+    from terminal.qsf import sector_archive as sa
+    now = datetime(2026, 11, 26, 0, 30, tzinfo=timezone.utc)
+    scan = lambda m: {"session": "2026-11-25", "rows": [{"ticker": f"T{k:03d}", "strategy": s, "sector": "기술" if k % 2 else "금융", "industry": "x"} for k in range(60) for s in ("SWING", "LONG_TERM")]}      # noqa: E731
+    assert sa.save_when_due(tmp_path, now, scan) == {"US": "WRITTEN", "KR": "WRITTEN"}
+    doc = json.loads(sa.path(tmp_path, "US", "2026-11").read_text(encoding="utf-8"))
+    assert doc["stocks"] == 60 and doc["session"] == "2026-11-25" and doc["sectors"]["T001"] == {"sector": "기술", "industry": "x"}
+    later = lambda m: {"rows": [{"ticker": f"T{k:03d}", "sector": "에너지"} for k in range(60)]}          # noqa: E731
+    assert sa.save_when_due(tmp_path, now + timedelta(days=3), later) == {"US": "KEPT", "KR": "KEPT"}      # the month's file is written once and never rewritten
+    assert sa.save_when_due(tmp_path, datetime(2026, 12, 2, tzinfo=timezone.utc), later)["US"] == "WRITTEN" and sa.months(tmp_path, "US") == ["2026-11", "2026-12"]
+    few = lambda m: {"rows": [{"ticker": "A", "sector": "x"}]}                                            # noqa: E731
+    assert sa.save_when_due(tmp_path, datetime(2027, 1, 4, tzinfo=timezone.utc), few) == {"US": "TOO_FEW", "KR": "TOO_FEW"} and "2027-01" not in sa.months(tmp_path, "US")
+
+    def broken(m):
+        raise OSError("disk")
+    assert sa.save_when_due(tmp_path, datetime(2027, 2, 1, tzinfo=timezone.utc), broken) == {"US": "OSError", "KR": "OSError"}      # never stops the caller
+    sector = sa.lookup(tmp_path, "US")
+    assert sector("T001", "2026-11-30") == "기술" and sector("T001", "2026-12-15") == "에너지" and sector("T001", "2027-06-01") == "에너지"      # the newest copy at or before the day
+    assert sector("T001", "2026-10-30") is None and sector("NOPE", "2026-12-15") is None and sa.lookup(tmp_path / "none", "US")("T001", "2026-12-01") is None
+    name, fn = lf.variant_of("LONG_TERM", lambda t, day=None: sector(t, day) or "판정 날 분류")
+    v = fn([{"ticker": f"T{k:03d}", "score": float(k), "data_date": "2026-11-27"} for k in range(8)])
+    assert "달마다 보관한 업종 분류" in name and v[:4].tolist() == [-3.0, -3.0, -1.0, -1.0]             # the dated sectors: even and odd tickers apart
+    auto = (ROOT / "terminal" / "automation.py").read_text(encoding="utf-8")
+    assert "self._sector_archive(st)" in auto and '"data/qsf/sector_archive/*.json"' in auto and "def _sector_archive(self, st" in auto
+    code = (ROOT / "terminal" / "qsf" / "sector_archive.py").read_text(encoding="utf-8")
+    assert "ledger" not in code.replace("The ledger keeps no sector", "") and "outcome" not in code and "yahoo" not in code.lower()       # an input kept as it was: no record, no return, no network

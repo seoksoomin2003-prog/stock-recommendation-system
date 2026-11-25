@@ -93,12 +93,13 @@ def without_factor(fid: str) -> Callable[[List[Dict[str, Any]]], np.ndarray]:
     return lambda snaps: np.array([one(x) for x in snaps])
 
 
-def within_sector(sector_of: Callable[[str], Optional[str]]) -> Callable[[List[Dict[str, Any]]], np.ndarray]:
-    """A reference score: the recorded score less the mean of its sector that day.  The ledger keeps no sector, so the sectors
-    are the ones in use on the day of the reading, and the report says so."""
+def within_sector(sector_of: Callable[[str, Optional[str]], Optional[str]]) -> Callable[[List[Dict[str, Any]]], np.ndarray]:
+    """A reference score: the recorded score less the mean of its sector that day.  The ledger keeps no sector: ``sector_of``
+    is asked with the ticker and the snapshot's date, so a dated copy (``sector_archive``, kept monthly from 2026-11) can answer
+    for that month; where there is none the caller falls back to the sectors of the day of the reading.  The report says so."""
     def many(snaps: List[Dict[str, Any]]) -> np.ndarray:
         sc = np.array([float(x["score"]) for x in snaps])
-        sec = [sector_of(x["ticker"]) for x in snaps]
+        sec = [sector_of(x["ticker"], x.get("data_date")) for x in snaps]
         out = np.full(len(sc), np.nan)
         for g in {x for x in sec if x}:
             m = np.array([x == g for x in sec])
@@ -262,7 +263,35 @@ def variant_of(strategy: str, sector_of: Optional[Callable[[str], Optional[str]]
     """(name, function) of the one reference score a strategy's verdict carries, or (name, None) when it cannot be built."""
     if strategy == "SWING":
         return "손익비 요인을 뺀 점수", without_factor("risk_reward")
-    return "업종 평균을 뺀 점수(판정 날의 업종 분류)", within_sector(sector_of) if sector_of else None
+    return "업종 평균을 뺀 점수(달마다 보관한 업종 분류, 없는 달은 판정 날의 분류)", within_sector(sector_of) if sector_of else None
+
+
+# A reading's t bar is set for a pay-off that does not persist from month to month.  When it does, the chance of a false pass is
+# larger: two agents of the score audit of 2026-11-25 simulated it separately (AGENT_06 section 5, AGENT_08 second pass).  These are
+# their points for the 240-session swing verdict: (correlation of neighbouring 20-session blocks, false passes in percent).
+PERSIST_POINTS = ((0.0, 1.25), (0.09, 2.5), (0.18, 3.9), (0.26, 5.4))
+PERSIST_MIN_BLOCKS = 8
+
+
+def persistence(days: List[Dict[str, Any]], h: int) -> Dict[str, Any]:
+    """How far the rank correlation of one block of ``h`` sessions carries into the next (user decision 2026-11-25, roadmap P3-3).
+    A reference figure beside the verdict: it reads the same day figures the verdict reads and changes nothing.  With a dozen
+    blocks the figure itself is rough (about one over the square root of the count), and the note says so."""
+    ic = np.array([d["ic"] for d in days][::h], dtype=float)
+    n = len(ic)
+    note = ("판정의 t 기준은 점수의 성과가 달마다 독립일 때 우연 통과가 1.25%가 되도록 맞춘 값입니다. 성과가 이웃한 달로 이어지면 우연 통과가 그보다 커집니다. "
+            "이 수치는 참고이고 판정의 조건과 낱말을 바꾸지 않습니다.")
+    if n < PERSIST_MIN_BLOCKS or float(ic.std()) < 1e-12:
+        return {"status": "UNAVAILABLE", "blocks": n, "note": note}
+    e = ic - ic.mean()
+    r = float((e[:-1] * e[1:]).sum() / (e * e).sum())
+    xs, ys = [p[0] for p in PERSIST_POINTS], [p[1] for p in PERSIST_POINTS]
+    return {"status": "REAL", "blocks": n, "block_sessions": h, "lag1": r, "rough_by": float(1 / math.sqrt(n)),
+            "false_pass_pct_about": float(np.interp(max(r, 0.0), xs, ys)), "beyond_table": bool(r > xs[-1]),
+            "says": (f"{h}거래일 묶음 {n}개의 이웃한 묶음 사이 순위 상관의 이어짐은 {r:+.2f}입니다(묶음이 {n}개뿐이라 ±{1 / math.sqrt(n):.2f}쯤 흔들리는 값). "
+                     + ("이어짐이 없거나 반대여서 우연 통과는 기준대로 1.25%쯤으로 봅니다." if r <= 0 else
+                        f"이 값이 참이라면 우연 통과는 1.25%가 아니라 약 {float(np.interp(r, xs, ys)):.1f}%{' 이상' if r > xs[-1] else ''}입니다(240거래일 스윙 판정 기준의 모의실험 값).")),
+            "note": note}
 
 
 def matured_sessions(sessions: Sequence[str], calendar: Sequence[str], h: int) -> List[str]:
@@ -333,6 +362,7 @@ def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str]
     res = {"status": "REAL", "protocol": PROTOCOL, "market": market, "strategy": strategy, "horizon": h, "sessions_used": len(used), "first": used[0], "last": used[-1],
            "cost_round_trip_pct": cost * 100, **reading(primary, top), "primary": primary, "other_horizons": extra,
            "money_split": money_split(primary, cost, top, reading(primary, top)["condition_b"]), "reference": [reference_line(days, vname)],
+           "persistence": persistence(days, h),
            **({"candidate_1": candidate_1(primary, reference_line(days, vname))} if strategy == "SWING" else {}),
            "benchmarks": sorted(px.benches) or None,
            "by_version": {k: {"dates": len(v), "ic": float(np.mean(v))} for k, v in sorted(versions.items())}, "note": NOTE}
@@ -474,4 +504,4 @@ def continue_once(base: Path, market: str, n: int, loader: Callable[[str], List[
                "순위 조건 다섯 가지 가운데 못 채운 것: " + (", ".join(failed) if failed else "없음") + ".", split["says"],
                "이 읽기는 첫 판정과 같은 공식, 같은 기록을 더 길게 본 것입니다. 통과하지 못해도 공식을 바꿀 이유가 아닙니다."]
     return write({**head, "sessions_used": len(used), "first": used[0], "last": used[-1], "cost_round_trip_pct": cost * 100, **r, "t_nominal": CONTINUE_T, "primary": s,
-                  "money_split": split, "versions": versions, "reasons": reasons})
+                  "money_split": split, "persistence": persistence(days, h), "versions": versions, "reasons": reasons})

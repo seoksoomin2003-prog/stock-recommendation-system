@@ -58,7 +58,7 @@ BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/paper_journal.json
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
                 "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl", "research_data/kr_swing_challenger/index.jsonl", "research_data/kr_swing_prior/index.jsonl", "research_data/kr_challenger/index.jsonl", "research_data/kr_cap_universe/index.jsonl", "research_data/kr_traded_universe/index.jsonl", "research_data/kr_method/index.jsonl", "research_data/regime_weights_kr/index.jsonl", "research_data/regime_weights_us/index.jsonl", "research_data/paper_book_kr/index.jsonl", "research_data/paper_book_us/index.jsonl", "research_data/forecast_kr/index.jsonl", "research_data/forecast_us/index.jsonl", "research_data/score_split_kr/index.jsonl", "research_data/score_split_us/index.jsonl", "research_data/fund_period_kr/index.jsonl", "research_data/fund_period_us/index.jsonl", "research_data/turnover_book_kr/index.jsonl", "research_data/turnover_book_us/index.jsonl", "reports/qsf/QSF_TURNOVER_*.json", "research_data/rank_book_kr/index.jsonl", "research_data/rank_book_us/index.jsonl", "research_data/entry_book_kr/index.jsonl", "research_data/entry_book_us/index.jsonl", "reports/qsf/QSF_RANK_RULES_*.json", "data/qsf/top3/index.jsonl", "data/qsf/top3/*.json.gz",
                 "data/qsf/price_archive/*.json.gz", "research_data/expectations_kr/*.jsonl", "research_data/expectations_us/*.jsonl", "research_data/committee_kr/*.jsonl", "research_data/committee_us/*.jsonl",
-                "data/qsf/stance.json", "data/qsf/*_switch.json", "data/qsf/verdict_seals.json")          # the user's own choices on the screen (stance, the three reading buttons)
+                "data/qsf/stance.json", "data/qsf/*_switch.json", "data/qsf/verdict_seals.json", "data/qsf/sector_archive/*.json")          # the user's own choices on the screen (stance, the three reading buttons)
 
 
 def backup_root() -> Path:
@@ -439,6 +439,17 @@ class Daily:
         except Exception as exc:                                    # never stops the run
             got["error"] = type(exc).__name__
         st["earnings_gap"] = got
+        return got
+
+    def _sector_archive(self, st: Dict[str, Any]) -> Dict[str, Any]:
+        """Once a month: the scanned stocks' sectors with their date (``qsf.sector_archive``, user decision 2026-11-25).  An input
+        kept as it was, for the long-term verdict's reference line; no score, no return, no network.  Never stops the run."""
+        try:
+            from terminal.qsf import sector_archive
+            got = sector_archive.save_when_due(self.base, self.now())
+        except Exception as exc:
+            got = {"error": type(exc).__name__}
+        st["sector_archive"] = got
         return got
 
     def _turnover_reading(self, st: Dict[str, Any]) -> Dict[str, Any]:
@@ -889,6 +900,7 @@ class Daily:
         self._cache_prune(st, session)
         self._price_audit(st)
         self._earnings_gap(st, steps)
+        self._sector_archive(st)
         self._turnover_reading(st)
         self._rank_reading(st)
         self._entry_reading(st)

@@ -265,3 +265,4 @@
 - **알림이 줄었습니다.** 텔레그램 알림은 실전 점수 판정, 중간 읽기, 이어 읽기, 한국 회피 표시 판정(15건)만 옵니다. 나머지 판정은 `reports/qsf/`에 파일로 남고, 순위·카드 탭 '판정 일정'의 '전체 일정 보기' 아래 '보관 판정'에서 볼 수 있습니다.
 - **'이 규칙 쓰기' 버튼 셋이 없습니다**(회전율 규칙, 순위 규칙, 재무 기준 기간). 첫 실전 스윙 판정까지 쓰지 않기로 한 것입니다. 다시 달려면 `terminal/qsf/config.py`의 `APPLY_BUTTONS = False`를 `True`로 바꾸고 서버를 다시 띄웁니다. 알림을 다시 늘리려면 `terminal/qsf/readings.py`의 `NOTIFY_KEYS`와 `BOOKS_NOTIFY`를 고칩니다.
 - **지금 공식의 과거 재현(BT-1).** 결과는 `reports/qsf/QSF_BACKTEST_CURRENT_US.json`, `..._KR.json`, 읽는 법은 `reports/QSF_BACKTEST_CURRENT_PROTOCOL.md`, 정오표는 `reports/QSF_BACKTEST_CURRENT_ERRATA.md`입니다. 다시 돌리지 않습니다(결과 파일이 있으면 명령이 그 파일을 그대로 보여 줍니다).
+- **업종 분류의 달별 보관.** 매일 작업이 달에 한 번 `data/qsf/sector_archive/미국·한국_연-월.json`을 씁니다(백업에 포함). 할 일은 없습니다. 그달 파일이 없으면 다음 날 작업이 다시 시도합니다. 매일 작업 상태의 `sector_archive` 칸에 그날의 결과(`KEPT`, `WRITTEN`, `TOO_FEW`)가 남습니다.

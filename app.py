@@ -1001,6 +1001,13 @@ def _qsf_us_challenger_evaluate(args, q, market) -> int:
     return 0
 
 
+def _dated_sector(q, market):
+    """The long verdict's sector lookup: the monthly dated copy first (terminal/qsf/sector_archive.py), today's classification where no copy is that old."""
+    from terminal.qsf import sector_archive
+    kept = sector_archive.lookup(PROJECT_ROOT, market)
+    return lambda t, day=None: kept(t, day) or (q._sector_of(market, t) or {}).get("sector")
+
+
 def _qsf_live_forward(args, q, market) -> int:
     # the one forward verdict of the live score (reports/QSF_LIVE_FORWARD_PROTOCOL.md); the status only counts sessions
     from terminal.qsf import live_forward
@@ -1023,7 +1030,7 @@ def _qsf_live_forward(args, q, market) -> int:
         res = {k: res.get(k) for k in ("status", "market", "kind", "horizon", "sessions_used", "verdict", "condition_a", "condition_b", "t_bar", "reasons")}
     else:
         res = live_forward.evaluate_once(PROJECT_ROOT, market, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader(market, longest=True), bench_of(market),
-                                         benches=benches_of(market), sector_of=lambda t: (q._sector_of(market, t) or {}).get("sector"))
+                                         benches=benches_of(market), sector_of=_dated_sector(q, market))
         res = {k: res.get(k) for k in ("status", "market", "strategy", "horizon", "sessions_used", "verdict", "condition_a", "condition_b", "money_split", "reference", "pooled")}
     print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
     return 0
