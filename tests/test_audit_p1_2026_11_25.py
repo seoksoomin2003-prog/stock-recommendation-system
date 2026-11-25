@@ -27,8 +27,9 @@ def test_a_card_with_a_missing_factor_always_shows_its_conservative_score():
     fn = PRE + body(QSF, "function qsfConservative(")
     got = node(fn + """
 console.log(JSON.stringify([qsfConservative({ missing: ["valuation"], conservative_score: 66.4, score: 71.2 }), qsfConservative({ missing: [], conservative_score: 71.2, score: 71.2 }),
-  qsfConservative({ missing: ["x"], conservative_score: null, score: 60 })]));""")
+  qsfConservative({ missing: ["x"], conservative_score: null, score: 60 }), qsfConservative({ missing: ["insider_activity"], conservative_score: 57.7, score: 57.7 })]));""")
     assert "<b>자료 없는 요인 1개</b>" in got[0] and "<b>66.4점</b>(−4.8)" in got[0] and "없는 자료가 점수를 올릴 수 있습니다" in got[0] and got[1] == "" and got[2] == ""
+    assert got[3] == ""                         # only a factor the market never has is missing (Korean swing): the same score, nothing to say
     assert "${qsfConservative(c)}${qsfInputsNote(c)}${qsfStaleNote(c)}" in QSF
     rank = PRE + body(QSF, "function qsfRankNote(")
     seen = node(rank + """

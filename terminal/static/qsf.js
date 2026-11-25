@@ -586,6 +586,7 @@ function qsfRankNote(c) {
 function qsfConservative(c) {
   if (!(c.missing || []).length || !isNum(c.conservative_score) || !isNum(c.score)) return "";
   const d = c.conservative_score - c.score;
+  if (Math.abs(d) < 0.05) return "";          // 그 시장에 늘 없는 요인(한국 스윙의 내부자)만 빠진 카드: 보수적 점수가 같아 할 말이 없고, '이 시장에 없는 입력' 줄이 따로 말합니다
   return `<div class="meta"><b>자료 없는 요인 ${c.missing.length}개</b> · 빠진 요인을 중간값(0.5)으로 보면 <b>${c.conservative_score.toFixed(1)}점</b>(${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)})입니다. 빠진 요인은 0점이 아니라 남은 요인의 평균으로 채워지므로, 없는 자료가 점수를 올릴 수 있습니다. 중간값도 후한 가정일 수 있습니다.</div>`;
 }
 const qsfInputsNote = (c) => (c.inputs_note ? `<div class="meta"><b>이 시장에 없는 입력</b> ${esc(c.inputs_note)}</div>` : "");
