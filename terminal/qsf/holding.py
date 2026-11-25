@@ -4,7 +4,7 @@ import math
 from datetime import date, datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional
 
-from terminal.qsf import config
+from terminal.qsf import config, deal_pin
 from utils import nyse_calendar
 
 
@@ -63,6 +63,14 @@ def entry_status(res: Dict, ctx: Dict) -> Dict[str, Any]:
     pin = res.get("deal_pin")
     if pin:                         # held near a deal price (deal_pin, 2026-11-24): the room above is the deal price, whatever the score
         return {"status": "NO_VALID_ENTRY_SETUP", "reason": f"합병 절차로 가격이 묶인 종목입니다({pin['label']} {pin['date']}, 최근 20거래일 변동성 연 {pin['vol20']:.1f}%). 오를 여지가 인수 가격까지뿐이라 진입을 찾지 않습니다.", "zone": None}
+    if res.get("band_held_back"):
+        # The buy band was taken back because the score reaches it only with a factor absent (QSF-1.5.1).  Until QSF-1.5.3 the
+        # entry rule did not read that: the card left the buy band and stayed "enter now" in the order plan, while '사도 돼?'
+        # said wait (assessment 2026-11-25; user decision "주문 계획에서 빼기").
+        cs = res.get("conservative_score")
+        return {"status": "NO_VALID_ENTRY_SETUP", "zone": None,
+                "reason": "자료가 빠진 요인을 중간값으로 보면 " + (f"{cs:.1f}점으로 " if cs is not None else "")
+                          + "매수 후보 기준에 못 미쳐 구간을 낮춘 종목입니다. 빠진 자료가 채워질 때까지 진입을 판단하지 않습니다."}
     if strategy == "LONG_TERM":
         v = _factor(res, "valuation")
         if v is None:
@@ -285,7 +293,14 @@ def what_would_change(res: Dict) -> List[str]:
     if s is None or res["actionability"] == "INSUFFICIENT_DATA":
         return ["부족한 데이터가 채워지면 점수를 판단할 수 있습니다: " + ", ".join(res["missing"][:4])]
     above = [(lo, label) for lo, _, label in config.BANDS if lo > s]
-    if above:
+    pin = res.get("deal_pin")
+    if pin:
+        # a pinned stock gets no buy band whatever its score: "3.2 points more is a strong buy" was false for it (2026-11-25)
+        out.append("합병 절차로 가격이 묶여 있는 동안은 점수가 올라도 매수 후보 구간을 주지 않습니다. 거래가 끝나거나 깨져 가격이 다시 움직이면"
+                   f"(최근 20거래일 변동성 연 {deal_pin.PIN_VOL:g}% 이상) 점수 구간대로 읽습니다.")
+    elif res.get("band_held_back"):
+        out.append("빠진 자료가 채워져 그 요인을 넣고도 매수 후보 기준(" + f"{config.BANDS[1][0]:g}점) 이상이면 매수 후보 구간과 진입 판단이 돌아옵니다.")
+    elif above:
         lo, label = min(above)
         out.append(f"{lo - s:.1f}점 오르면 '{label}' 구간입니다.")
     floor = max((lo for lo, _, _ in config.BANDS if lo <= s), default=0.0)

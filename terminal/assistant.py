@@ -312,6 +312,7 @@ def candidates(rows: List[Dict[str, Any]], notes: Dict[str, Any], shown: int = C
                        key=lambda r: -float(r["score"]))
         out[strategy] = {"total": len(ready), "buy_band": sum(1 for r in ready if float(r["score"]) >= BUY_LINE),
                          "rows": [{"ticker": r["ticker"], "name": r.get("name"), "score": r["score"], "band": r.get("band"), "band_label": r.get("band_label"), "action": r.get("action"),
+                                   "confidence": r.get("confidence"),        # shown when LOW: the list had no word on it (assessment 2026-11-25)
                                    "sector": sectors.get(r["ticker"]), **{k: v for k, v in (note_rows.get(f"{r['ticker']}|{strategy}") or {}).items() if k in ("plus", "minus", "prev")}}
                                   for r in ready[:shown]]}
     from terminal.qsf.rank_notes import band_edges
@@ -1334,6 +1335,7 @@ def portfolio_answer(terminal: Any, stock: Dict[str, str], follow: List[str]) ->
 # 관찰 기준(구간 경계 55점), 지금 고른 성향의 후보 판정(stance.judge, 순위표의 '성향 후보'와 같은 함수), 기록된 진입 판단을 읽기만 합니다.
 #   사지 않음: 차단 조건 · 회피 표시 · 실행 대상 아님 · 관찰 기준 미만 · 유효한 진입 근거 없음
 #   기다림:   성향 후보가 아님(선 미달, 신뢰도, 큰 움직임) · 눌림/돌파 확인/실적 대기 · 지금 가격에서 비쌈 · 스윙 실적 임박
+#             · 신뢰도 낮음(어느 성향이든, 2026-11-25 결정) · 빠진 자료 때문에 구간을 낮춘 종목(2026-11-25 결정)
 #   사도 됨:  위에 걸린 것이 없고 진입 판단이 '지금 진입 가능'
 # 나쁜 날(미국)은 결론을 바꾸지 않고 '크기 절반'을 덧붙입니다(2026-11-16 결정과 같음).  점수와 기록은 바뀌지 않습니다.
 VERDICT_KO = {"OK": "사도 됨", "WAIT": "기다림", "NO": "사지 않음"}
@@ -1372,6 +1374,14 @@ def buy_verdict(snap: Dict[str, Any], strategy: str, market: str, *, gates: List
         no.append(("자료가 모자라 실행 대상이 아닙니다.", "빠진 자료가 채워지면 다시 봅니다."))
     if score < hold_start:
         no.append((f"점수 {score:.1f}점이 관찰 기준 {hold_start:g}점 미만입니다.", f"{hold_start:g}점 이상으로 오르면 다시 봅니다."))
+    elif entry == "NO_VALID_ENTRY_SETUP" and not gates and snap.get("deal_pin"):
+        # the reason is the merger, not "the score or the reward-to-risk falls short" (assessment 2026-11-25)
+        pin = snap["deal_pin"]
+        no.append((f"합병 절차로 가격이 인수 가격 근처에 묶인 종목입니다({pin.get('label')} {pin.get('date')}). 오를 여지가 인수 가격까지뿐이라 진입 대상에서 뺍니다.",
+                   "거래가 끝나거나 깨져 가격이 다시 움직이면 다시 봅니다."))
+    elif entry == "NO_VALID_ENTRY_SETUP" and not gates and snap.get("band_held_back"):
+        seen_txt = f"{float(seen):.1f}점" if seen is not None else "기준 미만"
+        wait.append((f"자료가 빠진 요인을 중간값으로 보면 {seen_txt}으로 매수 후보 기준에 못 미쳐, 진입 판단을 미룬 종목입니다.", "빠진 자료가 채워지면 다시 봅니다."))
     elif entry == "NO_VALID_ENTRY_SETUP" and not gates:
         no.append((f"진입 판단이 '{entry_ko(entry, strategy)}'입니다. {entry_meaning(entry, strategy)}".strip(), "진입 근거가 생기면 다시 봅니다."))
     why = qs.judge(snap, level, set(wide))
@@ -1384,6 +1394,9 @@ def buy_verdict(snap: Dict[str, Any], strategy: str, market: str, *, gates: List
         wait.append((f"자료 신뢰도가 낮아 '{label}' 성향의 후보에서 빠집니다.", "자료가 채워지거나 성향을 바꾸면 달라집니다."))
     elif why == "VOLATILE":
         wait.append((f"하루 움직임이 큰 쪽 3분의 1에 들어 '{label}' 성향의 후보에서 빠집니다.", "움직임이 줄거나 성향을 바꾸면 달라집니다."))
+    if snap.get("confidence") == "LOW" and why != "CONFIDENCE":
+        # whatever the stance: a score built on missing or old figures is not a "사도 됨" (user decision 2026-11-25)
+        wait.append(("이 점수를 믿는 정도가 '낮음'입니다. 계산에 쓸 자료가 일부 없거나 오래됐습니다.", "자료가 채워져 신뢰도가 오르면 다시 봅니다."))
     rr = (snap.get("holding") or {}).get("reward_risk")
     if entry == "WAIT_FOR_PULLBACK":
         zone, need = pullback_zone(snap), config.SWING["min_reward_risk"]

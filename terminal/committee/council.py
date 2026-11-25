@@ -57,7 +57,7 @@ def material_risks(f: Dict[str, Any], by: Dict[str, Dict[str, Any]]) -> List[Dic
     if (by.get("GRAHAM") or {}).get("value_trap"):
         add(MAJOR, "가치 함정 가능성", "값은 싸지만 부채나 현금흐름이 나쁨", "GRAHAM")
     if f.get("deals"):
-        add(MAJOR, "인수·합병 절차", "인수 가격이 정해진 종목은 가격이 그 값에 묶여 있을 수 있음", "DRUCKENMILLER")
+        add(MAJOR, "인수·합병 절차", "팔리는 쪽이면 가격이 인수 가격에 묶임(사는 쪽이 낸 서류일 수도 있어 공시 원문 확인 필요)", "DRUCKENMILLER")
     return out
 
 

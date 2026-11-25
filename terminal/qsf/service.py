@@ -624,6 +624,11 @@ class QSF(ScreenViews):
         rec = self.cache.read(f"submforms:{cik}") if cik else None
         return events.deal_filings(((rec or {}).get("data") or {}).get("filings"), as_of)
 
+    def deals_known(self, cik: Optional[str]) -> bool:
+        """True when a stored SEC filing list exists for the company, so "no deal filing" is something that was looked at."""
+        rec = self.cache.read(f"submforms:{cik}") if cik else None
+        return bool(rec) and isinstance((rec.get("data") or {}).get("filings"), list)
+
     def stored_annual(self, ticker: str, market: str, cik: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """The annual statements the score last read, from the cache only."""
         if market == "US":
@@ -665,7 +670,7 @@ class QSF(ScreenViews):
         if not corp:
             out["reason"] = "DART 고유번호를 찾지 못했습니다."
             return out
-        as_of = self.now().date()
+        as_of = self.now().astimezone(ZoneInfo("Asia/Seoul")).date()      # the Korean day: the UTC day hid a morning's filings until 09:00
         klass = ident.get("industry_class") or "NON_FINANCIAL"
         fm = fundamentals.fiscal_month_of(ident.get("fiscal_month"))
         res = self.cache.cached(_kr_fund_key(code, fm), TTL["kr_facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart, fiscal_month=fm)))
@@ -762,8 +767,10 @@ class QSF(ScreenViews):
             ctx["events"] = self._us_events(ctx["fund"].get("cik"), session)
             try:                                            # the merger mark and, with the price, the deal pin (decision 14 (가), 2026-11-24)
                 ctx["deals"] = self.stored_deals(ctx["fund"].get("cik"), session)
+                # no stored SEC list is not "no deal filing": without one the pin cannot be set, and the card says so (2026-11-25)
+                ctx["deal_unchecked"] = not self.deals_known(ctx["fund"].get("cik"))
             except Exception:
-                ctx["deals"] = []
+                ctx["deals"], ctx["deal_unchecked"] = [], True
             ctx["deal_pin"] = deal_pin.pin(ctx["deals"], bars)
         else:
             fe = self._kr_fund_events(ticker, ident, bars, session)
@@ -810,6 +817,9 @@ class QSF(ScreenViews):
             out["fund_period"] = fund_period.card_field(fund["live_period"], res["score"], fund, other_score, other)
         _stale_statements(out, ctx)
         out["why_summary"] = _why(out)
+        if market == "US" and ctx.get("deal_unchecked"):
+            out["deal_unchecked"] = True               # display only: not a ledger field
+            out["why_summary"] = f"{out['why_summary'].rstrip()} 합병·공개 매수 서류가 있는지는 확인하지 못했습니다(받아 둔 SEC 공시 목록 없음)."
         if (ctx.get("earnings") or {}).get("unavailable"):
             out["earnings_unknown"] = "실적 발표일을 받지 못했습니다. 실적 직전의 진입을 막는 조건이 오늘은 작동하지 않습니다."
         out["surface_note"] = _surface_note(out)            # display only: not a ledger field

@@ -24,9 +24,10 @@ def parse_day(text: Optional[str]) -> Optional[date]:
         raise ValueError("INVALID_DATE") from None
 
 
-def pick(rows: Sequence[Dict[str, Any]], want: Optional[date], today: date) -> Dict[str, Any]:
+def pick(rows: Sequence[Dict[str, Any]], want: Optional[date], today: date, symbol: Optional[str] = None, now: Optional[datetime] = None) -> Dict[str, Any]:
     """The last row dated on or before ``want`` (or the last row).  ``status`` is UNAVAILABLE when there is none, STALE when that
-    row lies more than STALE_DAYS calendar days before the asked day (a halt, a delisting, a feed that stopped)."""
+    row lies more than STALE_DAYS calendar days before the asked day (a halt, a delisting, a feed that stopped) or, with
+    ``symbol`` and ``now``, when its market has had a session since that the rows lack (terminal/freshness.py)."""
     ref = want or today
     keep = [r for r in rows if r.get("date") and r["date"] <= ref.isoformat() and r.get("close")]
     if not keep:
@@ -34,7 +35,11 @@ def pick(rows: Sequence[Dict[str, Any]], want: Optional[date], today: date) -> D
                 "reason": "BEFORE_HISTORY" if rows and want else "NO_PRICE"}
     last = keep[-1]
     age = (ref - datetime.strptime(last["date"], "%Y-%m-%d").date()).days
-    return {"status": "STALE" if age > STALE_DAYS else "REAL", "close": float(last["close"]), "date": last["date"],
+    old = age > STALE_DAYS
+    if not old and symbol and now is not None:
+        from terminal import freshness
+        old = freshness.behind(last["date"], symbol, now, ref=ref)
+    return {"status": "STALE" if old else "REAL", "close": float(last["close"]), "date": last["date"],
             "exact": last["date"] == ref.isoformat()}
 
 

@@ -45,7 +45,7 @@ def test_the_regime_value_cannot_move_any_score(monkeypatch, market, strategy):
     assert [r["factor"] for r in rows] == list(REGIME[market]) and all(r["scored"] is False and r["weight"] == 0 and r["contribution"] is None for r in rows)
     d = high["domains"]["REGIME"]
     assert d["reference"] is True and d["max_points"] == 0 and d["points"] == 0 and d["score_100"] == pytest.approx(100.0)
-    assert all(x["factor"] not in REGIME[market] for x in high["top_positive"] + high["top_negative"]) and high["model_version"] == "QSF-1.5.2"
+    assert all(x["factor"] not in REGIME[market] for x in high["top_positive"] + high["top_negative"]) and high["model_version"] == "QSF-1.5.3"
 
 
 def test_one_market_state_for_both_cards_and_from_the_ledger(monkeypatch):

@@ -171,7 +171,8 @@ def test_intraday_flag_and_stale_label(tmp_path):
     assert t._intraday("2026-11-04") is True
     assert t._intraday("2026-11-03") is False
     assert Terminal(tmp_path, src=fake_src(), now=lambda: AFTER)._intraday("2026-11-04") is False
-    assert t._bar_status("2026-11-01", "REAL") == "REAL"
+    assert t._bar_status("2026-11-03", "REAL") == "REAL"             # the last completed NYSE session
+    assert t._bar_status("2026-11-01", "REAL") == "STALE"            # two sessions behind: within five calendar days, still not current (2026-11-25)
     assert t._bar_status("2026-10-25", "REAL") == "STALE"            # > 5 calendar days old
     assert t._bar_status("2026-11-04", "STALE") == "STALE"
     assert t._bar_status(None, "REAL") == "UNAVAILABLE"

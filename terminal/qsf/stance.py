@@ -87,11 +87,21 @@ def describe(name: str) -> List[str]:
     return [f"후보로 부르는 점수: {p['line']:g}점 이상", conf, wide, f"주문 한 건의 위험 한도와 종목 비중 한도: {p['size']:g}배", cap, plan]
 
 
+def adverse_note(market: str) -> str:
+    """What a bad market day does to the chosen size, per market.  Korea has no brake (user decision 2026-11-16, MKT-1 found
+    nothing in its market state), so there the chosen factor is used as it is; the former sentence said otherwise for both."""
+    if config.ADVERSE_SIZE_FACTOR.get(market, 1.0) < 1.0:
+        return ("시장 상태가 나쁘거나 읽을 수 없는 날에는 공격적 성향의 1.5배를 쓰지 않습니다(그날의 "
+                f"{config.ADVERSE_SIZE_FACTOR[market]:g}배 그대로). 방어적 성향의 0.5배는 그날에도 겹칩니다.")
+    return ("이 시장은 시장 상태가 나쁜 날에도 주문 크기를 줄이지 않습니다(한국 시장 상태 값은 검증에서 뜻이 확인되지 않았습니다). "
+            "그래서 시장 상태가 '나쁨'인 날에도 고른 성향의 배수가 그대로 쓰입니다(공격적이면 1.5배).")
+
+
 def view(base: Path, market: str) -> Dict[str, Any]:
     cur = level(base, market)
     return {"market": market, "level": cur, "label": LABELS[cur], "note": NOTE, "damaged": damaged(base),
             "damaged_note": "성향 파일(data/qsf/stance.json)을 읽을 수 없어 '기본'으로 계산하고 있습니다. 성향을 다시 골라 주세요." if damaged(base) else None,
-            "adverse_note": "시장 상태가 나쁘거나 읽을 수 없는 날에는 공격적 성향의 1.5배를 쓰지 않습니다(그날의 0.5배 그대로). 방어적 성향의 0.5배는 그날에도 겹칩니다.",
+            "adverse_note": adverse_note(market),
             "levels": [{"level": k, "label": LABELS[k], "what": describe(k), **{f: PRESETS[k][f] for f in ("line", "size", "exposure_cap")}} for k in LEVELS]}
 
 

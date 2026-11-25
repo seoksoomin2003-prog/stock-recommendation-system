@@ -85,7 +85,7 @@ function asstCands(c, note) {
     const s = c.styles[k];
     if (!s) return "";
     const rows = s.rows.map((r) => `<tr><td class="l an"><button type="button" class="chip" data-ticker="${esc(r.ticker)}" title="${esc(tickerText(r.ticker, r.name || ""))}">${esc(nameFirst(r.ticker, r.name) ? r.name : r.ticker)}</button> <span class="meta m0 an-sub">${esc(nameFirst(r.ticker, r.name) ? r.ticker : r.name || "")}</span><div class="qr-m2">${esc(r.band_label || "")}</div></td>
-      <td class="num"><b>${qsfInt(r.score)}</b>${moved(r)}${qsfNear(r.score, c.band_edges)}</td><td class="l w">${esc(r.band_label || "")}</td><td class="l w">${esc(sectorKo(r.sector))}</td><td class="l aw">${why(r)}</td></tr>`).join("");
+      <td class="num"><b>${qsfInt(r.score)}</b>${moved(r)}${qsfNear(r.score, c.band_edges)}${r.confidence === "LOW" ? ' <span class="badge STALE" title="계산에 쓸 자료가 일부 없거나 오래됐습니다. 이 점수를 믿는 정도가 낮습니다.">신뢰도 낮음</span>' : ""}</td><td class="l w">${esc(r.band_label || "")}</td><td class="l w">${esc(sectorKo(r.sector))}</td><td class="l aw">${why(r)}</td></tr>`).join("");
     const ready = k === "LONG_TERM" ? "진입을 막는 조건 없음" : "지금 진입 가능";
     return `<div class="asst-cand"><h4>${ASST_STYLE[k]} <span class="meta m0">${ready} ${s.total}종목 · 그중 매수 후보 구간(70점 이상) ${s.buy_band}</span></h4>
       ${rows ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>점수</th><th class="l w">구간</th><th class="l w">업종</th><th class="l">가점 / 감점</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="meta">${ready}인 종목이 없습니다.</div>`}</div>`;

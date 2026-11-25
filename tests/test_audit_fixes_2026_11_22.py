@@ -406,7 +406,7 @@ def test_a_loss_maker_gets_zero_for_the_earnings_growth_it_cannot_have_and_a_tur
     assert burn["normalized"] == pytest.approx(1 / 3) and "현금 전환을 0점" in burn["explanation"] and only_loss["normalized"] == pytest.approx(0.5)          # profit down, cash still coming in: cash conversion stays missing
     whole = engine.score(ctx(), "LONG_TERM")
     assert whole["score"] == pytest.approx(engine.score(ctx(fund={**GOOD_FUND, "loss_now": False, "cash_burn": False}), "LONG_TERM")["score"])          # a profitable company: nothing changes
-    assert config.MODEL_VERSION == "QSF-1.5.2" and (ROOT / "reports" / "QSF_1_5_0_2026_11_22.md").exists()
+    assert config.MODEL_VERSION == "QSF-1.5.3" and (ROOT / "reports" / "QSF_1_5_0_2026_11_22.md").exists()
 
 
 def test_the_statement_reader_marks_a_loss_and_a_cash_burn_and_computes_no_figure_for_them():

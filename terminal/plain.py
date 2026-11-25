@@ -149,20 +149,35 @@ def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> 
     if card.get("stale_fund_days"):
         head.append(f"회사 살림 자료를 새로 받지 못해 {float(card['stale_fund_days']):.0f}일 전에 받아 둔 자료로 계산했습니다. 그래서 이 점수를 믿는 정도를 낮게 봅니다.")
     deals = facts.get("deals") or []
-    if deals:
-        head.append("다만 이 회사는 다른 회사와 합치거나 팔리는 절차에 관한 서류를 냈습니다. 아래 '먼저 알아 둘 사건'을 보세요.")
+    pinned = bool(card.get("deal_pin"))
+    if deals or pinned:
+        head.append("다만 이 회사는 다른 회사와 합치거나 팔리는 절차에 관한 서류를 냈습니다. 아래 '먼저 알아 둘 사건'을 보세요." if pinned else
+                    "다만 이 회사에는 합병이나 공개 매수에 관한 서류가 있습니다. 사는 쪽인지 팔리는 쪽인지는 아래 '먼저 알아 둘 사건'을 보세요.")
+    if card.get("confidence") == "LOW":
+        # the card's own confidence was never read here: a LOW card read "잘 맞는 편 · 걱정 없음" (assessment 2026-11-25)
+        head.append("이 점수를 믿는 정도는 '낮음'입니다. 계산에 쓸 자료가 일부 없거나 오래됐습니다. 아래의 좋게 본 점과 걱정되는 점도 그만큼 덜 확실합니다.")
+    if card.get("deal_unchecked"):
+        head.append("합병이나 공개 매수 서류가 있는지는 오늘 확인하지 못했습니다(받아 둔 SEC 공시 목록이 없습니다).")
     parts.append({"h": "한 줄로", "lines": head})
-    if deals:
+    if deals or pinned:
         used.append("공시")
+        d0 = deals[0] if deals else card["deal_pin"]
+        first = f"{d0.get('date')}에 합병이나 공개 매수(회사를 통째로 사겠다는 제안)에 관한 공시가 있었습니다({d0.get('label') or d0.get('form')})."
+        # The filing alone does not say which side this company is on: a buyer files a tender offer or a merger proxy too
+        # (deal_pin.py).  Until 2026-11-25 every filer read as the company being bought, GILD among them.
         parts.append({"h": "먼저 알아 둘 사건", "lines": [
-            f"{deals[0].get('date')}에 합병이나 공개 매수(회사를 통째로 사겠다는 제안)에 관한 공시가 있었습니다({deals[0].get('label') or deals[0].get('form')}).",
-            "이런 회사의 주가는 사겠다고 한 값 가까이에 묶여 잘 움직이지 않는 일이 많습니다. 그러면 점수가 높아도 더 오를 자리가 거의 없고, 거래가 깨지면 크게 떨어질 수 있습니다. "
+            first,
+            "가격이 사겠다고 한 값 가까이에 묶여 거의 움직이지 않고 있어, 팔리는 쪽으로 읽힙니다. 그러면 점수가 높아도 더 오를 자리가 거의 없고, 거래가 깨지면 크게 떨어질 수 있습니다.",
+            "그래서 점수는 그대로 두되 매수 후보 구간과 진입 판단을 주지 않습니다."] if pinned else [
+            first,
+            "이 서류는 사는 쪽 회사가 낼 때도 있습니다. 가격이 평소처럼 움직이고 있어 인수 가격에 묶인 모습은 아닙니다. 어느 쪽인지는 공시 원문에서 확인하세요.",
             "점수는 이 사정을 따지지 않습니다."]})
     good, bad, unsaid = _sides(card, facts=facts)
     if card.get("entry_status") == "OVERVALUED_AT_CURRENT_PRICE" and not any(s in bad for s in (FACTOR["valuation"][1], LOSS_WORRY)):
         bad = [LOSS_WORRY if facts.get("loss") else FACTOR["valuation"][1]] + bad[:2]      # the entry rule says so: the worries must too
     parts.append({"h": "좋게 본 점", "lines": good or ["뚜렷하게 좋게 본 점이 없습니다."]})
-    parts.append({"h": "걱정되는 점", "lines": bad or ["뚜렷하게 걱정되는 점이 없습니다."]})
+    none_bad = "뚜렷하게 걱정되는 점이 없습니다." + (" 다만 자료가 모자라거나 오래돼, 걱정할 점이 없다는 뜻으로 읽으면 안 됩니다." if card.get("confidence") == "LOW" else "")
+    parts.append({"h": "걱정되는 점", "lines": bad or [none_bad]})
     if unsaid:
         parts.append({"h": "말하지 않은 것", "lines": [
             f"{'자료가 일부만 있거나, 금융 회사라 빚의 뜻이 다른' if facts.get('financial') else '자료가 일부만 있는'} 항목 {unsaid}개는 좋다 나쁘다를 여기서 말하지 않았습니다. 점수에는 있는 자료만으로 들어가 있습니다."]})
@@ -175,6 +190,10 @@ def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> 
         now = ENTRY_NOW.get(strategy) if status == "ENTRY_NOW" else ENTRY.get(status) or "지금 살 조건인지는 이 프로그램의 규칙으로 정해지지 않았습니다."
         if status == "NO_VALID_ENTRY_SETUP" and "자료가 없어" in str((card.get("entry") or {}).get("reason") or ""):
             now = NO_VALUE
+        if status == "NO_VALID_ENTRY_SETUP" and pinned:
+            now = "합병 절차로 가격이 묶여 있어, 이 프로그램은 지금 살 자리로 보지 않습니다. 오를 여지가 사겠다고 한 값까지뿐이기 때문입니다."
+        elif status == "NO_VALID_ENTRY_SETUP" and card.get("band_held_back"):
+            now = "일부 자료가 없어서 지금 사도 되는지를 판단하지 않았습니다. 없는 자료를 '보통'으로 치면 매수 후보 기준에 못 미칩니다. 자료가 채워지면 다시 판단합니다."
         if status == "WAIT_FOR_EARNINGS":
             used.append("실적 발표")
         lines = [now]
@@ -188,7 +207,7 @@ def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> 
                                                 else " 이 시장에는 그런 날 크기를 줄이는 규칙이 없습니다. 참고로만 보세요."))
         parts.append({"h": "지금 사도 되나", "lines": lines})
     lv, price = card.get("levels") or {}, card.get("price")
-    if strategy == "SWING" and price and lv.get("stop") and lv.get("target") and state != "BLOCKED":
+    if strategy == "SWING" and price and lv.get("stop") and lv.get("target") and state != "BLOCKED" and not pinned:      # a pinned stock has no entry: no stop or target to plan
         down, up = (1 - lv["stop"] / price) * 100, (lv["target"] / price - 1) * 100
         parts.append({"h": f"{short} 산다면 미리 정해 둘 가격", "lines": [
             f"계산에 쓴 가격은 {card.get('data_date') or '기준일'} 장을 마칠 때의 값 {money(price, market)}입니다. 지금 가격은 이와 다를 수 있습니다.",

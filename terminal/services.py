@@ -198,11 +198,17 @@ class Terminal(ModelViews):
         et = self.now().astimezone(ZoneInfo("America/New_York"))
         return last_date == et.strftime("%Y-%m-%d") and (et.hour, et.minute) < (16, 15)
 
-    def _bar_status(self, last_date: Optional[str], cache_status: str) -> str:
+    def _bar_status(self, last_date: Optional[str], cache_status: str, symbol: str = "", newest: Optional[str] = None) -> str:
+        """REAL only when the bar is the newest one its market should have by now (terminal/freshness.py): a reply that stopped a
+        session or more earlier reads STALE, as it does on the score path.  ``newest``: the newest date among the Korean
+        symbols of the same reply."""
         if cache_status != "REAL" or not last_date:
             return cache_status if cache_status != "REAL" else "UNAVAILABLE"
         age = (self.now().date() - datetime.strptime(last_date, "%Y-%m-%d").date()).days
-        return "STALE" if age > STALE_DAYS else "REAL"
+        if age > STALE_DAYS:
+            return "STALE"
+        from terminal import freshness
+        return "STALE" if freshness.behind(last_date, symbol, self.now(), newest_in_reply=newest) else "REAL"
 
     def _sym(self, ticker: str) -> str:
         """Yahoo symbol of a ticker.  A Korean code not on the listed-company master, such as an ETF, is tried on KOSPI."""
@@ -226,6 +232,8 @@ class Terminal(ModelViews):
         res = self.cache.cached(key, TTL["quote"], lambda: self.src.yahoo_history(symbols, "3mo"))
         data = res["data"] or {}
         out = {}
+        from terminal import freshness
+        newest = freshness.newest((s, (data.get(s) or [{}])[-1].get("date")) for s in symbols)
         for s in symbols:
             rows = data.get(s) or []
             if not rows:
@@ -239,7 +247,7 @@ class Terminal(ModelViews):
                       "change_pct": _pct(last["close"], prev["close"] if prev else None),
                       "change_1m_pct": _pct(last["close"], m1["close"] if m1 else None),
                       "spark": [r["close"] for r in rows[-30:]], "intraday": self._intraday(last["date"], market),
-                      "status": self._bar_status(last["date"], res["status"])}
+                      "status": self._bar_status(last["date"], res["status"], s, newest)}
         return {"items": out, "cache": {k: res[k] for k in ("status", "fetched_at", "error")}}
 
     # ---------------------------------------------------------------- screens
@@ -272,7 +280,7 @@ class Terminal(ModelViews):
         hi52 = max(r["high"] or r["close"] for r in rows[-252:])
         lo52 = min(r["low"] or r["close"] for r in rows[-252:])
         return {"ticker": ticker, "market": market, "range": rng, "bars": bars,
-                "status": self._bar_status(last["date"], res["status"]),
+                "status": self._bar_status(last["date"], res["status"], sym),
                 "last": {"date": last["date"], "close": last["close"], "intraday": self._intraday(last["date"], market),
                          "change_pct": _pct(last["close"], rows[-2]["close"] if len(rows) > 1 else None),
                          "high_52w": hi52, "low_52w": lo52,
@@ -294,7 +302,7 @@ class Terminal(ModelViews):
         if mk == "KR":
             rows, source = self._kr_raw_rows(ticker, rows)
         today =self.now().astimezone(ZoneInfo("Asia/Seoul" if mk == "KR" else "America/New_York")).date()
-        got = price_fill.pick(rows, want, today)
+        got = price_fill.pick(rows, want, today, symbol=sym, now=self.now())
         if res["status"] != "REAL" and got["status"] == "REAL":
             got["status"] = res["status"]
         return {"ticker": ticker, "market": mk, "asked": want.isoformat() if want else None, **got,
@@ -388,7 +396,7 @@ class Terminal(ModelViews):
                     source += " · 오늘 일봉은 Yahoo 1분봉으로 이어 그림"
         out = chart_analysis.analyse(rows, market, keep, periods)
         bars = out["bars"]
-        status = self._bar_status(bars[-1]["date"], res["status"]) if bars else "UNAVAILABLE"
+        status = self._bar_status(bars[-1]["date"], res["status"], sym) if bars else "UNAVAILABLE"
         return {**out, "ticker": ticker, "name": self.COMPARE_INDEX.get(ticker), "market": market, "range": rng, "status": status,
                 "intraday": self._intraday(bars[-1]["date"], market) if bars else None, "short_history": bool(bars) and len(bars) < keep,
                 "settings": chart_analysis.settings(), "cache": {k: res.get(k) for k in ("status", "fetched_at", "error")}, "source": source,
@@ -704,7 +712,7 @@ class Terminal(ModelViews):
             rows = [r for r in data.get(s) or [] if isinstance(r.get("close"), (int, float)) and math.isfinite(r["close"])]
             if rows and self._intraday(rows[-1]["date"], market):
                 rows = rows[:-1]
-            if not rows or self._bar_status(rows[-1]["date"], "REAL") != "REAL":
+            if not rows or self._bar_status(rows[-1]["date"], "REAL", s) != "REAL":        # a price that stopped is not judged
                 continue
             out[t] = {"date": rows[-1]["date"], "close": rows[-1]["close"], "prev_close": rows[-2]["close"] if len(rows) > 1 else None}
         return out
