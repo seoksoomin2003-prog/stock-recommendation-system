@@ -60,3 +60,14 @@ def test_the_rule_is_written_down_with_how_rarely_the_word_returns():
     for needle in ("점수는 바뀌지 않습니다", "WEAK_POSITIVE_EVIDENCE", "`RANK_ONLY`로는 돌아오지 않습니다", "6.7~8.7%", "주문은 바뀌지 않습니다", "R-1로 기록된 거래일은 없습니다"):
         assert needle in doc
     assert "wording.restore(engine.score(ctx, strategy, held=bool(position)), self.base, market, strategy)" in (ROOT / "terminal" / "qsf" / "service.py").read_text(encoding="utf-8")
+
+
+def test_a_scan_stored_before_r2_is_named_by_todays_rules_when_it_is_read(tmp_path):
+    old = {"ticker": "AAA", "strategy": "SWING", "score": 68.0, "band": "BUY_CANDIDATE", "band_label": "매수 후보(완충 구간: 67점까지 유지)", "action": "BUY", "action_label": "매수 후보"}
+    got = wording.relabel(old, tmp_path, "US")
+    assert got["band_label"] == "상위 구간(완충 구간: 67점까지 유지)" and got["action_label"] == "상위 구간" and old["action_label"] == "매수 후보"      # the stored row is not rewritten
+    low = wording.relabel({"strategy": "LONG_TERM", "band": "SELL_AVOID", "band_label": "매도·회피 후보", "action": "AVOID", "action_label": "신규 진입 회피"}, tmp_path, "KR")
+    assert low["band_label"] == "최하위 구간" and low["action_label"] == "하위 구간"
+    pinned = wording.relabel({"strategy": "SWING", "band": "HOLD_WATCH", "band_label": "보유·관찰 · 합병 절차로 가격이 묶여 매수 후보에서 뺌(x)", "action": "WATCH", "action_label": "관찰"}, tmp_path, "US")
+    assert pinned["band_label"] == "보유·관찰 · 합병 절차로 가격이 묶여 상위 구간에서 뺌(x)" and wording.relabel({"band_label": None, "action": "?"}, tmp_path, "US")["band_label"] is None
+    assert "wording.relabel(r, self.base, market)" in (ROOT / "terminal" / "qsf" / "views.py").read_text(encoding="utf-8")

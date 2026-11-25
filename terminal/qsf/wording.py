@@ -61,3 +61,22 @@ def restore(res: Dict[str, Any], base: Path, market: str, strategy: str) -> Dict
         out["action_label"] = "매수 후보"
     out["buy_word_earned"] = True
     return out
+
+
+# A scan stored before R-2 keeps the labels of its day in its rows (the ledger keeps codes only).  The screen names a band by
+# today's rules whenever it reads a stored row: the stored file is not rewritten.
+BEFORE_R2 = (("강력 매수 후보", "최상위 구간"), ("매수 후보", "상위 구간"), ("약세·축소 후보", "하위 구간"), ("매도·회피 후보", "최하위 구간"))
+
+
+def relabel(row: Dict[str, Any], base: Path, market: str) -> Dict[str, Any]:
+    """``row`` of a stored scan with its band and action named by the rules in force (and the buy word, where earned)."""
+    from terminal.qsf import config
+    out = dict(row)
+    label = out.get("band_label")
+    if isinstance(label, str):
+        for old, new in BEFORE_R2:
+            label = label.replace(old, new)
+        out["band_label"] = label
+    if out.get("action") in config.ACTION_LABELS:
+        out["action_label"] = config.ACTION_LABELS[out["action"]]
+    return restore(out, base, market, str(out.get("strategy") or ""))

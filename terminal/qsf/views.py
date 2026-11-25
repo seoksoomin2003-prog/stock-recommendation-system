@@ -99,6 +99,8 @@ class ScreenViews:
             from terminal.qsf import price_audit
             audit = price_audit.load(self.base, market) or {}
             checked = audit.get("stocks") if audit.get("session") == out.get("session") else None   # an older check says nothing about this scan
+            from terminal.qsf import wording
+            out["rows"] = [wording.relabel(r, self.base, market) for r in out.get("rows") or []]      # a stored row is named by today's rules (R-2)
             for r in out.get("rows") or []:
                 a = (checked or {}).get(r.get("ticker"))
                 if a and a["level"] in ("warn", "bad"):
