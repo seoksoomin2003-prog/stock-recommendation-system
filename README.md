@@ -469,10 +469,12 @@ python app.py terminal-agent uninstall # 멈추고 launchd 작업 제거
   보유하며 재검토는 화면에만 나옵니다.
 * 스윙의 30거래일 시간 제한은 스윙이 된 날부터 셉니다.
 
-### QSF 1.1 종목 점수 (실험)
+### QSF 종목 점수 (실험, 지금 공식 QSF-1.6.0)
 
-점수 탭과 `qsf` 명령은 고른 종목을 네 가지 별도 기준으로 0~100점 채점합니다: `US_SWING_V1`, `US_LONG_TERM_V1`,
-`KR_SWING_V2`, `KR_LONG_TERM_V1`. 결과마다 요인, 자료 충족도와 신뢰도, 절대 관문, 보유 계획, 청산 조건, 판정을 바꿀 조건이
+점수 탭과 `qsf` 명령은 고른 종목을 네 가지 별도 기준으로 0~100점 채점합니다: `US_SWING_V2`, `US_LONG_TERM_V2`,
+`KR_SWING_V3`, `KR_LONG_TERM_V2`. 요인·배점·한계의 지금 목록은 코드에서 만드는 `reports/QSF_FACTOR_INVENTORY.md`입니다
+(시장 국면은 점수 밖, 한국 스윙은 가격 추세 요인 없음). 높은 점수의 수익 근거는 확인된 것이 없습니다
+(`reports/score_reliability_audit_2026_11_25/EXECUTIVE_RESEARCH_FINDINGS.md`). 결과마다 요인, 자료 충족도와 신뢰도, 절대 관문, 보유 계획, 청산 조건, 판정을 바꿀 조건이
 나옵니다.
 
 ```bash

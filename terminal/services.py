@@ -171,6 +171,7 @@ class Terminal(ModelViews):
             sectors = {r["ticker"]: r.get("sector") for r in self.qsf.screen_rows(market).get("rows") or []}
             memo[key] = {"status": "REAL", "market": market, "session": session, "prev_session": next((v["prev_session"] for v in got.values()), None),
                          "rows": {f"{t}|{s}": v for (t, s), v in got.items()}, "sectors": sectors, "band_edges": rank_notes.band_edges(),
+                         "daily_move": rank_notes.daily_move(self.qsf.ledger, market, session),
                          "note": "가점·감점은 중간(50점)에서 각 요인이 더하거나 뺀 점수입니다. 모든 요인의 값을 더하면 총점 − 50이 됩니다. 스캔이 원장에 남긴 값에서 읽었습니다."}
         return memo[key]
 

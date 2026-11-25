@@ -220,6 +220,39 @@ def tilt_line(t: Optional[Dict[str, Any]]) -> Optional[str]:
             "높은 점수가 더 오른다는 근거는 아직 확인되지 않았습니다.")
 
 
+def tilt_long(snaps: Sequence[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """The same for the long-term score (score audit 2026-11-25, P2-4): the top fifth's median price-to-earnings ratio (companies
+    with earnings only), return on equity and downside volatility beside the whole scan's.  Recorded factor values; no return."""
+    rows = [s for s in snaps if s.get("strategy") == "LONG_TERM" and s.get("score") is not None and s.get("actionability") == "ACTIONABLE"]
+    if len(rows) < TILT_MIN:
+        return None
+    rows.sort(key=lambda s: -float(s["score"]))
+    top = rows[:max(1, len(rows) // 5)]
+
+    def med(group, fid, key, positive=False):
+        v = [x for x in (_raw(s, fid, key) for s in group) if x is not None and (x > 0 or not positive)]
+        return float(np.median(v)) if len(v) >= max(3, len(group) // 2) else None
+    out: Dict[str, Any] = {"n": len(rows), "top_n": len(top)}
+    for name, fid, key, positive in (("pe", "valuation", "pe", True), ("roe", "business_quality", "roe", False), ("down_vol", "downside_drawdown", "downside_vol", False)):
+        out[f"{name}_top"], out[f"{name}_all"] = med(top, fid, key, positive), med(rows, fid, key, positive)
+    return out
+
+
+def tilt_long_line(t: Optional[Dict[str, Any]]) -> Optional[str]:
+    if not t:
+        return None
+    parts = []
+    if t["pe_top"] is not None and t["pe_all"] is not None:
+        parts.append(f"PER 중앙값 {t['pe_top']:.1f}배(스캔 전체 {t['pe_all']:.1f}배, 흑자 회사만)")
+    if t["roe_top"] is not None and t["roe_all"] is not None:
+        parts.append(f"ROE 중앙값 {t['roe_top'] * 100:.0f}%(전체 {t['roe_all'] * 100:.0f}%)")
+    if t["down_vol_top"] is not None and t["down_vol_all"] is not None:
+        parts.append(f"하방 변동성 중앙값 {t['down_vol_top'] * 100:.0f}%(전체 {t['down_vol_all'] * 100:.0f}%)")
+    if not parts:
+        return None
+    return (f"장기 점수 상위 5분의 1({t['top_n']}종목)의 모양: " + ", ".join(parts) + ". 높은 점수는 이런 모양의 회사를 고른 것이고, 더 오른다는 근거는 아직 확인되지 않았습니다.")
+
+
 # ---------------------------------------------------------------------- liked by the score, flagged by an avoid mark
 def marks_of(row: Dict[str, Any]) -> List[str]:
     out = []

@@ -74,6 +74,32 @@ def previous_session(ledger: Any, market: str, session: str) -> Optional[str]:
     return days[-1] if days else None
 
 
+MOVE_MIN = 30                   # stocks scored on both days under which no daily move is said
+
+
+def daily_move(ledger: Any, market: str, session: str) -> Dict[str, Dict[str, Any]]:
+    """{strategy: {"median", "p90", "n", "prev_session", "same_formula"}}: how far a score moved between the session before and this
+    one, over every stock scored on both days (absolute change in points).  Display only (score audit 2026-11-25, P2-2): a score
+    within that distance of a band's line may be on the other side tomorrow.  ``same_formula``: both days carry one and the same
+    model version; when not, the move includes the formula's change and the page says so."""
+    before = previous_session(ledger, market, session)
+    if not before:
+        return {}
+    now, prev, versions = {}, {}, {session: set(), before: set()}
+    for day, book in ((session, now), (before, prev)):
+        for s in _session_snaps(ledger, market, day):
+            if s.get("data_date") == day and s.get("score") is not None:
+                book[(s["ticker"], s["strategy"])] = float(s["score"])
+                versions[day].add(str(s.get("model_version")))
+    same = len(versions[session] | versions[before]) == 1
+    out: Dict[str, Dict[str, Any]] = {}
+    for strategy in sorted({k[1] for k in now}):
+        moves = sorted(abs(v - prev[k]) for k, v in now.items() if k[1] == strategy and k in prev)
+        if len(moves) >= MOVE_MIN:
+            out[strategy] = {"median": moves[len(moves) // 2], "p90": moves[min(len(moves) - 1, int(len(moves) * 0.9))], "n": len(moves), "prev_session": before, "same_formula": same}
+    return out
+
+
 def notes(ledger: Any, market: str, session: str) -> Dict[Tuple[str, str], Dict[str, Any]]:
     """{(ticker, strategy): {"plus", "minus", "prev", "prev_session"}} for one recorded session.  ``prev``: the score recorded at the
     session before (None when the stock had none).  A ticker scanned twice in a session keeps its last snapshot, as the screens do."""

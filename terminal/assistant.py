@@ -570,8 +570,15 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
         return [item("INFO", "FINANCIAL_SHARE", line, tab="qsf")] if line else []
 
     part("dividends", dividends)
+    def tilt_long() -> List[Dict[str, Any]]:
+        from terminal import analyst_extra as ax
+        session = terminal.qsf.latest(market).get("session")
+        line = ax.tilt_long_line(ax.tilt_long(_snaps(terminal, market, session))) if session else None
+        return [item("INFO", "SCORE_TILT_LONG", line, tab="qsf")] if line else []
+
     part("mix", mix)
     part("mix", tilt)
+    part("mix", tilt_long)
     part("mix", financial_share)
     part("marked", marked)
     part("gaps", gaps)

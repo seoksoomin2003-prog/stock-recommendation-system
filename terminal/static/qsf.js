@@ -664,6 +664,7 @@ function qsfCard(c) {
     ${c.surface_note ? `<div class="meta"><b>엇갈림</b> ${esc(c.surface_note)}</div>` : ""}
     ${qsfConservative(c)}${qsfInputsNote(c)}${qsfStaleNote(c)}${qsfFundPeriodNote(c)}${qsfFullerNote(c)}${qsfFundChecks(c)}
     <h3>영역별 점수</h3><div class="qsf-domains">${Object.entries(c.domains).filter(([k]) => k !== "REGIME").map(([k, v]) => `<div><span>${esc(v.label)} <small class="meta m0">${v.reference ? "참고 · 점수 미반영" : v.max_points + "점"}${k === "RISK" ? " · 높을수록 좋음" : ""}</small></span>${qsfBar(v.score_100)}</div>`).join("")}</div>
+    ${qsfRiskBeside(c)}
     <h3>진입</h3><p><b>${qsfEntry(e.status, c.strategy)}</b>: ${esc(e.reason)}${e.zone ? ` 기준 구간 ${qsfPrice(e.zone.low, m)}~${qsfPrice(e.zone.high, m)}.` : ""}</p>
     ${c.exit ? `<h3>보유 종목 판단</h3><p><b>${QSF_EXIT[c.exit.action]}</b>: ${esc(c.exit.reason)}</p>` : ""}`, true)}
     ${qsfFold(c.position ? "plan-held" : "plan", "계획 (가설) · 보유 계획과 판단이 바뀌는 조건", `<h3>보유 계획 <span class="meta m0">(가설)</span></h3><dl class="qsf-dl"><dt>진입 예정일</dt><dd>${esc(h.entry_date)}</dd>${horizon}
@@ -806,6 +807,22 @@ function qsfLineToday(rows, market) {
     ? ` 한국 스윙의 실전 판정은 70점이 아니라 <b>그날 상위 5분의 1</b>(오늘 ${Math.ceil(n / 5)}종목, ${fifth.toFixed(1)}점 이상)을 읽습니다.` : ` 그날 상위 5분의 1은 ${fifth.toFixed(1)}점 이상입니다.`;
   return `<div class="meta qr-line70">${line}${kr} 70점의 자리는 점수 종류와 날에 따라 달라, 다른 점수나 다른 날의 70점과 같은 뜻이 아닙니다.</div>`;
 }
+// 점수가 하루에 얼마나 움직이는가 (점수 감사 P2-2): 직전 기록과 견준 값. 구간 선에서 그 폭 안에 있는 종목은 내일 다른 구간일 수 있습니다.
+function qsfMoveLine(notes) {
+  const m = notes && notes.daily_move && notes.daily_move[qsfState.strategy];
+  if (!m || !isNum(m.median) || !isNum(m.p90)) return "";
+  return `<div class="meta qr-move">이 점수는 직전 기록(${esc(m.prev_session)})과 견줘 종목의 절반이 ${m.median.toFixed(1)}점 안에서, 열에 하나는 ${m.p90.toFixed(1)}점 넘게 움직였습니다(${m.n}종목). 구간 선에서 그 폭 안에 있는 점수는 내일 다른 구간일 수 있습니다.${m.same_formula ? "" : " 두 기록의 공식이 달라 공식이 바뀐 몫도 섞여 있습니다."}</div>`;
+}
+// 위험 영역과 그 밖의 영역을 나란히 (점수 감사 P2-3): 한 숫자에 '덜 흔들리고 사고팔기 쉬움'과 나머지 평가가 섞여 있습니다.
+function qsfRiskBeside(c) {
+  const dm = c.domains || {}, risk = dm.RISK;
+  if (!risk || risk.reference || !isNum(risk.score_100)) return "";
+  const rest = Object.entries(dm).filter(([k, v]) => k !== "RISK" && !v.reference && isNum(v.score_100) && isNum(v.max_points) && v.max_points > 0);
+  const w = rest.reduce((a, [, v]) => a + v.max_points, 0);
+  if (!w) return "";
+  const other = rest.reduce((a, [, v]) => a + v.score_100 * v.max_points, 0) / w;
+  return `<div class="meta">위험 영역 <b>${risk.score_100.toFixed(0)}</b>/100 · 그 밖의 영역 <b>${other.toFixed(0)}</b>/100. 점수 한 숫자에는 '덜 흔들리고 사고팔기 쉬움'(위험 영역)과 나머지 평가가 섞여 있습니다. 위험 영역 점수가 높다는 것은 위험이 낮다는 뜻입니다.</div>`;
+}
 function qsfRankRow(r, isTop, n, sector, edges, common) {
   const out = r.actionability !== "ACTIONABLE", dm = r.domains || {};
   const dom = (k) => `<td class="num w qd qd-col">${isNum(dm[k]) ? `<span class="qd-bar"><i style="width:${Math.max(2, Math.min(100, dm[k]))}%"></i></span>${dm[k].toFixed(0)}` : DASH}</td>`;
@@ -861,7 +878,7 @@ async function qsfRank() {
     ${commonLine}`;
   box.innerHTML = `<div class="panel"><h2>${QSF_STRAT[qsfState.strategy]} 순위 ${all.length}개 <span class="badge">${esc(d.session)}</span></h2>
     <div class="meta qr-caveat">점수순으로 보여 줄 뿐 수익이 더 좋다는 근거는 아닙니다.</div>
-    ${qsfLineToday(scoredRows, mk)}
+    ${qsfLineToday(scoredRows, mk)}${qsfMoveLine(notes)}
     ${d.live_model_version && d.model_version && d.live_model_version !== d.model_version ? `<div class="notice">이 순위는 ${esc(d.model_version)} 공식으로 기록된 스캔입니다. 종목을 열면 카드는 지금 공식(${esc(d.live_model_version)})으로 다시 계산하므로 점수와 구간 표시가 다를 수 있습니다. 다음 스캔이 기록되면 같아집니다.</div>` : ""}
     <details class="qr-how" data-fold="rankhow"${qsfFoldOpen("rankhow", false) ? " open" : ""}><summary>읽는 법 <span class="meta m0">상위 3 · 줄 누르기 · 표시와 가점·감점 칸의 뜻</span></summary>${how}</details>
     ${all.length ? `<div class="tbl-wrap"><table class="qsf-rank-tbl"><thead>${head}</thead><tbody>${all.map((r) => qsfRankRow(r, top.includes(r), note(r), notes && notes.sectors[r.ticker], notes && notes.band_edges, common)).join("")}</tbody></table></div>` : '<div class="empty">순위에 올릴 종목이 없습니다.</div>'}

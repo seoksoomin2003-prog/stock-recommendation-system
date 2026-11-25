@@ -88,7 +88,7 @@ def picks(latest: Dict[str, Any], market: str, fund: str, holdings: Optional[Dic
         ranked = [r for r in mine if r.get("score") is not None and r.get("actionability") != "INSUFFICIENT_DATA" and r.get("data_date") == session]
         ranked.sort(key=lambda r: (-r["score"], r["ticker"]))
         out[strategy] = {"n": len(mine), "ranked": len(ranked), "top": [_pick(i + 1, r) for i, r in enumerate(ranked[:TOP])],
-                         "buy_candidates": sum(1 for r in ranked if r.get("band") == "BUY_CANDIDATE")}
+                         "buy_candidates": sum(1 for r in ranked if r.get("band") in ("STRONG_BUY_CANDIDATE", "BUY_CANDIDATE"))}      # the band of 80 is inside the band of 70 (it was left out until 2026-11-25)
     return {"status": "REAL", "market": market, "fund": fund_code(fund), "session": session, "model_version": latest.get("model_version"),
             "rule": holdings_rule(holdings, stale) if holdings else rule_text(market, fund), "basis_kind": "HOLDINGS" if holdings else "MATCH",
             "fund_holdings": len(holdings["codes"]) if holdings else None, "strategies": out,

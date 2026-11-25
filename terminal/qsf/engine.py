@@ -27,7 +27,7 @@ def kept_in_buy_band(score: Optional[float], prev_band: Optional[str]) -> bool:
 def classify(score: Optional[float], prev_band: Optional[str] = None) -> Dict[str, str]:
     """``prev_band``: the band of the stock's previous record, when the caller knows it (the live card).  Research and replays
     pass none and read the score alone, as before."""
-    if score is None:
+    if score is None or score != score:            # NaN: no score, never the lowest band (score audit 2026-11-25; no record ever held one)
         return {"band": "NONE", "band_label": "점수 없음"}
     if kept_in_buy_band(score, prev_band):
         return {"band": "BUY_CANDIDATE", "band_label": f"상위 구간(완충 구간: {config.BUY_BAND_EXIT:g}점까지 유지)"}
@@ -40,7 +40,7 @@ def classify(score: Optional[float], prev_band: Optional[str] = None) -> Dict[st
 def action_for(score: Optional[float], held: bool, prev_band: Optional[str] = None) -> str:
     """Held and new candidates get different words: SELL only ever applies to a position actually held.  The buy word follows the
     band, buffer included, so the two never part."""
-    if score is None:
+    if score is None or score != score:
         return "INSUFFICIENT_DATA"
     if held:
         return "HOLD" if score >= 55 else "REDUCE" if score >= 40 else "SELL"
