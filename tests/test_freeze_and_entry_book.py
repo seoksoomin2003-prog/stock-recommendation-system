@@ -58,7 +58,7 @@ def test_another_capital_spending_tag_is_read_only_for_a_year_the_three_do_not_r
                 "NetCashProvidedByUsedInOperatingActivities": {2023: 300.0, 2024: 310.0, 2025: 320.0}})
     got = {r["end"][:4]: (r["val"], r["alias"]) for r in F.extract_us(f)["capex"]}
     assert got == {"2023": (100.0, "PaymentsToAcquirePropertyPlantAndEquipment"), "2024": (120.0, "PaymentsToAcquireOtherProductiveAssets"), "2025": (130.0, "PaymentsToAcquireOtherProductiveAssets")}
-    assert len(F.US_FLOW["capex"]) == 3 and len(F.US_CAPEX_FALLBACK) == 7                         # the three still come first, alone
+    assert len(F.US_FLOW["capex"]) == 3 and len(F.US_CAPEX_FALLBACK) == 8                         # the three still come first, alone
 
 
 def test_a_property_company_and_a_net_inflow_stay_unread():
@@ -128,3 +128,12 @@ def test_the_entry_comparison_is_recorded_backed_up_shown_and_read_without_a_per
     assert "EN-1" in doc and "아무것도 바꾸지 않는다" in doc and "2026-11-25" in doc
     # the real order plan never takes the rule: only the comparison book asks for it
     assert "breakout=" not in src("terminal", "services.py")
+
+
+def test_a_company_on_its_own_capital_spending_tag_is_named_as_unread():
+    from terminal import plain
+    card = {"actionability": "ACTIONABLE", "score": 66.0, "band": "HOLD_WATCH", "strategy": "LONG_TERM", "market": "US", "entry_status": "ENTRY_NOW", "factors": [], "capex_unread": True}
+    said = " ".join(line for part in plain.card_plain(card, {})["parts"] for line in part["lines"])
+    assert "회사 자체 항목 이름으로 신고" in said and "읽지 못했다는 뜻" in said
+    assert 'out["capex_unread"] = True' in src("terminal", "qsf", "service.py")
+    assert F.US_CAPEX_FALLBACK[-1] == "SegmentExpenditureAdditionToLongLivedAssets"          # the segment note comes last: only when no cash-flow tag is there

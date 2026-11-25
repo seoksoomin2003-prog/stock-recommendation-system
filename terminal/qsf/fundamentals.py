@@ -27,13 +27,16 @@ US_FLOW = {
     "buyback": ["PaymentsForRepurchaseOfCommonStock", "PaymentsForRepurchaseOfEquity"], "dividends": ["PaymentsOfDividendsCommonStock", "PaymentsOfDividends", "PaymentsOfOrdinaryDividends"],
     "shares_avg": ["WeightedAverageNumberOfDilutedSharesOutstanding"], "eps": ["EarningsPerShareDiluted"],
 }
-# Capital spending under other names (QSF-1.6.0, user decision 2026-11-25).  The three tags above left 23 scanned companies with
+# Capital spending under other names (QSF-1.6.0, user decision 2026-11-25).  The three tags above left 26 scanned companies with
 # no capital spending in their newest year (EOG, VZ, LLY, ED, D, WEC ...): no free cash flow, a missing factor.  These are read
 # only for a fiscal year none of the three tags reports, so a year is never a mix of two concepts; a net figure at or under zero
 # is not spending; and a year in which the company reports buying or building real estate is left unread (a property company's
 # "other equipment" line is not its capital spending).  Companies that file spending under their own tags stay unread.
 US_CAPEX_FALLBACK = ["PaymentsToAcquireOilAndGasPropertyAndEquipment", "PaymentsToExploreAndDevelopOilAndGasProperties", "PaymentsToAcquireOtherPropertyPlantAndEquipment",
-                     "PaymentsForConstructionInProcess", "PaymentsToAcquireOtherProductiveAssets", "PaymentsToAcquireMachineryAndEquipment", "PaymentsForProceedsFromProductiveAssets"]
+                     "PaymentsForConstructionInProcess", "PaymentsToAcquireOtherProductiveAssets", "PaymentsToAcquireMachineryAndEquipment", "PaymentsForProceedsFromProductiveAssets",
+                     # last: the segment note's "additions to long-lived assets", for a company whose cash-flow line is under its own tag.
+                     # Checked on the three it reads (2026-11-25): equal to the cash-flow figure in URI and VLO 2023-2024, within 4% in CMS 2021-2022.
+                     "SegmentExpenditureAdditionToLongLivedAssets"]
 US_REAL_ESTATE_SPENDING = ["PaymentsToAcquireRealEstate", "PaymentsToDevelopRealEstateAssets", "PaymentsToAcquireRealEstateAndRealEstateJointVentures"]
 CONTRACT_REVENUE = ("RevenueFromContractWithCustomerExcludingAssessedTax", "RevenueFromContractWithCustomerIncludingAssessedTax")
 US_INSTANT = {

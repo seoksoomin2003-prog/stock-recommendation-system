@@ -22,7 +22,7 @@ from markets import session_data
 from terminal import plain
 from terminal import sources as default_sources
 from terminal.cache import FileCache
-from terminal.qsf import config, deal_pin, earnings_estimate, engine, events, fund_period, fund_trailing, fundamentals, holding, ledger, technicals
+from terminal.qsf import config, deal_pin, earnings_estimate, engine, events, fund_period, fund_trailing, fundamentals, holding, kr_fuller, ledger, technicals
 from terminal.qsf.views import ScreenViews, _n
 from utils import nyse_calendar
 
@@ -57,6 +57,11 @@ def _stale(what: str, res: Dict[str, Any]) -> List[Dict[str, Any]]:
 def _us_fund_key(ticker: str, cik: str) -> str:
     """The one name under which a US company's annual statements are stored (read by the score and by the note)."""
     return f"annual5:{default_sources.facts_key(ticker, cik)}"       # annual5 from QSF-1.6.0: capital spending under more tags
+
+
+def _kr_side_key(code: str, fiscal_month: int) -> str:
+    """Where the statement lines of the side record FI-1 are kept: beside the live series, under a name of their own."""
+    return _kr_fund_key(code, fiscal_month).replace("krfund3:", f"{kr_fuller.KEY}:", 1)
 
 
 def _kr_fund_key(code: str, fiscal_month: int) -> str:
@@ -583,6 +588,33 @@ class QSF(ScreenViews):
             self._krx_share_cache[as_of] = got
         return got
 
+    def _kr_annual(self, corp: str, code: str, klass: str, as_of: date, fm: int) -> Dict[str, Any]:
+        """The annual series the live score reads, from OpenDART.  The same download's lines the live reader has no place for
+        (gross profit, interest paid, own shares bought) are put aside under their own name for the side record FI-1
+        (terminal/qsf/kr_fuller.py); they are never part of what this returns."""
+        from markets.kr import dart as kr_dart
+        keep: Dict[int, Dict[str, Any]] = {}
+        annual = fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart, extract=kr_fuller.extractor(kr_dart.extract_concepts, keep), fiscal_month=fm))
+        try:
+            self.cache.write(_kr_side_key(code, fm), kr_fuller.series(keep, annual.get("_bases")))
+        except Exception:
+            pass
+        return annual
+
+    def _kr_fuller(self, code: str, fm: int, annual: Dict[str, Any], fund: Dict[str, Any], close: float, as_of: str, kw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """The figures with the put-aside lines read too, for the side record FI-1; None when there are none or the live figures
+        are not the annual ones.  Never raises: the live figures stand without it."""
+        if fund.get("status") not in USABLE or fund.get("live_period") not in (None, "ANNUAL"):
+            return None
+        try:
+            full = kr_fuller.merged(annual, (self.cache.read(_kr_side_key(code, fm)) or {}).get("data"))
+            if not full:
+                return None
+            added = [k for k in kr_fuller.LINES if full.get(k) and not annual.get(k)]
+            return {"fund": {**fundamentals.blank_mixed_cash_flow(fundamentals.metrics(full, close, as_of, source="OpenDART 사업보고서", **kw), code), "period_basis": "ANNUAL"}, "added": added}
+        except Exception:
+            return None
+
     def _kr_fund_events(self, code: str, ident: Dict, bars: List[Dict], as_of: str) -> Dict[str, Any]:
         if not self.dart.configured:
             reason = "OPENDART_API_KEY가 없어 한국 재무·공시를 평가하지 않았습니다."
@@ -592,7 +624,7 @@ class QSF(ScreenViews):
             return {"fund": {"status": "UNAVAILABLE", "reason": "DART 고유번호 없음"}, "events": {"status": "UNAVAILABLE", "reason": "DART 고유번호 없음"}}
         klass = ident.get("industry_class") or "NON_FINANCIAL"
         fm = fundamentals.fiscal_month_of(ident.get("fiscal_month"))
-        res = self.cache.cached(_kr_fund_key(code, fm), TTL["kr_facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, date.fromisoformat(as_of), self.dart, fiscal_month=fm)))
+        res = self.cache.cached(_kr_fund_key(code, fm), TTL["kr_facts"], lambda: self._kr_annual(corp, code, klass, date.fromisoformat(as_of), fm))
         info = self.cache.cached(f"info:{ident.get('yahoo_symbol')}", TTL["info"], lambda: self.src.yahoo_info(ident["yahoo_symbol"]))["data"] or {}
         fund = {"status": "UNAVAILABLE", "reason": f"DART 재무 조회 실패 ({res.get('error')})"}
         if res["data"]:
@@ -600,6 +632,9 @@ class QSF(ScreenViews):
             fund = fundamentals.blank_mixed_cash_flow(fundamentals.metrics(res["data"], bars[-1]["close"], as_of, source="OpenDART 사업보고서", **kw), code)
             other = self._kr_trailing(code, corp, klass, fm, as_of, res["data"], bars[-1]["close"], kw)
             fund = self._with_other_period("KR", fund, dict(fund, period_basis="ANNUAL") if other and other.get("annual_only") else other)
+            fuller = self._kr_fuller(code, fm, res["data"], fund, bars[-1]["close"], as_of, kw)
+            if fuller:
+                fund["fuller"] = fuller
         rep = self._kr_filing_list(corp, date.fromisoformat(as_of), TTL["subm"], whole_day=True)       # every page of the year (QSF-1.4.1)
         ev = events.classify_kr_list(rep["data"], as_of)
         old_fund, old_list = _stale("DART 재무제표", res) if res["data"] else [], _stale("DART 공시 목록", rep)
@@ -681,7 +716,7 @@ class QSF(ScreenViews):
         as_of = self.now().astimezone(ZoneInfo("Asia/Seoul")).date()      # the Korean day: the UTC day hid a morning's filings until 09:00
         klass = ident.get("industry_class") or "NON_FINANCIAL"
         fm = fundamentals.fiscal_month_of(ident.get("fiscal_month"))
-        res = self.cache.cached(_kr_fund_key(code, fm), TTL["kr_facts"], lambda: fundamentals.extract_kr(fundamentals.load_kr_statements(corp, code, klass, as_of, self.dart, fiscal_month=fm)))
+        res = self.cache.cached(_kr_fund_key(code, fm), TTL["kr_facts"], lambda: self._kr_annual(corp, code, klass, as_of, fm))
 
         rep = self._kr_filing_list(corp, as_of, TTL["kr_list_screen"])          # the stock screen: today's filings within the hour
         out.update(annual=res["data"], annual_status=res["status"], annual_fetched=res["fetched_at"], reports=(rep["data"] or {}).get("rows") if rep["data"] is not None else None,
@@ -823,6 +858,14 @@ class QSF(ScreenViews):
                 except Exception:
                     other_score = None
             out["fund_period"] = fund_period.card_field(fund["live_period"], res["score"], fund, other_score, other)
+        if market == "US" and fund.get("status") in USABLE and not fund.get("is_financial") and fund.get("fcf") is None and fund.get("ocf_to_ni") is not None:
+            out["capex_unread"] = True          # display only: operating cash flow is there, capital spending is not (filed under the company's own tag)
+        if fund.get("fuller"):                  # the score with the lines the live Korean reader has no place for (side record FI-1; never the live score)
+            try:
+                full_score = engine.score({**ctx, "fund": fund["fuller"]["fund"]}, strategy, held=bool(position))["score"]
+            except Exception:
+                full_score = None
+            out["fuller_inputs"] = kr_fuller.card_field(full_score, res["score"], fund["fuller"]["added"])
         _stale_statements(out, ctx)
         out["why_summary"] = _why(out)
         if market == "US" and ctx.get("deal_unchecked"):

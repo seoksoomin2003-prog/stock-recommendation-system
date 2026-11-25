@@ -44,6 +44,8 @@ def snapshot(card: Dict[str, Any]) -> Dict[str, Any]:
         rec["cik"] = card["cik"]
     if card.get("fund_period"):     # from 2026-11-23: the score on annual statements and on trailing four quarters (reports/QSF_FUND_PERIOD_PROTOCOL.md)
         rec["fund_period"] = card["fund_period"]
+    if card.get("fuller_inputs"):   # KR, from 2026-11-25: the score with gross profit, interest paid and own-share purchases read too (side record FI-1)
+        rec["fuller_inputs"] = card["fuller_inputs"]
     return rec
 
 

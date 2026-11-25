@@ -160,6 +160,10 @@ def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> 
     gap = ax.gap_line(card.get("fund_period"), strategy)
     if gap:
         head.append(gap)
+    if card.get("capex_unread"):
+        # SEC's public figures hold standard tags only; about twenty scanned companies file capital spending under their own (2026-11-25)
+        head.append("이 회사는 설비투자를 회사 자체 항목 이름으로 신고해서, 이 프로그램이 쓰는 SEC 공개 자료로는 잉여현금흐름(벌어서 설비에 쓰고 남는 돈)을 계산하지 못했습니다. "
+                    "그 항목은 점수에서 빠져 있습니다. 돈을 잘 못 번다는 뜻이 아니라 읽지 못했다는 뜻입니다.")
     if card.get("deal_unchecked"):
         head.append("합병이나 공개 매수 서류가 있는지는 오늘 확인하지 못했습니다(받아 둔 SEC 공시 목록이 없습니다).")
     parts.append({"h": "한 줄로", "lines": head})

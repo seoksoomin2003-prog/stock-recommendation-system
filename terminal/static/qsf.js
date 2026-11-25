@@ -572,6 +572,15 @@ function qsfFundPeriodNote(c) {
   return `<div class="meta">${head} · <b>${otherName}(${esc(other.fiscal_end || "")}까지) 기준 점수 ${other.score.toFixed(1)}</b> (${diff > 0 ? "+" : ""}${diff.toFixed(1)}) · 참고값입니다. 매일 따로 기록하고 240거래일 뒤 한 번 읽어 정합니다.</div>`;
 }
 
+// 한국: 실제 점수가 읽지 않는 재무 항목(매출총이익·이자 지급액·자기주식 취득)까지 읽으면 나오는 참고 점수 (옆 기록 FI-1,
+// reports/QSF_KR_FULLER_INPUTS_2026_11_25.md).  점수 공식 동결 중이라 실제 점수에는 넣지 않습니다.
+function qsfFullerNote(c) {
+  const f = c.fuller_inputs;
+  if (!f || !isNum(f.score) || !isNum(c.score)) return "";
+  const diff = f.score - c.score;
+  return `<div class="meta">빠진 재무 항목까지 읽은 참고 점수 <b>${f.score.toFixed(1)}</b> (${diff >= 0 ? "+" : ""}${diff.toFixed(1)}) · 더 읽은 항목: ${esc((f.added_ko || []).join(", "))} · 실제 점수가 아니며 매일 옆에 기록만 합니다(점수 공식 동결 중).</div>`;
+}
+
 // 근거 균형: 중간(50점)에서 각 요인이 더하거나 뺀 점수. 모든 요인의 값을 더하면 총점 − 50 (terminal/qsf/rank_notes.py).
 // 작업 화면 개편 6단계 (시각화 명세 5.1): 가운데 0선(50점 중간)에서 좌우로 자라는 막대.  색은 하나(중립)이고 쪽과 부호가 방향을
 // 말합니다: 가점·감점은 가격이 아니므로 가격 색을 쓰지 않습니다.  눈금은 카드 하나에 공통(가장 큰 |점수|를 둥근 값으로 올림).
@@ -616,7 +625,7 @@ function qsfCard(c) {
     ${qsfBalance(c.balance)}
     ${plainBlock(c.plain)}
     ${c.surface_note ? `<div class="meta"><b>엇갈림</b> ${esc(c.surface_note)}</div>` : ""}
-    ${qsfStaleNote(c)}${qsfFundPeriodNote(c)}
+    ${qsfStaleNote(c)}${qsfFundPeriodNote(c)}${qsfFullerNote(c)}
     <h3>영역별 점수</h3><div class="qsf-domains">${Object.entries(c.domains).filter(([k]) => k !== "REGIME").map(([k, v]) => `<div><span>${esc(v.label)} <small class="meta m0">${v.reference ? "참고 · 점수 미반영" : v.max_points + "점"}${k === "RISK" ? " · 높을수록 좋음" : ""}</small></span>${qsfBar(v.score_100)}</div>`).join("")}</div>
     <h3>진입</h3><p><b>${qsfEntry(e.status, c.strategy)}</b>: ${esc(e.reason)}${e.zone ? ` 기준 구간 ${qsfPrice(e.zone.low, m)}~${qsfPrice(e.zone.high, m)}.` : ""}</p>
     ${c.exit ? `<h3>보유 종목 판단</h3><p><b>${QSF_EXIT[c.exit.action]}</b>: ${esc(c.exit.reason)}</p>` : ""}`, true)}

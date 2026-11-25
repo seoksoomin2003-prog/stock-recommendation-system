@@ -5,8 +5,8 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
-# 1.6.0 (user decisions 2026-11-25, reports/QSF_1_6_0_2026_11_25.md): US capital spending is read under seven more tags for a
-# fiscal year the three former tags do not report (15 of 504 long scores move, 8 swing scores).  THE SCORE IS FROZEN AT THIS
+# 1.6.0 (user decisions 2026-11-25, reports/QSF_1_6_0_2026_11_25.md): US capital spending is read under eight more tags for a
+# fiscal year the three former tags do not report (18 of 504 long scores move, 11 swing scores).  THE SCORE IS FROZEN AT THIS
 # VERSION until the first live swing verdict (reports/QSF_FORMULA_FREEZE_2026_11_25.md): no weight, factor formula, anchor or
 # input reading changes before it; an input error found meanwhile is recorded beside the live score and applied after the verdict.
 # Bands, entry rules, gates and wording are not the score: they carry RULES_VERSION and may change with a disclosure.
