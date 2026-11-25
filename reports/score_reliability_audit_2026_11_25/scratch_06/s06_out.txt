@@ -1,0 +1,75 @@
+== (a) long verdict: 756 daily values of 63-session ICs, lag 63, bar 3.35; rank side only (t, mean IC >= 0.02, both halves > 0)
+   KR long, s 0.120 (BT-1 63-session cell / sqrt(2.33)): IC 0.000: 1.3% | IC 0.030: 7.4% | IC 0.050: 16.8% | IC 0.057: 23.4% | IC 0.100: 64.1%
+   KR long, s 0.107 (power note): IC 0.000: 1.4% | IC 0.030: 8.5% | IC 0.050: 22.3% | IC 0.057: 28.6% | IC 0.100: 74.7%
+   US long, s 0.092 (BT-1 / sqrt(2.33)): IC 0.000: 1.2% | IC 0.030: 11.4% | IC 0.050: 29.8% | IC 0.057: 38.5% | IC 0.100: 87.4%
+   US long, s 0.140 (power note): IC 0.000: 1.1% | IC 0.030: 6.3% | IC 0.050: 12.9% | IC 0.057: 17.0% | IC 0.100: 50.0%
+
+== (b) the 42 scheduled readings (terminal/qsf/readings.py REGISTRY 36 + three books x two markets): chance of clearing the t bar on noise
+   one-sided chance per reading = the normal-table tail of its nominal bar, which the calibrated bar restores (script 1); extra conditions only lower it
+   readings counted: 42
+   live verdict (4)                                 pass-type  1.25% each | opposite flag  0.00% each | t bar only; with all conditions 0.1-0.6% (script 3)
+   early readings (4)                               pass-type  0.30% each | opposite flag  0.30% each | EARLY_AGAINST on the other side
+   continuation (6 = 2 markets x 3 nested looks)    pass-type  0.84% each | opposite flag  0.00% each | per market, the three nested looks together (script 2)
+   Korean avoid marks (1)                           pass-type  1.25% each | opposite flag  0.00% each | T1 = 2.24
+   score split (2)                                  pass-type  2.27% each | opposite flag  2.27% each | either score 'better'
+   fund period (2)                                  pass-type  0.14% each | opposite flag  0.14% each | bar 3.0
+   regime weights (2)                               pass-type  0.00% each | opposite flag  0.00% each | figures only
+   US challenger (2)                                pass-type  2.27% each | opposite flag  0.00% each | 
+   Korean price / fund / events records (3)         pass-type  1.25% each | opposite flag  0.00% each | bar 2.24
+   Korean cap universe (1)                          pass-type  2.27% each | opposite flag  0.00% each | 
+   Korean traded universe (1)                       pass-type  2.27% each | opposite flag  2.27% each | FORMER_BETTER / SWITCH_SUPPORTED
+   Korean swing challenger (1)                      pass-type  2.27% each | opposite flag  0.00% each | 12 separate samples
+   Korean prior swing formula (1)                   pass-type  2.27% each | opposite flag  2.27% each | PRIOR_BETTER / DECISION_SUPPORTED
+   Korean bundle challenger (2)                     pass-type  2.27% each | opposite flag  2.27% each | CHALLENGER_BETTER / LIVE_BETTER
+   Korean own method (2)                            pass-type  0.00% each | opposite flag  0.00% each | NO_PRIMARY: figures only
+   committee paper portfolios (2 x 6 portfolios)    pass-type  0.81% each | opposite flag  0.81% each | any of six, bar 3.0
+   rank rules book (2)                              pass-type  2.27% each | opposite flag  0.00% each | ADOPT
+   entry rules book (2)                             pass-type  2.27% each | opposite flag  2.27% each | either book 'better'
+   turnover rules book (2)                          pass-type 50.00% each | opposite flag  0.00% each | cost lower and mean difference >= 0: no t bar
+   15 notified readings: any pass-type by chance 8.8% (with EARLY_AGAINST 9.9%)
+   the four live verdicts alone: 4.9% on the t bar; with every condition about 4 x 0.1..0.6% = 0.4..2.4%
+   25 filed readings without the turnover book: any pass-type 31.5% | any flag either way 44.4%
+   40 readings without the turnover book: any pass-type 37.5% | any flag either way 49.9%
+   all 42: any pass-type 84.4%   (the two turnover readings alone: 75%)
+   These treat the readings as independent.  They are not (one year, the same scores): fewer years have any false pass, and the years that have one tend to have several.
+
+== (c) t values on file in reports/qsf/*.json (own count; 'checks' blocks and the *_RUN1 copies left out)
+   QSF_1_2_VALIDATION.json              US  t values   51   |t| >= 2.24:   0
+   QSF_BACKTEST_CURRENT_KR.json         KR  t values    6   |t| >= 2.24:   5
+   QSF_BACKTEST_CURRENT_US.json         US  t values    6   |t| >= 2.24:   0
+   QSF_CORRECTED_OOS.json               US  t values   50   |t| >= 2.24:   0
+   QSF_CORRECTED_OPEN.json              US  t values   51   |t| >= 2.24:   0
+   QSF_CORRECTED_RESEARCH.json          US  t values   34   |t| >= 2.24:   1
+   QSF_CORRECTED_SUE_TEST.json          US  t values    2   |t| >= 2.24:   0
+   QSF_CORRECTED_SWING.json             US  t values   48   |t| >= 2.24:   7
+   QSF_ENSEMBLE.json                    US  t values   44   |t| >= 2.24:   3
+   QSF_INSIDER_DEV.json                 US  t values   10   |t| >= 2.24:   0
+   QSF_KR.json                          KR  t values   28   |t| >= 2.24:  24
+   QSF_KR_DIAGNOSTICS.json              KR  t values    4   |t| >= 2.24:   4
+   QSF_KR_EVENTS.json                   KR  t values   32   |t| >= 2.24:  32
+   QSF_KR_FUND.json                     KR  t values   84   |t| >= 2.24:  74
+   QSF_KR_HOLDER.json                   KR  t values   32   |t| >= 2.24:  19
+   QSF_KR_LIVE_REPLAY.json              KR  t values   38   |t| >= 2.24:  23
+   QSF_KR_LONG_EARLY.json               KR  t values   13   |t| >= 2.24:   9
+   QSF_KR_METHOD_SELECTION.json         KR  t values    8   |t| >= 2.24:   3
+   QSF_KR_RISK_GRADE.json               KR  t values    8   |t| >= 2.24:   8
+   QSF_KR_SUE.json                      KR  t values   49   |t| >= 2.24:  37
+   QSF_KR_TECH_EARLY.json               KR  t values   12   |t| >= 2.24:  10
+   QSF_KR_UNIVERSE_TEST.json            KR  t values   32   |t| >= 2.24:  10
+   QSF_MARKET_STATE.json                US  t values   18   |t| >= 2.24:  10
+   QSF_NEWS_DEV.json                    US  t values   10   |t| >= 2.24:   1
+   QSF_NEWS_TEST.json                   US  t values   12   |t| >= 2.24:   0
+   QSF_OOS_TEST.json                    US  t values   99   |t| >= 2.24:   0
+   QSF_OPEN_VALIDATION.json             US  t values  204   |t| >= 2.24:   4
+   QSF_PICKS_SIMULATION.json            US  t values   23   |t| >= 2.24:   4
+   QSF_PIT_VALIDATION.json              US  t values  102   |t| >= 2.24:   0
+   QSF_REGIME_WEIGHTS.json              US  t values    2   |t| >= 2.24:   0
+   QSF_RESEARCH_SCORE_DEV.json          US  t values   34   |t| >= 2.24:   2
+   QSF_SENTIMENT.json                   US  t values    4   |t| >= 2.24:   0
+   QSF_SHORT_DEV.json                   US  t values   10   |t| >= 2.24:   0
+   QSF_SWING_DEV.json                   US  t values   48   |t| >= 2.24:   7
+   QSF_SWING_TEST.json                  US  t values    8   |t| >= 2.24:   0
+   QSF_US_13F.json                      US  t values   20   |t| >= 2.24:   3
+   totals: {'US': 890, 'KR': 346} | |t| >= 2.24: {'US': 42, 'KR': 258} | files: {'US': 23, 'KR': 13}
+   US: if all 890 were independent noise, expected |t| >= 2.24 by the table: 22; one or more of them above 3.0 one-sided: 70%
+   KR: if all 346 were independent noise, expected |t| >= 2.24 by the table: 9; one or more of them above 3.0 one-sided: 37%

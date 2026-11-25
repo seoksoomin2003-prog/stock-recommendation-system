@@ -1,0 +1,250 @@
+[
+ {
+  "session": "2026-11-04",
+  "market": "KR",
+  "n": 590,
+  "stale_cards": 0,
+  "no_fund": 1,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-04",
+  "market": "US",
+  "n": 1004,
+  "stale_cards": 0,
+  "no_fund": 4,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-05",
+  "market": "US",
+  "n": 1004,
+  "stale_cards": 0,
+  "no_fund": 4,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-05",
+  "market": "KR",
+  "n": 592,
+  "stale_cards": 0,
+  "no_fund": 1,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-06",
+  "market": "US",
+  "n": 1006,
+  "stale_cards": 0,
+  "no_fund": 2,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-06",
+  "market": "KR",
+  "n": 592,
+  "stale_cards": 0,
+  "no_fund": 1,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-09",
+  "market": "KR",
+  "n": 590,
+  "stale_cards": 0,
+  "no_fund": 1,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-09",
+  "market": "US",
+  "n": 1006,
+  "stale_cards": 0,
+  "no_fund": 2,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-10",
+  "market": "US",
+  "n": 1006,
+  "stale_cards": 0,
+  "no_fund": 2,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-10",
+  "market": "KR",
+  "n": 4,
+  "stale_cards": 0,
+  "no_fund": 0,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-10",
+  "market": "KR",
+  "n": 592,
+  "stale_cards": 0,
+  "no_fund": 1,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-11",
+  "market": "US",
+  "n": 1008,
+  "stale_cards": 0,
+  "no_fund": 3,
+  "stale_factors": 12
+ },
+ {
+  "session": "2026-11-11",
+  "market": "KR",
+  "n": 600,
+  "stale_cards": 0,
+  "no_fund": 0,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-12",
+  "market": "US",
+  "n": 1008,
+  "stale_cards": 0,
+  "no_fund": 3,
+  "stale_factors": 12
+ },
+ {
+  "session": "2026-11-12",
+  "market": "KR",
+  "n": 600,
+  "stale_cards": 0,
+  "no_fund": 0,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-13",
+  "market": "US",
+  "n": 1008,
+  "stale_cards": 0,
+  "no_fund": 3,
+  "stale_factors": 24
+ },
+ {
+  "session": "2026-11-13",
+  "market": "KR",
+  "n": 600,
+  "stale_cards": 0,
+  "no_fund": 0,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-16",
+  "market": "US",
+  "n": 1008,
+  "stale_cards": 0,
+  "no_fund": 3,
+  "stale_factors": 24
+ },
+ {
+  "session": "2026-11-16",
+  "market": "KR",
+  "n": 600,
+  "stale_cards": 0,
+  "no_fund": 0,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-17",
+  "market": "KR",
+  "n": 600,
+  "stale_cards": 0,
+  "no_fund": 0,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-17",
+  "market": "US",
+  "n": 1006,
+  "stale_cards": 0,
+  "no_fund": 3,
+  "stale_factors": 24
+ },
+ {
+  "session": "2026-11-18",
+  "market": "US",
+  "n": 1008,
+  "stale_cards": 10,
+  "no_fund": 3,
+  "stale_factors": 24
+ },
+ {
+  "session": "2026-11-18",
+  "market": "KR",
+  "n": 600,
+  "stale_cards": 0,
+  "no_fund": 0,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-19",
+  "market": "US",
+  "n": 1006,
+  "stale_cards": 0,
+  "no_fund": 3,
+  "stale_factors": 24
+ },
+ {
+  "session": "2026-11-19",
+  "market": "KR",
+  "n": 600,
+  "stale_cards": 0,
+  "no_fund": 0,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-20",
+  "market": "US",
+  "n": 1008,
+  "stale_cards": 0,
+  "no_fund": 3,
+  "stale_factors": 24
+ },
+ {
+  "session": "2026-11-20",
+  "market": "KR",
+  "n": 600,
+  "stale_cards": 0,
+  "no_fund": 0,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-23",
+  "market": "US",
+  "n": 1008,
+  "stale_cards": 0,
+  "no_fund": 3,
+  "stale_factors": 24
+ },
+ {
+  "session": "2026-11-23",
+  "market": "KR",
+  "n": 600,
+  "stale_cards": 0,
+  "no_fund": 0,
+  "stale_factors": 0
+ },
+ {
+  "session": "2026-11-24",
+  "market": "US",
+  "n": 1008,
+  "stale_cards": 0,
+  "no_fund": 3,
+  "stale_factors": 24
+ },
+ {
+  "session": "2026-11-24",
+  "market": "KR",
+  "n": 600,
+  "stale_cards": 0,
+  "no_fund": 0,
+  "stale_factors": 0
+ }
+]

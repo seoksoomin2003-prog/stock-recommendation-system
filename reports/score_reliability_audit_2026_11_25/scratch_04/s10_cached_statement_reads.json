@@ -1,0 +1,70 @@
+{
+ "US": {
+  "counts": {
+   "companies": 500,
+   "status:REAL": 496,
+   "none:gross_margin": 311,
+   "none:op_margin": 119,
+   "none:interest_cover": 192,
+   "financial": 51,
+   "basis_changed": 0,
+   "loss_now": 25,
+   "revenue_note": 3,
+   "share_scale_error": 1,
+   "debt_equity_99": 31,
+   "has_restated_year_3pct": 235,
+   "has_multi_vintage": 495,
+   "none:roe": 32,
+   "none:eps_cagr3": 91,
+   "none:share_change": 17,
+   "none:eps_growth": 46,
+   "none:current_ratio": 80,
+   "none:fcf": 64,
+   "none:ocf_to_ni": 76,
+   "status:UNAVAILABLE": 2,
+   "none:rev_growth": 11,
+   "none:debt_equity": 9,
+   "status:STALE": 2
+  },
+  "debt_basis": {
+   "PARTS": 327,
+   "TOTAL_LIABILITIES": 42,
+   "OWN_TOTAL": 114,
+   "NOTES_FLOOR": 6,
+   "None": 9
+  },
+  "currency": {}
+ },
+ "KR": {
+  "counts": {
+   "companies": 427,
+   "status:REAL": 422,
+   "none:gross_margin": 422,
+   "none:interest_cover": 422,
+   "none:share_change": 422,
+   "none:eps_growth": 140,
+   "financial": 0,
+   "basis_changed": 26,
+   "loss_now": 95,
+   "revenue_note": 0,
+   "share_scale_error": 0,
+   "debt_equity_99": 0,
+   "has_restated_year_3pct": 0,
+   "has_multi_vintage": 0,
+   "none:op_margin": 33,
+   "none:current_ratio": 30,
+   "none:rev_growth": 55,
+   "none:eps_cagr3": 235,
+   "none:ocf_to_ni": 92,
+   "status:UNAVAILABLE": 5,
+   "none:fcf": 27,
+   "none:roe": 1
+  },
+  "debt_basis": {
+   "TOTAL_LIABILITIES": 422
+  },
+  "currency": {
+   "USD": 1
+  }
+ }
+}

@@ -1,0 +1,4 @@
+US SWING {'rho_live_A': 0.985, 'rho_live_Araw': 0.983, 'rho_A_Araw': 0.999, 'top_kept_live_Araw': 0.905, 'tied_share_before': 0.171, 'tied_share_after': 0.118}
+US LONG_TERM {'rho_live_A': 0.972, 'rho_live_Araw': 0.971, 'rho_A_Araw': 0.999, 'top_kept_live_Araw': 0.845, 'tied_share_before': 0.243, 'tied_share_after': 0.092}
+KR SWING {'rho_live_A': 0.92, 'rho_live_Araw': 0.904, 'rho_A_Araw': 0.985, 'top_kept_live_Araw': 0.748, 'tied_share_before': 0.276, 'tied_share_after': 0.117}
+KR LONG_TERM {'rho_live_A': 0.992, 'rho_live_Araw': 0.992, 'rho_A_Araw': 0.999, 'top_kept_live_Araw': 0.902, 'tied_share_before': 0.347, 'tied_share_after': 0.094}

@@ -1,0 +1,6 @@
+US h 63 dates 151 lag 3 bar 2.68
+US h 126 dates 148 lag 6 bar 2.9
+US h 252 dates 142 lag 12 bar 3.34
+KR h 63 dates 87 lag 3 bar 2.81
+KR h 126 dates 84 lag 6 bar 3.19
+KR h 252 dates 78 lag 12 bar 4.06

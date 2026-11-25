@@ -1,0 +1,52 @@
+== US SWING  periods 152  cost 0.402%  index CAGR 13.92 vol 13.29 sharpe 1.05 mdd -19.0
+   ALL_SCORED: CAGR 11.67 vol 14.33 sharpe 0.84 mdd -21.4 excess/period -0.157% (t -1.07) turnover 0.011 -> universe before cost -0.152%/period
+   TOP_FIFTH: CAGR 8.43 vol 12.23 sharpe 0.73 sortino 0.62 mdd -19.0 names 92.1 turnover 0.413 beat 0.40 excess/period -0.425% (t -2.25; early -0.222 late -0.628)
+      split per period: universe -0.152  cost -0.166  selection -0.107  | x12 a year: universe -1.83  cost -1.99  selection -1.28  total -5.10
+      vs ALL_SCORED (same universe, both after own cost): -0.269%/period, CAGR diff -3.24pp, sharpe diff -0.12; CAGR vs index -5.49pp
+      years beating index: 1/13  worst year 2023 -17.2pp best 2022 +2.7pp
+   BUY_BAND: CAGR 6.71 vol 12.91 sharpe 0.57 sortino 0.53 mdd -24.4 names 57.4 turnover 0.531 beat 0.39 excess/period -0.553% (t -2.17; early -0.182 late -0.923)
+      split per period: universe -0.152  cost -0.214  selection -0.187  | x12 a year: universe -1.83  cost -2.56  selection -2.24  total -6.63
+      vs ALL_SCORED (same universe, both after own cost): -0.396%/period, CAGR diff -4.96pp, sharpe diff -0.28; CAGR vs index -7.21pp
+      years beating index: 2/13  worst year 2023 -19.4pp best 2020 +4.5pp
+   h5: fifths net [-0.28, -0.22, -0.17, -0.08, -0.21] index 0.22 top-bottom +0.07 top-index -0.43 monotone False band-index -0.48 (names 57.5, dates 152, +share 0.28)
+   h10: fifths net [-0.05, -0.05, 0.0, 0.09, -0.02] index 0.48 top-bottom +0.03 top-index -0.50 monotone False band-index -0.45 (names 57.5, dates 152, +share 0.35)
+   h20: fifths net [0.4, 0.46, 0.4, 0.52, 0.35] index 1.00 top-bottom -0.05 top-index -0.65 monotone False band-index -0.62 (names 57.4, dates 152, +share 0.40)
+== US LONG_TERM  periods 152  cost 0.402%  index CAGR 13.92 vol 13.29 sharpe 1.05 mdd -19.0
+   ALL_SCORED: CAGR 11.73 vol 14.32 sharpe 0.85 mdd -21.3 excess/period -0.152% (t -1.04) turnover 0.011 -> universe before cost -0.147%/period
+   TOP_FIFTH: CAGR 13.17 vol 13.58 sharpe 0.98 sortino 0.95 mdd -19.6 names 91.1 turnover 0.104 beat 0.53 excess/period -0.052% (t -0.40; early -0.126 late +0.021)
+      split per period: universe -0.147  cost -0.042  selection +0.137  | x12 a year: universe -1.77  cost -0.50  selection +1.64  total -0.63
+      vs ALL_SCORED (same universe, both after own cost): +0.100%/period, CAGR diff +1.43pp, sharpe diff +0.13; CAGR vs index -0.75pp
+      years beating index: 4/13  worst year 2023 -9.2pp best 2021 +8.8pp
+   BUY_BAND: CAGR 12.77 vol 13.55 sharpe 0.96 sortino 0.92 mdd -20.6 names 107.6 turnover 0.096 beat 0.53 excess/period -0.082% (t -0.63; early -0.157 late -0.007)
+      split per period: universe -0.147  cost -0.039  selection +0.104  | x12 a year: universe -1.77  cost -0.46  selection +1.25  total -0.98
+      vs ALL_SCORED (same universe, both after own cost): +0.070%/period, CAGR diff +1.04pp, sharpe diff +0.11; CAGR vs index -1.14pp
+      years beating index: 5/13  worst year 2024 -10.1pp best 2021 +9.6pp
+   h63: fifths net [2.59, 2.57, 2.54, 2.46, 3.09] index 3.55 top-bottom +0.50 top-index -0.45 monotone False band-index -0.54 (names 107.5, dates 151, +share 0.39)
+   h126: fifths net [5.74, 5.28, 5.38, 5.36, 6.41] index 7.11 top-bottom +0.67 top-index -0.69 monotone False band-index -0.77 (names 107.7, dates 148, +share 0.37)
+   h252: fifths net [12.57, 11.34, 11.62, 11.19, 13.29] index 14.47 top-bottom +0.72 top-index -1.18 monotone False band-index -1.31 (names 108.1, dates 142, +share 0.37)
+== KR SWING  periods 89  cost 0.530%  index CAGR 11.27 vol 26.23 sharpe 0.53 mdd -33.3
+   ALL_SCORED: CAGR 6.00 vol 21.16 sharpe 0.38 mdd -30.1 excess/period -0.494% (t -1.25) turnover 0.059 -> universe before cost -0.463%/period
+   TOP_FIFTH: CAGR 4.03 vol 18.07 sharpe 0.31 sortino 0.35 mdd -27.7 names 55.7 turnover 0.340 beat 0.44 excess/period -0.700% (t -1.76; early -0.367 late -1.026)
+      split per period: universe -0.463  cost -0.180  selection -0.057  | x12 a year: universe -5.56  cost -2.16  selection -0.69  total -8.40
+      vs ALL_SCORED (same universe, both after own cost): -0.206%/period, CAGR diff -1.97pp, sharpe diff -0.07; CAGR vs index -7.24pp
+      years beating index: 3/8  worst year 2025 -40.0pp best 2024 +7.9pp
+   BUY_BAND: CAGR 0.04 vol 22.49 sharpe 0.11 sortino 0.11 mdd -37.9 names 3.4 turnover 0.727 beat 0.43 excess/period -0.952% (t -1.11; early -0.553 late -1.343)
+      split per period: universe -0.463  cost -0.385  selection -0.104  | x12 a year: universe -5.56  cost -4.62  selection -1.25  total -11.43
+      vs ALL_SCORED (same universe, both after own cost): -0.458%/period, CAGR diff -5.96pp, sharpe diff -0.27; CAGR vs index -11.23pp
+      years beating index: 3/8  worst year 2025 -84.7pp best 2024 +53.8pp
+   h5: fifths net [-0.76, -0.86, -0.62, -0.43, -0.55] index 0.10 top-bottom +0.21 top-index -0.65 monotone False band-index 0.0 (names 4.3, dates 71, +share 0.39)
+   h10: fifths net [-0.55, -0.46, -0.33, -0.15, -0.37] index 0.60 top-bottom +0.18 top-index -0.97 monotone False band-index -0.55 (names 4.3, dates 71, +share 0.37)
+   h20: fifths net [-0.08, -0.36, 0.05, 0.53, -0.0] index 1.07 top-bottom +0.08 top-index -1.07 monotone False band-index -0.41 (names 4.3, dates 71, +share 0.44)
+== KR LONG_TERM  periods 89  cost 0.530%  index CAGR 11.27 vol 26.23 sharpe 0.53 mdd -33.3
+   ALL_SCORED: CAGR 6.16 vol 21.35 sharpe 0.38 mdd -30.9 excess/period -0.479% (t -1.22) turnover 0.072 -> universe before cost -0.441%/period
+   TOP_FIFTH: CAGR 11.11 vol 19.67 sharpe 0.63 sortino 0.75 mdd -33.9 names 48.7 turnover 0.151 beat 0.49 excess/period -0.125% (t -0.29; early -0.005 late -0.241)
+      split per period: universe -0.441  cost -0.080  selection +0.396  | x12 a year: universe -5.29  cost -0.96  selection +4.75  total -1.49
+      vs ALL_SCORED (same universe, both after own cost): +0.354%/period, CAGR diff +4.95pp, sharpe diff +0.25; CAGR vs index -0.16pp
+      years beating index: 5/8  worst year 2025 -35.7pp best 2024 +8.7pp
+   BUY_BAND: CAGR 13.07 vol 21.43 sharpe 0.68 sortino 0.81 mdd -33.6 names 34.9 turnover 0.166 beat 0.53 excess/period +0.051% (t +0.11; early +0.376 late -0.268)
+      split per period: universe -0.441  cost -0.088  selection +0.579  | x12 a year: universe -5.29  cost -1.06  selection +6.95  total +0.61
+      vs ALL_SCORED (same universe, both after own cost): +0.529%/period, CAGR diff +6.91pp, sharpe diff +0.29; CAGR vs index +1.80pp
+      years beating index: 6/8  worst year 2025 -41.8pp best 2020 +10.4pp
+   h63: fifths net [1.61, 1.98, 1.88, 2.18, 3.21] index 4.04 top-bottom +1.60 top-index -0.83 monotone False band-index -0.49 (names 35.0, dates 87, +share 0.51)
+   h126: fifths net [5.63, 5.71, 4.49, 6.08, 7.46] index 9.85 top-bottom +1.83 top-index -2.39 monotone False band-index -2.22 (names 34.8, dates 84, +share 0.50)
+   h252: fifths net [17.62, 15.04, 12.06, 15.48, 14.28] index 21.49 top-bottom -3.34 top-index -7.21 monotone False band-index -6.19 (names 33.6, dates 78, +share 0.54)

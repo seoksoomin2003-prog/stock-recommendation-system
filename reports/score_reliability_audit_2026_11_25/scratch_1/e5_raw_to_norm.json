@@ -1,0 +1,605 @@
+{
+ "KR|atr_risk": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|balance_dilution": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|balance_sheet": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|breadth": {
+  "n": 1200,
+  "match": 1200,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|breakout_volume": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|business_quality": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|capital_allocation": {
+  "n": 462,
+  "match": 462,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|cash_flow_quality": {
+  "n": 538,
+  "match": 534,
+  "match_zero_rule": 4,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|credit_liquidity": {
+  "n": 1200,
+  "match": 1200,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|downside_drawdown": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|drawdown_gap": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|earnings_calendar": {
+  "n": 596,
+  "match": 596,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|earnings_revenue_quality": {
+  "n": 594,
+  "match": 542,
+  "match_zero_rule": 52,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|financial_resilience": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|free_cash_flow": {
+  "n": 522,
+  "match": 522,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|governance": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|growth_quality": {
+  "n": 530,
+  "match": 464,
+  "match_zero_rule": 66,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|index_trend": {
+  "n": 1200,
+  "match": 1200,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|insider_ownership": {
+  "n": 546,
+  "match": 546,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|leverage": {
+  "n": 544,
+  "match": 544,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|liquidity": {
+  "n": 1200,
+  "match": 1200,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|long_trend": {
+  "n": 598,
+  "match": 598,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|material_disclosures": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|material_events": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|momentum": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|momentum_persistence": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|profitability": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|relative_strength": {
+  "n": 1200,
+  "match": 1200,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|risk_reward": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|trend_structure": {
+  "n": 598,
+  "match": 598,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|usdkrw_regime": {
+  "n": 1200,
+  "match": 1200,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|valuation": {
+  "n": 598,
+  "match": 598,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "KR|volatility_structure": {
+  "n": 600,
+  "match": 600,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|atr_risk": {
+  "n": 1008,
+  "match": 1008,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|balance_dilution": {
+  "n": 1002,
+  "match": 1002,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|balance_sheet": {
+  "n": 1000,
+  "match": 1000,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|breakout_volume": {
+  "n": 1008,
+  "match": 1008,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|business_quality": {
+  "n": 1000,
+  "match": 1000,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|capital_allocation": {
+  "n": 994,
+  "match": 994,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|cash_flow_quality": {
+  "n": 892,
+  "match": 892,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|credit_spread": {
+  "n": 2016,
+  "match": 2016,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|downside_drawdown": {
+  "n": 1008,
+  "match": 1008,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|drawdown_gap": {
+  "n": 1008,
+  "match": 1008,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|earnings_calendar": {
+  "n": 991,
+  "match": 991,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|earnings_revenue_quality": {
+  "n": 1000,
+  "match": 984,
+  "match_zero_rule": 16,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|financial_resilience": {
+  "n": 1000,
+  "match": 1000,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|free_cash_flow": {
+  "n": 820,
+  "match": 820,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|governance": {
+  "n": 1008,
+  "match": 1008,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|growth_quality": {
+  "n": 1000,
+  "match": 962,
+  "match_zero_rule": 38,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|index_trend_breadth": {
+  "n": 2016,
+  "match": 2016,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|insider_activity": {
+  "n": 1008,
+  "match": 1008,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|insider_ownership": {
+  "n": 1002,
+  "match": 1002,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|leverage": {
+  "n": 878,
+  "match": 878,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|liquidity": {
+  "n": 2016,
+  "match": 2016,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|long_trend": {
+  "n": 1002,
+  "match": 1002,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|material_disclosures": {
+  "n": 1008,
+  "match": 1008,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|material_events": {
+  "n": 1008,
+  "match": 1008,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|momentum": {
+  "n": 1008,
+  "match": 1008,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|momentum_persistence": {
+  "n": 1002,
+  "match": 1002,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|profitability": {
+  "n": 996,
+  "match": 996,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|relative_strength": {
+  "n": 2006,
+  "match": 2006,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|risk_reward": {
+  "n": 1008,
+  "match": 1008,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|trend_structure": {
+  "n": 1002,
+  "match": 1002,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|valuation": {
+  "n": 1002,
+  "match": 1002,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|vix_regime": {
+  "n": 2016,
+  "match": 2016,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|vix_term": {
+  "n": 2016,
+  "match": 2016,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ },
+ "US|volatility_structure": {
+  "n": 1006,
+  "match": 1006,
+  "match_zero_rule": 0,
+  "mismatch": 0,
+  "max_gap": 0.0,
+  "error": 0,
+  "examples": []
+ }
+}

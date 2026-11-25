@@ -1,0 +1,58 @@
+{
+ "2019": {
+  "rows": 2700,
+  "gone_later": 160,
+  "unavail": 328,
+  "unavail_gone": 36,
+  "unavail_no_corp": 0
+ },
+ "2020": {
+  "rows": 3600,
+  "gone_later": 163,
+  "unavail": 428,
+  "unavail_gone": 19,
+  "unavail_no_corp": 0
+ },
+ "2021": {
+  "rows": 3600,
+  "gone_later": 134,
+  "unavail": 451,
+  "unavail_gone": 9,
+  "unavail_no_corp": 0
+ },
+ "2022": {
+  "rows": 3600,
+  "gone_later": 99,
+  "unavail": 372,
+  "unavail_gone": 17,
+  "unavail_no_corp": 0
+ },
+ "2023": {
+  "rows": 3300,
+  "gone_later": 74,
+  "unavail": 336,
+  "unavail_gone": 2,
+  "unavail_no_corp": 0
+ },
+ "2024": {
+  "rows": 3600,
+  "gone_later": 59,
+  "unavail": 186,
+  "unavail_gone": 3,
+  "unavail_no_corp": 0
+ },
+ "2025": {
+  "rows": 3600,
+  "gone_later": 48,
+  "unavail": 50,
+  "unavail_gone": 0,
+  "unavail_no_corp": 0
+ },
+ "2026": {
+  "rows": 2700,
+  "gone_later": 10,
+  "unavail": 38,
+  "unavail_gone": 0,
+  "unavail_no_corp": 0
+ }
+}

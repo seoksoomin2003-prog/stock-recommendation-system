@@ -1,0 +1,21 @@
+== US_SWING sigma 0.199 h 20 registered sessions 240
+  A/C2/B2-like (rho 0.98)        sd(diff) 0.0398  generous gap +0.0093  power 240: 10% (bar 2.84)  480: 18% (bar 2.56)  960: 34% (bar 2.42)  1920: 61% (bar 2.34)  | false pass 2.4%  | gap needed for 50%: 0.025
+  equal weights (rho 0.92)       sd(diff) 0.0796  generous gap +0.0172  power 240: 10% (bar 2.84)  480: 16% (bar 2.56)  960: 29% (bar 2.42)  1920: 54% (bar 2.34)  | false pass 2.3%  | gap needed for 50%: 0.051
+  bundles, long (rho 0.84)       sd(diff) 0.1126  generous gap +0.0223  power 240: 8% (bar 2.84)  480: 14% (bar 2.56)  960: 25% (bar 2.42)  1920: 47% (bar 2.34)  | false pass 2.4%  | gap needed for 50%: 0.073
+  bundles, US swing (rho 0.50)   sd(diff) 0.1990  generous gap +0.0283  power 240: 6% (bar 2.84)  480: 9% (bar 2.56)  960: 15% (bar 2.42)  1920: 27% (bar 2.34)  | false pass 2.3%  | gap needed for 50%: 0.126
+== KR_SWING sigma 0.099 h 20 registered sessions 240
+  A/C2/B2-like (rho 0.98)        sd(diff) 0.0198  generous gap +0.0093  power 240: 30% (bar 2.84)  480: 58% (bar 2.56)  960: 88% (bar 2.42)  1920: 99% (bar 2.34)  | false pass 2.1%  | gap needed for 50%: 0.012
+  equal weights (rho 0.92)       sd(diff) 0.0396  generous gap +0.0172  power 240: 27% (bar 2.84)  480: 51% (bar 2.56)  960: 83% (bar 2.42)  1920: 99% (bar 2.34)  | false pass 2.2%  | gap needed for 50%: 0.025
+  bundles, long (rho 0.84)       sd(diff) 0.0560  generous gap +0.0223  power 240: 23% (bar 2.84)  480: 44% (bar 2.56)  960: 75% (bar 2.42)  1920: 97% (bar 2.34)  | false pass 2.1%  | gap needed for 50%: 0.036
+  bundles, US swing (rho 0.50)   sd(diff) 0.0990  generous gap +0.0283  power 240: 14% (bar 2.84)  480: 25% (bar 2.56)  960: 47% (bar 2.42)  1920: 79% (bar 2.34)  | false pass 2.1%  | gap needed for 50%: 0.063
+== US_LONG_TERM sigma 0.142 h 63 registered sessions 756
+  A/C2/B2-like (rho 0.98)        sd(diff) 0.0284  generous gap +0.0093  power 756: 18% (bar 2.89)  1512: 33% (bar 2.62)  3024: 59% (bar 2.49)  6048: 88% (bar 2.45)  | false pass 2.3%  | gap needed for 50%: 0.018
+  equal weights (rho 0.92)       sd(diff) 0.0568  generous gap +0.0172  power 756: 15% (bar 2.89)  1512: 28% (bar 2.62)  3024: 53% (bar 2.49)  6048: 82% (bar 2.45)  | false pass 2.3%  | gap needed for 50%: 0.036
+  bundles, long (rho 0.84)       sd(diff) 0.0803  generous gap +0.0223  power 756: 14% (bar 2.89)  1512: 24% (bar 2.62)  3024: 46% (bar 2.49)  6048: 75% (bar 2.45)  | false pass 2.3%  | gap needed for 50%: 0.050
+  bundles, US swing (rho 0.50)   sd(diff) 0.1420  generous gap +0.0283  power 756: 9% (bar 2.89)  1512: 14% (bar 2.62)  3024: 25% (bar 2.49)  6048: 47% (bar 2.45)  | false pass 2.2%  | gap needed for 50%: 0.088
+== KR_LONG_TERM sigma 0.182 h 63 registered sessions 756
+  A/C2/B2-like (rho 0.98)        sd(diff) 0.0364  generous gap +0.0093  power 756: 12% (bar 2.89)  1512: 22% (bar 2.62)  3024: 39% (bar 2.49)  6048: 68% (bar 2.45)  | false pass 2.3%  | gap needed for 50%: 0.023
+  equal weights (rho 0.92)       sd(diff) 0.0728  generous gap +0.0172  power 756: 11% (bar 2.89)  1512: 18% (bar 2.62)  3024: 35% (bar 2.49)  6048: 60% (bar 2.45)  | false pass 2.2%  | gap needed for 50%: 0.046
+  bundles, long (rho 0.84)       sd(diff) 0.1030  generous gap +0.0223  power 756: 10% (bar 2.89)  1512: 16% (bar 2.62)  3024: 30% (bar 2.49)  6048: 53% (bar 2.45)  | false pass 2.2%  | gap needed for 50%: 0.065
+  bundles, US swing (rho 0.50)   sd(diff) 0.1820  generous gap +0.0283  power 756: 6% (bar 2.89)  1512: 10% (bar 2.62)  3024: 17% (bar 2.49)  6048: 31% (bar 2.45)  | false pass 2.3%  | gap needed for 50%: 0.114
+family-wise false pass (independent readings, US swing design): {1: 0.023, 4: 0.088, 7: 0.148, 14: 0.274}

@@ -1,0 +1,34 @@
+{
+ "equal means, calm vs wild stocks (lognormal)": {
+  "ic_mean": 0.039284563081100336,
+  "ic_sd_between_dates": 0.10516735614500256,
+  "t_median": 3.4955409918149107,
+  "t_5_95": [
+   1.8533913170453369,
+   5.373356762969015
+  ],
+  "share_t_ge_2.35": 0.8786666666666667,
+  "ic_positive_share": 0.6461348314606742,
+  "top_minus_bottom_mean_pct": 0.001784346355983124,
+  "spread_t_median": 0.003871689502418721,
+  "share_spread_t_ge_2": 0.03200000000000001,
+  "top_minus_bottom_median_pct": 1.1750679893676208,
+  "top_fifth_vol_vs_bottom": null
+ },
+ "the same + rare large jumps among the wild stocks": {
+  "ic_mean": 0.05714399824562901,
+  "ic_sd_between_dates": 0.10207173011891511,
+  "t_median": 5.287395680843085,
+  "t_5_95": [
+   3.553839517667509,
+   7.132999735401961
+  ],
+  "share_t_ge_2.35": 0.996,
+  "ic_positive_share": 0.7126067415730336,
+  "top_minus_bottom_mean_pct": 0.01083616419139524,
+  "spread_t_median": 0.046615826023372255,
+  "share_spread_t_ge_2": 0.034,
+  "top_minus_bottom_median_pct": 1.7353050300408335,
+  "top_fifth_vol_vs_bottom": null
+ }
+}

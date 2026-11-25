@@ -1,0 +1,321 @@
+{
+ "classify": [
+  {
+   "score": 80.0,
+   "prev": null,
+   "band": "STRONG_BUY_CANDIDATE",
+   "action_new": "BUY",
+   "action_held": "HOLD"
+  },
+  {
+   "score": 79.999999,
+   "prev": null,
+   "band": "BUY_CANDIDATE",
+   "action_new": "BUY",
+   "action_held": "HOLD"
+  },
+  {
+   "score": 70.0,
+   "prev": null,
+   "band": "BUY_CANDIDATE",
+   "action_new": "BUY",
+   "action_held": "HOLD"
+  },
+  {
+   "score": 69.999999,
+   "prev": null,
+   "band": "HOLD_WATCH",
+   "action_new": "WATCH",
+   "action_held": "HOLD"
+  },
+  {
+   "score": 67.0,
+   "prev": "BUY_CANDIDATE",
+   "band": "BUY_CANDIDATE",
+   "action_new": "BUY",
+   "action_held": "HOLD"
+  },
+  {
+   "score": 66.999999,
+   "prev": "BUY_CANDIDATE",
+   "band": "HOLD_WATCH",
+   "action_new": "WATCH",
+   "action_held": "HOLD"
+  },
+  {
+   "score": 67.0,
+   "prev": null,
+   "band": "HOLD_WATCH",
+   "action_new": "WATCH",
+   "action_held": "HOLD"
+  },
+  {
+   "score": 69.9,
+   "prev": "STRONG_BUY_CANDIDATE",
+   "band": "BUY_CANDIDATE",
+   "action_new": "BUY",
+   "action_held": "HOLD"
+  },
+  {
+   "score": 69.9,
+   "prev": "HOLD_WATCH",
+   "band": "HOLD_WATCH",
+   "action_new": "WATCH",
+   "action_held": "HOLD"
+  },
+  {
+   "score": 55.0,
+   "prev": null,
+   "band": "HOLD_WATCH",
+   "action_new": "WATCH",
+   "action_held": "HOLD"
+  },
+  {
+   "score": 54.999999,
+   "prev": null,
+   "band": "WEAK_REDUCE",
+   "action_new": "AVOID",
+   "action_held": "REDUCE"
+  },
+  {
+   "score": 40.0,
+   "prev": null,
+   "band": "WEAK_REDUCE",
+   "action_new": "AVOID",
+   "action_held": "REDUCE"
+  },
+  {
+   "score": 39.999999,
+   "prev": null,
+   "band": "SELL_AVOID",
+   "action_new": "AVOID",
+   "action_held": "SELL"
+  },
+  {
+   "score": 0.0,
+   "prev": null,
+   "band": "SELL_AVOID",
+   "action_new": "AVOID",
+   "action_held": "SELL"
+  },
+  {
+   "score": null,
+   "prev": null,
+   "band": "NONE",
+   "action_new": "INSUFFICIENT_DATA",
+   "action_held": "INSUFFICIENT_DATA"
+  },
+  {
+   "score": 100.0,
+   "prev": null,
+   "band": "STRONG_BUY_CANDIDATE",
+   "action_new": "BUY",
+   "action_held": "HOLD"
+  },
+  {
+   "score": NaN,
+   "prev": null,
+   "band": "SELL_AVOID",
+   "action_new": "AVOID",
+   "action_held": "SELL"
+  }
+ ],
+ "ramp": {
+  "mid": 0.5,
+  "below": 0.0,
+  "above": 1.0,
+  "lower_better": 1.0,
+  "nan": null,
+  "inf": null,
+  "none": null,
+  "lo_eq_hi": "ZeroDivisionError (no factor uses equal anchors; engine would catch it as MISSING)",
+  "mean_empty": null,
+  "mean_partial": [
+   0.4,
+   2,
+   3
+  ]
+ },
+ "anchor_pairs": 57,
+ "anchor_equal": 0,
+ "made_up_twice": {
+  "SWING": {
+   "score": 61.72015075953267,
+   "identical_twice": true,
+   "coverage": 1.0,
+   "confidence": "HIGH",
+   "band": "HOLD_WATCH",
+   "same_with_reordered_inputs": true
+  },
+  "LONG_TERM": {
+   "score": 68.05491865520445,
+   "identical_twice": true,
+   "coverage": 1.0,
+   "confidence": "HIGH",
+   "band": "HOLD_WATCH",
+   "same_with_reordered_inputs": true
+  }
+ },
+ "no_fund_no_events_long": {
+  "score": 88.30979497427684,
+  "coverage": 0.2111111111111111,
+  "confidence": "INSUFFICIENT",
+  "band": "STRONG_BUY_CANDIDATE",
+  "band_label": "판단 불가(자료 부족)",
+  "action": "INSUFFICIENT_DATA",
+  "actionability": "INSUFFICIENT_DATA",
+  "short_domains": [
+   "FUNDAMENTAL"
+  ]
+ },
+ "no_fund_no_events_swing": {
+  "score": 63.95295419034954,
+  "coverage": 0.75,
+  "confidence": "LOW",
+  "band": "HOLD_WATCH",
+  "band_label": "보유·관찰",
+  "action": "WATCH",
+  "actionability": "ACTIONABLE",
+  "short_domains": [],
+  "conservative_score": 60.46471564276216,
+  "band_held_back": false
+ },
+ "edges": {
+  "pe_negative": {
+   "score": 63.98084458113038,
+   "valuation": 0.4468864468864469,
+   "valuation_status": "REAL",
+   "business_quality": 0.6452525252525252,
+   "growth_quality": 0.5231372549019608,
+   "leverage": 0.7391304347826088,
+   "financial_resilience": 0.4820261437908497,
+   "band": "HOLD_WATCH",
+   "held_back": false,
+   "conservative": 63.98084458113038,
+   "confidence": "HIGH",
+   "input_coverage": 0.9888888888888889
+  },
+  "pe_zero": {
+   "score": 63.98084458113038,
+   "valuation": 0.4468864468864469,
+   "valuation_status": "REAL",
+   "business_quality": 0.6452525252525252,
+   "growth_quality": 0.5231372549019608,
+   "leverage": 0.7391304347826088,
+   "financial_resilience": 0.4820261437908497,
+   "band": "HOLD_WATCH",
+   "held_back": false,
+   "conservative": 63.98084458113038,
+   "confidence": "HIGH",
+   "input_coverage": 0.9888888888888889
+  },
+  "pb_none(neg equity)": {
+   "score": 62.71437775882383,
+   "valuation": 0.6523809523809523,
+   "valuation_status": "REAL",
+   "business_quality": 0.6785185185185186,
+   "growth_quality": 0.5231372549019608,
+   "leverage": 0.0,
+   "financial_resilience": 0.4820261437908497,
+   "band": "HOLD_WATCH",
+   "held_back": false,
+   "conservative": 62.71437775882383,
+   "confidence": "MEDIUM",
+   "input_coverage": 0.8916666666666667
+  },
+  "all_valuation_none": {
+   "score": 67.83928455962752,
+   "valuation": null,
+   "valuation_status": "MISSING",
+   "business_quality": 0.6452525252525252,
+   "growth_quality": 0.5231372549019608,
+   "leverage": 0.7391304347826088,
+   "financial_resilience": 0.4820261437908497,
+   "band": "HOLD_WATCH",
+   "held_back": false,
+   "conservative": 64.86607046635626,
+   "confidence": "MEDIUM",
+   "input_coverage": 0.8222222222222222
+  },
+  "nan_roe": {
+   "score": 68.60935187630434,
+   "valuation": 0.6913308913308912,
+   "valuation_status": "REAL",
+   "business_quality": 0.6785185185185186,
+   "growth_quality": 0.5231372549019608,
+   "leverage": 0.7391304347826088,
+   "financial_resilience": 0.4820261437908497,
+   "band": "HOLD_WATCH",
+   "held_back": false,
+   "conservative": 68.60935187630434,
+   "confidence": "HIGH",
+   "input_coverage": 0.9472222222222222
+  },
+  "inf_pe": {
+   "score": 67.7048983051841,
+   "valuation": 0.6703296703296704,
+   "valuation_status": "REAL",
+   "business_quality": 0.6452525252525252,
+   "growth_quality": 0.5231372549019608,
+   "leverage": 0.7391304347826088,
+   "financial_resilience": 0.4820261437908497,
+   "band": "HOLD_WATCH",
+   "held_back": false,
+   "conservative": 67.7048983051841,
+   "confidence": "HIGH",
+   "input_coverage": 0.9333333333333333
+  },
+  "loss_now_no_growth": {
+   "score": 66.5141779144637,
+   "valuation": 0.6913308913308912,
+   "valuation_status": "REAL",
+   "business_quality": 0.6452525252525252,
+   "growth_quality": 0.3498039215686275,
+   "leverage": 0.7391304347826088,
+   "financial_resilience": 0.4820261437908497,
+   "band": "HOLD_WATCH",
+   "held_back": false,
+   "conservative": 66.5141779144637,
+   "confidence": "HIGH",
+   "input_coverage": 0.9888888888888889
+  },
+  "interest_cover_negative": {
+   "score": 66.6823696355966,
+   "valuation": 0.6913308913308912,
+   "valuation_status": "REAL",
+   "business_quality": 0.6452525252525252,
+   "growth_quality": 0.5231372549019608,
+   "leverage": 0.7391304347826088,
+   "financial_resilience": 0.3055555555555556,
+   "band": "HOLD_WATCH",
+   "held_back": false,
+   "conservative": 66.6823696355966,
+   "confidence": "HIGH",
+   "input_coverage": 0.9888888888888889
+  }
+ },
+ "flat_bars": {
+  "score": 56.43776641091218,
+  "gates": [
+   "DATA_ANOMALY",
+   "NO_TRADING",
+   "LOW_LIQUIDITY"
+  ],
+  "missing": [
+   "risk_reward",
+   "liquidity"
+  ],
+  "actionability": "INSUFFICIENT_DATA"
+ },
+ "short_bars": {
+  "score": 62.9466617236737,
+  "gates": [
+   "SHORT_HISTORY"
+  ],
+  "missing": [
+   "trend_structure"
+  ],
+  "actionability": "BLOCKED",
+  "coverage": 0.875
+ }
+}

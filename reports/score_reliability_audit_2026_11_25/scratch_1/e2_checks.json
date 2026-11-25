@@ -1,0 +1,1357 @@
+{
+ "E2_buffer_US_SWING": {
+  "score_67_70": 34,
+  "prev_in_buy_band": 0,
+  "kept": 0,
+  "not_kept": []
+ },
+ "E2_buffer_US_LONG_TERM": {
+  "score_67_70": 45,
+  "prev_in_buy_band": 0,
+  "kept": 0,
+  "not_kept": []
+ },
+ "E3_US": {
+  "scan_session": "2026-11-24",
+  "scan_rows": 1008,
+  "ledger_rows": 1008,
+  "not_in_ledger": 0,
+  "max_score_gap": 0.0,
+  "band_differs": 0,
+  "ranks_session": "2026-11-24",
+  "ranks_n": 502,
+  "rs_rows": 1004,
+  "rs_from_benchmark_fallback": 0,
+  "rs_rank_compared": 1004,
+  "rs_rank_max_gap": 0.0
+ },
+ "E4_US_SWING": {
+  "n": 504,
+  "factors": {
+   "trend_structure": {
+    "domain": "TECHNICAL",
+    "weight": 10,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 501,
+     "MISSING": 3
+    },
+    "at0": 0.07584830339321358,
+    "at1": 0.2155688622754491,
+    "median": 0.5,
+    "distinct": 7
+   },
+   "relative_strength": {
+    "domain": "TECHNICAL",
+    "weight": 10,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 502,
+     "MISSING": 2
+    },
+    "at0": 0.0,
+    "at1": 0.00199203187250996,
+    "median": 0.500996015936255,
+    "distinct": 502
+   },
+   "momentum": {
+    "domain": "TECHNICAL",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.06547619047619048,
+    "at1": 0.0,
+    "median": 0.3844120994036302,
+    "distinct": 471
+   },
+   "breakout_volume": {
+    "domain": "TECHNICAL",
+    "weight": 10,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.46935988981466586,
+    "distinct": 435
+   },
+   "volatility_structure": {
+    "domain": "TECHNICAL",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 503,
+     "MISSING": 1
+    },
+    "at0": 0.003976143141153081,
+    "at1": 0.0,
+    "median": 0.38095238095238093,
+    "distinct": 204
+   },
+   "earnings_revenue_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 498,
+     "STALE": 2,
+     "MISSING": 4
+    },
+    "at0": 0.016,
+    "at1": 0.044,
+    "median": 0.650505872727287,
+    "distinct": 444
+   },
+   "profitability": {
+    "domain": "FUNDAMENTAL",
+    "weight": 2,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 496,
+     "STALE": 2,
+     "MISSING": 6
+    },
+    "at0": 0.03614457831325301,
+    "at1": 0.25502008032128515,
+    "median": 0.7596776446717118,
+    "distinct": 353
+   },
+   "balance_sheet": {
+    "domain": "FUNDAMENTAL",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 498,
+     "STALE": 2,
+     "MISSING": 4
+    },
+    "at0": 0.072,
+    "at1": 0.128,
+    "median": 0.5674170836870336,
+    "distinct": 397
+   },
+   "cash_flow_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight": 2,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 444,
+     "NOT_APPLICABLE": 53,
+     "MISSING": 5,
+     "STALE": 2
+    },
+    "at0": 0.017937219730941704,
+    "at1": 0.36995515695067266,
+    "median": 0.9112752658135619,
+    "distinct": 248
+   },
+   "vix_regime": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 5,
+    "scored": false,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.37565214737601904,
+    "distinct": 1
+   },
+   "vix_term": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 4,
+    "scored": false,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.0752843892833521,
+    "distinct": 1
+   },
+   "credit_spread": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 4,
+    "scored": false,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.0535714285714286,
+    "distinct": 1
+   },
+   "index_trend_breadth": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 7,
+    "scored": false,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.4811507936507937,
+    "distinct": 1
+   },
+   "risk_reward": {
+    "domain": "RISK",
+    "weight": 6,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.7261904761904762,
+    "at1": 0.011904761904761904,
+    "median": 0.0,
+    "distinct": 134
+   },
+   "atr_risk": {
+    "domain": "RISK",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.051587301587301584,
+    "at1": 0.0,
+    "median": 0.6844713519083634,
+    "distinct": 479
+   },
+   "liquidity": {
+    "domain": "RISK",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.43253968253968256,
+    "median": 0.9475810154527855,
+    "distinct": 287
+   },
+   "drawdown_gap": {
+    "domain": "RISK",
+    "weight": 4,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.06547619047619048,
+    "at1": 0.0,
+    "median": 0.5925001345732539,
+    "distinct": 471
+   },
+   "earnings_calendar": {
+    "domain": "EVENTS",
+    "weight": 4,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 499,
+     "MISSING": 5
+    },
+    "at0": 0.01002004008016032,
+    "at1": 0.9458917835671342,
+    "median": 1.0,
+    "distinct": 11
+   },
+   "material_disclosures": {
+    "domain": "EVENTS",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.6,
+    "distinct": 3
+   },
+   "insider_activity": {
+    "domain": "EVENTS",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.5337301587301587,
+    "at1": 0.06944444444444445,
+    "median": 0.0,
+    "distinct": 28
+   }
+  },
+  "mean_available_points": 79.54960317460318,
+  "min_available_points": 45.0,
+  "max_available_points": 80.0,
+  "mean_domain_share": {
+   "TECHNICAL": 0.5013067519221602,
+   "FUNDAMENTAL": 0.12161660249452505,
+   "REGIME": 0.0,
+   "RISK": 0.2517430710983944,
+   "EVENTS": 0.1253335744849203
+  },
+  "score": {
+   "min": 26.753605214811657,
+   "p10": 36.57663574650268,
+   "median": 53.575626943606515,
+   "p90": 68.95839965956179,
+   "max": 77.67837305072663,
+   "n70": 35,
+   "n80": 0
+  },
+  "confidence": {
+   "HIGH": 498,
+   "MEDIUM": 4,
+   "INSUFFICIENT": 2
+  },
+  "actionability": {
+   "ACTIONABLE": 493,
+   "BLOCKED": 9,
+   "INSUFFICIENT_DATA": 2
+  },
+  "bands": {
+   "BUY_CANDIDATE": 33,
+   "HOLD_WATCH": 194,
+   "WEAK_REDUCE": 189,
+   "SELL_AVOID": 88
+  },
+  "held_back": 0,
+  "deal_held": 2,
+  "entry_status": {
+   "WAIT_FOR_PULLBACK": 209,
+   "NO_VALID_ENTRY_SETUP": 280,
+   "WAIT_FOR_BREAKOUT_CONFIRMATION": 8,
+   "ENTRY_NOW": 6,
+   "WAIT_FOR_EARNINGS": 1
+  }
+ },
+ "E4_US_LONG_TERM": {
+  "n": 504,
+  "factors": {
+   "long_trend": {
+    "domain": "TECHNICAL",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 501,
+     "MISSING": 3
+    },
+    "at0": 0.0499001996007984,
+    "at1": 0.08383233532934131,
+    "median": 0.5597111837341994,
+    "distinct": 406
+   },
+   "relative_strength": {
+    "domain": "TECHNICAL",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 502,
+     "MISSING": 2
+    },
+    "at0": 0.0,
+    "at1": 0.00199203187250996,
+    "median": 0.500996015936255,
+    "distinct": 502
+   },
+   "momentum_persistence": {
+    "domain": "TECHNICAL",
+    "weight": 2,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 501,
+     "MISSING": 3
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.5605612212160123,
+    "distinct": 292
+   },
+   "valuation": {
+    "domain": "FUNDAMENTAL",
+    "weight": 15,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 499,
+     "STALE": 2,
+     "MISSING": 3
+    },
+    "at0": 0.013972055888223553,
+    "at1": 0.00998003992015968,
+    "median": 0.47639584015772846,
+    "distinct": 482
+   },
+   "business_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight": 15,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 498,
+     "STALE": 2,
+     "MISSING": 4
+    },
+    "at0": 0.0,
+    "at1": 0.108,
+    "median": 0.7408164062696156,
+    "distinct": 430
+   },
+   "growth_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight": 8,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 498,
+     "STALE": 2,
+     "MISSING": 4
+    },
+    "at0": 0.032,
+    "at1": 0.058,
+    "median": 0.49863387363327705,
+    "distinct": 446
+   },
+   "free_cash_flow": {
+    "domain": "FUNDAMENTAL",
+    "weight": 7,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 408,
+     "MISSING": 41,
+     "NOT_APPLICABLE": 53,
+     "STALE": 2
+    },
+    "at0": 0.02926829268292683,
+    "at1": 0.3146341463414634,
+    "median": 0.8715430004731033,
+    "distinct": 248
+   },
+   "balance_dilution": {
+    "domain": "FUNDAMENTAL",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 499,
+     "STALE": 2,
+     "MISSING": 3
+    },
+    "at0": 0.003992015968063872,
+    "at1": 0.0998003992015968,
+    "median": 0.7824322125796559,
+    "distinct": 380
+   },
+   "vix_regime": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 2,
+    "scored": false,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.37565214737601904,
+    "distinct": 1
+   },
+   "vix_term": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 2,
+    "scored": false,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.0752843892833521,
+    "distinct": 1
+   },
+   "credit_spread": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 3,
+    "scored": false,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.0535714285714286,
+    "distinct": 1
+   },
+   "index_trend_breadth": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 3,
+    "scored": false,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.4811507936507937,
+    "distinct": 1
+   },
+   "financial_resilience": {
+    "domain": "RISK",
+    "weight": 7,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 498,
+     "STALE": 2,
+     "MISSING": 4
+    },
+    "at0": 0.05,
+    "at1": 0.116,
+    "median": 0.42513018230875355,
+    "distinct": 414
+   },
+   "downside_drawdown": {
+    "domain": "RISK",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.051587301587301584,
+    "at1": 0.011904761904761904,
+    "median": 0.6393623480396899,
+    "distinct": 474
+   },
+   "liquidity": {
+    "domain": "RISK",
+    "weight": 4,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.43253968253968256,
+    "median": 0.9475810154527855,
+    "distinct": 287
+   },
+   "leverage": {
+    "domain": "RISK",
+    "weight": 4,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 437,
+     "NOT_APPLICABLE": 53,
+     "MISSING": 12,
+     "STALE": 2
+    },
+    "at0": 0.15945330296127563,
+    "at1": 0.1070615034168565,
+    "median": 0.7640136302984465,
+    "distinct": 322
+   },
+   "governance": {
+    "domain": "EVENTS",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.8,
+    "distinct": 3
+   },
+   "material_events": {
+    "domain": "EVENTS",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 504
+    },
+    "at0": 0.003968253968253968,
+    "at1": 0.0,
+    "median": 0.6,
+    "distinct": 3
+   },
+   "insider_ownership": {
+    "domain": "EVENTS",
+    "weight": 2,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 501,
+     "MISSING": 3
+    },
+    "at0": 0.0,
+    "at1": 0.06187624750499002,
+    "median": 0.0393,
+    "distinct": 401
+   },
+   "capital_allocation": {
+    "domain": "EVENTS",
+    "weight": 2,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 495,
+     "MISSING": 7,
+     "STALE": 2
+    },
+    "at0": 0.008048289738430584,
+    "at1": 0.3561368209255533,
+    "median": 0.9364075152750125,
+    "distinct": 283
+   }
+  },
+  "mean_available_points": 87.72817460317461,
+  "min_available_points": 15.0,
+  "max_available_points": 90.0,
+  "mean_domain_share": {
+   "TECHNICAL": 0.1136669363990185,
+   "FUNDAMENTAL": 0.5486584080196486,
+   "REGIME": 0.0,
+   "RISK": 0.2226921631730516,
+   "EVENTS": 0.11498249240828123
+  },
+  "score": {
+   "min": 22.40871488938363,
+   "p10": 48.311757784201426,
+   "median": 61.880005054323256,
+   "p90": 71.83843508309708,
+   "max": 83.03230152523841,
+   "n70": 82,
+   "n80": 3
+  },
+  "confidence": {
+   "HIGH": 356,
+   "MEDIUM": 118,
+   "LOW": 24,
+   "INSUFFICIENT": 6
+  },
+  "actionability": {
+   "ACTIONABLE": 495,
+   "INSUFFICIENT_DATA": 6,
+   "BLOCKED": 3
+  },
+  "bands": {
+   "HOLD_WATCH": 304,
+   "STRONG_BUY_CANDIDATE": 2,
+   "BUY_CANDIDATE": 78,
+   "WEAK_REDUCE": 115,
+   "SELL_AVOID": 5
+  },
+  "held_back": 2,
+  "deal_held": 1,
+  "entry_status": {
+   "OVERVALUED_AT_CURRENT_PRICE": 76,
+   "ENTRY_NOW": 299,
+   "NO_VALID_ENTRY_SETUP": 127,
+   "WAIT_FOR_EARNINGS": 2
+  }
+ },
+ "E2_buffer_KR_SWING": {
+  "score_67_70": 0,
+  "prev_in_buy_band": 0,
+  "kept": 0,
+  "not_kept": []
+ },
+ "E2_buffer_KR_LONG_TERM": {
+  "score_67_70": 27,
+  "prev_in_buy_band": 0,
+  "kept": 0,
+  "not_kept": []
+ },
+ "E3_KR": {
+  "scan_session": "2026-11-24",
+  "scan_rows": 600,
+  "ledger_rows": 600,
+  "not_in_ledger": 0,
+  "max_score_gap": 0.0,
+  "band_differs": 0,
+  "ranks_session": "2026-11-24",
+  "ranks_n": 300,
+  "rs_rows": 600,
+  "rs_from_benchmark_fallback": 0,
+  "rs_rank_compared": 600,
+  "rs_rank_max_gap": 0.0
+ },
+ "E4_KR_SWING": {
+  "n": 300,
+  "factors": {
+   "trend_structure": {
+    "domain": "TECHNICAL",
+    "weight": 0,
+    "reference_weight": 10,
+    "scored": false,
+    "status": {
+     "REAL": 299,
+     "MISSING": 1
+    },
+    "at0": 0.3177257525083612,
+    "at1": 0.043478260869565216,
+    "median": 0.16666666666666666,
+    "distinct": 7
+   },
+   "relative_strength": {
+    "domain": "TECHNICAL",
+    "weight": 0,
+    "reference_weight": 10,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.0,
+    "at1": 0.0033333333333333335,
+    "median": 0.5016666666666667,
+    "distinct": 300
+   },
+   "momentum": {
+    "domain": "TECHNICAL",
+    "weight": 0,
+    "reference_weight": 5,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.06,
+    "at1": 0.06333333333333334,
+    "median": 0.5227052293718837,
+    "distinct": 265
+   },
+   "breakout_volume": {
+    "domain": "TECHNICAL",
+    "weight": 0,
+    "reference_weight": 10,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.2855111600176662,
+    "distinct": 180
+   },
+   "volatility_structure": {
+    "domain": "TECHNICAL",
+    "weight": 0,
+    "reference_weight": 5,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.016666666666666666,
+    "at1": 0.0,
+    "median": 0.39087301587301587,
+    "distinct": 174
+   },
+   "earnings_revenue_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 297,
+     "MISSING": 3
+    },
+    "at0": 0.10774410774410774,
+    "at1": 0.08080808080808081,
+    "median": 0.5,
+    "distinct": 211
+   },
+   "profitability": {
+    "domain": "FUNDAMENTAL",
+    "weight": 2,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.11,
+    "at1": 0.06,
+    "median": 0.3638220844967487,
+    "distinct": 251
+   },
+   "balance_sheet": {
+    "domain": "FUNDAMENTAL",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.04,
+    "at1": 0.20333333333333334,
+    "median": 0.6414783980016238,
+    "distinct": 229
+   },
+   "cash_flow_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight": 2,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 269,
+     "NOT_APPLICABLE": 28,
+     "MISSING": 3
+    },
+    "at0": 0.2342007434944238,
+    "at1": 0.09665427509293681,
+    "median": 0.5782733031581693,
+    "distinct": 173
+   },
+   "vkospi_regime": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 5,
+    "scored": false,
+    "status": {
+     "MISSING": 300
+    },
+    "at0": null,
+    "at1": null,
+    "median": null,
+    "distinct": 0
+   },
+   "index_trend": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 5,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 1.0,
+    "at1": 0.0,
+    "median": 0.0,
+    "distinct": 1
+   },
+   "breadth": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 4,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 1.0,
+    "at1": 0.0,
+    "median": 0.0,
+    "distinct": 1
+   },
+   "usdkrw_regime": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 3,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.0,
+    "at1": 1.0,
+    "median": 1.0,
+    "distinct": 1
+   },
+   "credit_liquidity": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 3,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.3485156567710451,
+    "distinct": 1
+   },
+   "risk_reward": {
+    "domain": "RISK",
+    "weight": 6,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.58,
+    "at1": 0.03,
+    "median": 0.0,
+    "distinct": 119
+   },
+   "atr_risk": {
+    "domain": "RISK",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.4533333333333333,
+    "at1": 0.0,
+    "median": 0.02932580790488265,
+    "distinct": 165
+   },
+   "liquidity": {
+    "domain": "RISK",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.01,
+    "at1": 0.22666666666666666,
+    "median": 0.7222102820831261,
+    "distinct": 231
+   },
+   "drawdown_gap": {
+    "domain": "RISK",
+    "weight": 4,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.14666666666666667,
+    "at1": 0.0,
+    "median": 0.241823142750837,
+    "distinct": 256
+   },
+   "earnings_calendar": {
+    "domain": "EVENTS",
+    "weight": 4,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 298,
+     "MISSING": 2
+    },
+    "at0": 0.0,
+    "at1": 1.0,
+    "median": 1.0,
+    "distinct": 1
+   },
+   "material_disclosures": {
+    "domain": "EVENTS",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.03666666666666667,
+    "at1": 0.016666666666666666,
+    "median": 0.6,
+    "distinct": 13
+   },
+   "insider_activity": {
+    "domain": "EVENTS",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "MISSING": 300
+    },
+    "at0": null,
+    "at1": null,
+    "median": null,
+    "distinct": 0
+   }
+  },
+  "mean_available_points": 36.736666666666665,
+  "min_available_points": 32.0,
+  "max_available_points": 37.0,
+  "mean_domain_share": {
+   "TECHNICAL": 0.0,
+   "FUNDAMENTAL": 0.2654565758940759,
+   "REGIME": 0.0,
+   "RISK": 0.5447048184548183,
+   "EVENTS": 0.1898386056511057
+  },
+  "score": {
+   "min": 24.239955745788173,
+   "p10": 33.80173628244977,
+   "median": 45.949361656040665,
+   "p90": 57.29351439973563,
+   "max": 65.77997942348335,
+   "n70": 0,
+   "n80": 0
+  },
+  "confidence": {
+   "HIGH": 233,
+   "MEDIUM": 67
+  },
+  "actionability": {
+   "ACTIONABLE": 289,
+   "BLOCKED": 11
+  },
+  "bands": {
+   "WEAK_REDUCE": 176,
+   "HOLD_WATCH": 42,
+   "SELL_AVOID": 82
+  },
+  "held_back": 0,
+  "deal_held": 0,
+  "entry_status": {
+   "NO_VALID_ENTRY_SETUP": 259,
+   "WAIT_FOR_PULLBACK": 24,
+   "ENTRY_NOW": 17
+  }
+ },
+ "E4_KR_LONG_TERM": {
+  "n": 300,
+  "factors": {
+   "long_trend": {
+    "domain": "TECHNICAL",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 299,
+     "MISSING": 1
+    },
+    "at0": 0.21070234113712374,
+    "at1": 0.05351170568561873,
+    "median": 0.39811773752824536,
+    "distinct": 167
+   },
+   "relative_strength": {
+    "domain": "TECHNICAL",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.0,
+    "at1": 0.0033333333333333335,
+    "median": 0.5016666666666667,
+    "distinct": 300
+   },
+   "momentum_persistence": {
+    "domain": "TECHNICAL",
+    "weight": 2,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.3333333333333333,
+    "distinct": 112
+   },
+   "valuation": {
+    "domain": "FUNDAMENTAL",
+    "weight": 15,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 299,
+     "MISSING": 1
+    },
+    "at0": 0.07357859531772576,
+    "at1": 0.15719063545150502,
+    "median": 0.6069517932224162,
+    "distinct": 205
+   },
+   "business_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight": 15,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.05,
+    "at1": 0.01,
+    "median": 0.5104542537769015,
+    "distinct": 263
+   },
+   "growth_quality": {
+    "domain": "FUNDAMENTAL",
+    "weight": 8,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 265,
+     "MISSING": 35
+    },
+    "at0": 0.1320754716981132,
+    "at1": 0.11320754716981132,
+    "median": 0.39511782763140196,
+    "distinct": 197
+   },
+   "free_cash_flow": {
+    "domain": "FUNDAMENTAL",
+    "weight": 7,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 261,
+     "NOT_APPLICABLE": 28,
+     "MISSING": 11
+    },
+    "at0": 0.14559386973180077,
+    "at1": 0.07662835249042145,
+    "median": 0.575732888527742,
+    "distinct": 165
+   },
+   "balance_dilution": {
+    "domain": "FUNDAMENTAL",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.10666666666666667,
+    "at1": 0.21666666666666667,
+    "median": 0.7089181552319888,
+    "distinct": 205
+   },
+   "vkospi_regime": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 2,
+    "scored": false,
+    "status": {
+     "MISSING": 300
+    },
+    "at0": null,
+    "at1": null,
+    "median": null,
+    "distinct": 0
+   },
+   "index_trend": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 3,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 1.0,
+    "at1": 0.0,
+    "median": 0.0,
+    "distinct": 1
+   },
+   "breadth": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 2,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 1.0,
+    "at1": 0.0,
+    "median": 0.0,
+    "distinct": 1
+   },
+   "usdkrw_regime": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 2,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.0,
+    "at1": 1.0,
+    "median": 1.0,
+    "distinct": 1
+   },
+   "credit_liquidity": {
+    "domain": "REGIME",
+    "weight": 0,
+    "reference_weight": 1,
+    "scored": false,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.3485156567710451,
+    "distinct": 1
+   },
+   "financial_resilience": {
+    "domain": "RISK",
+    "weight": 7,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.02,
+    "at1": 0.12,
+    "median": 0.4760204596638332,
+    "distinct": 260
+   },
+   "downside_drawdown": {
+    "domain": "RISK",
+    "weight": 5,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.48,
+    "at1": 0.0,
+    "median": 0.009641410285350437,
+    "distinct": 157
+   },
+   "liquidity": {
+    "domain": "RISK",
+    "weight": 4,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.01,
+    "at1": 0.22666666666666666,
+    "median": 0.7222102820831261,
+    "distinct": 231
+   },
+   "leverage": {
+    "domain": "RISK",
+    "weight": 4,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 272,
+     "NOT_APPLICABLE": 28
+    },
+    "at0": 0.0661764705882353,
+    "at1": 0.11397058823529412,
+    "median": 0.7536296348843552,
+    "distinct": 225
+   },
+   "governance": {
+    "domain": "EVENTS",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.0,
+    "at1": 0.0,
+    "median": 0.8,
+    "distinct": 2
+   },
+   "material_events": {
+    "domain": "EVENTS",
+    "weight": 3,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 300
+    },
+    "at0": 0.06,
+    "at1": 0.016666666666666666,
+    "median": 0.6,
+    "distinct": 11
+   },
+   "insider_ownership": {
+    "domain": "EVENTS",
+    "weight": 2,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 273,
+     "MISSING": 27
+    },
+    "at0": 0.0,
+    "at1": 0.9413919413919414,
+    "median": 1.0,
+    "distinct": 17
+   },
+   "capital_allocation": {
+    "domain": "EVENTS",
+    "weight": 2,
+    "reference_weight": null,
+    "scored": true,
+    "status": {
+     "REAL": 231,
+     "MISSING": 69
+    },
+    "at0": 0.0,
+    "at1": 0.961038961038961,
+    "median": 1.0,
+    "distinct": 2
+   }
+  },
+  "mean_available_points": 87.07666666666667,
+  "min_available_points": 64.0,
+  "max_available_points": 90.0,
+  "mean_domain_share": {
+   "TECHNICAL": 0.11517759297596143,
+   "FUNDAMENTAL": 0.5512776673405325,
+   "REGIME": 0.0,
+   "RISK": 0.22560101009528988,
+   "EVENTS": 0.10794372958821628
+  },
+  "score": {
+   "min": 12.833926841360297,
+   "p10": 31.44664401451026,
+   "median": 54.01583073515289,
+   "p90": 70.43409744762963,
+   "max": 83.36127029321398,
+   "n70": 33,
+   "n80": 4
+  },
+  "confidence": {
+   "MEDIUM": 251,
+   "LOW": 49
+  },
+  "actionability": {
+   "ACTIONABLE": 289,
+   "BLOCKED": 11
+  },
+  "bands": {
+   "HOLD_WATCH": 113,
+   "BUY_CANDIDATE": 26,
+   "SELL_AVOID": 58,
+   "WEAK_REDUCE": 100,
+   "STRONG_BUY_CANDIDATE": 3
+  },
+  "held_back": 5,
+  "deal_held": 0,
+  "entry_status": {
+   "ENTRY_NOW": 122,
+   "NO_VALID_ENTRY_SETUP": 162,
+   "OVERVALUED_AT_CURRENT_PRICE": 16
+  }
+ }
+}

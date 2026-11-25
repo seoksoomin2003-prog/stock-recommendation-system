@@ -1,0 +1,327 @@
+{
+ "US_SWING": {
+  "session": "2026-11-24",
+  "model_version_recorded": "QSF-1.5.2",
+  "factors": {
+   "trend_structure": {
+    "exact": 501
+   },
+   "relative_strength": {
+    "exact": 502
+   },
+   "momentum": {
+    "exact": 504
+   },
+   "breakout_volume": {
+    "exact": 504
+   },
+   "volatility_structure": {
+    "exact": 503
+   },
+   "earnings_revenue_quality": {
+    "exact": 492,
+    "differs": 8
+   },
+   "profitability": {
+    "exact": 498
+   },
+   "balance_sheet": {
+    "exact": 500
+   },
+   "cash_flow_quality": {
+    "exact": 446
+   },
+   "risk_reward": {
+    "exact": 504
+   },
+   "atr_risk": {
+    "exact": 504
+   },
+   "liquidity": {
+    "exact": 504
+   },
+   "drawdown_gap": {
+    "exact": 504
+   },
+   "earnings_calendar": {
+    "exact": 499
+   },
+   "material_disclosures": {
+    "exact": 504
+   },
+   "insider_activity": {
+    "exact": 504
+   }
+  },
+  "worst_difference": {
+   "earnings_revenue_quality": 0.5
+  },
+  "examples": {
+   "earnings_revenue_quality": {
+    "ticker": "BE",
+    "stored": 0.5,
+    "rebuilt": 1.0,
+    "raw": {
+     "eps_growth": null,
+     "ocf_to_ni": null,
+     "rev_growth": 0.37326441660515
+    }
+   }
+  },
+  "scores_rebuilt_exactly_from_raw": 496,
+  "scores": 504,
+  "max_score_difference": 1.875,
+  "no_scan_rank_basis": {
+   "n": 502,
+   "mean_change": 1.0951576329120325,
+   "mean_abs_change": 1.5498297641398873,
+   "max_abs_change": 3.3615537848605683,
+   "rho": 0.9972893511844456,
+   "ge70_scan": 35,
+   "ge70_no_scan": 62,
+   "crossing_70_either_way": 27
+  }
+ },
+ "US_LONG_TERM": {
+  "session": "2026-11-24",
+  "model_version_recorded": "QSF-1.5.2",
+  "factors": {
+   "long_trend": {
+    "exact": 501
+   },
+   "relative_strength": {
+    "exact": 502
+   },
+   "momentum_persistence": {
+    "exact": 501
+   },
+   "valuation": {
+    "exact": 501
+   },
+   "business_quality": {
+    "exact": 500
+   },
+   "growth_quality": {
+    "exact": 481,
+    "differs": 19
+   },
+   "free_cash_flow": {
+    "exact": 410
+   },
+   "balance_dilution": {
+    "exact": 501
+   },
+   "financial_resilience": {
+    "exact": 500
+   },
+   "downside_drawdown": {
+    "exact": 504
+   },
+   "liquidity": {
+    "exact": 504
+   },
+   "leverage": {
+    "exact": 439
+   },
+   "governance": {
+    "exact": 504
+   },
+   "material_events": {
+    "exact": 504
+   },
+   "insider_ownership": {
+    "exact": 501
+   },
+   "capital_allocation": {
+    "exact": 497
+   }
+  },
+  "worst_difference": {
+   "growth_quality": 0.33333333333333337
+  },
+  "examples": {
+   "growth_quality": {
+    "ticker": "BE",
+    "stored": 0.6666666666666666,
+    "rebuilt": 1.0,
+    "raw": {
+     "eps_cagr3": null,
+     "rev_cagr3": 0.19064306780764095,
+     "rev_growth": 0.37326441660515
+    }
+   }
+  },
+  "scores_rebuilt_exactly_from_raw": 485,
+  "scores": 504,
+  "max_score_difference": 2.962962962962969,
+  "no_scan_rank_basis": {
+   "n": 502,
+   "mean_change": 0.3006566964773531,
+   "mean_abs_change": 0.42314280189072573,
+   "max_abs_change": 1.1747296528173194,
+   "rho": 0.9989789535326629,
+   "ge70_scan": 81,
+   "ge70_no_scan": 88,
+   "crossing_70_either_way": 7
+  }
+ },
+ "KR_SWING": {
+  "session": "2026-11-24",
+  "model_version_recorded": "QSF-1.5.2",
+  "factors": {
+   "earnings_revenue_quality": {
+    "exact": 271,
+    "differs": 22,
+    "not_rebuildable": 4
+   },
+   "profitability": {
+    "exact": 300
+   },
+   "balance_sheet": {
+    "exact": 300
+   },
+   "cash_flow_quality": {
+    "exact": 267,
+    "not_rebuildable": 2
+   },
+   "risk_reward": {
+    "exact": 300
+   },
+   "atr_risk": {
+    "exact": 300
+   },
+   "liquidity": {
+    "exact": 300
+   },
+   "drawdown_gap": {
+    "exact": 300
+   },
+   "earnings_calendar": {
+    "exact": 298
+   },
+   "material_disclosures": {
+    "exact": 300
+   }
+  },
+  "worst_difference": {
+   "earnings_revenue_quality": 0.6666666666666667
+  },
+  "examples": {
+   "earnings_revenue_quality": {
+    "ticker": "028300",
+    "stored": 0.3333333333333333,
+    "rebuilt": 1.0,
+    "raw": {
+     "eps_growth": null,
+     "ocf_to_ni": null,
+     "rev_growth": 0.23554753104161374
+    }
+   }
+  },
+  "scores_rebuilt_exactly_from_raw": 278,
+  "scores": 300,
+  "max_score_difference": 5.405405405405411
+ },
+ "KR_LONG_TERM": {
+  "session": "2026-11-24",
+  "model_version_recorded": "QSF-1.5.2",
+  "factors": {
+   "long_trend": {
+    "exact": 299
+   },
+   "relative_strength": {
+    "exact": 300
+   },
+   "momentum_persistence": {
+    "exact": 300
+   },
+   "valuation": {
+    "exact": 299
+   },
+   "business_quality": {
+    "exact": 300
+   },
+   "growth_quality": {
+    "exact": 232,
+    "differs": 29,
+    "not_rebuildable": 4
+   },
+   "free_cash_flow": {
+    "exact": 261
+   },
+   "balance_dilution": {
+    "exact": 300
+   },
+   "financial_resilience": {
+    "exact": 300
+   },
+   "downside_drawdown": {
+    "exact": 300
+   },
+   "liquidity": {
+    "exact": 300
+   },
+   "leverage": {
+    "exact": 272
+   },
+   "governance": {
+    "exact": 300
+   },
+   "material_events": {
+    "exact": 300
+   },
+   "insider_ownership": {
+    "exact": 273
+   },
+   "capital_allocation": {
+    "exact": 231
+   }
+  },
+  "worst_difference": {
+   "growth_quality": 0.5
+  },
+  "examples": {
+   "growth_quality": {
+    "ticker": "440110",
+    "stored": 0.5,
+    "rebuilt": 1.0,
+    "raw": {
+     "eps_cagr3": null,
+     "rev_cagr3": null,
+     "rev_growth": 1.124448314427875
+    }
+   }
+  },
+  "scores_rebuilt_exactly_from_raw": 271,
+  "scores": 300,
+  "max_score_difference": 4.54545454545455,
+  "no_scan_rank_basis": {
+   "n": 300,
+   "mean_change": 0.2773661251455907,
+   "mean_abs_change": 0.6279584215296018,
+   "max_abs_change": 1.943181818181813,
+   "rho": 0.9987510972344137,
+   "ge70_scan": 33,
+   "ge70_no_scan": 37,
+   "crossing_70_either_way": 4
+  }
+ },
+ "latest_file_US": {
+  "session": "2026-11-24",
+  "rows": 1008,
+  "rows_differing_from_ledger": 0,
+  "model_version": "QSF-1.5.2"
+ },
+ "latest_file_KR": {
+  "session": "2026-11-24",
+  "rows": 600,
+  "rows_differing_from_ledger": 0,
+  "model_version": "QSF-1.5.2"
+ },
+ "ledger_verify": {
+  "status": "OK",
+  "shards": 34,
+  "voided": 3,
+  "bad_files": []
+ }
+}

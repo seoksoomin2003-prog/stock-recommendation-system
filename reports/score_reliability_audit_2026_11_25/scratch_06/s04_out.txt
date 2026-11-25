@@ -1,0 +1,17 @@
+
+== equal means, calm vs wild stocks (lognormal)
+   mean rank correlation +0.039 (BT-1 Korea swing 20 sessions: +0.054) | its sd between dates 0.105 (file-implied 0.100) | share of dates positive 65% (file 72%)
+   t of the rank correlation over 89 dates: median 3.50, 5%..95% 1.85..5.37; histories with t >= 2.35: 88%  (file: 5.13)
+   top fifth - bottom fifth, MEAN: +0.002% a period (file: +0.08% before the spread's cost line; true value in this world: 0) | histories where that difference has t >= 2: 3.2%
+   top fifth - bottom fifth, MEDIAN: +1.175% a period
+
+== the same + rare large jumps among the wild stocks
+   mean rank correlation +0.057 (BT-1 Korea swing 20 sessions: +0.054) | its sd between dates 0.102 (file-implied 0.100) | share of dates positive 71% (file 72%)
+   t of the rank correlation over 89 dates: median 5.29, 5%..95% 3.55..7.13; histories with t >= 2.35: 100%  (file: 5.13)
+   top fifth - bottom fifth, MEAN: +0.011% a period (file: +0.08% before the spread's cost line; true value in this world: 0) | histories where that difference has t >= 2: 3.4%
+   top fifth - bottom fifth, MEDIAN: +1.735% a period
+
+For comparison, in a bell-shaped world where every stock has the same volatility, a rank correlation of 0.054 means a top-minus-bottom mean of about
+   2.80 x 0.054 x 0.08 = 1.21% a period (cross-sectional sd 8%)
+   2.80 x 0.054 x 0.10 = 1.51% a period (cross-sectional sd 10%)
+   2.80 x 0.054 x 0.12 = 1.81% a period (cross-sectional sd 12%)

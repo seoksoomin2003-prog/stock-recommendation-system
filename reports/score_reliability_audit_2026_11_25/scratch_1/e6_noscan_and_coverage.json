@@ -1,0 +1,50 @@
+{
+ "US_SWING": {
+  "n": 502,
+  "mean_abs": 1.549829764139887,
+  "p95_abs": 3.0104581673306683,
+  "max_abs": 3.361553784860554,
+  "mean": 1.095157632912032,
+  "cross_70": 27
+ },
+ "US_SWING_cov": {
+  "max_input_coverage": 1.0,
+  "median_input_coverage": 1.0,
+  "max_coverage": 1.0,
+  "median_coverage": 1.0
+ },
+ "US_LONG_TERM": {
+  "n": 502,
+  "mean_abs": 0.42314280189072573,
+  "p95_abs": 0.8166192162053487,
+  "max_abs": 1.1747296528173052,
+  "mean": 0.30065669647735316,
+  "cross_70": 7
+ },
+ "US_LONG_TERM_cov": {
+  "max_input_coverage": 1.0,
+  "median_input_coverage": 0.9472222222222222,
+  "max_coverage": 1.0,
+  "median_coverage": 1.0
+ },
+ "KR_SWING_cov": {
+  "max_input_coverage": 0.925,
+  "median_input_coverage": 0.925,
+  "max_coverage": 0.925,
+  "median_coverage": 0.925
+ },
+ "KR_LONG_TERM": {
+  "n": 300,
+  "mean_abs": 0.6279584215296021,
+  "p95_abs": 1.3820712556376125,
+  "max_abs": 1.943181818181813,
+  "mean": 0.2773661251455909,
+  "cross_70": 4
+ },
+ "KR_LONG_TERM_cov": {
+  "max_input_coverage": 0.8824074074074073,
+  "median_input_coverage": 0.8712962962962962,
+  "max_coverage": 1.0,
+  "median_coverage": 1.0
+ }
+}

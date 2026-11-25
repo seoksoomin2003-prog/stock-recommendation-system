@@ -1,0 +1,173 @@
+~/Developer/quant-stock-engine/reports/score_reliability_audit_2026_11_25/scratch_07/w_weakness.py:155: RuntimeWarning: Mean of empty slice
+  M = np.nanmean(np.stack(mats), axis=0)
+== reproduce stored score from stored factor values under QSF-1.6.0 weights
+US_SWING_2026-11-09 {'versions': ['QSF-1.1.8'], 'n': 503, 'max_abs_diff': 6.839146240072683, 'n_diff_gt_0.01': 502}
+US_SWING_2026-11-10 {'versions': ['QSF-1.1.8'], 'n': 503, 'max_abs_diff': 7.275798845740184, 'n_diff_gt_0.01': 503}
+US_SWING_2026-11-11 {'versions': ['QSF-1.3.1'], 'n': 504, 'max_abs_diff': 7.673668837478171, 'n_diff_gt_0.01': 503}
+US_SWING_2026-11-12 {'versions': ['QSF-1.3.2'], 'n': 504, 'max_abs_diff': 6.742134253418733, 'n_diff_gt_0.01': 503}
+US_SWING_2026-11-13 {'versions': ['QSF-1.3.2'], 'n': 504, 'max_abs_diff': 6.972660196822911, 'n_diff_gt_0.01': 500}
+US_SWING_2026-11-16 {'versions': ['QSF-1.4.1'], 'n': 504, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_SWING_2026-11-17 {'versions': ['QSF-1.4.1'], 'n': 503, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_SWING_2026-11-18 {'versions': ['QSF-1.4.1'], 'n': 503, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_SWING_2026-11-19 {'versions': ['QSF-1.4.1'], 'n': 503, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_SWING_2026-11-20 {'versions': ['QSF-1.4.1'], 'n': 504, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_SWING_2026-11-23 {'versions': ['QSF-1.5.2'], 'n': 504, 'max_abs_diff': 2.1316282072803006e-14, 'n_diff_gt_0.01': 0}
+US_SWING_2026-11-24 {'versions': ['QSF-1.5.2'], 'n': 504, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_LONG_TERM_2026-11-09 {'versions': ['QSF-1.1.8'], 'n': 503, 'max_abs_diff': 7.863917115054235, 'n_diff_gt_0.01': 502}
+US_LONG_TERM_2026-11-10 {'versions': ['QSF-1.1.8'], 'n': 503, 'max_abs_diff': 7.008133841359495, 'n_diff_gt_0.01': 503}
+US_LONG_TERM_2026-11-11 {'versions': ['QSF-1.3.1'], 'n': 504, 'max_abs_diff': 5.545119766003012, 'n_diff_gt_0.01': 502}
+US_LONG_TERM_2026-11-12 {'versions': ['QSF-1.3.2'], 'n': 504, 'max_abs_diff': 6.310405421732753, 'n_diff_gt_0.01': 503}
+US_LONG_TERM_2026-11-13 {'versions': ['QSF-1.3.2'], 'n': 504, 'max_abs_diff': 5.379141970954038, 'n_diff_gt_0.01': 497}
+US_LONG_TERM_2026-11-16 {'versions': ['QSF-1.4.1'], 'n': 504, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_LONG_TERM_2026-11-17 {'versions': ['QSF-1.4.1'], 'n': 503, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_LONG_TERM_2026-11-18 {'versions': ['QSF-1.4.1'], 'n': 503, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_LONG_TERM_2026-11-19 {'versions': ['QSF-1.4.1'], 'n': 503, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_LONG_TERM_2026-11-20 {'versions': ['QSF-1.4.1'], 'n': 504, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_LONG_TERM_2026-11-23 {'versions': ['QSF-1.5.2'], 'n': 504, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+US_LONG_TERM_2026-11-24 {'versions': ['QSF-1.5.2'], 'n': 504, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+KR_SWING_2026-11-11 {'versions': ['QSF-1.3.1'], 'n': 300, 'max_abs_diff': 12.106101054630692, 'n_diff_gt_0.01': 300}
+KR_SWING_2026-11-12 {'versions': ['QSF-1.3.2'], 'n': 300, 'max_abs_diff': 12.002592583196702, 'n_diff_gt_0.01': 300}
+KR_SWING_2026-11-13 {'versions': ['QSF-1.3.2'], 'n': 300, 'max_abs_diff': 11.983838480736793, 'n_diff_gt_0.01': 300}
+KR_SWING_2026-11-16 {'versions': ['QSF-1.4.1'], 'n': 300, 'max_abs_diff': 2.1316282072803006e-14, 'n_diff_gt_0.01': 0}
+KR_SWING_2026-11-17 {'versions': ['QSF-1.4.1'], 'n': 300, 'max_abs_diff': 1.4210854715202004e-14, 'n_diff_gt_0.01': 0}
+KR_SWING_2026-11-18 {'versions': ['QSF-1.4.1'], 'n': 300, 'max_abs_diff': 1.4210854715202004e-14, 'n_diff_gt_0.01': 0}
+KR_SWING_2026-11-19 {'versions': ['QSF-1.4.1'], 'n': 300, 'max_abs_diff': 2.1316282072803006e-14, 'n_diff_gt_0.01': 0}
+KR_SWING_2026-11-20 {'versions': ['QSF-1.4.1'], 'n': 300, 'max_abs_diff': 1.4210854715202004e-14, 'n_diff_gt_0.01': 0}
+KR_SWING_2026-11-23 {'versions': ['QSF-1.5.2'], 'n': 300, 'max_abs_diff': 2.1316282072803006e-14, 'n_diff_gt_0.01': 0}
+KR_SWING_2026-11-24 {'versions': ['QSF-1.5.2'], 'n': 300, 'max_abs_diff': 2.1316282072803006e-14, 'n_diff_gt_0.01': 0}
+KR_LONG_TERM_2026-11-11 {'versions': ['QSF-1.3.1'], 'n': 300, 'max_abs_diff': 5.566045019258553, 'n_diff_gt_0.01': 300}
+KR_LONG_TERM_2026-11-12 {'versions': ['QSF-1.3.2'], 'n': 300, 'max_abs_diff': 5.513873658364176, 'n_diff_gt_0.01': 300}
+KR_LONG_TERM_2026-11-13 {'versions': ['QSF-1.3.2'], 'n': 300, 'max_abs_diff': 5.500393461206087, 'n_diff_gt_0.01': 298}
+KR_LONG_TERM_2026-11-16 {'versions': ['QSF-1.4.1'], 'n': 300, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+KR_LONG_TERM_2026-11-17 {'versions': ['QSF-1.4.1'], 'n': 300, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+KR_LONG_TERM_2026-11-18 {'versions': ['QSF-1.4.1'], 'n': 300, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+KR_LONG_TERM_2026-11-19 {'versions': ['QSF-1.4.1'], 'n': 300, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+KR_LONG_TERM_2026-11-20 {'versions': ['QSF-1.4.1'], 'n': 300, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+KR_LONG_TERM_2026-11-23 {'versions': ['QSF-1.5.2'], 'n': 300, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+KR_LONG_TERM_2026-11-24 {'versions': ['QSF-1.5.2'], 'n': 300, 'max_abs_diff': 2.842170943040401e-14, 'n_diff_gt_0.01': 0}
+
+== line of 70 (current weights on ledger factor values)
+US_SWING sessions 12 ge70 min/med/max 13 27 39 share% min/med/max 2.6 5.4 7.8 median score 55.2 p80 64.5 p90 68.1 max 77.7 sd 11.2
+US_LONG_TERM sessions 12 ge70 min/med/max 72 77 80 share% min/med/max 14.4 15.4 16.1 median score 62.0 p80 68.6 p90 71.9 max 83.0 sd 9.1
+KR_SWING sessions 10 ge70 min/med/max 0 0 0 share% min/med/max 0.0 0.0 0.0 median score 46.3 p80 53.7 p90 57.3 max 68.8 sd 8.9
+KR_LONG_TERM sessions 10 ge70 min/med/max 32 36 38 share% min/med/max 10.7 12.2 12.7 median score 54.5 p80 67.2 p90 70.9 max 84.2 sd 14.5
+
+== factors: weight share vs share of score variance (mean over sessions)
+-- US_SWING
+  trend_structure            w   10 wshare  12.5%  varshare   30.9%  valued 1.00 modal 0.21 distinct 7 sd 0.32 at0 0.06 at1 0.21 rho_with_score 0.88
+  relative_strength          w   10 wshare  12.5%  varshare   25.6%  valued 1.00 modal 0.00 distinct 501 sd 0.29 at0 0.00 at1 0.00 rho_with_score 0.80
+  breakout_volume            w   10 wshare  12.5%  varshare   17.2%  valued 1.00 modal 0.12 distinct 436 sd 0.18 at0 0.00 at1 0.00 rho_with_score 0.89
+  risk_reward                w    6 wshare   7.5%  varshare   -1.0%  valued 1.00 modal 0.70 distinct 152 sd 0.15 at0 0.70 at1 0.00 rho_with_score 0.01
+  momentum                   w    5 wshare   6.2%  varshare    5.7%  valued 1.00 modal 0.06 distinct 470 sd 0.26 at0 0.06 at1 0.01 rho_with_score 0.33
+  volatility_structure       w    5 wshare   6.2%  varshare    4.6%  valued 1.00 modal 0.03 distinct 201 sd 0.26 at0 0.02 at1 0.00 rho_with_score 0.31
+  atr_risk                   w    5 wshare   6.2%  varshare    9.2%  valued 1.00 modal 0.05 distinct 477 sd 0.26 at0 0.05 at1 0.00 rho_with_score 0.59
+  liquidity                  w    5 wshare   6.2%  varshare   -0.4%  valued 1.00 modal 0.43 distinct 284 sd 0.14 at0 0.00 at1 0.43 rho_with_score -0.09
+  drawdown_gap               w    4 wshare   5.0%  varshare    7.2%  valued 1.00 modal 0.04 distinct 483 sd 0.26 at0 0.04 at1 0.00 rho_with_score 0.59
+  earnings_calendar          w    4 wshare   5.0%  varshare    1.0%  valued 0.90 modal 0.91 distinct 10 sd 0.19 at0 0.01 at1 0.91 rho_with_score 0.06
+  earnings_revenue_quality   w    3 wshare   3.8%  varshare    0.1%  valued 1.00 modal 0.04 distinct 445 sd 0.22 at0 0.02 at1 0.04 rho_with_score -0.01
+  balance_sheet              w    3 wshare   3.8%  varshare   -0.8%  valued 1.00 modal 0.14 distinct 392 sd 0.33 at0 0.07 at1 0.14 rho_with_score -0.07
+  material_disclosures       w    3 wshare   3.8%  varshare    0.0%  valued 1.00 modal 0.95 distinct 3 sd 0.06 at0 0.00 at1 0.00 rho_with_score 0.02
+  insider_activity           w    3 wshare   3.8%  varshare   -0.9%  valued 1.00 modal 0.56 distinct 27 sd 0.32 at0 0.56 at1 0.07 rho_with_score -0.08
+  profitability              w    2 wshare   2.5%  varshare    1.2%  valued 0.99 modal 0.25 distinct 352 sd 0.30 at0 0.04 at1 0.25 rho_with_score 0.16
+  cash_flow_quality          w    2 wshare   2.5%  varshare    0.4%  valued 0.88 modal 0.37 distinct 246 sd 0.22 at0 0.02 at1 0.37 rho_with_score 0.17
+-- US_LONG_TERM
+  valuation                  w   15 wshare  16.7%  varshare   15.9%  valued 1.00 modal 0.02 distinct 478 sd 0.26 at0 0.02 at1 0.01 rho_with_score 0.28
+  business_quality           w   15 wshare  16.7%  varshare   23.7%  valued 1.00 modal 0.11 distinct 428 sd 0.21 at0 0.00 at1 0.11 rho_with_score 0.54
+  growth_quality             w    8 wshare   8.9%  varshare    8.2%  valued 1.00 modal 0.06 distinct 445 sd 0.28 at0 0.03 at1 0.06 rho_with_score 0.28
+  free_cash_flow             w    7 wshare   7.8%  varshare    8.8%  valued 0.81 modal 0.31 distinct 245 sd 0.26 at0 0.03 at1 0.31 rho_with_score 0.61
+  financial_resilience       w    7 wshare   7.8%  varshare   14.1%  valued 1.00 modal 0.12 distinct 410 sd 0.32 at0 0.05 at1 0.12 rho_with_score 0.50
+  long_trend                 w    5 wshare   5.6%  varshare    5.6%  valued 1.00 modal 0.10 distinct 402 sd 0.29 at0 0.04 at1 0.10 rho_with_score 0.26
+  balance_dilution           w    5 wshare   5.6%  varshare    8.6%  valued 1.00 modal 0.14 distinct 375 sd 0.23 at0 0.00 at1 0.10 rho_with_score 0.57
+  downside_drawdown          w    5 wshare   5.6%  varshare    4.2%  valued 1.00 modal 0.05 distinct 472 sd 0.27 at0 0.05 at1 0.01 rho_with_score 0.19
+  liquidity                  w    4 wshare   4.4%  varshare    0.6%  valued 1.00 modal 0.43 distinct 283 sd 0.14 at0 0.00 at1 0.43 rho_with_score 0.08
+  leverage                   w    4 wshare   4.4%  varshare    3.6%  valued 0.87 modal 0.16 distinct 318 sd 0.35 at0 0.16 at1 0.11 rho_with_score 0.40
+  relative_strength          w    3 wshare   3.3%  varshare    3.5%  valued 1.00 modal 0.00 distinct 498 sd 0.29 at0 0.00 at1 0.00 rho_with_score 0.29
+  governance                 w    3 wshare   3.3%  varshare    0.5%  valued 1.00 modal 0.95 distinct 3 sd 0.07 at0 0.00 at1 0.00 rho_with_score 0.09
+  material_events            w    3 wshare   3.3%  varshare    0.4%  valued 1.00 modal 0.95 distinct 3 sd 0.07 at0 0.00 at1 0.00 rho_with_score 0.11
+  momentum_persistence       w    2 wshare   2.2%  varshare    0.9%  valued 1.00 modal 0.08 distinct 294 sd 0.23 at0 0.00 at1 0.00 rho_with_score 0.11
+  insider_ownership          w    2 wshare   2.2%  varshare   -0.4%  valued 1.00 modal 0.06 distinct 397 sd 0.27 at0 0.00 at1 0.05 rho_with_score -0.05
+  capital_allocation         w    2 wshare   2.2%  varshare    1.7%  valued 0.99 modal 0.35 distinct 283 sd 0.18 at0 0.01 at1 0.35 rho_with_score 0.28
+-- KR_SWING
+  risk_reward                w    6 wshare  15.0%  varshare   18.9%  valued 1.00 modal 0.57 distinct 120 sd 0.26 at0 0.57 at1 0.04 rho_with_score 0.31
+  atr_risk                   w    5 wshare  12.5%  varshare   10.1%  valued 1.00 modal 0.46 distinct 164 sd 0.22 at0 0.46 at1 0.00 rho_with_score 0.35
+  liquidity                  w    5 wshare  12.5%  varshare    8.4%  valued 1.00 modal 0.23 distinct 230 sd 0.29 at0 0.01 at1 0.23 rho_with_score 0.20
+  drawdown_gap               w    4 wshare  10.0%  varshare    6.3%  valued 1.00 modal 0.15 distinct 256 sd 0.20 at0 0.15 at1 0.00 rho_with_score 0.25
+  earnings_calendar          w    4 wshare  10.0%  varshare    8.5%  valued 0.99 modal 0.93 distinct 2 sd 0.16 at0 0.05 at1 0.93 rho_with_score 0.26
+  earnings_revenue_quality   w    3 wshare   7.5%  varshare   12.2%  valued 0.98 modal 0.11 distinct 212 sd 0.29 at0 0.10 at1 0.10 rho_with_score 0.43
+  balance_sheet              w    3 wshare   7.5%  varshare   10.3%  valued 1.00 modal 0.20 distinct 230 sd 0.35 at0 0.04 at1 0.20 rho_with_score 0.33
+  material_disclosures       w    3 wshare   7.5%  varshare    5.6%  valued 1.00 modal 0.64 distinct 11 sd 0.18 at0 0.04 at1 0.02 rho_with_score 0.37
+  insider_activity           w    3 wshare   7.5%  varshare    0.0%  valued 0.00 modal   -   distinct   -   sd   -   at0   -   at1   -   rho_with_score   -  
+  profitability              w    2 wshare   5.0%  varshare    9.5%  valued 1.00 modal 0.11 distinct 252 sd 0.31 at0 0.11 at1 0.06 rho_with_score 0.55
+  cash_flow_quality          w    2 wshare   5.0%  varshare   10.1%  valued 0.89 modal 0.22 distinct 176 sd 0.36 at0 0.22 at1 0.09 rho_with_score 0.62
+-- KR_LONG_TERM
+  valuation                  w   15 wshare  16.7%  varshare   26.1%  valued 1.00 modal 0.15 distinct 209 sd 0.34 at0 0.07 at1 0.15 rho_with_score 0.57
+  business_quality           w   15 wshare  16.7%  varshare   25.3%  valued 1.00 modal 0.05 distinct 264 sd 0.25 at0 0.05 at1 0.01 rho_with_score 0.80
+  growth_quality             w    8 wshare   8.9%  varshare    4.0%  valued 0.87 modal 0.12 distinct 196 sd 0.34 at0 0.12 at1 0.12 rho_with_score 0.36
+  free_cash_flow             w    7 wshare   7.8%  varshare    9.8%  valued 0.87 modal 0.14 distinct 166 sd 0.32 at0 0.14 at1 0.08 rho_with_score 0.79
+  financial_resilience       w    7 wshare   7.8%  varshare    9.4%  valued 1.00 modal 0.12 distinct 261 sd 0.33 at0 0.02 at1 0.12 rho_with_score 0.51
+  long_trend                 w    5 wshare   5.6%  varshare    3.2%  valued 1.00 modal 0.20 distinct 169 sd 0.29 at0 0.19 at1 0.06 rho_with_score 0.25
+  balance_dilution           w    5 wshare   5.6%  varshare    6.9%  valued 1.00 modal 0.22 distinct 206 sd 0.35 at0 0.10 at1 0.22 rho_with_score 0.48
+  downside_drawdown          w    5 wshare   5.6%  varshare    3.6%  valued 1.00 modal 0.47 distinct 161 sd 0.21 at0 0.47 at1 0.00 rho_with_score 0.42
+  liquidity                  w    4 wshare   4.4%  varshare   -0.1%  valued 1.00 modal 0.23 distinct 230 sd 0.29 at0 0.01 at1 0.23 rho_with_score -0.02
+  leverage                   w    4 wshare   4.4%  varshare    2.8%  valued 0.90 modal 0.12 distinct 225 sd 0.31 at0 0.06 at1 0.12 rho_with_score 0.53
+  relative_strength          w    3 wshare   3.3%  varshare    2.6%  valued 1.00 modal 0.00 distinct 300 sd 0.29 at0 0.00 at1 0.00 rho_with_score 0.35
+  governance                 w    3 wshare   3.3%  varshare    0.6%  valued 1.00 modal 0.93 distinct 3 sd 0.14 at0 0.00 at1 0.00 rho_with_score 0.10
+  material_events            w    3 wshare   3.3%  varshare    1.6%  valued 1.00 modal 0.64 distinct 10 sd 0.19 at0 0.06 at1 0.02 rho_with_score 0.30
+  momentum_persistence       w    2 wshare   2.2%  varshare    1.1%  valued 1.00 modal 0.12 distinct 117 sd 0.26 at0 0.00 at1 0.00 rho_with_score 0.21
+  insider_ownership          w    2 wshare   2.2%  varshare    0.4%  valued 0.91 modal 0.94 distinct 18 sd 0.16 at0 0.00 at1 0.94 rho_with_score -0.13
+  capital_allocation         w    2 wshare   2.2%  varshare    2.6%  valued 0.78 modal 0.96 distinct 2 sd 0.12 at0 0.00 at1 0.96 rho_with_score 0.10
+
+== risk/reward (swing): rank corr with the trend factors (stored reference values in KR), share at 0, mean in the top fifth of the score without it
+{
+ "US": {
+  "rho_trend": 0.0009268327918889457,
+  "rho_breakout": -0.027918265103746048,
+  "rho_score_without": -0.051180956599485676,
+  "at0": 0.695358767193369,
+  "top_fifth_norr_mean_rr": 0.07147192512497554,
+  "all_mean_rr": 0.06993981581652663
+ },
+ "KR": {
+  "rho_trend": -0.36810120392405776,
+  "rho_breakout": -0.08385040563256205,
+  "rho_score_without": -0.07030822095279508,
+  "at0": 0.5683333333333334,
+  "top_fifth_norr_mean_rr": 0.10347464558742717,
+  "all_mean_rr": 0.14680359176538296
+ }
+}
+
+== sector share: universe vs top fifth of the live score (pooled over sessions)
+-- US_SWING Health Care 12%->28% | Financials 15%->25% | Industrials 16%->15% | Consumer Staples 6%->8% | Information Technology 15%->7% | Consumer Discretionary 9%->6%
+-- US_LONG_TERM Financials 15%->30% | Information Technology 15%->17% | Health Care 12%->15% | Industrials 16%->12% | Consumer Discretionary 9%->8% | Communication Services 4%->7%
+-- KR_SWING 산업재 29%->24% | 금융 9%->18% | 기술 14%->13% | 헬스케어 11%->12% | 필수소비재 6%->11% | 커뮤니케이션 4%->10%
+-- KR_LONG_TERM 금융 9%->20% | 산업재 29%->17% | 기술 14%->13% | 지주회사 9%->12% | 헬스케어 11%->11% | 필수소비재 6%->10%
+
+== inputs that are None in >=20% of the stocks that have the factor (newest session), and stocks without the factor
+-- US_SWING
+  profitability              no factor    6   {'op_margin': 0.24}
+  cash_flow_quality          no factor   58   {}
+-- US_LONG_TERM
+  business_quality           no factor    4   {'gross_margin': 0.63, 'op_margin': 0.24}
+  free_cash_flow             no factor   94   {}
+  financial_resilience       no factor    4   {'interest_cover': 0.29}
+  leverage                   no factor   65   {}
+-- KR_SWING
+  earnings_revenue_quality   no factor    3   {'eps_growth': 0.26, 'ocf_to_ni': 0.25}
+  cash_flow_quality          no factor   31   {}
+  insider_activity           no factor  300   {}
+-- KR_LONG_TERM
+  business_quality           no factor    0   {'gross_margin': 1.0}
+  growth_quality             no factor   35   {'eps_cagr3': 0.45}
+  free_cash_flow             no factor   39   {}
+  balance_dilution           no factor    0   {'share_change': 1.0}
+  financial_resilience       no factor    0   {'interest_cover': 0.91}
+  leverage                   no factor   28   {}
+  insider_ownership          no factor   27   {}
+  capital_allocation         no factor   69   {'share_change': 1.0}
+
+== factor pairs with mean |rank corr| >= 0.6
+-- US_SWING [('trend_structure', 'breakout_volume', 0.798), ('atr_risk', 'drawdown_gap', 0.793), ('trend_structure', 'relative_strength', 0.766), ('relative_strength', 'breakout_volume', 0.659), ('breakout_volume', 'drawdown_gap', 0.65), ('breakout_volume', 'atr_risk', 0.63)]
+-- US_LONG_TERM [('balance_dilution', 'leverage', 0.779), ('long_trend', 'momentum_persistence', 0.771), ('long_trend', 'relative_strength', 0.678)]
+-- KR_SWING [('atr_risk', 'drawdown_gap', 0.828)]
+-- KR_LONG_TERM [('balance_dilution', 'leverage', 0.995), ('long_trend', 'momentum_persistence', 0.816), ('financial_resilience', 'leverage', 0.8), ('balance_dilution', 'financial_resilience', 0.799), ('relative_strength', 'downside_drawdown', 0.629), ('business_quality', 'free_cash_flow', 0.621)]

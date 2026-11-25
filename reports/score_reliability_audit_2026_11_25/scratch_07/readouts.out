@@ -1,0 +1,20 @@
+~/Developer/quant-stock-engine/reports/score_reliability_audit_2026_11_25/scratch_07/readouts.py:45: RuntimeWarning: Mean of empty slice
+  facdiff.setdefault(f, []).append((np.nanmean(a) if np.isfinite(a).any() else np.nan) - np.nanmean(b))
+~/Developer/quant-stock-engine/reports/score_reliability_audit_2026_11_25/scratch_07/readouts.py:54: RuntimeWarning: Mean of empty slice
+  res["financial_minus_other_by_factor_pts"] = {f: round(float(np.nanmean(v)) * weights(m, s)[f][0] / tot * 100, 2) for f, v in sorted(facdiff.items(), key=lambda x: -abs(np.nanmean(x[1]) * weights(m, s)[x[0]][0])) if np.isfinite(np.nanmean(v))}
+== US SWING
+   {'rho_score_riskdomain': 0.59, 'rho_score_vol': -0.537, 'rho_attract_riskdomain': 0.408, 'rho_score_coverage': 0.048, 'share_with_missing': 0.106, 'share70_with_missing': 0.136, 'mean_gap_missing': -0.048, 'p90_gap_missing': 1.162, 'fin_mean': 58.339, 'nonfin_mean': 52.653, 'fin_na': 0.719, 'held_back': 0.167}
+   by confidence: {'HIGH': {'n_per_session': 498.2, 'mean_score': 53.5}, 'MEDIUM': {'n_per_session': 2.6, 'mean_score': 53.5}}
+   financial minus other, weighted points by factor: {'relative_strength': 1.2, 'atr_risk': 0.94, 'breakout_volume': 0.93, 'trend_structure': 0.84, 'drawdown_gap': 0.72, 'volatility_structure': 0.6, 'momentum': 0.41}
+== US LONG_TERM
+   {'rho_score_riskdomain': 0.637, 'rho_score_vol': -0.147, 'rho_attract_riskdomain': 0.302, 'rho_score_coverage': 0.002, 'share_with_missing': 0.101, 'share70_with_missing': 0.11, 'mean_gap_missing': 0.752, 'p90_gap_missing': 1.482, 'fin_mean': 66.026, 'nonfin_mean': 59.988, 'fin_na': 1.439, 'held_back': 0.417}
+   by confidence: {'HIGH': {'n_per_session': 473.4, 'mean_score': 60.9}, 'MEDIUM': {'n_per_session': 21.0, 'mean_score': 61.7}, 'LOW': {'n_per_session': 4.0, 'mean_score': 57.9}}
+   financial minus other, weighted points by factor: {'free_cash_flow': 1.56, 'financial_resilience': 1.37, 'valuation': 1.29, 'growth_quality': 0.91, 'downside_drawdown': 0.74, 'business_quality': 0.64, 'balance_dilution': 0.37}
+== KR SWING
+   {'rho_score_riskdomain': 0.656, 'rho_score_vol': -0.381, 'rho_attract_riskdomain': 0.078, 'rho_score_coverage': -0.1, 'share_with_missing': 0.036, 'share70_with_missing': None, 'mean_gap_missing': -0.81, 'p90_gap_missing': 2.524, 'fin_mean': 50.231, 'nonfin_mean': 45.078, 'fin_na': 1.0, 'held_back': 0.0}
+   by confidence: {'MEDIUM': {'n_per_session': 108.6, 'mean_score': 44.1}, 'LOW': {'n_per_session': 0.6, 'mean_score': 25.6}, 'HIGH': {'n_per_session': 190.8, 'mean_score': 46.4}}
+   financial minus other, weighted points by factor: {'atr_risk': 2.27, 'drawdown_gap': 1.83, 'liquidity': -0.87, 'risk_reward': 0.61, 'material_disclosures': 0.49, 'earnings_revenue_quality': 0.43, 'balance_sheet': -0.35}
+== KR LONG_TERM
+   {'rho_score_riskdomain': 0.607, 'rho_score_vol': -0.405, 'rho_attract_riskdomain': 0.396, 'rho_score_coverage': -0.013, 'share_with_missing': 0.399, 'share70_with_missing': 0.419, 'mean_gap_missing': 0.313, 'p90_gap_missing': 2.131, 'fin_mean': 65.282, 'nonfin_mean': 52.11, 'fin_na': 2.0, 'held_back': 0.9}
+   by confidence: {'HIGH': {'n_per_session': 208.9, 'mean_score': 52.4}, 'MEDIUM': {'n_per_session': 80.5, 'mean_score': 55.5}, 'LOW': {'n_per_session': 10.6, 'mean_score': 55.9}}
+   financial minus other, weighted points by factor: {'valuation': 6.42, 'growth_quality': -4.16, 'business_quality': 2.5, 'downside_drawdown': 0.84, 'financial_resilience': 0.72, 'insider_ownership': -0.42, 'balance_dilution': -0.36}

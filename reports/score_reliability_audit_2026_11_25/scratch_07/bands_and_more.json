@@ -1,0 +1,609 @@
+{
+ "history_bands": {
+  "US_SWING": {
+   "dates": 152,
+   "first": "2014-01-02",
+   "last": "2026-08-13",
+   "mean_n": 463.19736842105266,
+   "ge70_min": 1,
+   "ge70_p10": 19.0,
+   "ge70_median": 59.0,
+   "ge70_p90": 94.9,
+   "ge70_max": 127,
+   "share70_min": 0.0022624434389140274,
+   "share70_median": 0.12777098926975994,
+   "share70_max": 0.27370689655172414,
+   "dates_zero": 0,
+   "dates_under5": 3,
+   "median_score_min": 38.610199661398795,
+   "median_score_max": 65.35970029187429,
+   "kept70_21d": 0.4861006745610209,
+   "kept_top20_21d": 0.5927466164405008,
+   "kept_top10_21d": 0.4653492523950628,
+   "kept_topk_same_size_21d": 0.4765170857909234,
+   "abs_d_21d_median": 5.811368970252499,
+   "abs_d_21d_p90": 14.269574029644104,
+   "ge70_by_year": {
+    "2014": 76.2,
+    "2015": 63.7,
+    "2016": 51.0,
+    "2017": 73.5,
+    "2018": 60.8,
+    "2019": 69.2,
+    "2020": 31.8,
+    "2021": 56.7,
+    "2022": 31.3,
+    "2023": 56.1,
+    "2024": 83.0,
+    "2025": 43.6,
+    "2026": 46.2
+   },
+   "corr_ge70_with_median_score": 0.7993817521703127
+  },
+  "US_LONG_TERM": {
+   "dates": 152,
+   "first": "2014-01-02",
+   "last": "2026-08-13",
+   "mean_n": 458.0263157894737,
+   "ge70_min": 52,
+   "ge70_p10": 75.1,
+   "ge70_median": 102.0,
+   "ge70_p90": 153.9,
+   "ge70_max": 199,
+   "share70_min": 0.11711711711711711,
+   "share70_median": 0.22641509433962265,
+   "share70_max": 0.4344978165938865,
+   "dates_zero": 0,
+   "dates_under5": 0,
+   "median_score_min": 59.758844723355395,
+   "median_score_max": 68.47128860989555,
+   "kept70_21d": 0.9065833481818046,
+   "kept_top20_21d": 0.9045769939092011,
+   "kept_top10_21d": 0.8789955958425648,
+   "kept_topk_same_size_21d": 0.9098199102392931,
+   "abs_d_21d_median": 0.9147644556995236,
+   "abs_d_21d_p90": 2.9447086733052523,
+   "ge70_by_year": {
+    "2014": 184.7,
+    "2015": 141.0,
+    "2016": 99.0,
+    "2017": 110.3,
+    "2018": 101.0,
+    "2019": 95.3,
+    "2020": 78.0,
+    "2021": 82.2,
+    "2022": 100.9,
+    "2023": 102.4,
+    "2024": 128.2,
+    "2025": 82.4,
+    "2026": 88.6
+   },
+   "corr_ge70_with_median_score": 0.9421665165428532
+  },
+  "KR_SWING": {
+   "dates": 90,
+   "first": "2019-04-01",
+   "last": "2026-11-11",
+   "mean_n": 280.56666666666666,
+   "ge70_min": 0,
+   "ge70_p10": 0.0,
+   "ge70_median": 2.5,
+   "ge70_p90": 8.100000000000009,
+   "ge70_max": 15,
+   "share70_min": 0.0,
+   "share70_median": 0.009051315279688981,
+   "share70_max": 0.05434782608695652,
+   "dates_zero": 19,
+   "dates_under5": 68,
+   "median_score_min": 37.2216534873975,
+   "median_score_max": 49.76696513058559,
+   "kept70_21d": 0.2891627543035994,
+   "kept_top20_21d": 0.6784283955092224,
+   "kept_top10_21d": 0.5788254293097377,
+   "kept_topk_same_size_21d": 0.25392354124748484,
+   "abs_d_21d_median": 2.898830800081443,
+   "abs_d_21d_p90": 10.972896859375712,
+   "ge70_by_year": {
+    "2019": 4.6,
+    "2020": 2.3,
+    "2021": 3.2,
+    "2022": 7.5,
+    "2023": 4.9,
+    "2024": 2.2,
+    "2025": 1.6,
+    "2026": 0.7
+   },
+   "corr_ge70_with_median_score": 0.6454776675153037
+  },
+  "KR_LONG_TERM": {
+   "dates": 90,
+   "first": "2019-04-01",
+   "last": "2026-11-11",
+   "mean_n": 246.26666666666668,
+   "ge70_min": 12,
+   "ge70_p10": 19.0,
+   "ge70_median": 35.5,
+   "ge70_p90": 49.10000000000001,
+   "ge70_max": 60,
+   "share70_min": 0.04897959183673469,
+   "share70_median": 0.14420385373006117,
+   "share70_max": 0.21818181818181817,
+   "dates_zero": 0,
+   "dates_under5": 0,
+   "median_score_min": 48.62591715382676,
+   "median_score_max": 56.56043329714133,
+   "kept70_21d": 0.8866878474072754,
+   "kept_top20_21d": 0.9039695733789754,
+   "kept_top10_21d": 0.8592296693638307,
+   "kept_topk_same_size_21d": 0.882910030257583,
+   "abs_d_21d_median": 1.2483147616300414,
+   "abs_d_21d_p90": 4.025574074221498,
+   "ge70_by_year": {
+    "2019": 23.8,
+    "2020": 18.7,
+    "2021": 27.4,
+    "2022": 32.5,
+    "2023": 42.1,
+    "2024": 44.3,
+    "2025": 48.4,
+    "2026": 40.4
+   },
+   "corr_ge70_with_median_score": 0.6822104495862013
+  }
+ },
+ "ledger_bands": {
+  "US_SWING": {
+   "pairs": 7,
+   "kept70": 0.8040147843874552,
+   "kept20": 0.8982539682539682,
+   "kept10": 0.8620991253644316,
+   "kept5": 0.8147619047619047,
+   "flip70": 0.021139490272246802,
+   "flip_top20": 0.0399955336964205,
+   "near70": 0.05684987997094846,
+   "abs_d_med": 1.0633420826973523,
+   "abs_d_p90": 3.4530112792612164,
+   "abs_d_p99": 6.937976884676714,
+   "place_d_med": 2.4617866829470727,
+   "place_d_p90": 7.88053513797532
+  },
+  "US_LONG_TERM": {
+   "pairs": 7,
+   "kept70": 0.9868841475984332,
+   "kept20": 0.9826984126984126,
+   "kept10": 0.9651311953352769,
+   "kept5": 0.9821428571428571,
+   "flip70": 0.005165293531308149,
+   "flip_top20": 0.007469995049041313,
+   "near70": 0.0887419856809309,
+   "abs_d_med": 0.1408289578136172,
+   "abs_d_p90": 0.40406195228332376,
+   "abs_d_p99": 1.0645149224731347,
+   "place_d_med": 0.43156775686470134,
+   "place_d_p90": 1.5538623773549456
+  },
+  "KR_SWING": {
+   "pairs": 6,
+   "kept70": null,
+   "kept20": 0.86530131826742,
+   "kept10": 0.8524904214559386,
+   "kept5": 0.7793650793650793,
+   "flip70": 0.0,
+   "flip_top20": 0.054792596134878024,
+   "near70": 0.0028002371906175037,
+   "abs_d_med": 0.3754697700357532,
+   "abs_d_p90": 4.020103607655452,
+   "abs_d_p99": 11.287096908750959,
+   "place_d_med": 2.0782603336030037,
+   "place_d_p90": 11.153163558592206
+  },
+  "KR_LONG_TERM": {
+   "pairs": 6,
+   "kept70": 0.9867235656709341,
+   "kept20": 0.9718926553672317,
+   "kept10": 0.9486590038314177,
+   "kept5": 0.9769841269841271,
+   "flip70": 0.003357688581402228,
+   "flip_top20": 0.006704128370795037,
+   "near70": 0.06878434159194786,
+   "abs_d_med": 0.19335386307810984,
+   "abs_d_p90": 0.6257503153890397,
+   "abs_d_p99": 1.3235174637525378,
+   "place_d_med": 0.33670923071562103,
+   "place_d_p90": 1.4031432291687749
+  }
+ },
+ "bundle_stability": {
+  "US_SWING": {
+   "sessions": 12,
+   "registered_bundles": 10,
+   "sessions_equal_to_registered": 10,
+   "distinct_structures": 2,
+   "bundles_min": 10,
+   "bundles_max": 11,
+   "most_common": [
+    [
+     "atr_risk",
+     "breakout_volume",
+     "drawdown_gap",
+     "relative_strength",
+     "trend_structure"
+    ],
+    [
+     "balance_sheet"
+    ],
+    [
+     "cash_flow_quality"
+    ],
+    [
+     "earnings_revenue_quality"
+    ],
+    [
+     "insider_activity"
+    ],
+    [
+     "liquidity"
+    ],
+    [
+     "momentum"
+    ],
+    [
+     "profitability"
+    ],
+    [
+     "risk_reward"
+    ],
+    [
+     "volatility_structure"
+    ]
+   ],
+   "most_common_count": 10,
+   "registered": [
+    [
+     "atr_risk",
+     "breakout_volume",
+     "drawdown_gap",
+     "relative_strength",
+     "trend_structure"
+    ],
+    [
+     "balance_sheet"
+    ],
+    [
+     "cash_flow_quality"
+    ],
+    [
+     "earnings_revenue_quality"
+    ],
+    [
+     "insider_activity"
+    ],
+    [
+     "liquidity"
+    ],
+    [
+     "momentum"
+    ],
+    [
+     "profitability"
+    ],
+    [
+     "risk_reward"
+    ],
+    [
+     "volatility_structure"
+    ]
+   ]
+  },
+  "US_LONG_TERM": {
+   "sessions": 12,
+   "registered_bundles": 9,
+   "sessions_equal_to_registered": 12,
+   "distinct_structures": 1,
+   "bundles_min": 9,
+   "bundles_max": 9,
+   "most_common": [
+    [
+     "balance_dilution",
+     "financial_resilience",
+     "leverage"
+    ],
+    [
+     "business_quality",
+     "free_cash_flow"
+    ],
+    [
+     "capital_allocation"
+    ],
+    [
+     "downside_drawdown"
+    ],
+    [
+     "growth_quality"
+    ],
+    [
+     "insider_ownership"
+    ],
+    [
+     "liquidity"
+    ],
+    [
+     "long_trend",
+     "momentum_persistence",
+     "relative_strength"
+    ],
+    [
+     "valuation"
+    ]
+   ],
+   "most_common_count": 12,
+   "registered": [
+    [
+     "balance_dilution",
+     "financial_resilience",
+     "leverage"
+    ],
+    [
+     "business_quality",
+     "free_cash_flow"
+    ],
+    [
+     "capital_allocation"
+    ],
+    [
+     "downside_drawdown"
+    ],
+    [
+     "growth_quality"
+    ],
+    [
+     "insider_ownership"
+    ],
+    [
+     "liquidity"
+    ],
+    [
+     "long_trend",
+     "momentum_persistence",
+     "relative_strength"
+    ],
+    [
+     "valuation"
+    ]
+   ]
+  },
+  "KR_SWING": {
+   "sessions": 10,
+   "registered_bundles": 9,
+   "sessions_equal_to_registered": 3,
+   "distinct_structures": 3,
+   "bundles_min": 6,
+   "bundles_max": 9,
+   "most_common": [
+    [
+     "atr_risk",
+     "drawdown_gap"
+    ],
+    [
+     "balance_sheet"
+    ],
+    [
+     "cash_flow_quality"
+    ],
+    [
+     "earnings_revenue_quality"
+    ],
+    [
+     "liquidity"
+    ],
+    [
+     "material_disclosures"
+    ],
+    [
+     "profitability"
+    ],
+    [
+     "risk_reward"
+    ]
+   ],
+   "most_common_count": 5,
+   "registered": [
+    [
+     "atr_risk",
+     "drawdown_gap"
+    ],
+    [
+     "balance_sheet"
+    ],
+    [
+     "cash_flow_quality"
+    ],
+    [
+     "earnings_calendar"
+    ],
+    [
+     "earnings_revenue_quality"
+    ],
+    [
+     "liquidity"
+    ],
+    [
+     "material_disclosures"
+    ],
+    [
+     "profitability"
+    ],
+    [
+     "risk_reward"
+    ]
+   ]
+  },
+  "KR_LONG_TERM": {
+   "sessions": 10,
+   "registered_bundles": 5,
+   "sessions_equal_to_registered": 4,
+   "distinct_structures": 3,
+   "bundles_min": 5,
+   "bundles_max": 6,
+   "most_common": [
+    [
+     "balance_dilution",
+     "financial_resilience",
+     "leverage"
+    ],
+    [
+     "business_quality",
+     "free_cash_flow",
+     "growth_quality"
+    ],
+    [
+     "downside_drawdown",
+     "relative_strength",
+     "valuation"
+    ],
+    [
+     "liquidity"
+    ],
+    [
+     "long_trend",
+     "momentum_persistence"
+    ],
+    [
+     "material_events"
+    ]
+   ],
+   "most_common_count": 5,
+   "registered": [
+    [
+     "balance_dilution",
+     "financial_resilience",
+     "leverage"
+    ],
+    [
+     "business_quality",
+     "free_cash_flow",
+     "growth_quality"
+    ],
+    [
+     "downside_drawdown",
+     "long_trend",
+     "momentum_persistence",
+     "relative_strength",
+     "valuation"
+    ],
+    [
+     "liquidity"
+    ],
+    [
+     "material_events"
+    ]
+   ]
+  }
+ },
+ "random_weights": {
+  "US_SWING": {
+   "x(0.8..1.2)": {
+    "rho_median": 0.9988445019934546,
+    "rho_p5": 0.9978871054703344,
+    "top_kept_median": 0.97,
+    "top_kept_p5": 0.95
+   },
+   "x(0.5..1.5)": {
+    "rho_median": 0.9937265071450725,
+    "rho_p5": 0.985837132274701,
+    "top_kept_median": 0.93,
+    "top_kept_p5": 0.88
+   },
+   "iid_uniform": {
+    "rho_median": 0.8820067853489317,
+    "rho_p5": 0.7219328243910585,
+    "top_kept_median": 0.73,
+    "top_kept_p5": 0.5895
+   },
+   "iid_uniform_noise_factors": {
+    "rho_median": 0.9932498508958181,
+    "rho_p5": 0.9880315051172556,
+    "top_kept_median": 0.95,
+    "top_kept_p5": 0.91
+   }
+  },
+  "US_LONG_TERM": {
+   "x(0.8..1.2)": {
+    "rho_median": 0.9954938360879719,
+    "rho_p5": 0.9898211734613199,
+    "top_kept_median": 0.9494949494949495,
+    "top_kept_p5": 0.9090909090909091
+   },
+   "x(0.5..1.5)": {
+    "rho_median": 0.974014500116084,
+    "rho_p5": 0.93781108069573,
+    "top_kept_median": 0.8787878787878788,
+    "top_kept_p5": 0.7878787878787878
+   },
+   "iid_uniform": {
+    "rho_median": 0.8102306282828196,
+    "rho_p5": 0.6653966826771285,
+    "top_kept_median": 0.6363636363636364,
+    "top_kept_p5": 0.48484848484848486
+   },
+   "iid_uniform_noise_factors": {
+    "rho_median": 0.9943169167842851,
+    "rho_p5": 0.9878443561385213,
+    "top_kept_median": 0.9494949494949495,
+    "top_kept_p5": 0.9090909090909091
+   }
+  },
+  "KR_SWING": {
+   "x(0.8..1.2)": {
+    "rho_median": 0.9954630607006744,
+    "rho_p5": 0.9900192891032121,
+    "top_kept_median": 0.9333333333333333,
+    "top_kept_p5": 0.8833333333333333
+   },
+   "x(0.5..1.5)": {
+    "rho_median": 0.9724921388015422,
+    "rho_p5": 0.942251025011389,
+    "top_kept_median": 0.85,
+    "top_kept_p5": 0.7666666666666667
+   },
+   "iid_uniform": {
+    "rho_median": 0.8828055867287413,
+    "rho_p5": 0.796112134579273,
+    "top_kept_median": 0.6833333333333333,
+    "top_kept_p5": 0.5666666666666667
+   },
+   "iid_uniform_noise_factors": {
+    "rho_median": 0.9923628040311558,
+    "rho_p5": 0.987103856709519,
+    "top_kept_median": 0.9333333333333333,
+    "top_kept_p5": 0.8833333333333333
+   }
+  },
+  "KR_LONG_TERM": {
+   "x(0.8..1.2)": {
+    "rho_median": 0.9980939788219868,
+    "rho_p5": 0.9951526572517472,
+    "top_kept_median": 0.9666666666666667,
+    "top_kept_p5": 0.9333333333333333
+   },
+   "x(0.5..1.5)": {
+    "rho_median": 0.9884596495516618,
+    "rho_p5": 0.9709396771075234,
+    "top_kept_median": 0.9,
+    "top_kept_p5": 0.8325000000000001
+   },
+   "iid_uniform": {
+    "rho_median": 0.8741503794486605,
+    "rho_p5": 0.7708452538361537,
+    "top_kept_median": 0.7166666666666667,
+    "top_kept_p5": 0.6
+   },
+   "iid_uniform_noise_factors": {
+    "rho_median": 0.9934203713374593,
+    "rho_p5": 0.9862984255380615,
+    "top_kept_median": 0.95,
+    "top_kept_p5": 0.9
+   }
+  }
+ }
+}

@@ -1,0 +1,69 @@
+========================================================================================== US 2026-11-24
+  LONG_ business_quality: inputs present -> [('op_margin+roe+roe_years_positive', 192, '38%'), ('gross_margin+op_margin+roe+roe_years_positive', 159, '32%'), ('roe+roe_years_positive', 104, '21%'), ('op_margin+roe_years_positive', 16, '3%'), ('gross_margin+roe+roe_years_positive', 14, '3%'), ('gross_margin+op_margin+roe_years_positive', 13, '3%'), ('[MISSING]', 4, '1%')]
+  LONG_ growth_quality: inputs present -> [('eps_cagr3+rev_cagr3+rev_growth', 400, '79%'), ('rev_cagr3+rev_growth', 88, '17%'), ('eps_cagr3', 10, '2%'), ('[MISSING]', 4, '1%'), ('rev_growth', 2, '0%')]
+  LONG_ financial_resilience: inputs present -> [('cash_debt+current_ratio+interest_cover', 288, '57%'), ('cash_debt+current_ratio', 117, '23%'), ('equity_assets', 53, '11%'), ('cash_debt', 20, '4%'), ('current_ratio', 8, '2%'), ('cash_debt+interest_cover', 8, '2%'), ('current_ratio+interest_cover', 6, '1%')]
+  LONG_ valuation: inputs present -> [('fcf_yield+pb+pe', 379, '75%'), ('pb+pe', 90, '18%'), ('fcf_yield+pe', 31, '6%'), ('[MISSING]', 3, '1%'), ('pb', 1, '0%')]
+  LONG_ balance_dilution: inputs present -> [('debt_equity+share_change', 425, '84%'), ('equity_assets+share_change', 50, '10%'), ('debt_equity', 14, '3%'), ('share_change', 9, '2%'), ('equity_assets', 3, '1%'), ('[MISSING]', 3, '1%')]
+  LONG_ capital_allocation: inputs present -> [('returns_capital+share_change', 465, '92%'), ('share_change', 19, '4%'), ('returns_capital', 13, '3%'), ('[MISSING]', 7, '1%')]
+  LONG_ insider_ownership: inputs present -> [('insider_pct+net_trades', 328, '65%'), ('insider_pct', 172, '34%'), ('[MISSING]', 3, '1%'), ('net_trades', 1, '0%')]
+  LONG_ free_cash_flow: inputs present -> [('fcf_margin+fcf_years_positive', 409, '81%'), ('[NOT_APPLICABLE]', 53, '11%'), ('[MISSING]', 41, '8%'), ('fcf_years_positive', 1, '0%')]
+  SWING earnings_revenue_quality: inputs present -> [('eps_growth+ocf_to_ni+rev_growth', 389, '77%'), ('eps_growth+rev_growth', 56, '11%'), ('ocf_to_ni+rev_growth', 30, '6%'), ('rev_growth', 15, '3%'), ('eps_growth', 6, '1%'), ('eps_growth+ocf_to_ni', 4, '1%'), ('[MISSING]', 4, '1%')]
+  SWING balance_sheet: inputs present -> [('current_ratio+debt_equity', 411, '82%'), ('equity_assets', 53, '11%'), ('debt_equity', 28, '6%'), ('current_ratio', 8, '2%'), ('[MISSING]', 4, '1%')]
+  SWING cash_flow_quality: inputs present -> [('fcf_margin+ocf_to_ni', 386, '77%'), ('[NOT_APPLICABLE]', 53, '11%'), ('ocf_to_ni', 37, '7%'), ('fcf_margin', 23, '5%'), ('[MISSING]', 5, '1%')]
+  SWING profitability: inputs present -> [('op_margin+roe', 351, '70%'), ('roe', 118, '23%'), ('op_margin', 29, '6%'), ('[MISSING]', 6, '1%')]
+  SWING insider_activity patterns: {'no trades (0.5)': 175, 'sells only (0)': 269, 'buys only (1)': 35, 'both': 25}
+  LONG insider_pct bands: {'<1%': 341, '1-5%': 73, '>=10%': 57, '5-10%': 29, 'pct None': 4}
+  risk_reward: n 504, target = 3 ATR projection (no resistance above) 37 (7%); their normalized max 0.192, mean 0.149; share at 0 overall 73%; reward_risk >= 1.5 share 7%
+   spearman(risk_reward, dist_high) (-0.137, 504)  spearman(risk_reward, trend_structure) (-0.11, 501)
+   among score>=70: 35 entry_status {'WAIT_FOR_PULLBACK': 30, 'WAIT_FOR_BREAKOUT_CONFIRMATION': 3, 'NO_VALID_ENTRY_SETUP': 2} mean risk_reward norm 0.093
+   entry_status all: {'WAIT_FOR_PULLBACK': 209, 'NO_VALID_ENTRY_SETUP': 280, 'WAIT_FOR_BREAKOUT_CONFIRMATION': 8, 'ENTRY_NOW': 6, 'WAIT_FOR_EARNINGS': 1}
+========================================================================================== KR 2026-11-24
+  LONG_ business_quality: inputs present -> [('op_margin+roe+roe_years_positive', 270, '90%'), ('roe+roe_years_positive', 30, '10%')]
+  LONG_ growth_quality: inputs present -> [('eps_cagr3+rev_cagr3+rev_growth', 139, '46%'), ('rev_cagr3+rev_growth', 95, '32%'), ('[MISSING]', 35, '12%'), ('rev_growth', 18, '6%'), ('eps_cagr3+rev_growth', 4, '1%'), ('(none)', 4, '1%'), ('rev_cagr3', 3, '1%')]
+  LONG_ financial_resilience: inputs present -> [('cash_debt+current_ratio', 271, '90%'), ('equity_assets', 28, '9%'), ('current_ratio', 1, '0%')]
+  LONG_ valuation: inputs present -> [('fcf_yield+pb+pe', 260, '87%'), ('pb+pe', 39, '13%'), ('[MISSING]', 1, '0%')]
+  LONG_ balance_dilution: inputs present -> [('debt_equity', 272, '91%'), ('equity_assets', 28, '9%')]
+  LONG_ capital_allocation: inputs present -> [('returns_capital', 231, '77%'), ('[MISSING]', 69, '23%')]
+  LONG_ insider_ownership: inputs present -> [('insider_pct', 273, '91%'), ('[MISSING]', 27, '9%')]
+  LONG_ free_cash_flow: inputs present -> [('fcf_margin+fcf_years_positive', 261, '87%'), ('[NOT_APPLICABLE]', 28, '9%'), ('[MISSING]', 11, '4%')]
+  SWING earnings_revenue_quality: inputs present -> [('eps_growth+ocf_to_ni+rev_growth', 176, '59%'), ('ocf_to_ni+rev_growth', 35, '12%'), ('rev_growth', 29, '10%'), ('eps_growth', 26, '9%'), ('eps_growth+rev_growth', 16, '5%'), ('ocf_to_ni', 10, '3%'), ('(none)', 4, '1%')]
+  SWING balance_sheet: inputs present -> [('current_ratio+debt_equity', 272, '91%'), ('equity_assets', 28, '9%')]
+  SWING cash_flow_quality: inputs present -> [('fcf_margin+ocf_to_ni', 216, '72%'), ('fcf_margin', 45, '15%'), ('[NOT_APPLICABLE]', 28, '9%'), ('ocf_to_ni', 6, '2%'), ('[MISSING]', 3, '1%'), ('(none)', 2, '1%')]
+  SWING profitability: inputs present -> [('op_margin+roe', 270, '90%'), ('roe', 30, '10%')]
+  LONG insider_pct bands: {'5-10%': 7, '>=10%': 257, '1-5%': 5, '<1%': 4, 'pct None': 27}
+  LONG capital_allocation returns_capital|status: {'True|REAL': 222, 'None|MISSING': 69, 'False|REAL': 9}
+  risk_reward: n 300, target = 3 ATR projection (no resistance above) 4 (1%); their normalized max 0.221, mean 0.142; share at 0 overall 58%; reward_risk >= 1.5 share 19%
+   spearman(risk_reward, dist_high) (-0.333, 300)  spearman(risk_reward, trend_structure) (-0.394, 299)
+   among score>=70: 0 entry_status {} mean risk_reward norm None
+   entry_status all: {'NO_VALID_ENTRY_SETUP': 259, 'WAIT_FOR_PULLBACK': 24, 'ENTRY_NOW': 17}
+========================================================================================== saturation by session: share at 0 / share at 1
+   US 2026-11-04 atr_risk 0.04/0.00 drawdown_g 0.03/0.00 downside_d 0.03/0.01 risk_rewar 0.57/0.01 liquidity 0.00/0.40 earnings_c 0.23/0.65 trend_stru 0.05/0.17
+   US 2026-11-05 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.59/0.01 liquidity 0.00/0.42 earnings_c 0.11/0.76 trend_stru 0.06/0.16
+   US 2026-11-06 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.60/0.00 liquidity 0.00/0.43 earnings_c 0.04/0.83 trend_stru 0.07/0.17
+   US 2026-11-09 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.61/0.00 liquidity 0.00/0.44 earnings_c 0.02/0.87 trend_stru 0.05/0.18
+   US 2026-11-10 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.57/0.00 liquidity 0.00/0.45 earnings_c 0.00/0.88 trend_stru 0.06/0.19
+   US 2026-11-11 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.59/0.01 liquidity 0.00/0.44 earnings_c 0.01/0.92 trend_stru 0.05/0.21
+   US 2026-11-12 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.75/0.00 liquidity 0.00/0.43 earnings_c 0.01/0.91 trend_stru 0.06/0.23
+   US 2026-11-13 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.74/0.00 liquidity 0.00/0.42 earnings_c 0.01/0.91 trend_stru 0.05/0.23
+   US 2026-11-16 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.70/0.00 liquidity 0.00/0.42 earnings_c 0.02/0.92 trend_stru 0.05/0.23
+   US 2026-11-17 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.73/0.00 liquidity 0.00/0.43 earnings_c 0.02/0.92 trend_stru 0.06/0.22
+   US 2026-11-18 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.75/0.00 liquidity 0.00/0.43 earnings_c 0.02/0.92 trend_stru 0.06/0.21
+   US 2026-11-19 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.74/0.01 liquidity 0.00/0.43 earnings_c 0.01/0.92 trend_stru 0.07/0.19
+   US 2026-11-20 atr_risk 0.05/0.00 drawdown_g 0.03/0.00 downside_d 0.05/0.01 risk_rewar 0.68/0.01 liquidity 0.00/0.43 earnings_c 0.02/0.93 trend_stru 0.08/0.17
+   US 2026-11-23 atr_risk 0.05/0.00 drawdown_g 0.06/0.00 downside_d 0.05/0.01 risk_rewar 0.76/0.01 liquidity 0.00/0.43 earnings_c 0.03/0.93 trend_stru 0.08/0.20
+   US 2026-11-24 atr_risk 0.05/0.00 drawdown_g 0.07/0.00 downside_d 0.05/0.01 risk_rewar 0.73/0.01 liquidity 0.00/0.43 earnings_c 0.01/0.95 trend_stru 0.08/0.22
+   KR 2026-11-04 atr_risk 0.64/0.00 drawdown_g 0.13/0.00 downside_d 0.63/0.00 risk_rewar 0.54/0.05 liquidity 0.00/0.25 earnings_c 0.21/0.43 trend_stru 0.14/0.11
+   KR 2026-11-05 atr_risk 0.65/0.00 drawdown_g 0.13/0.00 downside_d 0.63/0.00 risk_rewar 0.57/0.05 liquidity 0.00/0.25 earnings_c 0.09/0.50 trend_stru 0.13/0.05
+   KR 2026-11-06 atr_risk 0.68/0.00 drawdown_g 0.31/0.00 downside_d 0.64/0.00 risk_rewar 0.53/0.05 liquidity 0.00/0.26 earnings_c 0.12/0.55 trend_stru 0.13/0.03
+   KR 2026-11-09 atr_risk 0.66/0.00 drawdown_g 0.31/0.00 downside_d 0.63/0.00 risk_rewar 0.51/0.06 liquidity 0.00/0.25 earnings_c 0.13/0.63 trend_stru 0.15/0.04
+   KR 2026-11-10 atr_risk 0.66/0.00 drawdown_g 0.31/0.00 downside_d 0.63/0.00 risk_rewar 0.52/0.05 liquidity 0.01/0.24 earnings_c 0.19/0.70 trend_stru 0.17/0.04
+   KR 2026-11-11 atr_risk 0.43/0.00 drawdown_g 0.14/0.00 downside_d 0.44/0.00 risk_rewar 0.57/0.04 liquidity 0.02/0.23 earnings_c 0.14/0.69 trend_stru 0.27/0.03
+   KR 2026-11-12 atr_risk 0.45/0.00 drawdown_g 0.15/0.00 downside_d 0.46/0.00 risk_rewar 0.63/0.03 liquidity 0.01/0.23 earnings_c 0.22/0.78 trend_stru 0.28/0.03
+   KR 2026-11-13 atr_risk 0.46/0.00 drawdown_g 0.15/0.00 downside_d 0.46/0.00 risk_rewar 0.61/0.04 liquidity 0.01/0.23 earnings_c 0.12/0.88 trend_stru 0.29/0.04
+   KR 2026-11-16 atr_risk 0.46/0.00 drawdown_g 0.15/0.00 downside_d 0.46/0.00 risk_rewar 0.59/0.04 liquidity 0.02/0.22 earnings_c 0.01/0.99 trend_stru 0.30/0.04
+   KR 2026-11-17 atr_risk 0.46/0.00 drawdown_g 0.15/0.00 downside_d 0.46/0.00 risk_rewar 0.51/0.05 liquidity 0.02/0.22 earnings_c 0.01/0.99 trend_stru 0.32/0.04
+   KR 2026-11-18 atr_risk 0.46/0.00 drawdown_g 0.15/0.00 downside_d 0.47/0.00 risk_rewar 0.53/0.04 liquidity 0.01/0.22 earnings_c 0.01/0.99 trend_stru 0.31/0.04
+   KR 2026-11-19 atr_risk 0.45/0.00 drawdown_g 0.14/0.00 downside_d 0.47/0.00 risk_rewar 0.55/0.04 liquidity 0.01/0.23 earnings_c 0.01/0.99 trend_stru 0.31/0.04
+   KR 2026-11-20 atr_risk 0.47/0.00 drawdown_g 0.15/0.00 downside_d 0.48/0.00 risk_rewar 0.60/0.03 liquidity 0.01/0.22 earnings_c 0.00/1.00 trend_stru 0.32/0.04
+   KR 2026-11-23 atr_risk 0.47/0.00 drawdown_g 0.15/0.00 downside_d 0.48/0.00 risk_rewar 0.51/0.03 liquidity 0.01/0.22 earnings_c 0.00/1.00 trend_stru 0.34/0.03
+   KR 2026-11-24 atr_risk 0.45/0.00 drawdown_g 0.15/0.00 downside_d 0.48/0.00 risk_rewar 0.58/0.03 liquidity 0.01/0.23 earnings_c 0.00/1.00 trend_stru 0.32/0.04

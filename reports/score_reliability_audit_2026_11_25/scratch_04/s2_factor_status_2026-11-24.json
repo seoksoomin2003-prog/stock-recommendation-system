@@ -1,0 +1,526 @@
+{
+ "session": "2026-11-24",
+ "cohorts": {
+  "US_SWING": {
+   "n": 504,
+   "factors": {
+    "EVENTS.earnings_calendar": {
+     "weight": 4,
+     "scored": true,
+     "REAL": 499,
+     "MISSING": 5
+    },
+    "EVENTS.insider_activity": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 504
+    },
+    "EVENTS.material_disclosures": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 504
+    },
+    "FUNDAMENTAL.balance_sheet": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 498,
+     "STALE": 2,
+     "MISSING": 4
+    },
+    "FUNDAMENTAL.cash_flow_quality": {
+     "weight": 2,
+     "scored": true,
+     "REAL": 444,
+     "NOT_APPLICABLE": 53,
+     "MISSING": 5,
+     "STALE": 2
+    },
+    "FUNDAMENTAL.earnings_revenue_quality": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 498,
+     "STALE": 2,
+     "MISSING": 4
+    },
+    "FUNDAMENTAL.profitability": {
+     "weight": 2,
+     "scored": true,
+     "REAL": 496,
+     "STALE": 2,
+     "MISSING": 6
+    },
+    "REGIME.credit_spread": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 504
+    },
+    "REGIME.index_trend_breadth": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 504
+    },
+    "REGIME.vix_regime": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 504
+    },
+    "REGIME.vix_term": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 504
+    },
+    "RISK.atr_risk": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 504
+    },
+    "RISK.drawdown_gap": {
+     "weight": 4,
+     "scored": true,
+     "REAL": 504
+    },
+    "RISK.liquidity": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 504
+    },
+    "RISK.risk_reward": {
+     "weight": 6,
+     "scored": true,
+     "REAL": 504
+    },
+    "TECHNICAL.breakout_volume": {
+     "weight": 10,
+     "scored": true,
+     "REAL": 504
+    },
+    "TECHNICAL.momentum": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 504
+    },
+    "TECHNICAL.relative_strength": {
+     "weight": 10,
+     "scored": true,
+     "REAL": 502,
+     "MISSING": 2
+    },
+    "TECHNICAL.trend_structure": {
+     "weight": 10,
+     "scored": true,
+     "REAL": 501,
+     "MISSING": 3
+    },
+    "TECHNICAL.volatility_structure": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 503,
+     "MISSING": 1
+    }
+   },
+   "provenance_stale": 0,
+   "price_source": {
+    "Yahoo Finance 일봉": 504
+   },
+   "gates": {
+    "EARNINGS_IMMINENT": 5,
+    "SEVERE_EVENT": 2,
+    "SHORT_HISTORY": 3,
+    "DATA_ANOMALY": 1
+   },
+   "fund_none": 3
+  },
+  "US_LONG_TERM": {
+   "n": 504,
+   "factors": {
+    "EVENTS.capital_allocation": {
+     "weight": 2,
+     "scored": true,
+     "REAL": 495,
+     "MISSING": 7,
+     "STALE": 2
+    },
+    "EVENTS.governance": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 504
+    },
+    "EVENTS.insider_ownership": {
+     "weight": 2,
+     "scored": true,
+     "REAL": 501,
+     "MISSING": 3
+    },
+    "EVENTS.material_events": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 504
+    },
+    "FUNDAMENTAL.balance_dilution": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 499,
+     "STALE": 2,
+     "MISSING": 3
+    },
+    "FUNDAMENTAL.business_quality": {
+     "weight": 15,
+     "scored": true,
+     "REAL": 498,
+     "STALE": 2,
+     "MISSING": 4
+    },
+    "FUNDAMENTAL.free_cash_flow": {
+     "weight": 7,
+     "scored": true,
+     "REAL": 408,
+     "MISSING": 41,
+     "NOT_APPLICABLE": 53,
+     "STALE": 2
+    },
+    "FUNDAMENTAL.growth_quality": {
+     "weight": 8,
+     "scored": true,
+     "REAL": 498,
+     "STALE": 2,
+     "MISSING": 4
+    },
+    "FUNDAMENTAL.valuation": {
+     "weight": 15,
+     "scored": true,
+     "REAL": 499,
+     "STALE": 2,
+     "MISSING": 3
+    },
+    "REGIME.credit_spread": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 504
+    },
+    "REGIME.index_trend_breadth": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 504
+    },
+    "REGIME.vix_regime": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 504
+    },
+    "REGIME.vix_term": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 504
+    },
+    "RISK.downside_drawdown": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 504
+    },
+    "RISK.financial_resilience": {
+     "weight": 7,
+     "scored": true,
+     "REAL": 498,
+     "STALE": 2,
+     "MISSING": 4
+    },
+    "RISK.leverage": {
+     "weight": 4,
+     "scored": true,
+     "REAL": 437,
+     "NOT_APPLICABLE": 53,
+     "MISSING": 12,
+     "STALE": 2
+    },
+    "RISK.liquidity": {
+     "weight": 4,
+     "scored": true,
+     "REAL": 504
+    },
+    "TECHNICAL.long_trend": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 501,
+     "MISSING": 3
+    },
+    "TECHNICAL.momentum_persistence": {
+     "weight": 2,
+     "scored": true,
+     "REAL": 501,
+     "MISSING": 3
+    },
+    "TECHNICAL.relative_strength": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 502,
+     "MISSING": 2
+    }
+   },
+   "provenance_stale": 0,
+   "price_source": {
+    "Yahoo Finance 일봉": 504
+   },
+   "gates": {
+    "SEVERE_EVENT": 2,
+    "SHORT_HISTORY": 3,
+    "DATA_ANOMALY": 1
+   },
+   "fund_none": 3
+  },
+  "KR_SWING": {
+   "n": 300,
+   "factors": {
+    "EVENTS.earnings_calendar": {
+     "weight": 4,
+     "scored": true,
+     "REAL": 298,
+     "MISSING": 2
+    },
+    "EVENTS.insider_activity": {
+     "weight": 3,
+     "scored": true,
+     "MISSING": 300
+    },
+    "EVENTS.material_disclosures": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 300
+    },
+    "FUNDAMENTAL.balance_sheet": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 300
+    },
+    "FUNDAMENTAL.cash_flow_quality": {
+     "weight": 2,
+     "scored": true,
+     "REAL": 269,
+     "NOT_APPLICABLE": 28,
+     "MISSING": 3
+    },
+    "FUNDAMENTAL.earnings_revenue_quality": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 297,
+     "MISSING": 3
+    },
+    "FUNDAMENTAL.profitability": {
+     "weight": 2,
+     "scored": true,
+     "REAL": 300
+    },
+    "REGIME.breadth": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    },
+    "REGIME.credit_liquidity": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    },
+    "REGIME.index_trend": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    },
+    "REGIME.usdkrw_regime": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    },
+    "REGIME.vkospi_regime": {
+     "weight": 0,
+     "scored": false,
+     "MISSING": 300
+    },
+    "RISK.atr_risk": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 300
+    },
+    "RISK.drawdown_gap": {
+     "weight": 4,
+     "scored": true,
+     "REAL": 300
+    },
+    "RISK.liquidity": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 300
+    },
+    "RISK.risk_reward": {
+     "weight": 6,
+     "scored": true,
+     "REAL": 300
+    },
+    "TECHNICAL.breakout_volume": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    },
+    "TECHNICAL.momentum": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    },
+    "TECHNICAL.relative_strength": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    },
+    "TECHNICAL.trend_structure": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 299,
+     "MISSING": 1
+    },
+    "TECHNICAL.volatility_structure": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    }
+   },
+   "provenance_stale": 0,
+   "price_source": {
+    "KRX 일별 시세로 만든 일봉 (KRX가 아직 내지 않은 최근 1거래일은 Yahoo)": 300
+   },
+   "gates": {
+    "SEVERE_EVENT": 7,
+    "DATA_ANOMALY": 3,
+    "SHORT_HISTORY": 1,
+    "LOW_LIQUIDITY": 3
+   },
+   "fund_none": 0
+  },
+  "KR_LONG_TERM": {
+   "n": 300,
+   "factors": {
+    "EVENTS.capital_allocation": {
+     "weight": 2,
+     "scored": true,
+     "REAL": 231,
+     "MISSING": 69
+    },
+    "EVENTS.governance": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 300
+    },
+    "EVENTS.insider_ownership": {
+     "weight": 2,
+     "scored": true,
+     "REAL": 273,
+     "MISSING": 27
+    },
+    "EVENTS.material_events": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 300
+    },
+    "FUNDAMENTAL.balance_dilution": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 300
+    },
+    "FUNDAMENTAL.business_quality": {
+     "weight": 15,
+     "scored": true,
+     "REAL": 300
+    },
+    "FUNDAMENTAL.free_cash_flow": {
+     "weight": 7,
+     "scored": true,
+     "REAL": 261,
+     "NOT_APPLICABLE": 28,
+     "MISSING": 11
+    },
+    "FUNDAMENTAL.growth_quality": {
+     "weight": 8,
+     "scored": true,
+     "REAL": 265,
+     "MISSING": 35
+    },
+    "FUNDAMENTAL.valuation": {
+     "weight": 15,
+     "scored": true,
+     "REAL": 299,
+     "MISSING": 1
+    },
+    "REGIME.breadth": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    },
+    "REGIME.credit_liquidity": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    },
+    "REGIME.index_trend": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    },
+    "REGIME.usdkrw_regime": {
+     "weight": 0,
+     "scored": false,
+     "REAL": 300
+    },
+    "REGIME.vkospi_regime": {
+     "weight": 0,
+     "scored": false,
+     "MISSING": 300
+    },
+    "RISK.downside_drawdown": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 300
+    },
+    "RISK.financial_resilience": {
+     "weight": 7,
+     "scored": true,
+     "REAL": 300
+    },
+    "RISK.leverage": {
+     "weight": 4,
+     "scored": true,
+     "REAL": 272,
+     "NOT_APPLICABLE": 28
+    },
+    "RISK.liquidity": {
+     "weight": 4,
+     "scored": true,
+     "REAL": 300
+    },
+    "TECHNICAL.long_trend": {
+     "weight": 5,
+     "scored": true,
+     "REAL": 299,
+     "MISSING": 1
+    },
+    "TECHNICAL.momentum_persistence": {
+     "weight": 2,
+     "scored": true,
+     "REAL": 300
+    },
+    "TECHNICAL.relative_strength": {
+     "weight": 3,
+     "scored": true,
+     "REAL": 300
+    }
+   },
+   "provenance_stale": 0,
+   "price_source": {
+    "KRX 일별 시세로 만든 일봉 (KRX가 아직 내지 않은 최근 1거래일은 Yahoo)": 300
+   },
+   "gates": {
+    "SEVERE_EVENT": 7,
+    "DATA_ANOMALY": 3,
+    "SHORT_HISTORY": 1,
+    "LOW_LIQUIDITY": 3
+   },
+   "fund_none": 0
+  }
+ }
+}

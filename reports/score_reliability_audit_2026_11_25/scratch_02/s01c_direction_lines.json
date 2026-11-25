@@ -1,0 +1,812 @@
+{
+ "direction": {
+  "US_SWING": {
+   "atr_risk.atr_pct": {
+    "rho": -0.9735700317178222,
+    "expected": -1,
+    "n": 504
+   },
+   "atr_risk.hist_vol": {
+    "rho": -0.9645050224751828,
+    "expected": -1,
+    "n": 503
+   },
+   "balance_sheet.current_ratio": {
+    "rho": 0.856767471594091,
+    "expected": 1,
+    "n": 419
+   },
+   "balance_sheet.debt_equity": {
+    "rho": -0.8445907157990661,
+    "expected": -1,
+    "n": 439
+   },
+   "balance_sheet.equity_assets": {
+    "rho": 0.9581216505446373,
+    "expected": 1,
+    "n": 53
+   },
+   "breakout_volume.breakout": {
+    "rho": 0.08089582315036314,
+    "expected": 1,
+    "n": 504
+   },
+   "breakout_volume.dist_high": {
+    "rho": 0.9513365388842698,
+    "expected": 1,
+    "n": 504
+   },
+   "breakout_volume.gap_today": {
+    "rho": 0.4354970018810134,
+    "expected": 0,
+    "n": 504
+   },
+   "breakout_volume.held_gap": {
+    "rho": 0.3736107954947796,
+    "expected": 0,
+    "n": 504
+   },
+   "breakout_volume.volume_ratio": {
+    "rho": -0.21521466170122086,
+    "expected": 0,
+    "n": 504
+   },
+   "cash_flow_quality.fcf_margin": {
+    "rho": 0.8501312796764727,
+    "expected": 1,
+    "n": 409
+   },
+   "cash_flow_quality.ocf_to_ni": {
+    "rho": 0.1202332996246506,
+    "expected": 1,
+    "n": 423
+   },
+   "drawdown_gap.max_drawdown_252": {
+    "rho": 0.9065399473840137,
+    "expected": 1,
+    "n": 504
+   },
+   "drawdown_gap.max_gap_60": {
+    "rho": -0.8439589385990017,
+    "expected": -1,
+    "n": 504
+   },
+   "earnings_calendar.overdue": {
+    "rho": NaN,
+    "expected": 0,
+    "n": 59
+   },
+   "earnings_calendar.sessions": {
+    "rho": 0.39249360581130843,
+    "expected": 1,
+    "n": 499
+   },
+   "earnings_revenue_quality.eps_growth": {
+    "rho": 0.8411401874125838,
+    "expected": 1,
+    "n": 455
+   },
+   "earnings_revenue_quality.ocf_to_ni": {
+    "rho": 0.0012562435123652594,
+    "expected": 1,
+    "n": 423
+   },
+   "earnings_revenue_quality.rev_growth": {
+    "rho": 0.6920139796511993,
+    "expected": 1,
+    "n": 490
+   },
+   "insider_activity.excluded_transactions": {
+    "rho": -0.0852580081045145,
+    "expected": 0,
+    "n": 504
+   },
+   "insider_activity.filings": {
+    "rho": -0.15114164269479677,
+    "expected": 0,
+    "n": 504
+   },
+   "insider_activity.open_market_buy": {
+    "rho": 0.5122618902195404,
+    "expected": 1,
+    "n": 504
+   },
+   "insider_activity.open_market_sell": {
+    "rho": -0.8140437473065979,
+    "expected": -1,
+    "n": 504
+   },
+   "insider_activity.window_days": {
+    "rho": NaN,
+    "expected": 0,
+    "n": 504
+   },
+   "liquidity.adv_value": {
+    "rho": 0.9586851857946617,
+    "expected": 1,
+    "n": 504
+   },
+   "material_disclosures.negative": {
+    "rho": -1.0,
+    "expected": -1,
+    "n": 504
+   },
+   "material_disclosures.positive": {
+    "rho": NaN,
+    "expected": 1,
+    "n": 504
+   },
+   "material_disclosures.window_days": {
+    "rho": NaN,
+    "expected": 0,
+    "n": 504
+   },
+   "momentum.macd_hist_pct": {
+    "rho": 0.8564889210023751,
+    "expected": 1,
+    "n": 504
+   },
+   "momentum.rsi": {
+    "rho": 0.9378386076692696,
+    "expected": 0,
+    "n": 504
+   },
+   "profitability.op_margin": {
+    "rho": 0.8206364679125167,
+    "expected": 1,
+    "n": 380
+   },
+   "profitability.roe": {
+    "rho": 0.8388700390440875,
+    "expected": 1,
+    "n": 469
+   },
+   "relative_strength.percentile": {
+    "rho": 1.0,
+    "expected": 1,
+    "n": 502
+   },
+   "relative_strength.rel_126": {
+    "rho": 1.0,
+    "expected": 1,
+    "n": 502
+   },
+   "risk_reward.cost_pct": {
+    "rho": NaN,
+    "expected": 0,
+    "n": 504
+   },
+   "risk_reward.reward_risk": {
+    "rho": 0.785519744876802,
+    "expected": 1,
+    "n": 504
+   },
+   "risk_reward.stop": {
+    "rho": -0.024462796834198445,
+    "expected": 0,
+    "n": 504
+   },
+   "risk_reward.target": {
+    "rho": 0.01665459740047894,
+    "expected": 0,
+    "n": 504
+   },
+   "trend_structure.ma20": {
+    "rho": 0.1696910898416441,
+    "expected": 0,
+    "n": 501
+   },
+   "trend_structure.ma200": {
+    "rho": 0.061919045815341474,
+    "expected": 0,
+    "n": 501
+   },
+   "trend_structure.ma200_slope": {
+    "rho": 0.2674625436013247,
+    "expected": 1,
+    "n": 501
+   },
+   "trend_structure.ma50": {
+    "rho": 0.12167621580788479,
+    "expected": 0,
+    "n": 501
+   },
+   "trend_structure.ma50_slope": {
+    "rho": 0.8213475663607683,
+    "expected": 1,
+    "n": 501
+   },
+   "volatility_structure.bandwidth": {
+    "rho": -0.8041313266393175,
+    "expected": 0,
+    "n": 503
+   },
+   "volatility_structure.bandwidth_pct": {
+    "rho": -0.9999999999999998,
+    "expected": -1,
+    "n": 503
+   }
+  },
+  "US_LONG_TERM": {
+   "balance_dilution.debt_equity": {
+    "rho": -0.77529025822985,
+    "expected": -1,
+    "n": 439
+   },
+   "balance_dilution.equity_assets": {
+    "rho": 0.6875386755725337,
+    "expected": 1,
+    "n": 53
+   },
+   "balance_dilution.share_change": {
+    "rho": -0.43164358497078503,
+    "expected": -1,
+    "n": 484
+   },
+   "business_quality.gross_margin": {
+    "rho": 0.6523630024254734,
+    "expected": 1,
+    "n": 187
+   },
+   "business_quality.op_margin": {
+    "rho": 0.8383264990918503,
+    "expected": 1,
+    "n": 380
+   },
+   "business_quality.roe": {
+    "rho": 0.7664419425003021,
+    "expected": 1,
+    "n": 469
+   },
+   "business_quality.roe_years_positive": {
+    "rho": 0.4080913376191992,
+    "expected": 1,
+    "n": 500
+   },
+   "capital_allocation.returns_capital": {
+    "rho": 0.18756415027574033,
+    "expected": 1,
+    "n": 478
+   },
+   "capital_allocation.share_change": {
+    "rho": -0.9702256901866922,
+    "expected": -1,
+    "n": 484
+   },
+   "downside_drawdown.downside_vol": {
+    "rho": -0.9527583118871563,
+    "expected": -1,
+    "n": 503
+   },
+   "downside_drawdown.max_drawdown_252": {
+    "rho": 0.9676390106042747,
+    "expected": 1,
+    "n": 504
+   },
+   "financial_resilience.cash_debt": {
+    "rho": 0.842068633784824,
+    "expected": 1,
+    "n": 433
+   },
+   "financial_resilience.current_ratio": {
+    "rho": 0.7879875532612962,
+    "expected": 1,
+    "n": 419
+   },
+   "financial_resilience.equity_assets": {
+    "rho": 0.9581216505446373,
+    "expected": 1,
+    "n": 53
+   },
+   "financial_resilience.interest_cover": {
+    "rho": 0.7654462338095216,
+    "expected": 1,
+    "n": 302
+   },
+   "free_cash_flow.fcf_margin": {
+    "rho": 0.9415073556538667,
+    "expected": 1,
+    "n": 409
+   },
+   "free_cash_flow.fcf_years_positive": {
+    "rho": 0.6328482684551955,
+    "expected": 1,
+    "n": 410
+   },
+   "governance.window_days": {
+    "rho": NaN,
+    "expected": 0,
+    "n": 504
+   },
+   "growth_quality.eps_cagr3": {
+    "rho": 0.7934003370414244,
+    "expected": 1,
+    "n": 410
+   },
+   "growth_quality.rev_cagr3": {
+    "rho": 0.8702238010766463,
+    "expected": 1,
+    "n": 488
+   },
+   "growth_quality.rev_growth": {
+    "rho": 0.7694699232664126,
+    "expected": 1,
+    "n": 490
+   },
+   "insider_ownership.insider_pct": {
+    "rho": 0.8197831024098079,
+    "expected": 1,
+    "n": 500
+   },
+   "leverage.debt_equity": {
+    "rho": -0.9975323752407839,
+    "expected": -1,
+    "n": 439
+   },
+   "liquidity.adv_value": {
+    "rho": 0.9586851857946617,
+    "expected": 1,
+    "n": 504
+   },
+   "long_trend.ma200": {
+    "rho": 0.11356281581094597,
+    "expected": 0,
+    "n": 501
+   },
+   "long_trend.ma200_slope": {
+    "rho": 0.75781178982741,
+    "expected": 1,
+    "n": 501
+   },
+   "material_events.negative": {
+    "rho": -1.0,
+    "expected": -1,
+    "n": 504
+   },
+   "material_events.positive": {
+    "rho": NaN,
+    "expected": 1,
+    "n": 504
+   },
+   "momentum_persistence.pos_month_share": {
+    "rho": 0.7467024667537071,
+    "expected": 1,
+    "n": 501
+   },
+   "momentum_persistence.ret_12_1": {
+    "rho": 0.9610211527093242,
+    "expected": 1,
+    "n": 501
+   },
+   "relative_strength.percentile": {
+    "rho": 1.0,
+    "expected": 1,
+    "n": 502
+   },
+   "relative_strength.rel_126": {
+    "rho": 1.0,
+    "expected": 1,
+    "n": 502
+   },
+   "valuation.fcf_yield": {
+    "rho": 0.7369498269612929,
+    "expected": 1,
+    "n": 410
+   },
+   "valuation.pb": {
+    "rho": -0.7380615169603759,
+    "expected": -1,
+    "n": 470
+   },
+   "valuation.pe": {
+    "rho": -0.6493569941328778,
+    "expected": 0,
+    "n": 500
+   }
+  },
+  "KR_SWING": {
+   "atr_risk.atr_pct": {
+    "rho": -0.881673527432483,
+    "expected": -1,
+    "n": 300
+   },
+   "atr_risk.hist_vol": {
+    "rho": -0.9291684433053924,
+    "expected": -1,
+    "n": 300
+   },
+   "balance_sheet.current_ratio": {
+    "rho": 0.9359005589122174,
+    "expected": 1,
+    "n": 272
+   },
+   "balance_sheet.debt_equity": {
+    "rho": -0.950171010021889,
+    "expected": -1,
+    "n": 272
+   },
+   "cash_flow_quality.fcf_margin": {
+    "rho": 0.8868439805691755,
+    "expected": 1,
+    "n": 261
+   },
+   "cash_flow_quality.ocf_to_ni": {
+    "rho": 0.5997652211842918,
+    "expected": 1,
+    "n": 222
+   },
+   "drawdown_gap.max_drawdown_252": {
+    "rho": 0.7646094261747527,
+    "expected": 1,
+    "n": 300
+   },
+   "drawdown_gap.max_gap_60": {
+    "rho": -0.9565566569026699,
+    "expected": -1,
+    "n": 300
+   },
+   "earnings_calendar.overdue": {
+    "rho": NaN,
+    "expected": 0,
+    "n": 246
+   },
+   "earnings_calendar.sessions": {
+    "rho": NaN,
+    "expected": 1,
+    "n": 298
+   },
+   "earnings_revenue_quality.eps_growth": {
+    "rho": 0.7367881613319668,
+    "expected": 1,
+    "n": 219
+   },
+   "earnings_revenue_quality.ocf_to_ni": {
+    "rho": 0.29582240983537655,
+    "expected": 1,
+    "n": 222
+   },
+   "earnings_revenue_quality.rev_growth": {
+    "rho": 0.5829433975812643,
+    "expected": 1,
+    "n": 256
+   },
+   "liquidity.adv_value": {
+    "rho": 0.9941608876941319,
+    "expected": 1,
+    "n": 300
+   },
+   "material_disclosures.negative": {
+    "rho": -0.7502436227514104,
+    "expected": -1,
+    "n": 300
+   },
+   "material_disclosures.positive": {
+    "rho": 0.6178653559433408,
+    "expected": 1,
+    "n": 300
+   },
+   "material_disclosures.window_days": {
+    "rho": NaN,
+    "expected": 0,
+    "n": 300
+   },
+   "profitability.op_margin": {
+    "rho": 0.9423814541798594,
+    "expected": 1,
+    "n": 270
+   },
+   "profitability.roe": {
+    "rho": 0.9448898720036826,
+    "expected": 1,
+    "n": 300
+   },
+   "risk_reward.cost_pct": {
+    "rho": NaN,
+    "expected": 0,
+    "n": 300
+   },
+   "risk_reward.reward_risk": {
+    "rho": 0.8971430262883864,
+    "expected": 1,
+    "n": 300
+   },
+   "risk_reward.stop": {
+    "rho": -0.025666947015825482,
+    "expected": 0,
+    "n": 300
+   },
+   "risk_reward.target": {
+    "rho": 0.03172451494935195,
+    "expected": 0,
+    "n": 300
+   }
+  },
+  "KR_LONG_TERM": {
+   "balance_dilution.debt_equity": {
+    "rho": -0.9943240562250185,
+    "expected": -1,
+    "n": 272
+   },
+   "business_quality.op_margin": {
+    "rho": 0.9118259196236881,
+    "expected": 1,
+    "n": 270
+   },
+   "business_quality.roe": {
+    "rho": 0.9147009137093154,
+    "expected": 1,
+    "n": 300
+   },
+   "business_quality.roe_years_positive": {
+    "rho": 0.6932709123087144,
+    "expected": 1,
+    "n": 300
+   },
+   "capital_allocation.returns_capital": {
+    "rho": 1.0,
+    "expected": 1,
+    "n": 231
+   },
+   "downside_drawdown.downside_vol": {
+    "rho": -0.9199739302151934,
+    "expected": -1,
+    "n": 300
+   },
+   "downside_drawdown.max_drawdown_252": {
+    "rho": 0.8577157216703258,
+    "expected": 1,
+    "n": 300
+   },
+   "financial_resilience.cash_debt": {
+    "rho": 0.9008544027782477,
+    "expected": 1,
+    "n": 271
+   },
+   "financial_resilience.current_ratio": {
+    "rho": 0.9424568531004348,
+    "expected": 1,
+    "n": 272
+   },
+   "free_cash_flow.fcf_margin": {
+    "rho": 0.9302937147132707,
+    "expected": 1,
+    "n": 261
+   },
+   "free_cash_flow.fcf_years_positive": {
+    "rho": 0.8407281959427442,
+    "expected": 1,
+    "n": 261
+   },
+   "governance.window_days": {
+    "rho": NaN,
+    "expected": 0,
+    "n": 300
+   },
+   "growth_quality.eps_cagr3": {
+    "rho": 0.7829214996700249,
+    "expected": 1,
+    "n": 145
+   },
+   "growth_quality.rev_cagr3": {
+    "rho": 0.8838450473578189,
+    "expected": 1,
+    "n": 238
+   },
+   "growth_quality.rev_growth": {
+    "rho": 0.7950968521093834,
+    "expected": 1,
+    "n": 256
+   },
+   "insider_ownership.insider_pct": {
+    "rho": 0.4070899317391855,
+    "expected": 1,
+    "n": 273
+   },
+   "leverage.debt_equity": {
+    "rho": -0.9991157116033809,
+    "expected": -1,
+    "n": 272
+   },
+   "liquidity.adv_value": {
+    "rho": 0.9941608876941319,
+    "expected": 1,
+    "n": 300
+   },
+   "long_trend.ma200": {
+    "rho": -0.04764080381922631,
+    "expected": 0,
+    "n": 299
+   },
+   "long_trend.ma200_slope": {
+    "rho": 0.8470533392944073,
+    "expected": 1,
+    "n": 296
+   },
+   "material_events.negative": {
+    "rho": -0.7499965608427414,
+    "expected": -1,
+    "n": 300
+   },
+   "material_events.positive": {
+    "rho": 0.6180428977433021,
+    "expected": 1,
+    "n": 300
+   },
+   "momentum_persistence.pos_month_share": {
+    "rho": 0.7864866010267393,
+    "expected": 1,
+    "n": 300
+   },
+   "momentum_persistence.ret_12_1": {
+    "rho": 0.9363667786842464,
+    "expected": 1,
+    "n": 296
+   },
+   "relative_strength.percentile": {
+    "rho": 1.0,
+    "expected": 1,
+    "n": 300
+   },
+   "relative_strength.rel_126": {
+    "rho": 0.9793273258591761,
+    "expected": 1,
+    "n": 300
+   },
+   "valuation.fcf_yield": {
+    "rho": 0.7361575776435038,
+    "expected": 1,
+    "n": 260
+   },
+   "valuation.pb": {
+    "rho": -0.7801882671462037,
+    "expected": -1,
+    "n": 299
+   },
+   "valuation.pe": {
+    "rho": -0.3197229789343858,
+    "expected": 0,
+    "n": 299
+   }
+  }
+ },
+ "lines": {
+  "US_SWING": {
+   "session": "2026-11-24",
+   "n": 504,
+   "min": 26.753605214811657,
+   "p20": 40.85446754754102,
+   "median": 53.575626943606515,
+   "p80_top_fifth_cut": 64.39182054114006,
+   "p90": 68.95839965956179,
+   "max": 77.67837305072663,
+   "share_ge80": 0.0,
+   "share_ge70": 0.06944444444444445,
+   "share_55_70": 0.38095238095238093,
+   "share_40_55": 0.375,
+   "share_lt40": 0.1746031746031746,
+   "theoretical_max_if_all_factors_1": 100.0
+  },
+  "US_LONG_TERM": {
+   "session": "2026-11-24",
+   "n": 504,
+   "min": 22.40871488938363,
+   "p20": 53.920666349877436,
+   "median": 61.880005054323256,
+   "p80_top_fifth_cut": 68.8080006589627,
+   "p90": 71.83843508309708,
+   "max": 83.03230152523841,
+   "share_ge80": 0.005952380952380952,
+   "share_ge70": 0.1626984126984127,
+   "share_55_70": 0.5992063492063492,
+   "share_40_55": 0.22817460317460317,
+   "share_lt40": 0.00992063492063492,
+   "theoretical_max_if_all_factors_1": 100.0
+  },
+  "KR_SWING": {
+   "session": "2026-11-24",
+   "n": 300,
+   "min": 24.239955745788173,
+   "p20": 37.61160280101368,
+   "median": 45.949361656040665,
+   "p80_top_fifth_cut": 53.410898468320575,
+   "p90": 57.29351439973563,
+   "max": 65.77997942348335,
+   "share_ge80": 0.0,
+   "share_ge70": 0.0,
+   "share_55_70": 0.14,
+   "share_40_55": 0.5866666666666667,
+   "share_lt40": 0.2733333333333333,
+   "theoretical_max_if_all_factors_1": 100.0
+  },
+  "KR_LONG_TERM": {
+   "session": "2026-11-24",
+   "n": 300,
+   "min": 12.833926841360297,
+   "p20": 40.28602578383038,
+   "median": 54.01583073515289,
+   "p80_top_fifth_cut": 66.92011334651905,
+   "p90": 70.43409744762963,
+   "max": 83.36127029321398,
+   "share_ge80": 0.013333333333333334,
+   "share_ge70": 0.11,
+   "share_55_70": 0.36333333333333334,
+   "share_40_55": 0.3333333333333333,
+   "share_lt40": 0.19333333333333333,
+   "theoretical_max_if_all_factors_1": 100.0
+  }
+ },
+ "direction_checked": 102,
+ "direction_wrong": [],
+ "kr_swing_daily_max": [
+  [
+   "2026-11-11",
+   "QSF-1.3.1",
+   56.7,
+   0,
+   4
+  ],
+  [
+   "2026-11-12",
+   "QSF-1.3.2",
+   56.5,
+   0,
+   5
+  ],
+  [
+   "2026-11-13",
+   "QSF-1.3.2",
+   56.5,
+   0,
+   4
+  ],
+  [
+   "2026-11-16",
+   "QSF-1.4.1",
+   68.5,
+   0,
+   48
+  ],
+  [
+   "2026-11-17",
+   "QSF-1.4.1",
+   68.5,
+   0,
+   53
+  ],
+  [
+   "2026-11-18",
+   "QSF-1.4.1",
+   68.5,
+   0,
+   51
+  ],
+  [
+   "2026-11-19",
+   "QSF-1.4.1",
+   68.5,
+   0,
+   51
+  ],
+  [
+   "2026-11-20",
+   "QSF-1.4.1",
+   67.9,
+   0,
+   44
+  ],
+  [
+   "2026-11-23",
+   "QSF-1.5.2",
+   67.5,
+   0,
+   47
+  ],
+  [
+   "2026-11-24",
+   "QSF-1.5.2",
+   65.8,
+   0,
+   42
+  ]
+ ]
+}

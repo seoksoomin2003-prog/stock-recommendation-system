@@ -1,0 +1,1422 @@
+{
+ "US_SWING": {
+  "session": "2026-11-24",
+  "n": 504,
+  "ge70": 35,
+  "top_fifth_sector_mix": {
+   "Health Care": 0.27,
+   "Information Technology": 0.05,
+   "Financials": 0.23,
+   "Industrials": 0.1,
+   "Utilities": 0.07,
+   "Materials": 0.03,
+   "Consumer Staples": 0.13,
+   "Communication Services": 0.03,
+   "Consumer Discretionary": 0.04,
+   "Real Estate": 0.05
+  },
+  "scan_sector_mix": {
+   "Health Care": 0.11706349206349206,
+   "Information Technology": 0.14484126984126985,
+   "Consumer Discretionary": 0.09325396825396826,
+   "Financials": 0.15079365079365079,
+   "Consumer Staples": 0.06349206349206349,
+   "Industrials": 0.15873015873015872,
+   "Utilities": 0.061507936507936505,
+   "Materials": 0.047619047619047616,
+   "Real Estate": 0.05952380952380952,
+   "Energy": 0.041666666666666664,
+   "Communication Services": 0.041666666666666664,
+   "분류 없음": 0.01984126984126984
+  },
+  "top_fifth_vs_scan_shift": 0.30714285714285716,
+  "top_fifth_hhi": 0.166,
+  "scan_hhi": 0.10880416981607458,
+  "ablation": [
+   {
+    "left_out": "trend_structure",
+    "kind": "factor",
+    "rho": 0.9753716269099221,
+    "top_fifth_overlap": 0.86,
+    "top20_overlap": 0.95,
+    "ge70_count": 10,
+    "ge70_overlap_of_live": 0.2857142857142857,
+    "sector_shift_top_fifth": 0.05999999999999999,
+    "mean_score_change": -0.5972540493907733,
+    "max_abs_change": 8.012052731648247
+   },
+   {
+    "left_out": "relative_strength",
+    "kind": "factor",
+    "rho": 0.9768089248572688,
+    "top_fifth_overlap": 0.88,
+    "top20_overlap": 0.85,
+    "ge70_count": 25,
+    "ge70_overlap_of_live": 0.6285714285714286,
+    "sector_shift_top_fifth": 0.07,
+    "mean_score_change": 0.3960146624093036,
+    "max_abs_change": 7.812451712709844
+   },
+   {
+    "left_out": "momentum",
+    "kind": "factor",
+    "rho": 0.9920836133599162,
+    "top_fifth_overlap": 0.9,
+    "top20_overlap": 0.95,
+    "ge70_count": 50,
+    "ge70_overlap_of_live": 1.0,
+    "sector_shift_top_fifth": 0.09000000000000001,
+    "mean_score_change": 0.9636939852410823,
+    "max_abs_change": 4.048160195895825
+   },
+   {
+    "left_out": "breakout_volume",
+    "kind": "factor",
+    "rho": 0.9948859413064286,
+    "top_fifth_overlap": 0.89,
+    "top20_overlap": 0.95,
+    "ge70_count": 34,
+    "ge70_overlap_of_live": 0.8857142857142857,
+    "sector_shift_top_fifth": 0.07,
+    "mean_score_change": 0.8294041899182818,
+    "max_abs_change": 5.167938894292014
+   },
+   {
+    "left_out": "volatility_structure",
+    "kind": "factor",
+    "rho": 0.9929540156514944,
+    "top_fifth_overlap": 0.9,
+    "top20_overlap": 0.7,
+    "ge70_count": 51,
+    "ge70_overlap_of_live": 0.9714285714285714,
+    "sector_shift_top_fifth": 0.06999999999999998,
+    "mean_score_change": 0.8246485667444107,
+    "max_abs_change": 4.388488868552997
+   },
+   {
+    "left_out": "earnings_revenue_quality",
+    "kind": "factor",
+    "rho": 0.9975212374972235,
+    "top_fifth_overlap": 0.96,
+    "top20_overlap": 0.9,
+    "ge70_count": 42,
+    "ge70_overlap_of_live": 0.9714285714285714,
+    "sector_shift_top_fifth": 0.03000000000000001,
+    "mean_score_change": -0.37928529879131656,
+    "max_abs_change": 2.709869722191229
+   },
+   {
+    "left_out": "profitability",
+    "kind": "factor",
+    "rho": 0.9981503716972098,
+    "top_fifth_overlap": 0.96,
+    "top20_overlap": 0.9,
+    "ge70_count": 35,
+    "ge70_overlap_of_live": 0.9142857142857143,
+    "sector_shift_top_fifth": 0.029999999999999978,
+    "mean_score_change": -0.4323297076886689,
+    "max_abs_change": 1.7555897694730724
+   },
+   {
+    "left_out": "balance_sheet",
+    "kind": "factor",
+    "rho": 0.9952040702508198,
+    "top_fifth_overlap": 0.95,
+    "top20_overlap": 0.85,
+    "ge70_count": 45,
+    "ge70_overlap_of_live": 0.9142857142857143,
+    "sector_shift_top_fifth": 0.03,
+    "mean_score_change": -0.07014915199106152,
+    "max_abs_change": 3.0171260388587484
+   },
+   {
+    "left_out": "cash_flow_quality",
+    "kind": "factor",
+    "rho": 0.9988394948554783,
+    "top_fifth_overlap": 0.96,
+    "top20_overlap": 0.9,
+    "ge70_count": 32,
+    "ge70_overlap_of_live": 0.8857142857142857,
+    "sector_shift_top_fifth": 0.03,
+    "mean_score_change": -0.6723933805769208,
+    "max_abs_change": 1.79108799604521
+   },
+   {
+    "left_out": "risk_reward",
+    "kind": "factor",
+    "rho": 0.9961494587402508,
+    "top_fifth_overlap": 0.97,
+    "top20_overlap": 0.95,
+    "ge70_count": 90,
+    "ge70_overlap_of_live": 1.0,
+    "sector_shift_top_fifth": 0.030000000000000013,
+    "mean_score_change": 3.8121413228903682,
+    "max_abs_change": 8.22002062502007
+   },
+   {
+    "left_out": "atr_risk",
+    "kind": "factor",
+    "rho": 0.9935667466207004,
+    "top_fifth_overlap": 0.92,
+    "top20_overlap": 0.85,
+    "ge70_count": 28,
+    "ge70_overlap_of_live": 0.8,
+    "sector_shift_top_fifth": 0.06,
+    "mean_score_change": -0.5829981992419968,
+    "max_abs_change": 3.6747385781635913
+   },
+   {
+    "left_out": "liquidity",
+    "kind": "factor",
+    "rho": 0.9969451560322182,
+    "top_fifth_overlap": 0.92,
+    "top20_overlap": 0.8,
+    "ge70_count": 28,
+    "ge70_overlap_of_live": 0.7714285714285715,
+    "sector_shift_top_fifth": 0.06,
+    "mean_score_change": -2.392924881751137,
+    "max_abs_change": 5.979312174869186
+   },
+   {
+    "left_out": "drawdown_gap",
+    "kind": "factor",
+    "rho": 0.9957879315338524,
+    "top_fifth_overlap": 0.93,
+    "top20_overlap": 0.85,
+    "ge70_count": 33,
+    "ge70_overlap_of_live": 0.8571428571428571,
+    "sector_shift_top_fifth": 0.06,
+    "mean_score_change": -0.041884117172018676,
+    "max_abs_change": 3.227119728752413
+   },
+   {
+    "left_out": "earnings_calendar",
+    "kind": "factor",
+    "rho": 0.997935536240361,
+    "top_fifth_overlap": 1.0,
+    "top20_overlap": 1.0,
+    "ge70_count": 26,
+    "ge70_overlap_of_live": 0.7428571428571429,
+    "sector_shift_top_fifth": 0.0,
+    "mean_score_change": -2.3007116334911126,
+    "max_abs_change": 4.679461702071535
+   },
+   {
+    "left_out": "material_disclosures",
+    "kind": "factor",
+    "rho": 0.9998093475919592,
+    "top_fifth_overlap": 1.0,
+    "top20_overlap": 1.0,
+    "ge70_count": 41,
+    "ge70_overlap_of_live": 1.0,
+    "sector_shift_top_fifth": 0.0,
+    "mean_score_change": -0.22883745705278222,
+    "max_abs_change": 2.121405811065472
+   },
+   {
+    "left_out": "insider_activity",
+    "kind": "factor",
+    "rho": 0.995383193530941,
+    "top_fifth_overlap": 0.95,
+    "top20_overlap": 0.8,
+    "ge70_count": 57,
+    "ge70_overlap_of_live": 1.0,
+    "sector_shift_top_fifth": 0.04000000000000001,
+    "mean_score_change": 1.0332961613792975,
+    "max_abs_change": 3.434924015350383
+   },
+   {
+    "left_out": "EVENTS",
+    "kind": "domain",
+    "rho": 0.992646759705792,
+    "top_fifth_overlap": 0.95,
+    "top20_overlap": 0.8,
+    "ge70_count": 45,
+    "ge70_overlap_of_live": 0.9714285714285714,
+    "sector_shift_top_fifth": 0.04000000000000001,
+    "mean_score_change": -1.6157493791061266,
+    "max_abs_change": 10.453452393455663
+   },
+   {
+    "left_out": "FUNDAMENTAL",
+    "kind": "domain",
+    "rho": 0.9875321386157362,
+    "top_fifth_overlap": 0.91,
+    "top20_overlap": 0.8,
+    "ge70_count": 46,
+    "ge70_overlap_of_live": 0.9142857142857143,
+    "sector_shift_top_fifth": 0.03,
+    "mean_score_change": -1.7217821663721806,
+    "max_abs_change": 9.076580543184562
+   },
+   {
+    "left_out": "RISK",
+    "kind": "domain",
+    "rho": 0.977100996097906,
+    "top_fifth_overlap": 0.85,
+    "top20_overlap": 0.65,
+    "ge70_count": 73,
+    "ge70_overlap_of_live": 1.0,
+    "sector_shift_top_fifth": 0.10999999999999999,
+    "mean_score_change": 0.9299579359719119,
+    "max_abs_change": 10.90979576442611
+   },
+   {
+    "left_out": "TECHNICAL",
+    "kind": "domain",
+    "rho": 0.5375528066865194,
+    "top_fifth_overlap": 0.44,
+    "top20_overlap": 0.35,
+    "ge70_count": 9,
+    "ge70_overlap_of_live": 0.05714285714285714,
+    "sector_shift_top_fifth": 0.22,
+    "mean_score_change": 4.466104032763592,
+    "max_abs_change": 30.88920909603811
+   }
+  ],
+  "normalisation": {
+   "percentile": {
+    "rho": 0.9877610339846826,
+    "top_fifth_overlap": 0.93,
+    "top20_overlap": 0.8,
+    "sector_shift_top_fifth_vs_live": 0.04000000000000001,
+    "top_fifth_vs_scan_shift": 0.2776190476190476,
+    "top_fifth_hhi": 0.154,
+    "max_sector_share": 0.26,
+    "max_sector": "Health Care",
+    "ge70_count": 37,
+    "mean": 49.99580311827841,
+    "sd": 13.163233264404,
+    "max": 79.61623124040818,
+    "ge70_overlap_of_live": 0.8857142857142857,
+    "same_count_as_live_cut": 70.41068798946216
+   },
+   "zscore": {
+    "rho": 0.9902528253393363,
+    "top_fifth_overlap": 0.91,
+    "top20_overlap": 0.85,
+    "sector_shift_top_fifth_vs_live": 0.04000000000000001,
+    "top_fifth_vs_scan_shift": 0.28714285714285714,
+    "top_fifth_hhi": 0.15760000000000002,
+    "max_sector_share": 0.26,
+    "max_sector": "Health Care"
+   },
+   "live": {
+    "mean": 52.85167337582256,
+    "sd": 11.927638047785377,
+    "max": 77.67837305072665,
+    "ge70_count": 35,
+    "max_sector_share": 0.27,
+    "max_sector": "Health Care",
+    "share_ge70": 0.06944444444444445,
+    "percentile_of_70": 0.9305555555555556
+   }
+  },
+  "anchor_centre": {
+   "trend_structure": {
+    "mean": 0.5711909514304723,
+    "points_vs_middle": 0.8898868928809034
+   },
+   "relative_strength": {
+    "mean": 0.500996015936255,
+    "points_vs_middle": 0.01245019920318724
+   },
+   "momentum": {
+    "mean": 0.38539014606393895,
+    "points_vs_middle": -0.7163115871003816
+   },
+   "breakout_volume": {
+    "mean": 0.4707759204989733,
+    "points_vs_middle": -0.3653009937628335
+   },
+   "volatility_structure": {
+    "mean": 0.40516552591994676,
+    "points_vs_middle": -0.5927154630003327
+   },
+   "earnings_revenue_quality": {
+    "mean": 0.6274413195352029,
+    "points_vs_middle": 0.4779049482570108
+   },
+   "profitability": {
+    "mean": 0.6990806188875789,
+    "points_vs_middle": 0.4977015472189472
+   },
+   "balance_sheet": {
+    "mean": 0.5468609243476151,
+    "points_vs_middle": 0.17572846630355674
+   },
+   "cash_flow_quality": {
+    "mean": 0.8252299366996679,
+    "points_vs_middle": 0.8130748417491699
+   },
+   "risk_reward": {
+    "mean": 0.061697432181322225,
+    "points_vs_middle": -3.287269258640083
+   },
+   "atr_risk": {
+    "mean": 0.6156061606191534,
+    "points_vs_middle": 0.7225385038697089
+   },
+   "liquidity": {
+    "mean": 0.8847365112776001,
+    "points_vs_middle": 2.404603195485001
+   },
+   "drawdown_gap": {
+    "mean": 0.5355819587966539,
+    "points_vs_middle": 0.17790979398326967
+   },
+   "earnings_calendar": {
+    "mean": 0.9665484815785416,
+    "points_vs_middle": 2.3327424078927077
+   },
+   "material_disclosures": {
+    "mean": 0.5866071428571427,
+    "points_vs_middle": 0.324776785714285
+   },
+   "insider_activity": {
+    "mean": 0.26350288837798813,
+    "points_vs_middle": -0.8868641685825445
+   }
+  }
+ },
+ "US_LONG_TERM": {
+  "session": "2026-11-24",
+  "n": 504,
+  "ge70": 82,
+  "top_fifth_sector_mix": {
+   "Information Technology": 0.18,
+   "Financials": 0.31,
+   "Industrials": 0.11,
+   "Energy": 0.02,
+   "Consumer Staples": 0.05,
+   "Health Care": 0.15,
+   "Consumer Discretionary": 0.07,
+   "Materials": 0.02,
+   "Communication Services": 0.07,
+   "분류 없음": 0.02
+  },
+  "scan_sector_mix": {
+   "Health Care": 0.11706349206349206,
+   "Information Technology": 0.14484126984126985,
+   "Consumer Discretionary": 0.09325396825396826,
+   "Financials": 0.15079365079365079,
+   "Consumer Staples": 0.06349206349206349,
+   "Industrials": 0.15873015873015872,
+   "Utilities": 0.061507936507936505,
+   "Materials": 0.047619047619047616,
+   "Real Estate": 0.05952380952380952,
+   "Energy": 0.041666666666666664,
+   "Communication Services": 0.041666666666666664,
+   "분류 없음": 0.01984126984126984
+  },
+  "top_fifth_vs_scan_shift": 0.2557936507936508,
+  "top_fifth_hhi": 0.1766,
+  "scan_hhi": 0.10880416981607458,
+  "ablation": [
+   {
+    "left_out": "long_trend",
+    "kind": "factor",
+    "rho": 0.9814358544630382,
+    "top_fifth_overlap": 0.9,
+    "top20_overlap": 0.75,
+    "ge70_count": 83,
+    "ge70_overlap_of_live": 0.9634146341463414,
+    "sector_shift_top_fifth": 0.05000000000000001,
+    "mean_score_change": 0.27699343095468226,
+    "max_abs_change": 4.533523803891029
+   },
+   {
+    "left_out": "relative_strength",
+    "kind": "factor",
+    "rho": 0.9932707386046757,
+    "top_fifth_overlap": 0.93,
+    "top20_overlap": 0.85,
+    "ge70_count": 85,
+    "ge70_overlap_of_live": 0.9634146341463414,
+    "sector_shift_top_fifth": 0.039999999999999994,
+    "mean_score_change": 0.3898047548082262,
+    "max_abs_change": 5.70841136858472
+   },
+   {
+    "left_out": "momentum_persistence",
+    "kind": "factor",
+    "rho": 0.9979366610333288,
+    "top_fifth_overlap": 0.96,
+    "top20_overlap": 0.9,
+    "ge70_count": 84,
+    "ge70_overlap_of_live": 0.9878048780487805,
+    "sector_shift_top_fifth": 0.030000000000000002,
+    "mean_score_change": 0.13683789809760466,
+    "max_abs_change": 1.3384395231842348
+   },
+   {
+    "left_out": "valuation",
+    "kind": "factor",
+    "rho": 0.8675427866558315,
+    "top_fifth_overlap": 0.64,
+    "top20_overlap": 0.45,
+    "ge70_count": 153,
+    "ge70_overlap_of_live": 0.8536585365853658,
+    "sector_shift_top_fifth": 0.11,
+    "mean_score_change": 2.639610956439822,
+    "max_abs_change": 15.000923428500741
+   },
+   {
+    "left_out": "business_quality",
+    "kind": "factor",
+    "rho": 0.9136303349164797,
+    "top_fifth_overlap": 0.78,
+    "top20_overlap": 0.65,
+    "ge70_count": 51,
+    "ge70_overlap_of_live": 0.5365853658536586,
+    "sector_shift_top_fifth": 0.1,
+    "mean_score_change": -2.27347781751425,
+    "max_abs_change": 10.377074600559098
+   },
+   {
+    "left_out": "growth_quality",
+    "kind": "factor",
+    "rho": 0.9539212626175997,
+    "top_fifth_overlap": 0.81,
+    "top20_overlap": 0.65,
+    "ge70_count": 107,
+    "ge70_overlap_of_live": 0.8780487804878049,
+    "sector_shift_top_fifth": 0.08,
+    "mean_score_change": 1.1211928735102534,
+    "max_abs_change": 7.837485735168073
+   },
+   {
+    "left_out": "free_cash_flow",
+    "kind": "factor",
+    "rho": 0.9823279090192464,
+    "top_fifth_overlap": 0.91,
+    "top20_overlap": 0.8,
+    "ge70_count": 58,
+    "ge70_overlap_of_live": 0.7073170731707317,
+    "sector_shift_top_fifth": 0.02999999999999998,
+    "mean_score_change": -1.2432472345584131,
+    "max_abs_change": 4.747488621813595
+   },
+   {
+    "left_out": "balance_dilution",
+    "kind": "factor",
+    "rho": 0.9900498002086494,
+    "top_fifth_overlap": 0.95,
+    "top20_overlap": 0.95,
+    "ge70_count": 66,
+    "ge70_overlap_of_live": 0.7926829268292683,
+    "sector_shift_top_fifth": 0.020000000000000007,
+    "mean_score_change": -0.6481659757908722,
+    "max_abs_change": 2.983489599687097
+   },
+   {
+    "left_out": "financial_resilience",
+    "kind": "factor",
+    "rho": 0.9558903064404711,
+    "top_fifth_overlap": 0.79,
+    "top20_overlap": 0.6,
+    "ge70_count": 89,
+    "ge70_overlap_of_live": 0.7926829268292683,
+    "sector_shift_top_fifth": 0.09,
+    "mean_score_change": 1.177683279296853,
+    "max_abs_change": 5.855168474140818
+   },
+   {
+    "left_out": "downside_drawdown",
+    "kind": "factor",
+    "rho": 0.9762030363786168,
+    "top_fifth_overlap": 0.9,
+    "top20_overlap": 0.75,
+    "ge70_count": 84,
+    "ge70_overlap_of_live": 0.9634146341463414,
+    "sector_shift_top_fifth": 0.060000000000000005,
+    "mean_score_change": 0.08072555250894184,
+    "max_abs_change": 22.90481358870334
+   },
+   {
+    "left_out": "liquidity",
+    "kind": "factor",
+    "rho": 0.9957259741878763,
+    "top_fifth_overlap": 0.95,
+    "top20_overlap": 0.85,
+    "ge70_count": 69,
+    "ge70_overlap_of_live": 0.8414634146341463,
+    "sector_shift_top_fifth": 0.039999999999999994,
+    "mean_score_change": -1.3396203834392606,
+    "max_abs_change": 11.66301956575488
+   },
+   {
+    "left_out": "leverage",
+    "kind": "factor",
+    "rho": 0.9841212039408999,
+    "top_fifth_overlap": 0.91,
+    "top20_overlap": 0.95,
+    "ge70_count": 79,
+    "ge70_overlap_of_live": 0.9024390243902439,
+    "sector_shift_top_fifth": 0.04,
+    "mean_score_change": -0.08735827663242639,
+    "max_abs_change": 3.308721646371694
+   },
+   {
+    "left_out": "governance",
+    "kind": "factor",
+    "rho": 0.9992183626201304,
+    "top_fifth_overlap": 1.0,
+    "top20_overlap": 0.95,
+    "ge70_count": 78,
+    "ge70_overlap_of_live": 0.9512195121951219,
+    "sector_shift_top_fifth": 0.0,
+    "mean_score_change": -0.5986236462664353,
+    "max_abs_change": 12.72471891405415
+   },
+   {
+    "left_out": "material_events",
+    "kind": "factor",
+    "rho": 0.9994697538484326,
+    "top_fifth_overlap": 0.99,
+    "top20_overlap": 0.9,
+    "ge70_count": 83,
+    "ge70_overlap_of_live": 1.0,
+    "sector_shift_top_fifth": 0.0,
+    "mean_score_change": 0.09895922529565863,
+    "max_abs_change": 2.724718914054151
+   },
+   {
+    "left_out": "insider_ownership",
+    "kind": "factor",
+    "rho": 0.9966599272821349,
+    "top_fifth_overlap": 0.97,
+    "top20_overlap": 1.0,
+    "ge70_count": 101,
+    "ge70_overlap_of_live": 1.0,
+    "sector_shift_top_fifth": 0.029999999999999992,
+    "mean_score_change": 0.9556204047737052,
+    "max_abs_change": 5.05397514516045
+   },
+   {
+    "left_out": "capital_allocation",
+    "kind": "factor",
+    "rho": 0.9989384766366444,
+    "top_fifth_overlap": 0.99,
+    "top20_overlap": 0.95,
+    "ge70_count": 74,
+    "ge70_overlap_of_live": 0.9024390243902439,
+    "sector_shift_top_fifth": 0.010000000000000005,
+    "mean_score_change": -0.6048422342332449,
+    "max_abs_change": 1.5637876835678597
+   },
+   {
+    "left_out": "EVENTS",
+    "kind": "domain",
+    "rho": 0.9936160500457887,
+    "top_fifth_overlap": 0.97,
+    "top20_overlap": 0.9,
+    "ge70_count": 95,
+    "ge70_overlap_of_live": 1.0,
+    "sector_shift_top_fifth": 0.02,
+    "mean_score_change": -0.158281627557055,
+    "max_abs_change": 20.599250437477778
+   },
+   {
+    "left_out": "FUNDAMENTAL",
+    "kind": "domain",
+    "rho": 0.6417393798453974,
+    "top_fifth_overlap": 0.52,
+    "top20_overlap": 0.3,
+    "ge70_count": 85,
+    "ge70_overlap_of_live": 0.5,
+    "sector_shift_top_fifth": 0.21,
+    "mean_score_change": -0.9547179983540444,
+    "max_abs_change": 36.39116440049989
+   },
+   {
+    "left_out": "RISK",
+    "kind": "domain",
+    "rho": 0.9030456581585454,
+    "top_fifth_overlap": 0.76,
+    "top20_overlap": 0.45,
+    "ge70_count": 87,
+    "ge70_overlap_of_live": 0.7439024390243902,
+    "sector_shift_top_fifth": 0.11000000000000001,
+    "mean_score_change": -0.2612105460538584,
+    "max_abs_change": 30.89887565621666
+   },
+   {
+    "left_out": "TECHNICAL",
+    "kind": "domain",
+    "rho": 0.9460609281604107,
+    "top_fifth_overlap": 0.83,
+    "top20_overlap": 0.65,
+    "ge70_count": 93,
+    "ge70_overlap_of_live": 0.9024390243902439,
+    "sector_shift_top_fifth": 0.06,
+    "mean_score_change": 0.8777238524342833,
+    "max_abs_change": 13.07058754671344
+   }
+  ],
+  "normalisation": {
+   "percentile": {
+    "rho": 0.9711688379857586,
+    "top_fifth_overlap": 0.85,
+    "top20_overlap": 0.8,
+    "sector_shift_top_fifth_vs_live": 0.060000000000000005,
+    "top_fifth_vs_scan_shift": 0.24238095238095236,
+    "top_fifth_hhi": 0.1814,
+    "max_sector_share": 0.32,
+    "max_sector": "Financials",
+    "ge70_count": 10,
+    "mean": 50.092099104099624,
+    "sd": 10.3539750015204,
+    "max": 75.99760636485658,
+    "ge70_overlap_of_live": 0.12195121951219512,
+    "same_count_as_live_cut": 60.128862022203876
+   },
+   "zscore": {
+    "rho": 0.9747386496672958,
+    "top_fifth_overlap": 0.91,
+    "top20_overlap": 0.9,
+    "sector_shift_top_fifth_vs_live": 0.04,
+    "top_fifth_vs_scan_shift": 0.2656349206349206,
+    "top_fifth_hhi": 0.1842,
+    "max_sector_share": 0.33,
+    "max_sector": "Financials"
+   },
+   "live": {
+    "mean": 60.90210575031959,
+    "sd": 9.151286745533586,
+    "max": 83.03230152523844,
+    "ge70_count": 82,
+    "max_sector_share": 0.31,
+    "max_sector": "Financials",
+    "share_ge70": 0.1626984126984127,
+    "percentile_of_70": 0.8373015873015873
+   }
+  },
+  "anchor_centre": {
+   "long_trend": {
+    "mean": 0.564281775315872,
+    "points_vs_middle": 0.35712097397706655
+   },
+   "relative_strength": {
+    "mean": 0.500996015936255,
+    "points_vs_middle": 0.0033200531208499307
+   },
+   "momentum_persistence": {
+    "mean": 0.5511783778371023,
+    "points_vs_middle": 0.11372972852689406
+   },
+   "valuation": {
+    "mean": 0.4778646538514701,
+    "points_vs_middle": -0.36892243580883183
+   },
+   "business_quality": {
+    "mean": 0.7209751321145325,
+    "points_vs_middle": 3.682918868575541
+   },
+   "growth_quality": {
+    "mean": 0.49552310482152473,
+    "points_vs_middle": -0.03979462380866908
+   },
+   "free_cash_flow": {
+    "mean": 0.7845884813380988,
+    "points_vs_middle": 2.2134659659629903
+   },
+   "balance_dilution": {
+    "mean": 0.716600338062833,
+    "points_vs_middle": 1.2033352114601832
+   },
+   "financial_resilience": {
+    "mean": 0.46897788978603766,
+    "points_vs_middle": -0.2412830794419293
+   },
+   "downside_drawdown": {
+    "mean": 0.5941158806152411,
+    "points_vs_middle": 0.5228660034180063
+   },
+   "liquidity": {
+    "mean": 0.8847365112776001,
+    "points_vs_middle": 1.7099400501226674
+   },
+   "leverage": {
+    "mean": 0.6231604729579414,
+    "points_vs_middle": 0.547379879813073
+   },
+   "governance": {
+    "mean": 0.7833333333333334,
+    "points_vs_middle": 0.9444444444444448
+   },
+   "material_events": {
+    "mean": 0.5839285714285714,
+    "points_vs_middle": 0.2797619047619045
+   },
+   "insider_ownership": {
+    "mean": 0.19055334907555485,
+    "points_vs_middle": -0.6876592242765447
+   },
+   "capital_allocation": {
+    "mean": 0.873636656421578,
+    "points_vs_middle": 0.8303036809368399
+   }
+  }
+ },
+ "KR_SWING": {
+  "session": "2026-11-24",
+  "n": 300,
+  "ge70": 0,
+  "top_fifth_sector_mix": {
+   "산업재": 0.16666666666666666,
+   "금융": 0.18333333333333332,
+   "경기소비재": 0.06666666666666667,
+   "기술": 0.11666666666666667,
+   "헬스케어": 0.11666666666666667,
+   "필수소비재": 0.15,
+   "지주회사": 0.05,
+   "커뮤니케이션": 0.11666666666666667,
+   "소재": 0.03333333333333333
+  },
+  "scan_sector_mix": {
+   "필수소비재": 0.06,
+   "헬스케어": 0.11666666666666667,
+   "산업재": 0.29,
+   "기술": 0.14,
+   "지주회사": 0.08666666666666667,
+   "경기소비재": 0.07,
+   "금융": 0.09,
+   "소재": 0.08333333333333333,
+   "에너지": 0.006666666666666667,
+   "유틸리티": 0.006666666666666667,
+   "커뮤니케이션": 0.05
+  },
+  "top_fifth_vs_scan_shift": 0.25,
+  "top_fifth_hhi": 0.13277777777777777,
+  "scan_hhi": 0.15095555555555557,
+  "ablation": [
+   {
+    "left_out": "earnings_revenue_quality",
+    "kind": "factor",
+    "rho": 0.965636062622918,
+    "top_fifth_overlap": 0.8666666666666667,
+    "top20_overlap": 0.8,
+    "ge70_count": 0,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.06666666666666667,
+    "mean_score_change": -0.5856554354897988,
+    "max_abs_change": 5.779578823298259
+   },
+   {
+    "left_out": "profitability",
+    "kind": "factor",
+    "rho": 0.9846167179635328,
+    "top_fifth_overlap": 0.8666666666666667,
+    "top20_overlap": 0.9,
+    "ge70_count": 0,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.08333333333333333,
+    "mean_score_change": 0.2491475207255856,
+    "max_abs_change": 4.347841682930433
+   },
+   {
+    "left_out": "balance_sheet",
+    "kind": "factor",
+    "rho": 0.9464842942699363,
+    "top_fifth_overlap": 0.7833333333333333,
+    "top20_overlap": 0.75,
+    "ge70_count": 0,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.13333333333333336,
+    "mean_score_change": -1.3143716198738,
+    "max_abs_change": 6.0317926761512055
+   },
+   {
+    "left_out": "cash_flow_quality",
+    "kind": "factor",
+    "rho": 0.9815597951088344,
+    "top_fifth_overlap": 0.9,
+    "top20_overlap": 0.85,
+    "ge70_count": 0,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.06666666666666668,
+    "mean_score_change": -0.2537776526816017,
+    "max_abs_change": 3.968391168093966
+   },
+   {
+    "left_out": "risk_reward",
+    "kind": "factor",
+    "rho": 0.8978610873454149,
+    "top_fifth_overlap": 0.7333333333333333,
+    "top20_overlap": 0.4,
+    "ge70_count": 7,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.08333333333333334,
+    "mean_score_change": 6.3734668864725155,
+    "max_abs_change": 12.43707908490596
+   },
+   {
+    "left_out": "atr_risk",
+    "kind": "factor",
+    "rho": 0.9418357981755352,
+    "top_fifth_overlap": 0.75,
+    "top20_overlap": 0.55,
+    "ge70_count": 5,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.16666666666666666,
+    "mean_score_change": 4.664598753506934,
+    "max_abs_change": 10.278121784919279
+   },
+   {
+    "left_out": "liquidity",
+    "kind": "factor",
+    "rho": 0.9054909498994432,
+    "top_fifth_overlap": 0.7,
+    "top20_overlap": 0.55,
+    "ge70_count": 0,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.09999999999999999,
+    "mean_score_change": -3.3616973797072727,
+    "max_abs_change": 10.58607773383837
+   },
+   {
+    "left_out": "drawdown_gap",
+    "kind": "factor",
+    "rho": 0.9689480994233268,
+    "top_fifth_overlap": 0.8,
+    "top20_overlap": 0.7,
+    "ge70_count": 1,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.18333333333333332,
+    "mean_score_change": 2.3920448305326674,
+    "max_abs_change": 7.252614987200154
+   },
+   {
+    "left_out": "earnings_calendar",
+    "kind": "factor",
+    "rho": 0.9984119823553593,
+    "top_fifth_overlap": 1.0,
+    "top20_overlap": 0.95,
+    "ge70_count": 0,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.0,
+    "mean_score_change": -6.590551375494732,
+    "max_abs_change": 9.5259343275439
+   },
+   {
+    "left_out": "material_disclosures",
+    "kind": "factor",
+    "rho": 0.9883300925565839,
+    "top_fifth_overlap": 0.95,
+    "top20_overlap": 0.85,
+    "ge70_count": 0,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.04999999999999999,
+    "mean_score_change": -1.0535636766192404,
+    "max_abs_change": 5.66852461511408
+   },
+   {
+    "left_out": "insider_activity",
+    "kind": "factor",
+    "rho": 1.0,
+    "top_fifth_overlap": 1.0,
+    "top20_overlap": 1.0,
+    "ge70_count": 0,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.0,
+    "mean_score_change": 0.0,
+    "max_abs_change": 0.0
+   },
+   {
+    "left_out": "EVENTS",
+    "kind": "domain",
+    "rho": 0.9865278503094479,
+    "top_fifth_overlap": 0.95,
+    "top20_overlap": 0.85,
+    "ge70_count": 0,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.04999999999999999,
+    "mean_score_change": -8.448574897187012,
+    "max_abs_change": 14.170783473902016
+   },
+   {
+    "left_out": "FUNDAMENTAL",
+    "kind": "domain",
+    "rho": 0.7102316212835147,
+    "top_fifth_overlap": 0.6333333333333333,
+    "top20_overlap": 0.5,
+    "ge70_count": 0,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.18333333333333335,
+    "mean_score_change": -2.39362710815736,
+    "max_abs_change": 16.332018482449946
+   },
+   {
+    "left_out": "RISK",
+    "kind": "domain",
+    "rho": 0.7761591979493939,
+    "top_fifth_overlap": 0.48333333333333334,
+    "top20_overlap": 0.1,
+    "ge70_count": 118,
+    "ge70_overlap_of_live": null,
+    "sector_shift_top_fifth": 0.3,
+    "mean_score_change": 18.863199093845804,
+    "max_abs_change": 39.64755578622149
+   }
+  ],
+  "normalisation": {
+   "percentile": {
+    "rho": 0.9199306658962877,
+    "top_fifth_overlap": 0.7666666666666667,
+    "top20_overlap": 0.55,
+    "sector_shift_top_fifth_vs_live": 0.08333333333333334,
+    "top_fifth_vs_scan_shift": 0.26,
+    "top_fifth_hhi": 0.12611111111111112,
+    "max_sector_share": 0.2,
+    "max_sector": "금융",
+    "ge70_count": 2,
+    "mean": 50.03844720953317,
+    "sd": 9.808687874780167,
+    "max": 71.2921437828501,
+    "ge70_overlap_of_live": null,
+    "same_count_as_live_cut": null
+   },
+   "zscore": {
+    "rho": 0.9716890187668751,
+    "top_fifth_overlap": 0.85,
+    "top20_overlap": 0.85,
+    "sector_shift_top_fifth_vs_live": 0.13333333333333333,
+    "top_fifth_vs_scan_shift": 0.31333333333333335,
+    "top_fifth_hhi": 0.1411111111111111,
+    "max_sector_share": 0.25,
+    "max_sector": "금융"
+   },
+   "live": {
+    "mean": 45.58334246656529,
+    "sd": 8.84704952665786,
+    "max": 65.77997942348335,
+    "ge70_count": 0,
+    "max_sector_share": 0.18333333333333332,
+    "max_sector": "금융",
+    "share_ge70": 0.0,
+    "percentile_of_70": 1.0
+   }
+  },
+  "anchor_centre": {
+   "earnings_revenue_quality": {
+    "mean": 0.5216772744634544,
+    "points_vs_middle": 0.16257955847590766
+   },
+   "profitability": {
+    "mean": 0.41247287849823666,
+    "points_vs_middle": -0.4376356075088167
+   },
+   "balance_sheet": {
+    "mean": 0.6040073647596227,
+    "points_vs_middle": 0.7800552356971702
+   },
+   "cash_flow_quality": {
+    "mean": 0.5012336653700635,
+    "points_vs_middle": 0.006168326850317651
+   },
+   "risk_reward": {
+    "mean": 0.12907640724245045,
+    "points_vs_middle": -5.563853891363243
+   },
+   "atr_risk": {
+    "mean": 0.15925340258168438,
+    "points_vs_middle": -4.259332467728945
+   },
+   "liquidity": {
+    "mean": 0.6699528620812445,
+    "points_vs_middle": 2.124410776015556
+   },
+   "drawdown_gap": {
+    "mean": 0.2594929219025236,
+    "points_vs_middle": -2.405070780974764
+   },
+   "earnings_calendar": {
+    "mean": 1.0,
+    "points_vs_middle": 5.0
+   },
+   "material_disclosures": {
+    "mean": 0.574,
+    "points_vs_middle": 0.5549999999999996
+   }
+  }
+ },
+ "KR_LONG_TERM": {
+  "session": "2026-11-24",
+  "n": 300,
+  "ge70": 33,
+  "top_fifth_sector_mix": {
+   "지주회사": 0.11666666666666667,
+   "커뮤니케이션": 0.08333333333333333,
+   "기술": 0.13333333333333333,
+   "산업재": 0.16666666666666666,
+   "금융": 0.2,
+   "헬스케어": 0.11666666666666667,
+   "소재": 0.03333333333333333,
+   "경기소비재": 0.05,
+   "필수소비재": 0.1
+  },
+  "scan_sector_mix": {
+   "필수소비재": 0.06,
+   "헬스케어": 0.11666666666666667,
+   "산업재": 0.29,
+   "기술": 0.14,
+   "지주회사": 0.08666666666666667,
+   "경기소비재": 0.07,
+   "금융": 0.09,
+   "소재": 0.08333333333333333,
+   "에너지": 0.006666666666666667,
+   "유틸리티": 0.006666666666666667,
+   "커뮤니케이션": 0.05
+  },
+  "top_fifth_vs_scan_shift": 0.21333333333333335,
+  "top_fifth_hhi": 0.13333333333333333,
+  "scan_hhi": 0.15095555555555557,
+  "ablation": [
+   {
+    "left_out": "long_trend",
+    "kind": "factor",
+    "rho": 0.9926185846509404,
+    "top_fifth_overlap": 0.9333333333333333,
+    "top20_overlap": 0.9,
+    "ge70_count": 42,
+    "ge70_overlap_of_live": 0.9696969696969697,
+    "sector_shift_top_fifth": 0.04999999999999999,
+    "mean_score_change": 1.0761586075597889,
+    "max_abs_change": 5.231605019298229
+   },
+   {
+    "left_out": "relative_strength",
+    "kind": "factor",
+    "rho": 0.9974741941577129,
+    "top_fifth_overlap": 0.9666666666666667,
+    "top20_overlap": 0.95,
+    "ge70_count": 34,
+    "ge70_overlap_of_live": 0.9696969696969697,
+    "sector_shift_top_fifth": 0.03333333333333333,
+    "mean_score_change": 0.09902129505377588,
+    "max_abs_change": 2.7256729369035355
+   },
+   {
+    "left_out": "momentum_persistence",
+    "kind": "factor",
+    "rho": 0.9989199879998666,
+    "top_fifth_overlap": 0.9833333333333333,
+    "top20_overlap": 0.95,
+    "ge70_count": 36,
+    "ge70_overlap_of_live": 1.0,
+    "sector_shift_top_fifth": 0.016666666666666663,
+    "mean_score_change": 0.24432026780650384,
+    "max_abs_change": 1.6916429561403419
+   },
+   {
+    "left_out": "valuation",
+    "kind": "factor",
+    "rho": 0.909495883287592,
+    "top_fifth_overlap": 0.7,
+    "top20_overlap": 0.55,
+    "ge70_count": 34,
+    "ge70_overlap_of_live": 0.6060606060606061,
+    "sector_shift_top_fifth": 0.21666666666666667,
+    "mean_score_change": -1.0292603787717647,
+    "max_abs_change": 12.914852387576957
+   },
+   {
+    "left_out": "business_quality",
+    "kind": "factor",
+    "rho": 0.9726023622484693,
+    "top_fifth_overlap": 0.8833333333333333,
+    "top20_overlap": 0.65,
+    "ge70_count": 38,
+    "ge70_overlap_of_live": 0.7272727272727273,
+    "sector_shift_top_fifth": 0.06666666666666665,
+    "mean_score_change": 0.7463085052399658,
+    "max_abs_change": 8.750407528195389
+   },
+   {
+    "left_out": "growth_quality",
+    "kind": "factor",
+    "rho": 0.9795011055678395,
+    "top_fifth_overlap": 0.9,
+    "top20_overlap": 0.75,
+    "ge70_count": 40,
+    "ge70_overlap_of_live": 0.9090909090909091,
+    "sector_shift_top_fifth": 0.05,
+    "mean_score_change": 0.5779393788384642,
+    "max_abs_change": 6.99363372576417
+   },
+   {
+    "left_out": "free_cash_flow",
+    "kind": "factor",
+    "rho": 0.9922905810064555,
+    "top_fifth_overlap": 0.8833333333333333,
+    "top20_overlap": 0.9,
+    "ge70_count": 30,
+    "ge70_overlap_of_live": 0.8484848484848485,
+    "sector_shift_top_fifth": 0.04999999999999999,
+    "mean_score_change": 0.05224712474026048,
+    "max_abs_change": 4.949069328823413
+   },
+   {
+    "left_out": "balance_dilution",
+    "kind": "factor",
+    "rho": 0.9905234502605583,
+    "top_fifth_overlap": 0.9333333333333333,
+    "top20_overlap": 0.8,
+    "ge70_count": 28,
+    "ge70_overlap_of_live": 0.7575757575757576,
+    "sector_shift_top_fifth": 0.05000000000000001,
+    "mean_score_change": -0.5403400709369383,
+    "max_abs_change": 4.746403245748905
+   },
+   {
+    "left_out": "financial_resilience",
+    "kind": "factor",
+    "rho": 0.9832127023633594,
+    "top_fifth_overlap": 0.85,
+    "top20_overlap": 0.75,
+    "ge70_count": 34,
+    "ge70_overlap_of_live": 0.8787878787878788,
+    "sector_shift_top_fifth": 0.08333333333333333,
+    "mean_score_change": 0.4470789943386307,
+    "max_abs_change": 6.424975513719353
+   },
+   {
+    "left_out": "downside_drawdown",
+    "kind": "factor",
+    "rho": 0.9958203980044221,
+    "top_fifth_overlap": 0.9333333333333333,
+    "top20_overlap": 0.9,
+    "ge70_count": 56,
+    "ge70_overlap_of_live": 1.0,
+    "sector_shift_top_fifth": 0.06666666666666665,
+    "mean_score_change": 2.3315099922722236,
+    "max_abs_change": 5.397785113279284
+   },
+   {
+    "left_out": "liquidity",
+    "kind": "factor",
+    "rho": 0.9950786119845775,
+    "top_fifth_overlap": 0.9333333333333333,
+    "top20_overlap": 0.95,
+    "ge70_count": 35,
+    "ge70_overlap_of_live": 0.8484848484848485,
+    "sector_shift_top_fifth": 0.033333333333333326,
+    "mean_score_change": -0.6643158533296796,
+    "max_abs_change": 3.8078616379837555
+   },
+   {
+    "left_out": "leverage",
+    "kind": "factor",
+    "rho": 0.9962106245624951,
+    "top_fifth_overlap": 0.9833333333333333,
+    "top20_overlap": 0.95,
+    "ge70_count": 29,
+    "ge70_overlap_of_live": 0.8787878787878788,
+    "sector_shift_top_fifth": 0.0,
+    "mean_score_change": -0.6466916552929128,
+    "max_abs_change": 3.523348829416822
+   },
+   {
+    "left_out": "governance",
+    "kind": "factor",
+    "rho": 0.9993026589184324,
+    "top_fifth_overlap": 0.9833333333333333,
+    "top20_overlap": 1.0,
+    "ge70_count": 31,
+    "ge70_overlap_of_live": 0.9393939393939394,
+    "sector_shift_top_fifth": 0.016666666666666663,
+    "mean_score_change": -0.8258240794722991,
+    "max_abs_change": 2.651292361525252
+   },
+   {
+    "left_out": "material_events",
+    "kind": "factor",
+    "rho": 0.9987804308936765,
+    "top_fifth_overlap": 0.9833333333333333,
+    "top20_overlap": 1.0,
+    "ge70_count": 33,
+    "ge70_overlap_of_live": 0.9393939393939394,
+    "sector_shift_top_fifth": 0.016666666666666663,
+    "mean_score_change": -0.130295675418925,
+    "max_abs_change": 2.331992782074721
+   },
+   {
+    "left_out": "insider_ownership",
+    "kind": "factor",
+    "rho": 0.999334214824609,
+    "top_fifth_overlap": 1.0,
+    "top20_overlap": 0.95,
+    "ge70_count": 31,
+    "ge70_overlap_of_live": 0.9090909090909091,
+    "sector_shift_top_fifth": 0.0,
+    "mean_score_change": -0.9161230130536692,
+    "max_abs_change": 1.9562826223990868
+   },
+   {
+    "left_out": "capital_allocation",
+    "kind": "factor",
+    "rho": 0.9993737708196757,
+    "top_fifth_overlap": 1.0,
+    "top20_overlap": 1.0,
+    "ge70_count": 29,
+    "ge70_overlap_of_live": 0.8787878787878788,
+    "sector_shift_top_fifth": 0.0,
+    "mean_score_change": -0.7537817013376386,
+    "max_abs_change": 1.8656015654331242
+   },
+   {
+    "left_out": "EVENTS",
+    "kind": "domain",
+    "rho": 0.9965292947699418,
+    "top_fifth_overlap": 0.9666666666666667,
+    "top20_overlap": 1.0,
+    "ge70_count": 23,
+    "ge70_overlap_of_live": 0.6666666666666666,
+    "sector_shift_top_fifth": 0.016666666666666663,
+    "mean_score_change": -2.862567469227114,
+    "max_abs_change": 6.97040742144296
+   },
+   {
+    "left_out": "FUNDAMENTAL",
+    "kind": "domain",
+    "rho": 0.6349008322314693,
+    "top_fifth_overlap": 0.5833333333333334,
+    "top20_overlap": 0.25,
+    "ge70_count": 30,
+    "ge70_overlap_of_live": 0.36363636363636365,
+    "sector_shift_top_fifth": 0.25,
+    "mean_score_change": -0.1638626145263955,
+    "max_abs_change": 29.86771810866366
+   },
+   {
+    "left_out": "RISK",
+    "kind": "domain",
+    "rho": 0.9643520483560928,
+    "top_fifth_overlap": 0.8,
+    "top20_overlap": 0.75,
+    "ge70_count": 50,
+    "ge70_overlap_of_live": 1.0,
+    "sector_shift_top_fifth": 0.1333333333333333,
+    "mean_score_change": 1.7467064602226992,
+    "max_abs_change": 11.99826330445137
+   },
+   {
+    "left_out": "TECHNICAL",
+    "kind": "domain",
+    "rho": 0.9797651085012055,
+    "top_fifth_overlap": 0.85,
+    "top20_overlap": 0.8,
+    "ge70_count": 50,
+    "ge70_overlap_of_live": 0.9393939393939394,
+    "sector_shift_top_fifth": 0.08333333333333333,
+    "mean_score_change": 1.527787691219803,
+    "max_abs_change": 8.91398893492206
+   }
+  ],
+  "normalisation": {
+   "percentile": {
+    "rho": 0.9916874631940354,
+    "top_fifth_overlap": 0.9166666666666666,
+    "top20_overlap": 0.75,
+    "sector_shift_top_fifth_vs_live": 0.05,
+    "top_fifth_vs_scan_shift": 0.23,
+    "top_fifth_hhi": 0.14555555555555555,
+    "max_sector_share": 0.23333333333333334,
+    "max_sector": "금융",
+    "ge70_count": 17,
+    "mean": 50.21658543413278,
+    "sd": 14.013102289545369,
+    "max": 79.27563042021808,
+    "ge70_overlap_of_live": 0.5151515151515151,
+    "same_count_as_live_cut": 67.51240907121814
+   },
+   "zscore": {
+    "rho": 0.9946830520339114,
+    "top_fifth_overlap": 0.9333333333333333,
+    "top20_overlap": 0.9,
+    "sector_shift_top_fifth_vs_live": 0.05000000000000001,
+    "top_fifth_vs_scan_shift": 0.18333333333333335,
+    "top_fifth_hhi": 0.14,
+    "max_sector_share": 0.2,
+    "max_sector": "금융"
+   },
+   "live": {
+    "mean": 52.83478120544695,
+    "sd": 14.5908644727464,
+    "max": 83.36127029321396,
+    "ge70_count": 33,
+    "max_sector_share": 0.2,
+    "max_sector": "금융",
+    "share_ge70": 0.11,
+    "percentile_of_70": 0.89
+   }
+  },
+  "anchor_centre": {
+   "long_trend": {
+    "mean": 0.35444463982056834,
+    "points_vs_middle": -0.8086408898857315
+   },
+   "relative_strength": {
+    "mean": 0.5016666666666667,
+    "points_vs_middle": 0.005555555555555684
+   },
+   "momentum_persistence": {
+    "mean": 0.427886920983323,
+    "points_vs_middle": -0.1602512867037267
+   },
+   "valuation": {
+    "mean": 0.5722892419603126,
+    "points_vs_middle": 1.2048206993385435
+   },
+   "business_quality": {
+    "mean": 0.4919427058582549,
+    "points_vs_middle": -0.1342882356957518
+   },
+   "growth_quality": {
+    "mean": 0.44622769302047893,
+    "points_vs_middle": -0.4779760620401873
+   },
+   "free_cash_flow": {
+    "mean": 0.5105238056768063,
+    "points_vs_middle": 0.08185182193071591
+   },
+   "balance_dilution": {
+    "mean": 0.619790060148286,
+    "points_vs_middle": 0.6655003341571443
+   },
+   "financial_resilience": {
+    "mean": 0.47710958147824006,
+    "points_vs_middle": -0.17803658850257728
+   },
+   "downside_drawdown": {
+    "mean": 0.14777184455092884,
+    "points_vs_middle": -1.956823085828173
+   },
+   "liquidity": {
+    "mean": 0.6699528620812445,
+    "points_vs_middle": 0.7553460536944199
+   },
+   "leverage": {
+    "mean": 0.6658491986553027,
+    "points_vs_middle": 0.737107549579123
+   },
+   "governance": {
+    "mean": 0.7599999999999999,
+    "points_vs_middle": 0.8666666666666664
+   },
+   "material_events": {
+    "mean": 0.5656666666666667,
+    "points_vs_middle": 0.21888888888888886
+   },
+   "insider_ownership": {
+    "mean": 0.9675043954186812,
+    "points_vs_middle": 1.0388986564859581
+   },
+   "capital_allocation": {
+    "mean": 0.9766233766233767,
+    "points_vs_middle": 1.0591630591630594
+   }
+  }
+ }
+}

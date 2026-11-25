@@ -1,0 +1,52 @@
+== A. pure noise (mu = 0): how often each look clears its t bar, and how often ANY look does (nested looks, one record)
+
+-- daily shocks: iid  (sims 200000)
+   t >= bar  : {'60': '0.31%', '120': '0.28%', '240': '1.29%', '480': '0.38%', '720': '0.36%', '960': '0.39%'}    [t240 >= 2.24 (table value): 5.50%]
+   three continuation looks, any: 0.84% | sum of the three: 1.13% | any, given the 240 verdict failed: 0.63%
+   verdict 240 or any continuation: 1.91% | any of the six looks: 2.36% | early any: 0.54% | EARLY_AGAINST any: 0.53%
+   with the two IC conditions too: {'60': '0.31%', '120': '0.28%', '240': '1.29%', '480': '0.38%', '720': '0.36%', '960': '0.39%'}
+
+-- daily shocks: ar10  (sims 40000)
+   t >= bar  : {'60': '0.31%', '120': '0.32%', '240': '1.37%', '480': '0.36%', '720': '0.38%', '960': '0.39%'}    [t240 >= 2.24 (table value): 5.87%]
+   three continuation looks, any: 0.84% | sum of the three: 1.13% | any, given the 240 verdict failed: 0.66%
+   verdict 240 or any continuation: 2.02% | any of the six looks: 2.51% | early any: 0.59% | EARLY_AGAINST any: 0.53%
+   with the two IC conditions too: {'60': '0.30%', '120': '0.32%', '240': '1.37%', '480': '0.36%', '720': '0.38%', '960': '0.39%'}
+
+-- daily shocks: ar20  (sims 40000)
+   t >= bar  : {'60': '0.34%', '120': '0.36%', '240': '1.38%', '480': '0.36%', '720': '0.38%', '960': '0.40%'}    [t240 >= 2.24 (table value): 5.89%]
+   three continuation looks, any: 0.84% | sum of the three: 1.13% | any, given the 240 verdict failed: 0.66%
+   verdict 240 or any continuation: 2.02% | any of the six looks: 2.56% | early any: 0.65% | EARLY_AGAINST any: 0.55%
+   with the two IC conditions too: {'60': '0.34%', '120': '0.36%', '240': '1.38%', '480': '0.36%', '720': '0.38%', '960': '0.40%'}
+
+-- daily shocks: t4  (sims 40000)
+   t >= bar  : {'60': '0.31%', '120': '0.24%', '240': '1.31%', '480': '0.39%', '720': '0.34%', '960': '0.38%'}    [t240 >= 2.24 (table value): 5.54%]
+   three continuation looks, any: 0.81% | sum of the three: 1.11% | any, given the 240 verdict failed: 0.61%
+   verdict 240 or any continuation: 1.91% | any of the six looks: 2.33% | early any: 0.51% | EARLY_AGAINST any: 0.44%
+   with the two IC conditions too: {'60': '0.31%', '120': '0.22%', '240': '1.31%', '480': '0.39%', '720': '0.34%', '960': '0.38%'}
+
+-- daily shocks: volcluster  (sims 40000)
+   t >= bar  : {'60': '0.29%', '120': '0.23%', '240': '1.00%', '480': '0.21%', '720': '0.26%', '960': '0.25%'}    [t240 >= 2.24 (table value): 5.17%]
+   three continuation looks, any: 0.55% | sum of the three: 0.71% | any, given the 240 verdict failed: 0.45%
+   verdict 240 or any continuation: 1.45% | any of the six looks: 1.88% | early any: 0.48% | EARLY_AGAINST any: 0.43%
+   with the two IC conditions too: {'60': '0.20%', '120': '0.09%', '240': '1.00%', '480': '0.21%', '720': '0.25%', '960': '0.25%'}
+
+== B. power of the rank side (t bar + mean IC >= 0.02 + both halves > 0): upper bound of the verdict's pass rate
+   columns: verdict at 240 | passed by 480 | by 720 | by 960 (cumulative, as the program reads) | old way: 12 separate samples, plain t >= its own 1.25% bar
+   (plain t of 12 separate samples: noise reaches 2.60 with chance 1.25%; t-table with 11 df says 2.59)
+   KR s=0.100 (BT-1 today)    true IC 0.03:   9.88% |  15.23% |  23.57% |  32.95% | old way   9.29% | early60 1.10%, early120 1.69% | median t: daily 1.39, separate 1.06
+   KR s=0.100 (BT-1 today)    true IC 0.05:  25.47% |  41.60% |  62.90% |  79.32% | old way  23.95% | early60 2.25%, early120 4.76% | median t: daily 2.32, separate 1.77
+   KR s=0.100 (BT-1 today)    true IC 0.10:  80.63% |  97.50% |  99.87% |  99.99% | old way  79.04% | early60 10.14%, early120 29.17% | median t: daily 4.66, separate 3.55
+   KR s=0.138 (power note)    true IC 0.03:   6.18% |   9.04% |  12.93% |  17.55% | old way   5.79% | early60 0.78%, early120 1.04% | median t: daily 1.00, separate 0.76
+   KR s=0.138 (power note)    true IC 0.05:  13.63% |  21.82% |  34.33% |  47.44% | old way  12.73% | early60 1.35%, early120 2.53% | median t: daily 1.68, separate 1.29
+   KR s=0.138 (power note)    true IC 0.10:  51.43% |  77.52% |  94.08% |  98.90% | old way  49.44% | early60 4.86%, early120 12.22% | median t: daily 3.39, separate 2.58
+   US s=0.198 (BT-1 today)    true IC 0.03:   3.92% |   5.34% |   7.24% |   9.40% | old way   3.67% | early60 0.66%, early120 0.74% | median t: daily 0.70, separate 0.53
+   US s=0.198 (BT-1 today)    true IC 0.05:   7.41% |  10.87% |  16.42% |  22.94% | old way   7.04% | early60 0.89%, early120 1.32% | median t: daily 1.15, separate 0.88
+   US s=0.198 (BT-1 today)    true IC 0.10:  26.16% |  42.90% |  64.02% |  80.00% | old way  24.71% | early60 2.15%, early120 4.92% | median t: daily 2.36, separate 1.79
+
+== C. early readings if the 5-session IC is as large as the 20-session one (front-loaded pay-off)
+   KR s=0.100   true IC 0.03: early60 16.15%, early120 45.82%
+   KR s=0.100   true IC 0.05: early60 55.97%, early120 95.25%
+   KR s=0.100   true IC 0.10: early60 99.73%, early120 100.00%
+   US s=0.198   true IC 0.03: early60 3.23%, early120 7.66%
+   US s=0.198   true IC 0.05: early60 10.53%, early120 30.57%
+   US s=0.198   true IC 0.10: early60 57.12%, early120 95.79%

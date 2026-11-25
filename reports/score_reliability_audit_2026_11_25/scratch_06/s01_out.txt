@@ -1,0 +1,46 @@
+nw_t matches a scalar re-derivation: True
+nw_t matches validate.newey_west_t: True
+
+== A. bars of the live readings: program (seed 20261122, 100k) vs my simulation (seed 60606, 60k)
+design                                 nominal  program   mine  noise>=nominal  noise>=program bar
+verdict swing 240 x 20d                   2.24     3.33   3.34           5.72%               1.28%   (table says 1.25%)
+verdict long 756 x 63d                    2.24     3.35   3.37           5.50%               1.28%   (table says 1.25%)
+early 60 x 5d                             2.75     4.29   4.25           2.50%               0.29%   (table says 0.30%)
+early 120 x 5d                            2.75     3.76   3.75           1.63%               0.29%   (table says 0.30%)
+continuation 480 x 20d                    2.64     3.66   3.56           2.16%               0.34%   (table says 0.41%)
+continuation 720 x 20d                    2.64     3.52   3.43           1.97%               0.34%   (table says 0.41%)
+continuation 960 x 20d                    2.64     3.44   3.40           1.78%               0.39%   (table says 0.41%)
+book 240 daily diffs, lag 20 (2.0)        2.00     2.24   2.24           3.54%               2.27%   (table says 2.28%)
+fund period 240 x 20d (3.0)               3.00     4.84   4.95           2.10%               0.16%   (table says 0.13%)
+
+== B. every recorded BT-1 t against the null of its own design (dates every 21 sessions)
+cell                      n    h  lag      t  bar@1.25%  p one-sided  p from normal table  95% two-sided crit
+US SWING 5              152    5    1   1.14       2.31      0.13070              0.12761               2.002
+US SWING 10             152   10    1   0.43       2.29      0.33688              0.33368               2.004
+US SWING 20             152   20    1   0.27       2.29      0.39496              0.39508               1.993
+US LONG_ 63             151   63    3   1.38       2.66      0.11815              0.08435               2.323
+US LONG_ 126            148  126    6   2.14       2.94      0.04620              0.01600               2.541
+US LONG_ 252            142  252   12   1.98       3.37      0.07637              0.02368               2.849
+KR SWING 5               90    5    1   4.02       2.32      0.00007              0.00003               2.012
+KR SWING 10              89   10    1   4.33       2.35      0.00003              0.00001               2.023
+KR SWING 20              89   20    1   5.13       2.35      0.00002              0.00000               2.017
+KR LONG_ 63              87   63    3   2.92       2.81      0.01028              0.00175               2.413
+KR LONG_ 126             84  126    6   2.31       3.17      0.04433              0.01044               2.721
+KR LONG_ 252             78  252   12   1.99       4.04      0.09800              0.02331               3.343
+
+== C. earlier recorded t values (file values) against the null of their own design
+KR replay long 252 (traded 300)      n= 77 h=252 lag=12 t= 8.20  bar@1.25%= 4.01  p(noise>=t)=0.00025  (normal table 0.00000)
+KR replay long 63                    n= 86 h= 63 lag= 3 t= 7.18  bar@1.25%= 2.74  p(noise>=t)=0.00002  (normal table 0.00000)
+KR replay swing 20                   n= 88 h= 20 lag= 1 t= 1.90  bar@1.25%= 2.34  p(noise>=t)=0.03378  (normal table 0.02872)
+KR universe test long 252 (cap)      n= 77 h=252 lag=12 t= 2.46  bar@1.25%= 4.01  p(noise>=t)=0.06202  (normal table 0.00695)
+KR universe test long 63 (cap)       n= 86 h= 63 lag= 3 t= 3.40  bar@1.25%= 2.74  p(noise>=t)=0.00308  (normal table 0.00034)
+KR universe test long 126 (cap)      n= 83 h=126 lag= 6 t= 2.73  bar@1.25%= 3.17  p(noise>=t)=0.02427  (normal table 0.00317)
+KR universe RISK domain 20 (cap)     n= 88 h= 20 lag= 1 t= 4.48  bar@1.25%= 2.34  p(noise>=t)=0.00002  (normal table 0.00000)
+KR long early 252 (2016-18)          n= 23 h=252 lag=12 t= 2.05  bar@1.25%=11.23  p(noise>=t)=0.21566  (normal table 0.02018)
+KR long early 63                     n= 32 h= 63 lag= 3 t= 3.02  bar@1.25%= 3.29  p(noise>=t)=0.01870  (normal table 0.00126)
+KR long early 126                    n= 29 h=126 lag= 6 t= 2.77  bar@1.25%= 4.66  p(noise>=t)=0.05933  (normal table 0.00280)
+KR tech early TECH 20 (neg)          n= 81 h= 20 lag= 1 t= 2.42  bar@1.25%= 2.35  p(noise>=t)=0.01040  (normal table 0.00776)
+US corrected open A long 252         n=142 h=252 lag=12 t= 1.83  bar@1.25%= 3.37  p(noise>=t)=0.09165  (normal table 0.03362)
+US open A long 252 (before fix)      n=142 h=252 lag=12 t= 2.00  bar@1.25%= 3.37  p(noise>=t)=0.07492  (normal table 0.02275)
+US open A long 126 (before fix)      n=148 h=126 lag= 6 t= 2.30  bar@1.25%= 2.94  p(noise>=t)=0.03627  (normal table 0.01072)
+US OOS 2011-12 A long 252            n= 22 h=252 lag=12 t= 0.31  bar@1.25%=11.62  p(noise>=t)=0.44796  (normal table 0.37828)

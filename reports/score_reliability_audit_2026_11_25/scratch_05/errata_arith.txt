@@ -1,0 +1,16 @@
+US SWING     TOP_FIFTH  sharpe 0.73 sortino recorded 0.62 -> usual ~1.06  turnover a year 4.95x  CAGR 8.43
+US SWING     BUY_BAND   sharpe 0.57 sortino recorded 0.53 -> usual ~0.84  turnover a year 6.38x  CAGR 6.71
+US SWING     ALL_SCORED sharpe 0.84 sortino recorded 0.82 -> usual ~1.41  turnover a year 0.13x  CAGR 11.67
+US SWING     INDEX      sharpe 1.05 sortino recorded 1.04 -> usual ~1.76  turnover a year 0.00x  CAGR 13.92
+US LONG_TERM TOP_FIFTH  sharpe 0.98 sortino recorded 0.95 -> usual ~1.61  turnover a year 1.25x  CAGR 13.17
+US LONG_TERM BUY_BAND   sharpe 0.96 sortino recorded 0.92 -> usual ~1.54  turnover a year 1.15x  CAGR 12.77
+US LONG_TERM ALL_SCORED sharpe 0.85 sortino recorded 0.83 -> usual ~1.42  turnover a year 0.13x  CAGR 11.73
+US LONG_TERM INDEX      sharpe 1.05 sortino recorded 1.04 -> usual ~1.76  turnover a year 0.00x  CAGR 13.92
+KR SWING     TOP_FIFTH  sharpe 0.31 sortino recorded 0.35 -> usual ~0.50  turnover a year 4.08x  CAGR 4.03 -> with 245 sessions a year 3.92; vol 18.07 -> 17.82; sharpe -> 0.30
+KR SWING     BUY_BAND   sharpe 0.11 sortino recorded 0.11 -> usual ~0.14  turnover a year 8.72x  CAGR 0.04 -> with 245 sessions a year 0.04; vol 22.49 -> 22.17; sharpe -> 0.11
+KR SWING     ALL_SCORED sharpe 0.38 sortino recorded 0.40 -> usual ~0.62  turnover a year 0.71x  CAGR 6.00 -> with 245 sessions a year 5.83; vol 21.16 -> 20.86; sharpe -> 0.37
+KR SWING     INDEX      sharpe 0.53 sortino recorded 0.68 -> usual ~0.98  turnover a year 0.00x  CAGR 11.27 -> with 245 sessions a year 10.94; vol 26.23 -> 25.86; sharpe -> 0.52
+KR LONG_TERM TOP_FIFTH  sharpe 0.63 sortino recorded 0.75 -> usual ~1.14  turnover a year 1.81x  CAGR 11.11 -> with 245 sessions a year 10.79; vol 19.67 -> 19.40; sharpe -> 0.62
+KR LONG_TERM BUY_BAND   sharpe 0.68 sortino recorded 0.81 -> usual ~1.25  turnover a year 1.99x  CAGR 13.07 -> with 245 sessions a year 12.69; vol 21.43 -> 21.13; sharpe -> 0.67
+KR LONG_TERM ALL_SCORED sharpe 0.38 sortino recorded 0.40 -> usual ~0.63  turnover a year 0.86x  CAGR 6.16 -> with 245 sessions a year 5.99; vol 21.35 -> 21.05; sharpe -> 0.38
+KR LONG_TERM INDEX      sharpe 0.53 sortino recorded 0.68 -> usual ~0.98  turnover a year 0.00x  CAGR 11.27 -> with 245 sessions a year 10.94; vol 26.23 -> 25.86; sharpe -> 0.52

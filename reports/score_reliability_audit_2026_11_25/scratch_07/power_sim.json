@@ -1,0 +1,500 @@
+{
+ "US_SWING": {
+  "sigma_ic": 0.199,
+  "h": 20,
+  "registered_sessions": 240,
+  "by_alternative": {
+   "A/C2/B2-like (rho 0.98)": {
+    "rho": 0.98,
+    "sd_of_difference": 0.03980000000000002,
+    "generous_true_gap": 0.00934987437106621,
+    "power": {
+     "240": {
+      "power": 0.10295,
+      "bar": 2.84,
+      "values": 48
+     },
+     "480": {
+      "power": 0.1824,
+      "bar": 2.56,
+      "values": 96
+     },
+     "960": {
+      "power": 0.34075,
+      "bar": 2.42,
+      "values": 192
+     },
+     "1920": {
+      "power": 0.6102,
+      "bar": 2.34,
+      "values": 384
+     }
+    },
+    "false_pass_at_zero_gap": 0.0235,
+    "gap_found_half_the_time_at_registered_length": 0.02529296875
+   },
+   "equal weights (rho 0.92)": {
+    "rho": 0.92,
+    "sd_of_difference": 0.07959999999999999,
+    "generous_true_gap": 0.017195917942265423,
+    "power": {
+     "240": {
+      "power": 0.095,
+      "bar": 2.84,
+      "values": 48
+     },
+     "480": {
+      "power": 0.1591,
+      "bar": 2.56,
+      "values": 96
+     },
+     "960": {
+      "power": 0.29425,
+      "bar": 2.42,
+      "values": 192
+     },
+     "1920": {
+      "power": 0.5381,
+      "bar": 2.34,
+      "values": 384
+     }
+    },
+    "false_pass_at_zero_gap": 0.02265,
+    "gap_found_half_the_time_at_registered_length": 0.0505859375
+   },
+   "bundles, long (rho 0.84)": {
+    "rho": 0.84,
+    "sd_of_difference": 0.1125713995648984,
+    "generous_true_gap": 0.022329319932501077,
+    "power": {
+     "240": {
+      "power": 0.08265,
+      "bar": 2.84,
+      "values": 48
+     },
+     "480": {
+      "power": 0.144,
+      "bar": 2.56,
+      "values": 96
+     },
+     "960": {
+      "power": 0.25345,
+      "bar": 2.42,
+      "values": 192
+     },
+     "1920": {
+      "power": 0.4685,
+      "bar": 2.34,
+      "values": 384
+     }
+    },
+    "false_pass_at_zero_gap": 0.02405,
+    "gap_found_half_the_time_at_registered_length": 0.07280273437500001
+   },
+   "bundles, US swing (rho 0.50)": {
+    "rho": 0.5,
+    "sd_of_difference": 0.199,
+    "generous_true_gap": 0.028301270189221933,
+    "power": {
+     "240": {
+      "power": 0.0585,
+      "bar": 2.84,
+      "values": 48
+     },
+     "480": {
+      "power": 0.08825,
+      "bar": 2.56,
+      "values": 96
+     },
+     "960": {
+      "power": 0.154,
+      "bar": 2.42,
+      "values": 192
+     },
+     "1920": {
+      "power": 0.27005,
+      "bar": 2.34,
+      "values": 384
+     }
+    },
+    "false_pass_at_zero_gap": 0.023,
+    "gap_found_half_the_time_at_registered_length": 0.12631835937499997
+   }
+  }
+ },
+ "KR_SWING": {
+  "sigma_ic": 0.099,
+  "h": 20,
+  "registered_sessions": 240,
+  "by_alternative": {
+   "A/C2/B2-like (rho 0.98)": {
+    "rho": 0.98,
+    "sd_of_difference": 0.01980000000000001,
+    "generous_true_gap": 0.00934987437106621,
+    "power": {
+     "240": {
+      "power": 0.3015,
+      "bar": 2.84,
+      "values": 48
+     },
+     "480": {
+      "power": 0.5775,
+      "bar": 2.56,
+      "values": 96
+     },
+     "960": {
+      "power": 0.88255,
+      "bar": 2.42,
+      "values": 192
+     },
+     "1920": {
+      "power": 0.99455,
+      "bar": 2.34,
+      "values": 384
+     }
+    },
+    "false_pass_at_zero_gap": 0.0211,
+    "gap_found_half_the_time_at_registered_length": 0.012402343750000001
+   },
+   "equal weights (rho 0.92)": {
+    "rho": 0.92,
+    "sd_of_difference": 0.039599999999999996,
+    "generous_true_gap": 0.017195917942265423,
+    "power": {
+     "240": {
+      "power": 0.2656,
+      "bar": 2.84,
+      "values": 48
+     },
+     "480": {
+      "power": 0.5096,
+      "bar": 2.56,
+      "values": 96
+     },
+     "960": {
+      "power": 0.8265,
+      "bar": 2.42,
+      "values": 192
+     },
+     "1920": {
+      "power": 0.98595,
+      "bar": 2.34,
+      "values": 384
+     }
+    },
+    "false_pass_at_zero_gap": 0.02245,
+    "gap_found_half_the_time_at_registered_length": 0.025097656250000003
+   },
+   "bundles, long (rho 0.84)": {
+    "rho": 0.84,
+    "sd_of_difference": 0.05600285706997458,
+    "generous_true_gap": 0.022329319932501077,
+    "power": {
+     "240": {
+      "power": 0.2305,
+      "bar": 2.84,
+      "values": 48
+     },
+     "480": {
+      "power": 0.44405,
+      "bar": 2.56,
+      "values": 96
+     },
+     "960": {
+      "power": 0.7529,
+      "bar": 2.42,
+      "values": 192
+     },
+     "1920": {
+      "power": 0.96775,
+      "bar": 2.34,
+      "values": 384
+     }
+    },
+    "false_pass_at_zero_gap": 0.02075,
+    "gap_found_half_the_time_at_registered_length": 0.03574218750000001
+   },
+   "bundles, US swing (rho 0.50)": {
+    "rho": 0.5,
+    "sd_of_difference": 0.099,
+    "generous_true_gap": 0.028301270189221933,
+    "power": {
+     "240": {
+      "power": 0.13645,
+      "bar": 2.84,
+      "values": 48
+     },
+     "480": {
+      "power": 0.2478,
+      "bar": 2.56,
+      "values": 96
+     },
+     "960": {
+      "power": 0.47245,
+      "bar": 2.42,
+      "values": 192
+     },
+     "1920": {
+      "power": 0.78845,
+      "bar": 2.34,
+      "values": 384
+     }
+    },
+    "false_pass_at_zero_gap": 0.0215,
+    "gap_found_half_the_time_at_registered_length": 0.0626953125
+   }
+  }
+ },
+ "US_LONG_TERM": {
+  "sigma_ic": 0.142,
+  "h": 63,
+  "registered_sessions": 756,
+  "by_alternative": {
+   "A/C2/B2-like (rho 0.98)": {
+    "rho": 0.98,
+    "sd_of_difference": 0.028400000000000012,
+    "generous_true_gap": 0.00934987437106621,
+    "power": {
+     "756": {
+      "power": 0.1777,
+      "bar": 2.89,
+      "values": 151
+     },
+     "1512": {
+      "power": 0.3306,
+      "bar": 2.62,
+      "values": 302
+     },
+     "3024": {
+      "power": 0.5927,
+      "bar": 2.49,
+      "values": 604
+     },
+     "6048": {
+      "power": 0.87985,
+      "bar": 2.45,
+      "values": 1209
+     }
+    },
+    "false_pass_at_zero_gap": 0.0233,
+    "gap_found_half_the_time_at_registered_length": 0.017919921875
+   },
+   "equal weights (rho 0.92)": {
+    "rho": 0.92,
+    "sd_of_difference": 0.05679999999999998,
+    "generous_true_gap": 0.017195917942265423,
+    "power": {
+     "756": {
+      "power": 0.14975,
+      "bar": 2.89,
+      "values": 151
+     },
+     "1512": {
+      "power": 0.2813,
+      "bar": 2.62,
+      "values": 302
+     },
+     "3024": {
+      "power": 0.5258,
+      "bar": 2.49,
+      "values": 604
+     },
+     "6048": {
+      "power": 0.8228,
+      "bar": 2.45,
+      "values": 1209
+     }
+    },
+    "false_pass_at_zero_gap": 0.02265,
+    "gap_found_half_the_time_at_registered_length": 0.035546875000000006
+   },
+   "bundles, long (rho 0.84)": {
+    "rho": 0.84,
+    "sd_of_difference": 0.08032733034279181,
+    "generous_true_gap": 0.022329319932501077,
+    "power": {
+     "756": {
+      "power": 0.13825,
+      "bar": 2.89,
+      "values": 151
+     },
+     "1512": {
+      "power": 0.23995,
+      "bar": 2.62,
+      "values": 302
+     },
+     "3024": {
+      "power": 0.4552,
+      "bar": 2.49,
+      "values": 604
+     },
+     "6048": {
+      "power": 0.749,
+      "bar": 2.45,
+      "values": 1209
+     }
+    },
+    "false_pass_at_zero_gap": 0.02265,
+    "gap_found_half_the_time_at_registered_length": 0.05029296875
+   },
+   "bundles, US swing (rho 0.50)": {
+    "rho": 0.5,
+    "sd_of_difference": 0.142,
+    "generous_true_gap": 0.028301270189221933,
+    "power": {
+     "756": {
+      "power": 0.0868,
+      "bar": 2.89,
+      "values": 151
+     },
+     "1512": {
+      "power": 0.14495,
+      "bar": 2.62,
+      "values": 302
+     },
+     "3024": {
+      "power": 0.25425,
+      "bar": 2.49,
+      "values": 604
+     },
+     "6048": {
+      "power": 0.4716,
+      "bar": 2.45,
+      "values": 1209
+     }
+    },
+    "false_pass_at_zero_gap": 0.02175,
+    "gap_found_half_the_time_at_registered_length": 0.08847656250000001
+   }
+  }
+ },
+ "KR_LONG_TERM": {
+  "sigma_ic": 0.182,
+  "h": 63,
+  "registered_sessions": 756,
+  "by_alternative": {
+   "A/C2/B2-like (rho 0.98)": {
+    "rho": 0.98,
+    "sd_of_difference": 0.036400000000000016,
+    "generous_true_gap": 0.00934987437106621,
+    "power": {
+     "756": {
+      "power": 0.11765,
+      "bar": 2.89,
+      "values": 151
+     },
+     "1512": {
+      "power": 0.21645,
+      "bar": 2.62,
+      "values": 302
+     },
+     "3024": {
+      "power": 0.3935,
+      "bar": 2.49,
+      "values": 604
+     },
+     "6048": {
+      "power": 0.68255,
+      "bar": 2.45,
+      "values": 1209
+     }
+    },
+    "false_pass_at_zero_gap": 0.02295,
+    "gap_found_half_the_time_at_registered_length": 0.022998046875
+   },
+   "equal weights (rho 0.92)": {
+    "rho": 0.92,
+    "sd_of_difference": 0.07279999999999998,
+    "generous_true_gap": 0.017195917942265423,
+    "power": {
+     "756": {
+      "power": 0.10565,
+      "bar": 2.89,
+      "values": 151
+     },
+     "1512": {
+      "power": 0.18255,
+      "bar": 2.62,
+      "values": 302
+     },
+     "3024": {
+      "power": 0.34975,
+      "bar": 2.49,
+      "values": 604
+     },
+     "6048": {
+      "power": 0.60415,
+      "bar": 2.45,
+      "values": 1209
+     }
+    },
+    "false_pass_at_zero_gap": 0.0216,
+    "gap_found_half_the_time_at_registered_length": 0.045703125000000004
+   },
+   "bundles, long (rho 0.84)": {
+    "rho": 0.84,
+    "sd_of_difference": 0.10295474734076134,
+    "generous_true_gap": 0.022329319932501077,
+    "power": {
+     "756": {
+      "power": 0.09685,
+      "bar": 2.89,
+      "values": 151
+     },
+     "1512": {
+      "power": 0.1616,
+      "bar": 2.62,
+      "values": 302
+     },
+     "3024": {
+      "power": 0.29655,
+      "bar": 2.49,
+      "values": 604
+     },
+     "6048": {
+      "power": 0.53045,
+      "bar": 2.45,
+      "values": 1209
+     }
+    },
+    "false_pass_at_zero_gap": 0.02175,
+    "gap_found_half_the_time_at_registered_length": 0.064599609375
+   },
+   "bundles, US swing (rho 0.50)": {
+    "rho": 0.5,
+    "sd_of_difference": 0.182,
+    "generous_true_gap": 0.028301270189221933,
+    "power": {
+     "756": {
+      "power": 0.06125,
+      "bar": 2.89,
+      "values": 151
+     },
+     "1512": {
+      "power": 0.10215,
+      "bar": 2.62,
+      "values": 302
+     },
+     "3024": {
+      "power": 0.1674,
+      "bar": 2.49,
+      "values": 604
+     },
+     "6048": {
+      "power": 0.30935,
+      "bar": 2.45,
+      "values": 1209
+     }
+    },
+    "false_pass_at_zero_gap": 0.0232,
+    "gap_found_half_the_time_at_registered_length": 0.113671875
+   }
+  }
+ },
+ "family": {
+  "1": 0.022649999999999948,
+  "4": 0.08756808164641428,
+  "7": 0.14817413860909145,
+  "14": 0.2743927018656367
+ }
+}

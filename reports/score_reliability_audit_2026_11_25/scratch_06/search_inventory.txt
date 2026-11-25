@@ -1,0 +1,146 @@
+
+QSF_1_2_VALIDATION.json: tables=53 with_t=53 t>=2.24: 0  t<=-2.24: 0
+   groups: {'tables/SWING|A|5': 1, 'tables/SWING|B|5': 1, 'tables/SWING|C|5': 1, 'tables/SWING|TECHNICAL|5': 1, 'tables/SWING|FUNDAMENTAL|5': 1, 'tables/SWING|RISK|5': 1, 'tables/SWING|mom_12_1|5': 1, 'tables/SWING|A|10': 1}
+   e.g. ['/tables/SWING|A|5', '/tables/SWING|B|5', '/tables/SWING|C|5', '/tables/SWING|TECHNICAL|5', '/tables/SWING|FUNDAMENTAL|5', '/tables/SWING|RISK|5']
+
+QSF_BACKTEST_CURRENT_KR.json: tables=12 with_t=12 t>=2.24: 5  t<=-2.24: 0
+   groups: {'strategies/SWING': 6, 'strategies/LONG_TERM': 6}
+   e.g. ['/strategies/SWING/horizons/5/rank', '/strategies/SWING/horizons/5/rank/checks', '/strategies/SWING/horizons/10/rank', '/strategies/SWING/horizons/10/rank/checks', '/strategies/SWING/horizons/20/rank', '/strategies/SWING/horizons/20/rank/checks']
+
+QSF_BACKTEST_CURRENT_US.json: tables=12 with_t=12 t>=2.24: 0  t<=-2.24: 0
+   groups: {'strategies/SWING': 6, 'strategies/LONG_TERM': 6}
+   e.g. ['/strategies/SWING/horizons/5/rank', '/strategies/SWING/horizons/5/rank/checks', '/strategies/SWING/horizons/10/rank', '/strategies/SWING/horizons/10/rank/checks', '/strategies/SWING/horizons/20/rank', '/strategies/SWING/horizons/20/rank/checks']
+
+QSF_CORRECTED_OOS.json: tables=51 with_t=51 t>=2.24: 0  t<=-2.24: 0
+   groups: {'primary': 1, 'primary/checks': 1, 'tables/SWING|A|5': 1, 'tables/SWING|B|5': 1, 'tables/SWING|C|5': 1, 'tables/SWING|TECHNICAL|5': 1, 'tables/SWING|FUNDAMENTAL|5': 1, 'tables/SWING|RISK|5': 1}
+   e.g. ['/primary', '/primary/checks', '/tables/SWING|A|5', '/tables/SWING|B|5', '/tables/SWING|C|5', '/tables/SWING|TECHNICAL|5']
+
+QSF_CORRECTED_OOS_RUN1.json: tables=51 with_t=51 t>=2.24: 0  t<=-2.24: 0
+   groups: {'primary': 1, 'primary/checks': 1, 'tables/SWING|A|5': 1, 'tables/SWING|B|5': 1, 'tables/SWING|C|5': 1, 'tables/SWING|TECHNICAL|5': 1, 'tables/SWING|FUNDAMENTAL|5': 1, 'tables/SWING|RISK|5': 1}
+   e.g. ['/primary', '/primary/checks', '/tables/SWING|A|5', '/tables/SWING|B|5', '/tables/SWING|C|5', '/tables/SWING|TECHNICAL|5']
+
+QSF_CORRECTED_OPEN.json: tables=53 with_t=53 t>=2.24: 0  t<=-2.24: 0
+   groups: {'tables/SWING|A|5': 1, 'tables/SWING|B|5': 1, 'tables/SWING|C|5': 1, 'tables/SWING|TECHNICAL|5': 1, 'tables/SWING|FUNDAMENTAL|5': 1, 'tables/SWING|RISK|5': 1, 'tables/SWING|mom_12_1|5': 1, 'tables/SWING|A|10': 1}
+   e.g. ['/tables/SWING|A|5', '/tables/SWING|B|5', '/tables/SWING|C|5', '/tables/SWING|TECHNICAL|5', '/tables/SWING|FUNDAMENTAL|5', '/tables/SWING|RISK|5']
+
+QSF_CORRECTED_OPEN_RUN1.json: tables=53 with_t=53 t>=2.24: 0  t<=-2.24: 0
+   groups: {'tables/SWING|A|5': 1, 'tables/SWING|B|5': 1, 'tables/SWING|C|5': 1, 'tables/SWING|TECHNICAL|5': 1, 'tables/SWING|FUNDAMENTAL|5': 1, 'tables/SWING|RISK|5': 1, 'tables/SWING|mom_12_1|5': 1, 'tables/SWING|A|10': 1}
+   e.g. ['/tables/SWING|A|5', '/tables/SWING|B|5', '/tables/SWING|C|5', '/tables/SWING|TECHNICAL|5', '/tables/SWING|FUNDAMENTAL|5', '/tables/SWING|RISK|5']
+
+QSF_CORRECTED_RESEARCH.json: tables=34 with_t=34 t>=2.24: 0  t<=-2.24: 1
+   groups: {'strategies/SWING': 17, 'strategies/LONG_TERM': 17}
+   e.g. ['/strategies/SWING/factors/mom_12_1', '/strategies/SWING/factors/mom_6_1', '/strategies/SWING/factors/rev_1m', '/strategies/SWING/factors/vol_252', '/strategies/SWING/factors/high_52w', '/strategies/SWING/factors/earnings_yield']
+
+QSF_CORRECTED_RESEARCH_RUN1.json: tables=34 with_t=34 t>=2.24: 0  t<=-2.24: 1
+   groups: {'strategies/SWING': 17, 'strategies/LONG_TERM': 17}
+   e.g. ['/strategies/SWING/factors/mom_12_1', '/strategies/SWING/factors/mom_6_1', '/strategies/SWING/factors/rev_1m', '/strategies/SWING/factors/vol_252', '/strategies/SWING/factors/high_52w', '/strategies/SWING/factors/earnings_yield']
+
+QSF_CORRECTED_SUE_TEST.json: tables=3 with_t=3 t>=2.24: 0  t<=-2.24: 0
+   groups: {'': 1, 'checks': 1, 'control_mom_12_1': 1}
+   e.g. ['', '/checks', '/control_mom_12_1']
+
+QSF_CORRECTED_SWING.json: tables=48 with_t=48 t>=2.24: 3  t<=-2.24: 4
+   groups: {'strategies/SWING_10': 24, 'strategies/SWING_20': 24}
+   e.g. ['/strategies/SWING_10/factors/high_52w', '/strategies/SWING_10/factors/ma200_ratio', '/strategies/SWING_10/factors/ma50_200', '/strategies/SWING_10/factors/mom_12_1', '/strategies/SWING_10/factors/mom_6_1', '/strategies/SWING_10/factors/resid_mom_12_1']
+
+QSF_CORRECTED_SWING_RUN1.json: tables=48 with_t=48 t>=2.24: 3  t<=-2.24: 4
+   groups: {'strategies/SWING_10': 24, 'strategies/SWING_20': 24}
+   e.g. ['/strategies/SWING_10/factors/high_52w', '/strategies/SWING_10/factors/ma200_ratio', '/strategies/SWING_10/factors/ma50_200', '/strategies/SWING_10/factors/mom_12_1', '/strategies/SWING_10/factors/mom_6_1', '/strategies/SWING_10/factors/resid_mom_12_1']
+
+QSF_ENSEMBLE.json: tables=46 with_t=46 t>=2.24: 1  t<=-2.24: 2
+   groups: {'strategies/SWING_20': 23, 'strategies/LONG_252': 23}
+   e.g. ['/strategies/SWING_20', '/strategies/SWING_20/checks', '/strategies/SWING_20/earlier_2014_2021', '/strategies/SWING_20/themes/value/early', '/strategies/SWING_20/themes/value/test', '/strategies/SWING_20/themes/profitability/early']
+
+QSF_INSIDER_DEV.json: tables=10 with_t=10 t>=2.24: 0  t<=-2.24: 0
+   groups: {'strategies/SWING_10': 5, 'strategies/SWING_20': 5}
+   e.g. ['/strategies/SWING_10/factors/insider_buyers', '/strategies/SWING_10/factors/insider_opp_buyers', '/strategies/SWING_10/factors/insider_buy_value', '/strategies/SWING_10/factors/insider_cluster', '/strategies/SWING_10/factors/insider_net', '/strategies/SWING_20/factors/insider_buyers']
+
+QSF_KR.json: tables=30 with_t=30 t>=2.24: 24  t<=-2.24: 0
+   groups: {'strategies/SWING_20': 15, 'strategies/LONG_252': 15}
+   e.g. ['/strategies/SWING_20', '/strategies/SWING_20/checks', '/strategies/SWING_20/earlier_2011_2021', '/strategies/SWING_20/themes/momentum/early', '/strategies/SWING_20/themes/momentum/test', '/strategies/SWING_20/themes/reversal/early']
+
+QSF_KR_DIAGNOSTICS.json: tables=8 with_t=8 t>=2.24: 4  t<=-2.24: 0
+   groups: {'strategies/SWING_20': 4, 'strategies/LONG_252': 4}
+   e.g. ['/strategies/SWING_20/early/corrected_rules', '/strategies/SWING_20/early/corrected_rules/checks', '/strategies/SWING_20/test/corrected_rules', '/strategies/SWING_20/test/corrected_rules/checks', '/strategies/LONG_252/early/corrected_rules', '/strategies/LONG_252/early/corrected_rules/checks']
+
+QSF_KR_EVENTS.json: tables=42 with_t=42 t>=2.24: 32  t<=-2.24: 0
+   groups: {'scores/EVENTS': 18, 'scores/FINANCING': 6, 'scores/BUYBACK': 6, 'scores/FUND_ONLY': 6, 'scores/FUND_WITH_EVENTS': 6}
+   e.g. ['/scores/EVENTS/SWING_20', '/scores/EVENTS/SWING_20/checks', '/scores/EVENTS/SWING_20/reference_2018_2021', '/scores/EVENTS/SWING_20/subsets/kospi/early', '/scores/EVENTS/SWING_20/subsets/kospi/test', '/scores/EVENTS/SWING_20/subsets/kosdaq/early']
+
+QSF_KR_FUND.json: tables=88 with_t=88 t>=2.24: 69  t<=-2.24: 5
+   groups: {'scores/FUNDAMENTALS': 38, 'scores/WITH_PRICE': 50}
+   e.g. ['/scores/FUNDAMENTALS/SWING_20', '/scores/FUNDAMENTALS/SWING_20/checks', '/scores/FUNDAMENTALS/SWING_20/reference_2017_2021', '/scores/FUNDAMENTALS/SWING_20/themes/value/early', '/scores/FUNDAMENTALS/SWING_20/themes/value/test', '/scores/FUNDAMENTALS/SWING_20/themes/profitability/early']
+
+QSF_KR_HOLDER.json: tables=42 with_t=42 t>=2.24: 19  t<=-2.24: 0
+   groups: {'scores/HOLDER': 18, 'scores/STAKE': 6, 'scores/CHANGE': 6, 'scores/FUND_ONLY': 6, 'scores/FUND_WITH_HOLDER': 6}
+   e.g. ['/scores/HOLDER/SWING_20', '/scores/HOLDER/SWING_20/checks', '/scores/HOLDER/SWING_20/reference_2018_2021', '/scores/HOLDER/SWING_20/subsets/kospi/early', '/scores/HOLDER/SWING_20/subsets/kospi/test', '/scores/HOLDER/SWING_20/subsets/kosdaq/early']
+
+QSF_KR_LIVE_REPLAY.json: tables=34 with_t=34 t>=2.24: 18  t<=-2.24: 5
+   groups: {'tables/SWING|5': 1, 'tables/SWING|10': 1, 'tables/SWING|20': 1, 'tables/LONG_TERM|63': 1, 'tables/LONG_TERM|126': 1, 'tables/LONG_TERM|252': 1, 'reference_2022/SWING|5': 1, 'reference_2022/SWING|10': 1}
+   e.g. ['/tables/SWING|5', '/tables/SWING|10', '/tables/SWING|20', '/tables/LONG_TERM|63', '/tables/LONG_TERM|126', '/tables/LONG_TERM|252']
+
+QSF_KR_LONG_EARLY.json: tables=17 with_t=17 t>=2.24: 7  t<=-2.24: 2
+   groups: {'primary': 1, 'primary/condition_a': 1, 'others/LONG_TERM|63': 2, 'others/LONG_TERM|126': 2, 'others/SWING|20': 2, 'domains/LONG_TERM|TECHNICAL|252': 1, 'domains/LONG_TERM|FUNDAMENTAL|252': 1, 'domains/LONG_TERM|RISK|252': 1}
+   e.g. ['/primary', '/primary/condition_a/checks', '/others/LONG_TERM|63', '/others/LONG_TERM|63/condition_a/checks', '/others/LONG_TERM|126', '/others/LONG_TERM|126/condition_a/checks']
+
+QSF_KR_RISK_GRADE.json: tables=8 with_t=8 t>=2.24: 4  t<=-2.24: 4
+   groups: {'primary/volatility': 1, 'primary/big_loss': 1, 'primary/drawdown': 1, 'primary/return_ic': 1, 'reference/volatility': 1, 'reference/big_loss': 1, 'reference/drawdown': 1, 'reference/return_ic': 1}
+   e.g. ['/primary/volatility', '/primary/big_loss', '/primary/drawdown', '/primary/return_ic', '/reference/volatility', '/reference/big_loss']
+
+QSF_KR_SUE.json: tables=67 with_t=67 t>=2.24: 37  t<=-2.24: 0
+   groups: {'scores/SUE': 18, 'scores/SUE_RESIDUAL': 6, 'scores/SUE_OP': 6, 'scores/SUE_SALES': 6, 'scores/SUE_FRESH': 6, 'scores/SUE_OLDER': 6, 'scores/EARNINGS_CHANGE': 6, 'scores/FUND_ONLY': 6}
+   e.g. ['/scores/SUE/SWING_20', '/scores/SUE/SWING_20/checks', '/scores/SUE/SWING_20/reference_2018_2021', '/scores/SUE/SWING_20/subsets/kospi/early', '/scores/SUE/SWING_20/subsets/kospi/test', '/scores/SUE/SWING_20/subsets/kosdaq/early']
+
+QSF_KR_TECH_EARLY.json: tables=12 with_t=12 t>=2.24: 3  t<=-2.24: 7
+   groups: {'technical': 1, 'risk': 1, 'composite': 1, 'risk_minus_composite': 1, 'technical_factors/breakout_volume': 1, 'technical_factors/momentum': 1, 'technical_factors/relative_strength': 1, 'technical_factors/trend_structure': 1}
+   e.g. ['/technical', '/risk', '/composite', '/risk_minus_composite', '/technical_factors/breakout_volume', '/technical_factors/momentum']
+
+QSF_KR_UNIVERSE_TEST.json: tables=28 with_t=28 t>=2.24: 10  t<=-2.24: 0
+   groups: {'tables/SWING|5': 1, 'tables/SWING|10': 1, 'tables/SWING|20': 1, 'tables/LONG_TERM|63': 1, 'tables/LONG_TERM|126': 1, 'tables/LONG_TERM|252': 1, 'domains/SWING|TECHNICAL|5': 1, 'domains/SWING|FUNDAMENTAL|5': 1}
+   e.g. ['/tables/SWING|5', '/tables/SWING|10', '/tables/SWING|20', '/tables/LONG_TERM|63', '/tables/LONG_TERM|126', '/tables/LONG_TERM|252']
+
+QSF_NEWS_DEV.json: tables=10 with_t=10 t>=2.24: 1  t<=-2.24: 0
+   groups: {'strategies/SWING_10': 5, 'strategies/SWING_20': 5}
+   e.g. ['/strategies/SWING_10/factors/news_tone_7', '/strategies/SWING_10/factors/news_tone_30', '/strategies/SWING_10/factors/news_neg_share_30', '/strategies/SWING_10/factors/news_abnormal_7', '/strategies/SWING_10/factors/news_count_91', '/strategies/SWING_20/factors/news_tone_7']
+
+QSF_NEWS_TEST.json: tables=14 with_t=14 t>=2.24: 0  t<=-2.24: 0
+   groups: {'strategies/SWING_10': 7, 'strategies/SWING_20': 7}
+   e.g. ['/strategies/SWING_10', '/strategies/SWING_10/checks', '/strategies/SWING_10/each_factor/news_tone_7', '/strategies/SWING_10/each_factor/news_tone_30', '/strategies/SWING_10/each_factor/news_neg_share_30', '/strategies/SWING_10/each_factor/news_abnormal_7']
+
+QSF_OOS_TEST.json: tables=100 with_t=100 t>=2.24: 0  t<=-2.24: 0
+   groups: {'primary': 1, 'primary/checks': 1, 'strict/tables': 49, 'extended_reference/tables': 49}
+   e.g. ['/primary', '/primary/checks', '/strict/tables/SWING|A|5', '/strict/tables/SWING|B|5', '/strict/tables/SWING|C|5', '/strict/tables/SWING|TECHNICAL|5']
+
+QSF_OPEN_VALIDATION.json: tables=212 with_t=212 t>=2.24: 1  t<=-2.24: 3
+   groups: {'tables/SWING|A|5': 1, 'tables/SWING|B|5': 1, 'tables/SWING|C|5': 1, 'tables/SWING|TECHNICAL|5': 1, 'tables/SWING|FUNDAMENTAL|5': 1, 'tables/SWING|RISK|5': 1, 'tables/SWING|mom_12_1|5': 1, 'tables/SWING|A|10': 1}
+   e.g. ['/tables/SWING|A|5', '/tables/SWING|B|5', '/tables/SWING|C|5', '/tables/SWING|TECHNICAL|5', '/tables/SWING|FUNDAMENTAL|5', '/tables/SWING|RISK|5']
+
+QSF_PIT_VALIDATION.json: tables=106 with_t=106 t>=2.24: 0  t<=-2.24: 0
+   groups: {'tables/SWING|A|5': 1, 'tables/SWING|B|5': 1, 'tables/SWING|C|5': 1, 'tables/SWING|TECHNICAL|5': 1, 'tables/SWING|FUNDAMENTAL|5': 1, 'tables/SWING|RISK|5': 1, 'tables/SWING|mom_12_1|5': 1, 'tables/SWING|A|10': 1}
+   e.g. ['/tables/SWING|A|5', '/tables/SWING|B|5', '/tables/SWING|C|5', '/tables/SWING|TECHNICAL|5', '/tables/SWING|FUNDAMENTAL|5', '/tables/SWING|RISK|5']
+
+QSF_RESEARCH_SCORE_DEV.json: tables=34 with_t=34 t>=2.24: 0  t<=-2.24: 2
+   groups: {'strategies/SWING': 17, 'strategies/LONG_TERM': 17}
+   e.g. ['/strategies/SWING/factors/mom_12_1', '/strategies/SWING/factors/mom_6_1', '/strategies/SWING/factors/rev_1m', '/strategies/SWING/factors/vol_252', '/strategies/SWING/factors/high_52w', '/strategies/SWING/factors/earnings_yield']
+
+QSF_SENTIMENT.json: tables=6 with_t=6 t>=2.24: 0  t<=-2.24: 0
+   groups: {'strategies/SWING_20': 3, 'strategies/LONG_252': 3}
+   e.g. ['/strategies/SWING_20', '/strategies/SWING_20/checks', '/strategies/SWING_20/earlier_2014_2021', '/strategies/LONG_252', '/strategies/LONG_252/checks', '/strategies/LONG_252/earlier_2014_2021']
+
+QSF_SHORT_DEV.json: tables=10 with_t=10 t>=2.24: 0  t<=-2.24: 0
+   groups: {'strategies/SWING_10': 5, 'strategies/SWING_20': 5}
+   e.g. ['/strategies/SWING_10/factors/si_dtc', '/strategies/SWING_10/factors/si_ratio', '/strategies/SWING_10/factors/si_chg_3m', '/strategies/SWING_10/factors/sv_ratio_20', '/strategies/SWING_10/factors/sv_abn_5', '/strategies/SWING_20/factors/si_dtc']
+
+QSF_SWING_DEV.json: tables=48 with_t=48 t>=2.24: 3  t<=-2.24: 4
+   groups: {'strategies/SWING_10': 24, 'strategies/SWING_20': 24}
+   e.g. ['/strategies/SWING_10/factors/high_52w', '/strategies/SWING_10/factors/ma200_ratio', '/strategies/SWING_10/factors/ma50_200', '/strategies/SWING_10/factors/mom_12_1', '/strategies/SWING_10/factors/mom_6_1', '/strategies/SWING_10/factors/resid_mom_12_1']
+
+QSF_SWING_TEST.json: tables=10 with_t=10 t>=2.24: 0  t<=-2.24: 0
+   groups: {'strategies/SWING_10': 5, 'strategies/SWING_20': 4, 'live_swing_reference': 1}
+   e.g. ['/strategies/SWING_10', '/strategies/SWING_10/checks', '/strategies/SWING_10/each_factor/vcp', '/strategies/SWING_10/each_factor/rev_sector_1m', '/strategies/SWING_10/control_mom_12_1', '/strategies/SWING_20']
+
+QSF_US_13F.json: tables=38 with_t=38 t>=2.24: 3  t<=-2.24: 0
+   groups: {'scores/BREADTH': 6, 'scores/BREADTH_RESIDUAL': 6, 'scores/BREADTH_REL': 6, 'scores/BREADTH_LEVEL': 6, 'scores/BREADTH_FRESH': 6, 'scores/BREADTH_OLDER': 6, 'partial/SWING_20': 1, 'partial/QUARTER_63': 1}
+   e.g. ['/scores/BREADTH/SWING_20', '/scores/BREADTH/SWING_20/checks', '/scores/BREADTH/QUARTER_63', '/scores/BREADTH/QUARTER_63/checks', '/scores/BREADTH/LONG_252', '/scores/BREADTH/LONG_252/checks']
+
+TOTAL t-values on file: 1472 of which >=2.24: 247

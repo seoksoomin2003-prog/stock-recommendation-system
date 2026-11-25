@@ -1,0 +1,34 @@
+{
+ "US_SWING": {
+  "rho_live_A": 0.9846422866924865,
+  "rho_live_Araw": 0.9834761595121405,
+  "rho_A_Araw": 0.9990067295993167,
+  "top_kept_live_Araw": 0.9049999999999999,
+  "tied_share_before": 0.17143358700924846,
+  "tied_share_after": 0.11819391451713661
+ },
+ "US_LONG_TERM": {
+  "rho_live_A": 0.9717209110980392,
+  "rho_live_Araw": 0.9705666221642457,
+  "rho_A_Araw": 0.9990689198327544,
+  "top_kept_live_Araw": 0.8453535353535352,
+  "tied_share_before": 0.24251461048332054,
+  "tied_share_after": 0.09161634813654396
+ },
+ "KR_SWING": {
+  "rho_live_A": 0.9202677807531195,
+  "rho_live_Araw": 0.9036234280204782,
+  "rho_A_Araw": 0.985398115381855,
+  "top_kept_live_Araw": 0.7483333333333333,
+  "tied_share_before": 0.2762222222222222,
+  "tied_share_after": 0.11733333333333333
+ },
+ "KR_LONG_TERM": {
+  "rho_live_A": 0.9917630640340447,
+  "rho_live_Araw": 0.9917810197891088,
+  "rho_A_Araw": 0.9989050989455439,
+  "top_kept_live_Araw": 0.9016666666666666,
+  "tied_share_before": 0.34716666666666673,
+  "tied_share_after": 0.094
+ }
+}

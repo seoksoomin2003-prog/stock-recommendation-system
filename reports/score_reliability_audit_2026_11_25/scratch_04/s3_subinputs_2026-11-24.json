@@ -1,0 +1,266 @@
+{
+ "US_SWING": {
+  "earnings_revenue_quality": {
+   "usable": 500,
+   "none": {
+    "eps_growth": 45,
+    "ocf_to_ni": 77,
+    "rev_growth": 10
+   }
+  },
+  "profitability": {
+   "usable": 498,
+   "none": {
+    "roe": 29,
+    "op_margin": 118
+   }
+  },
+  "balance_sheet": {
+   "usable": 500,
+   "none": {
+    "debt_equity": 8,
+    "current_ratio": 28
+   }
+  },
+  "cash_flow_quality": {
+   "usable": 446,
+   "none": {
+    "fcf_margin": 37,
+    "ocf_to_ni": 23
+   }
+  },
+  "risk_reward": {
+   "usable": 504,
+   "none": {}
+  },
+  "atr_risk": {
+   "usable": 504,
+   "none": {
+    "hist_vol": 1
+   }
+  },
+  "liquidity": {
+   "usable": 504,
+   "none": {}
+  },
+  "drawdown_gap": {
+   "usable": 504,
+   "none": {}
+  },
+  "earnings_calendar": {
+   "usable": 499,
+   "none": {}
+  },
+  "material_disclosures": {
+   "usable": 504,
+   "none": {}
+  },
+  "insider_activity": {
+   "usable": 504,
+   "none": {}
+  }
+ },
+ "US_LONG_TERM": {
+  "valuation": {
+   "usable": 501,
+   "none": {
+    "pb": 31,
+    "fcf_yield": 38,
+    "pe": 1
+   }
+  },
+  "business_quality": {
+   "usable": 500,
+   "none": {
+    "gross_margin": 313,
+    "roe": 31,
+    "op_margin": 120
+   }
+  },
+  "growth_quality": {
+   "usable": 500,
+   "none": {
+    "eps_cagr3": 90,
+    "rev_cagr3": 12,
+    "rev_growth": 10
+   }
+  },
+  "free_cash_flow": {
+   "usable": 410,
+   "none": {
+    "fcf_margin": 1
+   }
+  },
+  "balance_dilution": {
+   "usable": 501,
+   "none": {
+    "debt_equity": 9,
+    "share_change": 17
+   }
+  },
+  "financial_resilience": {
+   "usable": 500,
+   "none": {
+    "interest_cover": 145,
+    "cash_debt": 14,
+    "current_ratio": 28
+   }
+  },
+  "downside_drawdown": {
+   "usable": 504,
+   "none": {
+    "downside_vol": 1
+   }
+  },
+  "liquidity": {
+   "usable": 504,
+   "none": {}
+  },
+  "leverage": {
+   "usable": 439,
+   "none": {}
+  },
+  "governance": {
+   "usable": 504,
+   "none": {}
+  },
+  "material_events": {
+   "usable": 504,
+   "none": {}
+  },
+  "insider_ownership": {
+   "usable": 501,
+   "none": {
+    "insider_pct": 1
+   }
+  },
+  "capital_allocation": {
+   "usable": 497,
+   "none": {
+    "share_change": 13,
+    "returns_capital": 19
+   }
+  }
+ },
+ "KR_SWING": {
+  "earnings_revenue_quality": {
+   "usable": 297,
+   "none": {
+    "eps_growth": 78,
+    "ocf_to_ni": 75,
+    "rev_growth": 41
+   }
+  },
+  "profitability": {
+   "usable": 300,
+   "none": {
+    "op_margin": 30
+   }
+  },
+  "balance_sheet": {
+   "usable": 300,
+   "none": {}
+  },
+  "cash_flow_quality": {
+   "usable": 269,
+   "none": {
+    "ocf_to_ni": 47,
+    "fcf_margin": 8
+   }
+  },
+  "risk_reward": {
+   "usable": 300,
+   "none": {}
+  },
+  "atr_risk": {
+   "usable": 300,
+   "none": {}
+  },
+  "liquidity": {
+   "usable": 300,
+   "none": {}
+  },
+  "drawdown_gap": {
+   "usable": 300,
+   "none": {}
+  },
+  "earnings_calendar": {
+   "usable": 298,
+   "none": {}
+  },
+  "material_disclosures": {
+   "usable": 300,
+   "none": {}
+  }
+ },
+ "KR_LONG_TERM": {
+  "valuation": {
+   "usable": 299,
+   "none": {
+    "fcf_yield": 11
+   }
+  },
+  "business_quality": {
+   "usable": 300,
+   "none": {
+    "gross_margin": 300,
+    "op_margin": 30
+   }
+  },
+  "growth_quality": {
+   "usable": 265,
+   "none": {
+    "eps_cagr3": 120,
+    "rev_cagr3": 27,
+    "rev_growth": 9
+   }
+  },
+  "free_cash_flow": {
+   "usable": 261,
+   "none": {}
+  },
+  "balance_dilution": {
+   "usable": 300,
+   "none": {
+    "share_change": 300
+   }
+  },
+  "financial_resilience": {
+   "usable": 300,
+   "none": {
+    "interest_cover": 272,
+    "cash_debt": 1
+   }
+  },
+  "downside_drawdown": {
+   "usable": 300,
+   "none": {}
+  },
+  "liquidity": {
+   "usable": 300,
+   "none": {}
+  },
+  "leverage": {
+   "usable": 272,
+   "none": {}
+  },
+  "governance": {
+   "usable": 300,
+   "none": {}
+  },
+  "material_events": {
+   "usable": 300,
+   "none": {}
+  },
+  "insider_ownership": {
+   "usable": 273,
+   "none": {}
+  },
+  "capital_allocation": {
+   "usable": 231,
+   "none": {
+    "share_change": 231
+   }
+  }
+ }
+}

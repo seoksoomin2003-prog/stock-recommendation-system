@@ -1,0 +1,4 @@
+n=240: 1.25% point 3.340 (program 3.33); chance of noise >= 3.33: 1.269%
+n=480: point of chance 0.415%: 3.617 (program 3.66); chance of noise >= program bar: 0.378% +- 0.010%
+n=720: point of chance 0.415%: 3.484 (program 3.52); chance of noise >= program bar: 0.386% +- 0.010%
+n=960: point of chance 0.415%: 3.403 (program 3.44); chance of noise >= program bar: 0.384% +- 0.010%

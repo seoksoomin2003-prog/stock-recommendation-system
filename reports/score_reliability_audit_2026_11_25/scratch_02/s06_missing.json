@@ -1,0 +1,1217 @@
+{
+ "US_SWING": {
+  "session": "2026-11-24",
+  "n": 504,
+  "recorded": {
+   "score_ge70": 35,
+   "ge70_insufficient_data": 0,
+   "ge70_with_missing_factor": 1,
+   "ge70_band_held_back": 0,
+   "ge70_missing_but_band_kept": 1,
+   "ge70_with_partial_factor": 16,
+   "ge70_input_coverage_lt_0.9": 0,
+   "ge70_confidence_HIGH": 35,
+   "ge70_buy_band_shown": 33,
+   "any_missing": 13,
+   "any_partial": 231,
+   "ge70_missing_conservative_gap_sum_x100": 117,
+   "ge70_confidence_MEDIUM": 0,
+   "ge70_confidence_INSUFFICIENT": 0
+  },
+  "ge70_partial_examples": [
+   [
+    "ABBV",
+    73.4,
+    [
+     "profitability"
+    ],
+    0.9375
+   ],
+   [
+    "ADP",
+    74.1,
+    [
+     "profitability",
+     "cash_flow_quality"
+    ],
+    0.975
+   ],
+   [
+    "AJG",
+    71.9,
+    [
+     "profitability"
+    ],
+    0.9875
+   ],
+   [
+    "ALL",
+    73.1,
+    [
+     "earnings_revenue_quality",
+     "profitability"
+    ],
+    0.9743589743589743
+   ],
+   [
+    "BIIB",
+    75.2,
+    [
+     "profitability"
+    ],
+    0.9875
+   ],
+   [
+    "CB",
+    72.5,
+    [
+     "earnings_revenue_quality",
+     "profitability"
+    ],
+    0.9743589743589743
+   ],
+   [
+    "CINF",
+    71.0,
+    [
+     "earnings_revenue_quality",
+     "profitability"
+    ],
+    0.9743589743589743
+   ],
+   [
+    "DLTR",
+    71.7,
+    [
+     "earnings_revenue_quality"
+    ],
+    0.9875
+   ]
+  ],
+  "sub_figures_empty_share(>=5%)": {
+   "earnings_revenue_quality.eps_growth": 0.09,
+   "earnings_revenue_quality.ocf_to_ni": 0.154,
+   "profitability.op_margin": 0.237,
+   "profitability.roe": 0.058,
+   "balance_sheet.current_ratio": 0.063,
+   "cash_flow_quality.fcf_margin": 0.083,
+   "cash_flow_quality.ocf_to_ni": 0.052
+  },
+  "full_data_stocks": 491,
+  "random_removal": {
+   "1": {
+    "p95_rise_mean": 3.9127578551294495,
+    "max_rise": 8.012052731648247,
+    "new_ge70_per_draw": 9.005,
+    "new_ge70_surviving_conservative_per_draw": 4.715,
+    "insufficient_per_draw": 0.0
+   },
+   "2": {
+    "p95_rise_mean": 5.42939334261787,
+    "max_rise": 14.059860277473042,
+    "new_ge70_per_draw": 12.49,
+    "new_ge70_surviving_conservative_per_draw": 4.21,
+    "insufficient_per_draw": 46.21
+   },
+   "3": {
+    "p95_rise_mean": 6.746558257176751,
+    "max_rise": 17.805611890934074,
+    "new_ge70_per_draw": 13.465,
+    "new_ge70_surviving_conservative_per_draw": 3.01,
+    "insufficient_per_draw": 121.475
+   }
+  },
+  "worst_case": {
+   "median_rise": 12.796364995578045,
+   "p95_rise": 16.937825987923112,
+   "max_rise": 20.512266792791365,
+   "newly_ge70": 172,
+   "newly_ge70_band_kept_after_conservative": 76,
+   "ge70_before": 34
+  },
+  "outage": [
+   {
+    "missing": "trend_structure",
+    "mean_change": -0.6055208996974296,
+    "max_rise": 8.012052731648247,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 10,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9748579457613853
+   },
+   {
+    "missing": "relative_strength",
+    "mean_change": 0.3990473170213459,
+    "max_rise": 5.2484442873485335,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 24,
+    "newly_ge70": 3,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9762654612289503
+   },
+   {
+    "missing": "momentum",
+    "mean_change": 0.9558967663405068,
+    "max_rise": 4.048160195895825,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 48,
+    "newly_ge70": 14,
+    "newly_ge70_band_kept": 6,
+    "rho": 0.9918664380957787
+   },
+   {
+    "missing": "breakout_volume",
+    "mean_change": 0.8321767324140792,
+    "max_rise": 5.167938894292014,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 32,
+    "newly_ge70": 2,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9949121012470359
+   },
+   {
+    "missing": "volatility_structure",
+    "mean_change": 0.840240347587173,
+    "max_rise": 4.388488868552997,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 50,
+    "newly_ge70": 17,
+    "newly_ge70_band_kept": 9,
+    "rho": 0.9928670270949769
+   },
+   {
+    "missing": "earnings_revenue_quality",
+    "mean_change": -0.3966560932524336,
+    "max_rise": 2.709869722191229,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 41,
+    "newly_ge70": 8,
+    "newly_ge70_band_kept": 2,
+    "rho": 0.9974875788077885
+   },
+   {
+    "missing": "profitability",
+    "mean_change": -0.44076064864760767,
+    "max_rise": 1.6557487142202802,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 34,
+    "newly_ge70": 3,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9980839785121738
+   },
+   {
+    "missing": "balance_sheet",
+    "mean_change": -0.09222142030098576,
+    "max_rise": 2.6944676000448453,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 42,
+    "newly_ge70": 11,
+    "newly_ge70_band_kept": 5,
+    "rho": 0.9950724793419429
+   },
+   {
+    "missing": "cash_flow_quality",
+    "mean_change": -0.685476434292721,
+    "max_rise": 1.3529326857536645,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 31,
+    "newly_ge70": 1,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9988048689248686
+   },
+   {
+    "missing": "risk_reward",
+    "mean_change": 3.8266096368240636,
+    "max_rise": 6.298246463572426,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 88,
+    "newly_ge70": 54,
+    "newly_ge70_band_kept": 33,
+    "rho": 0.9966064116769852
+   },
+   {
+    "missing": "atr_risk",
+    "mean_change": -0.5923019932701785,
+    "max_rise": 3.6747385781635913,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 27,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9935177647632496
+   },
+   {
+    "missing": "liquidity",
+    "mean_change": -2.382888006804287,
+    "max_rise": 2.054103294958601,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 27,
+    "newly_ge70": 1,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9969575809062883
+   },
+   {
+    "missing": "drawdown_gap",
+    "mean_change": -0.03471252117473791,
+    "max_rise": 3.227119728752413,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 31,
+    "newly_ge70": 2,
+    "newly_ge70_band_kept": 1,
+    "rho": 0.9957687351926514
+   },
+   {
+    "missing": "earnings_calendar",
+    "mean_change": -2.304348003507942,
+    "max_rise": 2.742678859500863,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 25,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9980117982317858
+   },
+   {
+    "missing": "material_disclosures",
+    "mean_change": -0.22364176011068643,
+    "max_rise": 2.121405811065472,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 40,
+    "newly_ge70": 6,
+    "newly_ge70_band_kept": 1,
+    "rho": 0.9998034303881009
+   },
+   {
+    "missing": "insider_activity",
+    "mean_change": 1.0646265576723426,
+    "max_rise": 3.0349140531710077,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 56,
+    "newly_ge70": 22,
+    "newly_ge70_band_kept": 17,
+    "rho": 0.9953203456137807
+   },
+   {
+    "missing": "EVENTS",
+    "mean_change": -1.5771106718688868,
+    "max_rise": 5.475539180858739,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 44,
+    "newly_ge70": 11,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9928015376832765
+   },
+   {
+    "missing": "FUNDAMENTAL",
+    "mean_change": -1.7892816914880656,
+    "max_rise": 4.8093400264619675,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 43,
+    "newly_ge70": 12,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9876178378559213
+   },
+   {
+    "missing": "RISK",
+    "mean_change": 0.9557879457915293,
+    "max_rise": 10.051625469181303,
+    "still_sufficient_share": 0.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9778553535566529
+   },
+   {
+    "missing": "TECHNICAL",
+    "mean_change": 4.477749227899669,
+    "max_rise": 30.88920909603811,
+    "still_sufficient_share": 0.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.5328161764929508
+   }
+  ]
+ },
+ "US_LONG_TERM": {
+  "session": "2026-11-24",
+  "n": 504,
+  "recorded": {
+   "score_ge70": 82,
+   "ge70_insufficient_data": 2,
+   "ge70_with_missing_factor": 11,
+   "ge70_band_held_back": 2,
+   "ge70_missing_but_band_kept": 7,
+   "ge70_with_partial_factor": 66,
+   "ge70_input_coverage_lt_0.9": 22,
+   "ge70_confidence_HIGH": 60,
+   "ge70_buy_band_shown": 78,
+   "any_missing": 55,
+   "any_partial": 413,
+   "ge70_confidence_MEDIUM": 20,
+   "ge70_confidence_LOW": 0,
+   "ge70_confidence_INSUFFICIENT": 2,
+   "ge70_missing_conservative_gap_sum_x100": 4802
+  },
+  "ge70_partial_examples": [
+   [
+    "ACGL",
+    83.0,
+    [
+     "business_quality"
+    ],
+    0.9050632911392406
+   ],
+   [
+    "ACN",
+    74.0,
+    [
+     "business_quality"
+    ],
+    0.9472222222222222
+   ],
+   [
+    "AIZ",
+    72.0,
+    [
+     "business_quality"
+    ],
+    0.9050632911392406
+   ],
+   [
+    "ALL",
+    75.7,
+    [
+     "business_quality",
+     "growth_quality"
+    ],
+    0.8713080168776373
+   ],
+   [
+    "ANET",
+    70.8,
+    [
+     "financial_resilience"
+    ],
+    0.9740740740740741
+   ],
+   [
+    "BEN",
+    70.9,
+    [
+     "business_quality"
+    ],
+    0.9525316455696202
+   ],
+   [
+    "CB",
+    78.8,
+    [
+     "business_quality"
+    ],
+    0.9050632911392406
+   ],
+   [
+    "CINF",
+    74.0,
+    [
+     "business_quality",
+     "growth_quality"
+    ],
+    0.858649789029536
+   ]
+  ],
+  "sub_figures_empty_share(>=5%)": {
+   "valuation.fcf_yield": 0.085,
+   "valuation.pb": 0.062,
+   "business_quality.gross_margin": 0.626,
+   "business_quality.op_margin": 0.24,
+   "business_quality.roe": 0.062,
+   "growth_quality.eps_cagr3": 0.18,
+   "financial_resilience.current_ratio": 0.063,
+   "financial_resilience.interest_cover": 0.324
+  },
+  "full_data_stocks": 449,
+  "random_removal": {
+   "1": {
+    "p95_rise_mean": 3.9131790840114204,
+    "max_rise": 12.73943191494051,
+    "new_ge70_per_draw": 10.875,
+    "new_ge70_surviving_conservative_per_draw": 4.38,
+    "insufficient_per_draw": 0.0
+   },
+   "2": {
+    "p95_rise_mean": 5.865366871248377,
+    "max_rise": 19.128178579323134,
+    "new_ge70_per_draw": 17.005,
+    "new_ge70_surviving_conservative_per_draw": 4.635,
+    "insufficient_per_draw": 20.54
+   },
+   "3": {
+    "p95_rise_mean": 7.481221866477909,
+    "max_rise": 28.303694081146944,
+    "new_ge70_per_draw": 19.77,
+    "new_ge70_surviving_conservative_per_draw": 3.695,
+    "insufficient_per_draw": 61.705
+   }
+  },
+  "worst_case": {
+   "median_rise": 12.6739097454074,
+   "p95_rise": 18.71236009260548,
+   "max_rise": 22.332215266488205,
+   "newly_ge70": 233,
+   "newly_ge70_band_kept_after_conservative": 85,
+   "ge70_before": 71
+  },
+  "outage": [
+   {
+    "missing": "long_trend",
+    "mean_change": 0.29291152635570344,
+    "max_rise": 4.408380262187862,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 72,
+    "newly_ge70": 4,
+    "newly_ge70_band_kept": 3,
+    "rho": 0.981411337363453
+   },
+   {
+    "missing": "relative_strength",
+    "mean_change": 0.3748580898931779,
+    "max_rise": 2.4252911495779017,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 74,
+    "newly_ge70": 6,
+    "newly_ge70_band_kept": 1,
+    "rho": 0.9932964789479266
+   },
+   {
+    "missing": "momentum_persistence",
+    "mean_change": 0.1369227164205036,
+    "max_rise": 1.3384395231842348,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 72,
+    "newly_ge70": 2,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9978900201505991
+   },
+   {
+    "missing": "valuation",
+    "mean_change": 2.6577680537092796,
+    "max_rise": 12.73943191494051,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 135,
+    "newly_ge70": 75,
+    "newly_ge70_band_kept": 29,
+    "rho": 0.8744779403966485
+   },
+   {
+    "missing": "business_quality",
+    "mean_change": -2.2152886985717557,
+    "max_rise": 7.60005570889615,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 43,
+    "newly_ge70": 5,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.911053001378725
+   },
+   {
+    "missing": "growth_quality",
+    "mean_change": 1.1265734767258453,
+    "max_rise": 7.142317037026373,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 94,
+    "newly_ge70": 31,
+    "newly_ge70_band_kept": 9,
+    "rho": 0.9538767366634848
+   },
+   {
+    "missing": "free_cash_flow",
+    "mean_change": -1.3592317457819998,
+    "max_rise": 4.747488621813595,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 49,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9821140895110826
+   },
+   {
+    "missing": "balance_dilution",
+    "mean_change": -0.6470217932442219,
+    "max_rise": 2.858223019307637,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 56,
+    "newly_ge70": 1,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9903495863824371
+   },
+   {
+    "missing": "financial_resilience",
+    "mean_change": 1.1341369613287393,
+    "max_rise": 5.843640136249476,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 78,
+    "newly_ge70": 22,
+    "newly_ge70_band_kept": 11,
+    "rho": 0.9597074186021847
+   },
+   {
+    "missing": "downside_drawdown",
+    "mean_change": 0.1311622896839187,
+    "max_rise": 4.559103416399708,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 73,
+    "newly_ge70": 3,
+    "newly_ge70_band_kept": 2,
+    "rho": 0.9832099109131401
+   },
+   {
+    "missing": "liquidity",
+    "mean_change": -1.3088556110570604,
+    "max_rise": 2.1191301752224945,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 61,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9973948722027787
+   },
+   {
+    "missing": "leverage",
+    "mean_change": -0.07023372850353482,
+    "max_rise": 3.308721646371694,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 69,
+    "newly_ge70": 5,
+    "newly_ge70_band_kept": 3,
+    "rho": 0.9832548520521792
+   },
+   {
+    "missing": "governance",
+    "mean_change": -0.6127869306535781,
+    "max_rise": 1.3274952668727096,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 68,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9996240322409585
+   },
+   {
+    "missing": "material_events",
+    "mean_change": 0.08950976415925456,
+    "max_rise": 2.3271521187561888,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 71,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9994971630077419
+   },
+   {
+    "missing": "insider_ownership",
+    "mean_change": 0.9820903875239119,
+    "max_rise": 2.0119154825931247,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 88,
+    "newly_ge70": 17,
+    "newly_ge70_band_kept": 10,
+    "rho": 0.9974134319652136
+   },
+   {
+    "missing": "capital_allocation",
+    "mean_change": -0.6229895259500915,
+    "max_rise": 1.5637876835678597,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 64,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9989505780040298
+   },
+   {
+    "missing": "EVENTS",
+    "mean_change": -0.1736287490423452,
+    "max_rise": 3.1827420208039854,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 82,
+    "newly_ge70": 11,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9956065065224307
+   },
+   {
+    "missing": "FUNDAMENTAL",
+    "mean_change": -1.062817366269764,
+    "max_rise": 36.39116440049989,
+    "still_sufficient_share": 0.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.6334680241807189
+   },
+   {
+    "missing": "RISK",
+    "mean_change": -0.18110396945035273,
+    "max_rise": 10.790075871633988,
+    "still_sufficient_share": 0.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9163072701240852
+   },
+   {
+    "missing": "TECHNICAL",
+    "mean_change": 0.8713806058113837,
+    "max_rise": 8.53915735675821,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 82,
+    "newly_ge70": 18,
+    "newly_ge70_band_kept": 4,
+    "rho": 0.9476627956305015
+   }
+  ]
+ },
+ "KR_SWING": {
+  "session": "2026-11-24",
+  "n": 300,
+  "recorded": {
+   "score_ge70": 0,
+   "ge70_insufficient_data": 0,
+   "ge70_with_missing_factor": 0,
+   "ge70_band_held_back": 0,
+   "ge70_missing_but_band_kept": 0,
+   "ge70_with_partial_factor": 0,
+   "ge70_input_coverage_lt_0.9": 0,
+   "ge70_confidence_HIGH": 0,
+   "ge70_buy_band_shown": 0,
+   "any_missing": 8,
+   "any_partial": 130,
+   "ge70_confidence_MEDIUM": 0
+  },
+  "ge70_partial_examples": [],
+  "sub_figures_empty_share(>=5%)": {
+   "earnings_revenue_quality.eps_growth": 0.263,
+   "earnings_revenue_quality.ocf_to_ni": 0.253,
+   "earnings_revenue_quality.rev_growth": 0.138,
+   "profitability.op_margin": 0.1,
+   "cash_flow_quality.ocf_to_ni": 0.175
+  },
+  "full_data_stocks": 292,
+  "random_removal": {
+   "1": {
+    "p95_rise_mean": 8.03316995302048,
+    "max_rise": 12.43707908490596,
+    "new_ge70_per_draw": 1.365,
+    "new_ge70_surviving_conservative_per_draw": 0.42,
+    "insufficient_per_draw": 0.0
+   },
+   "2": {
+    "p95_rise_mean": 11.348756309943237,
+    "max_rise": 24.449350799072313,
+    "new_ge70_per_draw": 1.94,
+    "new_ge70_surviving_conservative_per_draw": 0.295,
+    "insufficient_per_draw": 39.16
+   },
+   "3": {
+    "p95_rise_mean": 15.324654754743593,
+    "max_rise": 39.401846329083476,
+    "new_ge70_per_draw": 0.12,
+    "new_ge70_surviving_conservative_per_draw": 0.005,
+    "insufficient_per_draw": 233.735
+   }
+  },
+  "worst_case": {
+   "median_rise": 10.73731806447785,
+   "p95_rise": 15.616453719243562,
+   "max_rise": 19.232380814271814,
+   "newly_ge70": 29,
+   "newly_ge70_band_kept_after_conservative": 6,
+   "ge70_before": 0
+  },
+  "outage": [
+   {
+    "missing": "earnings_revenue_quality",
+    "mean_change": -0.608183881369418,
+    "max_rise": 4.228276023406245,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.96466629681988
+   },
+   {
+    "missing": "profitability",
+    "mean_change": 0.2507323161252242,
+    "max_rise": 2.7524905013483902,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9848043097593763
+   },
+   {
+    "missing": "balance_sheet",
+    "mean_change": -1.3292160885209552,
+    "max_rise": 4.669596742814228,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9463993680150651
+   },
+   {
+    "missing": "cash_flow_quality",
+    "mean_change": -0.26605361749561357,
+    "max_rise": 3.264464263698059,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9810900968943956
+   },
+   {
+    "missing": "risk_reward",
+    "mean_change": 6.492249442935996,
+    "max_rise": 12.43707908490596,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 7,
+    "newly_ge70": 7,
+    "newly_ge70_band_kept": 2,
+    "rho": 0.9034429972435009
+   },
+   {
+    "missing": "atr_risk",
+    "mean_change": 4.634432740389535,
+    "max_rise": 10.278121784919279,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 5,
+    "newly_ge70": 5,
+    "newly_ge70_band_kept": 2,
+    "rho": 0.9414690950594607
+   },
+   {
+    "missing": "liquidity",
+    "mean_change": -3.385789110011941,
+    "max_rise": 8.869685034962387,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9035885581421804
+   },
+   {
+    "missing": "drawdown_gap",
+    "mean_change": 2.3910674112148143,
+    "max_rise": 7.252614987200154,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 1,
+    "newly_ge70": 1,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9682985714306371
+   },
+   {
+    "missing": "earnings_calendar",
+    "mean_change": -6.622926241834979,
+    "max_rise": -4.147881282002004,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9999036020538548
+   },
+   {
+    "missing": "material_disclosures",
+    "mean_change": -1.0309603362066064,
+    "max_rise": 5.66852461511408,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9882982533174148
+   },
+   {
+    "missing": "insider_activity",
+    "mean_change": 0.0,
+    "max_rise": 0.0,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 1.0
+   },
+   {
+    "missing": "EVENTS",
+    "mean_change": -8.458718289266901,
+    "max_rise": 1.6567650933017006,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9879584505572525
+   },
+   {
+    "missing": "FUNDAMENTAL",
+    "mean_change": -2.453029295627943,
+    "max_rise": 13.088928922197894,
+    "still_sufficient_share": 0.08561643835616438,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.7049383436128184
+   },
+   {
+    "missing": "RISK",
+    "mean_change": 18.92128343243269,
+    "max_rise": 39.64755578622149,
+    "still_sufficient_share": 0.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.7732598681556201
+   }
+  ]
+ },
+ "KR_LONG_TERM": {
+  "session": "2026-11-24",
+  "n": 300,
+  "recorded": {
+   "score_ge70": 33,
+   "ge70_insufficient_data": 0,
+   "ge70_with_missing_factor": 13,
+   "ge70_band_held_back": 5,
+   "ge70_missing_but_band_kept": 8,
+   "ge70_with_partial_factor": 33,
+   "ge70_input_coverage_lt_0.9": 33,
+   "ge70_confidence_MEDIUM": 23,
+   "ge70_buy_band_shown": 29,
+   "any_missing": 120,
+   "any_partial": 300,
+   "ge70_confidence_LOW": 10,
+   "ge70_missing_conservative_gap_sum_x100": 2687
+  },
+  "ge70_partial_examples": [
+   [
+    "000660",
+    71.4,
+    [
+     "business_quality",
+     "balance_dilution",
+     "financial_resilience",
+     "capital_allocation"
+    ],
+    0.8824074074074073
+   ],
+   [
+    "000810",
+    75.9,
+    [
+     "business_quality",
+     "balance_dilution",
+     "capital_allocation"
+    ],
+    0.7468354430379747
+   ],
+   [
+    "000990",
+    70.4,
+    [
+     "business_quality",
+     "balance_dilution",
+     "financial_resilience",
+     "capital_allocation"
+    ],
+    0.8824074074074073
+   ],
+   [
+    "001450",
+    74.2,
+    [
+     "business_quality",
+     "balance_dilution",
+     "capital_allocation"
+    ],
+    0.7468354430379747
+   ],
+   [
+    "001800",
+    72.4,
+    [
+     "business_quality",
+     "balance_dilution",
+     "financial_resilience",
+     "capital_allocation"
+    ],
+    0.8824074074074073
+   ],
+   [
+    "003690",
+    77.3,
+    [
+     "business_quality",
+     "balance_dilution",
+     "capital_allocation"
+    ],
+    0.7468354430379747
+   ],
+   [
+    "005830",
+    83.4,
+    [
+     "business_quality",
+     "balance_dilution",
+     "capital_allocation"
+    ],
+    0.7468354430379747
+   ],
+   [
+    "011200",
+    71.7,
+    [
+     "business_quality",
+     "growth_quality",
+     "balance_dilution",
+     "financial_resilience",
+     "capital_allocation"
+    ],
+    0.8527777777777777
+   ]
+  ],
+  "sub_figures_empty_share(>=5%)": {
+   "business_quality.gross_margin": 1.0,
+   "business_quality.op_margin": 0.1,
+   "growth_quality.eps_cagr3": 0.453,
+   "growth_quality.rev_cagr3": 0.102,
+   "balance_dilution.share_change": 1.0,
+   "financial_resilience.interest_cover": 1.0,
+   "capital_allocation.share_change": 1.0
+  },
+  "full_data_stocks": 180,
+  "random_removal": {
+   "1": {
+    "p95_rise_mean": 3.6621987947956227,
+    "max_rise": 12.799647739638942,
+    "new_ge70_per_draw": 3.9,
+    "new_ge70_surviving_conservative_per_draw": 1.715,
+    "insufficient_per_draw": 0.0
+   },
+   "2": {
+    "p95_rise_mean": 5.294536250351438,
+    "max_rise": 18.62114769319193,
+    "new_ge70_per_draw": 5.695,
+    "new_ge70_surviving_conservative_per_draw": 1.485,
+    "insufficient_per_draw": 7.29
+   },
+   "3": {
+    "p95_rise_mean": 6.698605085583664,
+    "max_rise": 22.46704589624892,
+    "new_ge70_per_draw": 6.43,
+    "new_ge70_surviving_conservative_per_draw": 1.035,
+    "insufficient_per_draw": 21.79
+   }
+  },
+  "worst_case": {
+   "median_rise": 13.115650631333482,
+   "p95_rise": 18.514638081906195,
+   "max_rise": 22.870132002875792,
+   "newly_ge70": 61,
+   "newly_ge70_band_kept_after_conservative": 25,
+   "ge70_before": 20
+  },
+  "outage": [
+   {
+    "missing": "long_trend",
+    "mean_change": 0.9923684198794187,
+    "max_rise": 4.4617220285819315,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 25,
+    "newly_ge70": 6,
+    "newly_ge70_band_kept": 3,
+    "rho": 0.9906313980884184
+   },
+   {
+    "missing": "relative_strength",
+    "mean_change": 0.04668469919252425,
+    "max_rise": 2.1978757658013137,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 21,
+    "newly_ge70": 1,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9969505231642951
+   },
+   {
+    "missing": "momentum_persistence",
+    "mean_change": 0.23689575596093407,
+    "max_rise": 1.5544760441714942,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 22,
+    "newly_ge70": 2,
+    "newly_ge70_band_kept": 2,
+    "rho": 0.9987407018735146
+   },
+   {
+    "missing": "valuation",
+    "mean_change": -1.6112732819432876,
+    "max_rise": 12.799647739638942,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 22,
+    "newly_ge70": 9,
+    "newly_ge70_band_kept": 5,
+    "rho": 0.9176414909925203
+   },
+   {
+    "missing": "business_quality",
+    "mean_change": 0.6771578031070099,
+    "max_rise": 8.577242110088491,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 24,
+    "newly_ge70": 10,
+    "newly_ge70_band_kept": 1,
+    "rho": 0.9671430188174531
+   },
+   {
+    "missing": "growth_quality",
+    "mean_change": 1.0464259854633153,
+    "max_rise": 6.99363372576417,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 27,
+    "newly_ge70": 9,
+    "newly_ge70_band_kept": 4,
+    "rho": 0.973618527320802
+   },
+   {
+    "missing": "free_cash_flow",
+    "mean_change": -0.08611767987913327,
+    "max_rise": 3.841503013717059,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 18,
+    "newly_ge70": 2,
+    "newly_ge70_band_kept": 1,
+    "rho": 0.9899791145817256
+   },
+   {
+    "missing": "balance_dilution",
+    "mean_change": -0.34249681003268745,
+    "max_rise": 3.7201856521298993,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 13,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.989958537814953
+   },
+   {
+    "missing": "financial_resilience",
+    "mean_change": 0.857190444134125,
+    "max_rise": 4.880238610497514,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 19,
+    "newly_ge70": 2,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9827360926777575
+   },
+   {
+    "missing": "downside_drawdown",
+    "mean_change": 2.1773892372557566,
+    "max_rise": 4.4617220285819315,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 35,
+    "newly_ge70": 15,
+    "newly_ge70_band_kept": 10,
+    "rho": 0.994561560541992
+   },
+   {
+    "missing": "liquidity",
+    "mean_change": -0.5955317812907754,
+    "max_rise": 3.309061574328794,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 24,
+    "newly_ge70": 6,
+    "newly_ge70_band_kept": 1,
+    "rho": 0.9929812648538534
+   },
+   {
+    "missing": "leverage",
+    "mean_change": -0.5039474888340547,
+    "max_rise": 2.3645210637040748,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 16,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9958146856384456
+   },
+   {
+    "missing": "governance",
+    "mean_change": -0.7310930785852533,
+    "max_rise": 1.853048179594424,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 19,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9988600471207958
+   },
+   {
+    "missing": "material_events",
+    "mean_change": -0.11806625866188136,
+    "max_rise": 2.331992782074721,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 21,
+    "newly_ge70": 1,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9987777400537053
+   },
+   {
+    "missing": "insider_ownership",
+    "mean_change": -1.0091371048175533,
+    "max_rise": 1.515631607731052,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 18,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9998086360690145
+   },
+   {
+    "missing": "capital_allocation",
+    "mean_change": -0.9970083169463412,
+    "max_rise": 0.8179011022190679,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 18,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9999279813162958
+   },
+   {
+    "missing": "EVENTS",
+    "mean_change": -3.1302207431965416,
+    "max_rise": 2.9299738365208725,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 14,
+    "newly_ge70": 1,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.9969464078109406
+   },
+   {
+    "missing": "FUNDAMENTAL",
+    "mean_change": -0.5127931596868893,
+    "max_rise": 25.262026605237722,
+    "still_sufficient_share": 0.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.662065701616305
+   },
+   {
+    "missing": "RISK",
+    "mean_change": 2.3095667828448043,
+    "max_rise": 10.664837838180844,
+    "still_sufficient_share": 0.0,
+    "ge70_after": 0,
+    "newly_ge70": 0,
+    "newly_ge70_band_kept": 0,
+    "rho": 0.957739436402358
+   },
+   {
+    "missing": "TECHNICAL",
+    "mean_change": 1.3657463880507807,
+    "max_rise": 8.529799651029748,
+    "still_sufficient_share": 1.0,
+    "ge70_after": 32,
+    "newly_ge70": 13,
+    "newly_ge70_band_kept": 3,
+    "rho": 0.9760177783264915
+   }
+  ]
+ }
+}

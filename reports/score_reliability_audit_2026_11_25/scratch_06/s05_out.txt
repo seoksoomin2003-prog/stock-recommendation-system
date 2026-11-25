@@ -1,0 +1,89 @@
+== 1. Interval of each rank correlation: IC +- crit x (IC/t).  crit = the 95% two-sided point of noise of the cell's own design (script 1), not 1.96
+US SWING 5     IC +0.0221  t  1.14  se 0.0194  crit 2.00  95%: [-0.017, +0.061]   (with 1.96: [-0.016, +0.060])  date-level sd(IC/t*sqrt(n)) 0.239
+US SWING 10    IC +0.0072  t  0.43  se 0.0168  crit 2.00  95%: [-0.026, +0.041]   (with 1.96: [-0.026, +0.040])  date-level sd(IC/t*sqrt(n)) 0.207
+US SWING 20    IC +0.0043  t  0.27  se 0.0160  crit 1.99  95%: [-0.028, +0.036]   (with 1.96: [-0.027, +0.036])  date-level sd(IC/t*sqrt(n)) 0.198
+US LONG_ 63    IC +0.0158  t  1.38  se 0.0115  crit 2.32  95%: [-0.011, +0.043]   (with 1.96: [-0.007, +0.038])  date-level sd(IC/t*sqrt(n)) 0.141
+US LONG_ 126   IC +0.0308  t  2.14  se 0.0144  crit 2.54  95%: [-0.006, +0.067]   (with 1.96: [+0.003, +0.059])  date-level sd(IC/t*sqrt(n)) 0.175
+US LONG_ 252   IC +0.0334  t  1.98  se 0.0168  crit 2.85  95%: [-0.015, +0.081]   (with 1.96: [+0.000, +0.066])  date-level sd(IC/t*sqrt(n)) 0.201
+KR SWING 5     IC +0.0498  t  4.02  se 0.0124  crit 2.01  95%: [+0.025, +0.075]   (with 1.96: [+0.026, +0.074])  date-level sd(IC/t*sqrt(n)) 0.118
+KR SWING 10    IC +0.0507  t  4.33  se 0.0117  crit 2.02  95%: [+0.027, +0.074]   (with 1.96: [+0.028, +0.074])  date-level sd(IC/t*sqrt(n)) 0.110
+KR SWING 20    IC +0.0544  t  5.13  se 0.0106  crit 2.02  95%: [+0.033, +0.076]   (with 1.96: [+0.034, +0.075])  date-level sd(IC/t*sqrt(n)) 0.100
+KR LONG_ 63    IC +0.0572  t  2.92  se 0.0196  crit 2.41  95%: [+0.010, +0.105]   (with 1.96: [+0.019, +0.096])  date-level sd(IC/t*sqrt(n)) 0.183
+KR LONG_ 126   IC +0.0635  t  2.31  se 0.0275  crit 2.72  95%: [-0.011, +0.138]   (with 1.96: [+0.010, +0.117])  date-level sd(IC/t*sqrt(n)) 0.252
+KR LONG_ 252   IC +0.0445  t  1.99  se 0.0224  crit 3.34  95%: [-0.030, +0.119]   (with 1.96: [+0.001, +0.088])  date-level sd(IC/t*sqrt(n)) 0.198
+
+== 2. Multiple testing on the 12 rank cells of BT-1 (2 markets x 2 scores x 3 horizons; p of script 1's null; one-sided)
+   Holm (controls the chance of ANY false pass; valid under any dependence):
+     KR SWING 20    p 0.00002  Holm threshold 0.00417  -> passes   | Bonferroni-adjusted p 0.0002
+     KR SWING 10    p 0.00003  Holm threshold 0.00455  -> passes   | Bonferroni-adjusted p 0.0004
+     KR SWING 5     p 0.00007  Holm threshold 0.00500  -> passes   | Bonferroni-adjusted p 0.0008
+     KR LONG_ 63    p 0.01028  Holm threshold 0.00556  -> fails   | Bonferroni-adjusted p 0.1234
+     KR LONG_ 126   p 0.04433  Holm threshold 0.00625  -> fails   | Bonferroni-adjusted p 0.5320
+     US LONG_ 126   p 0.04620  Holm threshold 0.00714  -> fails   | Bonferroni-adjusted p 0.5544
+     US LONG_ 252   p 0.07637  Holm threshold 0.00833  -> fails   | Bonferroni-adjusted p 0.9164
+     KR LONG_ 252   p 0.09800  Holm threshold 0.01000  -> fails   | Bonferroni-adjusted p 1.0000
+   Benjamini-Hochberg at 5% and 10% (controls the share of false passes; valid under positive dependence):
+     q 0.05: 4 cells pass -> ['KR SWING 20', 'KR SWING 10', 'KR SWING 5', 'KR LONG_ 63']
+     q 0.10: 6 cells pass -> ['KR SWING 20', 'KR SWING 10', 'KR SWING 5', 'KR LONG_ 63', 'KR LONG_ 126', 'US LONG_ 126']
+   counting all 24 t values of BT-1 (12 rank + 12 account-against-index): Holm passes 3 (['KR SWING 20', 'KR SWING 10', 'KR SWING 5']); BH 5% passes 3; BH 10% passes 4
+   Korean swing 20-session cell, p 0.00002 (simulation floor 1/60001; t distribution with 88 df gives about 8e-7): x 42 (7 domain sets x 2 universes x 3 horizons seen before the Korean swing formula was chosen): 0.00003 .. 0.00070
+   Korean swing 20-session cell, p 0.00002 (simulation floor 1/60001; t distribution with 88 df gives about 8e-7): x 500 (order of all t values on file for the two windows): 0.00040 .. 0.00833
+
+== 3. Accounts: excess over the index per 21-session period, interval = mean +- t(0.975, T-1) x mean/t ; tracking error; years to tell 3% a year
+US SWING TOP_FIFTH  T=152 excess -0.425%/period (t -2.25) 95% [-0.80, -0.05] = [-9.6, -0.6] %/yr | tracking error 8.1%/yr | 3%/yr: 28 yrs (50% power), 57 yrs (80%) | years above index 1/13, worst 2023 -17.2pp | Sharpe 0.73 vs index 1.05
+US SWING BUY_BAND   T=152 excess -0.553%/period (t -2.17) 95% [-1.06, -0.05] = [-12.7, -0.6] %/yr | tracking error 10.9%/yr | 3%/yr: 50 yrs (50% power), 103 yrs (80%) | years above index 2/13, worst 2023 -19.4pp | Sharpe 0.57 vs index 1.05
+US SWING ALL_SCORED T=152 excess -0.157%/period (t -1.07) 95% [-0.45, +0.13] = [-5.3, +1.6] %/yr | tracking error 6.2%/yr | 3%/yr: 17 yrs (50% power), 34 yrs (80%) | years above index 3/13, worst 2024 -11.8pp | Sharpe 0.84 vs index 1.05
+US LONG_ TOP_FIFTH  T=152 excess -0.052%/period (t -0.40) 95% [-0.31, +0.20] = [-3.7, +2.4] %/yr | tracking error 5.5%/yr | 3%/yr: 13 yrs (50% power), 26 yrs (80%) | years above index 4/13, worst 2023 -9.2pp | Sharpe 0.98 vs index 1.05
+US LONG_ BUY_BAND   T=152 excess -0.082%/period (t -0.63) 95% [-0.34, +0.17] = [-4.1, +2.1] %/yr | tracking error 5.5%/yr | 3%/yr: 13 yrs (50% power), 27 yrs (80%) | years above index 5/13, worst 2024 -10.1pp | Sharpe 0.96 vs index 1.05
+US LONG_ ALL_SCORED T=152 excess -0.152%/period (t -1.04) 95% [-0.44, +0.14] = [-5.3, +1.6] %/yr | tracking error 6.2%/yr | 3%/yr: 17 yrs (50% power), 34 yrs (80%) | years above index 4/13, worst 2024 -11.9pp | Sharpe 0.85 vs index 1.05
+KR SWING TOP_FIFTH  T= 89 excess -0.700%/period (t -1.76) 95% [-1.49, +0.09] = [-17.9, +1.1] %/yr | tracking error 13.0%/yr | 3%/yr: 72 yrs (50% power), 147 yrs (80%) | years above index 3/8, worst 2025 -40.0pp | Sharpe 0.31 vs index 0.53
+KR SWING BUY_BAND   T= 89 excess -0.952%/period (t -1.11) 95% [-2.66, +0.76] = [-31.9, +9.1] %/yr | tracking error 28.1%/yr | 3%/yr: 337 yrs (50% power), 689 yrs (80%) | years above index 3/8, worst 2025 -84.7pp | Sharpe 0.11 vs index 0.53
+KR SWING ALL_SCORED T= 89 excess -0.494%/period (t -1.25) 95% [-1.28, +0.29] = [-15.3, +3.5] %/yr | tracking error 12.9%/yr | 3%/yr: 71 yrs (50% power), 145 yrs (80%) | years above index 2/8, worst 2025 -30.5pp | Sharpe 0.38 vs index 0.53
+KR LONG_ TOP_FIFTH  T= 89 excess -0.125%/period (t -0.29) 95% [-0.97, +0.72] = [-11.7, +8.7] %/yr | tracking error 14.0%/yr | 3%/yr: 83 yrs (50% power), 170 yrs (80%) | years above index 5/8, worst 2025 -35.7pp | Sharpe 0.63 vs index 0.53
+KR LONG_ BUY_BAND   T= 89 excess +0.051%/period (t +0.11) 95% [-0.87, +0.97] = [-10.4, +11.6] %/yr | tracking error 15.1%/yr | 3%/yr: 97 yrs (50% power), 199 yrs (80%) | years above index 6/8, worst 2025 -41.8pp | Sharpe 0.68 vs index 0.53
+KR LONG_ ALL_SCORED T= 89 excess -0.479%/period (t -1.22) 95% [-1.26, +0.30] = [-15.1, +3.6] %/yr | tracking error 12.8%/yr | 3%/yr: 70 yrs (50% power), 143 yrs (80%) | years above index 2/8, worst 2025 -29.8pp | Sharpe 0.38 vs index 0.53
+
+== 4. Sign test of the by-year excess (file values; years are not independent of the pooled t, shown as stability only)
+US SWING top fifth: above the index in 1 of 13 calendar years; chance of 1 or fewer with a fair coin 0.002
+US LONG_ top fifth: above the index in 4 of 13 calendar years; chance of 4 or fewer with a fair coin 0.133
+KR SWING top fifth: above the index in 3 of 8 calendar years; chance of 3 or fewer with a fair coin 0.363
+KR LONG_ top fifth: above the index in 5 of 8 calendar years; chance of 5 or fewer with a fair coin 0.855
+
+== 5. Deflated Sharpe (Bailey & Lopez de Prado 2014).  Per-period Sharpe = annual / sqrt(12); T = periods on file.
+   SR0 = sqrt(V) * ((1-g) * Z(1-1/N) + g * Z(1-1/(N e))), g = 0.5772; V = variance of the trials' Sharpe estimates: NOT on file -> assumed 1/(T-1) (independent trials with no skill).
+   DSR = Phi((SR - SR0) * sqrt(T-1) / sqrt(1 - skew*SR + (kurt-1)/4*SR^2)).  Skewness and kurtosis are NOT on file -> shown for normal (0, 3) and for (-0.7, 6) ASSUMED.
+   (a) Sharpe against zero (what the file calls 'sharpe').  N = 1 is the plain probabilistic Sharpe.
+   account                       SR/yr   idx | N=1   N=12  N=50  N=200 | N=50 with skew -0.7, kurt 6
+   US SWING TOP_FIFTH             0.73  1.05 | 0.995 0.816 0.616 0.425 | 0.607
+   US SWING BUY_BAND              0.57  1.05 | 0.978 0.637 0.399 0.229 | 0.405
+   US LONG_ TOP_FIFTH             0.98  1.05 | 1.000 0.963 0.883 0.761 | 0.856
+   US LONG_ BUY_BAND              0.96  1.05 | 1.000 0.956 0.866 0.734 | 0.839
+   KR SWING TOP_FIFTH             0.31  0.53 | 0.796 0.203 0.075 0.027 | 0.081
+   KR SWING BUY_BAND              0.11  0.53 | 0.619 0.087 0.024 0.007 | 0.026
+   KR LONG_ TOP_FIFTH             0.63  0.53 | 0.955 0.520 0.289 0.149 | 0.302
+   KR LONG_ BUY_BAND              0.68  0.53 | 0.966 0.569 0.333 0.179 | 0.344
+   US INDEX itself                1.05       | 1.000 0.978 0.923 0.828 | 0.897
+   KR INDEX itself                0.53       | 0.924 0.412 0.203 0.094 | 0.217
+   (b) The same on the excess over the index (information ratio per period = excess_t / sqrt(T)): the figure that answers 'did the score add anything'.
+   account                       IR/yr | N=1   N=12  N=50  N=200
+   US SWING TOP_FIFTH            -0.63 | 0.013 0.000 0.000 0.000
+   US SWING BUY_BAND             -0.61 | 0.016 0.000 0.000 0.000
+   US SWING ALL_SCORED           -0.30 | 0.143 0.003 0.000 0.000
+   US LONG_ TOP_FIFTH            -0.11 | 0.344 0.019 0.004 0.001
+   US LONG_ BUY_BAND             -0.18 | 0.265 0.011 0.002 0.000
+   US LONG_ ALL_SCORED           -0.29 | 0.150 0.004 0.000 0.000
+   KR SWING TOP_FIFTH            -0.65 | 0.041 0.000 0.000 0.000
+   KR SWING BUY_BAND             -0.41 | 0.136 0.003 0.000 0.000
+   KR SWING ALL_SCORED           -0.46 | 0.107 0.002 0.000 0.000
+   KR LONG_ TOP_FIFTH            -0.11 | 0.386 0.025 0.005 0.001
+   KR LONG_ BUY_BAND              0.04 | 0.543 0.060 0.015 0.004
+   KR LONG_ ALL_SCORED           -0.45 | 0.113 0.002 0.000 0.000
+   expected best excess t among N no-skill accounts (T=152): N=12 1.66, N=50 2.28, N=200 2.77; the best on file is +0.11
+
+== 6. Years of record to establish RANK: z = (IC/s) * sqrt(periods), 12.5 separate 20-session periods a year; one-sided 1.25% (2.24) and power 50% / 80%
+   (asymptotic; the small-sample bars of the first years are higher, see script 2 for those)
+   KR swing, s 0.100: IC 0.03: 4.5 / 8.4 yrs | IC 0.05: 1.6 / 3.0 yrs | IC 0.10: 0.4 / 0.8 yrs
+   KR swing, s 0.138: IC 0.03: 8.5 / 16.1 yrs | IC 0.05: 3.1 / 5.8 yrs | IC 0.10: 0.8 / 1.4 yrs
+   US swing, s 0.198: IC 0.03: 17.5 / 33.1 yrs | IC 0.05: 6.3 / 11.9 yrs | IC 0.10: 1.6 / 3.0 yrs
+   US long 63 sessions, s 0.092 (file-implied 0.141 / sqrt(2.33)): IC 0.03: 11.9 / 22.6 yrs | IC 0.05: 4.3 / 8.1 yrs | IC 0.10: 1.1 / 2.0 yrs
+   KR long 63 sessions, s 0.120 (file-implied 0.183 / sqrt(2.33)): IC 0.03: 20.0 / 37.8 yrs | IC 0.05: 7.2 / 13.6 yrs | IC 0.10: 1.8 / 3.4 yrs

@@ -1,0 +1,122 @@
+====================================================================================================
+US SWING 2026-11-24 n 504 recompute diff 2.84e-14 ge70 35 | equal weight: {'rho': 0.9368122242499741, 'top20_kept': 16, 'ge70': 21}
+  available weight {'nominal': 80, 'median': 80.0, 'min': 45.0, 'p10': 78.0, 'counter_fin': 78.0} | max reachable with observed ceilings 96.8
+  financial {'n': 53, 'mean': 53.648, 'ge70': 6, 'share_ge70': 0.113, 'rest_n': 451, 'rest_mean': 52.758, 'rest_ge70': 29, 'rest_share_ge70': 0.064, 'top_fifth_share_financial': 0.12}
+  drop domain TECHNICAL    w  40  rho 0.538  top20 kept  7  ge70   9  | domain alone vs score rho 0.964
+  drop domain RISK         w  20  rho 0.977  top20 kept 13  ge70  73  | domain alone vs score rho 0.614
+  drop domain FUNDAMENTAL  w  10  rho 0.988  top20 kept 16  ge70  46  | domain alone vs score rho 0.045
+  drop domain EVENTS       w  10  rho 0.993  top20 kept 16  ge70  45  | domain alone vs score rho -0.059
+  drop trend_structure            w  10  rho 0.9754  top20 kept 19  ge70  10  mean shift -0.60  range [0.0, 1.0]
+  drop relative_strength          w  10  rho 0.9768  top20 kept 17  ge70  25  mean shift +0.40  range [0.002, 1.0]
+  drop momentum                   w   5  rho 0.9921  top20 kept 19  ge70  50  mean shift +0.96  range [0.0, 0.985]
+  drop volatility_structure       w   5  rho 0.9930  top20 kept 14  ge70  51  mean shift +0.82  range [0.0, 0.992]
+  drop atr_risk                   w   5  rho 0.9936  top20 kept 17  ge70  28  mean shift -0.58  range [0.0, 0.986]
+  drop breakout_volume            w  10  rho 0.9949  top20 kept 19  ge70  34  mean shift +0.83  range [0.175, 0.896]
+  drop balance_sheet              w   3  rho 0.9952  top20 kept 17  ge70  45  mean shift -0.07  range [0.0, 1.0]
+  drop insider_activity           w   3  rho 0.9954  top20 kept 16  ge70  57  mean shift +1.03  range [0.0, 1.0]
+  drop drawdown_gap               w   4  rho 0.9958  top20 kept 17  ge70  33  mean shift -0.04  range [0.0, 0.964]
+  drop risk_reward                w   6  rho 0.9961  top20 kept 19  ge70  90  mean shift +3.81  range [0.0, 1.0]
+  drop liquidity                  w   5  rho 0.9969  top20 kept 16  ge70  28  mean shift -2.39  range [0.222, 1.0]
+  drop earnings_revenue_quality   w   3  rho 0.9975  top20 kept 18  ge70  42  mean shift -0.38  range [0.0, 1.0]
+  drop earnings_calendar          w   4  rho 0.9979  top20 kept 20  ge70  26  mean shift -2.30  range [0.0, 1.0]
+  drop profitability              w   2  rho 0.9982  top20 kept 18  ge70  35  mean shift -0.43  range [0.0, 1.0]
+  drop cash_flow_quality          w   2  rho 0.9988  top20 kept 18  ge70  32  mean shift -0.67  range [0.0, 1.0]
+  drop material_disclosures       w   3  rho 0.9998  top20 kept 20  ge70  41  mean shift -0.23  range [0.1, 0.6]
+====================================================================================================
+US LONG_TERM 2026-11-24 n 504 recompute diff 4.26e-14 ge70 82 | equal weight: {'rho': 0.8709926204208038, 'top20_kept': 10, 'ge70': 67}
+  available weight {'nominal': 90, 'median': 90.0, 'min': 15.0, 'p10': 79.0, 'counter_fin': 79.0} | max reachable with observed ceilings 97.8
+  financial {'n': 53, 'mean': 65.075, 'ge70': 17, 'share_ge70': 0.321, 'rest_n': 451, 'rest_mean': 60.412, 'rest_ge70': 65, 'rest_share_ge70': 0.144, 'top_fifth_share_financial': 0.18}
+  drop domain FUNDAMENTAL  w  50  rho 0.642  top20 kept  6  ge70  85  | domain alone vs score rho 0.814
+  drop domain RISK         w  20  rho 0.903  top20 kept  9  ge70  87  | domain alone vs score rho 0.641
+  drop domain TECHNICAL    w  10  rho 0.946  top20 kept 13  ge70  93  | domain alone vs score rho 0.286
+  drop domain EVENTS       w  10  rho 0.994  top20 kept 18  ge70  95  | domain alone vs score rho 0.213
+  drop valuation                  w  15  rho 0.8675  top20 kept  9  ge70 153  mean shift +2.64  range [0.0, 1.0]
+  drop business_quality           w  15  rho 0.9136  top20 kept 13  ge70  51  mean shift -2.27  range [0.114, 1.0]
+  drop growth_quality             w   8  rho 0.9539  top20 kept 13  ge70 107  mean shift +1.12  range [0.0, 1.0]
+  drop financial_resilience       w   7  rho 0.9559  top20 kept 12  ge70  89  mean shift +1.18  range [0.0, 1.0]
+  drop downside_drawdown          w   5  rho 0.9762  top20 kept 15  ge70  84  mean shift +0.08  range [0.0, 1.0]
+  drop long_trend                 w   5  rho 0.9814  top20 kept 15  ge70  83  mean shift +0.28  range [0.0, 1.0]
+  drop free_cash_flow             w   7  rho 0.9823  top20 kept 16  ge70  58  mean shift -1.24  range [0.0, 1.0]
+  drop leverage                   w   4  rho 0.9841  top20 kept 19  ge70  79  mean shift -0.09  range [0.0, 1.0]
+  drop balance_dilution           w   5  rho 0.9900  top20 kept 19  ge70  66  mean shift -0.65  range [0.0, 1.0]
+  drop relative_strength          w   3  rho 0.9933  top20 kept 17  ge70  85  mean shift +0.39  range [0.002, 1.0]
+  drop liquidity                  w   4  rho 0.9957  top20 kept 17  ge70  69  mean shift -1.34  range [0.222, 1.0]
+  drop insider_ownership          w   2  rho 0.9967  top20 kept 20  ge70 101  mean shift +0.96  range [0.001, 1.0]
+  drop momentum_persistence       w   2  rho 0.9979  top20 kept 18  ge70  84  mean shift +0.14  range [0.083, 0.917]
+  drop capital_allocation         w   2  rho 0.9989  top20 kept 19  ge70  74  mean shift -0.60  range [0.0, 1.0]
+  drop governance                 w   3  rho 0.9992  top20 kept 19  ge70  78  mean shift -0.60  range [0.2, 0.8]
+  drop material_events            w   3  rho 0.9995  top20 kept 18  ge70  83  mean shift +0.10  range [0.0, 0.6]
+====================================================================================================
+KR SWING 2026-11-24 n 300 recompute diff 2.13e-14 ge70 0 | equal weight: {'rho': 0.9546248291647684, 'top20_kept': 8, 'ge70': 0}
+  available weight {'nominal': 40, 'median': 37.0, 'min': 32.0, 'p10': 35.0, 'counter_fin': 35.0} | max reachable with observed ceilings 96.6
+  financial {'n': 28, 'mean': 50.193, 'ge70': 0, 'share_ge70': 0.0, 'rest_n': 272, 'rest_mean': 45.109, 'rest_ge70': 0, 'rest_share_ge70': 0.0, 'top_fifth_share_financial': 0.183}
+  drop domain FUNDAMENTAL  w  10  rho 0.710  top20 kept 10  ge70   0  | domain alone vs score rho 0.733
+  drop domain RISK         w  20  rho 0.776  top20 kept  2  ge70 118  | domain alone vs score rho 0.650
+  drop domain EVENTS       w  10  rho 0.987  top20 kept 17  ge70   0  | domain alone vs score rho 0.394
+  drop risk_reward                w   6  rho 0.8979  top20 kept  8  ge70   7  mean shift +6.37  range [0.0, 1.0]
+  drop liquidity                  w   5  rho 0.9055  top20 kept 11  ge70   0  mean shift -3.36  range [0.0, 1.0]
+  drop atr_risk                   w   5  rho 0.9418  top20 kept 11  ge70   5  mean shift +4.66  range [0.0, 0.862]
+  drop balance_sheet              w   3  rho 0.9465  top20 kept 15  ge70   0  mean shift -1.31  range [0.0, 1.0]
+  drop earnings_revenue_quality   w   3  rho 0.9656  top20 kept 16  ge70   0  mean shift -0.59  range [0.0, 1.0]
+  drop drawdown_gap               w   4  rho 0.9689  top20 kept 14  ge70   1  mean shift +2.39  range [0.0, 0.86]
+  drop cash_flow_quality          w   2  rho 0.9816  top20 kept 17  ge70   0  mean shift -0.25  range [0.0, 1.0]
+  drop profitability              w   2  rho 0.9846  top20 kept 18  ge70   0  mean shift +0.25  range [0.0, 1.0]
+  drop material_disclosures       w   3  rho 0.9883  top20 kept 17  ge70   0  mean shift -1.05  range [0.0, 1.0]
+  drop earnings_calendar          w   4  rho 0.9984  top20 kept 19  ge70   0  mean shift -6.59  range [1.0, 1.0]
+  drop insider_activity           w   3  rho 1.0000  top20 kept 20  ge70   0  mean shift +0.00  range None
+====================================================================================================
+KR LONG_TERM 2026-11-24 n 300 recompute diff 2.84e-14 ge70 33 | equal weight: {'rho': 0.9080354226158068, 'top20_kept': 11, 'ge70': 41}
+  available weight {'nominal': 90, 'median': 90.0, 'min': 64.0, 'p10': 78.9, 'counter_fin': 71.0} | max reachable with observed ceilings 98.2
+  financial {'n': 28, 'mean': 64.9, 'ge70': 7, 'share_ge70': 0.25, 'rest_n': 272, 'rest_mean': 51.593, 'rest_ge70': 26, 'rest_share_ge70': 0.096, 'top_fifth_share_financial': 0.217}
+  drop domain FUNDAMENTAL  w  50  rho 0.635  top20 kept  5  ge70  30  | domain alone vs score rho 0.920
+  drop domain RISK         w  20  rho 0.964  top20 kept 15  ge70  50  | domain alone vs score rho 0.606
+  drop domain TECHNICAL    w  10  rho 0.980  top20 kept 16  ge70  50  | domain alone vs score rho 0.295
+  drop domain EVENTS       w  10  rho 0.997  top20 kept 20  ge70  23  | domain alone vs score rho 0.342
+  drop valuation                  w  15  rho 0.9095  top20 kept 11  ge70  34  mean shift -1.03  range [0.0, 1.0]
+  drop business_quality           w  15  rho 0.9726  top20 kept 13  ge70  38  mean shift +0.75  range [0.0, 1.0]
+  drop growth_quality             w   8  rho 0.9795  top20 kept 15  ge70  40  mean shift +0.58  range [0.0, 1.0]
+  drop financial_resilience       w   7  rho 0.9832  top20 kept 15  ge70  34  mean shift +0.45  range [0.0, 1.0]
+  drop balance_dilution           w   5  rho 0.9905  top20 kept 16  ge70  28  mean shift -0.54  range [0.0, 1.0]
+  drop free_cash_flow             w   7  rho 0.9923  top20 kept 18  ge70  30  mean shift +0.05  range [0.0, 1.0]
+  drop long_trend                 w   5  rho 0.9926  top20 kept 18  ge70  42  mean shift +1.08  range [0.0, 1.0]
+  drop liquidity                  w   4  rho 0.9951  top20 kept 19  ge70  35  mean shift -0.66  range [0.0, 1.0]
+  drop downside_drawdown          w   5  rho 0.9958  top20 kept 18  ge70  56  mean shift +2.33  range [0.0, 0.83]
+  drop leverage                   w   4  rho 0.9962  top20 kept 19  ge70  29  mean shift -0.65  range [0.0, 1.0]
+  drop relative_strength          w   3  rho 0.9975  top20 kept 19  ge70  34  mean shift +0.10  range [0.003, 1.0]
+  drop material_events            w   3  rho 0.9988  top20 kept 20  ge70  33  mean shift -0.13  range [0.0, 1.0]
+  drop momentum_persistence       w   2  rho 0.9989  top20 kept 19  ge70  36  mean shift +0.24  range [0.083, 0.917]
+  drop governance                 w   3  rho 0.9993  top20 kept 20  ge70  31  mean shift -0.83  range [0.2, 0.8]
+  drop insider_ownership          w   2  rho 0.9993  top20 kept 19  ge70  31  mean shift -0.92  range [0.002, 1.0]
+  drop capital_allocation         w   2  rho 0.9994  top20 kept 20  ge70  29  mean shift -0.75  range [0.4, 1.0]
+====================================================================================================
+weighted participation ratio / first eigen share per session (scored factors with sd>0, mean-imputed)
+   US 2026-11-04 QSF-1.1.1 SWING k=16 PRcorr=10.0 PRw=3.21 eig1=0.53 LONG_ k=16 PRcorr=10.4 PRw=4.80 eig1=0.34
+   US 2026-11-05 QSF-1.1.2 SWING k=16 PRcorr=9.6 PRw=2.96 eig1=0.56 LONG_ k=16 PRcorr=10.5 PRw=4.83 eig1=0.34
+   US 2026-11-06 QSF-1.1.3 SWING k=16 PRcorr=9.4 PRw=2.82 eig1=0.57 LONG_ k=16 PRcorr=10.2 PRw=4.78 eig1=0.34
+   US 2026-11-09 QSF-1.1.8 SWING k=16 PRcorr=9.7 PRw=2.86 eig1=0.57 LONG_ k=16 PRcorr=10.3 PRw=4.73 eig1=0.35
+   US 2026-11-10 QSF-1.1.8 SWING k=16 PRcorr=9.6 PRw=2.81 eig1=0.58 LONG_ k=16 PRcorr=10.2 PRw=4.73 eig1=0.35
+   US 2026-11-11 QSF-1.3.1 SWING k=16 PRcorr=9.8 PRw=2.88 eig1=0.57 LONG_ k=16 PRcorr=10.2 PRw=4.72 eig1=0.35
+   US 2026-11-12 QSF-1.3.2 SWING k=16 PRcorr=9.7 PRw=2.76 eig1=0.58 LONG_ k=16 PRcorr=10.1 PRw=4.73 eig1=0.35
+   US 2026-11-13 QSF-1.3.2 SWING k=16 PRcorr=9.6 PRw=2.80 eig1=0.58 LONG_ k=16 PRcorr=10.1 PRw=4.75 eig1=0.35
+   US 2026-11-16 QSF-1.4.1 SWING k=16 PRcorr=9.4 PRw=2.74 eig1=0.59 LONG_ k=16 PRcorr=10.1 PRw=4.77 eig1=0.35
+   US 2026-11-17 QSF-1.4.1 SWING k=16 PRcorr=9.3 PRw=2.74 eig1=0.59 LONG_ k=16 PRcorr=10.1 PRw=4.75 eig1=0.35
+   US 2026-11-18 QSF-1.4.1 SWING k=16 PRcorr=9.4 PRw=2.68 eig1=0.59 LONG_ k=16 PRcorr=10.0 PRw=4.73 eig1=0.35
+   US 2026-11-19 QSF-1.4.1 SWING k=16 PRcorr=9.4 PRw=2.68 eig1=0.59 LONG_ k=16 PRcorr=10.1 PRw=4.72 eig1=0.35
+   US 2026-11-20 QSF-1.4.1 SWING k=16 PRcorr=9.0 PRw=2.59 eig1=0.61 LONG_ k=16 PRcorr=10.0 PRw=4.79 eig1=0.34
+   US 2026-11-23 QSF-1.5.2 SWING k=16 PRcorr=8.8 PRw=2.49 eig1=0.62 LONG_ k=16 PRcorr=10.1 PRw=4.71 eig1=0.35
+   US 2026-11-24 QSF-1.5.2 SWING k=16 PRcorr=8.8 PRw=2.45 eig1=0.63 LONG_ k=16 PRcorr=10.1 PRw=4.75 eig1=0.35
+   KR 2026-11-04 QSF-1.1.1 SWING k=14 PRcorr=10.0 PRw=3.35 eig1=0.51 LONG_ k=15 PRcorr=9.1 PRw=3.47 eig1=0.44
+   KR 2026-11-05 QSF-1.1.2 SWING k=14 PRcorr=9.6 PRw=3.76 eig1=0.47 LONG_ k=15 PRcorr=9.2 PRw=3.46 eig1=0.45
+   KR 2026-11-06 QSF-1.1.3 SWING k=14 PRcorr=9.1 PRw=3.70 eig1=0.48 LONG_ k=15 PRcorr=9.2 PRw=3.43 eig1=0.45
+   KR 2026-11-09 QSF-1.1.8 SWING k=14 PRcorr=9.1 PRw=3.57 eig1=0.49 LONG_ k=16 PRcorr=9.4 PRw=3.51 eig1=0.46
+   KR 2026-11-10 QSF-1.1.8 SWING k=14 PRcorr=9.3 PRw=3.72 eig1=0.48 LONG_ k=16 PRcorr=9.4 PRw=3.55 eig1=0.45
+   KR 2026-11-11 QSF-1.3.1 SWING k=10 PRcorr=7.2 PRw=5.55 eig1=0.27 LONG_ k=16 PRcorr=8.9 PRw=3.43 eig1=0.46
+   KR 2026-11-12 QSF-1.3.2 SWING k=10 PRcorr=7.2 PRw=5.74 eig1=0.26 LONG_ k=16 PRcorr=8.9 PRw=3.40 eig1=0.47
+   KR 2026-11-13 QSF-1.3.2 SWING k=10 PRcorr=7.2 PRw=5.94 eig1=0.27 LONG_ k=16 PRcorr=8.9 PRw=3.40 eig1=0.47
+   KR 2026-11-16 QSF-1.4.1 SWING k=10 PRcorr=7.2 PRw=5.16 eig1=0.30 LONG_ k=16 PRcorr=8.9 PRw=3.42 eig1=0.47
+   KR 2026-11-17 QSF-1.4.1 SWING k=10 PRcorr=7.3 PRw=4.87 eig1=0.32 LONG_ k=16 PRcorr=9.0 PRw=3.45 eig1=0.46
+   KR 2026-11-18 QSF-1.4.1 SWING k=10 PRcorr=7.2 PRw=4.97 eig1=0.31 LONG_ k=16 PRcorr=9.0 PRw=3.42 eig1=0.46
+   KR 2026-11-19 QSF-1.4.1 SWING k=10 PRcorr=7.3 PRw=4.93 eig1=0.30 LONG_ k=16 PRcorr=9.1 PRw=3.43 eig1=0.46
+   KR 2026-11-20 QSF-1.4.1 SWING k=10 PRcorr=7.3 PRw=5.29 eig1=0.30 LONG_ k=16 PRcorr=9.1 PRw=3.42 eig1=0.46
+   KR 2026-11-23 QSF-1.5.2 SWING k=9 PRcorr=6.2 PRw=5.14 eig1=0.30 LONG_ k=16 PRcorr=9.0 PRw=3.38 eig1=0.47
+   KR 2026-11-24 QSF-1.5.2 SWING k=9 PRcorr=6.2 PRw=5.14 eig1=0.30 LONG_ k=16 PRcorr=9.0 PRw=3.39 eig1=0.47

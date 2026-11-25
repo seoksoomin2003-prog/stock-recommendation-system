@@ -1,0 +1,173 @@
+{
+ "US_SWING": {
+  "rho_score_riskdomain": 0.5895881536402463,
+  "rho_score_vol": -0.5368915888403687,
+  "rho_attract_riskdomain": 0.4075140781750945,
+  "rho_score_coverage": 0.04805029585227624,
+  "share_with_missing": 0.10596741311533638,
+  "share70_with_missing": 0.13558887368669975,
+  "mean_gap_missing": -0.048167386879194134,
+  "p90_gap_missing": 1.1624682313847574,
+  "fin_mean": 58.33874848320013,
+  "nonfin_mean": 52.65258536413568,
+  "fin_na": 0.7192982456140351,
+  "held_back": 0.16666666666666666,
+  "by_confidence": {
+   "HIGH": {
+    "n_per_session": 498.25,
+    "mean_score": 53.51583229241673
+   },
+   "MEDIUM": {
+    "n_per_session": 2.5833333333333335,
+    "mean_score": 53.45171809700871
+   }
+  },
+  "financial_minus_other_by_factor_pts": {
+   "relative_strength": 1.2,
+   "atr_risk": 0.94,
+   "breakout_volume": 0.93,
+   "trend_structure": 0.84,
+   "drawdown_gap": 0.72,
+   "volatility_structure": 0.6,
+   "momentum": 0.41,
+   "balance_sheet": 0.38,
+   "cash_flow_quality": 0.38,
+   "earnings_calendar": 0.29,
+   "liquidity": -0.17,
+   "risk_reward": -0.11,
+   "insider_activity": -0.07,
+   "earnings_revenue_quality": -0.07,
+   "profitability": 0.06,
+   "material_disclosures": 0.03
+  }
+ },
+ "US_LONG_TERM": {
+  "rho_score_riskdomain": 0.6369893597081665,
+  "rho_score_vol": -0.14744406244668548,
+  "rho_attract_riskdomain": 0.3023578264418535,
+  "rho_score_coverage": 0.0015365771734163775,
+  "share_with_missing": 0.10132673828069921,
+  "share70_with_missing": 0.11022018918423028,
+  "mean_gap_missing": 0.7522648022032783,
+  "p90_gap_missing": 1.4818762995796193,
+  "fin_mean": 66.0261192052798,
+  "nonfin_mean": 59.98849405319433,
+  "fin_na": 1.4385964912280702,
+  "held_back": 0.4166666666666667,
+  "by_confidence": {
+   "HIGH": {
+    "n_per_session": 473.4166666666667,
+    "mean_score": 60.900834525316924
+   },
+   "MEDIUM": {
+    "n_per_session": 21.0,
+    "mean_score": 61.671398080589434
+   },
+   "LOW": {
+    "n_per_session": 4.0,
+    "mean_score": 57.87443640763772
+   }
+  },
+  "financial_minus_other_by_factor_pts": {
+   "free_cash_flow": 1.56,
+   "financial_resilience": 1.37,
+   "valuation": 1.29,
+   "growth_quality": 0.91,
+   "downside_drawdown": 0.74,
+   "business_quality": 0.64,
+   "balance_dilution": 0.37,
+   "relative_strength": 0.32,
+   "long_trend": 0.3,
+   "insider_ownership": 0.13,
+   "liquidity": -0.12,
+   "capital_allocation": 0.11,
+   "leverage": 0.1,
+   "momentum_persistence": -0.04,
+   "material_events": 0.03,
+   "governance": -0.0
+  }
+ },
+ "KR_SWING": {
+  "rho_score_riskdomain": 0.6559964826226292,
+  "rho_score_vol": -0.38132965921843576,
+  "rho_attract_riskdomain": 0.0782968775840139,
+  "rho_score_coverage": -0.0995006823072995,
+  "share_with_missing": 0.036,
+  "share70_with_missing": null,
+  "mean_gap_missing": -0.8101941888397974,
+  "p90_gap_missing": 2.523916854566095,
+  "fin_mean": 50.2313869007095,
+  "nonfin_mean": 45.07824993960117,
+  "fin_na": 1.0,
+  "held_back": 0.0,
+  "by_confidence": {
+   "MEDIUM": {
+    "n_per_session": 108.6,
+    "mean_score": 44.102909284510766
+   },
+   "LOW": {
+    "n_per_session": 0.6,
+    "mean_score": 25.632575723603576
+   },
+   "HIGH": {
+    "n_per_session": 190.8,
+    "mean_score": 46.436653780535586
+   }
+  },
+  "financial_minus_other_by_factor_pts": {
+   "atr_risk": 2.27,
+   "drawdown_gap": 1.83,
+   "liquidity": -0.87,
+   "risk_reward": 0.61,
+   "material_disclosures": 0.49,
+   "earnings_revenue_quality": 0.43,
+   "balance_sheet": -0.35,
+   "earnings_calendar": 0.2,
+   "profitability": 0.18
+  }
+ },
+ "KR_LONG_TERM": {
+  "rho_score_riskdomain": 0.6069387468478014,
+  "rho_score_vol": -0.4048774764164046,
+  "rho_attract_riskdomain": 0.39603838084865023,
+  "rho_score_coverage": -0.01255805994789574,
+  "share_with_missing": 0.3993333333333333,
+  "share70_with_missing": 0.4186119732172363,
+  "mean_gap_missing": 0.31259777054800575,
+  "p90_gap_missing": 2.1306012429227357,
+  "fin_mean": 65.2815905753302,
+  "nonfin_mean": 52.109870559229286,
+  "fin_na": 2.0,
+  "held_back": 0.9,
+  "by_confidence": {
+   "HIGH": {
+    "n_per_session": 208.9,
+    "mean_score": 52.36335012104594
+   },
+   "MEDIUM": {
+    "n_per_session": 80.5,
+    "mean_score": 55.4529558140327
+   },
+   "LOW": {
+    "n_per_session": 10.6,
+    "mean_score": 55.893937246666006
+   }
+  },
+  "financial_minus_other_by_factor_pts": {
+   "valuation": 6.42,
+   "growth_quality": -4.16,
+   "business_quality": 2.5,
+   "downside_drawdown": 0.84,
+   "financial_resilience": 0.72,
+   "insider_ownership": -0.42,
+   "balance_dilution": -0.36,
+   "relative_strength": 0.35,
+   "liquidity": -0.31,
+   "long_trend": 0.27,
+   "material_events": 0.22,
+   "governance": 0.14,
+   "momentum_persistence": 0.09,
+   "capital_allocation": -0.12
+  }
+ }
+}

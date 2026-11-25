@@ -1,0 +1,24 @@
+US_SWING 2026-11-24: nominal weight 80, varying factors 16, bets if independent (weights x sd only) 5.2, bets measured 2.45, equal-weight correlation bets 8.8
+   domain  : TECHNICAL 40(50%)->84%  RISK 20(25%)->15%  FUNDAMENTAL 10(12%)->1%  EVENTS 10(12%)->-0%
+   trait   : 가격 모멘텀 35(44%)->77%  변동성 14(18%)->23%  수익성·질 4(5%)->2%  성장 3(4%)->0%  사건·심리 10(12%)->-0%  유동성 5(6%)->-1%  재무 건전성 3(4%)->-1%  진입 위치(손익비) 6(8%)->-1%
+US_LONG_TERM 2026-11-24: nominal weight 90, varying factors 16, bets if independent (weights x sd only) 5.7, bets measured 4.75, equal-weight correlation bets 10.1
+   domain  : FUNDAMENTAL 50(56%)->66%  RISK 20(22%)->23%  TECHNICAL 10(11%)->9%  EVENTS 10(11%)->2%
+   trait   : 수익성·질 22(24%)->35%  재무 건전성 16(18%)->27%  가치 15(17%)->14%  가격 모멘텀 10(11%)->9%  성장 8(9%)->8%  변동성 5(6%)->4%  자본 배분 2(2%)->2%  유동성 4(4%)->0%  사건·심리 8(9%)->0%
+KR_SWING 2026-11-24: nominal weight 40, varying factors 9, bets if independent (weights x sd only) 6.4, bets measured 5.14, equal-weight correlation bets 6.2
+   domain  : FUNDAMENTAL 10(25%)->51%  RISK 20(50%)->43%  EVENTS 10(25%)->6%
+   trait   : 수익성·질 4(10%)->24%  변동성 9(22%)->19%  진입 위치(손익비) 6(15%)->17%  성장 3(8%)->15%  재무 건전성 3(8%)->13%  유동성 5(12%)->8%  사건·심리 10(25%)->6%
+KR_LONG_TERM 2026-11-24: nominal weight 90, varying factors 16, bets if independent (weights x sd only) 4.6, bets measured 3.39, equal-weight correlation bets 9.0
+   domain  : FUNDAMENTAL 50(56%)->76%  RISK 20(22%)->17%  TECHNICAL 10(11%)->6%  EVENTS 10(11%)->2%
+   trait   : 수익성·질 22(24%)->37%  가치 15(17%)->24%  재무 건전성 16(18%)->21%  성장 8(9%)->8%  가격 모멘텀 10(11%)->6%  변동성 5(6%)->3%  사건·심리 8(9%)->2%  자본 배분 2(2%)->0%  유동성 4(4%)->-0%
+US_SWING 2026-11-16: nominal weight 80, varying factors 16, bets if independent (weights x sd only) 5.5, bets measured 2.74, equal-weight correlation bets 9.4
+   domain  : TECHNICAL 40(50%)->84%  RISK 20(25%)->15%  FUNDAMENTAL 10(12%)->1%  EVENTS 10(12%)->-0%
+   trait   : 가격 모멘텀 35(44%)->79%  변동성 14(18%)->22%  수익성·질 4(5%)->2%  성장 3(4%)->0%  사건·심리 10(12%)->-0%  유동성 5(6%)->-0%  재무 건전성 3(4%)->-1%  진입 위치(손익비) 6(8%)->-2%
+US_LONG_TERM 2026-11-16: nominal weight 90, varying factors 16, bets if independent (weights x sd only) 5.7, bets measured 4.77, equal-weight correlation bets 10.1
+   domain  : FUNDAMENTAL 50(56%)->66%  RISK 20(22%)->23%  TECHNICAL 10(11%)->9%  EVENTS 10(11%)->2%
+   trait   : 수익성·질 22(24%)->35%  재무 건전성 16(18%)->27%  가치 15(17%)->15%  가격 모멘텀 10(11%)->9%  성장 8(9%)->8%  변동성 5(6%)->4%  자본 배분 2(2%)->1%  유동성 4(4%)->0%  사건·심리 8(9%)->0%
+KR_SWING 2026-11-16: nominal weight 40, varying factors 10, bets if independent (weights x sd only) 6.4, bets measured 5.16, equal-weight correlation bets 7.2
+   domain  : FUNDAMENTAL 10(25%)->47%  RISK 20(50%)->44%  EVENTS 10(25%)->9%
+   trait   : 수익성·질 4(10%)->23%  진입 위치(손익비) 6(15%)->20%  변동성 9(22%)->17%  성장 3(8%)->13%  재무 건전성 3(8%)->12%  사건·심리 10(25%)->9%  유동성 5(12%)->8%
+KR_LONG_TERM 2026-11-16: nominal weight 90, varying factors 16, bets if independent (weights x sd only) 4.6, bets measured 3.42, equal-weight correlation bets 8.9
+   domain  : FUNDAMENTAL 50(56%)->74%  RISK 20(22%)->17%  TECHNICAL 10(11%)->7%  EVENTS 10(11%)->2%
+   trait   : 수익성·질 22(24%)->37%  가치 15(17%)->24%  재무 건전성 16(18%)->22%  가격 모멘텀 10(11%)->7%  성장 8(9%)->7%  변동성 5(6%)->3%  사건·심리 8(9%)->2%  자본 배분 2(2%)->0%  유동성 4(4%)->-1%

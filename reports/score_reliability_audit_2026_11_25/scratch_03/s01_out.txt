@@ -1,0 +1,411 @@
+==============================================================================================================
+US_SWING_2026-11-24 QSF-1.5.2 n 504 sector known 502
+  scored varying factors 16 | PR pearson 8.81 spearman 8.93 entropy 11.68 | weighted PR 2.45 | sum~score rho 1.000
+  eig weighted share [0.625, 0.081, 0.057, 0.049, 0.035, 0.029]
+  score eta2 sector 0.18344090572922617 (null 0.01996007984031936)  stats {'mean': 52.85167337582256, 'sd': 11.939488659797144, 'ge70': 35, 'n': 504}
+  factor                     dom     w    n  mean    sd    s0    s1  mode smode dist  eta2 rho_sc  varsh  status / raw None
+  trend_structure            TECHN  10  501  0.57  0.33  0.08  0.22  1.00  0.22    7  0.13   0.90   0.30  {'MISSING': 3} {}
+  relative_strength          TECHN  10  502  0.50  0.29  0.00  0.00  0.99  0.00  502  0.20   0.83   0.25  {'MISSING': 2} {}
+  momentum                   TECHN   5  504  0.39  0.25  0.07  0.00  0.00  0.07  471  0.09   0.41   0.05  {} {}
+  breakout_volume            TECHN  10  504  0.47  0.18  0.00  0.00  0.30  0.12  435  0.17   0.90   0.17  {} {}
+  volatility_structure       TECHN   5  503  0.41  0.25  0.00  0.00  0.12  0.02  204  0.14   0.51   0.07  {'MISSING': 1} {}
+  earnings_revenue_quality   FUNDA   3  500  0.63  0.22  0.02  0.04  1.00  0.04  444  0.07  -0.01   0.00  {'STALE': 2, 'MISSING': 4} {'eps_growth': 0.09, 'ocf_to_ni': 0.15}
+  profitability              FUNDA   2  498  0.70  0.30  0.04  0.26  1.00  0.26  353  0.04   0.17   0.01  {'STALE': 2, 'MISSING': 6} {'roe': 0.06, 'op_margin': 0.24}
+  balance_sheet              FUNDA   3  500  0.55  0.33  0.07  0.13  1.00  0.13  397  0.16  -0.11  -0.01  {'STALE': 2, 'MISSING': 4} {'current_ratio': 0.06}
+  cash_flow_quality          FUNDA   2  446  0.83  0.22  0.02  0.37  1.00  0.37  248  0.11   0.15   0.01  {'NOT_APPLICABLE': 53, 'MISSING': 5, 'STALE': 2} {'fcf_margin': 0.08, 'ocf_to_ni': 0.05}
+  vix_regime                 REGIM   0  504  0.38  0.00  0.00  0.00  0.38  1.00    1  0.59    nan    nan  {} {}
+  vix_term                   REGIM   0  504  0.08  0.00  0.00  0.00  0.08  1.00    1  0.26    nan    nan  {} {}
+  credit_spread              REGIM   0  504  0.05  0.00  0.00  0.00  0.05  1.00    1   nan    nan    nan  {} {}
+  index_trend_breadth        REGIM   0  504  0.48  0.00  0.00  0.00  0.48  1.00    1  1.57    nan    nan  {} {}
+  risk_reward                RISK    6  504  0.06  0.16  0.73  0.01  0.00  0.73  134  0.02  -0.09  -0.01  {} {}
+  atr_risk                   RISK    5  504  0.62  0.27  0.05  0.00  0.00  0.05  479  0.38   0.65   0.09  {} {}
+  liquidity                  RISK    5  504  0.88  0.14  0.00  0.43  1.00  0.43  287  0.10  -0.12  -0.01  {} {}
+  drawdown_gap               RISK    4  504  0.54  0.27  0.07  0.00  0.00  0.07  471  0.35   0.64   0.07  {} {}
+  earnings_calendar          EVENT   4  499  0.97  0.15  0.01  0.95  1.00  0.95   11  0.06   0.12   0.01  {'MISSING': 5} {}
+  material_disclosures       EVENT   3  504  0.59  0.06  0.00  0.00  0.60  0.95    3  0.03   0.03   0.00  {} {}
+  insider_activity           EVENT   3  504  0.26  0.32  0.53  0.07  0.00  0.53   28  0.04  -0.09  -0.01  {} {}
+  clusters:
+    w  39 (49%)  var 89%  ['trend_structure', 'relative_strength', 'breakout_volume', 'atr_risk', 'drawdown_gap']
+    w   5 (6%)  var 7%  ['volatility_structure']
+    w   5 (6%)  var 5%  ['momentum']
+    w   2 (2%)  var 1%  ['profitability']
+    w   2 (2%)  var 1%  ['cash_flow_quality']
+    w   4 (5%)  var 1%  ['earnings_calendar']
+    w   3 (4%)  var 0%  ['earnings_revenue_quality']
+    w   3 (4%)  var 0%  ['material_disclosures']
+    w   5 (6%)  var -1%  ['liquidity']
+    w   3 (4%)  var -1%  ['insider_activity']
+    w   3 (4%)  var -1%  ['balance_sheet']
+    w   6 (8%)  var -1%  ['risk_reward']
+  top pairs (pearson, spearman, n):
+    atr_risk                 drawdown_gap               0.83   0.82 504
+    trend_structure          breakout_volume            0.82   0.81 501
+    trend_structure          relative_strength          0.80   0.80 501
+    relative_strength        breakout_volume            0.69   0.69 502
+    breakout_volume          drawdown_gap               0.67   0.69 504
+    breakout_volume          atr_risk                   0.63   0.66 504
+    trend_structure          drawdown_gap               0.49   0.49 501
+    trend_structure          atr_risk                   0.45   0.45 501
+    volatility_structure     atr_risk                   0.42   0.42 503
+    breakout_volume          volatility_structure       0.40   0.41 503
+    relative_strength        drawdown_gap               0.45   0.41 502
+    relative_strength        atr_risk                   0.43   0.38 502
+==============================================================================================================
+US_LONG_TERM_2026-11-24 QSF-1.5.2 n 504 sector known 502
+  scored varying factors 16 | PR pearson 10.07 spearman 10.15 entropy 12.01 | weighted PR 4.75 | sum~score rho 0.994
+  eig weighted share [0.345, 0.236, 0.138, 0.099, 0.058, 0.043]
+  score eta2 sector 0.17845240916217148 (null 0.01996007984031936)  stats {'mean': 60.90210575031959, 'sd': 9.160378935302866, 'ge70': 82, 'n': 504}
+  factor                     dom     w    n  mean    sd    s0    s1  mode smode dist  eta2 rho_sc  varsh  status / raw None
+  long_trend                 TECHN   5  501  0.56  0.29  0.05  0.08  1.00  0.08  406  0.12   0.26   0.05  {'MISSING': 3} {}
+  relative_strength          TECHN   3  502  0.50  0.29  0.00  0.00  0.99  0.00  502  0.20   0.30   0.03  {'MISSING': 2} {}
+  momentum_persistence       TECHN   2  501  0.55  0.23  0.00  0.00  0.79  0.09  292  0.11   0.11   0.01  {'MISSING': 3} {}
+  valuation                  FUNDA  15  501  0.48  0.26  0.01  0.01  0.67  0.02  482  0.06   0.27   0.14  {'STALE': 2, 'MISSING': 3} {'pb': 0.06, 'fcf_yield': 0.08}
+  business_quality           FUNDA  15  500  0.72  0.21  0.00  0.11  1.00  0.11  430  0.04   0.55   0.23  {'STALE': 2, 'MISSING': 4} {'gross_margin': 0.63, 'roe': 0.06, 'op_margin': 0.24}
+  growth_quality             FUNDA   8  500  0.50  0.28  0.03  0.06  1.00  0.06  446  0.15   0.30   0.08  {'STALE': 2, 'MISSING': 4} {'eps_cagr3': 0.18, 'rev_cagr3': 0.02}
+  free_cash_flow             FUNDA   7  410  0.78  0.26  0.03  0.31  1.00  0.31  248  0.46   0.62   0.12  {'MISSING': 41, 'NOT_APPLICABLE': 53, 'STALE': 2} {}
+  balance_dilution           FUNDA   5  501  0.72  0.23  0.00  0.10  0.50  0.14  380  0.17   0.57   0.08  {'STALE': 2, 'MISSING': 3} {'share_change': 0.03}
+  vix_regime                 REGIM   0  504  0.38  0.00  0.00  0.00  0.38  1.00    1  0.59    nan    nan  {} {}
+  vix_term                   REGIM   0  504  0.08  0.00  0.00  0.00  0.08  1.00    1  0.26    nan    nan  {} {}
+  credit_spread              REGIM   0  504  0.05  0.00  0.00  0.00  0.05  1.00    1   nan    nan    nan  {} {}
+  index_trend_breadth        REGIM   0  504  0.48  0.00  0.00  0.00  0.48  1.00    1  1.57    nan    nan  {} {}
+  financial_resilience       RISK    7  500  0.47  0.32  0.05  0.12  1.00  0.12  414  0.27   0.50   0.13  {'STALE': 2, 'MISSING': 4} {'interest_cover': 0.29, 'cash_debt': 0.03, 'current_ratio': 0.06}
+  downside_drawdown          RISK    5  504  0.59  0.28  0.05  0.01  0.00  0.05  474  0.33   0.19   0.04  {} {}
+  liquidity                  RISK    4  504  0.88  0.14  0.00  0.43  1.00  0.43  287  0.10   0.08   0.00  {} {}
+  leverage                   RISK    4  439  0.62  0.35  0.16  0.11  0.00  0.16  322  0.10   0.40   0.06  {'NOT_APPLICABLE': 53, 'MISSING': 12, 'STALE': 2} {}
+  governance                 EVENT   3  504  0.78  0.07  0.00  0.00  0.80  0.95    3  0.03   0.09   0.00  {} {}
+  material_events            EVENT   3  504  0.58  0.07  0.00  0.00  0.60  0.95    3  0.03   0.11   0.00  {} {}
+  insider_ownership          EVENT   2  501  0.19  0.28  0.00  0.06  1.00  0.06  401  0.04  -0.04  -0.00  {'MISSING': 3} {}
+  capital_allocation         EVENT   2  497  0.87  0.18  0.01  0.36  1.00  0.36  283  0.10   0.28   0.02  {'MISSING': 7, 'STALE': 2} {'share_change': 0.03, 'returns_capital': 0.04}
+  clusters:
+    w  22 (24%)  var 35%  ['business_quality', 'free_cash_flow']
+    w  16 (18%)  var 27%  ['balance_dilution', 'financial_resilience', 'leverage']
+    w  15 (17%)  var 14%  ['valuation']
+    w   8 (9%)  var 8%  ['growth_quality']
+    w   7 (8%)  var 6%  ['long_trend', 'momentum_persistence']
+    w   5 (6%)  var 4%  ['downside_drawdown']
+    w   3 (3%)  var 3%  ['relative_strength']
+    w   2 (2%)  var 2%  ['capital_allocation']
+    w   3 (3%)  var 0%  ['governance']
+    w   4 (4%)  var 0%  ['liquidity']
+    w   3 (3%)  var 0%  ['material_events']
+    w   2 (2%)  var -0%  ['insider_ownership']
+  top pairs (pearson, spearman, n):
+    balance_dilution         leverage                   0.76   0.78 439
+    long_trend               momentum_persistence       0.77   0.75 501
+    long_trend               relative_strength          0.69   0.70 501
+    balance_dilution         financial_resilience       0.55   0.59 500
+    financial_resilience     leverage                   0.50   0.59 439
+    business_quality         free_cash_flow             0.43   0.54 410
+    long_trend               downside_drawdown          0.49   0.49 501
+    balance_dilution         capital_allocation         0.50   0.42 497
+    relative_strength        downside_drawdown          0.45   0.40 502
+    valuation                liquidity                 -0.29  -0.31 501
+    financial_resilience     downside_drawdown         -0.29  -0.29 500
+    business_quality         growth_quality             0.28   0.27 500
+==============================================================================================================
+KR_SWING_2026-11-24 QSF-1.5.2 n 300 sector known 300
+  scored varying factors 9 | PR pearson 6.16 spearman 6.10 entropy 7.20 | weighted PR 5.14 | sum~score rho 0.999
+  eig weighted share [0.299, 0.239, 0.147, 0.123, 0.094, 0.031]
+  score eta2 sector 0.09701134592420045 (null 0.033444816053511704)  stats {'mean': 45.58334246656529, 'sd': 8.861831574604613, 'ge70': 0, 'n': 300}
+  factor                     dom     w    n  mean    sd    s0    s1  mode smode dist  eta2 rho_sc  varsh  status / raw None
+  trend_structure            TECHN   0  299  0.25  0.27  0.32  0.04  0.17  0.33    7  0.07  -0.02    nan  {'MISSING': 1} {}
+  relative_strength          TECHN   0  300  0.50  0.29  0.00  0.00  0.42  0.00  300  0.12   0.13    nan  {} {}
+  momentum                   TECHN   0  300  0.50  0.32  0.06  0.06  1.00  0.06  265  0.05  -0.07    nan  {} {}
+  breakout_volume            TECHN   0  300  0.28  0.11  0.00  0.00  0.30  0.27  180  0.08   0.09    nan  {} {}
+  volatility_structure       TECHN   0  300  0.41  0.26  0.02  0.00  0.08  0.02  174  0.09  -0.25    nan  {} {}
+  earnings_revenue_quality   FUNDA   3  297  0.52  0.30  0.11  0.08  0.00  0.11  211  0.03   0.52   0.15  {'MISSING': 3} {'eps_growth': 0.26, 'ocf_to_ni': 0.25, 'rev_growth': 0.14}
+  profitability              FUNDA   2  300  0.41  0.31  0.11  0.06  0.00  0.11  251  0.04   0.60   0.11  {} {'op_margin': 0.1}
+  balance_sheet              FUNDA   3  300  0.60  0.35  0.04  0.20  1.00  0.20  229  0.10   0.38   0.13  {} {}
+  cash_flow_quality          FUNDA   2  269  0.50  0.36  0.23  0.10  0.00  0.23  173  0.04   0.64   0.13  {'NOT_APPLICABLE': 28, 'MISSING': 3} {'ocf_to_ni': 0.17, 'fcf_margin': 0.03}
+  vkospi_regime              REGIM   0    0   -- {'MISSING': 300}
+  index_trend                REGIM   0  300  0.00  0.00  1.00  0.00  0.00  1.00    1   nan    nan    nan  {} {}
+  breadth                    REGIM   0  300  0.00  0.00  1.00  0.00  0.00  1.00    1   nan    nan    nan  {} {}
+  usdkrw_regime              REGIM   0  300  1.00  0.00  0.00  1.00  1.00  1.00    1   nan    nan    nan  {} {}
+  credit_liquidity           REGIM   0  300  0.35  0.00  0.00  0.00  0.35  1.00    1  2.38    nan    nan  {} {}
+  risk_reward                RISK    6  300  0.13  0.24  0.58  0.03  0.00  0.58  119  0.03   0.27   0.17  {} {}
+  atr_risk                   RISK    5  300  0.16  0.21  0.45  0.00  0.00  0.45  165  0.25   0.38   0.11  {} {}
+  liquidity                  RISK    5  300  0.67  0.29  0.01  0.23  1.00  0.23  231  0.13   0.19   0.08  {} {}
+  drawdown_gap               RISK    4  300  0.26  0.20  0.15  0.00  0.00  0.15  256  0.31   0.28   0.07  {} {}
+  earnings_calendar          EVENT   4  298  1.00  0.00  0.00  1.00  1.00  1.00    1   nan    nan    nan  {'MISSING': 2} {}
+  material_disclosures       EVENT   3  300  0.57  0.18  0.04  0.02  0.60  0.62   13  0.04   0.39   0.06  {} {}
+  insider_activity           EVENT   3    0   -- {'MISSING': 300}
+  clusters:
+    w   5 (15%)  var 27%  ['earnings_revenue_quality', 'cash_flow_quality']
+    w   9 (27%)  var 19%  ['atr_risk', 'drawdown_gap']
+    w   6 (18%)  var 17%  ['risk_reward']
+    w   3 (9%)  var 13%  ['balance_sheet']
+    w   2 (6%)  var 11%  ['profitability']
+    w   5 (15%)  var 8%  ['liquidity']
+    w   3 (9%)  var 6%  ['material_disclosures']
+  top pairs (pearson, spearman, n):
+    atr_risk                 drawdown_gap               0.80   0.83 300
+    earnings_revenue_quality cash_flow_quality          0.61   0.58 269
+    earnings_revenue_quality profitability              0.50   0.52 297
+    profitability            cash_flow_quality          0.42   0.46 269
+    liquidity                drawdown_gap              -0.43  -0.44 300
+    atr_risk                 liquidity                 -0.42  -0.41 300
+    profitability            balance_sheet              0.28   0.26 300
+    cash_flow_quality        material_disclosures       0.20   0.23 269
+    balance_sheet            cash_flow_quality          0.20   0.22 269
+    atr_risk                 material_disclosures       0.18   0.21 300
+    cash_flow_quality        atr_risk                   0.16   0.20 269
+    profitability            material_disclosures       0.12   0.17 300
+==============================================================================================================
+KR_LONG_TERM_2026-11-24 QSF-1.5.2 n 300 sector known 300
+  scored varying factors 16 | PR pearson 9.01 spearman 8.68 entropy 11.13 | weighted PR 3.39 | sum~score rho 0.997
+  eig weighted share [0.467, 0.241, 0.118, 0.047, 0.036, 0.029]
+  score eta2 sector 0.1460833437421244 (null 0.033444816053511704)  stats {'mean': 52.83478120544695, 'sd': 14.615243544839398, 'ge70': 33, 'n': 300}
+  factor                     dom     w    n  mean    sd    s0    s1  mode smode dist  eta2 rho_sc  varsh  status / raw None
+  long_trend                 TECHN   5  299  0.35  0.29  0.21  0.05  0.00  0.21  167  0.12   0.24   0.03  {'MISSING': 1} {}
+  relative_strength          TECHN   3  300  0.50  0.29  0.00  0.00  0.42  0.00  300  0.12   0.32   0.02  {} {}
+  momentum_persistence       TECHN   2  300  0.43  0.25  0.00  0.00  0.17  0.13  112  0.16   0.17   0.01  {} {}
+  valuation                  FUNDA  15  299  0.57  0.34  0.07  0.16  1.00  0.16  205  0.30   0.57   0.24  {'MISSING': 1} {'fcf_yield': 0.04}
+  business_quality           FUNDA  15  300  0.49  0.25  0.05  0.01  0.00  0.05  263  0.07   0.80   0.25  {} {'gross_margin': 1.0, 'op_margin': 0.1}
+  growth_quality             FUNDA   8  265  0.45  0.34  0.13  0.11  0.00  0.13  197  0.08   0.43   0.08  {'MISSING': 35} {'eps_cagr3': 0.45, 'rev_cagr3': 0.1, 'rev_growth': 0.03}
+  free_cash_flow             FUNDA   7  261  0.51  0.32  0.15  0.08  0.00  0.15  165  0.06   0.78   0.12  {'NOT_APPLICABLE': 28, 'MISSING': 11} {}
+  balance_dilution           FUNDA   5  300  0.62  0.36  0.11  0.22  1.00  0.22  205  0.12   0.48   0.07  {} {'share_change': 1.0}
+  vkospi_regime              REGIM   0    0   -- {'MISSING': 300}
+  index_trend                REGIM   0  300  0.00  0.00  1.00  0.00  0.00  1.00    1   nan    nan    nan  {} {}
+  breadth                    REGIM   0  300  0.00  0.00  1.00  0.00  0.00  1.00    1   nan    nan    nan  {} {}
+  usdkrw_regime              REGIM   0  300  1.00  0.00  0.00  1.00  1.00  1.00    1   nan    nan    nan  {} {}
+  credit_liquidity           REGIM   0  300  0.35  0.00  0.00  0.00  0.35  1.00    1  2.38    nan    nan  {} {}
+  financial_resilience       RISK    7  300  0.48  0.33  0.02  0.12  1.00  0.12  260  0.08   0.52   0.09  {} {'interest_cover': 0.91}
+  downside_drawdown          RISK    5  300  0.15  0.21  0.48  0.00  0.00  0.48  157  0.26   0.40   0.03  {} {}
+  liquidity                  RISK    4  300  0.67  0.29  0.01  0.23  1.00  0.23  231  0.13  -0.00  -0.00  {} {}
+  leverage                   RISK    4  272  0.67  0.31  0.07  0.11  1.00  0.11  225  0.13   0.53   0.05  {'NOT_APPLICABLE': 28} {}
+  governance                 EVENT   3  300  0.76  0.15  0.00  0.00  0.80  0.93    2  0.03   0.10   0.00  {} {}
+  material_events            EVENT   3  300  0.57  0.20  0.06  0.02  0.60  0.62   11  0.04   0.32   0.01  {} {}
+  insider_ownership          EVENT   2  273  0.97  0.16  0.00  0.94  1.00  0.94   17  0.13  -0.13  -0.00  {'MISSING': 27} {}
+  capital_allocation         EVENT   2  231  0.98  0.12  0.00  0.96  1.00  0.96    2  0.04   0.09   0.00  {'MISSING': 69} {'share_change': 1.0}
+  clusters:
+    w  22 (24%)  var 37%  ['business_quality', 'free_cash_flow']
+    w  15 (17%)  var 24%  ['valuation']
+    w  16 (18%)  var 21%  ['balance_dilution', 'financial_resilience', 'leverage']
+    w   8 (9%)  var 8%  ['growth_quality']
+    w   8 (9%)  var 5%  ['relative_strength', 'downside_drawdown']
+    w   7 (8%)  var 3%  ['long_trend', 'momentum_persistence']
+    w   3 (3%)  var 1%  ['material_events']
+    w   3 (3%)  var 0%  ['governance']
+    w   2 (2%)  var 0%  ['capital_allocation']
+    w   2 (2%)  var -0%  ['insider_ownership']
+    w   4 (4%)  var -0%  ['liquidity']
+  top pairs (pearson, spearman, n):
+    balance_dilution         leverage                   0.99   1.00 272
+    long_trend               momentum_persistence       0.79   0.82 299
+    financial_resilience     leverage                   0.75   0.80 272
+    balance_dilution         financial_resilience       0.77   0.80 300
+    relative_strength        downside_drawdown          0.59   0.62 300
+    business_quality         free_cash_flow             0.61   0.60 261
+    business_quality         growth_quality             0.58   0.58 265
+    valuation                downside_drawdown          0.44   0.54 299
+    long_trend               relative_strength          0.51   0.49 299
+    valuation                free_cash_flow             0.50   0.47 260
+    free_cash_flow           leverage                   0.34   0.40 261
+    free_cash_flow           balance_dilution           0.34   0.39 261
+==============================================================================================================
+US_SWING_2026-11-16 QSF-1.4.1 n 504 sector known 502
+  scored varying factors 16 | PR pearson 9.39 spearman 9.83 entropy 12.04 | weighted PR 2.74 | sum~score rho 0.999
+  eig weighted share [0.585, 0.101, 0.071, 0.049, 0.032, 0.031]
+  score eta2 sector 0.2114379968353397 (null 0.01996007984031936)  stats {'mean': 54.40202187852423, 'sd': 11.163494310666737, 'ge70': 25, 'n': 504}
+  factor                     dom     w    n  mean    sd    s0    s1  mode smode dist  eta2 rho_sc  varsh  status / raw None
+  trend_structure            TECHN  10  501  0.60  0.32  0.05  0.23  1.00  0.23    7  0.13   0.88   0.31  {'MISSING': 3} {}
+  relative_strength          TECHN  10  501  0.50  0.29  0.00  0.00  0.98  0.00  501  0.18   0.78   0.25  {'MISSING': 3} {}
+  momentum                   TECHN   5  504  0.56  0.24  0.04  0.01  0.00  0.04  476  0.23   0.27   0.05  {} {}
+  breakout_volume            TECHN  10  504  0.49  0.18  0.00  0.00  0.30  0.12  441  0.16   0.88   0.17  {} {}
+  volatility_structure       TECHN   5  503  0.39  0.28  0.03  0.00  0.00  0.03  207  0.10   0.29   0.05  {'MISSING': 1} {}
+  earnings_revenue_quality   FUNDA   3  500  0.63  0.23  0.02  0.04  1.00  0.04  446  0.09  -0.02   0.00  {'STALE': 2, 'MISSING': 4} {'eps_growth': 0.09, 'ocf_to_ni': 0.16}
+  profitability              FUNDA   2  498  0.70  0.30  0.04  0.25  1.00  0.25  353  0.04   0.15   0.01  {'STALE': 2, 'MISSING': 6} {'roe': 0.06, 'op_margin': 0.24}
+  balance_sheet              FUNDA   3  500  0.55  0.33  0.07  0.13  1.00  0.13  396  0.16  -0.07  -0.01  {'STALE': 2, 'MISSING': 4} {'current_ratio': 0.06}
+  cash_flow_quality          FUNDA   2  446  0.82  0.23  0.02  0.37  1.00  0.37  248  0.12   0.16   0.01  {'NOT_APPLICABLE': 53, 'MISSING': 5, 'STALE': 2} {'fcf_margin': 0.08, 'ocf_to_ni': 0.05}
+  vix_regime                 REGIM   0  504  0.53  0.00  0.00  0.00  0.53  1.00    1   nan    nan    nan  {} {}
+  vix_term                   REGIM   0  504  0.27  0.00  0.00  0.00  0.27  1.00    1  1.00    nan    nan  {} {}
+  credit_spread              REGIM   0  504  0.24  0.00  0.00  0.00  0.24  1.00    1   nan    nan    nan  {} {}
+  index_trend_breadth        REGIM   0  504  0.73  0.00  0.00  0.00  0.73  1.00    1  6.08    nan    nan  {} {}
+  risk_reward                RISK    6  504  0.06  0.15  0.70  0.00  0.00  0.70  149  0.05  -0.00  -0.02  {} {}
+  atr_risk                   RISK    5  504  0.61  0.27  0.05  0.00  0.00  0.05  480  0.39   0.59   0.10  {} {}
+  liquidity                  RISK    5  504  0.88  0.15  0.00  0.42  1.00  0.42  291  0.09  -0.10  -0.00  {} {}
+  drawdown_gap               RISK    4  504  0.56  0.26  0.03  0.00  0.00  0.03  489  0.31   0.60   0.07  {} {}
+  earnings_calendar          EVENT   4  493  0.95  0.20  0.02  0.92  1.00  0.92    9  0.06   0.05   0.01  {'MISSING': 11} {}
+  material_disclosures       EVENT   3  504  0.59  0.06  0.00  0.00  0.60  0.95    3  0.03   0.02   0.00  {} {}
+  insider_activity           EVENT   3  504  0.25  0.32  0.56  0.07  0.00  0.56   28  0.04  -0.06  -0.01  {} {}
+  clusters:
+    w  30 (38%)  var 74%  ['trend_structure', 'relative_strength', 'breakout_volume']
+    w   9 (11%)  var 17%  ['atr_risk', 'drawdown_gap']
+    w   5 (6%)  var 5%  ['momentum']
+    w   5 (6%)  var 5%  ['volatility_structure']
+    w   2 (2%)  var 1%  ['profitability']
+    w   2 (2%)  var 1%  ['cash_flow_quality']
+    w   4 (5%)  var 1%  ['earnings_calendar']
+    w   3 (4%)  var 0%  ['material_disclosures']
+    w   3 (4%)  var 0%  ['earnings_revenue_quality']
+    w   5 (6%)  var -0%  ['liquidity']
+    w   3 (4%)  var -1%  ['insider_activity']
+    w   3 (4%)  var -1%  ['balance_sheet']
+    w   6 (8%)  var -2%  ['risk_reward']
+  top pairs (pearson, spearman, n):
+    trend_structure          breakout_volume            0.81   0.81 501
+    atr_risk                 drawdown_gap               0.78   0.78 504
+    trend_structure          relative_strength          0.76   0.76 501
+    relative_strength        breakout_volume            0.66   0.66 501
+    breakout_volume          drawdown_gap               0.63   0.62 504
+    breakout_volume          atr_risk                   0.62   0.61 504
+    trend_structure          drawdown_gap               0.46   0.46 501
+    trend_structure          atr_risk                   0.43   0.41 501
+    profitability            cash_flow_quality          0.39   0.31 444
+    momentum                 atr_risk                   0.38   0.28 504
+    relative_strength        drawdown_gap               0.30   0.28 501
+    earnings_revenue_quality profitability              0.34   0.27 498
+==============================================================================================================
+US_LONG_TERM_2026-11-16 QSF-1.4.1 n 504 sector known 502
+  scored varying factors 16 | PR pearson 10.10 spearman 10.18 entropy 12.06 | weighted PR 4.77 | sum~score rho 0.994
+  eig weighted share [0.346, 0.233, 0.138, 0.101, 0.059, 0.043]
+  score eta2 sector 0.17859604371271434 (null 0.01996007984031936)  stats {'mean': 60.955367925605486, 'sd': 9.07096197388503, 'ge70': 76, 'n': 504}
+  factor                     dom     w    n  mean    sd    s0    s1  mode smode dist  eta2 rho_sc  varsh  status / raw None
+  long_trend                 TECHN   5  501  0.60  0.29  0.04  0.11  1.00  0.11  397  0.12   0.27   0.05  {'MISSING': 3} {}
+  relative_strength          TECHN   3  501  0.50  0.29  0.00  0.00  0.98  0.00  501  0.18   0.28   0.03  {'MISSING': 3} {}
+  momentum_persistence       TECHN   2  501  0.54  0.23  0.00  0.00  0.83  0.07  303  0.09   0.11   0.01  {'MISSING': 3} {}
+  valuation                  FUNDA  15  501  0.47  0.26  0.02  0.01  0.00  0.02  482  0.06   0.27   0.15  {'STALE': 2, 'MISSING': 3} {'pb': 0.06, 'fcf_yield': 0.08}
+  business_quality           FUNDA  15  500  0.72  0.21  0.00  0.11  1.00  0.11  430  0.04   0.54   0.23  {'STALE': 2, 'MISSING': 4} {'gross_margin': 0.63, 'roe': 0.06, 'op_margin': 0.24}
+  growth_quality             FUNDA   8  500  0.50  0.28  0.03  0.06  1.00  0.06  446  0.15   0.28   0.08  {'STALE': 2, 'MISSING': 4} {'eps_cagr3': 0.18, 'rev_cagr3': 0.02}
+  free_cash_flow             FUNDA   7  410  0.78  0.26  0.03  0.31  1.00  0.31  247  0.45   0.61   0.12  {'MISSING': 41, 'NOT_APPLICABLE': 53, 'STALE': 2} {}
+  balance_dilution           FUNDA   5  501  0.72  0.23  0.00  0.10  0.50  0.14  379  0.17   0.57   0.08  {'STALE': 2, 'MISSING': 3} {'share_change': 0.03}
+  vix_regime                 REGIM   0  504  0.53  0.00  0.00  0.00  0.53  1.00    1   nan    nan    nan  {} {}
+  vix_term                   REGIM   0  504  0.27  0.00  0.00  0.00  0.27  1.00    1  1.00    nan    nan  {} {}
+  credit_spread              REGIM   0  504  0.24  0.00  0.00  0.00  0.24  1.00    1   nan    nan    nan  {} {}
+  index_trend_breadth        REGIM   0  504  0.73  0.00  0.00  0.00  0.73  1.00    1  6.08    nan    nan  {} {}
+  financial_resilience       RISK    7  500  0.47  0.32  0.05  0.12  1.00  0.12  414  0.27   0.50   0.13  {'STALE': 2, 'MISSING': 4} {'interest_cover': 0.29, 'cash_debt': 0.03, 'current_ratio': 0.06}
+  downside_drawdown          RISK    5  504  0.60  0.27  0.05  0.01  0.00  0.05  476  0.32   0.20   0.04  {} {}
+  liquidity                  RISK    4  504  0.88  0.15  0.00  0.42  1.00  0.42  291  0.09   0.08   0.00  {} {}
+  leverage                   RISK    4  439  0.62  0.35  0.16  0.11  0.00  0.16  322  0.10   0.40   0.06  {'NOT_APPLICABLE': 53, 'MISSING': 12, 'STALE': 2} {}
+  governance                 EVENT   3  504  0.78  0.07  0.00  0.00  0.80  0.95    3  0.03   0.09   0.00  {} {}
+  material_events            EVENT   3  504  0.58  0.07  0.00  0.00  0.60  0.95    3  0.03   0.13   0.00  {} {}
+  insider_ownership          EVENT   2  501  0.19  0.27  0.00  0.05  0.50  0.06  391  0.05  -0.06  -0.00  {'MISSING': 3} {}
+  capital_allocation         EVENT   2  497  0.87  0.18  0.01  0.35  1.00  0.35  285  0.10   0.27   0.01  {'MISSING': 7, 'STALE': 2} {'share_change': 0.03, 'returns_capital': 0.04}
+  clusters:
+    w  22 (24%)  var 35%  ['business_quality', 'free_cash_flow']
+    w  16 (18%)  var 27%  ['balance_dilution', 'financial_resilience', 'leverage']
+    w  15 (17%)  var 15%  ['valuation']
+    w   8 (9%)  var 8%  ['growth_quality']
+    w   7 (8%)  var 6%  ['long_trend', 'momentum_persistence']
+    w   5 (6%)  var 4%  ['downside_drawdown']
+    w   3 (3%)  var 3%  ['relative_strength']
+    w   2 (2%)  var 1%  ['capital_allocation']
+    w   4 (4%)  var 0%  ['liquidity']
+    w   3 (3%)  var 0%  ['governance']
+    w   3 (3%)  var 0%  ['material_events']
+    w   2 (2%)  var -0%  ['insider_ownership']
+  top pairs (pearson, spearman, n):
+    balance_dilution         leverage                   0.76   0.78 439
+    long_trend               momentum_persistence       0.79   0.77 501
+    long_trend               relative_strength          0.67   0.68 501
+    balance_dilution         financial_resilience       0.55   0.59 500
+    financial_resilience     leverage                   0.50   0.58 439
+    business_quality         free_cash_flow             0.43   0.54 410
+    long_trend               downside_drawdown          0.49   0.47 501
+    balance_dilution         capital_allocation         0.49   0.41 497
+    valuation                liquidity                 -0.29  -0.30 501
+    relative_strength        downside_drawdown          0.35   0.30 501
+    momentum_persistence     downside_drawdown          0.27   0.29 501
+    financial_resilience     downside_drawdown         -0.29  -0.28 500
+==============================================================================================================
+KR_SWING_2026-11-16 QSF-1.4.1 n 300 sector known 300
+  scored varying factors 10 | PR pearson 7.22 spearman 7.17 entropy 8.31 | weighted PR 5.16 | sum~score rho 0.998
+  eig weighted share [0.302, 0.252, 0.13, 0.107, 0.088, 0.031]
+  score eta2 sector 0.09900191418870628 (null 0.033444816053511704)  stats {'mean': 46.26606257567831, 'sd': 8.836985009089084, 'ge70': 0, 'n': 300}
+  factor                     dom     w    n  mean    sd    s0    s1  mode smode dist  eta2 rho_sc  varsh  status / raw None
+  trend_structure            TECHN   0  299  0.27  0.28  0.30  0.04  0.17  0.31    7  0.07  -0.07    nan  {'MISSING': 1} {}
+  relative_strength          TECHN   0  300  0.50  0.29  0.00  0.00  0.53  0.00  300  0.14   0.10    nan  {} {}
+  momentum                   TECHN   0  300  0.55  0.30  0.06  0.05  0.00  0.06  269  0.06  -0.08    nan  {} {}
+  breakout_volume            TECHN   0  300  0.29  0.11  0.00  0.00  0.30  0.35  161  0.04   0.08    nan  {} {}
+  volatility_structure       TECHN   0  300  0.45  0.26  0.02  0.00  0.00  0.02  174  0.12  -0.17    nan  {} {}
+  earnings_revenue_quality   FUNDA   3  294  0.57  0.29  0.10  0.11  1.00  0.11  212  0.05   0.42   0.13  {'MISSING': 6} {'eps_growth': 0.25, 'ocf_to_ni': 0.24, 'rev_growth': 0.13}
+  profitability              FUNDA   2  300  0.42  0.31  0.10  0.06  0.00  0.10  253  0.05   0.55   0.10  {} {'op_margin': 0.1}
+  balance_sheet              FUNDA   3  300  0.61  0.35  0.04  0.20  1.00  0.20  230  0.10   0.37   0.12  {} {}
+  cash_flow_quality          FUNDA   2  266  0.51  0.36  0.22  0.09  0.00  0.22  177  0.04   0.63   0.12  {'NOT_APPLICABLE': 29, 'MISSING': 5} {'ocf_to_ni': 0.16, 'fcf_margin': 0.02}
+  vkospi_regime              REGIM   0    0   -- {'MISSING': 300}
+  index_trend                REGIM   0  300  0.00  0.00  1.00  0.00  0.00  1.00    1   nan    nan    nan  {} {}
+  breadth                    REGIM   0  300  0.00  0.00  1.00  0.00  0.00  1.00    1   nan    nan    nan  {} {}
+  usdkrw_regime              REGIM   0  300  1.00  0.00  0.00  1.00  1.00  1.00    1   nan    nan    nan  {} {}
+  credit_liquidity           REGIM   0  300  0.35  0.00  0.00  0.00  0.35  1.00    1  0.72    nan    nan  {} {}
+  risk_reward                RISK    6  300  0.15  0.26  0.59  0.04  0.00  0.59  112  0.03   0.27   0.20  {} {}
+  atr_risk                   RISK    5  300  0.16  0.22  0.46  0.00  0.00  0.46  163  0.27   0.35   0.11  {} {}
+  liquidity                  RISK    5  300  0.67  0.28  0.02  0.22  1.00  0.22  230  0.13   0.18   0.08  {} {}
+  drawdown_gap               RISK    4  300  0.26  0.20  0.15  0.00  0.00  0.15  255  0.34   0.23   0.06  {} {}
+  earnings_calendar          EVENT   4  298  0.99  0.12  0.01  0.99  1.00  0.99    2  0.03   0.17   0.03  {'MISSING': 2} {}
+  material_disclosures       EVENT   3  300  0.58  0.18  0.04  0.02  0.60  0.63   10  0.03   0.38   0.06  {} {}
+  insider_activity           EVENT   3    0   -- {'MISSING': 300}
+  clusters:
+    w   6 (16%)  var 20%  ['risk_reward']
+    w   9 (24%)  var 17%  ['atr_risk', 'drawdown_gap']
+    w   3 (8%)  var 13%  ['earnings_revenue_quality']
+    w   2 (5%)  var 12%  ['cash_flow_quality']
+    w   3 (8%)  var 12%  ['balance_sheet']
+    w   2 (5%)  var 10%  ['profitability']
+    w   5 (14%)  var 8%  ['liquidity']
+    w   3 (8%)  var 6%  ['material_disclosures']
+    w   4 (11%)  var 3%  ['earnings_calendar']
+  top pairs (pearson, spearman, n):
+    atr_risk                 drawdown_gap               0.80   0.83 300
+    profitability            cash_flow_quality          0.42   0.46 266
+    liquidity                drawdown_gap              -0.42  -0.43 300
+    earnings_revenue_quality cash_flow_quality          0.46   0.42 265
+    atr_risk                 liquidity                 -0.43  -0.41 300
+    earnings_revenue_quality profitability              0.34   0.31 294
+    profitability            balance_sheet              0.30   0.28 300
+    balance_sheet            cash_flow_quality          0.22   0.24 266
+    atr_risk                 material_disclosures       0.17   0.23 300
+    cash_flow_quality        material_disclosures       0.20   0.20 266
+    risk_reward              atr_risk                  -0.18  -0.19 300
+    earnings_revenue_quality drawdown_gap              -0.18  -0.19 294
+==============================================================================================================
+KR_LONG_TERM_2026-11-16 QSF-1.4.1 n 300 sector known 300
+  scored varying factors 16 | PR pearson 8.94 spearman 8.62 entropy 11.13 | weighted PR 3.42 | sum~score rho 0.997
+  eig weighted share [0.465, 0.238, 0.116, 0.053, 0.037, 0.028]
+  score eta2 sector 0.15744608106240343 (null 0.033444816053511704)  stats {'mean': 53.53135426799585, 'sd': 14.540849362407881, 'ge70': 38, 'n': 300}
+  factor                     dom     w    n  mean    sd    s0    s1  mode smode dist  eta2 rho_sc  varsh  status / raw None
+  long_trend                 TECHN   5  299  0.39  0.30  0.18  0.05  0.50  0.21  169  0.13   0.25   0.03  {'MISSING': 1} {}
+  relative_strength          TECHN   3  300  0.50  0.29  0.00  0.00  0.53  0.00  300  0.14   0.36   0.03  {} {}
+  momentum_persistence       TECHN   2  300  0.48  0.26  0.00  0.00  0.21  0.11  110  0.14   0.26   0.01  {} {}
+  valuation                  FUNDA  15  299  0.57  0.34  0.07  0.15  1.00  0.15  212  0.30   0.58   0.24  {'MISSING': 1} {'fcf_yield': 0.04}
+  business_quality           FUNDA  15  300  0.50  0.25  0.05  0.01  0.00  0.05  265  0.07   0.79   0.24  {} {'gross_margin': 1.0, 'op_margin': 0.1}
+  growth_quality             FUNDA   8  261  0.47  0.34  0.12  0.12  1.00  0.12  196  0.12   0.34   0.07  {'MISSING': 39} {'eps_cagr3': 0.44, 'rev_cagr3': 0.09}
+  free_cash_flow             FUNDA   7  260  0.51  0.32  0.14  0.08  0.00  0.14  168  0.06   0.79   0.12  {'NOT_APPLICABLE': 29, 'MISSING': 11} {}
+  balance_dilution           FUNDA   5  300  0.62  0.35  0.10  0.21  1.00  0.21  207  0.12   0.49   0.07  {} {'share_change': 1.0}
+  vkospi_regime              REGIM   0    0   -- {'MISSING': 300}
+  index_trend                REGIM   0  300  0.00  0.00  1.00  0.00  0.00  1.00    1   nan    nan    nan  {} {}
+  breadth                    REGIM   0  300  0.00  0.00  1.00  0.00  0.00  1.00    1   nan    nan    nan  {} {}
+  usdkrw_regime              REGIM   0  300  1.00  0.00  0.00  1.00  1.00  1.00    1   nan    nan    nan  {} {}
+  credit_liquidity           REGIM   0  300  0.35  0.00  0.00  0.00  0.35  1.00    1  0.72    nan    nan  {} {}
+  financial_resilience       RISK    7  300  0.48  0.33  0.02  0.12  1.00  0.12  261  0.07   0.52   0.09  {} {'interest_cover': 0.9}
+  downside_drawdown          RISK    5  300  0.15  0.22  0.46  0.00  0.00  0.46  162  0.27   0.42   0.03  {} {}
+  liquidity                  RISK    4  300  0.67  0.28  0.02  0.22  1.00  0.22  230  0.13  -0.04  -0.01  {} {}
+  leverage                   RISK    4  271  0.67  0.31  0.06  0.11  1.00  0.11  225  0.13   0.54   0.05  {'NOT_APPLICABLE': 29} {}
+  governance                 EVENT   3  300  0.76  0.15  0.00  0.00  0.80  0.93    4  0.03   0.10   0.00  {} {}
+  material_events            EVENT   3  300  0.57  0.20  0.07  0.02  0.60  0.63    9  0.03   0.31   0.02  {} {}
+  insider_ownership          EVENT   2  272  0.96  0.17  0.00  0.94  1.00  0.94   18  0.16  -0.13  -0.00  {'MISSING': 28} {}
+  capital_allocation         EVENT   2  234  0.97  0.13  0.00  0.95  1.00  0.95    2  0.04   0.11   0.00  {'MISSING': 66} {'share_change': 1.0}
+  clusters:
+    w  22 (24%)  var 37%  ['business_quality', 'free_cash_flow']
+    w  15 (17%)  var 24%  ['valuation']
+    w  16 (18%)  var 22%  ['balance_dilution', 'financial_resilience', 'leverage']
+    w   8 (9%)  var 7%  ['growth_quality']
+    w   8 (9%)  var 6%  ['relative_strength', 'downside_drawdown']
+    w   7 (8%)  var 4%  ['long_trend', 'momentum_persistence']
+    w   3 (3%)  var 2%  ['material_events']
+    w   3 (3%)  var 0%  ['governance']
+    w   2 (2%)  var 0%  ['capital_allocation']
+    w   2 (2%)  var -0%  ['insider_ownership']
+    w   4 (4%)  var -1%  ['liquidity']
+  top pairs (pearson, spearman, n):
+    balance_dilution         leverage                   0.99   1.00 271
+    long_trend               momentum_persistence       0.78   0.80 299
+    financial_resilience     leverage                   0.74   0.80 271
+    balance_dilution         financial_resilience       0.77   0.80 300
+    relative_strength        downside_drawdown          0.63   0.65 300
+    business_quality         free_cash_flow             0.64   0.63 260
+    valuation                downside_drawdown          0.46   0.57 299
+    long_trend               relative_strength          0.53   0.51 299
+    business_quality         growth_quality             0.49   0.50 261
+    valuation                free_cash_flow             0.50   0.48 259
+    free_cash_flow           leverage                   0.37   0.43 260
+    free_cash_flow           balance_dilution           0.37   0.42 260

@@ -1,0 +1,670 @@
+[
+ {
+  "seq": 1,
+  "void": true,
+  "session": "2026-11-03",
+  "market": "KR",
+  "version": "QSF-1.1.0",
+  "n": 590,
+  "first_rec_local": "11-05 10:59",
+  "last_rec_local": "11-05 11:22",
+  "entry_session": "2026-11-06",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 21.6,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 508,
+   "BLOCKED": 80,
+   "INSUFFICIENT_DATA": 2
+  }
+ },
+ {
+  "seq": 3,
+  "void": true,
+  "session": "2026-11-04",
+  "market": "KR",
+  "version": "QSF-1.1.0",
+  "n": 590,
+  "first_rec_local": "11-05 12:55",
+  "last_rec_local": "11-05 13:02",
+  "entry_session": "2026-11-06",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 20.0,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 509,
+   "BLOCKED": 79,
+   "INSUFFICIENT_DATA": 2
+  }
+ },
+ {
+  "seq": 4,
+  "void": true,
+  "session": "2026-11-04",
+  "market": "US",
+  "version": "QSF-1.1.0",
+  "n": 1004,
+  "first_rec_local": "11-04 23:19",
+  "last_rec_local": "11-04 23:36",
+  "entry_session": "2026-11-05",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 9.9,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 913,
+   "BLOCKED": 84,
+   "INSUFFICIENT_DATA": 7
+  }
+ },
+ {
+  "seq": 7,
+  "void": false,
+  "session": "2026-11-04",
+  "market": "KR",
+  "version": "QSF-1.1.1",
+  "n": 590,
+  "first_rec_local": "11-05 13:47",
+  "last_rec_local": "11-05 13:48",
+  "entry_session": "2026-11-06",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 19.2,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 564,
+   "BLOCKED": 24,
+   "INSUFFICIENT_DATA": 2
+  }
+ },
+ {
+  "seq": 8,
+  "void": false,
+  "session": "2026-11-04",
+  "market": "US",
+  "version": "QSF-1.1.1",
+  "n": 1004,
+  "first_rec_local": "11-04 23:48",
+  "last_rec_local": "11-04 23:48",
+  "entry_session": "2026-11-05",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 9.7,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 921,
+   "BLOCKED": 76,
+   "INSUFFICIENT_DATA": 7
+  }
+ },
+ {
+  "seq": 9,
+  "void": false,
+  "session": "2026-11-05",
+  "market": "US",
+  "version": "QSF-1.1.2",
+  "n": 1004,
+  "first_rec_local": "11-05 17:16",
+  "last_rec_local": "11-05 17:25",
+  "entry_session": "2026-11-06",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 16.1,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 964,
+   "BLOCKED": 33,
+   "INSUFFICIENT_DATA": 7
+  }
+ },
+ {
+  "seq": 10,
+  "void": false,
+  "session": "2026-11-05",
+  "market": "KR",
+  "version": "QSF-1.1.2",
+  "n": 592,
+  "first_rec_local": "11-06 07:37",
+  "last_rec_local": "11-06 07:44",
+  "entry_session": "2026-11-06",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 1.3,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 572,
+   "BLOCKED": 18,
+   "INSUFFICIENT_DATA": 2
+  }
+ },
+ {
+  "seq": 11,
+  "void": false,
+  "session": "2026-11-06",
+  "market": "US",
+  "version": "QSF-1.1.3",
+  "n": 1006,
+  "first_rec_local": "11-06 17:23",
+  "last_rec_local": "11-06 17:38",
+  "entry_session": "2026-11-09",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 63.9,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 988,
+   "BLOCKED": 14,
+   "INSUFFICIENT_DATA": 4
+  }
+ },
+ {
+  "seq": 12,
+  "void": false,
+  "session": "2026-11-06",
+  "market": "KR",
+  "version": "QSF-1.1.3",
+  "n": 592,
+  "first_rec_local": "11-07 07:57",
+  "last_rec_local": "11-07 08:03",
+  "entry_session": "2026-11-09",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 48.9,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 575,
+   "BLOCKED": 15,
+   "INSUFFICIENT_DATA": 2
+  }
+ },
+ {
+  "seq": 13,
+  "void": false,
+  "session": "2026-11-09",
+  "market": "KR",
+  "version": "QSF-1.1.8",
+  "n": 590,
+  "first_rec_local": "11-10 11:52",
+  "last_rec_local": "11-10 11:56",
+  "entry_session": "2026-11-11",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 21.1,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 571,
+   "BLOCKED": 17,
+   "INSUFFICIENT_DATA": 2
+  }
+ },
+ {
+  "seq": 14,
+  "void": false,
+  "session": "2026-11-09",
+  "market": "US",
+  "version": "QSF-1.1.8",
+  "n": 1006,
+  "first_rec_local": "11-09 22:33",
+  "last_rec_local": "11-09 22:38",
+  "entry_session": "2026-11-10",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 10.9,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 993,
+   "BLOCKED": 9,
+   "INSUFFICIENT_DATA": 4
+  }
+ },
+ {
+  "seq": 15,
+  "void": false,
+  "session": "2026-11-10",
+  "market": "US",
+  "version": "QSF-1.1.8",
+  "n": 1006,
+  "first_rec_local": "11-10 17:24",
+  "last_rec_local": "11-10 17:31",
+  "entry_session": "2026-11-11",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 16.0,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 997,
+   "BLOCKED": 5,
+   "INSUFFICIENT_DATA": 4
+  }
+ },
+ {
+  "seq": 16,
+  "void": false,
+  "session": "2026-11-10",
+  "market": "KR",
+  "version": "QSF-1.1.8",
+  "n": 4,
+  "first_rec_local": "11-11 07:32",
+  "last_rec_local": "11-11 07:32",
+  "entry_session": "2026-11-11",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 1.5,
+  "data_date_not_session": 0,
+  "actionability": {
+   "BLOCKED": 4
+  }
+ },
+ {
+  "seq": 17,
+  "void": false,
+  "session": "2026-11-10",
+  "market": "KR",
+  "version": "QSF-1.1.8",
+  "n": 592,
+  "first_rec_local": "11-11 07:58",
+  "last_rec_local": "11-11 08:00",
+  "entry_session": "2026-11-11",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 1.0,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 571,
+   "BLOCKED": 19,
+   "INSUFFICIENT_DATA": 2
+  }
+ },
+ {
+  "seq": 18,
+  "void": false,
+  "session": "2026-11-11",
+  "market": "US",
+  "version": "QSF-1.3.1",
+  "n": 1008,
+  "first_rec_local": "11-11 17:26",
+  "last_rec_local": "11-11 17:42",
+  "entry_session": "2026-11-12",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 15.8,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 991,
+   "BLOCKED": 9,
+   "INSUFFICIENT_DATA": 8
+  }
+ },
+ {
+  "seq": 19,
+  "void": false,
+  "session": "2026-11-11",
+  "market": "KR",
+  "version": "QSF-1.3.1",
+  "n": 600,
+  "first_rec_local": "11-12 07:45",
+  "last_rec_local": "11-12 07:55",
+  "entry_session": "2026-11-12",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 1.1,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 491,
+   "BLOCKED": 109
+  }
+ },
+ {
+  "seq": 20,
+  "void": false,
+  "session": "2026-11-12",
+  "market": "US",
+  "version": "QSF-1.3.2",
+  "n": 1008,
+  "first_rec_local": "11-12 17:26",
+  "last_rec_local": "11-12 17:49",
+  "entry_session": "2026-11-13",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 15.7,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 991,
+   "BLOCKED": 9,
+   "INSUFFICIENT_DATA": 8
+  }
+ },
+ {
+  "seq": 21,
+  "void": false,
+  "session": "2026-11-12",
+  "market": "KR",
+  "version": "QSF-1.3.2",
+  "n": 600,
+  "first_rec_local": "11-13 07:51",
+  "last_rec_local": "11-13 08:00",
+  "entry_session": "2026-11-13",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 1.0,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 518,
+   "BLOCKED": 82
+  }
+ },
+ {
+  "seq": 22,
+  "void": false,
+  "session": "2026-11-13",
+  "market": "US",
+  "version": "QSF-1.3.2",
+  "n": 1008,
+  "first_rec_local": "11-13 17:25",
+  "last_rec_local": "11-13 17:43",
+  "entry_session": "2026-11-16",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 63.8,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 990,
+   "BLOCKED": 9,
+   "INSUFFICIENT_DATA": 9
+  }
+ },
+ {
+  "seq": 23,
+  "void": false,
+  "session": "2026-11-13",
+  "market": "KR",
+  "version": "QSF-1.3.2",
+  "n": 600,
+  "first_rec_local": "11-14 07:47",
+  "last_rec_local": "11-14 07:54",
+  "entry_session": "2026-11-16",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 49.1,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 545,
+   "BLOCKED": 55
+  }
+ },
+ {
+  "seq": 24,
+  "void": false,
+  "session": "2026-11-16",
+  "market": "US",
+  "version": "QSF-1.4.1",
+  "n": 1008,
+  "first_rec_local": "11-16 17:26",
+  "last_rec_local": "11-16 17:34",
+  "entry_session": "2026-11-17",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 15.9,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 987,
+   "BLOCKED": 12,
+   "INSUFFICIENT_DATA": 9
+  }
+ },
+ {
+  "seq": 25,
+  "void": false,
+  "session": "2026-11-16",
+  "market": "KR",
+  "version": "QSF-1.4.1",
+  "n": 600,
+  "first_rec_local": "11-17 07:36",
+  "last_rec_local": "11-17 07:43",
+  "entry_session": "2026-11-17",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 1.3,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 576,
+   "BLOCKED": 24
+  }
+ },
+ {
+  "seq": 26,
+  "void": false,
+  "session": "2026-11-17",
+  "market": "KR",
+  "version": "QSF-1.4.1",
+  "n": 600,
+  "first_rec_local": "11-18 10:04",
+  "last_rec_local": "11-18 10:29",
+  "entry_session": "2026-11-19",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 22.5,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 578,
+   "BLOCKED": 22
+  }
+ },
+ {
+  "seq": 27,
+  "void": false,
+  "session": "2026-11-17",
+  "market": "US",
+  "version": "QSF-1.4.1",
+  "n": 1006,
+  "first_rec_local": "11-17 22:11",
+  "last_rec_local": "11-17 22:22",
+  "entry_session": "2026-11-18",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 11.1,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 983,
+   "BLOCKED": 14,
+   "INSUFFICIENT_DATA": 9
+  }
+ },
+ {
+  "seq": 28,
+  "void": false,
+  "session": "2026-11-18",
+  "market": "US",
+  "version": "QSF-1.4.1",
+  "n": 1008,
+  "first_rec_local": "11-18 21:36",
+  "last_rec_local": "11-18 23:24",
+  "entry_session": "2026-11-19",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 10.1,
+  "data_date_not_session": 2,
+  "actionability": {
+   "ACTIONABLE": 984,
+   "BLOCKED": 15,
+   "INSUFFICIENT_DATA": 9
+  }
+ },
+ {
+  "seq": 29,
+  "void": false,
+  "session": "2026-11-18",
+  "market": "KR",
+  "version": "QSF-1.4.1",
+  "n": 600,
+  "first_rec_local": "11-19 13:28",
+  "last_rec_local": "11-19 13:45",
+  "entry_session": "2026-11-20",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 19.2,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 580,
+   "BLOCKED": 20
+  }
+ },
+ {
+  "seq": 30,
+  "void": false,
+  "session": "2026-11-19",
+  "market": "US",
+  "version": "QSF-1.4.1",
+  "n": 1006,
+  "first_rec_local": "11-19 17:26",
+  "last_rec_local": "11-19 17:27",
+  "entry_session": "2026-11-20",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 16.0,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 987,
+   "INSUFFICIENT_DATA": 9,
+   "BLOCKED": 10
+  }
+ },
+ {
+  "seq": 31,
+  "void": false,
+  "session": "2026-11-19",
+  "market": "KR",
+  "version": "QSF-1.4.1",
+  "n": 600,
+  "first_rec_local": "11-20 07:30",
+  "last_rec_local": "11-20 07:31",
+  "entry_session": "2026-11-20",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 1.5,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 580,
+   "BLOCKED": 20
+  }
+ },
+ {
+  "seq": 32,
+  "void": false,
+  "session": "2026-11-20",
+  "market": "US",
+  "version": "QSF-1.4.1",
+  "n": 1008,
+  "first_rec_local": "11-20 17:25",
+  "last_rec_local": "11-20 17:38",
+  "entry_session": "2026-11-23",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 63.9,
+  "data_date_not_session": 0,
+  "actionability": {
+   "BLOCKED": 12,
+   "ACTIONABLE": 987,
+   "INSUFFICIENT_DATA": 9
+  }
+ },
+ {
+  "seq": 33,
+  "void": false,
+  "session": "2026-11-20",
+  "market": "KR",
+  "version": "QSF-1.4.1",
+  "n": 600,
+  "first_rec_local": "11-21 07:41",
+  "last_rec_local": "11-21 07:47",
+  "entry_session": "2026-11-23",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 49.2,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 583,
+   "BLOCKED": 17
+  }
+ },
+ {
+  "seq": 34,
+  "void": false,
+  "session": "2026-11-23",
+  "market": "US",
+  "version": "QSF-1.5.2",
+  "n": 1008,
+  "first_rec_local": "11-23 17:27",
+  "last_rec_local": "11-23 17:37",
+  "entry_session": "2026-11-24",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 15.9,
+  "data_date_not_session": 0,
+  "actionability": {
+   "BLOCKED": 19,
+   "ACTIONABLE": 980,
+   "INSUFFICIENT_DATA": 9
+  }
+ },
+ {
+  "seq": 35,
+  "void": false,
+  "session": "2026-11-23",
+  "market": "KR",
+  "version": "QSF-1.5.2",
+  "n": 600,
+  "first_rec_local": "11-24 07:40",
+  "last_rec_local": "11-24 07:46",
+  "entry_session": "2026-11-24",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 1.2,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 578,
+   "BLOCKED": 22
+  }
+ },
+ {
+  "seq": 36,
+  "void": false,
+  "session": "2026-11-24",
+  "market": "US",
+  "version": "QSF-1.5.2",
+  "n": 1008,
+  "first_rec_local": "11-24 17:25",
+  "last_rec_local": "11-24 17:35",
+  "entry_session": "2026-11-25",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 15.9,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 988,
+   "BLOCKED": 12,
+   "INSUFFICIENT_DATA": 8
+  }
+ },
+ {
+  "seq": 37,
+  "void": false,
+  "session": "2026-11-24",
+  "market": "KR",
+  "version": "QSF-1.5.2",
+  "n": 600,
+  "first_rec_local": "11-25 07:38",
+  "last_rec_local": "11-25 07:44",
+  "entry_session": "2026-11-25",
+  "n_entry_sessions": 1,
+  "before_open": true,
+  "hours_before_open": 1.3,
+  "data_date_not_session": 0,
+  "actionability": {
+   "ACTIONABLE": 578,
+   "BLOCKED": 22
+  }
+ }
+]
