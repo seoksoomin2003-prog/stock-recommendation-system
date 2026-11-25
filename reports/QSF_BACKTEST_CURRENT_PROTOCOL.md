@@ -43,3 +43,8 @@
 
 - 시장마다 결과 파일(`reports/qsf/QSF_BACKTEST_CURRENT_US.json`, `…_KR.json`)이 있으면 다시 돌리지 않는다.
 - 배점이나 기준을 바꿔 가며 다시 돌리지 않는다. 다른 배점을 보고 싶으면 그것은 새 규칙 문서가 필요한 다른 시험이다.
+
+
+## 7. 정오표
+
+실행 뒤 찾은 결함과 밝히지 않은 차이는 `reports/QSF_BACKTEST_CURRENT_ERRATA.md`에 있습니다. 결과 파일은 다시 만들지 않습니다.

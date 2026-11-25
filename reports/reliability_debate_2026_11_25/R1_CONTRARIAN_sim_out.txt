@@ -1,0 +1,23 @@
+reference readings with a verdict: K=26 (36 minus 4 primary, minus 2 turnover books, minus 4 figures-only)
+  per-reading chance 0.0125 one-sided rho=0.0: P(at least one notable)=0.277, mean count=0.32
+  per-reading chance 0.0125 one-sided rho=0.3: P(at least one notable)=0.198, mean count=0.33
+  per-reading chance 0.0125 one-sided rho=0.6: P(at least one notable)=0.118, mean count=0.32
+  per-reading chance 0.0230 one-sided rho=0.0: P(at least one notable)=0.454, mean count=0.60
+  per-reading chance 0.0230 one-sided rho=0.3: P(at least one notable)=0.308, mean count=0.60
+  per-reading chance 0.0230 one-sided rho=0.6: P(at least one notable)=0.187, mean count=0.60
+  per-reading chance 0.0460 two-sided rho=0.0: P(at least one notable)=0.706, mean count=1.19
+  per-reading chance 0.0460 two-sided rho=0.3: P(at least one notable)=0.588, mean count=1.19
+  per-reading chance 0.0460 two-sided rho=0.6: P(at least one notable)=0.377, mean count=1.20
+turnover book, two markets, 50% each, independent: 0.75
+  prior 10% that true effect is IC0.05: after PASS 43%, after NO_EVIDENCE 9%, P(NO_EVIDENCE)=98%
+  prior 10% that true effect is IC0.10: after PASS 82%, after NO_EVIDENCE 5%, P(NO_EVIDENCE)=94%
+  prior 20% that true effect is IC0.05: after PASS 63%, after NO_EVIDENCE 19%, P(NO_EVIDENCE)=97%
+  prior 20% that true effect is IC0.10: after PASS 91%, after NO_EVIDENCE 11%, P(NO_EVIDENCE)=89%
+  prior 40% that true effect is IC0.05: after PASS 82%, after NO_EVIDENCE 38%, P(NO_EVIDENCE)=96%
+  prior 40% that true effect is IC0.10: after PASS 96%, after NO_EVIDENCE 24%, P(NO_EVIDENCE)=78%
+best of 14 null challengers: mean first-year z 1.7  next-year z of the same one 0.0  P(best z > 2.0) = 0.274
+  per-market effect 0.0 sd: P(either market passes t bar)=0.024  P(pooled passes)=0.012
+  per-market effect 1.0 sd: P(either market passes t bar)=0.203  P(pooled passes)=0.204
+  per-market effect 1.5 sd: P(either market passes t bar)=0.406  P(pooled passes)=0.452
+  per-market effect 2.0 sd: P(either market passes t bar)=0.644  P(pooled passes)=0.721
+  per-market effect 3.0 sd: P(either market passes t bar)=0.950  P(pooled passes)=0.978

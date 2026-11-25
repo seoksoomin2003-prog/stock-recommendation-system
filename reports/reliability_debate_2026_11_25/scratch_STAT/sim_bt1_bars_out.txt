@@ -1,0 +1,15 @@
+design | noise bar for 1.25% one-sided (table says 2.24) | chance noise reaches the observed t | chance noise passes 2.24
+US swing 20  n=152 h= 20 lag= 1 | bar 2.30 | P(t>=0.27)  39.55% | P(t>=2.24)  1.43%
+US long 63   n=151 h= 63 lag= 3 | bar 2.68 | P(t>=1.38)  11.87% | P(t>=2.24)  2.85%
+US long 126  n=148 h=126 lag= 6 | bar 2.91 | P(t>=2.14)   4.70% | P(t>=2.24)  3.96%
+US long 252  n=142 h=252 lag=12 | bar 3.36 | P(t>=1.98)   7.71% | P(t>=2.24)  5.62%
+KR swing 5   n= 90 h=  5 lag= 1 | bar 2.36 | P(t>=4.02)   0.01% | P(t>=2.24)  1.61%
+KR swing 20  n= 89 h= 20 lag= 1 | bar 2.32 | P(t>=5.13)   0.00% | P(t>=2.24)  1.51%
+KR long 63   n= 87 h= 63 lag= 3 | bar 2.77 | P(t>=2.92)   0.91% | P(t>=2.24)  3.29%
+KR long 126  n= 84 h=126 lag= 6 | bar 3.15 | P(t>=2.31)   4.38% | P(t>=2.24)  4.78%
+KR long 252  n= 78 h=252 lag=12 | bar 4.02 | P(t>=1.99)   9.86% | P(t>=2.24)  7.78%
+
+family of K independent statistics, chance of at least one |t|>=2.2: {1: 0.028, 4: 0.107, 8: 0.202, 12: 0.287, 24: 0.492}
+
+primary swing bar (240 daily values, h 20, lag 20): 3.33 | long (756, 63, 63): 3.35
+early bars: 60 -> 4.29  120 -> 3.76

@@ -432,7 +432,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
                "kr-challenger-record", "kr-challenger-status", "kr-challenger-evaluate-swing", "kr-challenger-evaluate-long",
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
-               "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "factor-inventory", "paper-book-record", "paper-book-status", "turnover-book-record", "turnover-book-status", "rank-book-record", "rank-book-status", "entry-book-record", "entry-book-status",
+               "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "factor-inventory", "backtest-current", "paper-book-record", "paper-book-status", "turnover-book-record", "turnover-book-status", "rank-book-record", "rank-book-status", "entry-book-record", "entry-book-status",
                "forecast-test", "forecast-record", "forecast-status", "forecast-touch-test", "score-split-record", "score-split-status", "score-split-evaluate",
                "fund-period-record", "fund-period-status", "fund-period-evaluate", "committee-evaluate",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-sue-prepare", "kr-sue-run",
@@ -773,6 +773,14 @@ def _qsf_forecast_touch(args) -> int:      # reports/QSF_FORECAST_TOUCH_PROTOCOL
     return 0 if res.get("status") in ("REAL", "ALREADY_RUN") else 1
 
 
+def _qsf_backtest_current(args) -> int:      # reports/QSF_BACKTEST_CURRENT_PROTOCOL.md: the score of today on stored history, once per market
+    from terminal.qsf import backtest_current
+    res = backtest_current.run(PROJECT_ROOT, args.market, log=lambda m: print(m, file=sys.stderr, flush=True))
+    print(json.dumps({k: res.get(k) for k in ("status", "market", "model_version", "first", "last", "evaluation_days", "rerun_of_used_windows")}
+                     | {"readings": {s: v.get("reading") for s, v in (res.get("strategies") or {}).items()}}, ensure_ascii=False, indent=1))
+    return 0
+
+
 def _qsf_factor_inventory(args) -> int:      # writes reports/QSF_FACTOR_INVENTORY.md from terminal/qsf/inventory.py; reads no price and no record
     from terminal.qsf import inventory
     path = inventory.write(PROJECT_ROOT)
@@ -1083,6 +1091,7 @@ QSF_HANDLERS = {
     "entry-book-status": _qsf_turnover_book,
     "lookahead-audit": _qsf_lookahead_audit,
     "factor-inventory": _qsf_factor_inventory,
+    "backtest-current": _qsf_backtest_current,
     "forecast-test": _qsf_forecast,
     "forecast-record": _qsf_forecast,
     "forecast-status": _qsf_forecast,

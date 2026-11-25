@@ -1,0 +1,5 @@
+280 stocks, 89 days.  'skew': equal expected return for every stock.  'bell': IC from a real difference in averages.
+skew  | mean IC +0.026 | mean t +4.08 | share of runs with t>=2.24: 96% | fifths (low->high, %) +0.00 / +0.01 / -0.00 / -0.00 / +0.00 | top-bottom -0.00% (sd across runs 0.25) | runs where top-bottom beats one round trip 0.53%: 2%
+skew  | mean IC +0.030 | mean t +4.73 | share of runs with t>=2.24: 99% | fifths (low->high, %) +0.01 / +0.00 / -0.00 / +0.01 / -0.00 | top-bottom -0.01% (sd across runs 0.26) | runs where top-bottom beats one round trip 0.53%: 2%
+skew  | mean IC +0.021 | mean t +3.37 | share of runs with t>=2.24: 85% | fifths (low->high, %) -0.00 / -0.01 / -0.01 / -0.00 / +0.00 | top-bottom +0.00% (sd across runs 0.26) | runs where top-bottom beats one round trip 0.53%: 2%
+bell  | mean IC +0.054 | mean t +8.61 | share of runs with t>=2.24: 100% | fifths (low->high, %) -0.79 / -0.30 / -0.00 / +0.30 / +0.79 | top-bottom +1.58% (sd across runs 0.20) | runs where top-bottom beats one round trip 0.53%: 100%

@@ -1,0 +1,35 @@
+primary bar 3.33, early bars {60: 4.29, 120: 3.76}; 600 made-up years per line
+
+== KR: 280 stocks, band = top 20%, round trip 0.53%
+true 20-session IC -0.001 (day scatter 0.140; universe-index scatter per 20 sessions 3.7%) | rank conditions A 1.0% | money B 13.0% (index ahead as in BT-1: 7.0%) | A and B 0.3% (0.2%) | band above universe in both halves 25.3% | t of (band - universe) over the bar 1.2% | band-index -0.58%, band-universe -0.02% per 20 sessions
+      early 60: 5-session IC -0.002 | t over the bar 0.3% | all rank conditions 0.3% | EARLY_AGAINST 0.5%
+      early 120: 5-session IC -0.000 | t over the bar 0.2% | all rank conditions 0.2% | EARLY_AGAINST 0.3%
+true 20-session IC +0.030 (day scatter 0.139; universe-index scatter per 20 sessions 3.8%) | rank conditions A 6.0% | money B 22.7% (index ahead as in BT-1: 14.5%) | A and B 2.8% (2.3%) | band above universe in both halves 48.0% | t of (band - universe) over the bar 5.5% | band-index -0.04%, band-universe +0.47% per 20 sessions
+      early 60: 5-session IC +0.019 | t over the bar 1.3% | all rank conditions 1.3% | EARLY_AGAINST 0.0%
+      early 120: 5-session IC +0.017 | t over the bar 1.0% | all rank conditions 1.0% | EARLY_AGAINST 0.0%
+true 20-session IC +0.052 (day scatter 0.138; universe-index scatter per 20 sessions 3.8%) | rank conditions A 14.3% | money B 34.8% (index ahead as in BT-1: 21.7%) | A and B 8.7% (6.7%) | band above universe in both halves 66.5% | t of (band - universe) over the bar 11.7% | band-index +0.25%, band-universe +0.81% per 20 sessions
+      early 60: 5-session IC +0.032 | t over the bar 2.2% | all rank conditions 2.2% | EARLY_AGAINST 0.0%
+      early 120: 5-session IC +0.032 | t over the bar 3.0% | all rank conditions 3.0% | EARLY_AGAINST 0.0%
+true 20-session IC +0.095 (day scatter 0.139; universe-index scatter per 20 sessions 3.7%) | rank conditions A 41.5% | money B 52.8% (index ahead as in BT-1: 38.5%) | A and B 27.0% (20.7%) | band above universe in both halves 89.2% | t of (band - universe) over the bar 35.2% | band-index +0.97%, band-universe +1.50% per 20 sessions
+      early 60: 5-session IC +0.055 | t over the bar 4.8% | all rank conditions 4.8% | EARLY_AGAINST 0.0%
+      early 120: 5-session IC +0.057 | t over the bar 16.0% | all rank conditions 15.3% | EARLY_AGAINST 0.0%
+true 20-session IC -0.044 (day scatter 0.139; universe-index scatter per 20 sessions 3.8%) | rank conditions A 0.0% | money B 7.7% (index ahead as in BT-1: 3.7%) | A and B 0.0% (0.0%) | band above universe in both halves 5.7% | t of (band - universe) over the bar 0.0% | band-index -1.18%, band-universe -0.68% per 20 sessions
+      early 60: 5-session IC -0.027 | t over the bar 0.0% | all rank conditions 0.0% | EARLY_AGAINST 0.8%
+      early 120: 5-session IC -0.026 | t over the bar 0.0% | all rank conditions 0.0% | EARLY_AGAINST 2.3%
+
+== US: 460 stocks, band = top 12%, round trip 0.40%
+true 20-session IC -0.003 (day scatter 0.194; universe-index scatter per 20 sessions 1.7%) | rank conditions A 1.3% | money B 13.7% (index ahead as in BT-1: 11.7%) | A and B 1.2% (1.2%) | band above universe in both halves 24.3% | t of (band - universe) over the bar 1.0% | band-index -0.44%, band-universe -0.06% per 20 sessions
+      early 60: 5-session IC -0.004 | t over the bar 0.2% | all rank conditions 0.2% | EARLY_AGAINST 0.3%
+      early 120: 5-session IC -0.004 | t over the bar 0.5% | all rank conditions 0.5% | EARLY_AGAINST 0.2%
+true 20-session IC +0.026 (day scatter 0.198; universe-index scatter per 20 sessions 1.7%) | rank conditions A 3.5% | money B 22.3% (index ahead as in BT-1: 19.7%) | A and B 2.7% (2.5%) | band above universe in both halves 35.0% | t of (band - universe) over the bar 2.2% | band-index -0.02%, band-universe +0.35% per 20 sessions
+      early 60: 5-session IC +0.013 | t over the bar 1.0% | all rank conditions 1.0% | EARLY_AGAINST 0.3%
+      early 120: 5-session IC +0.015 | t over the bar 0.8% | all rank conditions 0.8% | EARLY_AGAINST 0.2%
+true 20-session IC +0.049 (day scatter 0.196; universe-index scatter per 20 sessions 1.7%) | rank conditions A 7.3% | money B 33.7% (index ahead as in BT-1: 29.7%) | A and B 6.7% (6.3%) | band above universe in both halves 49.0% | t of (band - universe) over the bar 5.8% | band-index +0.30%, band-universe +0.69% per 20 sessions
+      early 60: 5-session IC +0.028 | t over the bar 1.0% | all rank conditions 1.0% | EARLY_AGAINST 0.3%
+      early 120: 5-session IC +0.029 | t over the bar 1.7% | all rank conditions 1.7% | EARLY_AGAINST 0.0%
+true 20-session IC +0.096 (day scatter 0.195; universe-index scatter per 20 sessions 1.7%) | rank conditions A 20.8% | money B 52.8% (index ahead as in BT-1: 49.2%) | A and B 18.8% (18.3%) | band above universe in both halves 71.2% | t of (band - universe) over the bar 16.0% | band-index +0.94%, band-universe +1.34% per 20 sessions
+      early 60: 5-session IC +0.055 | t over the bar 1.5% | all rank conditions 1.5% | EARLY_AGAINST 0.2%
+      early 120: 5-session IC +0.055 | t over the bar 6.3% | all rank conditions 6.3% | EARLY_AGAINST 0.0%
+true 20-session IC -0.048 (day scatter 0.195; universe-index scatter per 20 sessions 1.7%) | rank conditions A 0.3% | money B 6.0% (index ahead as in BT-1: 4.7%) | A and B 0.3% (0.3%) | band above universe in both halves 9.7% | t of (band - universe) over the bar 0.3% | band-index -1.07%, band-universe -0.68% per 20 sessions
+      early 60: 5-session IC -0.027 | t over the bar 0.0% | all rank conditions 0.0% | EARLY_AGAINST 1.2%
+      early 120: 5-session IC -0.027 | t over the bar 0.0% | all rank conditions 0.0% | EARLY_AGAINST 2.3%

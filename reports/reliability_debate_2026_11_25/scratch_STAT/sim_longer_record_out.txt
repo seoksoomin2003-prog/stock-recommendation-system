@@ -1,0 +1,9 @@
+single-reading bars at (240, 480, 720, 960) [3.4, 3.05, 2.92, 2.88]
+continuation bars at 480/720/960 (any of three = 1.25% under noise): [3.47, 3.33, 3.28] per-look chance 0.55 %
+noise: first reading passes 1.26% | any continuation passes 1.25%
+KR true IC 0.03 | one reading at 240/480/720/960: 6% / 10% / 15% / 21% | registered 240 then continuations, found by 240/480/720/960: 6% / 9% / 14% / 20%
+KR true IC 0.05 | one reading at 240/480/720/960: 13% / 27% / 43% / 57% | registered 240 then continuations, found by 240/480/720/960: 13% / 24% / 38% / 52%
+KR true IC 0.08 | one reading at 240/480/720/960: 32% / 66% / 86% / 95% | registered 240 then continuations, found by 240/480/720/960: 32% / 59% / 81% / 92%
+US true IC 0.03 | one reading at 240/480/720/960: 4% / 6% / 8% / 11% | registered 240 then continuations, found by 240/480/720/960: 4% / 6% / 8% / 11%
+US true IC 0.05 | one reading at 240/480/720/960: 7% / 13% / 21% / 28% | registered 240 then continuations, found by 240/480/720/960: 7% / 12% / 19% / 26%
+US true IC 0.08 | one reading at 240/480/720/960: 16% / 34% / 53% / 68% | registered 240 then continuations, found by 240/480/720/960: 16% / 30% / 47% / 63%

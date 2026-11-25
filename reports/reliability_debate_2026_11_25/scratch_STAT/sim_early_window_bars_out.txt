@@ -1,0 +1,5 @@
+KR long early 252d (2016-18): n=23 bar 11.08 | chance noise reaches t 2.05: 22.02%
+KR long early 63d: n=32 bar 3.26 | chance noise reaches t 3.02: 1.74%
+KR cap universe long 63d: n=86 bar 2.77 | chance noise reaches t 3.4: 0.39%
+KR cap universe long 252d: n=77 bar 4.13 | chance noise reaches t 2.46: 6.47%
+KR cap universe risk domain swing 20d: n=88 bar 2.30 | chance noise reaches t 4.5: 0.00%
