@@ -257,7 +257,7 @@ def munger(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] 
         opinion = f"거꾸로 따져 보면 돈을 영영 잃을 길이 여럿 보입니다(위험 {lr:.0f}/100, 가장 큰 것: {worst}). 싸 보여도 피합니다. 위험 점수가 {M_RISK_OK:.0f} 아래로 내려와야 다시 봅니다."
     elif rec == HOLD:
         opinion = (f"좋은 사업이지만 탁월하다고 하기엔 모자랍니다(탁월함 {ex:.0f}/기준 {M_EXCELLENT:.0f}, 지속성 {'자료 없음' if ps is None else f'{ps:.0f}'}/기준 {M_PERSIST:.0f}, 흑자 연도 {pct(f.get('profit_years'), 0)}). "
-                   f"가진 것은 두되 새로 살 이유는 없습니다. 적자 없이 높은 수익률이 이어지면 매수 후보가 됩니다.")
+                   f"가진 것은 두되 새로 살 이유는 없습니다. 적자 없이 높은 수익률이 이어지면 이 관점의 살 기준을 채웁니다.")
     else:
         opinion = f"평범한 사업은 싸도 사지 않습니다(탁월함 {ex:.0f}, {'ROE' if fin else '투하자본 수익률'} {pct(f['roic'])}{', ' + margin if fin else ''}). 탁월함 {M_GOOD:.0f} 이상이 되기 전에는 보지 않습니다."
     cond = {"buy": f"사업의 탁월함 {M_EXCELLENT:.0f} 이상(지금 {ex:.0f}), 지속성 {M_PERSIST:.0f} 이상이고 적자 연도 없음, 영구 손실 위험 {M_RISK_OK:.0f} 이하(지금 {lr:.0f}), PER {fair:.1f}배 이하(지금 {times(pe)})",

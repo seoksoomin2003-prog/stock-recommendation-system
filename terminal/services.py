@@ -1046,7 +1046,9 @@ class Terminal(ModelViews):
                                 lambda: self.src.yahoo_history(syms, period))
         hist = res["data"] or {}
         curve = pf.equity_curve(recs, {t: hist.get(sym[t]) or [] for t in tickers}, hist.get(bench) or [])
-        return {**curve, "status": res["status"] if curve["points"] else "UNAVAILABLE",
+        from terminal import journal_yardstick as jy                 # each sale beside the same money in the index fund (user decision 2026-11-25)
+        marked = jy.mark(state["closed"], hist.get(bench) or [])
+        return {**curve, "yardstick": {**jy.summary(marked, bench_name), "trades": marked[::-1][:50]}, "status": res["status"] if curve["points"] else "UNAVAILABLE",
                 "fetched_at": res["fetched_at"], "source": f"거래 기록 재계산 + Yahoo 일봉 종가, 비교 지수 {bench_name}",
                 "benchmark": bench_name, "method": "시간가중수익률(TWR): 입출금 효과를 제외한 일별 수익률의 누적"}
 

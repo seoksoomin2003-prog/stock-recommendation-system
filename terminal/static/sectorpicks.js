@@ -26,11 +26,11 @@ async function loadSectorPicks(f) {
         <span class="sp-score num">${fmt(p.score, 1)}</span><span class="grade ${SP_BAND[p.band] || ""}" style="width:auto;padding:0 6px">${esc(p.band_label || "")}</span>
         ${p.gates && p.gates.length ? ui.badge(p.gates.map((g) => QSF_GATE[g] || g).join(", "), "risk-note") : ""}${p.high_risk ? ui.badge("고위험 표시", "risk-note") : ""}</button>`).join("")
       : ui.empty("점수가 있는 종목이 없습니다.");
-    return `<div><h3>${QSF_STRAT[k]} 점수 상위 3 <span class="meta m0">${d.basis_kind === "HOLDINGS" ? `ETF 보유 ${d.fund_holdings}종목 중 스캔 대상 ${s.ranked}개` : `업종 ${s.ranked}개 중`} · 매수 후보 ${s.buy_candidates}개</span></h3>${list}</div>`;
+    return `<div><h3>${QSF_STRAT[k]} 점수 상위 3 <span class="meta m0">${d.basis_kind === "HOLDINGS" ? `ETF 보유 ${d.fund_holdings}종목 중 스캔 대상 ${s.ranked}개` : `업종 ${s.ranked}개 중`} · 상위 구간 ${s.buy_candidates}개</span></h3>${list}</div>`;
   };
   box.innerHTML = `${ui.head({ title, sub: `스캔 거래일 ${d.session} · ${d.model_version || ""}` })}
     <div class="sp-cols">${col("SWING")}${col("LONG_TERM")}</div>
-    <div class="meta">포함 기준: ${esc(d.rule)} ${esc(d.basis)} '매수 후보'가 아닌 종목은 업종 안에서 점수가 높을 뿐 매수 구간이 아닙니다.</div>
+    <div class="meta">포함 기준: ${esc(d.rule)} ${esc(d.basis)} '상위 구간'이 아닌 종목은 업종 안에서 점수가 높을 뿐 70점 이상이 아닙니다.</div>
     <div id="sp-plan"></div>`;
   box.querySelectorAll(".sp-pick").forEach((b) => (b.onclick = () => {
     box.querySelectorAll(".sp-pick").forEach((x) => x.classList.toggle("on", x.dataset.t === b.dataset.t));

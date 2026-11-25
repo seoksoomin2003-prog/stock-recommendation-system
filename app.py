@@ -437,7 +437,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "fund-period-record", "fund-period-status", "fund-period-evaluate", "committee-evaluate",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-sue-prepare", "kr-sue-run",
                "backup-check", "cache-report", "cache-prune", "price-audit", "us-earnings-gap", "stability",
-               "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "live-forward-early-60", "live-forward-early-120", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
+               "live-forward-status", "live-forward-evaluate-swing", "live-forward-evaluate-long", "live-forward-early-60", "live-forward-early-120", "live-forward-continue-480", "live-forward-continue-720", "live-forward-continue-960", "kr-avoid-marks-evaluate", *QSF_ONE_SHOT]
 
 
 def _regime_weights_record(market: str):
@@ -1017,13 +1017,14 @@ def _qsf_live_forward(args, q, market) -> int:
         from terminal.qsf import kr_avoid_marks
         res = kr_avoid_marks.evaluate_once(PROJECT_ROOT, q._loader("KR", longest=True), bench_of("KR"), benches=benches_of("KR"))
         res = {k: res.get(k) for k in ("status", "sessions_used", "days", "verdict", "reading_1", "reading_2", "buy_band_filter")}
-    elif args.action.startswith("live-forward-early-"):     # the two early readings of the swing score (the protocol's "중간 읽기"); they decide nothing
-        res = live_forward.early_once(PROJECT_ROOT, market, int(args.action.rsplit("-", 1)[1]), q._loader(market, longest=True), bench_of(market), benches=benches_of(market))
+    elif args.action.startswith(("live-forward-early-", "live-forward-continue-")):     # early readings decide nothing; continuation readings: QSF_AFTER_VERDICT_RULES_2026_11_25.md
+        once = live_forward.early_once if "-early-" in args.action else live_forward.continue_once
+        res = once(PROJECT_ROOT, market, int(args.action.rsplit("-", 1)[1]), q._loader(market, longest=True), bench_of(market), benches=benches_of(market))
         res = {k: res.get(k) for k in ("status", "market", "kind", "horizon", "sessions_used", "verdict", "condition_a", "condition_b", "t_bar", "reasons")}
     else:
         res = live_forward.evaluate_once(PROJECT_ROOT, market, "SWING" if args.action.endswith("swing") else "LONG_TERM", q._loader(market, longest=True), bench_of(market),
-                                         benches=benches_of(market))
-        res = {k: res.get(k) for k in ("status", "market", "strategy", "horizon", "sessions_used", "verdict", "condition_a", "condition_b", "pooled")}
+                                         benches=benches_of(market), sector_of=lambda t: (q._sector_of(market, t) or {}).get("sector"))
+        res = {k: res.get(k) for k in ("status", "market", "strategy", "horizon", "sessions_used", "verdict", "condition_a", "condition_b", "money_split", "reference", "pooled")}
     print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
     return 0
 
@@ -1123,6 +1124,9 @@ QSF_LIVE_HANDLERS = {
     "live-forward-evaluate-long": _qsf_live_forward,
     "live-forward-early-60": _qsf_live_forward,
     "live-forward-early-120": _qsf_live_forward,
+    "live-forward-continue-480": _qsf_live_forward,
+    "live-forward-continue-720": _qsf_live_forward,
+    "live-forward-continue-960": _qsf_live_forward,
     "kr-avoid-marks-evaluate": _qsf_live_forward,
     "validate": _qsf_validate,
     "verify": _qsf_verify,

@@ -42,9 +42,9 @@ def pin(deals: Optional[List[Dict[str, Any]]], bars: Sequence[Dict[str, Any]]) -
 
 
 def band_label(p: Dict[str, Any]) -> str:
-    return f"보유·관찰 · 합병 절차로 가격이 묶여 매수 후보에서 뺌({p['label']} {p['date']}, 20일 변동성 {p['vol20']:.1f}%)"
+    return f"보유·관찰 · 합병 절차로 가격이 묶여 상위 구간에서 뺌({p['label']} {p['date']}, 20일 변동성 {p['vol20']:.1f}%)"
 
 
 def why(p: Dict[str, Any]) -> str:
     return (f"{p['date']}에 '{p['label']}'이(가) 올라왔고 최근 20거래일 변동성이 연 {p['vol20']:.1f}%로 거의 움직이지 않습니다. "
-            "인수 가격에 묶인 종목은 추세·변동성 요인이 높게 나와도 오를 여지가 인수가까지뿐이라, 점수는 그대로 두고 매수 후보 구간을 주지 않습니다.")
+            "인수 가격에 묶인 종목은 추세·변동성 요인이 높게 나와도 오를 여지가 인수가까지뿐이라, 점수는 그대로 두고 상위 구간을 주지 않습니다.")

@@ -109,13 +109,14 @@ def test_the_card_keeps_its_content_under_the_new_sections():
 
 def test_the_detail_folds_committee_range_and_history_and_loads_them_when_opened():
     detail = body(QSF, "function qsfDrawDetail(")
-    order = [detail.index(k) for k in ('<div class="qsf-cards">', 'qsfFold("committee"', 'qsfFold("range"', 'qsfFold("tech"')]
-    assert order == sorted(order)
+    # ranges and risk come before the score cards and open by themselves (user decision 2026-11-25): the record supports them, not the direction
+    order = [detail.index(k) for k in ('qsfFold("range-first"', '<div class="qsf-cards">', 'qsfFold("committee"', 'qsfFold("tech"')]
+    assert order == sorted(order) and 'true, "qsffcfold")' in detail and detail.index("qsfRiskGradeLine(d.risk_grade)") < order[1]
     assert detail.index("QSF_RISK_NOTE") < order[0] and detail.index("d.deals") < order[0] and detail.index("qsfAuditLine(d.price_audit)") < order[0]
     assert 'qsfOnOpen($("#qsffcfold"), () => fcStock($("#qsffc"), d.ticker, d.market, d.cards));' in detail
     assert 'qsfOnOpen($("#qsftechfold"), () => qsfHistory($("#qsfhistory"), d.ticker, d.market));' in detail
     tech = detail[detail.index('qsfFold("tech"'):]
-    for k in ("qsfRiskGradeLine(d.risk_grade)", "QSF_RANK_NOTE[d.rank_basis]", "P6-11B 참고", 'id="qsftodayfold"', 'id="qsfhistory"'):
+    for k in ("QSF_RANK_NOTE[d.rank_basis]", "P6-11B 참고", 'id="qsftodayfold"', 'id="qsfhistory"'):
         assert k in tech, k
     got = node("""const calls = []; const el = { open: false, ls: [], addEventListener(t, f) { this.ls.push(f); }, removeEventListener(t, f) { this.ls = this.ls.filter((x) => x !== f); } };
 """ + body(QSF, "function qsfOnOpen(") + """

@@ -9,6 +9,8 @@ from terminal.automation import Daily
 from terminal.qsf import kr_avoid_marks, kr_cap_universe, kr_events_forward, kr_forward, kr_method, kr_swing_challenger, kr_swing_prior, kr_traded_universe, live_forward
 from terminal.qsf import readings as rd, regime_weights, score_split, us_challenger
 
+pytestmark = pytest.mark.usefixtures("mechanism_on")      # notices and buttons as they worked until 2026-11-25 (off by default since: tests/test_after_verdict_rules.py)
+
 ROOT = Path(__file__).resolve().parents[1]
 BY = {e["key"]: e for e in rd.REGISTRY}
 DAY = datetime(2027, 11, 20, 0, 0, tzinfo=timezone.utc)
@@ -48,7 +50,7 @@ def fill(tmp_path, store, n):
 # ---------------------------------------------------------------------- the list itself
 def test_the_list_names_real_commands_reports_stores_and_protocols():
     app = (ROOT / "app.py").read_text(encoding="utf-8")
-    assert len(rd.REGISTRY) == 30 and len(BY) == 30 and len({e["report"] for e in rd.REGISTRY}) == 30          # 24, the committee's paper record in two markets (2026-11-22), four early readings (2026-11-25)
+    assert len(rd.REGISTRY) == 36 and len(BY) == 36 and len({e["report"] for e in rd.REGISTRY}) == 36          # 24, the committee's paper record in two markets (2026-11-22), four early readings (2026-11-25)
     for e in rd.REGISTRY:
         assert f'"{e["argv"][-1]}"' in app and e["argv"][-2] == "qsf" and (ROOT / e["protocol"]).exists(), e["key"]
         assert e["argv"][:2] == ["--market", e["key"][-2:].upper()] or len(e["argv"]) == 2, e["key"]
@@ -171,7 +173,7 @@ def test_the_schedule_lists_every_reading_with_its_progress_and_its_verdict(tmp_
     p.write_text(json.dumps({"verdict": "CHALLENGER_BETTER"}), encoding="utf-8")
     got = rd.status(tmp_path, date(2026, 11, 16), {"kr_method_120": {"failed": 2}})
     rows = {r["key"]: r for r in got["readings"]}
-    assert got["total"] == 36 and rows["committee_paper_us"]["state"] == "WAITING" and rows["committee_paper_us"]["left"] == 242 and got["read"] == 1 and got["guide"] == "reports/RUNBOOK.md" and "읽는 데 사람이 할 일은 없고" in got["note"] and "스스로 바꾸지 않습니다" in got["note"]
+    assert got["total"] == 42 and rows["committee_paper_us"]["state"] == "WAITING" and rows["committee_paper_us"]["left"] == 242 and got["read"] == 1 and got["guide"] == "reports/RUNBOOK.md" and "읽는 데 사람이 할 일은 없고" in got["note"] and "스스로 바꾸지 않습니다" in got["note"]
     assert rows["kr_method_120"]["state"] == "DUE" and rows["kr_method_120"]["attempts"] == 2 and rows["kr_method_240"]["state"] == "WAITING" and rows["kr_method_240"]["left"] == 120
     assert rows["kr_cap_universe"]["left"] == 160 and rows["kr_cap_universe"]["expected"] == "2027-07" and rows["kr_cap_universe"]["applies_itself"] is False
     assert rows["kr_swing_challenger"]["state"] == "READ" and rows["kr_swing_challenger"]["verdict"] == "CHALLENGER_BETTER" and "도전자 공식이 지금 공식보다 나았습니다" in rows["kr_swing_challenger"]["meaning"]

@@ -26,7 +26,7 @@ def verdict(s, level="NORMAL", strategy="SWING", market="US", **kw):
 
 def test_entry_now_above_the_stance_line_is_ok_and_names_the_line():
     v = verdict(snap(72.0))
-    assert v["key"] == "OK" and v["label"] == "사도 됨" and v["change"] is None and v["candidate"]
+    assert v["key"] == "OK" and v["label"] == "막는 것 없음" and v["change"] is None and v["candidate"]
     assert "'기본'의 후보 선 70점" in v["basis"] and "방어적 75 · 기본 70 · 공격적 67" in v["basis"]
 
 

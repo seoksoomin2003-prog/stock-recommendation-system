@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import numpy as np
 
-from terminal.qsf import calibrate, config, ledger as ledger_mod, validate
+from terminal.qsf import calibrate, config, engine, ledger as ledger_mod, validate
 from terminal.qsf.ledger import Ledger
 from utils import durable
 
@@ -73,19 +73,59 @@ class Prices:
         return ledger_mod.outcome(bars, bench, session, h, cost, snap.get("entry_session"), days, by_date, self.calendar)
 
 
-def day_stats(session: str, snaps: List[Dict[str, Any]], px: Prices, h: int, cost: float) -> Optional[Dict[str, Any]]:
+def _fifths_median(sc: np.ndarray, r: np.ndarray, cost: float) -> Optional[float]:
+    """Median return of the top fifth less the bottom fifth's, net of one round trip.  A rank correlation can be positive while
+    the means are equal (a few large winners among the low scores); the median beside the mean lets a reader see which it is."""
+    q = validate.rank(sc) / (len(sc) - 1)
+    top, bot = r[q >= 0.8], r[q <= 0.2]
+    return float(np.median(top) - np.median(bot) - cost) if len(top) and len(bot) else None
+
+
+def without_factor(fid: str) -> Callable[[List[Dict[str, Any]]], np.ndarray]:
+    """A reference score: the recorded factor values weighted as the live score weights them, with one factor left out."""
+    def one(snap: Dict[str, Any]) -> float:
+        w = c = 0.0
+        for f in snap.get("factors") or []:
+            if f.get("factor") == fid or f.get("scored") is False or f.get("normalized") is None or f.get("status") not in engine._QUALITY:
+                continue
+            w, c = w + float(f["weight"]), c + float(f["weight"]) * float(f["normalized"])
+        return 100 * c / w if w else float("nan")
+    return lambda snaps: np.array([one(x) for x in snaps])
+
+
+def within_sector(sector_of: Callable[[str], Optional[str]]) -> Callable[[List[Dict[str, Any]]], np.ndarray]:
+    """A reference score: the recorded score less the mean of its sector that day.  The ledger keeps no sector, so the sectors
+    are the ones in use on the day of the reading, and the report says so."""
+    def many(snaps: List[Dict[str, Any]]) -> np.ndarray:
+        sc = np.array([float(x["score"]) for x in snaps])
+        sec = [sector_of(x["ticker"]) for x in snaps]
+        out = np.full(len(sc), np.nan)
+        for g in {x for x in sec if x}:
+            m = np.array([x == g for x in sec])
+            if m.sum() >= 3:
+                out[m] = sc[m] - sc[m].mean()
+        return out
+    return many
+
+
+def day_stats(session: str, snaps: List[Dict[str, Any]], px: Prices, h: int, cost: float,
+              variant: Optional[Callable[[List[Dict[str, Any]]], np.ndarray]] = None) -> Optional[Dict[str, Any]]:
     """One session's cross-section, or None while its holds have not ended.  Returns are net of one round trip."""
-    score, net, bench, own = [], [], [], []
+    score, net, bench, own, price, kept = [], [], [], [], [], []
     for s in snaps:
         o = px.outcome(s, session, h, cost)
         if not o:
             continue
         score.append(float(s["score"]))
         net.append(o["net"])
+        kept.append(s)
         own.append(float("nan"))
+        price.append(float("nan"))
         if o.get("relative_net") is not None and not o.get("stopped"):
             bench.append(o["net"] - o["relative_net"])                   # the index's return over the same days
             own[-1] = bench[-1]                                          # this stock's own index
+            if o.get("relative_price_net") is not None:
+                price[-1] = o["relative_price_net"]                      # the same comparison on prices alone
     if len(score) < MIN_ROWS or not bench:
         return None
     sc, r = np.array(score), np.array(net)
@@ -102,10 +142,21 @@ def day_stats(session: str, snaps: List[Dict[str, Any]], px: Prices, h: int, cos
         """The mean index return of these stocks' own indexes: KOSDAQ names against the KOSDAQ index."""
         return idx if one_index or not np.isfinite(ix[mask]).any() else float(np.nanmean(ix[mask]))
     every = np.ones(len(sc), dtype=bool)
+    pr = np.array(price)
+
+    def price_of(mask: np.ndarray) -> Optional[float]:
+        return float(np.nanmean(pr[mask])) if np.isfinite(pr[mask]).any() else None
     d.update(date=session, universe_net=float(r.mean()), index=idx, universe_effect=float(r.mean()) - index_of(every),
              buy_index=index_of(sc >= BUY) if len(buy) else None, top_index=index_of(q >= 0.8) if len(top) else None,
              buy_net=float(buy.mean()) if len(buy) else None, top_net=float(top.mean()) if len(top) else None,
+             buy_price=price_of(sc >= BUY) if len(buy) else None, top_price=price_of(q >= 0.8) if len(top) else None,
+             spread_median=_fifths_median(sc, r, cost),
              versions=sorted({str(s.get("model_version")) for s in snaps}))
+    if variant is not None:                          # a reference score rebuilt from the same records: figures only, never a verdict
+        v = variant(kept)
+        ok = np.isfinite(v)
+        got = validate.per_date(v[ok], r[ok], cost) if ok.sum() >= MIN_ROWS else None
+        d["variant"] = {"ic": got["ic"], "spread_net": got.get("spread_net"), "spread_median": _fifths_median(v[ok], r[ok], cost), "n": int(ok.sum())} if got and got.get("ic") is not None else None
     return d
 
 
@@ -126,7 +177,9 @@ def summarize(rows: List[Dict[str, Any]], h: int) -> Dict[str, Any]:
                 "score_effect": _mean(sel, lambda r: None if r["buy_net"] is None else r["buy_net"] - r["universe_net"]),
                 "top_minus_index": _mean(sel, lambda r: None if r["top_net"] is None else r["top_net"] - (r["index"] if r.get("top_index") is None else r["top_index"])),
                 "top_score_effect": _mean(sel, lambda r: None if r["top_net"] is None else r["top_net"] - r["universe_net"]),
-                "universe_effect": _mean(sel, lambda r: r["universe_effect"])}
+                "universe_effect": _mean(sel, lambda r: r["universe_effect"]),
+                "buy_minus_index_price": _mean(sel, lambda r: r.get("buy_price")), "top_minus_index_price": _mean(sel, lambda r: r.get("top_price")),
+                "spread_median": _mean(sel, lambda r: r.get("spread_median"))}
     separate = ic[::h]
     sd = float(np.std(separate, ddof=1)) if len(separate) > 2 else 0.0
     return {"dates": len(rows), "first": rows[0]["date"], "last": rows[-1]["date"], "split": mid, "lag": h, "mean_n": float(np.mean([r["n"] for r in rows])),
@@ -151,6 +204,50 @@ def reading(s: Dict[str, Any], top_band: bool = False) -> Dict[str, Any]:
     rank_ok = all(checks.values())
     return {"verdict": "WEAK_POSITIVE_EVIDENCE" if rank_ok and money else "RANK_ONLY" if rank_ok else "NO_EVIDENCE", "condition_a": checks, "condition_b": money,
             "band": "TOP_FIFTH" if top_band else "SCORE_70", "t_bar": s.get("t_bar")}
+
+
+SPLIT_SAYS = {"PASSED": "수익 조건(조건 B)을 채웠습니다.",
+              "SCORE_SIDE_POSITIVE": "수익 조건(조건 B)은 못 채웠지만, 점수 효과(점수 상위 묶음 − 스캔 전체)는 전·후반 모두 양수였습니다. 지수에 뒤진 몫은 대상(같은 비중으로 든 스캔 전체 − 지수)과 "
+                                     "비용 쪽에 있습니다. 점수 효과가 우연과 구분되는지는 이 수치로 알 수 없습니다.",
+              "SCORE_SIDE_NOT_POSITIVE": "수익 조건(조건 B)을 못 채웠고, 점수 효과(점수 상위 묶음 − 스캔 전체)도 전·후반 모두 양수는 아니었습니다."}
+
+
+def money_split(s: Dict[str, Any], cost: float, top_band: bool, money: bool) -> Dict[str, Any]:
+    """Condition B's one figure in its three parts (fixed 2026-11-25, before the first outcome matured): the scanned stocks at
+    equal weight against the index before cost, the cost of the round trip every stock pays, and the band against the scanned
+    stocks.  band − index = universe_before_cost − cost + score_effect.  The sentence is one of three written beforehand; the
+    verdict and its conditions are not touched.  ``price_only``: the same comparison without dividends on either side."""
+    key, eff, pkey = ("top_minus_index", "top_score_effect", "top_minus_index_price") if top_band else ("buy_minus_index", "score_effect", "buy_minus_index_price")
+    gt = lambda v: v is not None and v > 0          # noqa: E731
+
+    def part(p: Dict[str, Any]) -> Dict[str, Any]:
+        u = p.get("universe_effect")
+        return {"band_minus_index": p.get(key), "universe_before_cost": None if u is None else u + cost, "cost": cost, "score_effect": p.get(eff), "band_minus_index_price_only": p.get(pkey)}
+    code = "PASSED" if money else "SCORE_SIDE_POSITIVE" if gt(s["early"].get(eff)) and gt(s["late"].get(eff)) else "SCORE_SIDE_NOT_POSITIVE"
+    return {"all": part(s["all"]), "early": part(s["early"]), "late": part(s["late"]), "reading": code, "says": SPLIT_SAYS[code],
+            "condition_b_price_only": gt(s["early"].get(pkey)) and gt(s["late"].get(pkey)),
+            "price_only_note": "배당을 뺀 가격만으로 양쪽을 잰 값입니다. 한국 종목의 수정 종가에는 배당이 들어 있고 코스피·코스닥 지수에는 없어, 수정 종가 기준 비교는 배당만큼 종목 쪽에 유리합니다. "
+                               "판정은 수정 종가 기준 그대로이고 이 값은 옆에 적는 참고입니다."}
+
+
+REFERENCE_NOTE = ("참고 줄입니다(2026-11-25에 미리 정함). 같은 기록의 요인 값으로 다시 만든 점수의 수치만 적고, 통과도 탈락도 없으며 t 기준을 붙이지 않습니다. "
+                  "이 줄을 근거로 공식을 바꾸지 않습니다: 바꾸려면 새로 등록한 기록이 필요합니다.")
+
+
+def reference_line(days: List[Dict[str, Any]], name: str) -> Dict[str, Any]:
+    got = [d["variant"] for d in days if d.get("variant")]
+    if not got:
+        return {"variant": name, "status": "UNAVAILABLE", "note": REFERENCE_NOTE}
+    mean = lambda k: float(np.mean([g[k] for g in got if g.get(k) is not None])) if any(g.get(k) is not None for g in got) else None      # noqa: E731
+    return {"variant": name, "status": "REAL", "dates": len(got), "mean_n": float(np.mean([g["n"] for g in got])), "ic": mean("ic"), "spread_net": mean("spread_net"),
+            "spread_median": mean("spread_median"), "note": REFERENCE_NOTE}
+
+
+def variant_of(strategy: str, sector_of: Optional[Callable[[str], Optional[str]]]):
+    """(name, function) of the one reference score a strategy's verdict carries, or (name, None) when it cannot be built."""
+    if strategy == "SWING":
+        return "손익비 요인을 뺀 점수", without_factor("risk_reward")
+    return "업종 평균을 뺀 점수(판정 날의 업종 분류)", within_sector(sector_of) if sector_of else None
 
 
 def matured_sessions(sessions: Sequence[str], calendar: Sequence[str], h: int) -> List[str]:
@@ -189,7 +286,7 @@ def _pooled(base: Path, strategy: str) -> Optional[Dict[str, Any]]:
 
 
 def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str], List[Dict]], bench: List[Dict], log=print,
-                  benches: Optional[Dict[str, List[Dict]]] = None) -> Dict[str, Any]:
+                  benches: Optional[Dict[str, List[Dict]]] = None, sector_of: Optional[Callable[[str], Optional[str]]] = None) -> Dict[str, Any]:
     base = Path(base)
     top = (market, strategy) in TOP_BAND
     out = report_path(base, market, strategy)
@@ -206,7 +303,8 @@ def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str]
         raise RuntimeError(f"아직 판정할 수 없습니다. 만기 거래일 {len(ready)}개, 기준 {need}개입니다.")
     used = ready[:need]                              # exactly the fixed sample, whenever this is run
     cost = config.round_trip_cost(market)
-    days = [d for d in (day_stats(s, rows[s], px, h, cost) for s in used) if d]
+    vname, variant = variant_of(strategy, sector_of)
+    days = [d for d in (day_stats(s, rows[s], px, h, cost, variant) for s in used) if d]
     if len(days) < need // 2:
         raise RuntimeError(f"수익을 계산할 수 있는 날이 {len(days)}일뿐입니다. 시세를 확인하세요.")
     primary = summarize(days, h)
@@ -219,6 +317,7 @@ def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str]
         versions.setdefault("+".join(d["versions"]), []).append(d["ic"])
     res = {"status": "REAL", "protocol": PROTOCOL, "market": market, "strategy": strategy, "horizon": h, "sessions_used": len(used), "first": used[0], "last": used[-1],
            "cost_round_trip_pct": cost * 100, **reading(primary, top), "primary": primary, "other_horizons": extra,
+           "money_split": money_split(primary, cost, top, reading(primary, top)["condition_b"]), "reference": [reference_line(days, vname)],
            "benchmarks": sorted(px.benches) or None,
            "by_version": {k: {"dates": len(v), "ic": float(np.mean(v))} for k, v in sorted(versions.items())}, "note": NOTE}
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -275,7 +374,7 @@ def early_once(base: Path, market: str, n: int, loader: Callable[[str], List[Dic
     failed = [k for k, ok in r["condition_a"].items() if not ok]
     t_txt = "계산할 수 없음" if s["t"] is None else f"{s['t']:+.2f}"
     reasons = [f"처음 {len(used)}거래일({used[0]} ~ {used[-1]})의 스윙 점수와 그 뒤 {h}거래일 수익의 순위 상관: 평균 {s['ic']:+.3f}, t {t_txt} (기준 {s['t_bar']:g}. 주된 판정보다 엄격한 값입니다).",
-               "순위 조건 다섯 가지 가운데 못 채운 것: " + (", ".join(failed) if failed else "없음") + f". 수익 조건(매수 구간이 지수를 전·후반 모두 이김): {'채움' if r['condition_b'] else '못 채움'}.",
+               "순위 조건 다섯 가지 가운데 못 채운 것: " + (", ".join(failed) if failed else "없음") + f". 수익 조건(70점 이상 구간이 지수를 전·후반 모두 이김): {'채움' if r['condition_b'] else '못 채움'}.",
                "이 읽기는 짧은 기록을 봅니다. 작은 효과는 잡지 못하고, '구분되지 않음'은 효과가 없다는 뜻이 아닙니다.",
                "무엇이 나와도 점수, 규칙, 주된 판정(240거래일·20거래일 수익)은 바뀌지 않습니다."]
     res = {"status": "REAL", "protocol": PROTOCOL, "kind": "EARLY", "market": market, "strategy": "SWING", "horizon": h, "sessions_used": len(used), "first": used[0], "last": used[-1],
@@ -285,3 +384,76 @@ def early_once(base: Path, market: str, n: int, loader: Callable[[str], List[Dic
     durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
     log(f"{market} SWING early {n}: {verdict}")
     return res
+
+
+# ---------------------------------------------------------------------- continuation readings (pre-registered 2026-11-25)
+# User decision 2026-11-25 (reports/QSF_AFTER_VERDICT_RULES_2026_11_25.md): a swing verdict that does not pass is not a reason to
+# change the formula.  At a true rank correlation of 0.05 the 240-session verdict finds it about one time in eight (Korea) or
+# fourteen (the US); the only way to more power is the same formula read over a longer record.  So the same record is read again
+# at 480, 720 and 960 matured sessions: the same horizon, the same conditions, the first n sessions from FIRST.  Three more looks,
+# so each uses a stricter nominal bar: together they pass by chance about as often as ONE verdict (1.25%), which makes the swing
+# family 2.5% a market.  A reading is skipped once an earlier one passed, and is not made on a record of more than one formula.
+CONTINUE = (480, 720, 960)
+CONTINUE_T = 2.64                       # a one-sided chance of 0.41% a look: three looks, 1.25% together (calibrated for the overlap below)
+PASSED = "WEAK_POSITIVE_EVIDENCE"
+
+
+def continue_path(base: Path, market: str, n: int) -> Path:
+    return Path(base) / REPORT_DIR / f"QSF_LIVE_FORWARD_CONT_{market}_SWING_{n}.json"
+
+
+def _read(p: Path) -> Dict[str, Any]:
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def continue_once(base: Path, market: str, n: int, loader: Callable[[str], List[Dict]], bench: List[Dict], log=print,
+                  benches: Optional[Dict[str, List[Dict]]] = None) -> Dict[str, Any]:
+    """One continuation reading of the swing score: the first ``n`` matured sessions, read once, after every earlier reading."""
+    if n not in CONTINUE:
+        raise ValueError(n)
+    base, h, strategy = Path(base), PRIMARY["SWING"], "SWING"
+    top = (market, strategy) in TOP_BAND
+    out = continue_path(base, market, n)
+    if out.exists():
+        raise RuntimeError("이어 읽기는 한 번만 합니다. 이미 결과가 있습니다.")
+    before = [report_path(base, market, strategy)] + [continue_path(base, market, m) for m in CONTINUE if m < n]
+    if not all(p.exists() for p in before):
+        raise RuntimeError("앞선 판정이나 이어 읽기가 아직 없습니다. 순서대로 읽습니다.")
+    head = {"status": "REAL", "protocol": "reports/QSF_AFTER_VERDICT_RULES_2026_11_25.md", "kind": "CONTINUATION", "market": market, "strategy": strategy, "horizon": h,
+            "sessions_wanted": n, "applies_itself": False, "note": NOTE}
+
+    def write(res: Dict[str, Any]) -> Dict[str, Any]:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
+        log(f"{market} SWING continuation {n}: {res['verdict']}")
+        return res
+    if any(_read(p).get("verdict") == PASSED for p in before):
+        return write({**head, "verdict": "ALREADY_PASSED", "reasons": ["앞선 판정이 이미 순위와 수익 조건을 모두 채웠습니다. 이 읽기는 수익을 읽지 않았습니다."]})
+    led = Ledger(base)
+    if led.verify()["status"] != "OK":
+        raise RuntimeError("원장 검증에 실패해 읽지 않습니다.")
+    rows = session_rows(led, market, strategy)
+    px = Prices(loader, bench, benches)
+    ready = matured_sessions(list(rows), px.calendar, h)
+    if len(ready) < n:
+        raise RuntimeError(f"아직 읽을 수 없습니다. 만기 거래일 {len(ready)}개, 기준 {n}개입니다.")
+    used = ready[:n]                                 # exactly the fixed sample, whenever this is run
+    versions = sorted({str(x.get("model_version")) for d in used for x in rows[d]})
+    if len(versions) > 1:                            # decided before any return is read
+        return write({**head, "verdict": "MIXED_FORMULA", "versions": versions, "first": used[0], "last": used[-1],
+                      "reasons": [f"이 {n}거래일에는 점수 공식이 둘 이상 섞여 있습니다({', '.join(versions)}). 한 공식의 기록이 아니어서 읽지 않았고, 수익도 읽지 않았습니다."]})
+    cost = config.round_trip_cost(market)
+    days = [d for d in (day_stats(s, rows[s], px, h, cost) for s in used) if d]
+    if len(days) < n // 2:
+        raise RuntimeError(f"수익을 계산할 수 있는 날이 {len(days)}일뿐입니다. 시세를 확인하세요.")
+    s = summarize(days, h)
+    s["t_bar"], s["t_nominal"] = calibrate.bar(CONTINUE_T, len(days), h, 1, h), CONTINUE_T
+    r = reading(s, top)
+    failed = [k for k, ok in r["condition_a"].items() if not ok]
+    t_txt = "계산할 수 없음" if s["t"] is None else f"{s['t']:+.2f}"
+    split = money_split(s, cost, top, r["condition_b"])
+    reasons = [f"처음 {len(used)}거래일({used[0]} ~ {used[-1]})의 스윙 점수와 그 뒤 {h}거래일 수익의 순위 상관: 평균 {s['ic']:+.3f}, t {t_txt} (기준 {s['t_bar']:g}. 여러 번 읽는 만큼 첫 판정보다 엄격한 값입니다).",
+               "순위 조건 다섯 가지 가운데 못 채운 것: " + (", ".join(failed) if failed else "없음") + ".", split["says"],
+               "이 읽기는 첫 판정과 같은 공식, 같은 기록을 더 길게 본 것입니다. 통과하지 못해도 공식을 바꿀 이유가 아닙니다."]
+    return write({**head, "sessions_used": len(used), "first": used[0], "last": used[-1], "cost_round_trip_pct": cost * 100, **r, "t_nominal": CONTINUE_T, "primary": s,
+                  "money_split": split, "versions": versions, "reasons": reasons})

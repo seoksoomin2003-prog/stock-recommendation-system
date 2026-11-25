@@ -352,3 +352,15 @@ def pytest_collection_modifyitems(config, items):
         reason = LEGACY_LIVE_DATA.get(item.nodeid)
         if reason:
             item.add_marker(pytest.mark.xfail(run=False, reason=f"LEGACY_LIVE_DATA: {reason}"))
+
+
+@pytest.fixture
+def mechanism_on(monkeypatch):
+    """Notices for every reading and the three "이 규칙 쓰기" buttons, as they worked until 2026-11-25.  Both are kept in the code
+    and are off by default since then (user decision; tests/test_after_verdict_rules.py pins the defaults); the tests of the
+    mechanism itself ask for this fixture."""
+    from terminal.qsf import config, readings
+    monkeypatch.setattr(config, "APPLY_BUTTONS", True)
+    monkeypatch.setattr(readings, "BOOKS_NOTIFY", True)
+    for e in readings.REGISTRY:
+        monkeypatch.setitem(e, "notify", True)

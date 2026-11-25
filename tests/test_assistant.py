@@ -48,7 +48,7 @@ def order(ticker, shares=10):
 def test_the_order_plan_reads_by_what_the_account_allows():
     assert kinds(A.plan_items({"status": "NO_SCAN"}, "US")) == ["NO_SCAN"]
     none = A.plan_items({"status": "NO_ACCOUNT", "candidates": 322}, "US")[0]
-    assert none["kind"] == "NO_ACCOUNT" and none["level"] == "INFO" and "322건" in none["text"] and none["short"] == "계좌 미기록(진입 가능 후보 322건)"
+    assert none["kind"] == "NO_ACCOUNT" and none["level"] == "INFO" and "322건" in none["text"] and none["short"] == "계좌 미기록(진입 규칙 충족 후보 322건)"
     plan = {"status": "REAL", "candidates": 9, "orders": [order(t) for t in ("AAA", "BBB", "CCC", "DDD", "EEE")]}
     got = A.plan_items(plan, "US")
     assert kinds(got) == ["ORDER", "ORDER", "ORDER", "ORDERS_MORE"] and got[0]["level"] == "DUE" and got[0]["ticker"] == "AAA"
@@ -111,7 +111,7 @@ def test_headline_and_the_daily_message_lines_carry_no_amount():
     kr = {"status": "REAL", "market": "KR", "orders": 0, "items": A.plan_items({"status": "NO_ACCOUNT", "candidates": 150}, "KR")
           + A.top_items({"strategies": {"SWING": {"days": [{"session": "2026-11-20", "entry_session": "2026-11-23", "top": [{"ticker": "138930", "name": "BNK금융지주", "score": 67.87}]}]}}}, "KR")}
     lines = A.daily_lines([us, kr, {"status": "UNAVAILABLE"}])
-    assert lines == ["시장 상태: 미국 15/100(나쁨, 새 주문 크기 0.5배)", "스윙 상위 3: 한국 BNK금융지주 67.9 (진입 2026-11-23)", "주문 계획: 미국 5건(AAA, BBB, CCC 등) · 한국 계좌 미기록(진입 가능 후보 150건)"]
+    assert lines == ["시장 상태: 미국 15/100(나쁨, 새 주문 크기 0.5배)", "스윙 상위 3: 한국 BNK금융지주 67.9 (진입 2026-11-23)", "주문 계획: 미국 5건(AAA, BBB, CCC 등) · 한국 계좌 미기록(진입 규칙 충족 후보 150건)"]
     assert "1234" not in "".join(lines) and "$" not in "".join(lines) and A.daily_lines([]) == []
     text = Daily.compose("2026-11-20", {}, {"status": "OK", "items": []}, [], [], brief=lines)
     assert "[오늘 볼 것]\n시장 상태: 미국 15/100" in text and "순위는 매수 신호가 아닙니다" in text
@@ -310,7 +310,7 @@ def test_an_answer_gives_the_conclusion_first_then_titled_groups_and_what_to_ask
     why = A.answer(term, "삼성전자 점수 왜 낮아?", "US")
     assert why["status"] == "REAL" and why["intent"] == "WHY" and why["ticker"] == "005930" and why["market"] == "KR" and why["note"] == A.NOTE
     assert why["summary"].startswith("삼성전자의 스윙 점수는 53.9점으로 3종목 중 1위(상위 33%)") and "중간값 40.0점" in why["summary"] and "16.1점 모자랍니다" in why["summary"]
-    assert "매수 후보 구간에 든 종목이 하나도 없습니다" in why["summary"] and why["lines"][0] == why["summary"]
+    assert "상위 구간에 든 종목이 하나도 없습니다" in why["summary"] and why["lines"][0] == why["summary"]
     titles = [s["title"] for s in why["sections"]]
     assert titles[0].startswith("점수를 깎은 것 (100점에서 46.1점을 잃었고") and titles[1:] == ["점수를 받친 것", "점수에 들어가지 않은 것", "프로그램이 이 점수로 읽는 것", "무엇이 달라지면 바뀌나"]
     assert why["lines"] == [why["summary"]] + [x for s in why["sections"] for x in s["lines"]]
@@ -408,9 +408,9 @@ def test_stock_answers_come_from_the_stored_scan(term):
     sec = lambda a, t: next(s["lines"] for s in a["sections"] if s["title"].startswith(t))      # noqa: E731
     buy = A.answer(term, "AAPL 사도 돼?", "KR")
     table = sec(buy, "점검표")
-    assert buy["intent"] == "BUY_CHECK" and len(table) == 7 and table[0].startswith("○ 성향 후보: 스윙 71.5점") and table[1].startswith("○ 진입 판단: '지금 진입 가능 구간'") and table[5].startswith("✕ 시장 상태")
+    assert buy["intent"] == "BUY_CHECK" and len(table) == 7 and table[0].startswith("○ 성향 후보: 스윙 71.5점") and table[1].startswith("○ 진입 판단: '진입 규칙 충족'") and table[5].startswith("✕ 시장 상태")
     # the conclusion comes first (user decision 2026-11-24): the default stance NORMAL (line 70), entry now, nothing blocks
-    assert buy["verdict"]["key"] == "OK" and buy["summary"].startswith("사도 됨 (스윙, 프로그램 규칙 기준) — ") and "7개 중 6개 통과" in next(s["title"] for s in buy["sections"] if s["title"].startswith("점검표"))
+    assert buy["verdict"]["key"] == "OK" and buy["summary"].startswith("막는 것 없음 (스윙, 프로그램 규칙 기준) — ") and "7개 중 6개 통과" in next(s["title"] for s in buy["sections"] if s["title"].startswith("점검표"))
     assert any("성향 '기본'의 후보 선 70점" in x for x in sec(buy, "결론 자세히")) and any("주문은 직접 정합니다" in x for x in sec(buy, "결론 자세히"))
     for word in ("사세요", "매수하세요", "파세요", "매도하세요", "추천합니다"):
         assert word not in json.dumps(buy, ensure_ascii=False)
@@ -431,7 +431,7 @@ def test_stock_answers_come_from_the_stored_scan(term):
     earn = A.answer(term, "삼성전자 실적 언제?", "KR")
     assert "2027-01-27(44거래일 뒤)" in earn["summary"] and "추정했습니다" in flat(earn) and "발표 5거래일 전부터 새 진입을 막습니다" in flat(earn) and "지금은 그 밖입니다" in flat(earn)
     rank = A.answer(term, "TECH 몇 등이야?", "KR")
-    assert "4종목 중 1위(상위 25%)" in rank["summary"] and "근거는 아직 확인되지 않았습니다" in flat(rank) and "매수 후보 구간(70점 이상)에 든 종목은 2개" in flat(rank)
+    assert "4종목 중 1위(상위 25%)" in rank["summary"] and "근거는 아직 확인되지 않았습니다" in flat(rank) and "상위 구간(70점 이상)에 든 종목은 2개" in flat(rank)
     low = A.answer(term, "IT 몇 등이야?", "KR")
     assert "4종목 중 4위(하위 1%)" in low["summary"]
     sell = A.answer(term, "삼성전자 팔아야 해?", "KR")
@@ -450,7 +450,7 @@ def test_plain_answers_and_what_it_does_not_know(term):
     assert market["title"] == "한국 시장 노트(2026-11-20)" and by["지수"][0] == "코스피 4,869.96(전일 대비 -3.10%, 한 달 -12.3%, 2026-11-20)."
     assert "대표 지수는 200일 평균보다 -25.4%, 50일 평균보다 -20.3%입니다." in by["얼마나 불안한가"] and any("200일 평균 위에 있는 종목은 16%" in x for x in by["얼마나 불안한가"])
     assert by["업종"] == ["한 달 동안 가장 약한 업종: 기술 -18.3%, 에너지 -10.4%, 금융 -6.0%.", "가장 강한 업종: 필수소비재 +0.5%, 유틸리티 -0.4%, 금융 -6.0%."]
-    assert "스윙 점수의 중간값은 40.0점이고, 3종목 가운데 매수 후보 구간(70점 이상)은 0개입니다." in by["점수로 본 시장"] and by["다가오는 일정"] == ["FOMC 금리 결정 2026-11-23(2일 뒤)."]
+    assert "스윙 점수의 중간값은 40.0점이고, 3종목 가운데 상위 구간(70점 이상)은 0개입니다." in by["점수로 본 시장"] and by["다가오는 일정"] == ["FOMC 금리 결정 2026-11-23(2일 뒤)."]
     assert "왜 움직였는지(뉴스의 뜻)는 판단하지 않습니다" in flat(market)
     assert "왕복 비용을 0.53%로 계산합니다" in A.answer(term, "수수료는 얼마로 계산해?", "KR")["summary"]
     top = A.answer(term, "오늘 상위 종목은?", "US")

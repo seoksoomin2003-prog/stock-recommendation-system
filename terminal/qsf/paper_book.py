@@ -24,7 +24,7 @@ CURRENCY = {"KR": "원", "US": "달러"}
 REFERENCE = {"KR": "005930", "US": "SPY"}                # whose bars give the market's trading days
 FIRST = "2026-11-12"            # the first session that makes a plan; its fills come at the next session's open
 SWING_TIME_STOP = config.SWING["time_stop"]             # sessions held after which a swing position is closed at the close
-LONG_EXIT_SCORE = 40.0          # a long position leaves when its long-term score falls under this ('매도·회피 후보')
+LONG_EXIT_SCORE = 40.0          # a long position leaves when its long-term score falls under this ('최하위 구간')
 HALT_SESSIONS = 10              # sessions without a price after which a position is closed at its last close
 RESTATED = 0.005                # a stored close this far from the price file's close for the same day means the file was restated
 MIN_ROWS = 200                  # fewer scored stocks than this is a partial day: no plan is made from it
@@ -306,7 +306,7 @@ def status(base: Path, market: str) -> Dict[str, Any]:
     folder = Path(base) / FOLDERS[market]
     index = kf.read_index(base, FOLDERS[market])
     head = {"market": market, "rules": RULES, "version": VERSION, "start_cash": START_CASH[market], "currency": CURRENCY[market], "first": FIRST,
-            "note": "판정 전 참고입니다. 가상의 금액으로 프로그램의 '지금 진입 가능' 안내를 기계적으로 따른 결과이고, 한 계좌의 경로는 점수의 근거가 아닙니다. 주문을 보내지 않으며 투자 자문이 아닙니다.",
+            "note": "판정 전 참고입니다. 가상의 금액으로 프로그램의 '진입 규칙 충족' 안내를 기계적으로 따른 결과이고, 한 계좌의 경로는 점수의 근거가 아닙니다. 주문을 보내지 않으며 투자 자문이 아닙니다.",
             "exit_labels": EXIT_LABELS, "unfilled_labels": UNFILLED_LABELS, "binding_labels": order_plan.BINDING, "skip_labels": order_plan.REASONS,
             "cost_basis": config.COSTS[market]["basis"], "limit_atr": order_plan.LIMIT_ATR, "max_participation_pct": order_plan.MAX_PARTICIPATION * 100,
             "swing_time_stop": SWING_TIME_STOP, "long_exit_score": LONG_EXIT_SCORE}

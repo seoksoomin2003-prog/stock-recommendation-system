@@ -1,7 +1,7 @@
 // QSF score tab.  Every colour comes with a text label; score and confidence are always shown separately.
 const QSF_ACTION_CLASS = { BUY: "act-buy", SELL: "act-sell", AVOID: "act-sell", REDUCE: "act-reduce", HOLD: "act-hold", WATCH: "act-hold", INSUFFICIENT_DATA: "act-hold", BLOCKED: "act-hold" };
 const QSF_STRAT = { SWING: "스윙", LONG_TERM: "장기" };
-const QSF_ENTRY = { ENTRY_NOW: "지금 진입 가능 구간", WAIT_FOR_PULLBACK: "눌림 대기", WAIT_FOR_BREAKOUT_CONFIRMATION: "돌파 확인 대기", WAIT_FOR_EARNINGS: "실적 발표 대기", OVERVALUED_AT_CURRENT_PRICE: "현재 가격 고평가", NO_VALID_ENTRY_SETUP: "유효한 진입 근거 없음" };
+const QSF_ENTRY = { ENTRY_NOW: "진입 규칙 충족", WAIT_FOR_PULLBACK: "눌림 대기", WAIT_FOR_BREAKOUT_CONFIRMATION: "돌파 확인 대기", WAIT_FOR_EARNINGS: "실적 발표 대기", OVERVALUED_AT_CURRENT_PRICE: "현재 가격 고평가", NO_VALID_ENTRY_SETUP: "유효한 진입 근거 없음" };
 // A long-term card's ENTRY_NOW says only that no rule blocks entry: 61% of US long cards carried it, so it is not a timing signal
 // and is not named like one (user decision 2026-11-23).  The swing one has passed a reward-to-risk test and keeps its name.
 const qsfEntry = (status, strategy) => (status === "ENTRY_NOW" && strategy === "LONG_TERM" ? "진입을 막는 조건 없음" : QSF_ENTRY[status] || "");
@@ -225,7 +225,7 @@ async function renderQsf(keep = false) {
       <b>점수 검증: 높은 점수의 수익 근거 아직 없음 · 참고용</b></span> <span class="fold-hint">자세히</span></summary>
     <div id="qsfstatefull"></div>
     <div class="notice qsf-caveat"><b>점수가 높다고 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다. 참고용으로만 쓰세요.</b><br>
-    <b>미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. 한국 스캔 대상은 2026-11-11부터 시가총액 상위 300종목입니다. 이 대상 안에서 점수는 과거 시험(2019~2026)의 기준에 못 미쳤고(장기 점수는 순위와 약한 양의 관계, 상위 종목은 시장 수준), 이전 대상(거래대금 상위 300)에서는 장기 점수가 한 구간에서만 순위를 설명했으며 그 대상 자체가 시장보다 크게 부진했습니다. 한국 스윙 점수는 2026-11-11에 차트 항목을 뺀 새 구성이라 과거 성적이 없습니다. 2026-11-16부터 네 점수 모두 시장 국면을 빼고 '시장 상태'로 따로 보여 줍니다(종목 순위는 거의 그대로이고 매수 후보 수가 달라집니다). 참고용으로만 쓰세요.</b><br>모델 탭의 기준 모델(미국 종목에 순위를 매겨 상위 5개와 진입·손절 계획을 내는, 규칙이 고정된 모델)과 별개인 규칙 기반 점수이며, 두 결과를 합치지 않습니다. 가중치와 구간은 사전에 정한 연구 기본값입니다. 주문을 실행하지 않고, 투자 자문이 아닙니다.</div>
+    <b>과거 기록(미국 2014~2026, 한국 2019~2026)을 지금 공식으로 다시 읽어도 네 점수 모두에서 점수 상위를 사면 더 번다는 근거를 찾지 못했습니다. 미국 스윙: 점수와 수익의 순위 관계가 없었습니다. 미국 장기: 순위 관계가 기준에 못 미쳤고, 이 과거 재현은 실제 점수의 근사치입니다. 한국 스윙: 2026-11-11에 차트 항목을 뺀 구성이고, 순위 관계는 있었지만 상위와 하위 묶음의 수익이 같았으며 구성을 이 구간을 보고 정했습니다. 한국 장기: 순위와 약한 양의 관계가 있고 상위 묶음이 스캔 평균보다 높았으나, 주된 기간(1년)은 기준에 못 미쳤습니다. 한국 스캔 대상은 2026-11-11부터 시가총액 상위 300종목입니다(이전 대상은 거래대금 상위 300). 같은 구간을 여러 번 읽은 결과라 새 근거가 아니며, 판정은 2026-11-25부터의 실전 기록으로 합니다(스윙 첫 판정 2027년 12월쯤). 그때까지 70점 이상 구간의 이름에 '매수'를 쓰지 않습니다. 네 점수 모두 시장 국면은 '시장 상태'로 따로 보여 줍니다. 참고용으로만 쓰세요.</b><br>모델 탭의 기준 모델(미국 종목에 순위를 매겨 상위 5개와 진입·손절 계획을 내는, 규칙이 고정된 모델)과 별개인 규칙 기반 점수이며, 두 결과를 합치지 않습니다. 가중치와 구간은 사전에 정한 연구 기본값입니다. 주문을 실행하지 않고, 투자 자문이 아닙니다.</div>
     <div id="qsfrecord"></div>
     <div id="qsfstance"></div></details>
     <div class="qsf-nav">
@@ -471,12 +471,14 @@ function qsfDrawDetail(d, r) {
     ${d.filing_events ? `<div class="meta">${QSF_FILING_NOTE} 기준일 ${esc(d.filing_events.session)}.</div>` : ""}
     ${(d.deals || []).length ? `<div class="notice">SEC에 인수·합병 절차 공시가 있습니다: ${d.deals.slice(0, 3).map((x) => `${esc(x.label)}(${esc(x.form)}, ${esc(x.date)})`).join(", ")}. 인수 가격이 정해진 종목은 더 오를 여지가 작고 거래가 깨지면 크게 내릴 수 있습니다. 인수하는 쪽이 내는 경우도 있으니 공시 원문을 확인하세요. 점수는 이 공시를 읽지 않습니다.</div>` : ""}
     ${qsfAuditLine(d.price_audit)}
+    ${qsfFold("range-first", `먼저 볼 것: 가격 범위와 위험 <span class="meta m0">점수에 포함되지 않음 · 예측 층 FC-1</span>`, `<div class="meta">과거 기록에서 이 프로그램이 맞힌 것은 방향이 아니라 흔들림의 크기였습니다. 점수가 높다고 더 오른다는 근거는 아직 없어, 범위와 위험을 점수보다 먼저 보여 줍니다(2026-11-25 결정).</div>
+      ${qsfRiskGradeLine(d.risk_grade)}${d.high_risk || d.filing_events ? `<div class="meta">위의 회피 표시는 판정 전 참고입니다. 한국 회피 표시 판정은 240거래일 기록이 찬 뒤 한 번 읽습니다.</div>` : ""}
+      <div id="qsffc"><div class="meta">불러오는 중…</div></div>`, true, "qsffcfold")}
     <div class="qsf-cards">${Object.values(d.cards).map((c) => qsfCard(c)).join("")}</div>
     ${d.committee ? qsfFold("committee", `다섯 투자자와 투자위원회 <span class="meta m0">규칙으로 옮긴 참고 · 점수와 무관</span>`,
       `${icCardHtml(d.committee, d.ticker, d.market)}
     ${d.committee_note ? `<div class="meta"><b>엇갈림</b> ${esc(d.committee_note)}</div>` : ""}`) : ""}
-    ${qsfFold("range", `가격 범위 · 예측 층 FC-1 <span class="meta m0">점수에 포함되지 않음</span>`, `<div id="qsffc"><div class="meta">불러오는 중…</div></div>`, false, "qsffcfold")}
-    ${qsfFold("tech", `이력과 기술 정보 <span class="meta m0">당일 점검 · 점수 이력 · 위험 등급 · 순위 기준 · P6-11B 참고</span>`, `${qsfRiskGradeLine(d.risk_grade)}
+    ${qsfFold("tech", `이력과 기술 정보 <span class="meta m0">당일 점검 · 점수 이력 · 순위 기준 · P6-11B 참고</span>`, `
     ${QSF_RANK_NOTE[d.rank_basis] ? `<div class="meta">${QSF_RANK_NOTE[d.rank_basis]}</div>` : ""}
     ${p ? `<div class="meta">P6-11B 참고: ${p.status !== "REAL" ? "기록 없음" : p.in_top5 ? `최근 스캔 상위 5 (${p.rank}위)` : "최근 스캔 상위 5 아님"} · 별도 모델이며 점수에 합치지 않습니다.</div>` : ""}
     <details class="qsf-today-fold" id="qsftodayfold"><summary>당일 점검 (시세·공시·뉴스) <span class="meta m0">점수에 포함되지 않음</span></summary><div id="qsftoday"></div></details>
@@ -693,7 +695,7 @@ async function qsfFillRow(box, r, market) {
 // The market's stance (terminal/qsf/stance.py): what the screen calls a candidate and how large the real account's planned
 // orders are.  It never changes a score or a record.
 const qsfStanceTag = (s, band) => (!s ? "" : s.ok ? ' <span class="badge info" title="지금 고른 성향의 기준을 모두 채운 종목입니다. 점수와 구간은 그대로입니다.">성향 후보</span>'
-  : s.why && s.why !== "실행 가능 상태가 아님" && /BUY_CANDIDATE$/.test(band || "") ? ` <span class="badge info" title="매수 후보 구간이지만 지금 고른 성향에서는 후보로 부르지 않습니다: ${esc(s.why)}">성향 밖 · ${esc(s.why)}</span>` : "");
+  : s.why && s.why !== "실행 가능 상태가 아님" && /BUY_CANDIDATE$/.test(band || "") ? ` <span class="badge info" title="상위 구간이지만 지금 고른 성향에서는 후보로 부르지 않습니다: ${esc(s.why)}">성향 밖 · ${esc(s.why)}</span>` : "");
 async function qsfStanceDraw() {
   const box = $("#qsfstance"), mk = qsfState.market;
   if (!box) return;
@@ -899,8 +901,8 @@ async function qsfChanges() {
   if (!d || d.status !== "REAL") { box.innerHTML = d && d.reason ? `<div class="panel"><h2>직전 기록과 달라진 점</h2><div class="empty">${esc(d.reason)}</div></div>` : ""; return; }
   box.innerHTML = `<div class="panel"><h2>직전 기록과 달라진 점 <span class="badge">${esc(d.previous_session)} → ${esc(d.session)}</span> <span class="meta m0">${QSF_STRAT[d.strategy]} ${d.compared}종목 비교</span></h2>
     ${d.model_changed ? `<div class="notice">두 기록의 모델 버전이 다릅니다(${d.previous_model_versions.map(esc).join(", ")} → ${esc(d.model_version)}). 이 차이에는 새 정보뿐 아니라 수식과 입력 수정이 섞여 있습니다.</div>` : ""}
-    <div class="meta">기록에 남은 값을 비교할 뿐입니다. 새 매수 후보가 더 좋은 수익을 낸다는 근거는 아닙니다.</div>
-    ${qsfChangeTable("새로 매수 후보가 된 종목", d.entered_buy)}${qsfChangeTable("매수 후보에서 빠진 종목", d.left_buy)}
+    <div class="meta">기록에 남은 값을 비교할 뿐입니다. 상위 구간에 새로 든 종목이 더 좋은 수익을 낸다는 근거는 아닙니다.</div>
+    ${qsfChangeTable("새로 상위 구간에 든 종목", d.entered_buy)}${qsfChangeTable("상위 구간에서 빠진 종목", d.left_buy)}
     <details class="qsf-today-fold"><summary>점수가 크게 움직인 종목</summary>${qsfChangeTable("오른 종목", d.up, "상위만")}${qsfChangeTable("내린 종목", d.down, "상위만")}</details>
     ${d.new_in_scan.length || d.gone_from_scan.length ? `<div class="meta">스캔에 새로 들어옴 ${d.new_in_scan.length}개, 빠짐 ${d.gone_from_scan.length}개</div>` : ""}</div>`;
   box.querySelectorAll(".qs-open").forEach((b) => { b.onclick = () => { qsfEvaluate(b.dataset.t, mk); if (!qsfBeside()) $("#qsfmsg").scrollIntoView({ block: "start" }); }; });
@@ -933,7 +935,7 @@ function qsfScreenBuild() {
     <form id="qsfscreenform" class="qs-form" autocomplete="off">
       <label class="qs-wide">검색<input type="search" name="q" maxlength="40" placeholder="코드 또는 이름" value="${esc(f.q || "")}"></label>
       <label>업종<select name="sector"><option value="">전체</option>${f.sector ? `<option value="${esc(f.sector)}" selected>${esc(qsfSector(f.sector))}</option>` : ""}</select></label>
-      <label>판단<select name="action">${opt("action", "", "전체")}${opt("action", "BUY", "매수 후보")}${opt("action", "WATCH", "관찰")}${opt("action", "AVOID", "회피")}</select></label>
+      <label>판단<select name="action">${opt("action", "", "전체")}${opt("action", "BUY", "상위 구간")}${opt("action", "WATCH", "관찰")}${opt("action", "AVOID", "하위 구간")}</select></label>
       <label>진입<select name="entry">${opt("entry", "", "전체")}${Object.keys(QSF_ENTRY).map((k) => opt("entry", k, esc(QSF_ENTRY[k]))).join("")}</select></label>
       <label>신뢰도<select name="confidence">${opt("confidence", "", "전체")}${opt("confidence", "MEDIUM", "보통 이상")}${opt("confidence", "HIGH", "높음")}</select></label>
       ${num("min_score", "점수 이상")}${num("min_technical", "기술 이상")}${num("min_fundamental", "재무 이상")}${num("min_risk", "위험 관리 이상")}
@@ -1174,7 +1176,7 @@ async function qsfLookahead() {
 }
 
 // ------------------------------------------------------------------ order plan (real account) and the paper book
-// 카드에서 한 번에 (6차 묶음 P1-13): 지금 진입 가능한 종목은 주문 계획의 그 줄로, 어느 종목이든 크기 계산기로 갑니다.  계산과 한도는 그대로입니다.
+// 카드에서 한 번에 (6차 묶음 P1-13): 진입 규칙을 채운 종목은 주문 계획의 그 줄로, 어느 종목이든 크기 계산기로 갑니다.  계산과 한도는 그대로입니다.
 function qsfCardGo(c, e, h) {
   const t = esc(c.ticker), stop = c.strategy === "SWING" && isNum(h.stop) ? ` data-stop="${h.stop.toFixed(c.market === "KR" ? 0 : 2)}"` : "";
   return `<span class="qsf-go">${e.status === "ENTRY_NOW" ? `<button type="button" class="linkish qsf-toplan" data-t="${t}">주문 계획의 이 줄 보기</button>` : ""}
@@ -1210,7 +1212,7 @@ function qsfSkipLine(counts, labels) {
 const qsfPlanState = (ms) => (!ms ? "" : `<div class="meta">이 계획이 읽은 ${qsfStateShort({ status: "REAL", ...ms })}${ms.session ? ` · ${esc(ms.session)} 기록` : ""} · 자세한 설명은 맨 위 띠</div>`);
 function qsfPlanHtml(d) {
   const title = `<h2>오늘 진입 후보의 주문 계획 <span class="badge">내 계좌 기준</span> <span class="badge risk-note">주문을 보내지 않습니다</span></h2>`;
-  const how = `<div class="meta">프로그램이 진입 상태를 '지금 진입 가능'(장기는 '진입을 막는 조건 없음')으로 읽은 종목을 점수 높은 순으로 놓고, 설정해 두신 한도(거래당 위험, 종목 비중, 장기·스윙 비중, 섹터 비중)와 현금 안에서 수량을 정합니다. 이미 보유한 종목과 같은 날 이미 계획된 종목에는 주문을 또 만들지 않습니다.</div>`;
+  const how = `<div class="meta">프로그램이 진입 상태를 '진입 규칙 충족'(장기는 '진입을 막는 조건 없음')으로 읽은 종목을 점수 높은 순으로 놓고, 설정해 두신 한도(거래당 위험, 종목 비중, 장기·스윙 비중, 섹터 비중)와 현금 안에서 수량을 정합니다. 이미 보유한 종목과 같은 날 이미 계획된 종목에는 주문을 또 만들지 않습니다.</div>`;
   if (!d) return "";
   if (d.status === "NO_SCAN") return `<div class="panel">${title}${how}<div class="empty">기록된 스캔이 없습니다.</div></div>`;
   if (d.status === "NO_ACCOUNT") return `<div class="panel">${title}${how}${qsfPlanState(d.market_state)}<div class="empty">${esc(d.reason)} 오늘 진입 후보는 ${d.candidates}종목입니다. <button type="button" class="ghost" onclick="acctRecord('${d.market === "KR" ? "KR" : "US"}')">통합 계좌에서 기록하기</button></div>${d.timing_note ? `<div class="meta">${esc(d.timing_note)}</div>` : ""}</div>`;
@@ -1265,7 +1267,8 @@ function qsfTurnoverHtml(tb) {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 장부의 첫 기록은 ${esc(tb.first)} 거래일입니다. ${esc(tb.note)}</div>`;
   }
   // The button that puts the rules in force (user decision 2026-11-22).  It appears once the reading exists; .env, when set, decides first.
-  const sw = tb.status !== "DECIDED" ? `<div class="meta">규칙을 켜는 버튼은 ${tb.read_at}거래일 판정이 나온 뒤 여기에 생깁니다. 그 전에 켜면 비교가 뜻을 잃습니다.</div>`
+  const sw = tb.buttons === false && !tb.active ? `<div class="meta">'이 규칙 쓰기' 버튼은 2026-11-25 결정으로 첫 실전 스윙 판정(2027년 12월쯤)까지 쓰지 않습니다. 비교 기록은 계속 쌓이고 판정 결과는 파일로 남습니다.</div>`
+    : tb.status !== "DECIDED" ? `<div class="meta">규칙을 켜는 버튼은 ${tb.read_at}거래일 판정이 나온 뒤 여기에 생깁니다. 그 전에 켜면 비교가 뜻을 잃습니다.</div>`
     : tb.mode !== "auto" ? "" : `<div class="meta"><button type="button" class="qsf-turnover-switch qsf-rule-switch" data-route="/api/qsf/turnover-rules" data-on="${tb.active ? "0" : "1"}">${tb.active ? "이 규칙 쓰지 않기" : "이 규칙 쓰기"}</button>
       <span class="qsf-turnover-said">지금: ${tb.active ? "규칙을 쓰는 중" : "쓰지 않음"}. 누르면 다음 기록부터 가상 장부, 주문 계획, 보유 종목 판단에 반영됩니다.</span></div>`;
   return `<h3>회전율 규칙 비교 <span class="meta">(TO-1${tb.active ? ` · 규칙 적용 중, ${esc(tb.adopted_version)}` : ""})</span></h3>${body}${sw}${qsfBookWarn(tb, "QSF_TURNOVER_RULES")}${force}${own}${what}`;
@@ -1290,7 +1293,8 @@ function qsfRankBookHtml(rb) {
   } else {
     body = `<div class="meta"><span class="badge">판정 전</span> 비교 장부의 첫 기록은 ${esc(rb.first)} 거래일입니다. ${esc(rb.note)}</div>`;
   }
-  const sw = rb.status !== "DECIDED" ? `<div class="meta">규칙을 켜는 버튼은 ${rb.read_at}거래일 판정이 나온 뒤 여기에 생깁니다. 그 전에 켜면 비교가 뜻을 잃습니다.</div>`
+  const sw = rb.buttons === false && !rb.active ? `<div class="meta">'이 규칙 쓰기' 버튼은 2026-11-25 결정으로 첫 실전 스윙 판정(2027년 12월쯤)까지 쓰지 않습니다. 비교 기록은 계속 쌓이고 판정 결과는 파일로 남습니다.</div>`
+    : rb.status !== "DECIDED" ? `<div class="meta">규칙을 켜는 버튼은 ${rb.read_at}거래일 판정이 나온 뒤 여기에 생깁니다. 그 전에 켜면 비교가 뜻을 잃습니다.</div>`
     : rb.mode !== "auto" ? "" : `<div class="meta"><button type="button" class="qsf-rule-switch" data-route="/api/qsf/rank-rules" data-on="${rb.active ? "0" : "1"}">${rb.active ? "이 규칙 쓰지 않기" : "이 규칙 쓰기"}</button>
       <span class="qsf-turnover-said">지금: ${rb.active ? "규칙을 쓰는 중" : "쓰지 않음"}. 누르면 다음 기록부터 가상 장부, 주문 계획, 보유 종목 판단에 반영됩니다.</span></div>`;
   return `<h3>순위 규칙 비교 <span class="meta">(RK-1${rb.active ? " · 규칙 적용 중" : ""})</span></h3>${body}${sw}${qsfBookWarn(rb, "QSF_RANK_RULES")}${force}${what}`;
@@ -1381,20 +1385,24 @@ async function qsfReadings() {
   const state = (r) => (r.state === "READ" ? `<span class="badge ok">읽음</span> <b>${esc(r.verdict)}</b><div class="meta m0">${esc(r.meaning || "")}</div>${(r.reasons || []).map((x) => `<div class="meta m0">${esc(x)}</div>`).join("")}`
     : r.state === "DUE" ? `<span class="badge risk-note">읽을 때가 됨</span>${r.attempts ? ` <span class="meta m0">시도 ${r.attempts}번, 아직 조건 미달</span>` : ""}`
     : `<span class="badge">기다리는 중</span> <span class="meta m0">${isNum(r.left) ? `${r.left}거래일 남음 · ${esc(r.expected)} 무렵` : ""}</span>`);
-  const sw = (r) => (!r.switch ? "" : !r.switch.can_switch ? `<div class="meta m0">${r.state === "READ" ? "설정 파일(.env)의 QSF_FUND_PERIOD가 재무 기준을 정하고 있어 버튼을 쓰지 않습니다." : "재무 기준을 바꾸는 버튼은 판정이 나온 뒤 여기에 생깁니다. 판정은 스스로 아무것도 바꾸지 않습니다."}</div>`
+  const sw = (r) => (!r.switch ? "" : r.switch.buttons === false && !r.switch.can_switch ? `<div class="meta m0">재무 기준을 바꾸는 버튼은 2026-11-25 결정으로 첫 실전 스윙 판정까지 쓰지 않습니다(점수 공식 동결).</div>`
+    : !r.switch.can_switch ? `<div class="meta m0">${r.state === "READ" ? "설정 파일(.env)의 QSF_FUND_PERIOD가 재무 기준을 정하고 있어 버튼을 쓰지 않습니다." : "재무 기준을 바꾸는 버튼은 판정이 나온 뒤 여기에 생깁니다. 판정은 스스로 아무것도 바꾸지 않습니다."}</div>`
     : `<div class="meta m0"><button type="button" class="qsf-fund-switch" data-market="${esc(r.switch.market)}" data-period="${r.switch.live_period === "TRAILING" ? "ANNUAL" : "TRAILING"}"${qsfOnPhone() ? " disabled" : ""}>${r.switch.live_period === "TRAILING" ? "연간 보고서 기준으로 되돌리기" : "최근 4분기 기준으로 바꾸기"}</button>
         <span class="phone-why">재무 기준은 컴퓨터에서 바꿉니다.</span> 지금: ${r.switch.live_period === "TRAILING" ? "최근 4분기" : "연간 보고서"} 기준. 누르면 다음 스캔부터 이 시장의 점수가 그 기준을 읽습니다.</div>`);
-  const row = (r) => `<tr><td class="l"><b>${esc(r.label)}</b> <span class="badge${r.primary ? " ok" : ""}" title="${r.primary ? "점수가 통하는지에 답하는 네 판정 가운데 하나입니다." : "참고 판정입니다. 판정이 서른 개쯤이라 몇은 우연히 기준을 넘을 수 있어, 점수가 통하는지는 실전 점수 판정 넷으로 답합니다."}">${r.primary ? "주된 판정" : "참고"}</span>${r.applies_itself ? ' <span class="badge">스스로 적용</span>' : ""}</td>
+  const row = (r) => `<tr><td class="l"><b>${esc(r.label)}</b> <span class="badge${r.primary ? " ok" : ""}" title="${r.primary ? "점수가 통하는지에 답하는 네 판정 가운데 하나입니다." : "참고 판정입니다. 판정이 서른 개쯤이라 몇은 우연히 기준을 넘을 수 있어, 점수가 통하는지는 실전 점수 판정 넷으로 답합니다."}">${r.primary ? "주된 판정" : "참고"}</span>${r.notify ? "" : ` <span class="badge" title="${esc(d.quiet_note || "")}">보관 · 알림 없음</span>`}${r.applies_itself ? ' <span class="badge">스스로 적용</span>' : ""}</td>
     <td class="num">${isNum(r.records) ? r.records : DASH} / ${r.wanted}</td><td class="l">${state(r)}${sw(r)}</td><td class="l"><span class="meta m0">${esc(r.after)}</span></td>
     <td class="l"><span class="meta m0">${esc(r.state === "READ" ? r.report : r.protocol)}</span></td></tr>`;
   const table = (list) => `<div class="tbl-wrap"><table><thead><tr><th class="l">판정</th><th title="지금까지의 기록 수 / 읽는 데 필요한 기록 수">기록</th><th class="l">상태</th><th class="l">결과가 나오면</th><th class="l">문서</th></tr></thead><tbody>${list.map(row).join("")}</tbody></table></div>`;
-  const now = d.readings.filter((r) => r.state !== "WAITING"), due = now.filter((r) => r.state === "DUE").length;
-  const next = d.readings.filter((r) => r.state === "WAITING" && isNum(r.left)).sort((a, b) => a.left - b.left)[0];
+  // 알림을 보내는 판정을 앞에, 보관 판정(파일로만 남김, 2026-11-25 결정)은 접어서 보여 줍니다.
+  const told = d.readings.filter((r) => r.notify), kept = d.readings.filter((r) => !r.notify);
+  const now = told.filter((r) => r.state !== "WAITING"), due = d.readings.filter((r) => r.state === "DUE").length;
+  const next = told.filter((r) => r.state === "WAITING" && isNum(r.left)).sort((a, b) => a.left - b.left)[0];
   const line = `읽은 판정 ${d.read}개, 읽을 때가 된 판정 ${due}개, 기다리는 판정 ${d.total - d.read - due}개.${next ? ` 가장 가까운 판정: ${esc(next.label)}(${next.left}거래일 남음, ${esc(next.expected)} 무렵).` : ""} 판정은 스스로 아무것도 바꾸지 않습니다.`;
   const wasOpen = !!(box.querySelector("details.qsf-readings-all") || {}).open;
   box.innerHTML = `<div class="panel"><h2>판정 일정 <span class="badge">${d.read} / ${d.total} 읽음</span></h2><div class="meta">${line}</div>
     ${now.length ? table(now) : ""}
-    <details class="qsf-readings-all"${wasOpen ? " open" : ""}><summary>전체 일정 보기 (${d.total}개)</summary><div class="meta">${esc(d.note)} 안내: ${esc(d.guide)}</div>${table(d.readings)}</details></div>`;
+    <details class="qsf-readings-all"${wasOpen ? " open" : ""}><summary>전체 일정 보기 (알림을 보내는 판정 ${told.length}개 · 보관 ${kept.length}개)</summary><div class="meta">${esc(d.note)} 안내: ${esc(d.guide)}</div>${table(told)}
+      <h3>보관 판정 <span class="meta">(읽어서 파일로만 남김)</span></h3>${table(kept)}</details></div>`;
   box.querySelectorAll(".qsf-fund-switch").forEach((b) => { b.onclick = async () => {
     if (qsfOnPhone()) return;                 // 휴대폰: 서버가 받지 않습니다(PHONE_MAC_ONLY).  단추는 눌리지 않게 보이고 이유가 옆에 있습니다
     const to = b.dataset.period === "TRAILING" ? "최근 4분기" : "연간 보고서";

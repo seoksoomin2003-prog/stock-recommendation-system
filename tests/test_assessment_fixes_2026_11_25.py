@@ -98,7 +98,7 @@ def test_what_would_change_and_the_buy_check_know_the_pin():
     c["deal_pin"] = PIN
     r = engine.score(c, "SWING")
     said = " ".join(holding.what_would_change(r))
-    assert "점수가 올라도 매수 후보 구간을 주지 않습니다" in said and "강력 매수 후보" not in said
+    assert "점수가 올라도 상위 구간을 주지 않습니다" in said and "최상위 구간" not in said
     v = verdict(snap(76.0, entry="NO_VALID_ENTRY_SETUP", deal_pin=PIN))
     assert v["key"] == "NO" and "합병 절차로 가격이 인수 가격 근처에 묶인" in v["why"] and "다시 움직이면" in v["change"]
 
@@ -140,7 +140,7 @@ def test_low_confidence_is_said_and_reads_wait_under_every_stance():
 
 # ---------------------------------------------------------------------- 6 and the version label
 def test_the_version_and_the_protocol_say_what_changed():
-    assert config.RULES_VERSION == "R-1" and (ROOT / "reports" / "QSF_1_5_3_2026_11_25.md").exists()       # the rules of 1.5.3 carry their own label from 1.6.0 on
+    assert config.RULES_VERSION == "R-2" and (ROOT / "reports" / "QSF_1_5_3_2026_11_25.md").exists()       # the rules of 1.5.3 carry their own label from 1.6.0 on
     doc = src("reports", "QSF_LIVE_FORWARD_PROTOCOL.md")
     assert "## 바로잡음 (2026-11-25" in doc and "차단(BLOCKED)된 종목도 점수가 있으면 표본에 남는다" in doc and "QSF-1.5.3" in doc
     assert 's.get("actionability") != "INSUFFICIENT_DATA"' in src("terminal", "qsf", "live_forward.py")     # the code the correction describes

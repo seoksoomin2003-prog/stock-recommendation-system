@@ -159,7 +159,7 @@ def concentration_line(c: Dict[str, Any]) -> Optional[str]:
         return None
     top, count = c["sectors"][0]
     mix = ", ".join(f"{s} {n}" for s, n in c["sectors"][:4])
-    said = [f"매수 구간 후보 {c['n']}개의 업종: {mix}" + (" 등" if len(c["sectors"]) > 4 else "") + "."]
+    said = [f"상위 구간 후보 {c['n']}개의 업종: {mix}" + (" 등" if len(c["sectors"]) > 4 else "") + "."]
     flags = []
     if count / c["n"] >= ONE_SECTOR:
         flags.append(f"{top} 한 업종이 {count / c['n'] * 100:.0f}%")
@@ -172,6 +172,52 @@ def concentration_line(c: Dict[str, Any]) -> Optional[str]:
     if flags:
         said.append(f"{', '.join(flags)}입니다. {c['n']}개를 사도 {c['n']}개로 나뉜 분산이 아닙니다.")
     return " ".join(said)
+
+
+# ---------------------------------------------------------------------- what a high score looks like (user decision 2026-11-25)
+TILT_MIN = 30                   # scored stocks a day under which the line is not written
+NEAR_HIGH = -0.05               # within five percent of the 52-week high
+
+
+def _raw(snap: Dict[str, Any], fid: str, key: str) -> Optional[float]:
+    v = next(((f.get("raw") or {}).get(key) for f in snap.get("factors") or [] if f.get("factor") == fid and isinstance(f.get("raw"), dict)), None)
+    return float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) and np.isfinite(v) else None
+
+
+def tilt(snaps: Sequence[Dict[str, Any]], strategy: str = "SWING") -> Optional[Dict[str, Any]]:
+    """How the day's top fifth by score differs from every scored stock, from the recorded factor values alone: the median
+    volatility and the share standing near the 52-week high.  No return is read.  The record of the current formula on used
+    windows found one thing the top fifth had in all four scores, lower volatility, and no return edge (BT-1); this line shows
+    the shape a high score picks, so the list is read as a style and not as "the better stocks"."""
+    rows = [s for s in snaps if s.get("strategy") == strategy and s.get("score") is not None and s.get("actionability") == "ACTIONABLE"]
+    if len(rows) < TILT_MIN:
+        return None
+    rows.sort(key=lambda s: -float(s["score"]))
+    top = rows[:max(1, len(rows) // 5)]
+
+    def med(group, fid, key):
+        v = [x for x in (_raw(s, fid, key) for s in group) if x is not None]
+        return float(np.median(v)) if len(v) >= max(3, len(group) // 2) else None
+
+    def share(group):
+        v = [x for x in (_raw(s, "breakout_volume", "dist_high") for s in group) if x is not None]
+        return float(np.mean([x >= NEAR_HIGH for x in v])) if len(v) >= max(3, len(group) // 2) else None
+    return {"strategy": strategy, "n": len(rows), "top_n": len(top), "vol_top": med(top, "atr_risk", "hist_vol"), "vol_all": med(rows, "atr_risk", "hist_vol"),
+            "near_high_top": share(top), "near_high_all": share(rows)}
+
+
+def tilt_line(t: Optional[Dict[str, Any]]) -> Optional[str]:
+    if not t or (t["vol_top"] is None and t["near_high_top"] is None):
+        return None
+    parts = []
+    if t["vol_top"] is not None and t["vol_all"] is not None:
+        parts.append(f"최근 변동성(연 환산)의 중앙값 {t['vol_top'] * 100:.0f}%(스캔 전체 {t['vol_all'] * 100:.0f}%)")
+    if t["near_high_top"] is not None and t["near_high_all"] is not None:
+        parts.append(f"52주 고점에서 5% 안에 있는 종목 {t['near_high_top'] * 100:.0f}%(전체 {t['near_high_all'] * 100:.0f}%)")
+    if not parts:
+        return None
+    return (f"스윙 점수 상위 5분의 1({t['top_n']}종목)의 모양: " + ", ".join(parts) + ". 높은 점수는 '더 오를 종목'이 아니라 이런 모양의 종목을 고른 것입니다. "
+            "과거 기록에서 점수 상위 묶음은 덜 흔들렸지만 더 벌지는 않았습니다.")
 
 
 # ---------------------------------------------------------------------- liked by the score, flagged by an avoid mark

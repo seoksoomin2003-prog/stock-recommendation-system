@@ -25,7 +25,7 @@ SHOWN_ORDERS = 3
 SWING_DAYS_LEFT = 3
 EX_DIVIDEND_DAYS = 5       # an ex-dividend date of a holding or a watched stock within this many days is listed
 PART_KO = {"committee": "가상 포트폴리오 알림", "context": "지수와 거시 일정", "account": "보유 종목 점검", "plan": "주문 계획", "market": "시장 상태", "earnings": "실적 일정", "alerts": "내 알림 조건", "job": "자료 수집 상태",
-           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "매수 후보의 구성", "marked": "회피 표시", "gaps": "재무 기준에 따른 점수 차이", "dividends": "배당락일", "filings": "장중 새 공시"}
+           "top": "점수 상위 종목", "changes": "직전 기록과 달라진 점", "readings": "판정 일정", "mix": "상위 구간의 구성", "marked": "회피 표시", "gaps": "재무 기준에 따른 점수 차이", "dividends": "배당락일", "filings": "장중 새 공시"}
 # the portfolio's own alert codes (terminal.portfolio.alerts) and the exit readings (automation.exit_alerts)
 ALERT_LEVEL = {"STOP_HIT": "ACT", "NEAR_STOP": "ACT", "QSF_EXIT": "ACT", "QSF_THESIS_INVALIDATED": "ACT", "QSF_REDUCE": "ACT",
                "TARGET_HIT": "DUE", "NO_STOP": "DUE", "OVERWEIGHT": "DUE", "NO_PRICE": "DUE", "NO_STYLE": "DUE", "SECTOR_OVER": "DUE",
@@ -76,7 +76,7 @@ def candidate_split(by: Optional[Dict[str, Dict[str, int]]]) -> str:
     parts = [f"{STYLE_KO[k]} {v['all']}건 중 {v['buy']}건" for k, v in (by or {}).items() if k in STYLE_KO and v.get("all")]
     if not parts:
         return ""
-    return f"그중 매수 후보 구간({BUY_LINE:g}점 이상)은 {', '.join(parts)}이고, 나머지는 관망 구간(55~{BUY_LINE:g}점)이면서 진입 조건만 채운 종목입니다. "
+    return f"그중 상위 구간({BUY_LINE:g}점 이상)은 {', '.join(parts)}이고, 나머지는 관망 구간(55~{BUY_LINE:g}점)이면서 진입 조건만 채운 종목입니다. "
 
 
 def plan_items(plan: Dict[str, Any], market: str) -> List[Dict[str, Any]]:
@@ -86,10 +86,10 @@ def plan_items(plan: Dict[str, Any], market: str) -> List[Dict[str, Any]]:
         return [item("DUE", "NO_SCAN", f"{MARKET_KO[market]} 점수 기록이 없어 진입 후보를 만들지 못했습니다. 자료 수집 상태를 확인하세요.", tab="qsf")]
     n = plan.get("candidates") or 0
     if status == "NO_ACCOUNT":
-        return [item("INFO", "NO_ACCOUNT", f"{MARKET_KO[market]} 계좌가 기록돼 있지 않아 주문 수량·손절·한도를 계산하지 못했습니다. 지금 진입 가능 구간으로 읽힌 후보는 스윙·장기 합쳐 {n}건입니다. "
+        return [item("INFO", "NO_ACCOUNT", f"{MARKET_KO[market]} 계좌가 기록돼 있지 않아 주문 수량·손절·한도를 계산하지 못했습니다. 진입 규칙을 채운 것으로 읽힌 후보는 스윙·장기 합쳐 {n}건입니다. "
                      + candidate_split(plan.get("candidates_by")) +
                      "'내 계좌'에 입금과 거래를 기록하면 계좌 기준 계획과 보유 종목 점검이 만들어집니다.", tab="account",
-                     short=f"계좌 미기록(진입 가능 후보 {n}건)")]
+                     short=f"계좌 미기록(진입 규칙 충족 후보 {n}건)")]
     if status != "REAL":
         return [item("DUE", "PLAN_UNAVAILABLE", "주문 계획을 만들지 못했습니다.", tab="qsf")]
     orders, out = plan.get("orders") or [], []
@@ -222,12 +222,12 @@ def change_items(changes: Dict[str, Any], held: Optional[set] = None) -> List[Di
     entered, left = changes.get("entered_buy") or [], changes.get("left_buy") or []
     for r in left:
         if r["ticker"] in held:
-            out.append(item("DUE", "HELD_LEFT_BUY", f"보유 종목 {r.get('name') or r['ticker']}({r['ticker']})이 매수 후보 구간에서 빠졌습니다"
+            out.append(item("DUE", "HELD_LEFT_BUY", f"보유 종목 {r.get('name') or r['ticker']}({r['ticker']})이 상위 구간에서 빠졌습니다"
                             f"({r.get('previous_score', 0):.1f} → {r.get('score', 0):.1f}점). 매도 조건은 보유 종목 점검에서 따로 봅니다.", r["ticker"], "qsf"))
     if entered:
-        out.append(item("INFO", "ENTERED_BUY", f"매수 후보 구간에 새로 들어온 종목 {len(entered)}개: {names(entered)}.", tab="qsf"))
+        out.append(item("INFO", "ENTERED_BUY", f"상위 구간에 새로 들어온 종목 {len(entered)}개: {names(entered)}.", tab="qsf"))
     if left:
-        out.append(item("INFO", "LEFT_BUY", f"매수 후보 구간에서 빠진 종목 {len(left)}개: {names(left)}.", tab="qsf"))
+        out.append(item("INFO", "LEFT_BUY", f"상위 구간에서 빠진 종목 {len(left)}개: {names(left)}.", tab="qsf"))
     if changes.get("model_changed"):
         out.append(item("INFO", "MODEL_CHANGED", f"점수 모델 버전이 바뀌었습니다({changes.get('model_version')}). 직전 기록과의 점수 차이에는 공식 변경이 섞여 있습니다.", tab="qsf"))
     return out
@@ -317,7 +317,7 @@ def candidates(rows: List[Dict[str, Any]], notes: Dict[str, Any], shown: int = C
                                   for r in ready[:shown]]}
     from terminal.qsf.rank_notes import band_edges
     return {"session": (notes or {}).get("session"), "styles": out, "band_edges": band_edges(),
-            "note": "진입 상태가 '지금 진입 가능'(장기는 '진입을 막는 조건 없음')인 종목을 점수순으로 보여 줍니다(주문 계획과 같은 기준). 매수 후보 구간(70점) 아래 종목도 있을 수 있으니 구간을 함께 보세요. 순위일 뿐 매수 신호가 아닙니다."}
+            "note": "진입 상태가 '진입 규칙 충족'(장기는 '진입을 막는 조건 없음')인 종목을 점수순으로 보여 줍니다(주문 계획과 같은 기준). 상위 구간(70점) 아래 종목도 있을 수 있으니 구간을 함께 보세요. 순위일 뿐 매수 신호가 아닙니다."}
 
 
 def market_clause(state: Optional[Dict[str, Any]]) -> str:
@@ -530,6 +530,13 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
         line = candidate_mix(terminal, market)
         return [item("INFO", "CANDIDATE_MIX", line, tab="qsf")] if line else []
 
+    def tilt() -> List[Dict[str, Any]]:
+        # what the top fifth by score looks like beside the whole scan, from the day's recorded factor values (user decision 2026-11-25)
+        from terminal import analyst_extra as ax
+        session = terminal.qsf.latest(market).get("session")
+        line = ax.tilt_line(ax.tilt(_snaps(terminal, market, session))) if session else None
+        return [item("INFO", "SCORE_TILT", line, tab="qsf")] if line else []
+
     def marked() -> List[Dict[str, Any]]:
         mine = [h["ticker"] for h in (seen.get("book") or {}).get("holdings") or []] + [t for t in terminal.watchlist() if not t.startswith("^")]
         from terminal import analyst_extra as ax
@@ -549,7 +556,7 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
         listed = ", ".join(f"{name_of.get(x['ticker'], x['ticker'])} {x['annual']:.0f}→{x['trailing']:.0f}점({x['diff']:+.0f})" for x in got["listed"][:6])
         live = "최근 4분기" if fund_period.live_period(base, market) == "TRAILING" else "연간"
         return [item("INFO", "FUND_GAP", f"장기 점수가 재무 기준(연간 → 최근 4분기)에 따라 {ax.GAP:.0f}점 넘게 달라지는 종목이 {got['all']}개입니다(최근 4분기 쪽이 높은 종목 {got['up']}개). "
-                     + (f"보유·관심·매수 후보 가운데: {listed}. " if listed else "보유·관심·매수 후보 가운데는 없습니다. ")
+                     + (f"보유·관심·상위 구간 종목 가운데: {listed}. " if listed else "보유·관심·상위 구간 종목 가운데는 없습니다. ")
                      + f"라이브 점수는 {live} 재무를 읽습니다. 이런 종목은 점수 카드의 참고 점수를 함께 보세요.", tab="qsf")]
 
     def dividends() -> List[Dict[str, Any]]:
@@ -564,6 +571,7 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
 
     part("dividends", dividends)
     part("mix", mix)
+    part("mix", tilt)
     part("mix", financial_share)
     part("marked", marked)
     part("gaps", gaps)
@@ -610,7 +618,7 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
 
 # ---------------------------------------------------------------------- questions, read by keyword
 STRATEGY_KO = {"SWING": "스윙", "LONG_TERM": "장기"}
-ENTRY_KO = {"ENTRY_NOW": "지금 진입 가능 구간", "WAIT_FOR_PULLBACK": "눌림 대기", "WAIT_FOR_BREAKOUT_CONFIRMATION": "돌파 확인 대기", "WAIT_FOR_EARNINGS": "실적 발표 대기",
+ENTRY_KO = {"ENTRY_NOW": "진입 규칙 충족", "WAIT_FOR_PULLBACK": "눌림 대기", "WAIT_FOR_BREAKOUT_CONFIRMATION": "돌파 확인 대기", "WAIT_FOR_EARNINGS": "실적 발표 대기",
             "OVERVALUED_AT_CURRENT_PRICE": "현재 가격 고평가", "NO_VALID_ENTRY_SETUP": "유효한 진입 근거 없음"}
 LONG_READY = "진입을 막는 조건 없음"
 
@@ -1337,9 +1345,9 @@ def portfolio_answer(terminal: Any, stock: Dict[str, str], follow: List[str]) ->
 #   기다림:   성향 후보가 아님(선 미달, 신뢰도, 큰 움직임) · 눌림/돌파 확인/실적 대기 · 지금 가격에서 비쌈 · 스윙 실적 임박
 #             · 신뢰도 낮음(어느 성향이든, 2026-11-25 결정) · 빠진 자료 때문에 구간을 낮춘 종목(2026-11-25 결정)
 #             · 재무 점검이 '값은 싼데 나빠지는 중'이거나 ROE 급락으로 읽은 종목(2026-11-25 결정, 진입 상태와 주문 계획은 그대로)
-#   사도 됨:  위에 걸린 것이 없고 진입 판단이 '지금 진입 가능'
+#   막는 것 없음(R-2; '사도 됨' until 2026-11-25):  위에 걸린 것이 없고 진입 판단이 '진입 규칙 충족'
 # 나쁜 날(미국)은 결론을 바꾸지 않고 '크기 절반'을 덧붙입니다(2026-11-16 결정과 같음).  점수와 기록은 바뀌지 않습니다.
-VERDICT_KO = {"OK": "사도 됨", "WAIT": "기다림", "NO": "사지 않음"}
+VERDICT_KO = {"OK": "막는 것 없음", "WAIT": "기다림", "NO": "사지 않음"}
 VERDICT_CAVEAT = "프로그램 규칙이 내린 결론입니다. 점수가 높은 종목의 수익이 더 좋았다는 근거는 아직 확인되지 않았고, 주문은 직접 정합니다."
 
 
@@ -1392,7 +1400,7 @@ def buy_verdict(snap: Dict[str, Any], strategy: str, market: str, *, gates: List
                    "거래가 끝나거나 깨져 가격이 다시 움직이면 다시 봅니다."))
     elif entry == "NO_VALID_ENTRY_SETUP" and not gates and snap.get("band_held_back"):
         seen_txt = f"{float(seen):.1f}점" if seen is not None else "기준 미만"
-        wait.append((f"자료가 빠진 요인을 중간값으로 보면 {seen_txt}으로 매수 후보 기준에 못 미쳐, 진입 판단을 미룬 종목입니다.", "빠진 자료가 채워지면 다시 봅니다."))
+        wait.append((f"자료가 빠진 요인을 중간값으로 보면 {seen_txt}으로 상위 구간 기준에 못 미쳐, 진입 판단을 미룬 종목입니다.", "빠진 자료가 채워지면 다시 봅니다."))
     elif entry == "NO_VALID_ENTRY_SETUP" and not gates:
         no.append((f"진입 판단이 '{entry_ko(entry, strategy)}'입니다. {entry_meaning(entry, strategy)}".strip(), "진입 근거가 생기면 다시 봅니다."))
     why = qs.judge(snap, level, set(wide))
@@ -1408,11 +1416,11 @@ def buy_verdict(snap: Dict[str, Any], strategy: str, market: str, *, gates: List
     worse = _falling(snap.get("fund_checks"))
     if worse:
         # the entry rule reads price and valuation, not the direction of the figures; a stock this program itself marks as
-        # "cheap and worsening" or whose ROE fall would read "thesis invalidated" on a holder is not a "사도 됨" (user decision
+        # "cheap and worsening" or whose ROE fall would read "thesis invalidated" on a holder is not a "막는 것 없음" (user decision
         # 2026-11-25; the entry status and the order plan are unchanged, and the rule is untested on returns)
         wait.append((f"이 프로그램의 재무 점검이 '나빠지는 중'으로 읽었습니다: {worse}", "다음 실적에서 이 수치가 돌아서면 다시 봅니다."))
     if snap.get("confidence") == "LOW" and why != "CONFIDENCE":
-        # whatever the stance: a score built on missing or old figures is not a "사도 됨" (user decision 2026-11-25)
+        # whatever the stance: a score built on missing or old figures is not a "막는 것 없음" (user decision 2026-11-25)
         wait.append(("이 점수를 믿는 정도가 '낮음'입니다. 계산에 쓸 자료가 일부 없거나 오래됐습니다.", "자료가 채워져 신뢰도가 오르면 다시 봅니다."))
     rr = (snap.get("holding") or {}).get("reward_risk")
     if entry == "WAIT_FOR_PULLBACK":
@@ -1454,7 +1462,7 @@ def buy_verdict(snap: Dict[str, Any], strategy: str, market: str, *, gates: List
 
 def decision_cautions(terminal: Any, snap: Dict[str, Any], ticker: str, market: str, strategy: str, key: str) -> List[str]:
     """Two facts that can speak against a conclusion and sat in folded sections (assessment 2026-11-25): the long-term score on
-    the other statement basis, and a committee decision that disagrees with "사도 됨".  They change no conclusion: both are
+    the other statement basis, and a committee decision that disagrees with "막는 것 없음".  They change no conclusion: both are
     untested rule sets, and the user reads them beside the verdict."""
     from terminal import analyst_extra as ax
     out = []
@@ -1510,9 +1518,9 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
         return f"지금보다 {(level / close - 1) * 100:+.1f}%" if level and close else ""
 
     if intent == "WHY":
-        gap = f"이고 매수 후보 구간({BUY_LINE:g}점 이상)까지 {BUY_LINE - score:.1f}점 모자랍니다" if score < BUY_LINE else f"입니다({BUY_LINE:g}점 이상이 매수 후보 구간)"
+        gap = f"이고 상위 구간({BUY_LINE:g}점 이상)까지 {BUY_LINE - score:.1f}점 모자랍니다" if score < BUY_LINE else f"입니다({BUY_LINE:g}점 이상이 상위 구간)"
         summary = (f"{name}의 {kind} 점수는 {score:.1f}점으로 {standing}, 대상 안에서 {st['word']}입니다(대상의 중간값 {st['median']:.1f}점). '{row.get('band_label')}' 구간{gap}."
-                   + (" 오늘은 매수 후보 구간에 든 종목이 하나도 없습니다." if st["buy"] == 0 else ""))
+                   + (" 오늘은 상위 구간에 든 종목이 하나도 없습니다." if st["buy"] == 0 else ""))
         parts = breakdown(snap)
         sections: List[Dict[str, Any]] = []
         if parts:
@@ -1535,7 +1543,7 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
             sections.append({"title": "요인별 점수", "lines": ["저장된 수치로 점수를 정확히 다시 나눌 수 없어 요인 점수만 보여 드립니다.", f"낮은 요인: {_factors(snap, True)}.", f"높은 요인: {_factors(snap, False)}."]})
         if still:
             sections.insert(0, {"title": "먼저 알아 둘 것", "lines": [still]})
-        sections.append({"title": "프로그램이 이 점수로 읽는 것", "lines": [f"판단은 '{row.get('action_label')}'입니다.", entry_line] + [f"차단 조건: {g}. 차단 조건이 있으면 점수와 상관없이 매수 후보에서 빠집니다." for g in gates]
+        sections.append({"title": "프로그램이 이 점수로 읽는 것", "lines": [f"판단은 '{row.get('action_label')}'입니다.", entry_line] + [f"차단 조건: {g}. 차단 조건이 있으면 점수와 상관없이 상위 구간에서 빠집니다." for g in gates]
                          + [other_line]})
         sections.append({"title": "무엇이 달라지면 바뀌나", "lines": _bands(score) + ["가격 요인은 매 거래일 종가로, 재무 요인은 새 사업보고서가 나올 때 다시 계산됩니다.",
                                                                                "점수가 높은 종목의 수익이 더 좋았다는 근거는 아직 확인되지 않았습니다. 순위의 설명으로만 읽으세요."]})
@@ -1543,7 +1551,7 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
 
     if intent == "RANK":
         summary = f"{name}의 {kind} 점수 {score:.1f}점은 {snap.get('data_date')}에 점수가 나온 {standing}입니다."
-        lines = [f"같은 날 {kind} 점수의 중간값은 {st['median']:.1f}점이고, 매수 후보 구간({BUY_LINE:g}점 이상)에 든 종목은 {st['buy']}개입니다."]
+        lines = [f"같은 날 {kind} 점수의 중간값은 {st['median']:.1f}점이고, 상위 구간({BUY_LINE:g}점 이상)에 든 종목은 {st['buy']}개입니다."]
         if other and other.get("score") is not None:
             so = _standing(terminal, market, other["strategy"], float(other["score"]))
             lines.append(f"{STRATEGY_KO[other['strategy']]} 점수는 {other['score']:.1f}점으로 {so['of']}종목 중 {so['place']}위({_share(so['share'])})입니다.")
@@ -1622,7 +1630,7 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
                    else f"{name}에는 차단 조건 {len(gates)}건, 회피 표시 {len(marks)}건이 있습니다.")
         risk = [_signal_line(f, snap, market, f"배점 {f['weight']:g}", scale=False) for f in snap.get("factors") or []
                 if f.get("domain") == "RISK" and f.get("weight") and f.get("normalized") is not None]
-        return reply(f"{head} 위험 점검", summary, [{"title": "차단 조건", "lines": [f"{g}. 차단 조건이 있으면 점수와 상관없이 매수 후보에서 빠집니다." for g in gates] or ["없음."]},
+        return reply(f"{head} 위험 점검", summary, [{"title": "차단 조건", "lines": [f"{g}. 차단 조건이 있으면 점수와 상관없이 상위 구간에서 빠집니다." for g in gates] or ["없음."]},
                                                  {"title": "회피 표시", "lines": marks or ["없음."]}, {"title": "위험 요인의 실제 수치", "lines": risk},
                                                  {"title": "참고", "lines": notes + unknown}], "stock", follow, basis)
     held = False
@@ -1663,7 +1671,7 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
     checks = [("성향 후보", pick is None, f"{kind} {score:.1f}점('{row.get('band_label')}' 구간), {standing}. 지금 성향 '{qs.LABELS[level]}'의 후보 선은 {v['line']:g}점입니다"
                + (f"({stance_why.get(pick, pick)})." if pick else ".")),
               ("진입 판단", entry == "ENTRY_NOW", f"'{entry_ko(entry, strategy)}'. {entry_meaning(entry, strategy)}" + (f" 지금 손익비는 {hold['reward_risk']:.2f}입니다." if hold.get("reward_risk") is not None else "")),
-              ("차단 조건", not gates, ("; ".join(gates) + ". 점수와 상관없이 매수 후보에서 빠집니다.") if gates else "없음."),
+              ("차단 조건", not gates, ("; ".join(gates) + ". 점수와 상관없이 상위 구간에서 빠집니다.") if gates else "없음."),
               ("실적 발표", (not soon) if raw.get("next_earnings") else None, (f"{raw['next_earnings']}({raw.get('sessions')}거래일 뒤)" + ("로 임박했습니다. 발표 전후에는 가격이 크게 움직일 수 있습니다." if soon else "로 임박하지 않았습니다."))
                if raw.get("next_earnings") else "저장된 날짜가 없습니다. 직접 확인하세요."),
               ("회피 표시", not marks, " ".join(marks) if marks else "없음."),
@@ -1761,10 +1769,10 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
             return reply("직전 기록과 달라진 점", "비교할 직전 기록이 없습니다.", [], "qsf")
         move = lambda r: f"{r.get('name') or r['ticker']}({r['ticker']}) {r['previous_score']:.1f} → {r['score']:.1f}점({r['delta']:+.1f})"      # noqa: E731
         entered, left = ch.get("entered_buy") or [], ch.get("left_buy") or []
-        summary = (f"{where} 스윙 점수는 {ch.get('previous_session')} 기록과 견줘, 매수 후보 구간에 {len(entered)}종목이 새로 들어오고 {len(left)}종목이 빠졌습니다." if entered or left
-                   else f"{where} 스윙 점수는 {ch.get('previous_session')} 기록과 견줘 매수 후보 구간을 드나든 종목이 없습니다.")
+        summary = (f"{where} 스윙 점수는 {ch.get('previous_session')} 기록과 견줘, 상위 구간에 {len(entered)}종목이 새로 들어오고 {len(left)}종목이 빠졌습니다." if entered or left
+                   else f"{where} 스윙 점수는 {ch.get('previous_session')} 기록과 견줘 상위 구간을 드나든 종목이 없습니다.")
         return reply(f"{where} 스윙 점수: {ch.get('previous_session')} → {ch.get('session')}", summary,
-                     [{"title": "매수 후보 구간", "lines": texts(change_items(ch))}, {"title": "점수가 가장 많이 오른 종목", "lines": [move(r) for r in (ch.get("up") or [])[:5]]},
+                     [{"title": "상위 구간", "lines": texts(change_items(ch))}, {"title": "점수가 가장 많이 오른 종목", "lines": [move(r) for r in (ch.get("up") or [])[:5]]},
                       {"title": "점수가 가장 많이 내린 종목", "lines": [move(r) for r in (ch.get("down") or [])[:5]]},
                       {"title": "알아 둘 것", "lines": [f"두 기록에 모두 있는 {ch.get('compared')}종목을 비교했습니다. 하루 사이의 점수 변화는 대부분 가격 요인에서 나옵니다.", switch]}], "qsf",
                      ["오늘 상위 종목은?"] + ([f"{(ch['down'][0].get('name') if market == 'KR' else None) or ch['down'][0]['ticker']} 점수 왜 이래?"] if ch.get("down") else []))
@@ -1799,11 +1807,11 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
         except Exception:
             lines = {"index": [], "macro": [], "sector": []}
         scored = [r["score"] for r in _rows(terminal, market) if r["strategy"] == "SWING" and r.get("score") is not None]
-        book = ([f"스윙 점수의 중간값은 {sorted(scored)[len(scored) // 2]:.1f}점이고, {len(scored)}종목 가운데 매수 후보 구간({BUY_LINE:g}점 이상)은 {sum(1 for s in scored if s >= BUY_LINE)}개입니다."] if scored else [])
+        book = ([f"스윙 점수의 중간값은 {sorted(scored)[len(scored) // 2]:.1f}점이고, {len(scored)}종목 가운데 상위 구간({BUY_LINE:g}점 이상)은 {sum(1 for s in scored if s >= BUY_LINE)}개입니다."] if scored else [])
         try:
             ch = qsf_changes.report(terminal.qsf.latest(market), terminal.qsf.ledger, market, "SWING")
             if ch.get("status") == "REAL":
-                book.append(f"직전 기록과 견줘 매수 후보 구간에 {len(ch.get('entered_buy') or [])}종목이 들어오고 {len(ch.get('left_buy') or [])}종목이 빠졌습니다.")
+                book.append(f"직전 기록과 견줘 상위 구간에 {len(ch.get('entered_buy') or [])}종목이 들어오고 {len(ch.get('left_buy') or [])}종목이 빠졌습니다.")
         except Exception:
             pass
         try:
@@ -1845,7 +1853,7 @@ def plain_answer(terminal: Any, intent: str, market: str) -> Dict[str, Any]:
     except Exception:
         mix_line = None
     return reply(f"{where} 점수 상위와 진입 후보", summary, [{"title": f"스윙 상위 3종목(진입 거래일 {day.get('entry_session')})", "lines": tops}, {"title": "먼저 알아 둘 것", "lines": still},
-                                                       {"title": "매수 후보의 구성", "lines": [mix_line or ""]},
+                                                       {"title": "상위 구간의 구성", "lines": [mix_line or ""]},
                                                        {"title": "주문 계획", "lines": texts(plan_items(plan, market))}, {"title": "읽을 때 주의", "lines": [past, switch]}], "qsf",
                  [f"{best.get('name') if market == 'KR' else best.get('ticker')} 점수 왜 이래?", f"{best.get('name') if market == 'KR' else best.get('ticker')} 사도 돼?"] if best.get("ticker") else [])
 

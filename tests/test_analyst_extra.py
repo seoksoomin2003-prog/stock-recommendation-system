@@ -49,7 +49,7 @@ def test_candidates_of_one_sector_that_move_together_are_said_to_be_one_bet():
     c = ax.concentration(list(series), sector.get, series.get, DATA["SPY"])
     assert c["n"] == 6 and c["sectors"][0] == ("보험", 3) and c["measured"] == 6 and c["mean_corr"] > 0.8 and c["mean_beta"] == pytest.approx(0.5, abs=0.2)
     line = ax.concentration_line(c)
-    assert "매수 구간 후보 6개의 업종: 보험 3, 헬스케어 2, 분류 없음 1." in line and "보험 한 업종이 50%" in line and "서로 같이 움직이는 편" in line and "방어주 쪽" in line and "6개로 나뉜 분산이 아닙니다" in line
+    assert "상위 구간 후보 6개의 업종: 보험 3, 헬스케어 2, 분류 없음 1." in line and "보험 한 업종이 50%" in line and "서로 같이 움직이는 편" in line and "방어주 쪽" in line and "6개로 나뉜 분산이 아닙니다" in line
     spread = {f"U{k}": bars(RNG.normal(0, 0.01, 199) + 1.1 * MARKET * (k % 2)) for k in range(8)}
     wide = ax.concentration(list(spread), {f"U{k}": f"업종{k}" for k in range(8)}.get, spread.get, DATA["SPY"])
     assert wide["mean_corr"] < ax.ALIKE and "분산이 아닙니다" not in ax.concentration_line({**wide, "mean_beta": 1.0})
@@ -207,19 +207,19 @@ def test_the_days_list_names_ones_own_stocks_whose_two_scores_are_far_apart(tmp_
     b = A.briefing(term, "KR")
     gap = next(i for i in b["items"] if i["kind"] == "FUND_GAP")
     assert b["unread_parts"] == [] and gap["level"] == "INFO" and gap["tab"] == "qsf"
-    assert gap["text"] == ("장기 점수가 재무 기준(연간 → 최근 4분기)에 따라 10점 넘게 달라지는 종목이 1개입니다(최근 4분기 쪽이 높은 종목 1개). 보유·관심·매수 후보 가운데: 삼성전자 64→85점(+21). "
+    assert gap["text"] == ("장기 점수가 재무 기준(연간 → 최근 4분기)에 따라 10점 넘게 달라지는 종목이 1개입니다(최근 4분기 쪽이 높은 종목 1개). 보유·관심·상위 구간 종목 가운데: 삼성전자 64→85점(+21). "
                            "라이브 점수는 연간 재무를 읽습니다. 이런 종목은 점수 카드의 참고 점수를 함께 보세요.")
     A._SNAPS.clear()
     other = FakeTerminal(tmp_path)                                                                     # the same records, the stock neither held nor watched nor a candidate
     other.qsf.ledger.snaps = term.qsf.ledger.snaps
-    assert "보유·관심·매수 후보 가운데는 없습니다." in next(i for i in A.briefing(other, "KR")["items"] if i["kind"] == "FUND_GAP")["text"]
+    assert "보유·관심·상위 구간 종목 가운데는 없습니다." in next(i for i in A.briefing(other, "KR")["items"] if i["kind"] == "FUND_GAP")["text"]
     A._SNAPS.clear()
 
 
 def test_the_additions_are_wired_into_the_note_the_list_and_the_documents():
     src = (ROOT / "terminal" / "assistant.py").read_text(encoding="utf-8")
-    for needle in ('part("mix", mix)', 'part("marked", marked)', 'part("gaps", gaps)', 'sections.insert(0, {"title": "핵심 세 줄"', "ax.own_sector(terminal, market", "ax.newly_marked(base) if market == \"KR\" else None", "ax.SECTOR_KO.get(", "ax.change_since(terminal.qsf.ledger", "ax.fund_age_lines(base", "ax.exposure(terminal.qsf._loader(market)(ticker)", '"매수 후보의 구성"'):
+    for needle in ('part("mix", mix)', 'part("marked", marked)', 'part("gaps", gaps)', 'sections.insert(0, {"title": "핵심 세 줄"', "ax.own_sector(terminal, market", "ax.newly_marked(base) if market == \"KR\" else None", "ax.SECTOR_KO.get(", "ax.change_since(terminal.qsf.ledger", "ax.fund_age_lines(base", "ax.exposure(terminal.qsf._loader(market)(ticker)", '"상위 구간의 구성"'):
         assert needle in src, needle
-    assert A.PART_KO["mix"] == "매수 후보의 구성" and A.PART_KO["marked"] == "회피 표시" and A.PART_KO["gaps"] == "재무 기준에 따른 점수 차이"
+    assert A.PART_KO["mix"] == "상위 구간의 구성" and A.PART_KO["marked"] == "회피 표시" and A.PART_KO["gaps"] == "재무 기준에 따른 점수 차이"
     mod = (ROOT / "terminal" / "analyst_extra.py").read_text(encoding="utf-8")
     assert "Nothing here feeds the score" in mod and "import requests" not in mod and "ledger.append" not in mod and ".write" not in mod

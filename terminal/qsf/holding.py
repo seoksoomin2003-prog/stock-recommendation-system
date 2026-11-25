@@ -70,7 +70,7 @@ def entry_status(res: Dict, ctx: Dict) -> Dict[str, Any]:
         cs = res.get("conservative_score")
         return {"status": "NO_VALID_ENTRY_SETUP", "zone": None,
                 "reason": "자료가 빠진 요인을 중간값으로 보면 " + (f"{cs:.1f}점으로 " if cs is not None else "")
-                          + "매수 후보 기준에 못 미쳐 구간을 낮춘 종목입니다. 빠진 자료가 채워질 때까지 진입을 판단하지 않습니다."}
+                          + "상위 구간 기준에 못 미쳐 구간을 낮춘 종목입니다. 빠진 자료가 채워질 때까지 진입을 판단하지 않습니다."}
     if strategy == "LONG_TERM":
         v = _factor(res, "valuation")
         if v is None:
@@ -87,7 +87,7 @@ def entry_status(res: Dict, ctx: Dict) -> Dict[str, Any]:
         if e.get("sessions") is not None and e["sessions"] <= config.EARNINGS_BLOCK_SESSIONS:
             return {"status": "WAIT_FOR_EARNINGS", "reason": f"실적 발표 {e['date']} 이후 숫자를 확인하고 판단합니다.", "zone": None}
         zone = _zone(t["close"], atr, 1.0)
-        return {"status": "ENTRY_NOW", "reason": f"점수 {res['score']:.1f}점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 분할 진입 기준 구간입니다.", "zone": zone}
+        return {"status": "ENTRY_NOW", "reason": f"점수 {res['score']:.1f}점이고 밸류에이션이 진입을 막는 수준이 아닙니다. 막는 조건이 없다는 뜻이고 좋은 때라는 뜻은 아닙니다.", "zone": zone}
     if e.get("sessions") is not None and e["sessions"] <= 5:
         return {"status": "WAIT_FOR_EARNINGS", "reason": f"실적 발표 {e['date']}가 {e['sessions']}거래일 뒤라 최소 보유 기간과 겹칩니다.", "zone": None}
     if lv.get("status") != "REAL":
@@ -306,17 +306,17 @@ def what_would_change(res: Dict) -> List[str]:
     pin = res.get("deal_pin")
     if pin:
         # a pinned stock gets no buy band whatever its score: "3.2 points more is a strong buy" was false for it (2026-11-25)
-        out.append("합병 절차로 가격이 묶여 있는 동안은 점수가 올라도 매수 후보 구간을 주지 않습니다. 거래가 끝나거나 깨져 가격이 다시 움직이면"
+        out.append("합병 절차로 가격이 묶여 있는 동안은 점수가 올라도 상위 구간을 주지 않습니다. 거래가 끝나거나 깨져 가격이 다시 움직이면"
                    f"(최근 20거래일 변동성 연 {deal_pin.PIN_VOL:g}% 이상) 점수 구간대로 읽습니다.")
     elif res.get("band_held_back"):
-        out.append("빠진 자료가 채워져 그 요인을 넣고도 매수 후보 기준(" + f"{config.BANDS[1][0]:g}점) 이상이면 매수 후보 구간과 진입 판단이 돌아옵니다.")
+        out.append("빠진 자료가 채워져 그 요인을 넣고도 상위 구간 기준(" + f"{config.BANDS[1][0]:g}점) 이상이면 상위 구간과 진입 판단이 돌아옵니다.")
     elif above:
         lo, label = min(above)
         out.append(f"{lo - s:.1f}점 오르면 '{label}' 구간입니다.")
     floor = max((lo for lo, _, _ in config.BANDS if lo <= s), default=0.0)
     if res.get("band") == "BUY_CANDIDATE" and s >= config.BUY_BAND_EXIT:
         # in at 70, out under 67: the next record keeps the band down to the buffer's floor
-        out.append(f"{s - config.BUY_BAND_EXIT:.1f}점 넘게 내려가 {config.BUY_BAND_EXIT:g}점 아래가 되면 매수 후보 구간을 벗어납니다({config.BANDS[1][0]:g}점에 들어가고 {config.BUY_BAND_EXIT:g}점 아래에서 나가는 완충).")
+        out.append(f"{s - config.BUY_BAND_EXIT:.1f}점 넘게 내려가 {config.BUY_BAND_EXIT:g}점 아래가 되면 상위 구간을 벗어납니다({config.BANDS[1][0]:g}점에 들어가고 {config.BUY_BAND_EXIT:g}점 아래에서 나가는 완충).")
     elif floor > 0:
         out.append(f"{s - floor:.1f}점 내려가면 현재 구간을 벗어납니다.")
     for g in res["gates"]:

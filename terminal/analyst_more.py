@@ -173,7 +173,7 @@ def financial_share_line(rows: Sequence[Dict[str, Any]], buy: float = 70.0, shar
     if len(picks) < 8 or len(fin) / len(picks) < share:
         return None
     all_fin = sum(1 for r in scored if is_financial(r.get("sector")))
-    return (f"장기 매수 후보 {len(picks)}개 중 금융업이 {len(fin)}개({len(fin) / len(picks) * 100:.0f}%)입니다. 대상 전체에서 금융업은 {all_fin / len(scored) * 100:.0f}%입니다. "
+    return (f"장기 상위 구간 {len(picks)}개 중 금융업이 {len(fin)}개({len(fin) / len(picks) * 100:.0f}%)입니다. 대상 전체에서 금융업은 {all_fin / len(scored) * 100:.0f}%입니다. "
             "금융업은 현금흐름·부채 요인이 빠진 채 채점돼 점수가 높게 나오는 편이니, 장기 상위 목록을 금융 비중이 큰 목록으로 읽으세요.")
 
 

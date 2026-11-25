@@ -10,6 +10,8 @@ import pytest
 from terminal import automation, store_watch
 from terminal.qsf import config, fund_period as fp, fund_trailing as ft, fundamentals as F, kr_forward as kf, ledger, readings as rd, service
 
+pytestmark = pytest.mark.usefixtures("mechanism_on")      # notices and buttons as they worked until 2026-11-25 (off by default since: tests/test_after_verdict_rules.py)
+
 NOW = datetime(2026, 11, 24, 22, 30, tzinfo=timezone.utc)
 ROOT = Path(__file__).resolve().parents[1]
 

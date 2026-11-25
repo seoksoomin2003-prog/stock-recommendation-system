@@ -30,11 +30,11 @@ def classify(score: Optional[float], prev_band: Optional[str] = None) -> Dict[st
     if score is None:
         return {"band": "NONE", "band_label": "점수 없음"}
     if kept_in_buy_band(score, prev_band):
-        return {"band": "BUY_CANDIDATE", "band_label": f"매수 후보(완충 구간: {config.BUY_BAND_EXIT:g}점까지 유지)"}
+        return {"band": "BUY_CANDIDATE", "band_label": f"상위 구간(완충 구간: {config.BUY_BAND_EXIT:g}점까지 유지)"}
     for lo, code, label in config.BANDS:
         if score >= lo:
             return {"band": code, "band_label": label}
-    return {"band": "SELL_AVOID", "band_label": "매도·회피 후보"}
+    return {"band": "SELL_AVOID", "band_label": config.BANDS[-1][2]}
 
 
 def action_for(score: Optional[float], held: bool, prev_band: Optional[str] = None) -> str:

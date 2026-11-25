@@ -125,7 +125,7 @@ def test_the_message_is_sent_once_per_korean_session(tmp_path):
 def test_no_account_lists_the_candidates_and_a_plan_that_cannot_be_read_sends_nothing(tmp_path):
     plan = {"status": "NO_ACCOUNT", "session": "2026-11-03", "candidates": 5, "candidates_by": {"SWING": {"all": 3, "buy": 1}, "LONG": {"all": 2, "buy": 0}}}
     text = Daily.compose_kr_early(plan, datetime(2026, 11, 4, 7, 50, tzinfo=KST))
-    assert "진입 가능 후보 5종목: 스윙 3(매수 구간 1), 장기 2(매수 구간 0)." in text and "07:50 KST" in text and "수량은 계산하지 않았습니다" in text
+    assert "진입 규칙을 채운 후보 5종목: 스윙 3(상위 구간 1), 장기 2(상위 구간 0)." in text and "07:50 KST" in text and "수량은 계산하지 않았습니다" in text
     d, calls, sent = job(tmp_path, None, terminal=FakeTerminal())       # no order_plan at all: the run goes on, one summary as before
     res = d.run()
     assert calls.count("TELEGRAM") == 1 and res["status"] == "DONE" and "kr_early" not in d.state()

@@ -179,6 +179,6 @@ def test_the_plan_is_written_and_the_record_is_backed_up_and_wired_into_the_dail
 def test_the_notice_names_the_live_universe_its_weak_evidence_and_the_new_swing_composition():
     root = Path(__file__).resolve().parents[1]
     n = config.VALIDATION_NOTICE
-    assert "시가총액 상위 300" in n and "기준에 못 미쳤" in n and "거래대금 상위 300" in n and "차트 항목을 뺀" in n and "과거 성적이 없습니다" in n
+    assert "시가총액 상위 300" in n and "기준에 못 미쳤" in n and "거래대금 상위 300" in n and "차트 항목을 뺀" in n and "상위와 하위 묶음의 수익이 같았" in n
     assert n.split("근거를 찾지 못했습니다. ", 1)[1] in (root / "terminal" / "static" / "qsf.js").read_text(encoding="utf-8")
     assert "시가총액 상위 300" in service.QSF._kr_scan_input.__code__.co_consts or "시가총액 상위 300 (스캔 대상)" in (root / "terminal" / "qsf" / "service.py").read_text(encoding="utf-8")

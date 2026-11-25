@@ -208,7 +208,7 @@ def annotate(orders: List[Dict[str, Any]], deals: Optional[Dict[str, Any]] = Non
             o["deal"] = deals[o["ticker"]]
     under = sum(1 for o in orders if o["band"] not in engine.BUY_CODES)
     return {"orders": len(orders), "under_buy_band": under, "buy_line": buy,
-            "note": (f"계획 {len(orders)}종목 가운데 {under}종목은 점수 구간이 매수 후보({buy:g}점 이상)가 아닙니다. 주문 계획은 구간이 아니라 '지금 진입 가능' 상태로 후보를 고르기 때문입니다. "
+            "note": (f"계획 {len(orders)}종목 가운데 {under}종목은 점수 구간이 상위 구간({buy:g}점 이상)이 아닙니다. 주문 계획은 구간이 아니라 '진입 규칙 충족' 상태로 후보를 고르기 때문입니다. "
                      "각 줄의 점수 아래에 구간을 적었습니다.") if under else None}
 
 

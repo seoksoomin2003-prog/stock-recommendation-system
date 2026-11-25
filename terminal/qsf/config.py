@@ -19,7 +19,9 @@ from typing import Dict
 # (NEVER_AVAILABLE) no longer counts against the buy band; (3) more than MAX_HALT_RUN sessions without a trade in a row block the
 # card; (4) a statement copy older than STALE_FUND_DAYS reads confidence LOW; (5) US debt is read from more of the tags companies
 # file it under.  Only (5) moves a score.
-RULES_VERSION = "R-1"           # bands, entry rules, gates: what turns a score into words.  R-1 = the rules of QSF-1.5.3 (2026-11-25)
+RULES_VERSION = "R-2"           # bands, entry rules, gates: what turns a score into words.  R-1 = the rules of QSF-1.5.3 (2026-11-25).
+                                # R-2 (user decision 2026-11-25 after BT-1 and the debate, reports/QSF_RULES_R2_2026_11_25.md): a band is named by its
+                                # place ("상위 구간"), not by what to do; a low score alone is not called "sell" or "avoid".  Codes, lines and scores unchanged.
 MODEL_VERSION = "QSF-1.6.0"     # 1.5.1 (user decisions 2026-11-22 after the maturity assessment, reports/QSF_1_5_1_2026_11_22.md; no record
                                 # was written under 1.5.0): the score is unchanged.  (1) the buy band is not given when the score would
                                 # fall under it with every missing factor read at the middle; (2) long-term entry: a valuation under 25
@@ -49,11 +51,25 @@ MODEL_VERSION = "QSF-1.6.0"     # 1.5.1 (user decisions 2026-11-22 after the mat
 #                                  and chart position stays in the entry assessment (holding.entry_status).  US and Korean long-term: unchanged.
 #                                  1.1.9: fundamental inputs after the 2026-11-11 audit (one fiscal year per figure, share bases, Korean account ids,
 #                                  currency, who is scored as financial); factor formulas and weights unchanged.  1.1.8: Korean daily bars from KRX
-VALIDATION_NOTICE = ("미국 S&P 500 과거 검증(2014~2026)에서 점수가 높을수록 수익이 좋다는 근거를 찾지 못했습니다. "
-                     "한국 스캔 대상은 2026-11-11부터 시가총액 상위 300종목입니다. 이 대상 안에서 점수는 과거 시험(2019~2026)의 기준에 못 미쳤고(장기 점수는 순위와 약한 양의 관계, 상위 종목은 시장 수준), "
-                     "이전 대상(거래대금 상위 300)에서는 장기 점수가 한 구간에서만 순위를 설명했으며 그 대상 자체가 시장보다 크게 부진했습니다. "
-                     "한국 스윙 점수는 2026-11-11에 차트 항목을 뺀 새 구성이라 과거 성적이 없습니다. "
-                     "2026-11-16부터 네 점수 모두 시장 국면을 빼고 '시장 상태'로 따로 보여 줍니다(종목 순위는 거의 그대로이고 매수 후보 수가 달라집니다). 참고용으로만 쓰세요.")
+# R-2 (2026-11-25): one line per score, after BT-1 and its errata.  No figure against the index is quoted: the Korean ones mix in
+# things that are not the score (reports/QSF_BACKTEST_CURRENT_ERRATA.md), and a standing number would be read as a forecast.
+VALIDATION_NOTICE = ("과거 기록(미국 2014~2026, 한국 2019~2026)을 지금 공식으로 다시 읽어도 네 점수 모두에서 점수 상위를 사면 더 번다는 근거를 찾지 못했습니다. "
+                     "미국 스윙: 점수와 수익의 순위 관계가 없었습니다. "
+                     "미국 장기: 순위 관계가 기준에 못 미쳤고, 이 과거 재현은 실제 점수의 근사치입니다. "
+                     "한국 스윙: 2026-11-11에 차트 항목을 뺀 구성이고, 순위 관계는 있었지만 상위와 하위 묶음의 수익이 같았으며 구성을 이 구간을 보고 정했습니다. "
+                     "한국 장기: 순위와 약한 양의 관계가 있고 상위 묶음이 스캔 평균보다 높았으나, 주된 기간(1년)은 기준에 못 미쳤습니다. "
+                     "한국 스캔 대상은 2026-11-11부터 시가총액 상위 300종목입니다(이전 대상은 거래대금 상위 300). "
+                     "같은 구간을 여러 번 읽은 결과라 새 근거가 아니며, 판정은 2026-11-25부터의 실전 기록으로 합니다(스윙 첫 판정 2027년 12월쯤). "
+                     "그때까지 70점 이상 구간의 이름에 '매수'를 쓰지 않습니다. "
+                     "네 점수 모두 시장 국면은 '시장 상태'로 따로 보여 줍니다. "
+                     "참고용으로만 쓰세요.")
+# The three "이 규칙 쓰기" buttons (turnover rules, rank rules, statement period).  Off by user decision 2026-11-25, until the first
+# live swing verdict: a comparison book's adoption condition is met about half the time with no effect at all, and the score is
+# frozen.  The books go on recording and their readings are still made and filed.  True brings the buttons back; turning a rule
+# OFF is always allowed, and the .env switches still decide first.
+APPLY_BUTTONS = False
+APPLY_REFUSED = ("이 규칙을 켜는 버튼은 2026-11-25 결정으로 첫 실전 스윙 판정(2027년 12월쯤)까지 쓰지 않습니다. 비교 기록은 계속 쌓이고 판정 결과는 파일로 남습니다. "
+                 "안내: reports/QSF_AFTER_VERDICT_RULES_2026_11_25.md")
 STYLE_TO_STRATEGY = {"LONG": "LONG_TERM", "SWING": "SWING"}
 # Which Korean stocks the live scan scores.  MARKET_CAP: the 300 largest by market value on the newest KRX day on file, by the rule of
 # reports/QSF_KR_CAP_UNIVERSE_PROTOCOL.md.  TRADED_VALUE: the 300 most traded over 20 sessions, the live rule until QSF-1.2.1; it is
@@ -168,14 +184,15 @@ MIN_DOMAIN_COVERAGE = {"SWING": {"TECHNICAL": 0.70, "RISK": 0.50},
                        "LONG_TERM": {"FUNDAMENTAL": 0.60, "RISK": 0.40}}
 CONFIDENCE_BANDS = ((0.90, "HIGH"), (0.80, "MEDIUM"), (0.70, "LOW"))
 
-BANDS = ((80.0, "STRONG_BUY_CANDIDATE", "강력 매수 후보"), (70.0, "BUY_CANDIDATE", "매수 후보"),
-         (55.0, "HOLD_WATCH", "보유·관찰"), (40.0, "WEAK_REDUCE", "약세·축소 후보"),
-         (0.0, "SELL_AVOID", "매도·회피 후보"))
+# R-2: the labels are places.  "매수 후보" returns to one score through wording.restore, when its live verdict passes.
+BANDS = ((80.0, "STRONG_BUY_CANDIDATE", "최상위 구간"), (70.0, "BUY_CANDIDATE", "상위 구간"),
+         (55.0, "HOLD_WATCH", "보유·관찰"), (40.0, "WEAK_REDUCE", "하위 구간"),
+         (0.0, "SELL_AVOID", "최하위 구간"))
 
 COLORS = {"BUY": "#16A34A", "SELL": "#DC2626", "AVOID": "#DC2626", "HOLD": "#64748B", "WATCH": "#64748B",
           "REDUCE": "#D97706", "INSUFFICIENT_DATA": "#64748B", "BLOCKED": "#64748B"}
-ACTION_LABELS = {"BUY": "매수 후보", "HOLD": "보유 유지", "WATCH": "관찰", "REDUCE": "비중 축소 검토", "SELL": "매도 검토",
-                 "AVOID": "신규 진입 회피", "INSUFFICIENT_DATA": "판단 불가", "BLOCKED": "차단"}
+ACTION_LABELS = {"BUY": "상위 구간", "HOLD": "보유 유지", "WATCH": "관찰", "REDUCE": "하위 구간(보유 중)", "SELL": "최하위 구간(보유 중)",
+                 "AVOID": "하위 구간", "INSUFFICIENT_DATA": "판단 불가", "BLOCKED": "차단"}
 
 # Hard gates.  KR's floor is a labelled hypothesis: the KR market config deliberately has no evidence-based floor.
 GATES = {"US": {"min_price": 5.0, "min_adv_value": 20_000_000.0},

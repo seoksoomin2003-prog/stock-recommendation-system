@@ -201,8 +201,8 @@ def test_each_order_row_says_its_band_and_carries_the_merger_mark():
               {"ticker": "DDD", "style": "LONG", "score": 68.2}]
     got = order_plan.annotate(orders, {"BBB": {"form": "DEFM14A", "date": "2026-10-01", "label": "합병 주주총회 위임장"}}, bands={("DDD", "LONG"): "BUY_CANDIDATE"})
     # a row without a recorded band reads its score; one recorded in the buy band by the buffer says so (the plan and the card no longer part)
-    assert [o["band_label"] for o in orders] == ["강력 매수 후보", "보유·관찰", "매수 후보", "매수 후보(완충 구간)"] and orders[1]["deal"]["form"] == "DEFM14A" and "deal" not in orders[0]
-    assert got["under_buy_band"] == 1 and "1종목은 점수 구간이 매수 후보" in got["note"] and order_plan.annotate([{"ticker": "AAA", "style": "SWING", "score": 90.0}])["note"] is None
+    assert [o["band_label"] for o in orders] == ["최상위 구간", "보유·관찰", "상위 구간", "상위 구간(완충 구간)"] and orders[1]["deal"]["form"] == "DEFM14A" and "deal" not in orders[0]
+    assert got["under_buy_band"] == 1 and "1종목은 점수 구간이 상위 구간" in got["note"] and order_plan.annotate([{"ticker": "AAA", "style": "SWING", "score": 90.0}])["note"] is None
 
 
 def test_a_card_says_when_its_band_and_its_entry_status_point_different_ways():
@@ -487,6 +487,7 @@ def test_the_live_verdicts_start_at_the_first_session_of_the_new_formula():
     assert "## 시작일 변경 (2026-11-22, 사용자 결정)" in text and "2026-11-23" in text and "## 시작일 변경 (2026-11-25, 사용자 결정)" in text
 
 
+@pytest.mark.usefixtures("mechanism_on")
 def test_the_turnover_rules_are_switched_by_a_button_and_not_before_the_reading(tmp_path, monkeypatch):
     from terminal.qsf import rank_book, turnover_book as tb
     from tests.test_turnover_book import decided

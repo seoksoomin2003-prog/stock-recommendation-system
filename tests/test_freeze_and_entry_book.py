@@ -45,7 +45,7 @@ def test_the_score_formula_is_frozen_until_the_first_live_verdict():
 
 def test_bands_and_entry_rules_carry_their_own_label():
     r = engine.score(ctx(), "SWING")
-    assert r["rules_version"] == config.RULES_VERSION == "R-1" and r["model_version"] == "QSF-1.6.0"
+    assert r["rules_version"] == config.RULES_VERSION == "R-2" and r["model_version"] == "QSF-1.6.0"
     assert "rules_version" in ledger.FIELDS
 
 

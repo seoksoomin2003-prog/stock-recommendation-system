@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
-from terminal.qsf import calibrate
+from terminal.qsf import calibrate, config
 from terminal.qsf import kr_forward as kf, paper_book, turnover_book as tb, validate
 from utils import durable
 
@@ -51,6 +51,8 @@ def set_switch(base: Path, market: str, on: bool, now: Callable[[], datetime] = 
     """The screen's button.  Refused until the market's reading exists, like the turnover rules' (``turnover_book.set_switch``)."""
     if market not in REPORTS:
         raise ValueError(market)
+    if on and not config.APPLY_BUTTONS:
+        return {"status": "REFUSED", "market": market, "reason": config.APPLY_REFUSED}
     rep = report(base, market)
     if on and (not rep or rep.get("status") == "DAMAGED"):
         return {"status": "REFUSED", "market": market, "reason": tb.REFUSED_EARLY}
@@ -210,7 +212,7 @@ def status(base: Path, market: str) -> Dict[str, Any]:
     out: Dict[str, Any] = {"status": "DAMAGED" if damaged else "DECIDED" if rep else "RECORDING" if index else "NO_RECORD", "market": market, "protocol": PROTOCOL, "version": VERSION, "rules": dict(RULES),
                            "switch_unknown": tb.switch_of(ENV)["unknown"], "damaged": damaged,
                            "read_at": READ_AT, "first": FIRST, "mode": mode(), "active": active_rules(base, market) is not None,
-                           "switch": tb.stored_switch(base, market, SWITCH_FILE), "can_switch": bool(rep) and mode() == "auto", "paper_version": paper_rules(base, market)[1],
+                           "switch": tb.stored_switch(base, market, SWITCH_FILE), "can_switch": bool(rep) and mode() == "auto", "buttons": config.APPLY_BUTTONS, "paper_version": paper_rules(base, market)[1],
                            "rule_labels": RULE_KO, "records": len(index), "left": max(READ_AT - len(index), 0),
                            "started": index[0]["session"] if index else None, "last": index[-1]["session"] if index else None,
                            "note": "판정 전에는 비교 장부의 평가액·수익률·비용을 보여 주지 않습니다. 240거래일이 되면 프로그램이 스스로 읽고 알립니다. 규칙을 스스로 바꾸지는 않습니다(2026-11-22 결정)."}

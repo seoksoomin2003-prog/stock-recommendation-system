@@ -18,8 +18,8 @@ function asstGo(tab, ticker, view) {
 // 할 일 한 줄 (6차 묶음 P2-20): 첫 문장을 제목으로, 나머지는 접어 둡니다.  수준은 왼쪽 띠의 색과 굵기로 봅니다.
 // 문장 끝은 한글이나 닫는 괄호 뒤의 마침표만 봅니다: 'Inc. ', 'Corp. ' 같은 영문 약어에서 끊지 않습니다.
 function asstFirst(text) { const m = String(text || "").match(/^.+?[가-힣)][.!?](?=\s|$)/); return m ? m[0] : String(text || ""); }
-// '사도 돼?'의 결론 (사용자 결정 2026-11-24): 사도 됨 · 기다림 · 사지 않음을 맨 위에 크게, 바로 아래 이유와 바뀌는 조건, 다른 전략 한 줄.
-// 판단 색(6차 묶음 P2-8): 사도 됨 보라, 기다림 회색, 사지 않음 주황.  가격 색은 쓰지 않습니다.
+// '사도 돼?'의 결론 (사용자 결정 2026-11-24): 막는 것 없음 · 기다림 · 사지 않음을 맨 위에 크게, 바로 아래 이유와 바뀌는 조건, 다른 전략 한 줄.
+// 판단 색(6차 묶음 P2-8): 막는 것 없음 보라, 기다림 회색, 사지 않음 주황.  가격 색은 쓰지 않습니다.
 const ASST_VERDICT_CLASS = { OK: "v-ok", WAIT: "v-wait", NO: "v-no" };
 function asstVerdict(v) {
   return `<div class="asst-verdict ${ASST_VERDICT_CLASS[v.key] || "v-wait"}"><div class="asst-v-head"><b>${esc(v.label)}</b><span class="meta m0">${esc(v.strategy)} · 프로그램 규칙 기준</span></div>
@@ -73,7 +73,7 @@ function asstTiles(t) {
       <div class="meta mt-1">${esc(ms.session || "")} 기록</div></div>` : "";
   return `<div class="grid asst-tiles">${t.items.map(card).join("")}${st}</div>${meta(t.source || "", t.fetched_at)}`;
 }
-// 오늘의 후보(사용자 결정 2026-11-23): 스타일마다 '지금 진입 가능'(장기는 '진입을 막는 조건 없음')인 종목을 점수순으로 다섯까지.
+// 오늘의 후보(사용자 결정 2026-11-23): 스타일마다 '진입 규칙 충족'(장기는 '진입을 막는 조건 없음')인 종목을 점수순으로 다섯까지.
 // 점수는 정수, 구간 경계 1점 안이면 '경계 근처'. 한계 문장은 후보 제목 바로 아래(UI 1차 묶음, 사용자 결정 2026-11-23).
 const ASST_STYLE = { SWING: "스윙", LONG_TERM: "장기" };
 function asstCands(c, note) {
@@ -86,11 +86,11 @@ function asstCands(c, note) {
     if (!s) return "";
     const rows = s.rows.map((r) => `<tr><td class="l an"><button type="button" class="chip" data-ticker="${esc(r.ticker)}" title="${esc(tickerText(r.ticker, r.name || ""))}">${esc(nameFirst(r.ticker, r.name) ? r.name : r.ticker)}</button> <span class="meta m0 an-sub">${esc(nameFirst(r.ticker, r.name) ? r.ticker : r.name || "")}</span><div class="qr-m2">${esc(r.band_label || "")}</div></td>
       <td class="num"><b>${qsfInt(r.score)}</b>${moved(r)}${qsfNear(r.score, c.band_edges)}${r.confidence === "LOW" ? ' <span class="badge STALE" title="계산에 쓸 자료가 일부 없거나 오래됐습니다. 이 점수를 믿는 정도가 낮습니다.">신뢰도 낮음</span>' : ""}</td><td class="l w">${esc(r.band_label || "")}</td><td class="l w">${esc(sectorKo(r.sector))}</td><td class="l aw">${why(r)}</td></tr>`).join("");
-    const ready = k === "LONG_TERM" ? "진입을 막는 조건 없음" : "지금 진입 가능";
-    return `<div class="asst-cand"><h4>${ASST_STYLE[k]} <span class="meta m0">${ready} ${s.total}종목 · 그중 매수 후보 구간(70점 이상) ${s.buy_band}</span></h4>
+    const ready = k === "LONG_TERM" ? "진입을 막는 조건 없음" : "진입 규칙 충족";
+    return `<div class="asst-cand"><h4>${ASST_STYLE[k]} <span class="meta m0">${ready} ${s.total}종목 · 그중 상위 구간(70점 이상) ${s.buy_band}</span></h4>
       ${rows ? `<div class="tbl-wrap"><table><thead><tr><th class="l">종목</th><th>점수</th><th class="l w">구간</th><th class="l w">업종</th><th class="l">가점 / 감점</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="meta">${ready}인 종목이 없습니다.</div>`}</div>`;
   };
-  return `<h2>오늘의 후보 ${c.session ? `<span class="badge">${esc(c.session)}</span>` : ""}</h2>${note ? `<div class="notice">${esc(note)}</div>` : ""}<div class="asst-cands">${one("SWING")}${one("LONG_TERM")}</div><div class="meta">${esc(c.note || "")}</div>`;
+  return `<h2>오늘의 후보 ${c.session ? `<span class="badge">${esc(c.session)}</span>` : ""}</h2>${note ? `<div class="notice">${esc(note)}</div>` : ""}<div class="meta">점수 순서는 수익 순서가 아닙니다. 종목을 누르면 가격 범위와 위험이 점수 카드보다 먼저 나옵니다.</div><div class="asst-cands">${one("SWING")}${one("LONG_TERM")}</div><div class="meta">${esc(c.note || "")}</div>`;
 }
 // 작업 화면 (작업 화면 개편 3단계, 배치 명세 3.1 · 결정 D5): 맨 위 줄에 제목·요약 문장·시장 숫자 타일, 가운데에 묻는 칸과 답·할 일,
 // 오른쪽에 오늘의 후보, 아래에 작업 상태.  뼈대는 한 번만 만들고 목록(asstBrief)은 data-brief가 붙은 네 칸만 채우므로, 목록을 새로

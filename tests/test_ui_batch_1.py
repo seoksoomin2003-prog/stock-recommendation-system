@@ -165,7 +165,7 @@ def test_the_limits_sentence_sits_under_the_candidates_title():
 # ---------------------------------------------------------------- P1-4 long-term entry is named as the score tab names it
 def test_today_names_long_term_entry_as_the_score_tab_does():
     asst = (STATIC / "assistant.js").read_text(encoding="utf-8")
-    assert 'k === "LONG_TERM" ? "진입을 막는 조건 없음" : "지금 진입 가능"' in body(asst, "function asstCands(c, note) {")
+    assert 'k === "LONG_TERM" ? "진입을 막는 조건 없음" : "진입 규칙 충족"' in body(asst, "function asstCands(c, note) {")
     assert "장기는 '진입을 막는 조건 없음'" in A.candidates([], {})["note"]
 
 

@@ -183,7 +183,7 @@ def test_a_financial_company_reads_not_applicable_and_a_crowded_buy_list_is_said
     rows = [{"score": 75.0, "sector": "Financial Services", "actionability": "ACTIONABLE"}] * 3 + [{"score": 72.0, "sector": "Technology", "actionability": "ACTIONABLE"}] * 7 \
         + [{"score": 50.0, "sector": "Technology", "actionability": "ACTIONABLE"}] * 20 + [{"score": 90.0, "sector": "Financial Services", "actionability": "BLOCKED"}, {"score": None, "sector": "금융"}]
     got = am.financial_share_line(rows)
-    assert got.startswith("장기 매수 후보 10개 중 금융업이 3개(30%)입니다. 대상 전체에서 금융업은 13%입니다.") and "금융 비중이 큰 목록" in got
+    assert got.startswith("장기 상위 구간 10개 중 금융업이 3개(30%)입니다. 대상 전체에서 금융업은 13%입니다.") and "금융 비중이 큰 목록" in got
     assert am.financial_share_line(rows[2:]) is None and am.financial_share_line(rows[:6]) is None          # under a quarter, or too few candidates: nothing is said
 
 

@@ -71,7 +71,7 @@ async function renderPortfolio() {
     <div class="panel"><h2>매매 성과 (매도 건 기준)</h2>${statsHtml(d.stats)}
       ${d.stats.count ? styleStatsHtml(d.stats_by_style) : ""}
       ${d.closed.length ? `<div class="tbl-wrap"><table><thead><tr><th>매도일</th><th class="l">종목</th><th class="l">구분</th><th>수량</th><th>평균단가</th><th>매도가</th><th>실현 손익</th><th>수익률</th><th>보유 일수</th></tr></thead>
-      <tbody>${d.closed.slice(0, 50).map((c) => `<tr><td>${esc(c.date)}</td><td class="l"><b>${esc(c.ticker)}</b></td><td class="l">${esc(STYLE_KO[c.style] || "미지정")}</td><td class="num">${qtyFmt(c.qty)}</td><td class="num">${money(c.avg_cost)}</td><td class="num">${money(c.price)}</td><td>${pnl(c.pnl)}</td><td>${pct(c.return_pct, 1)}</td><td class="num">${c.hold_days}일</td></tr>`).join("")}</tbody></table></div>` : ""}</div>
+      <tbody>${d.closed.slice(0, 50).map((c) => `<tr><td>${esc(c.date)}</td><td class="l"><b>${esc(c.ticker)}</b></td><td class="l">${esc(STYLE_KO[c.style] || "미지정")}</td><td class="num">${qtyFmt(c.qty)}</td><td class="num">${money(c.avg_cost)}</td><td class="num">${money(c.price)}</td><td>${pnl(c.pnl)}</td><td>${pct(c.return_pct, 1)}</td><td class="num">${c.hold_days}일</td></tr>`).join("")}</tbody></table></div>` : ""}<div id="eq-yard"></div></div>
     <div class="panel" id="jform-panel"><h2>거래 기록 추가</h2><div class="meta">거래 기록은 통합 계좌의 양식 하나에서 적습니다. 누르면 ${mk === "KR" ? "한국" : "미국"} 계좌가 골라진 양식으로 갑니다.</div>
       <button type="button" class="btn-primary mt-2" id="jgo">통합 계좌에서 기록하기</button></div>
     <div class="panel span-all"><h2>거래 기록 <span class="meta m0">${d.journal.length}건 · 추가만 가능, 취소는 별도 기록으로 남습니다</span></h2>
@@ -135,6 +135,16 @@ function pfSide() {
   $("#pf-ask").onclick = () => askAssistant(`${t} 팔아야 해?`);
   $("#pf-alert").onclick = () => assistGo("alerts", t);
   if (typeof qsfScanSummary === "function") qsfScanSummary($("#pf-pick-score"), t, state.market, { compact: true, still: () => pfState.sel === t && state.tab === "portfolio" });
+}
+// 닫힌 거래마다 "같은 날 같은 금액을 지수 ETF에 넣었다면"을 옆에 (사용자 결정 2026-11-25).  점검용 잣대이고 판정이 아닙니다.
+function pfYardstick(y) {
+  if (!y || !y.count) return "";
+  if (!y.compared) return `<h3>지수 ETF와 견주기 <span class="meta">(${esc(y.fund)})</span></h3><div class="meta">견줄 지수 ETF 가격이 없어 계산하지 못했습니다.</div>`;
+  const rows = (y.trades || []).filter((t) => isNum(t.vs_index_pct)).slice(0, 20).map((t) => `<tr><td>${esc(t.date)}</td><td class="l"><b>${esc(t.ticker)}</b></td><td>${pct(t.return_pct, 1)}</td><td>${pct(t.index_return_pct, 1)}</td><td>${pct(t.vs_index_pct, 1)}</td><td>${pnl(t.vs_index_pnl)}</td></tr>`).join("");
+  return `<h3>지수 ETF와 견주기 <span class="meta">(${esc(y.fund)} · 판 거래 ${y.compared}건${y.small_sample ? " · 표본 적음" : ""})</span></h3>
+    <div class="meta">같은 날 같은 금액을 ${esc(y.fund)}에 넣었다면: 내 거래 합계 ${pnl(y.pnl)}, 지수 ETF였다면 ${pnl(y.index_pnl)}, 차이 ${pnl(y.vs_index_pnl)}. 지수 ETF보다 나았던 거래 ${y.ahead}건 / ${y.compared}건, 거래당 평균 차이 ${pct(y.mean_vs_index_pct, 1)}.</div>
+    <div class="tbl-wrap"><table><thead><tr><th>매도일</th><th class="l">종목</th><th>내 수익률</th><th>같은 기간 ${esc(y.fund)}</th><th>차이</th><th>금액 차이</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="meta">${esc(y.note)}</div>`;
 }
 const pfTone = (a) => ({ EXIT: "act-sell", THESIS_INVALIDATED: "act-sell", REDUCE: "act-reduce", PARTIAL_TAKE_PROFIT: "act-reduce", TIME_STOP_REVIEW: "act-reduce" }[a] || "act-hold");
 // 위험 기여 막대 (작업 화면 개편 2단계, 시각화 명세 1.7): 값이 없으면 막대 없이 —만(0% 막대는 '기여 0'으로 읽힘), 음수(헤지)가 하나라도
@@ -233,6 +243,7 @@ async function loadEquity() {
     if (!d.points.length) { $("#eq-sum").innerHTML = "거래 기록이 생기면 계좌 가치 곡선을 그립니다."; return; }
     $("#eq-sum").innerHTML = `시작 ${esc(d.start)} 이후 · 내 계좌(TWR) ${pct(d.twr_pct)} · ${esc(d.benchmark)} ${pct(d.bench_pct)}`;
     $("#eq-meta").innerHTML = meta(d.source, d.fetched_at, esc(d.method));
+    const yard = $("#eq-yard"); if (yard) yard.innerHTML = pfYardstick(d.yardstick);
     drawEquity(); redrawOn("portfolio", "equity", drawEquity);
   } catch (e) { $("#eq-sum").innerHTML = `<span class="err">${esc(errKo(e))}</span>`; }
 }
@@ -347,14 +358,14 @@ async function loadEarnings() {
   const d = await api(`/api/qsf/earnings?market=${mk}&days=14`).catch(() => null);
   if (!el.isConnected || mk !== state.market) return;
   if (!d || d.status !== "REAL") { el.innerHTML = `<h2>다가오는 실적 발표</h2><div class="empty">${esc((d && d.reason) || "일정을 불러오지 못했습니다.")}</div>`; return; }
-  const tag = (i) => [i.held ? '<span class="badge">보유</span>' : "", i.watched ? '<span class="badge">관심</span>' : "", ...i.buy.map((s) => `<span class="badge">${s === "SWING" ? "스윙" : "장기"} 매수 후보</span>`), i.stale ? `<span class="badge risk-note" title="${i.stored_days_ago}일 전에 받은 일정입니다.">오래된 일정</span>` : ""].join(" ");
+  const tag = (i) => [i.held ? '<span class="badge">보유</span>' : "", i.watched ? '<span class="badge">관심</span>' : "", ...i.buy.map((s) => `<span class="badge">${s === "SWING" ? "스윙" : "장기"} 상위 구간</span>`), i.stale ? `<span class="badge risk-note" title="${i.stored_days_ago}일 전에 받은 일정입니다.">오래된 일정</span>` : ""].join(" ");
   const mine = d.items.filter((i) => i.held || i.watched || i.buy.length), rest = d.items.length - mine.length;
   const row = (i) => `<tr><td class="l">${esc(i.date)} <span class="meta m0">${i.days_away === 0 ? "오늘" : i.days_away + "일 뒤"}</span></td><td class="l"><b data-ticker="${esc(i.ticker)}" class="pointer">${esc(i.ticker)}</b> <span class="meta m0">${esc(i.name || "")}</span></td><td class="l">${tag(i)}</td></tr>`;
   const table = (rows) => `<div class="tbl-wrap"><table><thead><tr><th class="l">발표일</th><th class="l">종목</th><th class="l">표시</th></tr></thead><tbody>${rows.map(row).join("")}</tbody></table></div>`;
   el.innerHTML = `<h2>다가오는 실적 발표 <span class="meta m0">14일 안</span></h2>
-    ${mine.length ? table(mine) : '<div class="empty">보유·관심 종목과 매수 후보 중 14일 안에 발표 일정이 저장된 종목이 없습니다.</div>'}
+    ${mine.length ? table(mine) : '<div class="empty">보유·관심 종목과 상위 구간 종목 중 14일 안에 발표 일정이 저장된 종목이 없습니다.</div>'}
     ${rest ? `<details class="qsf-today-fold"><summary>그 밖의 스캔 종목 ${rest}개</summary>${table(d.items.filter((i) => !(i.held || i.watched || i.buy.length)))}</details>` : ""}
-    <div class="meta">${esc(d.source)}. ${d.checked}종목 중 ${d.no_date}종목은 저장된 다음 일정이 없어 빠졌습니다(발표가 없다는 뜻이 아닙니다). 스윙 보유 중 실적 발표는 갭 위험이 있습니다. 매수 후보 표시는 ${esc(d.session || "")} 거래일 스캔 기준입니다.</div>`;
+    <div class="meta">${esc(d.source)}. ${d.checked}종목 중 ${d.no_date}종목은 저장된 다음 일정이 없어 빠졌습니다(발표가 없다는 뜻이 아닙니다). 스윙 보유 중 실적 발표는 갭 위험이 있습니다. 상위 구간 표시는 ${esc(d.session || "")} 거래일 스캔 기준입니다.</div>`;
 }
 let lastSizing = null;
 async function runSizing() {

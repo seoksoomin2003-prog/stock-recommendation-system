@@ -460,6 +460,7 @@ class Daily:
         """A comparison book's one reading per market: made by this run on the day the book has its 240 records, then told once.
         An undelivered notice is sent again at later runs; a record that cannot be read is told once and asked again each run.
         Never stops the run."""
+        from terminal.qsf import readings
         got = dict(st.get(key) or {})
         for market in ("KR", "US"):
             m = dict(got.get(market) or {})
@@ -470,6 +471,8 @@ class Daily:
                 m.pop("error", None)
                 if told and not unread:
                     m["warned"] = False                             # the verdict file is whole (again)
+                elif rep is not None and not unread and not readings.BOOKS_NOTIFY:      # read and filed, no notice (user decision 2026-11-25)
+                    m = {"decision": rep.get("decision"), "at": self.now().isoformat(), "warned": False, "delivered": True, "quiet": True}
                 elif rep is not None and not (unread and m.get("warned")):
                     tg = self.telegram(book.text(rep))
                     if tg["status"] == "NOT_CONFIGURED":
@@ -499,7 +502,7 @@ class Daily:
             try:
                 rep = readings.report(self.base, e)
                 if rep is None and readings.report_path(self.base, e).exists():        # there, and not a report: the command would refuse for good
-                    if not m.get("damaged"):
+                    if not m.get("damaged") and e.get("notify"):
                         tg = self.telegram(readings.damaged_text(e))
                         if tg["status"] == "NOT_CONFIGURED":
                             tg = self.macos("판정", f"{e['label']}: 결과 파일 손상")
@@ -516,11 +519,13 @@ class Daily:
                     rep = readings.report(self.base, e)
                 if rep is None:
                     m["failed"] = m.get("failed", 0) + 1
-                    if m["failed"] >= readings.GIVE_UP and not m.get("warned"):
+                    if m["failed"] >= readings.GIVE_UP and not m.get("warned") and e.get("notify"):
                         tg = self.telegram(readings.stuck_text(e, m["failed"]))
                         if tg["status"] == "NOT_CONFIGURED":
                             tg = self.macos("판정", f"{e['label']}: {m['failed']}번 읽지 못함")
                         m["warned"] = tg["status"] == "SENT"
+                elif not e.get("notify"):                           # an archived reading (user decision 2026-11-25): filed, on the schedule, no notice
+                    m.update(verdict=readings.verdict(e, rep), at=self.now().isoformat(), delivered=True, quiet=True)
                 else:
                     tg = self.telegram(readings.text(e, rep))
                     if tg["status"] == "NOT_CONFIGURED":
@@ -766,8 +771,8 @@ class Daily:
         lines = [f"🇰🇷 한국 점수 기록 완료 (기준 거래일 {plan['session']}, {now.astimezone(KST):%H:%M} KST)", ""]
         if plan["status"] == "NO_ACCOUNT":
             by = plan.get("candidates_by") or {}
-            part = lambda s, label: f"{label} {(by.get(s) or {}).get('all', 0)}(매수 구간 {(by.get(s) or {}).get('buy', 0)})"      # noqa: E731
-            lines += [f"진입 가능 후보 {plan.get('candidates', 0)}종목: {part('SWING', '스윙')}, {part('LONG', '장기')}.",
+            part = lambda s, label: f"{label} {(by.get(s) or {}).get('all', 0)}(상위 구간 {(by.get(s) or {}).get('buy', 0)})"      # noqa: E731
+            lines += [f"진입 규칙을 채운 후보 {plan.get('candidates', 0)}종목: {part('SWING', '스윙')}, {part('LONG', '장기')}.",
                       "계좌 평가액이 없어 수량은 계산하지 않았습니다(화면 '내 계좌'에 기록하면 계산합니다)."]
         else:
             orders = plan.get("orders") or []

@@ -22,7 +22,7 @@ from markets import session_data
 from terminal import plain
 from terminal import sources as default_sources
 from terminal.cache import FileCache
-from terminal.qsf import config, deal_pin, earnings_estimate, engine, events, fund_period, fund_trailing, fundamentals, holding, kr_fuller, ledger, technicals
+from terminal.qsf import config, deal_pin, earnings_estimate, engine, events, fund_period, fund_trailing, fundamentals, holding, kr_fuller, ledger, technicals, wording
 from terminal.qsf.views import ScreenViews, _n
 from utils import nyse_calendar
 
@@ -833,7 +833,7 @@ class QSF(ScreenViews):
         fresh = bool(prev) and prev.get("actionability") == "ACTIONABLE" and prev.get("model_version") == config.MODEL_VERSION \
             and prev.get("data_date") in self.ledger.recent_sessions(market, session, config.BUFFER_SESSIONS)     # an actionable record's data date is its session
         ctx["prev_band"] = prev.get("band") if fresh else None
-        res = engine.score(ctx, strategy, held=bool(position))
+        res = wording.restore(engine.score(ctx, strategy, held=bool(position)), self.base, market, strategy)
         entry_day = self._entry_date(market, session)
         entry = holding.entry_status(res, ctx)
         plan = holding.swing_plan(res, ctx, entry_day) if strategy == "SWING" else holding.long_plan(res, ctx, entry_day)
@@ -1245,12 +1245,12 @@ def _surface_note(c: Dict[str, Any]) -> Optional[str]:
     if c.get("actionability") != "ACTIONABLE" or c.get("score") is None:
         return None
     buy, now = c.get("band") in BUY_BANDS, c.get("entry_status") == "ENTRY_NOW"
-    ready = "진입을 막는 조건 없음" if c.get("strategy") == "LONG_TERM" else "지금 진입 가능"      # the long card's name for it (2026-11-23)
+    ready = "진입을 막는 조건 없음" if c.get("strategy") == "LONG_TERM" else "진입 규칙 충족"      # the long card's name for it (2026-11-23)
     if buy and not now:
         return (f"점수 구간은 '{c['band_label']}'이지만 진입 상태는 '{ready}'이 아닙니다({(c.get('entry') or {}).get('reason') or '진입 근거 없음'}). 구간은 점수만 보고, 진입 상태는 가격 위치와 "
                 "손익비까지 봅니다. 주문 계획은 진입 상태를 따르므로 이 종목은 계획에 나오지 않습니다.")
     if now and not buy:
-        return (f"진입 상태는 '{ready}'이지만 점수 구간은 '{c['band_label']}'입니다(매수 후보는 {config.BANDS[1][0]:g}점 이상). 주문 계획은 구간이 아니라 진입 상태로 후보를 고르므로 "
+        return (f"진입 상태는 '{ready}'이지만 점수 구간은 '{c['band_label']}'입니다(상위 구간은 {config.BANDS[1][0]:g}점 이상). 주문 계획은 구간이 아니라 진입 상태로 후보를 고르므로 "
                 "이 종목이 계획에 나올 수 있습니다.")
     return None
 

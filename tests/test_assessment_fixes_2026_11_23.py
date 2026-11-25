@@ -164,13 +164,14 @@ def test_the_daily_message_keeps_the_line_of_a_day_the_state_could_not_be_read()
 
 
 # ---------------------------------------------------------------------- readings: nothing applies itself
+@pytest.mark.usefixtures("mechanism_on")
 def test_no_reading_changes_anything_by_itself_and_the_fund_period_row_has_a_button(tmp_path):
     assert not any(e.get("applies") for e in readings.REGISTRY)
     from datetime import date
     got = readings.status(tmp_path, date(2026, 11, 23))
     assert not any(r["applies_itself"] for r in got["readings"]) and "스스로 바꾸지 않습니다" in got["note"]
     sw = {r["key"]: r.get("switch") for r in got["readings"]}
-    assert sw["fund_period_us"] == {"market": "US", "live_period": "ANNUAL", "can_switch": False} and sw["fund_period_kr"]["market"] == "KR"
+    assert sw["fund_period_us"] == {"market": "US", "live_period": "ANNUAL", "can_switch": False, "buttons": True} and sw["fund_period_kr"]["market"] == "KR"
     assert sum(1 for v in sw.values() if v) == 2
     server = src("terminal", "server.py")
     assert '("POST", "/api/qsf/fund-period"): lambda q, b: qsf_fund_period.set_period(' in server
@@ -186,7 +187,7 @@ def test_the_top_three_verdict_is_read_once():
 
 # ---------------------------------------------------------------------- what the screen calls things
 def test_a_long_term_entry_now_is_named_for_what_it_is():
-    assert assistant.entry_ko("ENTRY_NOW", "LONG_TERM") == "진입을 막는 조건 없음" and assistant.entry_ko("ENTRY_NOW", "SWING") == "지금 진입 가능 구간"
+    assert assistant.entry_ko("ENTRY_NOW", "LONG_TERM") == "진입을 막는 조건 없음" and assistant.entry_ko("ENTRY_NOW", "SWING") == "진입 규칙 충족"
     assert assistant.entry_ko("WAIT_FOR_PULLBACK", "LONG_TERM") == "눌림 대기" and "좋은 때" in assistant.entry_meaning("ENTRY_NOW", "LONG_TERM")
     assert assistant.entry_meaning("ENTRY_NOW", "SWING") == assistant.ENTRY_MEANING["ENTRY_NOW"]
     js = src("terminal", "static", "qsf.js")

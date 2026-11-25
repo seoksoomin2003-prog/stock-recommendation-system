@@ -176,7 +176,7 @@ def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> 
         parts.append({"h": "먼저 알아 둘 사건", "lines": [
             first,
             "가격이 사겠다고 한 값 가까이에 묶여 거의 움직이지 않고 있어, 팔리는 쪽으로 읽힙니다. 그러면 점수가 높아도 더 오를 자리가 거의 없고, 거래가 깨지면 크게 떨어질 수 있습니다.",
-            "그래서 점수는 그대로 두되 매수 후보 구간과 진입 판단을 주지 않습니다."] if pinned else [
+            "그래서 점수는 그대로 두되 상위 구간과 진입 판단을 주지 않습니다."] if pinned else [
             first,
             "이 서류는 사는 쪽 회사가 낼 때도 있습니다. 가격이 평소처럼 움직이고 있어 인수 가격에 묶인 모습은 아닙니다. 어느 쪽인지는 공시 원문에서 확인하세요.",
             "점수는 이 사정을 따지지 않습니다."]})
@@ -211,7 +211,7 @@ def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> 
         if status == "NO_VALID_ENTRY_SETUP" and pinned:
             now = "합병 절차로 가격이 묶여 있어, 이 프로그램은 지금 살 자리로 보지 않습니다. 오를 여지가 사겠다고 한 값까지뿐이기 때문입니다."
         elif status == "NO_VALID_ENTRY_SETUP" and card.get("band_held_back"):
-            now = "일부 자료가 없어서 지금 사도 되는지를 판단하지 않았습니다. 없는 자료를 '보통'으로 치면 매수 후보 기준에 못 미칩니다. 자료가 채워지면 다시 판단합니다."
+            now = "일부 자료가 없어서 지금 사도 되는지를 판단하지 않았습니다. 없는 자료를 '보통'으로 치면 상위 구간 기준에 못 미칩니다. 자료가 채워지면 다시 판단합니다."
         if status == "WAIT_FOR_EARNINGS":
             used.append("실적 발표")
         lines = [now]

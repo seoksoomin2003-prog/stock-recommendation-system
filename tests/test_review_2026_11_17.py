@@ -119,6 +119,8 @@ from terminal.automation import Daily                       # noqa: E402
 from terminal.qsf import krx_history as kh, rank_book as rb, readings as rd, turnover_book as tb  # noqa: E402
 from utils import nyse_calendar                             # noqa: E402
 
+pytestmark = pytest.mark.usefixtures("mechanism_on")      # notices and buttons as they worked until 2026-11-25 (off by default since: tests/test_after_verdict_rules.py)
+
 ROOT = Path(__file__).resolve().parents[1]
 NOW = datetime(2027, 3, 2, 0, 0, tzinfo=timezone.utc)
 

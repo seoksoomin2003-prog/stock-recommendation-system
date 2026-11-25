@@ -88,6 +88,8 @@ def set_period(base: Path, market: str, period: str, now: Optional[Any] = None) 
     period = str(period or "").upper()
     if market not in REPORTS or period not in PERIODS:
         raise ValueError("BAD_VALUE")
+    if period == "TRAILING" and not config.APPLY_BUTTONS:        # user decision 2026-11-25; the score is frozen (QSF_FORMULA_FREEZE_2026_11_25.md)
+        return {"status": "REFUSED", "market": market, "reason": config.APPLY_REFUSED}
     if period == "TRAILING" and read_report(base, market) is None:
         return {"status": "REFUSED", "market": market, "reason": "240거래일 판정이 나온 뒤에 바꿀 수 있습니다. 그 전에 바꾸면 비교하려는 두 점수 가운데 하나가 실전 점수가 되어 비교가 뜻을 잃습니다."}
     path = Path(base) / SWITCH_FILE
@@ -169,7 +171,8 @@ def status(base: Path) -> Dict[str, Any]:
         rep = read_report(base, market)
         out["markets"][market] = {"records": len(rows), "first": rows[0]["session"] if rows else None, "last": rows[-1]["session"] if rows else None,
                                   "late": sum(1 for r in rows if r.get("late")), "evaluated": rep is not None, "verdict": (rep or {}).get("verdict"), "live_period": live_period(base, market),
-                                  "switch": stored_switch(base, market), "can_switch": rep is not None and os.environ.get(SWITCH, "").strip().upper() not in PERIODS}
+                                  "switch": stored_switch(base, market), "can_switch": rep is not None and os.environ.get(SWITCH, "").strip().upper() not in PERIODS and (config.APPLY_BUTTONS or live_period(base, market) == "TRAILING"),
+                                  "buttons": config.APPLY_BUTTONS}
     return out
 
 

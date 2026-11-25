@@ -16,7 +16,7 @@ from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from terminal.qsf import kr_forward as kf
+from terminal.qsf import kr_forward as kf, wording
 
 GUIDE = "reports/RUNBOOK.md"
 GIVE_UP = 15                    # attempts without a report after which the user is told once; later attempts come a week apart
@@ -25,6 +25,13 @@ REPORTS = Path("reports") / "qsf"
 STORES = Path("research_data")
 LEDGER_FIRST = "2026-11-25"     # live_forward.FIRST: the first ledger session the live verdicts read (moved 2026-11-22 and, with QSF-1.6.0, 2026-11-25; user decisions)
 PRIMARY_KEYS = ("live_swing_", "live_long_")
+# Which readings send a notice (user decision 2026-11-25, reports/QSF_AFTER_VERDICT_RULES_2026_11_25.md): the four verdicts of the
+# live score, their registered early and continuation readings, and the Korean avoid marks.  Every other reading is still made
+# on its day and filed, and shown folded on the schedule, but tells nobody: thirty alternatives read over one year mostly answer
+# "which looked best this year", and a notice invites acting on a chance pass.
+NOTIFY_KEYS = ("live_swing_", "live_long_", "early_swing_", "cont_swing_", "kr_avoid_marks")
+BOOKS_NOTIFY = False             # the three comparison books (turnover, rank, entry): read and filed, no notice
+QUIET_NOTE = "보관 판정입니다(2026-11-25 결정). 때가 되면 읽어 파일로 남기고 알림은 보내지 않습니다."
 KIND_KO = {True: "주된 판정", False: "참고 판정"}
 REFERENCE_NOTE = "참고 판정입니다. 판정이 서른 개쯤이라 그중 몇은 우연히 기준을 넘을 수 있으므로, 점수가 통하는지는 실전 점수 판정 넷(미국·한국의 스윙·장기)으로 답합니다."
 NO_CHANGE = "이 결과로 점수·스캔 대상·규칙이 자동으로 바뀌지는 않습니다."
@@ -36,7 +43,7 @@ def _e(key: str, label: str, argv: List[str], report: str, protocol: str, need: 
     # (audit 2026-11-22, QNT-04).  The four are the ones the question "does the score work" is answered by; every other
     # reading is reference (user decision 2026-11-22) and is said to be in its notice and on the schedule.
     return {"key": key, "label": label, "argv": argv, "report": report, "protocol": f"reports/{protocol}", "need": need, "horizon": horizon, "store": store, "ledger": ledger,
-            "verdict": verdict, "after": after, "applies": applies, "committee": committee, "primary": key.startswith(PRIMARY_KEYS)}
+            "verdict": verdict, "after": after, "applies": applies, "committee": committee, "primary": key.startswith(PRIMARY_KEYS), "notify": key.startswith(NOTIFY_KEYS)}
 
 
 def _per_market(key: str, label: str, action: str, report: str, protocol: str, need: int, horizon: int, store: Optional[str] = None, ledger: bool = False, **kw) -> List[Dict[str, Any]]:
@@ -44,6 +51,9 @@ def _per_market(key: str, label: str, action: str, report: str, protocol: str, n
                store=store.format(m=m.lower()) if store else None, ledger=m if ledger else None, **kw) for m, ko in (("KR", "한국"), ("US", "미국"))]
 
 
+EARLY_AFTER = "중간 읽기입니다. 무엇이 나와도 점수, 규칙, 주된 판정은 바뀌지 않습니다. 공식 동결도 풀지 않습니다. 이 읽기는 점수가 실제로 통하든 통하지 않든 97% 넘게 '구분되지 않음'으로 나옵니다(모의실험). '구분되지 않음'을 '안 통한다'로 읽지 마십시오."
+CONT_AFTER = (f"첫 판정과 같은 공식, 같은 기록을 더 길게 읽은 것입니다. WEAK_POSITIVE_EVIDENCE가 나오면 그 점수의 구간 이름에 '{wording.RESTORED['BUY_CANDIDATE']}'가 돌아옵니다(프로그램이 스스로 적용). "
+              "그 밖의 결과로는 아무것도 바뀌지 않고, 통과하지 못한 것이 공식을 바꿀 이유도 아닙니다.")
 # need: sessions whose outcome must have ended; horizon: sessions an outcome takes.  A record of need + horizon sessions is long enough.
 REGISTRY: List[Dict[str, Any]] = [
     *_per_market("live_swing", "실전 점수 판정 · 스윙", "live-forward-evaluate-swing", "QSF_LIVE_FORWARD_{m}_SWING.json", "QSF_LIVE_FORWARD_PROTOCOL.md", 240, 20, ledger=True),
@@ -51,15 +61,19 @@ REGISTRY: List[Dict[str, Any]] = [
     # Two early readings of the swing score (user decision 2026-11-25): five-session outcomes of the first 60 and 120 matured
     # sessions, a stricter bar, and no consequence.  Reference readings: the four above stay the ones that answer.
     *_per_market("early_swing_60", "실전 점수 중간 읽기 · 스윙 60일", "live-forward-early-60", "QSF_LIVE_FORWARD_EARLY_{m}_SWING_60.json", "QSF_LIVE_FORWARD_PROTOCOL.md", 60, 5, ledger=True,
-                 after="중간 읽기입니다. 무엇이 나와도 점수, 규칙, 주된 판정은 바뀌지 않습니다."),
+                 after=EARLY_AFTER),
     *_per_market("early_swing_120", "실전 점수 중간 읽기 · 스윙 120일", "live-forward-early-120", "QSF_LIVE_FORWARD_EARLY_{m}_SWING_120.json", "QSF_LIVE_FORWARD_PROTOCOL.md", 120, 5, ledger=True,
-                 after="중간 읽기입니다. 무엇이 나와도 점수, 규칙, 주된 판정은 바뀌지 않습니다."),
+                 after=EARLY_AFTER),
+    # Continuation readings of the swing verdict (user decision 2026-11-25): the same formula and record read again at 480, 720 and
+    # 960 matured sessions when the verdict before did not pass.  Stricter bars; a pass gives the score its "매수 후보" name back.
+    *[r for n in (480, 720, 960) for r in _per_market(f"cont_swing_{n}", f"실전 점수 이어 읽기 · 스윙 {n}일", f"live-forward-continue-{n}", "QSF_LIVE_FORWARD_CONT_{m}_SWING_" + f"{n}.json",
+                                                      "QSF_AFTER_VERDICT_RULES_2026_11_25.md", n, 20, ledger=True, after=CONT_AFTER)],
     _e("kr_avoid_marks", "한국 회피 표시 판정", ["qsf", "kr-avoid-marks-evaluate"], "QSF_KR_AVOID_MARKS.json", "QSF_KR_AVOID_MARKS_PROTOCOL.md", 240, 20, ledger="KR",
-       after="AVOID_RULE_SUPPORTED가 나와도 매수 후보에서 자동으로 빼지 않습니다. 화면의 회피 표시를 보고 직접 판단합니다."),
+       after="AVOID_RULE_SUPPORTED가 나와도 상위 구간에서 자동으로 빼지 않습니다. 화면의 회피 표시를 보고 직접 판단합니다."),
     *_per_market("score_split", "점수 분리 비교", "score-split-evaluate", "QSF_SCORE_SPLIT_{m}.json", "QSF_SCORE_SPLIT_PROTOCOL.md", 240, 20, store="score_split_{m}",
                  after="WITH_REGIME_BETTER가 나와도 점수를 자동으로 되돌리지 않습니다."),
     *_per_market("fund_period", "재무 기준 기간 비교", "fund-period-evaluate", "QSF_FUND_PERIOD_{m}.json", "QSF_FUND_PERIOD_PROTOCOL.md", 240, 20, store="fund_period_{m}", applies=False,
-                 after="TRAILING_BETTER가 나와도 프로그램이 스스로 바꾸지 않습니다(2026-11-23 결정). 결과를 알리고, 바꾸려면 이 표의 그 줄에 생기는 버튼을 누릅니다. .env의 QSF_FUND_PERIOD가 있으면 그 값이 먼저입니다."),
+                 after="TRAILING_BETTER가 나와도 아무것도 바뀌지 않습니다. 바꾸는 버튼은 2026-11-25 결정으로 첫 실전 스윙 판정까지 쓰지 않습니다(점수 공식 동결). .env의 QSF_FUND_PERIOD가 있으면 그 값이 먼저입니다."),
     *_per_market("regime_weights", "국면 가중치 기록 읽기", "regime-weights-evaluate", "QSF_REGIME_WEIGHTS_FORWARD_{m}.json", "QSF_REGIME_WEIGHTS_PROTOCOL.md", 240, 20,
                  store="regime_weights_{m}", verdict=("reading",), after="판정 없이 수치만 적는 읽기입니다. 아무것도 바뀌지 않습니다."),
     _e("us_challenger_swing", "미국 도전자 점수 · 스윙", ["qsf", "us-challenger-evaluate-swing"], "QSF_US_CHALLENGER_SWING.json", "QSF_US_CHALLENGER_PROTOCOL.md", 240, 20,
@@ -92,6 +106,8 @@ REGISTRY: List[Dict[str, Any]] = [
 ]
 
 VERDICT_KO = {
+    "ALREADY_PASSED": "앞선 판정이 이미 통과해 읽지 않았습니다",
+    "MIXED_FORMULA": "점수 공식이 둘 이상 섞인 기록이라 읽지 않았습니다",
     "EARLY_POSITIVE": "이른 근거가 있습니다(짧은 기록에서 순위 조건과 수익 조건을 모두 채움). 주된 판정은 따로 읽습니다",
     "EARLY_RANK_ONLY": "짧은 기록에서 순위 조건만 채웠습니다(상위 종목의 수익 조건은 못 채움)",
     "EARLY_NOTHING": "짧은 기록으로는 구분되지 않았습니다. 효과가 없다는 뜻이 아닙니다",
@@ -188,7 +204,7 @@ def why(rep: Dict[str, Any]) -> List[str]:
 def text(e: Dict[str, Any], rep: Dict[str, Any]) -> str:
     """The notice sent once when a reading has been made."""
     code = verdict(e, rep)
-    lines = [f"[{KIND_KO[bool(e.get('primary'))]} · {e['label']}] {code}", meaning(code) + ".", *why(rep), *([] if e.get("primary") else [REFERENCE_NOTE]), e["after"],
+    lines = [f"[{KIND_KO[bool(e.get('primary'))]} · {e['label']}] {code}", meaning(code) + ".", *why(rep), *([] if e.get("primary") or e["key"].startswith("cont_swing_") else [REFERENCE_NOTE]), e["after"],
              f"수치: {REPORTS / e['report']} · 규칙: {e['protocol']} · 터미널 순위·카드 탭의 '판정 일정'에서도 볼 수 있습니다."]
     return "\n".join(lines)
 
@@ -218,7 +234,7 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
     for e in REGISTRY:
         rep, n = report(base, e), records(base, e)
         row = {"key": e["key"], "label": e["label"], "protocol": e["protocol"], "records": n, "wanted": wanted(e), "after": e["after"], "applies_itself": bool(e.get("applies")), "primary": bool(e.get("primary")),
-               "attempts": ((tried or {}).get(e["key"]) or {}).get("failed", 0)}
+               "notify": bool(e.get("notify")), "attempts": ((tried or {}).get(e["key"]) or {}).get("failed", 0)}
         if rep is not None:
             code = verdict(e, rep)
             row.update(state="READ", verdict=code, meaning=meaning(code), report=str(REPORTS / e["report"]), reasons=why(rep))
@@ -229,15 +245,15 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
             from terminal.qsf import fund_period
             m = e["key"].rsplit("_", 1)[1].upper()
             st = fund_period.status(base)["markets"][m]
-            row["switch"] = {"market": m, "live_period": st["live_period"], "can_switch": st["can_switch"]}
+            row["switch"] = {"market": m, "live_period": st["live_period"], "can_switch": st["can_switch"], "buttons": st["buttons"]}
         rows.append(row)
     for book, label in ((turnover_book, "회전율 규칙 비교"), (rank_book, "순위 규칙 비교")):
         for m, ko in (("KR", "한국"), ("US", "미국")):
             s = book.status(base, m)
             itself = False                                # both readings report and apply nothing by themselves (user decisions 2026-11-22)
-            row = {"key": f"{book.VERSION}_{m}", "label": f"{label}({ko})", "protocol": book.PROTOCOL, "records": s["records"], "wanted": s["read_at"], "applies_itself": itself, "primary": False,
+            row = {"key": f"{book.VERSION}_{m}", "label": f"{label}({ko})", "protocol": book.PROTOCOL, "records": s["records"], "wanted": s["read_at"], "applies_itself": itself, "primary": False, "notify": BOOKS_NOTIFY,
                    "after": "적용으로 정해지면 프로그램이 스스로 규칙을 바꿉니다. .env로 뒤집을 수 있습니다." if itself else
-                   "조건을 채워도 프로그램이 스스로 규칙을 바꾸지 않습니다. 결과를 알리고, 쓰려면 순위·카드 탭 가상 장부의 그 규칙 칸에서 '이 규칙 쓰기'를 누릅니다.", "attempts": 0}
+                   "조건을 채워도 아무것도 바뀌지 않습니다. '이 규칙 쓰기' 버튼은 2026-11-25 결정으로 첫 실전 스윙 판정까지 쓰지 않습니다.", "attempts": 0}
             if s["status"] == "DECIDED":
                 adopt = s["decision"]["decision"] == "ADOPT"
                 row.update(state="READ", verdict=s["decision"]["decision"], meaning=("규칙 적용" if itself else "적용 조건 충족(자동 적용 안 함)") if adopt else "기존 규칙 유지", report=str(book.REPORTS[m]))
@@ -248,11 +264,12 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
     for m, ko in (("KR", "한국"), ("US", "미국")):
         s = entry_book.status(base, m)
         row = {"key": f"{entry_book.VERSION}_{m}", "label": f"진입 규칙 비교({ko})", "protocol": entry_book.PROTOCOL, "records": s["records"], "wanted": s["read_at"], "applies_itself": False,
-               "primary": False, "attempts": 0, "after": "결과만 알립니다. 진입 규칙은 스스로 바뀌지 않고, 바꿀지는 결과를 보고 직접 정합니다."}
+               "primary": False, "notify": BOOKS_NOTIFY, "attempts": 0, "after": "결과만 알립니다. 진입 규칙은 스스로 바뀌지 않고, 바꿀지는 결과를 보고 직접 정합니다."}
         if s["status"] == "DECIDED":
             row.update(state="READ", verdict=s["decision"]["decision"], meaning=entry_book.DECISION_KO[s["decision"]["decision"]], report=str(entry_book.REPORTS[m]))
         else:
             row.update(state="DUE" if s["left"] == 0 else "WAITING", left=s["left"], expected=_eta(s["left"], today))
         rows.append(row)
     return {"status": "REAL", "guide": GUIDE, "readings": rows, "read": sum(1 for r in rows if r["state"] == "READ"), "total": len(rows),
-            "note": "판정은 때가 되면 매일 작업이 스스로 읽고 텔레그램으로 알립니다. 읽는 데 사람이 할 일은 없고, 어느 판정도 규칙이나 점수를 스스로 바꾸지 않습니다(바꾸려면 버튼). 예상 시점은 기록이 하루도 빠지지 않고 휴장일이 한 해 열흘쯤이라고 본 어림입니다."}
+            "notified": sum(1 for r in rows if r.get("notify")), "quiet_note": QUIET_NOTE,
+            "note": "판정은 때가 되면 매일 작업이 스스로 읽습니다. 알림은 실전 점수 판정과 그 중간·이어 읽기, 한국 회피 표시 판정만 보내고, 나머지는 파일로만 남깁니다(2026-11-25 결정). 읽는 데 사람이 할 일은 없고, 어느 판정도 규칙이나 점수를 스스로 바꾸지 않습니다. 예상 시점은 기록이 하루도 빠지지 않고 휴장일이 한 해 열흘쯤이라고 본 어림입니다."}

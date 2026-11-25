@@ -174,8 +174,8 @@ def body(src, start, end):
 def test_the_screens_read_the_new_fields():
     qsf = (ROOT / "terminal" / "static" / "qsf.js").read_text(encoding="utf-8")
     detail = body(qsf, "function qsfDrawDetail(", "\n}")
-    order = [detail.index(k) for k in ('<div class="qsf-cards">', "icCardHtml(d.committee", 'id="qsffc"', 'id="qsftoday"', 'id="qsfhistory"')]
-    assert order == sorted(order)                                                 # scores first, the day's check folded near the end
+    order = [detail.index(k) for k in ('id="qsffc"', '<div class="qsf-cards">', "icCardHtml(d.committee", 'id="qsftoday"', 'id="qsfhistory"')]
+    assert order == sorted(order)                                                 # ranges and risk first (user decision 2026-11-25), then the scores; the day's check folded near the end
     assert "qsfToday($(\"#qsftoday\")" in body(detail, "todayFold.addEventListener", "\n")
     card = body(qsf, "function qsfCard(", "\n}")
     assert "${qsfBalance(c.balance)}" in card and "qsfMarketState(" not in card and "names[f.factor] || f.factor" in card

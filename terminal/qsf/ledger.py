@@ -428,6 +428,10 @@ def outcome(path: List[Dict[str, Any]], bench: List[Dict[str, Any]], signal_sess
         rel = gross - (be["adj_close"] / (bs["open"] * bs["adj_close"] / bs["close"]) - 1)
     out = {"gross": gross, "net": gross - cost, "relative_net": rel - cost if rel is not None else None, "worst": low / adj_open - 1,
            "entry_date": start["date"], "exit_date": end["date"]}
+    # prices alone, both sides (2026-11-25): a Korean stock's adjusted close carries its dividends and the KOSPI and KOSDAQ price
+    # indexes carry none, so the adjusted comparison flatters the stock by its yield.  Kept beside it, never in place of it.
+    if end.get("close") and bs and be and bs.get("open") and be.get("close"):
+        out["relative_price_net"] = (end["close"] / start["open"] - 1) - (be["close"] / bs["open"] - 1) - cost
     if stopped:
         out["stopped"] = True
     return out

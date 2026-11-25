@@ -10,6 +10,8 @@ from tests.test_earnings_gap import daily
 from tests.test_order_plan_paper_book import FakeLedger, account, calendar, cand, filler, held, loader_of, snap
 from tests.test_qsf import run
 
+pytestmark = pytest.mark.usefixtures("mechanism_on")      # notices and buttons as they worked until 2026-11-25 (off by default since: tests/test_after_verdict_rules.py)
+
 ROOT = Path(__file__).resolve().parents[1]
 RULES = dict(tb.RULES)
 AT = datetime(2027, 12, 1, tzinfo=timezone.utc)

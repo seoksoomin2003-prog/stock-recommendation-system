@@ -15,7 +15,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
-from terminal.qsf import calibrate
+from terminal.qsf import calibrate, config
 from terminal.qsf import kr_forward as kf, paper_book, validate
 from utils import durable
 
@@ -97,6 +97,8 @@ def set_switch(base: Path, market: str, on: bool, now: Callable[[], datetime] = 
     would measure nothing.  Turning them off is always allowed."""
     if market not in REPORTS:
         raise ValueError(market)
+    if on and not config.APPLY_BUTTONS:                 # user decision 2026-11-25: no adoption by button before the first live verdict
+        return {"status": "REFUSED", "market": market, "reason": config.APPLY_REFUSED}
     rep = report(base, market)
     if on and (not rep or rep.get("status") == "DAMAGED"):
         return {"status": "REFUSED", "market": market, "reason": REFUSED_EARLY}
@@ -291,7 +293,7 @@ def status(base: Path, market: str) -> Dict[str, Any]:
     rep = report(base, market)
     head = {"market": market, "protocol": PROTOCOL, "version": VERSION, "rules": dict(RULES), "read_at": READ_AT, "first": FIRST, "mode": mode(),
             "switch_unknown": switch_of(ENV)["unknown"], "damaged": rep.get("reason") if rep and rep.get("status") == "DAMAGED" else None,
-            "switch": stored_switch(base, market), "can_switch": bool(rep and rep.get("status") != "DAMAGED") and mode() == "auto",
+            "switch": stored_switch(base, market), "can_switch": bool(rep and rep.get("status") != "DAMAGED") and mode() == "auto", "buttons": config.APPLY_BUTTONS,
             "active": active_rules(base, market) is not None, "adopted_version": ADOPTED_VERSION, "rule_labels": RULE_KO,
             "note": "판정 전에는 비교 장부의 평가액·수익률·비용을 보여 주지 않습니다. 240거래일이 되면 프로그램이 스스로 읽고 알립니다. 규칙을 스스로 바꾸지는 않습니다(2026-11-22 결정)."}
     if head["damaged"]:
