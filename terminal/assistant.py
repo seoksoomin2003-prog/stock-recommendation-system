@@ -1435,6 +1435,28 @@ def buy_verdict(snap: Dict[str, Any], strategy: str, market: str, *, gates: List
             "basis": basis, "stance": level, "line": p["line"], "candidate": why is None}
 
 
+def decision_cautions(terminal: Any, snap: Dict[str, Any], ticker: str, market: str, strategy: str, key: str) -> List[str]:
+    """Two facts that can speak against a conclusion and sat in folded sections (assessment 2026-11-25): the long-term score on
+    the other statement basis, and a committee decision that disagrees with "사도 됨".  They change no conclusion: both are
+    untested rule sets, and the user reads them beside the verdict."""
+    from terminal import analyst_extra as ax
+    out = []
+    line = ax.gap_line(snap.get("fund_period"), strategy)
+    if line:
+        out.append(line)
+    if key == "OK":
+        try:
+            from terminal.committee import service as cs
+            five = cs.stock(terminal, ticker, market)
+            c = five.get("committee") or {}
+            if five.get("status") == "OK" and c.get("valid") and c.get("decision") in ("AVOID", "SELL", "REDUCE", "WAIT"):
+                out.append(f"다섯 투자자 규칙을 모은 투자위원회의 판정은 '{c.get('decision_ko') or c.get('decision')}'로 이 결론과 다릅니다. 점수와 위원회는 서로 다른 규칙이고, "
+                           "둘 다 수익으로 검증되지 않았습니다.")
+        except Exception:
+            pass
+    return out
+
+
 def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: str) -> Dict[str, Any]:
     """One stock, from the stored scan only: nothing is fetched and nothing is scored again."""
     from terminal.qsf import config
@@ -1630,14 +1652,16 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
               ("보유 여부", not held, "이미 보유 중입니다. 추가 매수는 종목 비중 한도를 먼저 보세요." if held else "보유 기록 없음.")]
     mark = lambda ok: "○" if ok else "✕" if ok is False else "–"      # noqa: E731
     passed = sum(1 for _, ok, _ in checks if ok)
+    cautions = decision_cautions(terminal, snap, ticker, market, strategy, v["key"])
     summary = f"{v['label']} ({kind}, 프로그램 규칙 기준) — {v['why']}"
     ans = reply(f"{head} 사도 돼? ({kind})", summary,
-                [{"title": "결론 자세히", "lines": ([f"바뀌는 조건: {v['change']}"] if v["change"] else []) + [f"함께 걸린 것: {x}" for x in v["also"]] + v["notes"] + [v["basis"], VERDICT_CAVEAT]},
+                [{"title": "결론 자세히", "lines": ([f"바뀌는 조건: {v['change']}"] if v["change"] else []) + [f"함께 걸린 것: {x}" for x in v["also"]] + [f"같이 볼 것: {x}" for x in cautions] + v["notes"] + [v["basis"], VERDICT_CAVEAT]},
                  {"title": "다른 전략", "lines": [other_line]},
                  {"title": f"점검표 ({len(checks)}개 중 {passed}개 통과 · ○ 통과 · ✕ 걸림 · – 확인 못 함)", "lines": [f"{mark(ok)} {label}: {text}" for label, ok, text in checks]},
                  {"title": "참고", "lines": ([still] if still else []) + notes + unknown},
                  {"title": "다음에 볼 것", "lines": ["수량, 지정가 상한, 손절은 '통합 계좌'에 계좌를 기록하면 '주문 계획'에 계좌 기준으로 나옵니다."]}], "stock", follow, basis)
-    ans["verdict"] = {"key": v["key"], "label": v["label"], "strategy": kind, "why": v["why"], "change": v["change"], "other": other_line}
+    ans["verdict"] = {"key": v["key"], "label": v["label"], "strategy": kind, "why": v["why"], "change": v["change"], "other": other_line, "cautions": cautions,
+                      "caveat": VERDICT_CAVEAT}          # inside the conclusion box: it sat under it (assessment 2026-11-25)
     return ans
 
 

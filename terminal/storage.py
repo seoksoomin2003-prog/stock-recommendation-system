@@ -25,6 +25,7 @@ KEEP_KR_WINDOWS = 3                 # window ends kept: today's, and two earlier
 # cache entries no program code reads any more: (file pattern, why).  QSF-1.1.9 moved the extracted annual series to the keys
 # annual3 and krfund3; the annual2 and krfund2 files are deliberately not listed here yet, so a return to 1.1.8 needs no download.
 # QSF-1.2.1 moved the US series on to annual4; the annual3 files are not listed either, for the same reason.
+# QSF-1.6.0 moved it to annual5 (and the quarterly rows to periods2); annual4 and periods1 are not listed either.
 SUPERSEDED = ((re.compile(r"^annual_\d{10}_[0-9a-z_]+\.json$"), "QSF-1.1.3부터 annual2로 바뀐 예전 연간 재무"),)
 
 

@@ -23,7 +23,7 @@ function asstFirst(text) { const m = String(text || "").match(/^.+?[가-힣)][.!
 const ASST_VERDICT_CLASS = { OK: "v-ok", WAIT: "v-wait", NO: "v-no" };
 function asstVerdict(v) {
   return `<div class="asst-verdict ${ASST_VERDICT_CLASS[v.key] || "v-wait"}"><div class="asst-v-head"><b>${esc(v.label)}</b><span class="meta m0">${esc(v.strategy)} · 프로그램 규칙 기준</span></div>
-    <p class="asst-sum">${esc(v.why)}</p>${v.change ? `<div class="asst-v-change">바뀌는 조건: ${esc(v.change)}</div>` : ""}${v.other ? `<div class="meta">${esc(v.other)}</div>` : ""}</div>`;
+    <p class="asst-sum">${esc(v.why)}</p>${v.change ? `<div class="asst-v-change">바뀌는 조건: ${esc(v.change)}</div>` : ""}${(v.cautions || []).map((c) => `<div class="asst-v-change">같이 볼 것: ${esc(c)}</div>`).join("")}${v.other ? `<div class="meta">${esc(v.other)}</div>` : ""}${v.caveat ? `<div class="meta">${esc(v.caveat)}</div>` : ""}</div>`;
 }
 function asstItem(i) {
   const view = ASST_VIEW[i.kind] || "", where = i.tab && i.tab !== "today" ? `<button type="button" class="ghost asst-go" data-tab="${esc(i.tab)}" data-view="${esc(view)}">${esc(ASST_TAB_KO[i.tab] || i.tab)} 탭에서 보기</button>` : "";

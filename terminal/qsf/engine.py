@@ -281,7 +281,7 @@ def score(ctx: Dict[str, Any], strategy: str, held: bool = False) -> Dict[str, A
     weighted = lambda r: (r["normalized"] - 0.5) * r["weight"]    # noqa: E731
     pos = sorted((r for r in ranked if r["normalized"] >= 0.6), key=weighted, reverse=True)[:3]
     neg = sorted((r for r in ranked if r["normalized"] <= 0.4), key=weighted)[:3]
-    return {"model_version": config.MODEL_VERSION, "spec_version": config.SPEC_VERSION, "profile": profile["id"],
+    return {"model_version": config.MODEL_VERSION, "rules_version": config.RULES_VERSION, "spec_version": config.SPEC_VERSION, "profile": profile["id"],
             "market": market, "strategy": strategy, "held": held, "score": composite,
             "diagnostic_only": not sufficient, **shown, "band_kept": kept, "conservative_score": conservative, "band_held_back": held_back,
             "deal_pin": pin, "deal_held": deal_held, "action": display, "raw_action": action,

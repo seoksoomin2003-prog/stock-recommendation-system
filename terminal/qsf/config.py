@@ -5,6 +5,12 @@ model version; nothing in the code tunes them.  QSF is a separate model: it neve
 """
 from typing import Dict
 
+# 1.6.0 (user decisions 2026-11-25, reports/QSF_1_6_0_2026_11_25.md): US capital spending is read under seven more tags for a
+# fiscal year the three former tags do not report (15 of 504 long scores move, 8 swing scores).  THE SCORE IS FROZEN AT THIS
+# VERSION until the first live swing verdict (reports/QSF_FORMULA_FREEZE_2026_11_25.md): no weight, factor formula, anchor or
+# input reading changes before it; an input error found meanwhile is recorded beside the live score and applied after the verdict.
+# Bands, entry rules, gates and wording are not the score: they carry RULES_VERSION and may change with a disclosure.
+# No session was recorded under 1.5.3 (made and replaced on 2026-11-25).
 # 1.5.3 (user decisions 2026-11-24 and 2026-11-25, reports/QSF_1_5_3_2026_11_25.md): no score moves.  (1) a US stock held near an
 # agreed deal price gets no buy band and no entry (deal_pin; recorded under the 1.5.2 label on session 2026-11-24, which the third
 # assessment found); (2) a card whose buy band was taken back for a missing factor gets no entry reading, so it leaves the order plan.
@@ -13,7 +19,8 @@ from typing import Dict
 # (NEVER_AVAILABLE) no longer counts against the buy band; (3) more than MAX_HALT_RUN sessions without a trade in a row block the
 # card; (4) a statement copy older than STALE_FUND_DAYS reads confidence LOW; (5) US debt is read from more of the tags companies
 # file it under.  Only (5) moves a score.
-MODEL_VERSION = "QSF-1.5.3"     # 1.5.1 (user decisions 2026-11-22 after the maturity assessment, reports/QSF_1_5_1_2026_11_22.md; no record
+RULES_VERSION = "R-1"           # bands, entry rules, gates: what turns a score into words.  R-1 = the rules of QSF-1.5.3 (2026-11-25)
+MODEL_VERSION = "QSF-1.6.0"     # 1.5.1 (user decisions 2026-11-22 after the maturity assessment, reports/QSF_1_5_1_2026_11_22.md; no record
                                 # was written under 1.5.0): the score is unchanged.  (1) the buy band is not given when the score would
                                 # fall under it with every missing factor read at the middle; (2) long-term entry: a valuation under 25
                                 # reads "overvalued" whatever the business quality; (3) the buffer reads only a record of the last five

@@ -107,5 +107,5 @@ def test_stored_condition_marks_are_shown_as_stored_and_a_full_pass_is_worded_as
 def test_the_forward_count_reads_the_ledger_index_only(tmp_path):
     write(tmp_path, "US", US_DOC)
     f = tr.summary(tmp_path, "US")["forward"]
-    assert f["first"] == "2026-11-23" and f["strategies"]["SWING"] == {"horizon": 20, "recorded": 0, "needed": 240, "expected": "2027년 12월쯤"}
+    assert f["first"] == "2026-11-25" and f["strategies"]["SWING"] == {"horizon": 20, "recorded": 0, "needed": 240, "expected": "2027년 12월쯤"}
     assert f["strategies"]["LONG_TERM"]["needed"] == 756 and f["strategies"]["LONG_TERM"]["horizon"] == 63

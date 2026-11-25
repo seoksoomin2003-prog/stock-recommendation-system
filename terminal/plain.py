@@ -156,6 +156,10 @@ def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> 
     if card.get("confidence") == "LOW":
         # the card's own confidence was never read here: a LOW card read "잘 맞는 편 · 걱정 없음" (assessment 2026-11-25)
         head.append("이 점수를 믿는 정도는 '낮음'입니다. 계산에 쓸 자료가 일부 없거나 오래됐습니다. 아래의 좋게 본 점과 걱정되는 점도 그만큼 덜 확실합니다.")
+    from terminal import analyst_extra as ax
+    gap = ax.gap_line(card.get("fund_period"), strategy)
+    if gap:
+        head.append(gap)
     if card.get("deal_unchecked"):
         head.append("합병이나 공개 매수 서류가 있는지는 오늘 확인하지 못했습니다(받아 둔 SEC 공시 목록이 없습니다).")
     parts.append({"h": "한 줄로", "lines": head})

@@ -252,7 +252,14 @@ def evaluate_exit(res: Dict, ctx: Dict, position: Dict[str, Any], today: date) -
                 hit("TIME_STOP", "TIME_STOP_REVIEW", f"보유 {config.SWING['time_stop']}거래일이 지나 재평가 대상입니다 ({ts}). 자동 매도는 아닙니다.")
         regime = res["domains"]["REGIME"].get("score_100")           # 0.0 is the worst reading there is, not a missing one (audit 2026-11-22, RED-04)
         if regime is not None and regime < 25:
-            hit("REGIME_SEVERE", "REDUCE", f"시장 국면 점수가 {regime:.0f}/100으로 급악화했습니다.")
+            if config.ADVERSE_SIZE_FACTOR.get(res["market"], 1.0) < 1.0:
+                hit("REGIME_SEVERE", "REDUCE", f"시장 국면 점수가 {regime:.0f}/100으로 급악화했습니다.")
+            else:
+                # A market whose state value the test found nothing in (MKT-1: Korea) and whose order size does not read it
+                # (user decision 2026-11-16) does not tell a holder to reduce on it either: a reference line (user decision
+                # 2026-11-25).  The Korean value is mostly the won and the credit spread; it sat at 25-27 for eight sessions.
+                hit("REGIME_NOTE", "HOLD", f"참고: 시장 상태 값이 {regime:.0f}/100으로 낮습니다. 이 시장에서는 이 값의 뜻이 검증에서 확인되지 않아 "
+                                           "줄이라는 판단은 내리지 않습니다. 청산 조건에는 해당하지 않습니다.")
     else:
         # Price alone is not a long-term exit rule.  This one exists because the user requires a stop and chose this reading of it.
         if stop and close <= stop:

@@ -31,7 +31,7 @@ def test_a_long_card_without_valuation_figures_gets_no_entry_reading():
     assert holding.entry_status(engine.score(c, "LONG_TERM"), c)["status"] == "ENTRY_NOW"            # with figures that do not block: as before
     c = ctx(fund=NO_VALUATION)
     assert holding.entry_status(engine.score(c, "SWING"), c)["status"] != "NO_VALID_ENTRY_SETUP" or True   # the swing rule never read the valuation
-    assert config.MODEL_VERSION == "QSF-1.5.3"
+    assert config.MODEL_VERSION == "QSF-1.6.0"
 
 
 def test_a_factor_no_stock_of_the_market_has_does_not_lower_the_conservative_score(monkeypatch):

@@ -432,7 +432,7 @@ QSF_ACTIONS = ["evaluate", "scan", "validate", "verify", "top3-freeze", "top3-re
                "kr-swing-prior-record", "kr-swing-prior-status", "kr-swing-prior-evaluate",
                "kr-challenger-record", "kr-challenger-status", "kr-challenger-evaluate-swing", "kr-challenger-evaluate-long",
                "kr-method-record", "kr-method-status", "kr-method-select", "kr-method-evaluate-120", "kr-method-evaluate-240", "kr-risk-grade-run",
-               "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "paper-book-record", "paper-book-status", "turnover-book-record", "turnover-book-status", "rank-book-record", "rank-book-status",
+               "regime-weights-run", "regime-weights-record", "regime-weights-status", "regime-weights-evaluate", "lookahead-audit", "paper-book-record", "paper-book-status", "turnover-book-record", "turnover-book-status", "rank-book-record", "rank-book-status", "entry-book-record", "entry-book-status",
                "forecast-test", "forecast-record", "forecast-status", "forecast-touch-test", "score-split-record", "score-split-status", "score-split-evaluate",
                "fund-period-record", "fund-period-status", "fund-period-evaluate", "committee-evaluate",
                "kr-cap-universe-record", "kr-cap-universe-status", "kr-cap-universe-evaluate", "kr-traded-universe-record", "kr-traded-universe-status", "kr-traded-universe-evaluate", "kr-tech-early-prepare", "kr-tech-early-run", "kr-long-early-download", "kr-long-early-prepare", "kr-long-early-run", "kr-holder-download", "kr-holder-prepare", "kr-holder-run", "kr-sue-prepare", "kr-sue-run",
@@ -464,10 +464,11 @@ def _paper_book_record(market: str):
     rules, version = rank_book.paper_rules(PROJECT_ROOT, market)    # rule sets in force only after their reading said ADOPT, or by the user's .env switches
     res = paper_book.record(PROJECT_ROOT, market, q._loader(market), info=info, bench=bench, rules=rules, version=version)
     if res.get("status") == "FAILED":           # the comparison books follow the paper book and never run past it (their protocols, section 4)
-        res["turnover_book"] = res["rank_book"] = {"status": "WAITING", "reason": f"PAPER_BOOK_{res.get('reason')}"}
+        res["turnover_book"] = res["rank_book"] = res["entry_book"] = {"status": "WAITING", "reason": f"PAPER_BOOK_{res.get('reason')}"}
         return res
     res["turnover_book"] = _turnover_book_record(market, q, info, bench)      # the comparison book (TO-1), right after the paper book every time
     res["rank_book"] = _rank_book_record(market, q, info, bench)              # and the rank rules' comparison book (RK-1)
+    res["entry_book"] = _entry_book_record(market, q, info, bench)            # and the entry comparison book (EN-1, from session 2026-11-25)
     return res
 
 
@@ -732,9 +733,19 @@ def _rank_book_record(market: str, q, info, bench):
         return {"status": "FAILED", "reason": type(exc).__name__}
 
 
-def _qsf_turnover_book(args) -> int:      # the two comparison books (TO-1, RK-1); their readings run in the daily job's wrap-up
-    from terminal.qsf import rank_book, turnover_book
-    book, key = (rank_book, "rank_book") if args.action.startswith("rank") else (turnover_book, "turnover_book")
+def _entry_book_record(market: str, q, info, bench):
+    """The entry comparison book (EN-1), on the same prices as the paper book.  reports/QSF_ENTRY_RULES_PROTOCOL.md.
+    Never raises: a failure is a FAILED result with the error's type name, and the paper book's own result stands."""
+    from terminal.qsf import entry_book
+    try:
+        return {k: v for k, v in entry_book.record(PROJECT_ROOT, market, q._loader(market), info=info, bench=bench).items() if k != "market"}
+    except Exception as exc:
+        return {"status": "FAILED", "reason": type(exc).__name__}
+
+
+def _qsf_turnover_book(args) -> int:      # the comparison books (TO-1, RK-1, EN-1); their readings run in the daily job's wrap-up
+    from terminal.qsf import entry_book, rank_book, turnover_book
+    book, key = (rank_book, "rank_book") if args.action.startswith("rank") else (entry_book, "entry_book") if args.action.startswith("entry") else (turnover_book, "turnover_book")
     res = _paper_book_record(args.market)[key] if args.action.endswith("record") else book.status(PROJECT_ROOT, args.market)
     print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
     return 0 if res.get("status") in ("OK", "DONE", "RECORDING", "DECIDED") else 3 if res.get("status") in ("WAITING", "NO_RECORD") else 1
@@ -1058,6 +1069,8 @@ QSF_HANDLERS = {
     "turnover-book-status": _qsf_turnover_book,
     "rank-book-record": _qsf_turnover_book,
     "rank-book-status": _qsf_turnover_book,
+    "entry-book-record": _qsf_turnover_book,
+    "entry-book-status": _qsf_turnover_book,
     "lookahead-audit": _qsf_lookahead_audit,
     "forecast-test": _qsf_forecast,
     "forecast-record": _qsf_forecast,

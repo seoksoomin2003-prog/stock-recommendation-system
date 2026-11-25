@@ -27,6 +27,7 @@ MAX_PER_MARKET = 60
 STATE = Path("data") / "terminal" / "filing_watch.json"
 ALERTS = Path("data") / "terminal" / "filing_alerts.jsonl"
 SEEN_DAYS = 30
+CATCH_UP_DAYS = 7       # after days without a turn (the Mac asleep), the next turn asks back to the last one, at most this far
 PAUSE_S = 0.25          # between two requests to the same provider (SEC asks for at most 10 a second)
 SEOUL, NEW_YORK = ZoneInfo("Asia/Seoul"), ZoneInfo("America/New_York")
 # Filing hours, local weekdays: OpenDART takes filings until about 19:00 KST; EDGAR accepts 06:00-22:00 ET.
@@ -91,15 +92,20 @@ def targets(terminal: Any) -> Dict[str, List[str]]:
     return {m: v[:MAX_PER_MARKET] for m, v in out.items()}
 
 
-def _kr_found(terminal: Any, ticker: str, day: str) -> List[Dict[str, Any]]:
+def _kr_found(terminal: Any, ticker: str, day: str, since: Optional[str] = None) -> List[Dict[str, Any]]:
+    """``since`` (YYYYMMDD): the first day asked, for the days no turn ran; the day alone otherwise."""
     qsf = terminal.qsf
     if not qsf.dart.configured:
         return []
     corp = qsf._corp_code(ticker)
     if not corp:
         return []
-    got = events.kr_filings(qsf.dart._get, corp, day, day)
-    return [{"key": f"KR:{r.get('rcept_no')}", "date": f"{day[:4]}-{day[4:6]}-{day[6:]}", "title": (r.get("report_nm") or "").strip(),
+    got = events.kr_filings(qsf.dart._get, corp, since or day, day)
+
+    def iso(r):
+        d = str(r.get("rcept_dt") or day)
+        return f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+    return [{"key": f"KR:{r.get('rcept_no')}", "date": iso(r), "title": (r.get("report_nm") or "").strip(),
              "label": kr_label(r.get("report_nm") or ""), "url": f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={r['rcept_no']}" if r.get("rcept_no") else None}
             for r in got["rows"] if r.get("rcept_no")]
 
@@ -108,7 +114,10 @@ def _us_found(terminal: Any, ticker: str, since: str) -> List[Dict[str, Any]]:
     cik = terminal._cik(ticker)
     if not cik:
         return []
-    rows = events.recent_filings(terminal.src.sec_submissions(cik))
+    # One list for the watch, the card and the score (assessment 2026-11-25: the watch could announce an 8-K while the card's
+    # events and the deal pin still read a list up to 20 hours old).  The fresh list is stored where they read it.
+    refresh = getattr(terminal.qsf, "refresh_us_filings", None)
+    rows = (refresh(cik) or {}).get("filings") or [] if refresh else events.recent_filings(terminal.src.sec_submissions(cik))
     out = []
     for r in rows:
         if not r.get("date") or r["date"] < since or not r.get("accession"):
@@ -124,7 +133,7 @@ def _read_state(base: Path) -> Dict[str, Any]:
     try:
         return json.loads((Path(base) / STATE).read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return {"seen": {}, "known": []}
+        return {"seen": {}, "known": [], "through": {}}
 
 
 def _write_state(base: Path, state: Dict[str, Any], today: str) -> None:
@@ -146,16 +155,29 @@ def check(terminal: Any, at: Optional[datetime] = None, markets: Iterable[str] =
     seen, known = state.setdefault("seen", {}), set(state.setdefault("known", []))
     names = {}
     asked, failed, new = 0, [], []
+    through = state.setdefault("through", {})
     for market in markets:
         if not open_now(market, at):
             continue
         local = at.astimezone(HOURS[market][0]).date()
-        for ticker in targets(terminal).get(market, []):
+        # the first day to ask: the day of this market's last turn (it may have ended before the day's last filing), never
+        # more than CATCH_UP_DAYS back; with no earlier turn, today (Korea) or yesterday (US, whose filings come in the evening)
+        try:
+            last = datetime.fromisoformat(through[market]).date() if through.get(market) else None
+        except (TypeError, ValueError):
+            last = None
+        first = max(min(last, local), local - timedelta(days=CATCH_UP_DAYS)) if last else local
+        mine = targets(terminal).get(market, [])
+        if market == "KR" and mine and not terminal.qsf.dart.configured:
+            failed.append({"market": "KR", "ticker": "*", "error": "NO_DART_KEY"})       # said once, not passed over in silence
+            continue
+        before = len(failed)
+        for ticker in mine:
             if asked or failed:
                 pause(PAUSE_S)
             try:
-                found = (_kr_found(terminal, ticker, local.strftime("%Y%m%d")) if market == "KR"
-                         else _us_found(terminal, ticker, (local - timedelta(days=1)).isoformat()))
+                found = (_kr_found(terminal, ticker, local.strftime("%Y%m%d"), first.strftime("%Y%m%d")) if market == "KR"
+                         else _us_found(terminal, ticker, (min(first, local - timedelta(days=1)) if last else local - timedelta(days=1)).isoformat()))
             except Exception as exc:                      # tried again next turn; the type only, never a URL or a key
                 failed.append({"market": market, "ticker": ticker, "error": type(exc).__name__})
                 continue
@@ -171,6 +193,8 @@ def check(terminal: Any, at: Optional[datetime] = None, markets: Iterable[str] =
                     names[ticker] = _name(terminal, ticker, market)
                 new.append({"at": at.isoformat(), "market": market, "ticker": ticker, "name": names[ticker], **{k: f[k] for k in ("date", "title", "label", "url")}})
             known.add(f"{market}:{ticker}")
+        if len(failed) == before:               # a turn with a failed request is asked again from the same day
+            through[market] = local.isoformat()
     state["known"], state["last_run"] = sorted(known), at.isoformat()
     _write_state(base, state, at.date().isoformat())
     if new:

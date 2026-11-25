@@ -279,6 +279,19 @@ def fund_gaps(snaps: Sequence[Dict[str, Any]], interest: Sequence[str] = (), gap
     return {"all": len(rows), "up": sum(1 for r in rows if r["diff"] > 0), "listed": sorted((r for r in rows if r["ticker"] in mine), key=lambda r: -abs(r["diff"]))}
 
 
+def gap_line(fp: Optional[Dict[str, Any]], strategy: str, gap: float = GAP) -> Optional[str]:
+    """One stock's sentence when its long-term score differs by ``gap`` points or more between the two statement bases.  The
+    card kept both scores but showed the difference only inside a folded section (assessment 2026-11-25: INCY 82.5 against 64.8);
+    this line goes where the conclusion is read.  Display only: the live score and the record are as they were."""
+    fp = fp or {}
+    a, t = (fp.get("annual") or {}).get("score"), (fp.get("trailing") or {}).get("score")
+    if strategy != "LONG_TERM" or a is None or t is None or not (fp.get("trailing") or {}).get("newer_quarter") or abs(t - a) < gap:
+        return None
+    live = "최근 4분기" if fp.get("live") == "TRAILING" else "연간"
+    return (f"재무 기준에 따라 장기 점수가 크게 다릅니다: 연간 재무로 {a:.1f}점, 최근 4분기 재무로 {t:.1f}점({t - a:+.1f}점). 화면의 점수는 {live} 기준입니다. "
+            "최근 분기 실적이 연간 숫자와 다른 쪽으로 움직였다는 뜻이니 실적을 직접 확인하세요.")
+
+
 # ---------------------------------------------------------------------- marks that are new today
 def newly_marked(base: Any) -> Dict[str, Any]:
     """Korean avoid marks on the newest record that the record before did not carry.  A code the earlier record did not know is

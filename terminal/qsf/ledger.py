@@ -28,7 +28,9 @@ FIELDS = ("market", "ticker", "strategy", "model_version", "spec_version", "prof
           # from QSF-1.5.2 on (earlier lines do not have them and are not rewritten): why a band or a confidence is what it is
           "input_coverage", "conservative_score", "band_held_back",
           # from 2026-11-24 (deal_pin): the stock's deal filing and 20-day volatility when its price is held near a deal price
-          "deal_pin", "deal_held")
+          "deal_pin", "deal_held",
+          # from QSF-1.6.0 (formula freeze, 2026-11-25): the label of the band and entry rules, apart from the score formula's
+          "rules_version")
 
 
 def snapshot(card: Dict[str, Any]) -> Dict[str, Any]:

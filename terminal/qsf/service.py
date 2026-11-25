@@ -56,7 +56,7 @@ def _stale(what: str, res: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 def _us_fund_key(ticker: str, cik: str) -> str:
     """The one name under which a US company's annual statements are stored (read by the score and by the note)."""
-    return f"annual4:{default_sources.facts_key(ticker, cik)}"
+    return f"annual5:{default_sources.facts_key(ticker, cik)}"       # annual5 from QSF-1.6.0: capital spending under more tags
 
 
 def _kr_fund_key(code: str, fiscal_month: int) -> str:
@@ -329,14 +329,14 @@ class QSF(ScreenViews):
     def _annual(self, ticker: str, cik: str) -> Dict[str, Any]:
         facts = default_sources.facts_with_predecessors(ticker, cik, self.src.sec_companyfacts)
         try:                    # the quarterly rows of the same download, for the trailing record; never a reason to lose the annual figures
-            self.cache.write(f"periods1:{default_sources.facts_key(ticker, cik)}", fund_trailing.us_periods(facts))
+            self.cache.write(f"periods2:{default_sources.facts_key(ticker, cik)}", fund_trailing.us_periods(facts))
         except Exception:
             pass
         return fundamentals.drop_stale_series(fundamentals.extract_us(facts))
 
     def _us_trailing(self, ticker: str, cik: str, close: Optional[float], as_of: str, kw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Trailing-four-quarter figures from the period rows kept at the last download; None when there are none or they cannot be read."""
-        rec = self.cache.read(f"periods1:{default_sources.facts_key(ticker, cik)}")
+        rec = self.cache.read(f"periods2:{default_sources.facts_key(ticker, cik)}")
         if not rec or not rec.get("data"):
             return None
         try:
@@ -412,14 +412,22 @@ class QSF(ScreenViews):
     def _us_subm(self, cik: str) -> Optional[Dict[str, Any]]:
         return self._us_subm_res(cik)["data"]
 
-    def _us_subm_res(self, cik: str) -> Dict[str, Any]:
+    def refresh_us_filings(self, cik: str) -> Dict[str, Any]:
+        """Fetch a company's SEC filing list now and store it where the score, the card and the deal pin read it: the day's
+        watch of new filings and they then read one list.  Raises when the list could not be fetched."""
+        res = self._us_subm_res(cik, ttl=0)
+        if res.get("status") != "REAL" or res.get("data") is None:
+            raise RuntimeError("SEC_LIST_UNAVAILABLE")
+        return res["data"]
+
+    def _us_subm_res(self, cik: str, ttl: Optional[float] = None) -> Dict[str, Any]:
         """The stored SEC filing list with its cache status, so a list that could not be refreshed is named as such."""
         def fetch():
             s = self.src.sec_submissions(cik)
             rows = events.recent_filings(s)
             # Banks file thousands of prospectuses, so the list is filtered by form rather than cut by position.
             return {"name": s.get("name"), "sic": s.get("sic"), "oldest": rows[-1]["date"] if rows else None, "truncated": bool((s.get("filings") or {}).get("files")), "filings": [r for r in rows if r["form"] in events.KEPT_FORMS]}
-        return self.cache.cached(f"submforms:{cik}", TTL["subm"], fetch)
+        return self.cache.cached(f"submforms:{cik}", TTL["subm"] if ttl is None else ttl, fetch)
 
     def _us_events(self, cik: Optional[str], as_of: str) -> Dict[str, Any]:
         if not cik:

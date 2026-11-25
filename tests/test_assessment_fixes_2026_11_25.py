@@ -140,7 +140,22 @@ def test_low_confidence_is_said_and_reads_wait_under_every_stance():
 
 # ---------------------------------------------------------------------- 6 and the version label
 def test_the_version_and_the_protocol_say_what_changed():
-    assert config.MODEL_VERSION == "QSF-1.5.3" and (ROOT / "reports" / "QSF_1_5_3_2026_11_25.md").exists()
+    assert config.RULES_VERSION == "R-1" and (ROOT / "reports" / "QSF_1_5_3_2026_11_25.md").exists()       # the rules of 1.5.3 carry their own label from 1.6.0 on
     doc = src("reports", "QSF_LIVE_FORWARD_PROTOCOL.md")
     assert "## 바로잡음 (2026-11-25" in doc and "차단(BLOCKED)된 종목도 점수가 있으면 표본에 남는다" in doc and "QSF-1.5.3" in doc
     assert 's.get("actionability") != "INSUFFICIENT_DATA"' in src("terminal", "qsf", "live_forward.py")     # the code the correction describes
+
+
+# ---------------------------------------------------------------------- P1 (2026-11-25): what speaks against a conclusion is said beside it
+def test_the_score_gap_between_statement_bases_is_said_where_the_conclusion_is_read():
+    from terminal import analyst_extra as ax
+    fp = {"live": "ANNUAL", "annual": {"score": 82.5}, "trailing": {"score": 64.8, "newer_quarter": True}}
+    line = ax.gap_line(fp, "LONG_TERM")
+    assert "연간 재무로 82.5점" in line and "최근 4분기 재무로 64.8점(-17.7점)" in line and "화면의 점수는 연간 기준" in line
+    assert ax.gap_line(fp, "SWING") is None and ax.gap_line({**fp, "trailing": {"score": 80.0, "newer_quarter": True}}, "LONG_TERM") is None
+    assert ax.gap_line({**fp, "trailing": {"score": 64.8, "newer_quarter": False}}, "LONG_TERM") is None            # no newer quarter: the same statements twice
+    said = _text(plain.card_plain(_card(strategy="LONG_TERM", fund_period=fp), {}))
+    assert "재무 기준에 따라 장기 점수가 크게 다릅니다" in said
+    assert A.decision_cautions(object(), {"fund_period": fp}, "X", "US", "LONG_TERM", "WAIT") == [line]             # no committee call unless the answer is 사도 됨
+    js = src("terminal", "static", "assistant.js")
+    assert "같이 볼 것: ${esc(c)}" in js and "v.caveat" in js

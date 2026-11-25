@@ -30,7 +30,7 @@ from terminal import assistant, automation, coin_bridge, model_scan, record_stat
 from terminal.committee import service as committee_service  # noqa: E402
 from terminal.qsf import rank_notes as qsf_rank_notes  # noqa: E402
 from terminal.qsf import changes as qsf_changes, forecast as qsf_forecast, kr_cap_view as qsf_cap_view, kr_method as qsf_kr_method, lookahead as qsf_lookahead, paper_book as qsf_paper_book, regime_weights as qsf_regime_weights, screen as qsf_screen, track_record as qsf_track_record, turnover_book as qsf_turnover_book  # noqa: E402
-from terminal.qsf import fund_period as qsf_fund_period, rank_book as qsf_rank_book, readings as qsf_readings, stance as qsf_stance  # noqa: E402
+from terminal.qsf import entry_book as qsf_entry_book, fund_period as qsf_fund_period, rank_book as qsf_rank_book, readings as qsf_readings, stance as qsf_stance  # noqa: E402
 
 HOST = "127.0.0.1"
 log = logging.getLogger("terminal")
@@ -223,6 +223,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[pho
         ("GET", "/api/qsf/turnover-book"): lambda q, b: qsf_turnover_book.status(t.base, _market(q.get("market", "US"))),
         ("GET", "/api/qsf/readings"): lambda q, b: qsf_readings.status(t.base, date.today(), automation.readings_state(t.base)),
         ("GET", "/api/qsf/rank-book"): lambda q, b: qsf_rank_book.status(t.base, _market(q.get("market", "US"))),
+        ("GET", "/api/qsf/entry-book"): lambda q, b: qsf_entry_book.status(t.base, _market(q.get("market", "US"))),
         ("GET", "/api/qsf/order-plan"): lambda q, b: t.order_plan(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/market-state"): lambda q, b: t.market_state(_market(q.get("market", "US"))),
         ("GET", "/api/qsf/top3"): lambda q, b: t.qsf.top3(_market(q.get("market", "US"))),

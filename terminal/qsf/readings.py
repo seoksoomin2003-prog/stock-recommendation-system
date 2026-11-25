@@ -23,7 +23,7 @@ GIVE_UP = 15                    # attempts without a report after which the user
 RETRY_DAYS = 7
 REPORTS = Path("reports") / "qsf"
 STORES = Path("research_data")
-LEDGER_FIRST = "2026-11-23"     # live_forward.FIRST: the first ledger session the live verdicts read (moved 2026-11-22, user decision)
+LEDGER_FIRST = "2026-11-25"     # live_forward.FIRST: the first ledger session the live verdicts read (moved 2026-11-22 and, with QSF-1.6.0, 2026-11-25; user decisions)
 PRIMARY_KEYS = ("live_swing_", "live_long_")
 KIND_KO = {True: "주된 판정", False: "참고 판정"}
 REFERENCE_NOTE = "참고 판정입니다. 판정이 서른 개쯤이라 그중 몇은 우연히 기준을 넘을 수 있으므로, 점수가 통하는지는 실전 점수 판정 넷(미국·한국의 스윙·장기)으로 답합니다."
@@ -234,5 +234,15 @@ def status(base: Path, today: date, tried: Optional[Dict[str, Any]] = None) -> D
             else:
                 row.update(state="DUE" if s["left"] == 0 else "WAITING", left=s["left"], expected=_eta(s["left"], today))
             rows.append(row)
+    from terminal.qsf import entry_book                     # the entry comparison (EN-1, 2026-11-25): it reports which book did better and changes nothing
+    for m, ko in (("KR", "한국"), ("US", "미국")):
+        s = entry_book.status(base, m)
+        row = {"key": f"{entry_book.VERSION}_{m}", "label": f"진입 규칙 비교({ko})", "protocol": entry_book.PROTOCOL, "records": s["records"], "wanted": s["read_at"], "applies_itself": False,
+               "primary": False, "attempts": 0, "after": "결과만 알립니다. 진입 규칙은 스스로 바뀌지 않고, 바꿀지는 결과를 보고 직접 정합니다."}
+        if s["status"] == "DECIDED":
+            row.update(state="READ", verdict=s["decision"]["decision"], meaning=entry_book.DECISION_KO[s["decision"]["decision"]], report=str(entry_book.REPORTS[m]))
+        else:
+            row.update(state="DUE" if s["left"] == 0 else "WAITING", left=s["left"], expected=_eta(s["left"], today))
+        rows.append(row)
     return {"status": "REAL", "guide": GUIDE, "readings": rows, "read": sum(1 for r in rows if r["state"] == "READ"), "total": len(rows),
             "note": "판정은 때가 되면 매일 작업이 스스로 읽고 텔레그램으로 알립니다. 읽는 데 사람이 할 일은 없고, 어느 판정도 규칙이나 점수를 스스로 바꾸지 않습니다(바꾸려면 버튼). 예상 시점은 기록이 하루도 빠지지 않고 휴장일이 한 해 열흘쯤이라고 본 어림입니다."}

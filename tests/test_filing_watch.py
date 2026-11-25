@@ -165,3 +165,39 @@ def test_the_watch_runs_only_in_the_real_server_and_feeds_no_score():
     assert "filing_watch.start(t)" in server and server.index("if warm_up:") < server.index("filing_watch.start(t)")
     for path in (ROOT / "terminal" / "qsf").glob("*.py"):
         assert "filing_watch" not in path.read_text(encoding="utf-8"), path.name
+
+
+def test_days_without_a_turn_are_asked_again_and_a_missing_key_is_said(tmp_path):
+    t = _Terminal(tmp_path, us=())
+    asked = []
+    get = t.qsf.dart._get
+
+    def spy(endpoint, **params):
+        asked.append((params["bgn_de"], params["end_de"]))
+        return get(endpoint, **params)
+    t.qsf.dart._get = spy
+    fw.check(t, datetime(2026, 11, 19, 10, 0, tzinfo=SEOUL), ("KR",), send=lambda x: None, pause=lambda s: None)       # Thursday
+    t.qsf.dart.rows = [{"rcept_no": "20261120000009", "rcept_dt": "20261120", "report_nm": "주요사항보고서(유상증자결정)"}]
+    sent = []
+    got = fw.check(t, datetime(2026, 11, 24, 10, 0, tzinfo=SEOUL), ("KR",), send=sent.append, pause=lambda s: None)   # the Mac slept until Tuesday
+    assert asked == [("20261119", "20261119"), ("20261119", "20261124")]
+    assert [a["date"] for a in got["new"]] == ["2026-11-20"] and len(sent) == 1                                      # the filing's own day, told once
+    far = fw.check(t, datetime(2026, 12, 21, 10, 0, tzinfo=SEOUL), ("KR",), send=sent.append, pause=lambda s: None)
+    assert asked[-1] == ("20261214", "20261221") and far["new"] == [] and fw.CATCH_UP_DAYS == 7                      # never further back than a week
+    t.qsf.dart.configured = False
+    none = fw.check(t, datetime(2026, 12, 22, 10, 0, tzinfo=SEOUL), ("KR",), send=sent.append, pause=lambda s: None)
+    assert none["failed"] == [{"market": "KR", "ticker": "*", "error": "NO_DART_KEY"}] and none["asked"] == 0
+
+
+def test_the_watch_stores_the_us_list_where_the_card_reads_it(tmp_path):
+    t = _Terminal(tmp_path, kr=())
+    stored = []
+
+    def refresh(cik):
+        stored.append(cik)
+        return {"filings": [{"form": "8-K", "date": "2026-11-24", "items": "5.02", "accession": "0001-26-3", "doc": "x.htm"}]}
+    t.qsf.refresh_us_filings = refresh
+    fw.check(t, US_OPEN, ("US",), send=lambda x: None, pause=lambda s: None)
+    assert stored == ["0000842023"] and t.src.asked == 0                         # one request, through the shared store
+    s = (ROOT / "terminal" / "qsf" / "service.py").read_text(encoding="utf-8")
+    assert 'res = self._us_subm_res(cik, ttl=0)' in s and 'TTL["subm"] if ttl is None else ttl' in s

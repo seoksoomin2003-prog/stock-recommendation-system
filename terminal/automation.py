@@ -45,7 +45,7 @@ HOLDINGS_EVERY_DAYS, HOLDINGS_FRESH_DAYS = 7, 90     # KODEX holdings: retry cad
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
 NO_STATEMENTS = "재무 자료 미준비(재무가 있는 종목이 80% 미만이라 그날을 기록하지 않음, 다음 시각에 다시 시도)"
-FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger", "kr_swing_challenger", "kr_swing_prior", "kr_challenger", "kr_cap_universe", "kr_traded_universe", "kr_method", "regime_weights_kr", "regime_weights_us", "paper_book_kr", "paper_book_us", "forecast_kr", "forecast_us", "score_split_kr", "score_split_us", "turnover_book_kr", "turnover_book_us", "rank_book_kr", "rank_book_us", "fund_period_kr", "fund_period_us")
+FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger", "kr_swing_challenger", "kr_swing_prior", "kr_challenger", "kr_cap_universe", "kr_traded_universe", "kr_method", "regime_weights_kr", "regime_weights_us", "paper_book_kr", "paper_book_us", "forecast_kr", "forecast_us", "score_split_kr", "score_split_us", "turnover_book_kr", "turnover_book_us", "rank_book_kr", "rank_book_us", "fund_period_kr", "fund_period_us", "entry_book_kr", "entry_book_us")
 KR_STEPS = ("QSF_KR", "NEWS_KR", "KR_FORWARD", "SCAN_KR")     # Korea trades on some days the US does not, and these must not wait for a US session
 KST = timezone(timedelta(hours=9))
 BACKUP_STALE_DAYS = 4                              # a long weekend with a holiday is three days without a new session
@@ -56,7 +56,7 @@ STEP_NAMES = {"LAB": "도전자 기록", "SCAN": "P6-11B 스캔", "TRACK": "P6-2
               "BACKUP": "백업"}
 BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/paper_journal.jsonl", "data/terminal/settings.json", "data/terminal/watchlist.json", "data/terminal/alerts.json", "data/terminal/alerts_log.jsonl",
                 "data/lab/ledger.jsonl", "tracking/*.jsonl", "tracking/excluded_runs.json", "tracking/ledger/*.jsonl",
-                "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl", "research_data/kr_swing_challenger/index.jsonl", "research_data/kr_swing_prior/index.jsonl", "research_data/kr_challenger/index.jsonl", "research_data/kr_cap_universe/index.jsonl", "research_data/kr_traded_universe/index.jsonl", "research_data/kr_method/index.jsonl", "research_data/regime_weights_kr/index.jsonl", "research_data/regime_weights_us/index.jsonl", "research_data/paper_book_kr/index.jsonl", "research_data/paper_book_us/index.jsonl", "research_data/forecast_kr/index.jsonl", "research_data/forecast_us/index.jsonl", "research_data/score_split_kr/index.jsonl", "research_data/score_split_us/index.jsonl", "research_data/fund_period_kr/index.jsonl", "research_data/fund_period_us/index.jsonl", "research_data/turnover_book_kr/index.jsonl", "research_data/turnover_book_us/index.jsonl", "reports/qsf/QSF_TURNOVER_*.json", "research_data/rank_book_kr/index.jsonl", "research_data/rank_book_us/index.jsonl", "reports/qsf/QSF_RANK_RULES_*.json", "data/qsf/top3/index.jsonl", "data/qsf/top3/*.json.gz",
+                "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl", "research_data/kr_swing_challenger/index.jsonl", "research_data/kr_swing_prior/index.jsonl", "research_data/kr_challenger/index.jsonl", "research_data/kr_cap_universe/index.jsonl", "research_data/kr_traded_universe/index.jsonl", "research_data/kr_method/index.jsonl", "research_data/regime_weights_kr/index.jsonl", "research_data/regime_weights_us/index.jsonl", "research_data/paper_book_kr/index.jsonl", "research_data/paper_book_us/index.jsonl", "research_data/forecast_kr/index.jsonl", "research_data/forecast_us/index.jsonl", "research_data/score_split_kr/index.jsonl", "research_data/score_split_us/index.jsonl", "research_data/fund_period_kr/index.jsonl", "research_data/fund_period_us/index.jsonl", "research_data/turnover_book_kr/index.jsonl", "research_data/turnover_book_us/index.jsonl", "reports/qsf/QSF_TURNOVER_*.json", "research_data/rank_book_kr/index.jsonl", "research_data/rank_book_us/index.jsonl", "research_data/entry_book_kr/index.jsonl", "research_data/entry_book_us/index.jsonl", "reports/qsf/QSF_RANK_RULES_*.json", "data/qsf/top3/index.jsonl", "data/qsf/top3/*.json.gz",
                 "data/qsf/price_archive/*.json.gz", "research_data/expectations_kr/*.jsonl", "research_data/expectations_us/*.jsonl", "research_data/committee_kr/*.jsonl", "research_data/committee_us/*.jsonl",
                 "data/qsf/stance.json", "data/qsf/*_switch.json")          # the user's own choices on the screen (stance, the three reading buttons)
 
@@ -451,6 +451,11 @@ class Daily:
         from terminal.qsf import rank_book
         return self._rule_reading(st, "rank_reading", rank_book, "순위 규칙 판정")
 
+    def _entry_reading(self, st: Dict[str, Any]) -> Dict[str, Any]:
+        """The entry comparison's one reading per market (``qsf.entry_book``, reports/QSF_ENTRY_RULES_PROTOCOL.md).  It reports only."""
+        from terminal.qsf import entry_book
+        return self._rule_reading(st, "entry_reading", entry_book, "진입 규칙 비교")
+
     def _rule_reading(self, st: Dict[str, Any], key: str, book: Any, title: str) -> Dict[str, Any]:
         """A comparison book's one reading per market: made by this run on the day the book has its 240 records, then told once.
         An undelivered notice is sent again at later runs; a record that cannot be read is told once and asked again each run.
@@ -532,9 +537,9 @@ class Daily:
         """The forward records that stopped growing (``terminal.store_watch``): index lines only, a second or less.  A side record
         that fails never fails its step, so without this a record could stop for a year unseen.  Never stops the run."""
         from terminal import store_watch
-        from terminal.qsf import rank_book, turnover_book
+        from terminal.qsf import entry_book, rank_book, turnover_book
         try:
-            ended = [f"{name}_{m.lower()}" for name, book in (("turnover_book", turnover_book), ("rank_book", rank_book)) for m in ("KR", "US")
+            ended = [f"{name}_{m.lower()}" for name, book in (("turnover_book", turnover_book), ("rank_book", rank_book), ("entry_book", entry_book)) for m in ("KR", "US")
                      if (self.base / book.REPORTS[m]).exists()]
             st["store_watch"] = {"at": self.now().isoformat(), "items": store_watch.look(self.base, FORWARD_STORES, ended, self.now().timestamp()),
                                  "quality": store_watch.quality(self.base)}
@@ -553,7 +558,7 @@ class Daily:
             out.append(line)
         out += (st.get("store_watch") or {}).get("quality") or []
         failed = [f"{label}({(st.get(key) or {})['error']})" for key, label in WRAP_UP_CHECKS.items() if (st.get(key) or {}).get("error")]
-        for key, label in (("turnover_reading", "회전율 규칙 판정 확인"), ("rank_reading", "순위 규칙 판정 확인"), ("readings", "판정 읽기")):
+        for key, label in (("turnover_reading", "회전율 규칙 판정 확인"), ("rank_reading", "순위 규칙 판정 확인"), ("entry_reading", "진입 규칙 비교 확인"), ("readings", "판정 읽기")):
             errs = sorted({v["error"] for v in (st.get(key) or {}).values() if isinstance(v, dict) and v.get("error")})
             if errs:
                 failed.append(f"{label}({', '.join(errs)})")
@@ -881,6 +886,7 @@ class Daily:
         self._earnings_gap(st, steps)
         self._turnover_reading(st)
         self._rank_reading(st)
+        self._entry_reading(st)
         self._store_watch(st)
         self._save(st)
         alerts = self._alerts()

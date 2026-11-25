@@ -17,7 +17,7 @@ from functools import lru_cache
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from terminal.qsf import fundamentals
-from terminal.qsf.fundamentals import US_FLOW, US_INSTANT
+from terminal.qsf.fundamentals import US_CAPEX_FALLBACK, US_FLOW, US_INSTANT, US_REAL_ESTATE_SPENDING
 
 FORMS = ("10-K", "10-K/A", "10-Q", "10-Q/A")
 HISTORY_DAYS = 6 * 365 + 120     # five yearly points back from the newest quarter, and the year before the oldest of them
@@ -61,6 +61,10 @@ def us_periods(facts: Dict[str, Any]) -> Dict[str, Dict[str, List[Dict]]]:
         return list(got.values())
 
     out = {"flow": {m: collect(c, True) for m, c in US_FLOW.items()}, "instant": {m: collect(c, False) for m, c in US_INSTANT.items()}}
+    if US_CAPEX_FALLBACK:           # the annual reader's rule (QSF-1.6.0): another capital-spending tag only for a period the three do not report
+        span = lambda r: (r.get("start"), r["end"])        # noqa: E731
+        skip = {span(r) for r in out["flow"]["capex"]} | {span(r) for r in collect(US_REAL_ESTATE_SPENDING, True)}
+        out["flow"]["capex"] += [r for r in collect(US_CAPEX_FALLBACK, True) if span(r) not in skip and r["val"] > 0]
     ends = [r["end"] for kind in out.values() for rows in kind.values() for r in rows]
     if not ends:
         return out

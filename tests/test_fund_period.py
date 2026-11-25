@@ -213,7 +213,7 @@ def test_the_service_carries_the_other_periods_figures_and_a_card_keeps_both_sco
     card = {"domains": {}, "factors": [], "levels": {}, "fund_period": field}
     assert ledger.snapshot(card)["fund_period"] == field and "fund_period" not in ledger.snapshot({"domains": {}, "factors": [], "levels": {}})
     assert q._us_trailing("AAA", "1", 10.0, "2026-11-20", {}) is None                                  # no period rows kept yet
-    q.cache.write("periods1:1", ft.us_periods(facts()))
+    q.cache.write("periods2:1", ft.us_periods(facts()))
     assert q._us_trailing("AAA", "1", 50.0, "2026-11-20", {})["period_basis"] == "TRAILING"
 
 
@@ -383,10 +383,10 @@ def test_the_daily_job_the_backup_the_readings_and_the_documents_know_the_record
     assert sum(1 for e in rd.REGISTRY if e["applies"]) == 0          # no reading changes anything by itself any more (2026-11-23)
     assert rd.VERDICT_KO["TRAILING_BETTER"] and rd.VERDICT_KO["ANNUAL_BETTER"]
     src = (ROOT / "terminal" / "qsf" / "service.py").read_text(encoding="utf-8")
-    assert 'f"periods1:' in src and 'f"krq1:' in src and "fund_period.live_period(self.base, market)" in src
+    assert 'f"periods2:' in src and 'f"krq1:' in src and "fund_period.live_period(self.base, market)" in src
     proto = (ROOT / fp.PROTOCOL).read_text(encoding="utf-8")
     assert "나란히 기록" in proto and "TRAILING_BETTER" in proto and "QSF_FUND_PERIOD=ANNUAL" in proto and "IC가 A -0.002, B -0.014" in proto
-    assert config.MODEL_VERSION == "QSF-1.5.3"                                                         # the live formula and its inputs did not change
+    assert config.MODEL_VERSION == "QSF-1.6.0"                                                         # the live formula and its inputs did not change
 
 
 def test_the_pass_bar_keeps_a_chance_pass_rare_and_two_episodes_do_not_decide():

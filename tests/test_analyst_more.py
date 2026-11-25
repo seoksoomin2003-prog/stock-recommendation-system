@@ -167,7 +167,7 @@ def test_the_own_range_uses_the_annual_figure_filed_by_each_day_and_holds_the_sh
 
 
 def test_stored_statements_and_records_are_found_by_market():
-    store = {"info:AAA": {"data": {"longName": "A"}}, "info:005930.KQ": {"data": {"longName": "삼성"}}, "annual4:0001": {"data": {"equity": []}}, "krfund3:005930": {"data": {"net_income": []}}}
+    store = {"info:AAA": {"data": {"longName": "A"}}, "info:005930.KQ": {"data": {"longName": "삼성"}}, "annual5:0001": {"data": {"equity": []}}, "krfund3:005930": {"data": {"net_income": []}}}
     qsf = SimpleNamespace(cache=SimpleNamespace(read=store.get), _kr_identity_or_reason=lambda code: ({"fiscal_month": 12}, None) if code == "005930" else (None, None))
     assert service.QSF.stored_info(qsf, "AAA", "US") == {"longName": "A"} and service.QSF.stored_info(qsf, "005930", "KR") == {"longName": "삼성"} and service.QSF.stored_info(qsf, "ZZZ", "US") == {}
     assert service.QSF.stored_annual(qsf, "AAA", "US", "0001") == {"equity": []} and service.QSF.stored_annual(qsf, "AAA", "US") is None

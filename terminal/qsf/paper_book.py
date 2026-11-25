@@ -105,6 +105,7 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
     rules = rules or None
     waits, holds = bool(rules and rules.get("reentry_wait")), bool(rules and rules.get("hold_score") is not None)
     entry_top, exit_top = (rules or {}).get("entry_top"), (rules or {}).get("long_exit_top")
+    breakout = bool((rules or {}).get("breakout_entry"))        # the entry comparison book's rule (reports/QSF_ENTRY_RULES_PROTOCOL.md)
     st = copy.deepcopy(prev) if prev else new_state(market)
     pos: Dict[str, Dict[str, Any]] = st["positions"]
     exits, fills, unfilled, adjusted = [], [], [], []
@@ -210,7 +211,7 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
     scored = [s for s in (snaps or []) if s.get("data_date") == day and s.get("score") is not None]
     plan: Dict[str, Any] = {"orders": [], "skipped_counts": {}, "candidates": 0, "scored": False}
     if len({s["ticker"] for s in scored}) >= MIN_ROWS:
-        cands = order_plan.candidates(scored, day, info)
+        cands = order_plan.candidates(scored, day, info, breakout=breakout)
         account = {"equity": equity, "cash": st["cash"], "positions": {t: {"style": p["style"], "value": p["qty"] * p["last_close"], "sector": p.get("sector")} for t, p in pos.items()}}
         mstate, outside = order_plan.state_for_plan(scored, market, day), order_plan.outside_top(cands, ahead, entry_top) if entry_top is not None else None
         built = order_plan.build(cands, account, market, state=mstate, blocked=wait if waits else None, outside=outside)
@@ -218,6 +219,9 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
             plain = order_plan.build(cands, account, market, state=mstate, blocked=wait if waits else None)
             events += [{"rule": "RANK_ENTRY", "ticker": o["ticker"], "style": o["style"], "score": o["score"]} for o in plain["orders"] if (o["ticker"], o["style"]) in outside]
         events += [{"rule": "REENTRY_WAIT", "ticker": s["ticker"], "style": s["style"], "left": wait[s["ticker"]]} for s in built["skipped"] if s["code"] == "REENTRY_WAIT"]
+        if breakout:            # the orders this rule alone made today
+            via = {(c["ticker"], c["style"]) for c in cands if c.get("via") == "BREAKOUT"}
+            events += [{"rule": "BREAKOUT_ENTRY", "ticker": o["ticker"], "style": o["style"], "score": o["score"]} for o in built["orders"] if (o["ticker"], o["style"]) in via]
         plan = {"market_state": built["market_state"], "size_factor": built["size_factor"], "orders": built["orders"], "skipped_counts": built["skipped_counts"], "candidates": built["candidates"], "scored": True, "sleeve": built["sleeve"],
                 "skipped_first": built["skipped"][:20]}
         st["plan"] = built["orders"]

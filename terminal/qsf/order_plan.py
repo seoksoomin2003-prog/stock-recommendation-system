@@ -159,14 +159,29 @@ def outside_top(cands: Iterable[Dict[str, Any]], ahead: Dict[Any, float], top: f
     return {(c["ticker"], c["style"]) for c in cands if ahead.get((c["ticker"], STRATEGY_OF[c["style"]]), 1.0) >= top}
 
 
-def candidates(snaps: Iterable[Dict[str, Any]], session: str, info: Optional[Dict[str, Dict[str, Any]]] = None, settings: Optional[Dict[str, float]] = None) -> List[Dict[str, Any]]:
+def breakout_wait(snap: Dict[str, Any]) -> bool:
+    """A swing card in the buy band that waits for a pullback only because nothing stands above it: with no resistance the target
+    is the ATR projection and the reward-to-risk cannot reach the entry rule's 1.5 (reports/QSF_ENTRY_RULES_PROTOCOL.md).  Read
+    from the record's own numbers: the target equals price plus ``projection_atr`` ATR."""
+    if snap.get("strategy") != "SWING" or snap.get("entry_status") != "WAIT_FOR_PULLBACK" or snap.get("band") not in ("STRONG_BUY_CANDIDATE", "BUY_CANDIDATE"):
+        return False
+    atr, price, target = atr_of(snap), snap.get("price"), snap.get("target")
+    if not atr or not price or not target:
+        return False
+    return abs(float(target) - (float(price) + config.SWING["projection_atr"] * atr)) <= 1e-6 * float(price)
+
+
+def candidates(snaps: Iterable[Dict[str, Any]], session: str, info: Optional[Dict[str, Dict[str, Any]]] = None, settings: Optional[Dict[str, float]] = None,
+               breakout: bool = False) -> List[Dict[str, Any]]:
     """Ledger snapshots of ``session`` the program itself reads as enterable now: actionable, and entry status ENTRY_NOW.
-    The long stop is the user's five ATR; the swing stop and target are the snapshot's own."""
+    The long stop is the user's five ATR; the swing stop and target are the snapshot's own.
+    ``breakout``: the entry comparison book's one rule (EN-1): ``breakout_wait`` cards are candidates too, marked ``via``."""
     st = settings or pf.DEFAULT_SETTINGS
     info = info or {}
     out = []
     for s in snaps:
-        if s.get("data_date") != session or s.get("actionability") != "ACTIONABLE" or s.get("entry_status") != ENTRY_READY or s.get("score") is None or not s.get("price"):
+        via = breakout and breakout_wait(s)
+        if s.get("data_date") != session or s.get("actionability") != "ACTIONABLE" or not (s.get("entry_status") == ENTRY_READY or via) or s.get("score") is None or not s.get("price"):
             continue
         style, atr, price = STYLE_OF.get(s.get("strategy")), atr_of(s), float(s["price"])
         if style is None:
@@ -174,7 +189,8 @@ def candidates(snaps: Iterable[Dict[str, Any]], session: str, info: Optional[Dic
         stop = None if atr is None else (float(s["stop"]) if style == "SWING" else price - st["stop_atr_long"] * atr)
         extra = info.get(s["ticker"]) or {}
         out.append({"ticker": s["ticker"], "name": extra.get("name"), "sector": extra.get("sector"), "style": style, "score": float(s["score"]), "band": s.get("band"), "close": price, "atr": atr,
-                    "stop": stop if stop and stop > 0 else None, "target": float(s["target"]) if style == "SWING" and s.get("target") else None, "adv_value": _adv(s), "session": session})
+                    "stop": stop if stop and stop > 0 else None, "target": float(s["target"]) if style == "SWING" and s.get("target") else None, "adv_value": _adv(s), "session": session,
+                    **({"via": "BREAKOUT"} if via else {})})
     return sorted(out, key=lambda c: (-c["score"], c["ticker"], c["style"]))
 
 

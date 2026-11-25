@@ -171,7 +171,7 @@ def test_the_schedule_lists_every_reading_with_its_progress_and_its_verdict(tmp_
     p.write_text(json.dumps({"verdict": "CHALLENGER_BETTER"}), encoding="utf-8")
     got = rd.status(tmp_path, date(2026, 11, 16), {"kr_method_120": {"failed": 2}})
     rows = {r["key"]: r for r in got["readings"]}
-    assert got["total"] == 30 and rows["committee_paper_us"]["state"] == "WAITING" and rows["committee_paper_us"]["left"] == 242 and got["read"] == 1 and got["guide"] == "reports/RUNBOOK.md" and "읽는 데 사람이 할 일은 없고" in got["note"] and "스스로 바꾸지 않습니다" in got["note"]
+    assert got["total"] == 32 and rows["committee_paper_us"]["state"] == "WAITING" and rows["committee_paper_us"]["left"] == 242 and got["read"] == 1 and got["guide"] == "reports/RUNBOOK.md" and "읽는 데 사람이 할 일은 없고" in got["note"] and "스스로 바꾸지 않습니다" in got["note"]
     assert rows["kr_method_120"]["state"] == "DUE" and rows["kr_method_120"]["attempts"] == 2 and rows["kr_method_240"]["state"] == "WAITING" and rows["kr_method_240"]["left"] == 120
     assert rows["kr_cap_universe"]["left"] == 160 and rows["kr_cap_universe"]["expected"] == "2027-07" and rows["kr_cap_universe"]["applies_itself"] is False
     assert rows["kr_swing_challenger"]["state"] == "READ" and rows["kr_swing_challenger"]["verdict"] == "CHALLENGER_BETTER" and "도전자 공식이 지금 공식보다 나았습니다" in rows["kr_swing_challenger"]["meaning"]

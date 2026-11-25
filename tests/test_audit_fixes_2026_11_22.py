@@ -31,6 +31,12 @@ def test_a_market_state_of_zero_raises_the_exit_warning():
         r["domains"]["REGIME"]["score_100"] = value
         said = json.dumps(holding.evaluate_exit(r, c, {"opened": "2026-11-01"}, date(2026, 11, 5)), ensure_ascii=False, default=str)
         assert ("REGIME_SEVERE" in said) is hit, value
+    # Korea (no brake, MKT-1 found nothing in its value): a reference line, never "reduce" (user decision 2026-11-25)
+    kr = dict(r, market="KR")
+    kr["domains"] = {**r["domains"], "REGIME": {**r["domains"]["REGIME"], "score_100": 10.0}}
+    got = holding.evaluate_exit(kr, c, {"opened": "2026-11-01"}, date(2026, 11, 5))
+    codes = {h["code"]: h["action"] for h in got["conditions"]}
+    assert "REGIME_SEVERE" not in codes and codes.get("REGIME_NOTE") == "HOLD" and "줄이라는 판단은 내리지 않습니다" in json.dumps(got, ensure_ascii=False, default=str)
 
 
 # ---------------------------------------------------------------------- 2-ga: a factor built from part of its inputs
@@ -406,7 +412,7 @@ def test_a_loss_maker_gets_zero_for_the_earnings_growth_it_cannot_have_and_a_tur
     assert burn["normalized"] == pytest.approx(1 / 3) and "현금 전환을 0점" in burn["explanation"] and only_loss["normalized"] == pytest.approx(0.5)          # profit down, cash still coming in: cash conversion stays missing
     whole = engine.score(ctx(), "LONG_TERM")
     assert whole["score"] == pytest.approx(engine.score(ctx(fund={**GOOD_FUND, "loss_now": False, "cash_burn": False}), "LONG_TERM")["score"])          # a profitable company: nothing changes
-    assert config.MODEL_VERSION == "QSF-1.5.3" and (ROOT / "reports" / "QSF_1_5_0_2026_11_22.md").exists()
+    assert config.MODEL_VERSION == "QSF-1.6.0" and (ROOT / "reports" / "QSF_1_5_0_2026_11_22.md").exists()
 
 
 def test_the_statement_reader_marks_a_loss_and_a_cash_burn_and_computes_no_figure_for_them():
@@ -468,17 +474,17 @@ def test_the_live_card_reads_the_band_the_stock_was_recorded_in(tmp_path):
 # ---------------------------------------------------------------------- second round of decisions, 2026-11-22
 def test_the_live_verdicts_start_at_the_first_session_of_the_new_formula():
     from terminal.qsf import live_forward as lf, readings as rd
-    assert lf.FIRST == rd.LEDGER_FIRST == "2026-11-23"
+    assert lf.FIRST == rd.LEDGER_FIRST == "2026-11-25"                 # moved again with QSF-1.6.0, the version the score is frozen at (user decision 2026-11-25)
 
     class Led:
         def _live_rows(self):
-            return [{"market": "US", "session": d} for d in ("2026-11-09", "2026-11-20", "2026-11-23", "2026-11-24")]
+            return [{"market": "US", "session": d} for d in ("2026-11-09", "2026-11-20", "2026-11-23", "2026-11-24", "2026-11-25", "2026-11-26")]
 
         def _load(self, r):
             return [{"strategy": "SWING", "score": 50.0 + k, "actionability": "ACTIONABLE", "data_date": r["session"], "ticker": f"T{k}"} for k in range(lf.MIN_ROWS)]
-    assert list(lf.session_rows(Led(), "US", "SWING")) == ["2026-11-23", "2026-11-24"]                          # the sessions of the earlier formulas are not in the sample
+    assert list(lf.session_rows(Led(), "US", "SWING")) == ["2026-11-25", "2026-11-26"]                          # the sessions of the earlier formulas are not in the sample
     text = (ROOT / "reports" / "QSF_LIVE_FORWARD_PROTOCOL.md").read_text(encoding="utf-8")
-    assert "## 시작일 변경 (2026-11-22, 사용자 결정)" in text and "2026-11-23" in text
+    assert "## 시작일 변경 (2026-11-22, 사용자 결정)" in text and "2026-11-23" in text and "## 시작일 변경 (2026-11-25, 사용자 결정)" in text
 
 
 def test_the_turnover_rules_are_switched_by_a_button_and_not_before_the_reading(tmp_path, monkeypatch):
