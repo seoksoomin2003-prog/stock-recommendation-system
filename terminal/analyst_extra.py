@@ -217,7 +217,7 @@ def tilt_line(t: Optional[Dict[str, Any]]) -> Optional[str]:
     if not parts:
         return None
     return (f"스윙 점수 상위 5분의 1({t['top_n']}종목)의 모양: " + ", ".join(parts) + ". 높은 점수는 '더 오를 종목'이 아니라 이런 모양의 종목을 고른 것입니다. "
-            "과거 기록에서 점수 상위 묶음은 덜 흔들렸지만 더 벌지는 않았습니다.")
+            "높은 점수가 더 오른다는 근거는 아직 확인되지 않았습니다.")
 
 
 # ---------------------------------------------------------------------- liked by the score, flagged by an avoid mark

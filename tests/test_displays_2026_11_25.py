@@ -58,7 +58,7 @@ def test_the_top_fifth_is_described_by_its_shape_from_recorded_factor_values():
     assert t["near_high_top"] == pytest.approx(0.8) and t["near_high_all"] == pytest.approx(8 / 50)       # k >= 42: within five percent of the high
     line = ax.tilt_line(t)
     assert line.startswith("스윙 점수 상위 5분의 1(10종목)의 모양: 최근 변동성(연 환산)의 중앙값 24%(스캔 전체 40%), 52주 고점에서 5% 안에 있는 종목 80%(전체 16%).")
-    assert "'더 오를 종목'이 아니라" in line and "더 벌지는 않았습니다" in line
+    assert "'더 오를 종목'이 아니라" in line and "근거는 아직 확인되지 않았습니다" in line and "덜 흔들렸" not in line
     assert ax.tilt(snaps[:20]) is None and ax.tilt_line(None) is None                                     # too few scored stocks: nothing is said
     bare = [{**snap(k), "factors": []} for k in range(50)]
     assert ax.tilt_line(ax.tilt(bare)) is None                                                            # no recorded values: no line, never a zero

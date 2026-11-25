@@ -210,3 +210,36 @@ def test_the_rules_are_written_down_and_wired():
     assert "sector_of=lambda t: (q._sector_of(market, t) or {}).get(\"sector\")" in src
     live = (ROOT / "reports" / "QSF_LIVE_FORWARD_PROTOCOL.md").read_text(encoding="utf-8")
     assert "2026-11-25 덧붙임" in live and "QSF_AFTER_VERDICT_RULES_2026_11_25.md" in live and "배당" in live
+
+
+# ---------------------------------------------------------------------- the word's return, from the reading's own files (audit P0, 2026-11-25)
+def test_a_real_passed_verdict_earns_the_word_and_a_dividend_only_pass_does_not(led, tmp_path, monkeypatch):
+    from terminal.qsf import wording
+    monkeypatch.setattr(config, "MODEL_VERSION", "QSF-1.6.0")                       # the version the made-up ledger records
+    res = lf.evaluate_once(tmp_path, "US", "SWING", loader(), bench(), log=quiet)
+    assert res["verdict"] == "WEAK_POSITIVE_EVIDENCE" and wording.why_not(res, "US", "SWING") == [] and wording.earned(tmp_path, "US", "SWING")
+    assert json.loads((tmp_path / wording.SEALS).read_text(encoding="utf-8")).keys() == {"QSF_LIVE_FORWARD_US_SWING.json"}       # sealed by the reading itself
+    paid = tmp_path / "paid"
+    got = lf.evaluate_once(paid, "US", "SWING", loader(strength=0.0, dividend=0.0006), bench(), log=quiet)
+    assert got["condition_b"] is True and "MONEY_CHECKS" in wording.why_not(got, "US", "SWING") and not wording.earned(paid, "US", "SWING")
+    flat = tmp_path / "flat"
+    lf.evaluate_once(flat, "US", "SWING", loader(strength=0.0), bench(), log=quiet)
+    cont = lf.continue_once(flat, "US", 480, loader(), bench(), log=quiet)          # the same record read longer, now with a real effect
+    assert cont["verdict"] == "WEAK_POSITIVE_EVIDENCE" and wording.why_not(cont, "US", "SWING", 480) == [] and wording.earned(flat, "US", "SWING")
+    monkeypatch.setattr(config, "MODEL_VERSION", "QSF-1.7.0")
+    assert not wording.earned(tmp_path, "US", "SWING") and not wording.earned(flat, "US", "SWING")       # another formula in force: the word leaves
+
+
+def test_candidate_one_has_a_written_meaning_of_not_worse(led, tmp_path):
+    res = lf.evaluate_once(tmp_path, "US", "SWING", loader(), bench(), log=quiet)
+    c = res["candidate_1"]
+    assert c["live_ic"] == res["primary"]["ic"] and c["reference_ic"] == res["reference"][0]["ic"] and c["live_spread_median"] == res["primary"]["all"]["spread_median"]
+    assert c["not_worse"] is (c["reference_ic"] >= c["live_ic"] and c["reference_spread_median"] >= c["live_spread_median"]) and "자격" in c["note"]
+    assert lf.candidate_1({"ic": 0.05, "all": {"spread_median": 0.01}}, {"status": "REAL", "ic": 0.05, "spread_median": 0.01})["not_worse"] is True
+    assert lf.candidate_1({"ic": 0.05, "all": {"spread_median": 0.01}}, {"status": "REAL", "ic": 0.06, "spread_median": 0.009})["not_worse"] is False      # both figures, not one
+    assert lf.candidate_1({"ic": 0.05, "all": {"spread_median": 0.01}}, {"status": "UNAVAILABLE"})["not_worse"] is None                                  # unknown is not "worse" and not "not worse"
+    doc = (ROOT / "reports" / "QSF_AFTER_VERDICT_RULES_2026_11_25.md").read_text(encoding="utf-8")
+    assert "'나쁘지 않다'의 정의" in doc and "candidate_1.not_worse" in doc and "둘 다" in doc and "수익 쪽 세 가지 확인" in doc
+    from terminal import analyst_extra as ax
+    line = ax.tilt_line({"top_n": 10, "vol_top": 0.2, "vol_all": 0.3, "near_high_top": 0.5, "near_high_all": 0.2})
+    assert "덜 흔들렸지만" not in line and line.endswith("높은 점수가 더 오른다는 근거는 아직 확인되지 않았습니다.")       # no hypothesis cited before a reading is registered

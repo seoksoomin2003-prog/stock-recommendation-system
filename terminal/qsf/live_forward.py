@@ -12,7 +12,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 
 import numpy as np
 
-from terminal.qsf import calibrate, config, engine, ledger as ledger_mod, validate
+from terminal.qsf import calibrate, config, engine, ledger as ledger_mod, validate, wording
 from terminal.qsf.ledger import Ledger
 from utils import durable
 
@@ -243,6 +243,21 @@ def reference_line(days: List[Dict[str, Any]], name: str) -> Dict[str, Any]:
             "spread_median": mean("spread_median"), "note": REFERENCE_NOTE}
 
 
+CANDIDATE_1_NOTE = ("판정 뒤 규칙 3절 후보 1번(스윙 점수에서 손익비 요인을 뺀다)의 조건 가운데 '참고 줄이 실제 점수보다 나쁘지 않다'를 읽은 값입니다(2026-11-25에 정의). "
+                    "같은 거래일에서 참고 줄의 평균 순위 상관과 중앙값 스프레드가 둘 다 실제 점수의 값 이상이면 '나쁘지 않다'입니다. 두 점수의 순위가 거의 같아 이 조건은 우연으로도 채워질 수 있습니다. "
+                    "그래서 두 시장 모두에서 채워져도 얻는 것은 채택이 아니라 새 기록으로 한 번 더 등록할 자격입니다.")
+
+
+def candidate_1(primary: Dict[str, Any], ref: Dict[str, Any]) -> Dict[str, Any]:
+    """"Not worse", defined before any outcome matured: the reference line's mean rank correlation and its median spread are both
+    at or above the live score's on the same days.  One market's reading; the rule asks for both markets and for EN-1."""
+    live_ic, live_med = primary.get("ic"), (primary.get("all") or {}).get("spread_median")
+    figures = (ref.get("ic"), ref.get("spread_median"), live_ic, live_med)
+    known = ref.get("status") == "REAL" and all(v is not None for v in figures)
+    return {"reference_ic": ref.get("ic"), "live_ic": live_ic, "reference_spread_median": ref.get("spread_median"), "live_spread_median": live_med,
+            "not_worse": bool(ref["ic"] >= live_ic and ref["spread_median"] >= live_med) if known else None, "note": CANDIDATE_1_NOTE}
+
+
 def variant_of(strategy: str, sector_of: Optional[Callable[[str], Optional[str]]]):
     """(name, function) of the one reference score a strategy's verdict carries, or (name, None) when it cannot be built."""
     if strategy == "SWING":
@@ -318,10 +333,12 @@ def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str]
     res = {"status": "REAL", "protocol": PROTOCOL, "market": market, "strategy": strategy, "horizon": h, "sessions_used": len(used), "first": used[0], "last": used[-1],
            "cost_round_trip_pct": cost * 100, **reading(primary, top), "primary": primary, "other_horizons": extra,
            "money_split": money_split(primary, cost, top, reading(primary, top)["condition_b"]), "reference": [reference_line(days, vname)],
+           **({"candidate_1": candidate_1(primary, reference_line(days, vname))} if strategy == "SWING" else {}),
            "benchmarks": sorted(px.benches) or None,
            "by_version": {k: {"dates": len(v), "ic": float(np.mean(v))} for k, v in sorted(versions.items())}, "note": NOTE}
     out.parent.mkdir(parents=True, exist_ok=True)
     durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
+    wording.seal(base, out)                          # the word "매수 후보" comes back only from a file this run wrote (wording.earned)
     pooled = _pooled(base, strategy)
     if pooled:
         durable.write_text(base / REPORT_DIR / f"QSF_LIVE_FORWARD_POOLED_{strategy}.json", json.dumps(pooled, ensure_ascii=False, indent=1))
@@ -425,6 +442,7 @@ def continue_once(base: Path, market: str, n: int, loader: Callable[[str], List[
     def write(res: Dict[str, Any]) -> Dict[str, Any]:
         out.parent.mkdir(parents=True, exist_ok=True)
         durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
+        wording.seal(base, out)
         log(f"{market} SWING continuation {n}: {res['verdict']}")
         return res
     if any(_read(p).get("verdict") == PASSED for p in before):
