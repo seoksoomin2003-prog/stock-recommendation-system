@@ -5,7 +5,7 @@ memory cache: an empty or cut file under the final name, which a write-once stor
 only hands the bytes to the drive; ``F_FULLFSYNC`` asks the drive to put them on the medium.  It costs a few milliseconds, so it
 is for records, verdicts and state, not for caches that can be fetched again.
 """
-import fcntl
+from utils import fcntl_port as fcntl
 import hashlib
 import json
 import os
@@ -17,7 +17,7 @@ PathLike = Union[str, Path]
 
 def sync(path: PathLike) -> None:
     """The finished file's bytes are on the disk when this returns."""
-    fd = os.open(path, os.O_RDONLY)
+    fd = os.open(path, os.O_RDWR if fcntl.WINDOWS else os.O_RDONLY)      # Windows flushes only a handle opened for writing
     try:
         try:
             fcntl.fcntl(fd, fcntl.F_FULLFSYNC)
@@ -30,7 +30,7 @@ def sync(path: PathLike) -> None:
 def replace(tmp: PathLike, target: PathLike) -> None:
     """``tmp`` becomes ``target``; a reader sees the old file or the whole new one, also after a power cut."""
     sync(tmp)
-    os.replace(tmp, target)
+    fcntl.replace(tmp, target)
 
 
 def write_text(target: PathLike, text: str) -> None:

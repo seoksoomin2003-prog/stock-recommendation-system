@@ -12,7 +12,7 @@ Everything is built from the run's own artifacts (``runs/<id>/``), so a record n
 depends on today's provider data.  Artifact sha256 hashes are stored so that the
 original decision can be re-verified later (``verify``).
 """
-import fcntl
+from utils import fcntl_port as fcntl
 import hashlib
 import json
 import os

@@ -4,7 +4,7 @@ Prospective rules (TERMINAL-3 §3): the signal session is the latest COMPLETED N
 one record per model per signal session (idempotent); no back-dating; the panel must end exactly on the
 signal session.  The P6-20 tracking ledger is only read.
 """
-import fcntl
+from utils import fcntl_port as fcntl
 import hashlib
 import json
 import os

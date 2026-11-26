@@ -8,7 +8,7 @@ Only final daily closes are read (a delayed intraday bar is never a trigger).  A
 missing, never treated as a crossing.  Score bands are the live QSF output as recorded by the scan: a band change is a
 reading to look at, not a trade instruction.
 """
-import fcntl
+from utils import fcntl_port as fcntl
 import json
 import uuid
 from contextlib import contextmanager

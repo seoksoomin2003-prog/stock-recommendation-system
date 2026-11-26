@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from terminal.automation import _launchctl
+from utils import fcntl_port
 
 LABEL = "com.quantengine.terminal"
 PORT = 8765
@@ -43,6 +44,9 @@ def plist_bytes(base: Path, port: int = PORT) -> bytes:
 
 
 def install(base: Path, port: int = PORT) -> Dict[str, Any]:
+    if fcntl_port.WINDOWS:                                    # Task Scheduler in place of launchd (terminal/win_tasks.py)
+        from terminal import win_tasks
+        return win_tasks.install_server(base, port)
     log_path(base).parent.mkdir(parents=True, exist_ok=True)
     p = plist_path()
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -54,6 +58,9 @@ def install(base: Path, port: int = PORT) -> Dict[str, Any]:
 
 
 def uninstall() -> Dict[str, Any]:
+    if fcntl_port.WINDOWS:
+        from terminal import win_tasks
+        return win_tasks.uninstall_server()
     p = plist_path()
     _launchctl("bootout", f"gui/{os.getuid()}", str(p))       # also stops the server it started
     p.unlink(missing_ok=True)
@@ -61,6 +68,9 @@ def uninstall() -> Dict[str, Any]:
 
 
 def status(base: Path) -> Dict[str, Any]:
+    if fcntl_port.WINDOWS:
+        from terminal import win_tasks
+        return win_tasks.server_status(base, PORT)
     res = _launchctl("print", f"gui/{os.getuid()}/{LABEL}")
     loaded = plist_path().exists() and res.returncode == 0
     info = {}

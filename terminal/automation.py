@@ -4,7 +4,7 @@ Each step runs in its own process (memory is returned between steps on an 8GB ma
 completed US session, so the schedule can fire several times a day: later firings only retry what failed.
 A day that is never run cannot be recorded afterwards (no backfill), so missed sessions are reported.
 """
-import fcntl
+from utils import fcntl_port as fcntl
 import hashlib
 import json
 import os
@@ -69,6 +69,14 @@ SECOND_FILE = "data/terminal/backup_second.json"      # the user's choice of a s
 ICLOUD_BACKUP = Path.home() / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "QuantEngineBackups"
 
 
+def default_second_backup() -> Path:
+    """Where the second backup goes when the user names no folder: the iCloud Drive folder on a Mac, the OneDrive folder on
+    Windows (both leave the computer by themselves)."""
+    if fcntl.WINDOWS:
+        return Path(os.getenv("OneDrive") or Path.home() / "OneDrive") / "QuantEngineBackups"
+    return ICLOUD_BACKUP
+
+
 def second_backup_root(base: Path) -> Optional[Path]:
     """A second backup folder, on another disk or service than the first.  None unless the user turned it on.  The first backup
     sits on the disk that holds the records (assessment 2026-11-26): this copy is what survives that disk.  ``.env`` is in neither."""
@@ -86,7 +94,7 @@ def set_second_backup(base: Path, on: bool, path: Optional[Path] = None) -> Dict
     from utils import durable
     target = Path(base) / SECOND_FILE
     target.parent.mkdir(parents=True, exist_ok=True)
-    doc = {"on": bool(on), "path": str(path or ICLOUD_BACKUP).replace(str(Path.home()), "~"), "set_at": datetime.now(timezone.utc).isoformat()}
+    doc = {"on": bool(on), "path": str(path or default_second_backup()).replace(str(Path.home()), "~"), "set_at": datetime.now(timezone.utc).isoformat()}
     durable.write_text(target, json.dumps(doc, ensure_ascii=False, indent=1))
     return second_backup_status(base)
 
@@ -1060,6 +1068,9 @@ def _launchctl(*args: str):
 
 
 def install(base: Path) -> Dict[str, Any]:
+    if fcntl.WINDOWS:                                         # Task Scheduler in place of launchd (terminal/win_tasks.py)
+        from terminal import win_tasks
+        return win_tasks.install_daily(base, SCHEDULE)
     (base / "data" / "automation").mkdir(parents=True, exist_ok=True)
     p = plist_path()
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -1071,6 +1082,9 @@ def install(base: Path) -> Dict[str, Any]:
 
 
 def uninstall() -> Dict[str, Any]:
+    if fcntl.WINDOWS:
+        from terminal import win_tasks
+        return win_tasks.uninstall_daily()
     p = plist_path()
     _launchctl("bootout", f"gui/{os.getuid()}", str(p))
     p.unlink(missing_ok=True)
@@ -1078,6 +1092,9 @@ def uninstall() -> Dict[str, Any]:
 
 
 def is_installed() -> bool:
+    if fcntl.WINDOWS:
+        from terminal import win_tasks
+        return win_tasks.is_installed(win_tasks.DAILY)
     return plist_path().exists() and _launchctl("print", f"gui/{os.getuid()}/{LABEL}").returncode == 0
 
 
@@ -1105,7 +1122,8 @@ def running(base: Path) -> Optional[Dict[str, Any]]:
     (a crash, a restart) does not count."""
     try:
         m = json.loads((Path(base) / "data" / "automation" / RUNNING_FILE).read_text(encoding="utf-8"))
-        os.kill(int(m["pid"]), 0)
+        if not fcntl.pid_alive(int(m["pid"])):
+            return None
     except (OSError, ValueError, KeyError, TypeError):
         return None
     return {k: m.get(k) for k in ("started_at", "step", "done", "total")}
@@ -1124,5 +1142,5 @@ def start_now(base: Path, popen: Callable = subprocess.Popen, now: Callable[[], 
     if Path(CAFFEINATE).exists():
         cmd = [CAFFEINATE, "-i", *cmd]
     with open(folder / "manual_run.log", "w", encoding="utf-8") as fh:
-        popen(cmd, cwd=base, stdout=fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
+        popen(cmd, cwd=base, stdout=fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, **fcntl.detached())
     return {"status": "STARTED", "at": now().isoformat()}

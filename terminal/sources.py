@@ -5,7 +5,7 @@ Each function returns JSON-serialisable data or raises; the cache layer turns fa
 STALE / UNAVAILABLE.  Missing values are ``None`` (never 0).
 """
 import csv
-import fcntl
+from utils import fcntl_port as fcntl
 import io
 import json
 import math
@@ -33,7 +33,7 @@ SEC_PAUSE_S = 10 * 60            # SEC lifts a rate block after about ten quiet 
 # One file for every process of this program on the machine.  The limit above used to be kept per process, so the morning scan
 # and the screen together could reach 13 requests a second.  The file holds the time of the last request and, after a refusal,
 # the time until which nothing is asked.  It holds no identity and no address.
-SEC_PACE_FILE = Path(tempfile.gettempdir()) / f"quantengine_sec_pace_{os.getuid()}.json"
+SEC_PACE_FILE = Path(tempfile.gettempdir()) / f"quantengine_sec_pace_{fcntl.uid()}.json"
 
 
 class SecPaused(RuntimeError):

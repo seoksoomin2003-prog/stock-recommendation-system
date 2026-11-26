@@ -5,7 +5,7 @@ cohorts are never pooled.  Later reassessments are new snapshots; an original is
 when reading, from prices that exist by then: entry at the session after the signal (open), exit at the close H sessions later.
 """
 import bisect
-import fcntl
+from utils import fcntl_port as fcntl
 import gzip
 import hashlib
 import json

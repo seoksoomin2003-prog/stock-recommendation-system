@@ -18,7 +18,7 @@ and each day's raw open, high, low and close are scaled by P / raw close; volume
 The snapshot panel is cached in ``data/qsf/krx_panel.npz``.  A new snapshot day is added to it; days that have left the window
 are cut off when it is read.  It is built from nothing only when it cannot be continued (no file, an old layout, a day missing).
 """
-import fcntl
+from utils import fcntl_port as fcntl
 import gzip
 import json
 import os

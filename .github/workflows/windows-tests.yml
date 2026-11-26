@@ -1,0 +1,56 @@
+# Runs the whole test suite and a start-up check on Windows (Windows port, 2026-11-27).
+# Starts only when asked (Actions tab -> "windows-tests" -> Run workflow) or on a push to the "windows" branch.
+name: windows-tests
+on:
+  workflow_dispatch:
+  push:
+    branches: [windows]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: windows-latest
+    timeout-minutes: 120
+    env:
+      PYTHONUTF8: "1"
+      PYTHONIOENCODING: "utf-8"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .venv\Scripts\python.exe -m pip install --upgrade pip
+          .venv\Scripts\python.exe -m pip install -r requirements.lock
+      - name: Tests
+        shell: pwsh
+        run: |
+          .venv\Scripts\python.exe -m pytest -q -p no:cacheprovider --tb=short -o console_output_style=classic 2>&1 | Tee-Object -FilePath pytest_windows.log
+          exit $LASTEXITCODE
+      - name: Start-up check (scheduler entries and the server)
+        if: always()
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Continue"
+          .venv\Scripts\python.exe app.py automation status *> smoke_status.log
+          "status exit $LASTEXITCODE" | Tee-Object -Append smoke.log
+          .venv\Scripts\python.exe app.py terminal-agent install *>> smoke.log
+          Start-Sleep -Seconds 25
+          schtasks /Query /TN "QuantEngine Terminal" /V /FO LIST *>> smoke.log
+          try { (Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/api/health -TimeoutSec 20).Content | Tee-Object -Append smoke.log } catch { "HEALTH FAILED: $($_.Exception.Message)" | Tee-Object -Append smoke.log }
+          try { "root " + (Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/ -TimeoutSec 20).StatusCode | Tee-Object -Append smoke.log } catch { "ROOT FAILED: $($_.Exception.Message)" | Tee-Object -Append smoke.log }
+          .venv\Scripts\python.exe app.py terminal-agent status *>> smoke.log
+          .venv\Scripts\python.exe app.py terminal-agent uninstall *>> smoke.log
+          if (Test-Path data\terminal\logs\launchd.log) { Get-Content data\terminal\logs\launchd.log -Tail 40 | Tee-Object -Append smoke.log }
+          Get-Content smoke.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-logs
+          path: |
+            pytest_windows.log
+            smoke.log
+            smoke_status.log

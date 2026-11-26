@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
+from utils import fcntl_port as fcntl
+
 MARKER = Path("data") / "kr" / "model_scan.json"       # the scan in progress or the last one started: pid and start time
 LOG = Path("data") / "kr" / "model_scan.log"
 RUNS = Path("runs") / "KR"
@@ -35,17 +37,13 @@ def _alive(pid: Any) -> bool:
     except (ValueError, TypeError):
         return False
     try:
-        if os.waitpid(pid, os.WNOHANG)[0] == pid:
+        if hasattr(os, "WNOHANG") and os.waitpid(pid, os.WNOHANG)[0] == pid:
             return False                    # this server's own child, ended
     except ChildProcessError:
         pass                                # not a child of this process: the server was restarted since the scan began
     except OSError:
         return False
-    try:
-        os.kill(pid, 0)
-        return True
-    except OSError:
-        return False
+    return fcntl.pid_alive(pid)
 
 
 def run_since(base: Path, started_at: str) -> Optional[Dict[str, Any]]:
@@ -135,7 +133,7 @@ def start(base: Path, popen: Callable = subprocess.Popen, now: Callable[[], date
         cmd = [CAFFEINATE, "-i", *cmd]
     at = now().isoformat()
     with open(base / LOG, "w", encoding="utf-8") as fh:
-        proc = popen(cmd, cwd=base, stdout=fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, start_new_session=True)
+        proc = popen(cmd, cwd=base, stdout=fh, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, **fcntl.detached())
     tmp = (base / MARKER).with_suffix(".tmp")
     tmp.write_text(json.dumps({"pid": proc.pid, "started_at": at}), encoding="utf-8")
     tmp.replace(base / MARKER)

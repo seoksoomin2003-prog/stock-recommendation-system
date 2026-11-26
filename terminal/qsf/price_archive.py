@@ -15,7 +15,7 @@ Rules:
   the newer ones as a price jump.  No day had left a window before 2027-10-01, so nothing stored earlier needed repair.
 - A file that exists but cannot be read is never taken for an empty archive: the update refuses, so it is not written over.
 """
-import fcntl
+from utils import fcntl_port as fcntl
 import gzip
 import json
 import statistics

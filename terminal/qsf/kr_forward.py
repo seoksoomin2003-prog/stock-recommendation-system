@@ -4,7 +4,7 @@ A record is written once and chained by hash, so a later edit shows.  No return 
 dates only, and the single evaluation is refused until enough sessions have matured.  Nothing here reads or changes the live score,
 the QSF ledger or P6-11B.
 """
-import fcntl
+from utils import fcntl_port as fcntl
 import gzip
 import hashlib
 import json

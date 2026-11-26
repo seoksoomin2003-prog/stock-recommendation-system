@@ -7,7 +7,7 @@ it wrote, never on a replay.  No order is sent anywhere, no real holding or jour
 the live score.  The figures are a reference before any verdict: one account's path is not evidence about the score.
 """
 import copy
-import fcntl
+from utils import fcntl_port as fcntl
 import json
 from datetime import datetime, timezone
 from pathlib import Path

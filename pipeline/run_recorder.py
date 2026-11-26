@@ -10,7 +10,10 @@ import hashlib
 import json
 import os
 import platform
-import resource
+try:
+    import resource
+except ImportError:          # Windows has no resource module: the peak is unknown there, never 0
+    resource = None
 import sys
 import time
 import traceback
@@ -35,6 +38,8 @@ STAGES = (
 
 
 def peak_rss_mb() -> float:
+    if resource is None:
+        return float("nan")
     usage = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     # macOS reports bytes, Linux reports kilobytes.
     return usage / (1024 * 1024) if sys.platform == "darwin" else usage / 1024

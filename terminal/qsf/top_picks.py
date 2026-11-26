@@ -3,7 +3,7 @@
 Each market and session is written once, with that day's full score list as the comparison group.  The ledger is only read: it
 supplies the entry session and each stock's benchmark.  Returns are computed when read, from prices that exist by then.
 """
-import fcntl
+from utils import fcntl_port as fcntl
 import gzip
 import hashlib
 import json
