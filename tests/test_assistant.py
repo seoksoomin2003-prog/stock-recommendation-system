@@ -567,11 +567,11 @@ def test_the_five_investors_answer_a_stock_and_the_portfolios_are_made_when_aske
     monkeypatch.setattr(cs, "stock", lambda terminal, ticker, market, cards=None: view)
     got = A.answer(term, "삼성전자 다섯 관점은?", "KR")
     by = {s["title"]: s["lines"] for s in got["sections"]}
-    assert got["summary"].startswith("투자위원회 판정: 매수 조건 충족. 세 관점(버핏식, 린치식, 드러켄밀러식)이 매수 조건입니다.") and got["follow"][:2] == ["삼성전자 포트폴리오 받아보기", "삼성전자 분석해 줘"]
-    assert len(by["다섯 투자자의 의견"]) == 5 and by["다섯 투자자의 의견"][0].startswith("버핏식(장기 사업 소유자) 적극 매수 조건 충족, 점수 87, 신뢰 100: ") and by["이 답의 한계"] == [civ.NOTE]
+    assert got["summary"].startswith("투자위원회 판정: 편입 조건 충족. 세 관점(버핏식, 린치식, 드러켄밀러식)이 편입 조건입니다.") and got["follow"][:2] == ["삼성전자 포트폴리오 받아보기", "삼성전자 분석해 줘"]
+    assert len(by["다섯 투자자의 의견"]) == 5 and by["다섯 투자자의 의견"][0].startswith("버핏식(장기 사업 소유자) 편입 조건 강하게 충족, 점수 87, 신뢰 100: ") and by["이 답의 한계"] == [civ.NOTE]
     assert any(x.startswith("철학의 차이: ") for x in by["의견이 갈린 곳"]) and by["들어갈 조건과 나올 조건"][0].startswith("들어갈 조건, ") and "투자 매력 78" in by["위원회의 아홉 점수(합치지 않음)"][0]
     note = {s["title"]: s["lines"] for s in A.answer(term, "삼성전자 분석해 줘", "KR")["sections"]}["다섯 투자자와 투자위원회 (참고)"]
-    assert len(note) == 7 and note[5].startswith("투자위원회: 매수 조건 충족. ") and note[6] == civ.NOTE
+    assert len(note) == 7 and note[5].startswith("투자위원회: 편입 조건 충족. ") and note[6] == civ.NOTE
     # the market-wide list is on no screen; the six portfolios are asked for and made only then
     team = A.answer(term, "다섯 관점 팀 목록은?", "KR")
     assert team["status"] == "REAL" and team["intent"] == "TEAM" and team["title"] == "다섯 투자자는 종목을 넣어 묻습니다" and team["follow"] == ["삼성전자 다섯 관점은?", "삼성전자 포트폴리오 받아보기"]

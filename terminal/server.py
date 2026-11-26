@@ -136,6 +136,11 @@ def _strategy(s: str) -> str:
     return s
 
 
+def _restore():
+    from terminal import restore
+    return restore
+
+
 def _phone(phone: Optional[phone_view.PhoneView]) -> phone_view.PhoneView:
     if phone is None:
         raise ValueError("PHONE_VIEW_UNAVAILABLE")
@@ -162,6 +167,9 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[pho
         ("GET", "/api/filings"): lambda q, b: t.filings(q.get("t", "")),
         ("GET", "/api/macro"): lambda q, b: t.macro(_market(q.get("market", "US"))),
         ("GET", "/api/watchlist"): lambda q, b: t.watchlist_quotes(_market(q.get("market", "US"))),
+        ("GET", "/api/backup/check"): lambda q, b: _restore().check(t.base),
+        ("POST", "/api/backup/second"): lambda q, b: _restore().set_second(t.base, b.get("on") is True),
+        ("POST", "/api/backup/repair-ledger"): lambda q, b: _restore().repair_ledger(t.base),
         ("POST", "/api/watchlist/add"): lambda q, b: {"tickers": t.watchlist_add(b.get("ticker", ""))},
         ("GET", "/api/calendar"): lambda q, b: t.econ_calendar(_market(q.get("market", "US")), _days(q.get("days") or "60")),
         ("GET", "/api/alerts"): lambda q, b: t.alerts_view(),

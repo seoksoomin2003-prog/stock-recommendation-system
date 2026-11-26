@@ -186,4 +186,5 @@ def test_every_changing_request_is_either_a_phone_entry_or_named_as_computer_onl
     assert pv.PHONE_WRITES <= posts
     assert posts - pv.PHONE_WRITES == {"/api/settings", "/api/capital", "/api/qsf/rank-rules", "/api/qsf/turnover-rules", "/api/automation/run", "/api/lab/run",
                                        "/api/model/scan", "/api/phone/switch", "/api/phone/code", "/api/phone/unpair",
-                                       "/api/qsf/stance", "/api/qsf/fund-period"}      # a new changing request must be put on one side (the stance sizes orders: a setting)
+                                       "/api/qsf/stance", "/api/qsf/fund-period",
+                                       "/api/backup/second", "/api/backup/repair-ledger"}       # backup settings and the record repair: at the computer only (2026-11-26)      # a new changing request must be put on one side (the stance sizes orders: a setting)

@@ -262,7 +262,7 @@ def _wrap(key: str, rows: List[Dict[str, Any]], exits: List[Dict[str, Any]], ski
     turnover = round(sum(abs(r["weight"] - prev.get(r["ticker"], 0.0)) for r in rows) + sum(w for t, w in prev.items() if t not in {r["ticker"] for r in rows}), 4)
     why_cash = []
     if not rows:
-        why_cash.append("이 관점의 매수 조건을 채운 종목이 없습니다. 자리를 채우려고 사지 않습니다.")
+        why_cash.append("이 관점의 편입 조건을 채운 종목이 없습니다. 자리를 채우려고 사지 않습니다.")
     elif extra.get("exposure_limit", 1.0) < 1.0:
         why_cash.append(f"시장 국면 때문에 투자 비중을 {extra['exposure_limit'] * 100:.0f}%까지로 줄였습니다.")
     if rows and invested < extra.get("exposure_limit", 1.0) - 0.01:

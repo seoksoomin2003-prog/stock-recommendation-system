@@ -329,6 +329,30 @@ def _pooled(base: Path, strategy: str) -> Optional[Dict[str, Any]]:
     return {"t": got, "combined": z, "t_bar": bar, "engine_level_reference": z >= bar, "note": "참고 근거입니다. 시장별 판정을 바꾸지 않습니다."}
 
 
+def late_days(rows: Dict[str, List[Dict[str, Any]]], used: Sequence[str], calendar: Sequence[str]) -> Dict[str, Any]:
+    """How many sessions of the sample were recorded after the next open.  Such a record enters one session later (its
+    ``entry_session`` is past the session that follows it), so no passed open is used; the report says how many there were
+    because the verdict reads them together with the days recorded on time (assessment 2026-11-26).  Changes no condition."""
+    nxt = {d: calendar[i + 1] for i, d in enumerate(calendar[:-1])}
+    late = [d for d in used if nxt.get(d) and any((x.get("entry_session") or "") > nxt[d] for x in rows[d])]
+    return {"late": len(late), "of": len(used), "sessions": late[:40],
+            "note": "다음 개장 뒤에 적힌 날입니다. 이런 날의 진입은 한 거래일 뒤로 계산했습니다. 판정 조건에는 쓰지 않는 참고 수치입니다."}
+
+
+def formula_mix(rows: Dict[str, List[Dict[str, Any]]], used: Sequence[str]) -> Optional[Dict[str, Any]]:
+    """None when every record of the sample was scored by one formula on one statement basis; otherwise what is mixed.
+    The statement basis (annual or trailing four quarters) can be switched by ``.env`` or a button under the same model version
+    (terminal/qsf/fund_period.py), so the version alone does not say the sample is one formula (assessment 2026-11-26).
+    A record from before 2026-11-23 has no basis written and was scored on annual statements."""
+    versions = sorted({str(x.get("model_version")) for d in used for x in rows[d]})
+    bases = sorted({str((x.get("fund_period") or {}).get("live") or "ANNUAL") for d in used for x in rows[d]})
+    if len(versions) <= 1 and len(bases) <= 1:
+        return None
+    what = ([f"점수 공식이 둘 이상입니다({', '.join(versions)})"] if len(versions) > 1 else []) + ([f"재무 기준이 둘 이상입니다({', '.join(bases)})"] if len(bases) > 1 else [])
+    return {"versions": versions, "fund_bases": bases,
+            "reasons": [f"이 {len(used)}거래일의 기록에는 " + ", ".join(what) + ". 한 공식의 기록이 아니어서 읽지 않았고, 수익도 읽지 않았습니다."]}
+
+
 def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str], List[Dict]], bench: List[Dict], log=print,
                   benches: Optional[Dict[str, List[Dict]]] = None, sector_of: Optional[Callable[[str], Optional[str]]] = None) -> Dict[str, Any]:
     base = Path(base)
@@ -346,6 +370,15 @@ def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str]
     if len(ready) < need:
         raise RuntimeError(f"아직 판정할 수 없습니다. 만기 거래일 {len(ready)}개, 기준 {need}개입니다.")
     used = ready[:need]                              # exactly the fixed sample, whenever this is run
+    mixed = formula_mix(rows, used)
+    if mixed:                                        # decided before any return is read (user decision 2026-11-26, as the continuation readings do)
+        res = {"status": "REAL", "protocol": PROTOCOL, "market": market, "strategy": strategy, "horizon": h, "sessions_used": len(used), "first": used[0], "last": used[-1],
+               "verdict": "MIXED_FORMULA", **mixed, "note": NOTE}
+        out.parent.mkdir(parents=True, exist_ok=True)
+        durable.write_text(out, json.dumps(res, ensure_ascii=False, indent=1))
+        wording.seal(base, out)
+        log(f"{market} {strategy}: {res['verdict']}")
+        return res
     cost = config.round_trip_cost(market)
     vname, variant = variant_of(strategy, sector_of)
     days = [d for d in (day_stats(s, rows[s], px, h, cost, variant) for s in used) if d]
@@ -362,7 +395,7 @@ def evaluate_once(base: Path, market: str, strategy: str, loader: Callable[[str]
     res = {"status": "REAL", "protocol": PROTOCOL, "market": market, "strategy": strategy, "horizon": h, "sessions_used": len(used), "first": used[0], "last": used[-1],
            "cost_round_trip_pct": cost * 100, **reading(primary, top), "primary": primary, "other_horizons": extra,
            "money_split": money_split(primary, cost, top, reading(primary, top)["condition_b"]), "reference": [reference_line(days, vname)],
-           "persistence": persistence(days, h),
+           "persistence": persistence(days, h), "late_days": late_days(rows, used, px.calendar),
            **({"candidate_1": candidate_1(primary, reference_line(days, vname))} if strategy == "SWING" else {}),
            "benchmarks": sorted(px.benches) or None,
            "by_version": {k: {"dates": len(v), "ic": float(np.mean(v))} for k, v in sorted(versions.items())}, "note": NOTE}
@@ -486,10 +519,9 @@ def continue_once(base: Path, market: str, n: int, loader: Callable[[str], List[
     if len(ready) < n:
         raise RuntimeError(f"아직 읽을 수 없습니다. 만기 거래일 {len(ready)}개, 기준 {n}개입니다.")
     used = ready[:n]                                 # exactly the fixed sample, whenever this is run
-    versions = sorted({str(x.get("model_version")) for d in used for x in rows[d]})
-    if len(versions) > 1:                            # decided before any return is read
-        return write({**head, "verdict": "MIXED_FORMULA", "versions": versions, "first": used[0], "last": used[-1],
-                      "reasons": [f"이 {n}거래일에는 점수 공식이 둘 이상 섞여 있습니다({', '.join(versions)}). 한 공식의 기록이 아니어서 읽지 않았고, 수익도 읽지 않았습니다."]})
+    mixed = formula_mix(rows, used)
+    if mixed:                                        # decided before any return is read
+        return write({**head, "verdict": "MIXED_FORMULA", **mixed, "first": used[0], "last": used[-1]})
     cost = config.round_trip_cost(market)
     days = [d for d in (day_stats(s, rows[s], px, h, cost) for s in used) if d]
     if len(days) < n // 2:
@@ -504,4 +536,4 @@ def continue_once(base: Path, market: str, n: int, loader: Callable[[str], List[
                "순위 조건 다섯 가지 가운데 못 채운 것: " + (", ".join(failed) if failed else "없음") + ".", split["says"],
                "이 읽기는 첫 판정과 같은 공식, 같은 기록을 더 길게 본 것입니다. 통과하지 못해도 공식을 바꿀 이유가 아닙니다."]
     return write({**head, "sessions_used": len(used), "first": used[0], "last": used[-1], "cost_round_trip_pct": cost * 100, **r, "t_nominal": CONTINUE_T, "primary": s,
-                  "money_split": split, "persistence": persistence(days, h), "versions": versions, "reasons": reasons})
+                  "money_split": split, "persistence": persistence(days, h), "late_days": late_days(rows, used, px.calendar), "versions": sorted({str(x.get("model_version")) for d in used for x in rows[d]}), "reasons": reasons})

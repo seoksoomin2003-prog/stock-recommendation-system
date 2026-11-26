@@ -107,7 +107,7 @@ REGISTRY: List[Dict[str, Any]] = [
 
 VERDICT_KO = {
     "ALREADY_PASSED": "앞선 판정이 이미 통과해 읽지 않았습니다",
-    "MIXED_FORMULA": "점수 공식이 둘 이상 섞인 기록이라 읽지 않았습니다",
+    "MIXED_FORMULA": "점수 공식이나 재무 기준이 둘 이상 섞인 기록이라 읽지 않았습니다",
     "EARLY_POSITIVE": "이른 근거가 있습니다(짧은 기록에서 순위 조건과 수익 조건을 모두 채움). 주된 판정은 따로 읽습니다",
     "EARLY_RANK_ONLY": "짧은 기록에서 순위 조건만 채웠습니다(상위 종목의 수익 조건은 못 채움)",
     "EARLY_NOTHING": "짧은 기록으로는 구분되지 않았습니다. 효과가 없다는 뜻이 아닙니다",

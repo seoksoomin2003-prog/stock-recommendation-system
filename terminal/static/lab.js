@@ -155,6 +155,36 @@ function recordProgress(q) {
   return (q.progress || []).reduce((a, p) => { a[`${p.strategy}|${p.horizon}`] = p; return a; }, {});
 }
 // 시세 이력 점검: 점수를 계산한 일봉 자체가 맞는지. 읽기 전용, 점수를 고치지 않습니다.
+// 백업 두 곳의 상태와 세 버튼(2026-11-26): 백업 확인, 두 번째 백업 켜고 끄기, 깨진 기록 묶음 되돌리기.
+function recBackup(d) {
+  const b2 = d.backup_second || {}, broken = d.integrity && d.integrity !== "OK";
+  return `<h3 id="rec-backup">백업</h3><div class="kv"><div><span>첫 번째(같은 디스크)</span><b>${esc((d.backup || {}).latest || "없음")}</b></div>
+    <div><span>두 번째${b2.path ? ` (${esc(b2.path)})` : ""}</span><b>${b2.on ? esc(b2.latest || "아직 없음") : '<span class="missing">꺼짐</span>'}</b></div></div>
+    <div class="actions"><button type="button" class="ghost" data-rec-backup="check">백업 확인(풀어서 검증)</button>
+      <button type="button" class="ghost" data-rec-backup="${b2.on ? "off" : "on"}">두 번째 백업 ${b2.on ? "끄기" : "켜기(iCloud Drive)"}</button>
+      ${broken ? '<button type="button" data-rec-backup="repair">깨진 기록 묶음을 백업에서 되돌리기</button>' : ""}</div>
+    <div class="meta" id="rec-backup-out">첫 번째 백업은 기록과 같은 디스크에 있습니다. 두 번째 백업은 그 디스크가 고장 나도 남는 사본입니다. 키 파일(.env)은 어느 백업에도 넣지 않습니다.</div>`;
+}
+document.addEventListener("click", async (ev) => {
+  const btn = ev.target.closest("[data-rec-backup]");
+  if (!btn) return;
+  const out = document.getElementById("rec-backup-out"), what = btn.dataset.recBackup, json = { method: "POST", headers: { "Content-Type": "application/json" } };
+  btn.disabled = true;
+  out.textContent = "확인하는 중입니다…";
+  try {
+    if (what === "check") {
+      const r = await api("/api/backup/check");
+      out.textContent = r.backups.length ? r.backups.map((x) => `${x.path}: ${x.status === "OK" ? `이상 없음(${x.latest}, 기록 ${x.checked}종 검증)` : x.status === "NO_BACKUP" ? "백업 없음" : `문제 있음: ${x.failed.join(", ")}`}`).join(" · ") + ". " + r.note : "백업 폴더가 없습니다.";
+    } else if (what === "repair") {
+      const r = await api("/api/backup/repair-ledger", { ...json, body: "{}" });
+      out.textContent = r.text;
+    } else {
+      const r = await api("/api/backup/second", { ...json, body: JSON.stringify({ on: what === "on" }) });
+      out.textContent = r.on ? `두 번째 백업을 켰습니다(${r.path}). 다음 매일 작업부터 만듭니다.` : "두 번째 백업을 껐습니다. 이미 만든 사본은 지우지 않습니다.";
+    }
+  } catch (e) { out.textContent = `하지 못했습니다: ${errKo(e)}`; }
+  btn.disabled = false;
+});
 function recAudit(pa) {
   if (!pa) return "";
   const one = (name, x) => {
@@ -197,6 +227,7 @@ async function renderRecord() {
     ${recAudit(d.price_audit)}
     <h3 id="rec-auto">자동 실행</h3><div class="kv">${d.disk ? `<div><span>디스크 여유</span><b class="num">${d.disk.free_gb}GB</b></div>` : ""}${d.backup ? `<div><span>마지막 백업</span><b>${esc(d.backup.latest || "—")}</b></div>` : ""}<div><span>설치</span><b>${a.installed ? "설치됨" : '<span class="missing">미설치</span>'}</b></div><div><span>실행 시각</span><b>${esc(a.schedule_text || (a.schedule_kst || []).join(", "))}</b></div><div><span>마지막 실행</span><b>${a.last_run_at ? when(a.last_run_at) : DASH}</b></div><div><span>기준 거래일</span><b>${esc(a.latest_session || "—")}</b></div></div>
     <div class="meta">${a.steps.map((s) => `${esc(s.name)}: ${esc(stat[s.status] || "기록 없음")}`).join(" · ")}</div>
+    ${recBackup(d)}
     <div class="meta">${esc(d.note)}</div></div>`;
 }
 // 작업 화면 개편 7단계 (배치 명세 3.16): 가운데 칸에 과거 시뮬레이션, 오른쪽 칸에 전향 기록 현황(한 칸에서는 맨 앞, 지금 순서).  한국은

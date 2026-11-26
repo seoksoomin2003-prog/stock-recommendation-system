@@ -37,7 +37,7 @@ NETWORK_PROBE = "query1.finance.yahoo.com"          # the first host every chain
 WAIT_RETRY_S = 600                                  # a step still waiting for its provider is asked once more before the backup, if its first try began this long ago
 RETRY_QUICK_S = 300                                 # a step that failed sooner than this gets one more try at the end of the run
 # wrap-up checks whose failure ends in a state key: said in the day's message by ``Daily._notes``
-WRAP_UP_CHECKS = {"cache_prune": "캐시 정리", "price_audit": "가격 점검", "earnings_gap": "실적일 재집계", "store_watch": "기록 진행 확인"}
+WRAP_UP_CHECKS = {"cache_prune": "캐시 정리", "price_audit": "가격 점검", "earnings_gap": "실적일 재집계", "store_watch": "기록 진행 확인", "sector_archive": "업종 분류 보관"}
 RUNNING_FILE = "running.json"                       # the run in progress: pid, step, steps done
 CAFFEINATE = "/usr/bin/caffeinate"
 SLEPT_NOTE_S = 120                                  # a step during which the Mac slept this long says so
@@ -151,7 +151,7 @@ def backup(base: Path, day: str, root: Optional[Path] = None) -> Dict[str, Any]:
             _mirror(src, dst)
             n += 1
     # So are the one-time verdict reports: each is the only copy of a reading that is never made twice.
-    for src in sorted((base / "reports" / "qsf").glob("QSF_*.json")):
+    for src in sorted(p for pattern in ("QSF_*.json", "IC1_*.json") for p in (base / "reports" / "qsf").glob(pattern)):      # IC1: the committee's one paper reading
         dst = root / "reports_qsf" / src.name
         if not dst.exists():
             _mirror(src, dst)
@@ -502,6 +502,9 @@ class Daily:
             got = sector_archive.save_when_due(self.base, self.now())
         except Exception as exc:
             got = {"error": type(exc).__name__}
+        bad = sorted(f"{m} {v}" for m, v in got.items() if m != "error" and v not in ("KEPT", "WRITTEN"))     # TOO_FEW or an error's type, per market
+        if bad and "error" not in got:
+            got = {**got, "error": ", ".join(bad)}                 # read by ``_notes``: a month without its file is said in the day's message
         st["sector_archive"] = got
         return got
 
@@ -566,6 +569,7 @@ class Daily:
             try:
                 rep = readings.report(self.base, e)
                 if rep is None and readings.report_path(self.base, e).exists():        # there, and not a report: the command would refuse for good
+                    m["broken"] = True                              # said in the day's message whether or not this reading sends notices
                     if not m.get("damaged") and e.get("notify"):
                         tg = self.telegram(readings.damaged_text(e))
                         if tg["status"] == "NOT_CONFIGURED":
@@ -574,6 +578,7 @@ class Daily:
                     got[e["key"]] = m
                     continue
                 m.pop("damaged", None)
+                m.pop("broken", None)
                 if rep is None:
                     last = date.fromisoformat(m["tried"]) if m.get("tried") else None
                     wait = readings.RETRY_DAYS if m.get("failed", 0) >= readings.GIVE_UP else 1
@@ -631,6 +636,12 @@ class Daily:
             errs = sorted({v["error"] for v in (st.get(key) or {}).values() if isinstance(v, dict) and v.get("error")})
             if errs:
                 failed.append(f"{label}({', '.join(errs)})")
+        from terminal.qsf import readings
+        labels = {e["key"]: e["label"] for e in readings.REGISTRY if not e.get("notify")}
+        quiet = [labels[k] + ("(결과 파일 손상)" if v.get("broken") else f"({v.get('failed')}번 읽지 못함)") for k, v in sorted((st.get("readings") or {}).items())
+                 if k in labels and isinstance(v, dict) and (v.get("broken") or v.get("failed", 0) >= readings.GIVE_UP)]
+        if quiet:                                                   # an archived reading sends no verdict notice, but a stuck one must not stay unseen
+            out.append("보관으로 돌린 읽기 가운데 막힌 것: " + ", ".join(quiet[:6]) + (f" 외 {len(quiet) - 6}개" if len(quiet) > 6 else "") + ". reports/RUNBOOK.md 4절을 보세요.")
         if failed:
             out.append("마무리 점검 중 실패한 것: " + ", ".join(failed) + ". 며칠 이어지면 고칠 사람이 필요합니다(reports/RUNBOOK.md 5절).")
         return out

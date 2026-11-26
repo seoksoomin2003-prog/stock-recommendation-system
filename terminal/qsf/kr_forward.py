@@ -49,6 +49,17 @@ def previous_weekday(day: date) -> date:
     return d
 
 
+def open_after(store: str, session: str) -> datetime:
+    """The next open of the market a store records.  A store of US scores (its name ends in ``_us``) is timed by the New York
+    open: until 2026-11-26 every store was timed by the Korean one, which marked US records written a day and a half before
+    their open as "after the next open".  The flag in the files written before that day is left as it was (records are not
+    edited); it errs to the cautious side."""
+    if str(store).endswith("_us"):
+        from terminal.qsf import us_challenger
+        return us_challenger.next_open(session)
+    return next_open(session)
+
+
 def next_open(session: str) -> datetime:
     """09:00 KST on the next weekday.  A holiday makes this earlier than the true open, so the flag can only understate."""
     d = date.fromisoformat(session) + timedelta(days=1)
@@ -215,7 +226,7 @@ def write_record(base: Path, day: str, at: datetime, late: bool, store: Path = F
         p = folder / f"{day}.json.gz"
         if not p.exists():
             scored = scorer(base, day) if scorer else score_fund_day(base, day) if store == FUND_FOLDER else score_day(Path(base) / kr.DATA, day)
-            doc = {**scored, "recorded_at": at.isoformat(), "late": late, "before_next_open": at < next_open(day)}
+            doc = {**scored, "recorded_at": at.isoformat(), "late": late, "before_next_open": at < open_after(store, day)}
             tmp = p.with_suffix(".tmp")
             with gzip.open(tmp, "wt", encoding="utf-8") as fh:
                 json.dump(doc, fh, ensure_ascii=False)

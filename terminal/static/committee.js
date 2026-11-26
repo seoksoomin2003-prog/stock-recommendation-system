@@ -5,7 +5,7 @@
 // Judgement colours, not price colours (UI batch 6 P2-8): candidate purple, wait and reduce amber, hold grey.
 const IC_REC_COLOR = { STRONG_BUY: "var(--judge-buy)", BUY: "var(--judge-buy)", CONDITIONAL_BUY: "var(--accent)", HOLD: "var(--muted)", WAIT: "var(--warn)", REDUCE: "var(--warn)", SELL: "var(--warn)", AVOID: "var(--warn)", INSUFFICIENT_DATA: "var(--muted)" };
 const IC_VIEWS = { dash: "위원회 현황", ports: "여섯 포트폴리오", compare: "투자자 비교", perf: "가상 성과" };
-const IC_COND = { buy: "매수", hold: "보유", add: "추가 매수", reduce: "축소", sell: "매도", invalidation: "생각이 틀렸다고 볼 때" };
+const IC_COND = { buy: "편입", hold: "보유", add: "추가 편입", reduce: "축소", sell: "매도", invalidation: "생각이 틀렸다고 볼 때" };
 const icState = { view: "dash", port: "COMMITTEE", ports: {}, market: null };
 
 const icNum = (v, d = 0) => (v === null || v === undefined ? DASH : Number(v).toLocaleString("ko-KR", { minimumFractionDigits: d, maximumFractionDigits: d }));
@@ -32,7 +32,7 @@ function icInvestorHtml(o) {
     <div class="meta mt-1"><b>할 일</b> ${esc(o.action)}</div>
     ${alt ? `<div class="meta mt-1"><b>${esc(alt.profile)} 기준이라면</b> ${icBadge(alt.recommendation, alt.recommendation_ko)}${alt.same ? " 같은 판정" : ""}</div>` : ""}
     <details><summary>자세히</summary>
-      ${alt ? `<div class="meta"><b>${esc(alt.profile)} 기준(비교용, 아무것도 바꾸지 않음)</b> ${esc(alt.opinion)} 매수 조건: ${esc(alt.buy)}</div>` : ""}
+      ${alt ? `<div class="meta"><b>${esc(alt.profile)} 기준(비교용, 아무것도 바꾸지 않음)</b> ${esc(alt.opinion)} 편입 조건: ${esc(alt.buy)}</div>` : ""}
       <div class="meta">묻는 것: ${esc(o.question)} · 보는 기간: ${esc(o.horizon)}</div>
       <div class="meta">가격 판단: ${esc(o.valuation)}</div>
       <div class="meta">근사 수익률(가정, 예측 아님): ${est(o.expected_return)} · 하방 위험: ${est(o.downside_risk, o.investor === "MUNGER" ? "점" : "")}</div>
@@ -74,7 +74,7 @@ function icCardHtml(v, ticker, market) {
   if (!v) return "";
   if (v.status !== "OK") return `<div class="panel"><h3>다섯 투자자와 투자위원회</h3><div class="meta">${esc(v.reason || "판단할 자료가 없습니다.")}</div></div>`;
   return `<div class="panel"><h3>다섯 투자자와 투자위원회 <span class="meta m0">실존 투자자의 의견이 아닙니다 · 알려진 원칙을 규칙으로 옮긴 참고 · 점수와 무관 · 주문 없음</span></h3>
-    <div class="meta">'매수 조건 충족' 같은 말은 그 관점의 규칙을 채웠다는 뜻입니다. 이 규칙들이 수익에 도움이 되는지는 아직 판정 전입니다(가상 성과 240일 기록 뒤 한 번 읽음).</div>
+    <div class="meta">'편입 조건 충족' 같은 말은 그 관점의 규칙을 채웠다는 뜻입니다. 이 규칙들이 수익에 도움이 되는지는 아직 판정 전입니다(가상 성과 240일 기록 뒤 한 번 읽음).</div>
     <div class="ic-grid">${v.investors.map(icInvestorHtml).join("")}</div>
     ${icCommitteeHtml(v.committee)}
     ${plainBlock(v.plain)}
@@ -149,19 +149,19 @@ async function icDash() {
   const chips = (o) => Object.entries(o || {}).map(([k, n]) => `<span class="badge">${esc(k)} ${n}</span>`).join(" ") || "없음";
   const top = d.top.map((r) => `<tr><td class="l">${icTicker(r.ticker, r.name)}</td><td class="l">${esc(r.sector || "")}</td><td class="l">${esc(r.decision_ko)}</td><td class="num">${icNum(r.attractiveness)}</td><td class="num">${icNum(r.confidence)}</td>
     <td class="l">${esc((r.supporters || []).join(", "))}</td><td class="l">${r.strongest_for ? esc(r.strongest_for.text) : ""}</td><td class="l">${r.strongest_against ? esc(r.strongest_against.investor + ": " + r.strongest_against.text) : ""}</td></tr>`).join("");
-  // 큰 숫자 넷 + 자세히 (6차 묶음 P2-20): 판정한 종목, 매수 조건 종목, 의견 일치, 시장 상태.  나머지 분포는 접어 둡니다.
+  // 큰 숫자 넷 + 자세히 (6차 묶음 P2-20): 판정한 종목, 편입 조건 종목, 의견 일치, 시장 상태.  나머지 분포는 접어 둡니다.
   const stat = (label, v, unit = "") => `<div class="ic-stat"><span>${label}</span><b class="num">${v}${unit ? `<small>${unit}</small>` : ""}</b></div>`;
-  // 오른쪽 칸(한 칸에서는 맨 앞): 큰 숫자 넷과 접힌 분포.  가운데 칸: 매수 조건으로 본 종목 표.
+  // 오른쪽 칸(한 칸에서는 맨 앞): 큰 숫자 넷과 접힌 분포.  가운데 칸: 편입 조건으로 본 종목 표.
   const stats = `<div class="panel ws-first"><h2>위원회 현황 <span class="meta m0">${esc(d.session)} 기록</span></h2>
-      <div class="ic-stats">${stat("판정한 종목", d.judged)}${stat("매수 조건으로 본 종목", d.buy_count)}${stat("의견 일치(평균)", icNum(d.average_agreement), "/100")}${stat("시장 상태", icNum(d.market_state), "/100")}</div>
+      <div class="ic-stats">${stat("판정한 종목", d.judged)}${stat("편입 조건으로 본 종목", d.buy_count)}${stat("의견 일치(평균)", icNum(d.average_agreement), "/100")}${stat("시장 상태", icNum(d.market_state), "/100")}</div>
       <details class="ic-more"><summary>분포와 국면 자세히</summary>
       <div class="meta"><b>시장 상태</b> ${icNum(d.market_state)}/100 · 국면: ${(d.regimes || []).map((r) => `${esc(r.label)}(확신 ${r.confidence})`).join(", ") || "뚜렷한 국면 없음"} · 읽지 못한 국면: ${esc((d.regimes_not_told || []).join(", "))}</div>
       <div class="meta"><b>위원회 판정의 분포</b> ${chips(d.decisions)}</div>
       <div class="meta"><b>의견 일치(평균)</b> ${icNum(d.average_agreement)}/100 · <b>의견이 갈린 종류</b> ${chips(d.disagreements)}</div>
       <div class="meta"><b>자주 나온 위험</b> ${chips(d.risks)}</div></details></div>`;
-  box.innerHTML = icWs(`<div class="panel"><h2>위원회가 매수 조건으로 본 종목 <span class="meta m0">${d.buy_count}종목 가운데 매력 순 ${d.top.length}종목 · 줄을 누르면 점수 카드</span></h2>
+  box.innerHTML = icWs(`<div class="panel"><h2>위원회가 편입 조건으로 본 종목 <span class="meta m0">${d.buy_count}종목 가운데 매력 순 ${d.top.length}종목 · 줄을 누르면 점수 카드</span></h2>
       ${top ? `<div class="tbl-wrap"><table class="ic-top"><thead><tr><th class="l">종목</th><th class="l">업종</th><th class="l">판정</th><th>매력</th><th title="자료 양 50%, 다섯 규칙의 자료 확인 30%, 의견 일치 20%를 섞은 값입니다. 맞을 확률이 아닙니다.">자료·일치</th><th class="l">찬성한 관점</th><th class="l">찬성 논거</th><th class="l">반대 논거</th></tr></thead><tbody>${top}</tbody></table></div>`
-        : `<div class="empty">위원회가 매수 조건으로 본 종목이 없습니다. 억지로 채우지 않습니다.</div>`}
+        : `<div class="empty">위원회가 편입 조건으로 본 종목이 없습니다. 억지로 채우지 않습니다.</div>`}
       <div class="meta">${esc(d.note)}</div></div>`, stats, "위원회 현황");
   icOpenRows(box, mk);
 }

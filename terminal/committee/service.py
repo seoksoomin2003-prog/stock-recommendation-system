@@ -196,7 +196,7 @@ def stock_in_portfolios(terminal: Any, ticker: str, market: str) -> Dict[str, An
             o = entry["opinions"][key]
             why = f"{o['name']} 판정 '{o['recommendation_ko']}'" + ("" if row else f": {o['opinion']}")
         if entry is not None and row is None and (entry["committee"]["decision"] if key == "COMMITTEE" else entry["opinions"][key]["recommendation"]) in iv.BUY_SIDE + (council.CONDITIONAL_BUY,):
-            why += " 매수 조건이지만 종목 수·업종·함께 움직이는 종목의 한도 때문에 들지 못했습니다."
+            why += " 편입 조건이지만 종목 수·업종·함께 움직이는 종목의 한도 때문에 들지 못했습니다."
         places.append({"key": key, "name": p["name"], "in": row is not None, "weight": row["weight"] if row else None, "why": why, "count": p["count"], "cash": p["cash"]})
     return {"status": "OK", "rules": iv.RULES, "ticker": ticker, "market": market, "name": (entry or {}).get("name") or ticker, "session": work["session"], "places": places,
             "portfolios": _ports_out(work), "note": iv.NOTE}

@@ -20,7 +20,7 @@ from terminal.committee.figures import band, pct
 from terminal.committee.investors import AVOID, BUY, BUY_SIDE, HOLD, NO_DATA, REDUCE, SELL, SELL_SIDE, STRONG_BUY, WAIT
 
 CONDITIONAL_BUY = "CONDITIONAL_BUY"
-DECISION_KO = {**iv.REC_KO, CONDITIONAL_BUY: "조건부 매수"}
+DECISION_KO = {**iv.REC_KO, CONDITIONAL_BUY: "조건부 편입"}
 CRITICAL, MAJOR = "CRITICAL", "MAJOR"
 MIN_VALID = 3                     # fewer engines with a view than this: the committee does not decide
 COMPELLING_SCORE, COMPELLING_CONFIDENCE, COMPELLING_DOWNSIDE = 75.0, 70, 55.0       # when one or two views are enough
@@ -131,7 +131,7 @@ def disagreements(opinions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         else:
             kind = "FUNDAMENTAL"
         why = o["negatives"][0] if o["negatives"] else o["thesis"]
-        out.append({"kind": kind, "kind_ko": KIND_KO[kind], "investor": o["name"], "text": f"{names}은 매수 조건으로 보지만 {o['name']}은 '{o['recommendation_ko']}'입니다({why})."})
+        out.append({"kind": kind, "kind_ko": KIND_KO[kind], "investor": o["name"], "text": f"{names}은 편입 조건으로 보지만 {o['name']}은 '{o['recommendation_ko']}'입니다({why})."})
     return out
 
 
@@ -160,10 +160,10 @@ def decide(f: Dict[str, Any], opinions: List[Dict[str, Any]], held: bool = False
         why.append(f"보유 중인데 세 관점 이상({names(against)})이 매도·축소·회피입니다.")
     elif len(buyers) >= 4:
         decision = CONDITIONAL_BUY if major else STRONG_BUY if len(strong) >= 2 else BUY
-        why.append(f"네 관점 이상({names(buyers)})이 매수 조건입니다." + (f" 다만 주요 위험({', '.join(r['name'] for r in major)})이 있어 조건을 붙였습니다." if major else ""))
+        why.append(f"네 관점 이상({names(buyers)})이 편입 조건입니다." + (f" 다만 주요 위험({', '.join(r['name'] for r in major)})이 있어 조건을 붙였습니다." if major else ""))
     elif len(buyers) == 3:
         decision = CONDITIONAL_BUY if major or (sc["downside"] or 0) > 60 else BUY
-        why.append(f"세 관점({names(buyers)})이 매수 조건입니다." + (" 주요 위험이나 큰 하방 위험이 있어 조건을 붙였습니다." if decision == CONDITIONAL_BUY else ""))
+        why.append(f"세 관점({names(buyers)})이 편입 조건입니다." + (" 주요 위험이나 큰 하방 위험이 있어 조건을 붙였습니다." if decision == CONDITIONAL_BUY else ""))
     elif buyers:
         leads = [o for o in buyers if o["recommendation"] == STRONG_BUY and o["score"] >= COMPELLING_SCORE and o["confidence"] >= COMPELLING_CONFIDENCE]
         # one or two views can carry the decision, but not against three or more that say avoid (user decision 2026-11-22, after
@@ -172,26 +172,26 @@ def decide(f: Dict[str, Any], opinions: List[Dict[str, Any]], held: bool = False
         lead = max(leads or buyers, key=lambda o: o["score"])
         if compelling:
             decision = CONDITIONAL_BUY
-            why.append(f"찬성은 {len(buyers)}개 관점({names(buyers)})뿐이지만 {lead['name']}의 근거가 강하고(점수 {lead['score']:.0f}, 자료 확인 {lead['confidence']}) 주요 위험이 없어 조건부 매수로 정했습니다. 다수결이 아닙니다.")
+            why.append(f"찬성은 {len(buyers)}개 관점({names(buyers)})뿐이지만 {lead['name']}의 근거가 강하고(점수 {lead['score']:.0f}, 자료 확인 {lead['confidence']}) 주요 위험이 없어 조건부 편입으로 정했습니다. 다수결이 아닙니다.")
         elif len(against) >= MANY_AGAINST:
             decision = REDUCE if held else AVOID
             why.append(f"찬성은 {names(buyers)}뿐이고 세 관점 이상({names(against)})이 회피입니다." + (f" {lead['name']}의 근거가 강해도(점수 {lead['score']:.0f}) 한두 관점이 세 관점 이상의 반대를 이기지는 못합니다." if leads else ""))
         else:
             decision = HOLD if held else WAIT
-            why.append(f"찬성은 {len(buyers)}개 관점({names(buyers)})뿐이고 근거가 위원회의 기준(적극 매수 조건, 점수 {COMPELLING_SCORE:.0f} 이상, 신뢰 {COMPELLING_CONFIDENCE} 이상, 주요 위험 없음)에 못 미칩니다.")
+            why.append(f"찬성은 {len(buyers)}개 관점({names(buyers)})뿐이고 근거가 위원회의 기준(강한 편입 조건, 점수 {COMPELLING_SCORE:.0f} 이상, 신뢰 {COMPELLING_CONFIDENCE} 이상, 주요 위험 없음)에 못 미칩니다.")
     elif len(against) >= 3:
         decision = (SELL if sum(1 for o in against if o["recommendation"] in (SELL, AVOID)) >= 3 else REDUCE) if held else AVOID
-        why.append(f"매수 조건으로 본 관점이 없고 세 관점 이상({names(against)})이 회피입니다.")
+        why.append(f"편입 조건으로 본 관점이 없고 세 관점 이상({names(against)})이 회피입니다.")
     elif waiting:
         decision = HOLD if held else WAIT
-        why.append(f"매수 조건으로 본 관점은 없지만 {names(waiting)}은 조건이 되면 사겠다고 봅니다. 그 조건을 기다립니다.")
+        why.append(f"편입 조건으로 본 관점은 없지만 {names(waiting)}은 조건이 되면 사겠다고 봅니다. 그 조건을 기다립니다.")
     else:
         decision = HOLD
-        why.append("매수 조건으로 본 관점도, 뚜렷이 반대하는 다수도 없습니다.")
+        why.append("편입 조건으로 본 관점도, 뚜렷이 반대하는 다수도 없습니다.")
     if decision in BUY_SIDE + (CONDITIONAL_BUY,) and sc["data"] is not None and sc["data"] < DATA_FLOOR:
         # thin data lowers the decision, not only the confidence number (audit 2026-11-22, RED-07)
         decision = HOLD if held else WAIT
-        why.append(f"자료 신뢰도가 {sc['data']:.0f}으로 기준 {DATA_FLOOR:.0f}에 못 미쳐 매수 쪽 판정을 내리지 않고 {'보유로' if held else '기다립니다'}. 자료가 적은 높은 점수는 근거로 삼지 않습니다.")
+        why.append(f"자료 신뢰도가 {sc['data']:.0f}으로 기준 {DATA_FLOOR:.0f}에 못 미쳐 편입 쪽 판정을 내리지 않고 {'보유로' if held else '기다립니다'}. 자료가 적은 높은 점수는 근거로 삼지 않습니다.")
     unseen = unchecked_risks(f)
     if unseen:
         why.append(f"자료가 없어 확인하지 못한 위험 검사: {', '.join(unseen)}. 확인하지 못한 것이지 위험이 없다는 뜻이 아닙니다.")
@@ -212,7 +212,7 @@ def decide(f: Dict[str, Any], opinions: List[Dict[str, Any]], held: bool = False
     exit_ = [f"{o['name']}: {o['conditions']['sell']}" for o in (buyers or valid)][:3] + [f"위험: {r['name']}이 나타나거나 커질 때" for r in major[:2]]
     long_buyers = [o for o in buyers if o["investor"] in LONG_TERM]
     horizon = "판단하지 않음" if decision == NO_DATA else "장기(5년 이상)" if long_buyers and len(long_buyers) == len(buyers) else "전술적(몇 주~몇 달)" if buyers and not long_buyers else \
-        "장기 관점과 추세 관점이 함께 봄" if buyers else "정해지지 않음(매수 조건인 관점 없음)"
+        "장기 관점과 추세 관점이 함께 봄" if buyers else "정해지지 않음(편입 조건인 관점 없음)"
     # what they share: a figure two or more views list on the same side
     def shared(key: str) -> List[str]:
         seen: Dict[str, int] = {}
@@ -241,7 +241,7 @@ def _thesis(name: str, sc: Dict[str, Any], decision: str, buyers: List[Dict[str,
             + ("(아래 치명 위험은 이 수치와 따로 읽습니다)." if any(r.get('level') == CRITICAL for r in risks) else "."))
     risk = f" 위험: {', '.join(r['name'] for r in risks[:3])}." if risks else ""
     other = f" {minority[0]['name']}은 '{minority[0]['recommendation_ko']}'로 달리 봅니다." if minority else ""
-    end = {STRONG_BUY: "위원회는 적극 매수 조건으로 봅니다.", BUY: "위원회는 매수 조건으로 봅니다.", CONDITIONAL_BUY: "위원회는 조건 없는 매수가 아니라 조건부 매수로 봅니다.",
+    end = {STRONG_BUY: "위원회는 강한 편입 조건으로 봅니다.", BUY: "위원회는 편입 조건으로 봅니다.", CONDITIONAL_BUY: "위원회는 조건 없는 편입이 아니라 조건부 편입으로 봅니다.",
            HOLD: "위원회는 새로 살 근거가 부족하다고 봅니다.", WAIT: "위원회는 조건이 될 때까지 기다립니다.", REDUCE: "위원회는 비중을 줄일 조건으로 봅니다.", SELL: "위원회는 매도 조건으로 봅니다.",
            AVOID: "위원회는 피합니다."}[decision]
     cond = f" 들어갈 조건: {entry[0]}." if entry and decision in (CONDITIONAL_BUY, WAIT) else ""

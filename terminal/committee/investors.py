@@ -24,7 +24,7 @@ from terminal.committee.figures import CONFIRMED, MISSING, NOT_APPLICABLE, band,
 
 RULES = "IC-1"
 STRONG_BUY, BUY, HOLD, WAIT, REDUCE, SELL, AVOID, NO_DATA = "STRONG_BUY", "BUY", "HOLD", "WAIT", "REDUCE", "SELL", "AVOID", "INSUFFICIENT_DATA"
-REC_KO = {STRONG_BUY: "적극 매수 조건 충족", BUY: "매수 조건 충족", HOLD: "보유(새로 사지 않음)", WAIT: "대기", REDUCE: "축소 조건", SELL: "매도 조건", AVOID: "회피", NO_DATA: "자료 부족"}
+REC_KO = {STRONG_BUY: "편입 조건 강하게 충족", BUY: "편입 조건 충족", HOLD: "보유(새로 사지 않음)", WAIT: "대기", REDUCE: "축소 조건", SELL: "매도 조건", AVOID: "회피", NO_DATA: "자료 부족"}
 BUY_SIDE, SELL_SIDE = (STRONG_BUY, BUY), (REDUCE, SELL, AVOID)
 MIN_COVERAGE = 0.5
 STRONG_MIN_CONFIDENCE = 60          # under it "적극 매수" is said one step lower: thin data lowers the verdict too, not only the number
@@ -87,14 +87,14 @@ def finish(key: str, f: Dict[str, Any], g: Dict[str, Any], rec: str, held: bool,
                    f"{'새로 사지 않습니다' if held else '기다립니다'}. 그 수치가 채워지면 다시 판단합니다.")
     elif rec == STRONG_BUY and sure_now < STRONG_MIN_CONFIDENCE:
         capped, rec = rec, BUY
-        opinion += f" 다만 판단에 쓴 수치가 적어(자료 확인 {sure_now}, 기준 {STRONG_MIN_CONFIDENCE}) '적극 매수'가 아니라 '매수 조건'으로 한 단계 낮췄습니다."
+        opinion += f" 다만 판단에 쓴 수치가 적어(자료 확인 {sure_now}, 기준 {STRONG_MIN_CONFIDENCE}) '강한 편입'가 아니라 '편입 조건'으로 한 단계 낮췄습니다."
     extra = {**(extra or {}), "unchecked": [fg.label(n) for n in unchecked], "capped_from": capped}
     # what moved the score most, for and against: how far a figure is from the middle, times its weight in the score
     positives = [e["text"] for e in sorted(g["evidence"], key=lambda e: -e["value"] * e["weight"]) if e["value"] >= 0.7][:3]
     negatives = list(flags) + [e["text"] for e in sorted(g["evidence"], key=lambda e: -(1.0 - e["value"]) * e["weight"]) if e["value"] <= 0.3][:3]
     confidence = sure_now
-    action = {STRONG_BUY: "추가 매수 조건" if held else "매수 조건 충족(비중 크게)", BUY: "보유 유지(추가 매수 가능)" if held else "매수 조건 충족", HOLD: "보유 유지" if held else "새로 사지 않음",
-              WAIT: "보유 유지, 추가 매수 보류" if held else "조건이 될 때까지 기다림", REDUCE: "비중 축소", SELL: "전량 매도 조건", AVOID: "매도 조건" if held else "사지 않음", NO_DATA: "판단 보류"}[rec]
+    action = {STRONG_BUY: "추가 편입 조건" if held else "편입 조건 충족(비중 크게)", BUY: "보유 유지(추가 편입 가능)" if held else "편입 조건 충족", HOLD: "보유 유지" if held else "새로 사지 않음",
+              WAIT: "보유 유지, 추가 편입 보류" if held else "조건이 될 때까지 기다림", REDUCE: "비중 축소", SELL: "전량 매도 조건", AVOID: "매도 조건" if held else "사지 않음", NO_DATA: "판단 보류"}[rec]
     return {"investor": key, "name": name, "philosophy": philosophy, "question": question, "ticker": f.get("ticker"), "as_of": f.get("as_of"), "rules": RULES,
             "score": None if g["score"] is None or rec == NO_DATA else round(g["score"], 1), "confidence": confidence, "coverage": round(g["coverage"], 3), "recommendation": rec,
             "recommendation_ko": REC_KO[rec], "held": held, "horizon": horizon, "valuation": valuation, "expected_return": expected, "downside_risk": downside,
@@ -179,7 +179,7 @@ def buffett(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]]
     if rec in BUY_SIDE:
         opinion = f"{business}로 오래 보유할 만한 사업이고, PER {pe:.1f}배가 보수적 적정 PER {fair:.1f}배 이하입니다. 사업의 질 점수가 {B_SELL_QUALITY:.0f} 아래로 떨어지면 생각을 바꿉니다."
     elif rec == WAIT:
-        opinion = f"사업은 좋습니다({business}). 다만 " + (f"PER {pe:.1f}배가 보수적 적정 PER {fair:.1f}배보다 높아" if pe > 0 else "지금 적자라 값을 매길 수 없어") + f" 기다립니다. PER이 {fair:.1f}배 이하가 되면 매수 조건이 됩니다."
+        opinion = f"사업은 좋습니다({business}). 다만 " + (f"PER {pe:.1f}배가 보수적 적정 PER {fair:.1f}배보다 높아" if pe > 0 else "지금 적자라 값을 매길 수 없어") + f" 기다립니다. PER이 {fair:.1f}배 이하가 되면 편입 조건이 됩니다."
     elif rec in (SELL, REDUCE):
         opinion = (f"보유 근거가 약해졌습니다(사업의 질 {q:.0f}, 예측 가능성 {p:.0f}). 가격이 아니라 사업이 나빠진 것이 이유입니다." if rec == SELL
                    else f"사업은 여전히 좋지만 PER {pe:.1f}배가 적정 {fair:.1f}배의 1.6배를 넘어 일부를 줄일 조건입니다.")
@@ -350,7 +350,7 @@ def _graham(f: Dict[str, Any], held: bool, p: Dict[str, Any]) -> Dict[str, Any]:
         opinion = f"보수적 가치보다 {mos * 100:.0f}% 싸게 거래됩니다({price}). {'이익의 안정(' + f'{sb:.0f}' + ')이 기준을 넘습니다(재무 항목은 금융업이라 따지지 않았습니다).' if st is None else f'재무({st:.0f})와 이익의 안정({sb:.0f})도 기준을 넘어 분석이 틀려도 버틸 여유가 있습니다.'} 값이 보수적 가치에 닿으면 줄입니다."
     elif rec in (WAIT, HOLD) and not held:
         opinion = (f"{'이익은 안정적입니다(이익의 안정 ' + f'{sb:.0f}' + ', 재무 항목은 금융업이라 따지지 않음).' if st is None else f'회사는 튼튼합니다(재무 {st:.0f}, 이익의 안정 {sb:.0f}).'} 그러나 {price}는 보수적 가치 대비 안전마진이 {mos * 100:+.0f}%뿐이라 "
-                   f"{'새로 사지는 않습니다' if rec == HOLD else '기다립니다'}. 안전마진이 {p['mos_buy'] * 100:.0f}% 이상이 되면 매수 조건입니다.")
+                   f"{'새로 사지는 않습니다' if rec == HOLD else '기다립니다'}. 안전마진이 {p['mos_buy'] * 100:.0f}% 이상이 되면 편입 조건입니다.")
     elif rec in (SELL, REDUCE, HOLD):
         opinion = (f"값이 보수적 가치에 닿았습니다(안전마진 {mos * 100:+.0f}%). 싸서 산 것이므로 {'일부를 줄일' if rec == REDUCE else '팔'} 조건입니다." if mos <= G_REDUCE_MOS and sound
                    else f"안전마진 {mos * 100:+.0f}%가 남아 있어 보유합니다." if rec == HOLD else "재무나 이익의 안정이 기준 아래로 내려가 싸다는 근거가 무너졌습니다.")
@@ -457,7 +457,7 @@ def lynch(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] =
         opinion = f"{KIND_KO[kind]}로 봅니다({basis}). {why}. 이야기가 꺾이면(이익과 매출이 함께 줄면) 팝니다."
     elif s >= L_BUY and not quality_ok and not story_broken and not dear:
         bad = "부채가 과합니다" if leveraged else f"이익이 현금으로 들어오지 않습니다({shown(f, 'ocf_to_ni')})"
-        opinion = f"{KIND_KO[kind]}로 점수({s:.0f})는 매수 기준 {L_BUY:.0f}을 넘지만 {bad}({_de_text(f)}). 숫자가 좋아 보여도 이 조건 없이는 사지 않습니다. 부채/자본 2배 이하, 영업현금흐름이 순이익의 60% 이상이 되면 매수 조건입니다."
+        opinion = f"{KIND_KO[kind]}로 점수({s:.0f})는 편입 기준 {L_BUY:.0f}을 넘지만 {bad}({_de_text(f)}). 숫자가 좋아 보여도 이 조건 없이는 사지 않습니다. 부채/자본 2배 이하, 영업현금흐름이 순이익의 60% 이상이 되면 편입 조건입니다."
     elif s >= L_BUY and not priced and not story_broken and not dear:
         need = f"PER {L_SLOW_PE:.0f}배 이하와 확인되는 배당이 있어야" if kind == SLOW else "PEG를 계산할 수 있어야(흑자이고 3년 이익이 늘었어야)"
         opinion = f"{KIND_KO[kind]}로 점수({s:.0f})는 기준을 넘지만 값을 따질 근거가 없습니다({basis}). 이 종류의 회사는 {need} 삽니다."
@@ -468,7 +468,7 @@ def lynch(f: Dict[str, Any], held: bool = False, ctx: Optional[Dict[str, Any]] =
     elif kind == CYCLICAL:
         opinion = f"경기순환주입니다. 이런 회사는 PER이 낮을 때가 정점일 수 있어 낮은 PER을 싸다고 읽지 않습니다. 회복 방향과 버틸 재무({turn})로 보면 점수 {s:.0f}으로 기준 {L_BUY:.0f}에 못 미칩니다."
     else:
-        opinion = f"{KIND_KO[kind]}로 봅니다. 점수 {s:.0f}으로 매수 기준 {L_BUY:.0f}에 못 미칩니다({basis}). 이 종류의 회사에서 보는 숫자가 좋아지면 다시 봅니다."
+        opinion = f"{KIND_KO[kind]}로 봅니다. 점수 {s:.0f}으로 편입 기준 {L_BUY:.0f}에 못 미칩니다({basis}). 이 종류의 회사에서 보는 숫자가 좋아지면 다시 봅니다."
     cond = {"buy": f"{KIND_KO[kind]} 기준 점수 {L_BUY:.0f} 이상(지금 {s:.0f}), PEG 2.5 이하, 부채/자본 2배 이하, 이익이 현금으로 들어올 것. PEG가 1 아래여도 이 조건 없이는 사지 않습니다",
             "hold": "처음의 성장 이야기가 숫자로 이어지는 동안. 주가가 많이 올랐다는 이유만으로는 팔지 않습니다", "add": f"점수 {L_STRONG:.0f} 이상이고 이야기가 더 좋아질 때",
             "reduce": "PEG가 2.5를 넘을 때(값이 성장을 앞질렀을 때)", "sell": "성장 이야기가 꺾일 때: 이익과 매출이 함께 줄거나, 회생의 증거가 사라질 때",

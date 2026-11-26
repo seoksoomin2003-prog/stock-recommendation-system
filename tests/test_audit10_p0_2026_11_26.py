@@ -85,3 +85,90 @@ def test_a_second_backup_folder_is_off_until_set_and_its_absence_is_said(tmp_pat
     second_file = second / "2026-11-25"
     assert second_file.is_dir() and automation.set_second_backup(base, False, second)["on"] is False and automation.Daily(base)._second_backup("2026-11-26") == ""
     assert ".env" not in " ".join(automation.BACKUP_GLOBS)                                   # keys go to neither backup
+
+
+# ---------------------------------------------------------------------- P1 (2026-11-26)
+def _ledger(base, session="2026-11-25"):
+    """A real ledger with one small shard (the least a snapshot needs)."""
+    from terminal.qsf import config
+    from terminal.qsf.ledger import Ledger
+    led = Ledger(base)
+    led.append(session, "US", [{"market": "US", "ticker": f"S{j:02d}", "strategy": "SWING", "score": 50.0 + j, "data_date": session, "model_version": config.MODEL_VERSION,
+                                "actionability": "ACTIONABLE", "domains": {}, "factors": [], "levels": {}} for j in range(5)])
+    return led
+
+
+def test_a_sample_of_two_formulas_or_two_statement_bases_is_named_before_any_return_is_read():
+    from terminal.qsf import live_forward as lf
+    row = lambda v, b: {"model_version": v, **({"fund_period": {"live": b}} if b else {})}      # noqa: E731
+    one = {"d1": [row("QSF-1.6.0", "ANNUAL")], "d2": [row("QSF-1.6.0", None)]}                    # no basis written = annual (before 2026-11-23)
+    assert lf.formula_mix(one, ["d1", "d2"]) is None
+    two = lf.formula_mix({"d1": [row("QSF-1.6.0", "ANNUAL")], "d2": [row("QSF-1.6.0", "TRAILING")]}, ["d1", "d2"])
+    assert two["fund_bases"] == ["ANNUAL", "TRAILING"] and "재무 기준이 둘 이상" in two["reasons"][0] and "수익도 읽지 않았습니다" in two["reasons"][0]
+    ver = lf.formula_mix({"d1": [row("QSF-1.6.0", "ANNUAL")], "d2": [row("QSF-1.7.0", "ANNUAL")]}, ["d1", "d2"])
+    assert ver["versions"] == ["QSF-1.6.0", "QSF-1.7.0"] and "점수 공식이 둘 이상" in ver["reasons"][0]
+    code = (ROOT / "terminal" / "qsf" / "live_forward.py").read_text(encoding="utf-8")
+    assert code.count("mixed = formula_mix(rows, used)") == 2 and code.index("mixed = formula_mix(rows, used)") < code.index("days = [d for d in (day_stats(s, rows[s], px, h, cost, variant)")
+    doc = (ROOT / "reports" / "QSF_LIVE_FORWARD_PROTOCOL.md").read_text(encoding="utf-8")
+    assert "MIXED_FORMULA" in doc and "2026-11-26" in doc
+
+
+def test_late_days_are_counted_from_the_entry_session_and_change_no_condition():
+    from terminal.qsf import live_forward as lf
+    cal = ["2026-11-02", "2026-11-03", "2026-11-04", "2026-11-05"]
+    rows = {"2026-11-02": [{"entry_session": "2026-11-03"}], "2026-11-03": [{"entry_session": "2026-11-05"}], "2026-11-04": [{"entry_session": None}]}
+    got = lf.late_days(rows, list(rows), cal)
+    assert got["late"] == 1 and got["sessions"] == ["2026-11-03"] and got["of"] == 3 and "판정 조건에는 쓰지 않는" in got["note"]
+
+
+def test_a_us_store_is_timed_by_the_new_york_open():
+    from datetime import datetime, timezone
+    from terminal.qsf import kr_forward as kf
+    at = datetime(2026, 11, 25, 22, 30, tzinfo=timezone.utc)                      # 07:30 KST on the 26th: before both next opens of the 25th
+    assert at < kf.open_after("fund_period_us", "2026-11-25") and at < kf.open_after("krx_forward", "2026-11-25")
+    noon = datetime(2026, 11, 26, 3, 0, tzinfo=timezone.utc)                      # 12:00 KST: Korea has opened, New York has not
+    assert noon < kf.open_after("paper_book_us", "2026-11-25") and not noon < kf.open_after("paper_book_kr", "2026-11-25")
+
+
+def test_the_committee_names_carry_no_buy_word_and_its_codes_are_the_same():
+    from terminal.committee import council, investors as iv
+    assert iv.REC_KO[iv.STRONG_BUY] == "편입 조건 강하게 충족" and iv.REC_KO[iv.BUY] == "편입 조건 충족" and council.DECISION_KO[council.CONDITIONAL_BUY] == "조건부 편입"
+    assert (iv.STRONG_BUY, iv.BUY, council.CONDITIONAL_BUY) == ("STRONG_BUY", "BUY", "CONDITIONAL_BUY")
+    for name in ("investors.py", "council.py", "portfolios.py", "service.py"):
+        text = (ROOT / "terminal" / "committee" / name).read_text(encoding="utf-8")
+        said = [ln for ln in text.splitlines() if "매수" in ln and "#" not in ln.split("매수")[0] and '"""' not in ln and "순매수" not in ln and "RED-07" not in ln]
+        assert said == [], (name, said[:2])
+
+
+def test_a_damaged_shard_comes_back_from_a_backup_whose_copy_matches_and_nothing_is_deleted(tmp_path, monkeypatch):
+    from terminal import restore
+    from terminal.qsf.ledger import Ledger
+    monkeypatch.delenv("QPP_BACKUP_DIR_2", raising=False)
+    base, first = tmp_path / "base", tmp_path / "first"
+    monkeypatch.setenv("QPP_BACKUP_DIR", str(first))
+    led = _ledger(base)
+    assert restore.repair_ledger(base)["status"] == "NOTHING_TO_DO"
+    automation.backup(base, "2026-11-25", first)
+    shard = next(led.dir.glob("*.jsonl.gz"))
+    good = shard.read_bytes()
+    shard.write_bytes(good[: len(good) // 2])                                   # a file cut short
+    assert Ledger(base).verify()["status"] == "BROKEN"
+    res = restore.repair_ledger(base)
+    assert res["status"] == "REPAIRED" and res["integrity"] == "OK" and shard.read_bytes() == good and len(list((led.dir / "damaged").iterdir())) == 1
+    shard.write_bytes(b"x")
+    (first / "qsf_ledger" / shard.name).write_bytes(b"y")                       # the backup's copy does not match either: left alone and named
+    res = restore.repair_ledger(base)
+    assert res["status"] == "NO_GOOD_COPY" and res["left"] == [shard.name] and shard.read_bytes() == b"x"
+    import terminal.server as server
+    src = (ROOT / "terminal" / "server.py").read_text(encoding="utf-8")
+    assert '("POST", "/api/backup/repair-ledger")' in src and '("GET", "/api/backup/check")' in src and server._restore().check
+
+
+def test_what_stayed_silent_is_now_said_in_the_days_message():
+    from terminal.qsf import readings
+    quiet = next(e for e in readings.REGISTRY if not e.get("notify"))
+    st = {"readings": {quiet["key"]: {"failed": readings.GIVE_UP}}, "sector_archive": {"US": "WRITTEN", "KR": "TOO_FEW", "error": "KR TOO_FEW"}}
+    said = " ".join(automation.Daily._notes(st))
+    assert "보관으로 돌린 읽기 가운데 막힌 것" in said and quiet["label"] in said and "업종 분류 보관(KR TOO_FEW)" in said
+    assert automation.Daily._notes({"readings": {quiet["key"]: {"failed": 1}}, "sector_archive": {"US": "KEPT", "KR": "KEPT"}}) == []
+    assert '"IC1_*.json"' in (ROOT / "terminal" / "automation.py").read_text(encoding="utf-8")
