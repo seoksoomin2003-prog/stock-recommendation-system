@@ -95,7 +95,8 @@ class TestMissingVersusZero(unittest.TestCase):
         loader = DataLoader(use_cache=False)
         info = {"trailingPE": 20.0, "priceToBook": 3.0, "returnOnEquity": 0.9, "profitMargins": 0.9}
         with patch.object(DataLoader, "_fetch_yf_info", lambda self, t: info), \
-             patch.object(DataLoader, "_fetch_sec_facts", lambda self, cik: facts_fixture()):
+             patch.object(DataLoader, "_fetch_sec_facts", lambda self, cik: facts_fixture()), \
+             patch("utils.runtime_config.sec_configured", lambda: True):      # a computer without .env has no SEC contact: the test is about preference, not configuration
             frame = loader.get_financial_data(["AAA"], ciks={"AAA": "1"})
         self.assertAlmostEqual(frame.loc["AAA", "roe"], 0.2)
         self.assertEqual(frame.attrs["field_provenance"]["AAA"]["roe"]["source"], "sec_edgar")

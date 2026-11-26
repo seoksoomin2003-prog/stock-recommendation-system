@@ -37,7 +37,7 @@ def test_the_button_runs_the_documented_command_detached_and_nothing_from_the_re
     cmd, kw = calls[0]
     tail = cmd[-5:] if Path(ms.CAFFEINATE).exists() else cmd
     assert got == {"status": "STARTED", "started_at": AT.isoformat()} and tail == [sys.executable, str(tmp_path / "app.py"), "--market", "KR", "scan"]
-    assert kw["cwd"] == tmp_path and kw["start_new_session"] is True and (tmp_path / ms.LOG).exists()
+    assert kw["cwd"] == tmp_path and (kw.get("start_new_session") is True or kw.get("creationflags")) and (tmp_path / ms.LOG).exists()
     assert json.loads((tmp_path / ms.MARKER).read_text()) == {"pid": os.getpid(), "started_at": AT.isoformat()}
     assert ms.status(tmp_path) == {"status": "RUNNING", "started_at": AT.isoformat()}
     again = ms.start(tmp_path, popen=starter(calls, 1), now=lambda: AT)                 # the first one is alive (this test's own pid)

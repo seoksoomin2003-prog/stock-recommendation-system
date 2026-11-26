@@ -56,7 +56,7 @@ def _protected_files():
 def _stat_map():
     out = {}
     for p in _protected_files():
-        rel = str(p.relative_to(ROOT))
+        rel = p.relative_to(ROOT).as_posix()
         if rel in ALLOWED_WRITES:
             continue
         try:
@@ -154,10 +154,10 @@ def _protected_rel(path, root=None):
     if not isinstance(path, (str, os.PathLike)):
         return None                                   # a file descriptor: its path was noted when it was opened
     try:
-        rel = os.path.relpath(os.path.realpath(os.fspath(path)), os.path.realpath(root or ROOT))
+        rel = os.path.relpath(os.path.realpath(os.fspath(path)), os.path.realpath(root or ROOT)).replace(os.sep, "/")      # one spelling on every system
     except (OSError, ValueError):
         return None
-    return rel if rel.split(os.sep, 1)[0] in PROTECTED_DIRS + WATCHED_DIRS else None
+    return rel if rel.split("/", 1)[0] in PROTECTED_DIRS + WATCHED_DIRS else None
 
 
 def _note(path):
@@ -168,7 +168,7 @@ def _note(path):
 
 def _watched(touched):
     """This process's own writes under a watched folder."""
-    return sorted(t for t in touched if t.split(os.sep, 1)[0] in WATCHED_DIRS)
+    return sorted(t for t in touched if t.split("/", 1)[0] in WATCHED_DIRS)
 
 
 def _beside_open_folder(event, args):
@@ -195,7 +195,7 @@ def _audit(event, args):
         elif event in _ONE_PATH:
             if _beside_open_folder(event, args):
                 pass
-            elif not (event == "os.mkdir" and (_protected_rel(args[0]) or "").split(os.sep, 1)[0] in WATCHED_DIRS):
+            elif not (event == "os.mkdir" and (_protected_rel(args[0]) or "").split("/", 1)[0] in WATCHED_DIRS):
                 _note(args[0])                        # an empty folder made in a watched place harms no record
         elif event in _TWO_PATHS:
             _note(args[0])
@@ -210,7 +210,7 @@ sys.addaudithook(_audit)
 
 
 def _is_own(rel, touched):
-    return any(rel == t or rel.startswith(t + os.sep) or rel in (t + "-journal", t + "-wal", t + "-shm") for t in touched)
+    return any(rel == t or rel.startswith(t + "/") or rel in (t + "-journal", t + "-wal", t + "-shm") for t in touched)
 
 
 def _settle(root, snap, changed, created, deleted, touched, children):

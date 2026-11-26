@@ -462,7 +462,7 @@ def test_start_now_spawns_the_same_job_detached_and_never_twice(tmp_path, monkey
     res = automation.start_now(tmp_path, popen=popen, now=lambda: TUE_NIGHT)
     cmd, kw = spawned[0]
     assert res == {"status": "STARTED", "at": TUE_NIGHT.isoformat()} and cmd[1:] == [str(tmp_path / "app.py"), "automation", "run"]
-    assert kw["start_new_session"] is True and kw["cwd"] == tmp_path and (tmp_path / "data" / "automation" / "manual_run.log").exists()
+    assert (kw.get("start_new_session") is True or kw.get("creationflags")) and kw["cwd"] == tmp_path and (tmp_path / "data" / "automation" / "manual_run.log").exists()
     tool = tmp_path / "caffeinate"
     tool.write_text("")
     monkeypatch.setattr(automation, "CAFFEINATE", str(tool))

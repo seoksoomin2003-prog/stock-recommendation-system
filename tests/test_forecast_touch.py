@@ -154,7 +154,7 @@ def test_the_status_carries_the_rule_the_stored_check_and_the_running_figures(tm
 def test_the_fixed_numbers_are_the_protocol_s():
     text = open(ft.PROTOCOL, encoding="utf-8").read()
     assert ft.GRID == (0.25, 0.5, 0.75, 1.0, 1.5, 2.0) and ft.TOLERANCE == {0.25: 0.05, 0.5: 0.05, 0.75: 0.05, 1.0: 0.05, 1.5: 0.03, 2.0: 0.02}
-    assert ft.FIRST == "2026-11-16" and ft.CROWDED == 2.0 and str(ft.REPORT) == "reports/qsf/QSF_FORECAST_TOUCH_TEST.json"
+    assert ft.FIRST == "2026-11-16" and ft.CROWDED == 2.0 and ft.REPORT.as_posix() == "reports/qsf/QSF_FORECAST_TOUCH_TEST.json"
     for words in ("0.25, 0.5, 0.75, 1.0, 1.5, 2.0", "| ±5 | ±5 | ±5 | ±5 | ±3 | ±2 |", "2026-11-16", "20,000개 미만", "종가 기준", "240개", "QSF_FORECAST_TOUCH_TEST.json", "예측의 2배"):
         assert words in text, words
 

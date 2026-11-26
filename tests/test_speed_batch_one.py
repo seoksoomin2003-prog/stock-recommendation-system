@@ -269,7 +269,7 @@ def test_the_us_score_step_has_the_long_limit_and_a_silent_launchctl_is_given_up
     assert automation._launchctl("print", "gui/1/x").returncode == 124 and automation._launchctl("bootout", "gui/1", "p").returncode == 0
     assert seen == [("print", automation.LAUNCHCTL_PRINT_TIMEOUT_S), ("bootout", None)]
     monkeypatch.setattr(automation, "plist_path", lambda: Path(__file__))
-    assert automation.is_installed() is False
+    assert os.name == "nt" or automation.is_installed() is False      # Windows asks Task Scheduler instead (tests/test_windows_port.py)
 
 
 # ---------------------------------------------------------------------- D4 / D5: one computation, one fetch

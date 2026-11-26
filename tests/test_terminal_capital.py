@@ -1,4 +1,5 @@
 """Capital entered on screen is saved in .env without touching any other line, and one market never fills the other."""
+import os
 import pytest
 
 from terminal.services import Terminal
@@ -18,7 +19,7 @@ def test_capital_is_saved_without_touching_other_env_lines(tmp_path):
     assert t.capital("US")["amount"] is None
     assert t.capital_set({"market": "US", "amount": "50,000"})["amount"] == 50000
     assert env.read_text(encoding="utf-8") == "# note\nSEC_USER_AGENT=keep me\n# QPP_CAPITAL=1\nQPP_CAPITAL=50000\n"
-    assert env.stat().st_mode & 0o777 == 0o600
+    assert os.name == "nt" or env.stat().st_mode & 0o777 == 0o600      # Windows has no owner-only mode bits; the user folder's own rule applies
     assert t.capital("US")["amount"] == 50000
     assert t.capital("KR")["amount"] is None
 

@@ -75,13 +75,13 @@ def test_a_write_to_the_forward_record_folder_is_noticed_and_an_empty_folder_the
     (root / "research_data" / "krx_live").mkdir(parents=True)
     monkeypatch.setattr(guard, "ROOT", root)
     monkeypatch.setitem(guard._OWN, "touched", set())
-    assert guard._protected_rel(root / "research_data" / "krx_live" / "index.jsonl", root) == os.path.join("research_data", "krx_live", "index.jsonl")
+    assert guard._protected_rel(root / "research_data" / "krx_live" / "index.jsonl", root) == "research_data/krx_live/index.jsonl"
     with open(root / "research_data" / "krx_live" / "index.jsonl", "a") as fh:          # the audit hook sees the real open
         fh.write("{}")
     os.mkdir(root / "research_data" / "new_store")
-    assert guard._watched(guard._OWN["touched"]) == [os.path.join("research_data", "krx_live", "index.jsonl")]
+    assert guard._watched(guard._OWN["touched"]) == ["research_data/krx_live/index.jsonl"]
     guard._OWN["touched"].clear()                      # this test's own write is to a temporary folder: it must not fail itself
-    assert guard._watched({os.path.join("data", "x.json")}) == []
+    assert guard._watched({"data/x.json"}) == []
 
 
 def test_only_protected_folders_are_noted_and_links_are_followed(tmp_path):
@@ -91,9 +91,9 @@ def test_only_protected_folders_are_noted_and_links_are_followed(tmp_path):
     sandbox = tmp_path / "sandbox"
     sandbox.mkdir()
     (sandbox / "tests").symlink_to(root / "tests")              # as the suite's sandbox links the source folders
-    assert guard._protected_rel(root / "data" / "a.json", root) == os.path.join("data", "a.json")
-    assert guard._protected_rel(str(sandbox / "tests" / ".." / "data" / "a.json"), root) == os.path.join("data", "a.json")
-    assert guard._protected_rel(os.fsencode(root / "data" / "a.json"), root) == os.path.join("data", "a.json")
+    assert guard._protected_rel(root / "data" / "a.json", root) == "data/a.json"
+    assert guard._protected_rel(str(sandbox / "tests" / ".." / "data" / "a.json"), root) == "data/a.json"
+    assert guard._protected_rel(os.fsencode(root / "data" / "a.json"), root) == "data/a.json"
     assert guard._protected_rel(root / "terminal" / "x.py", root) is None and guard._protected_rel(tmp_path / "elsewhere", root) is None
     assert guard._protected_rel(7, root) is None                 # a file descriptor
 

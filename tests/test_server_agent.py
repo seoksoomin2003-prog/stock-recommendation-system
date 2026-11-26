@@ -3,7 +3,13 @@ import plistlib
 import subprocess
 from types import SimpleNamespace
 
+import os
+
+import pytest
+
 from terminal import server_agent
+
+pytestmark = pytest.mark.skipif(os.name == "nt", reason="launchd is the Mac's; Windows uses Task Scheduler (tests/test_windows_port.py)")
 
 TOKEN = "123456:ABCdefGHIjklMNOpqrSTUvwxYZ_secret"
 

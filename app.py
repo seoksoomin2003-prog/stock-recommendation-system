@@ -1222,7 +1222,7 @@ def cmd_terminal(args) -> int:
     url = f"http://{HOST}:{args.port}/"
     from terminal.server_agent import LABEL
     how = "자동 재시작으로 실행 중 · 끄기: python app.py terminal-agent uninstall" if os.environ.get("XPC_SERVICE_NAME") == LABEL else "종료: Ctrl+C"
-    print(f"퀀트 터미널: {url}  (이 Mac에서만 접속 가능 · {how})", flush=True)
+    print(f"퀀트 터미널: {url}  (이 컴퓨터에서만 접속 가능 · {how})", flush=True)
     if args.open and sys.platform == "darwin":
         os.system(f"open '{url}'")
     try:
