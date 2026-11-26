@@ -18,6 +18,7 @@ from terminal import automation
 from terminal.qsf.ledger import Ledger
 
 ASIDE = "damaged"          # data/qsf/ledger/damaged/<file>.<time>: what was on disk when the repair ran
+DATALESS = 0x40000000      # macOS SF_DATALESS: the file's name and size are here, its content only in iCloud until it is read
 
 
 def _sha(p: Path) -> str:
@@ -43,7 +44,7 @@ def repair_ledger(base: Path, now: Optional[datetime] = None, backups: Optional[
     stamp = (now or datetime.now(timezone.utc)).strftime("%Y%m%dT%H%M%SZ")
     repaired, left = [], []
     for name in bad:
-        good = next((p for p in (Path(r) / "qsf_ledger" / name for r in (backups if backups is not None else roots(base))) if p.exists() and _sha(p) == want[name]), None)
+        good = next((p for p in (Path(r) / "qsf_ledger" / name for r in (backups if backups is not None else roots(base))) if p.exists() and not (getattr(p.lstat(), "st_flags", 0) & DATALESS) and _sha(p) == want[name]), None)      # a copy held in iCloud only is not read here: download it first
         if good is None:
             left.append(name)
             continue
@@ -66,13 +67,36 @@ def repair_ledger(base: Path, now: Optional[datetime] = None, backups: Optional[
     return {"status": status, "repaired": repaired, "left": left, "text": text.strip(), "integrity": led.verify()["status"]}
 
 
+def in_cloud_only(root: Path) -> int:
+    """How many files of a backup folder iCloud keeps as download-on-read entries.  macOS does this by itself when the disk is
+    short ("Mac 저장 공간 최적화").  Reading one downloads it, which can take minutes and fails inside the background server
+    (first seen 2026-11-26: 166 of 421 files a few hours after the first copy).  The copy is whole in iCloud; it is the local
+    read that is not possible, so the check says that instead of hanging."""
+    n = 0
+    for p in Path(root).rglob("*"):
+        try:
+            n += bool(getattr(p.lstat(), "st_flags", 0) & DATALESS)
+        except OSError:
+            continue
+    return n
+
+
 def check(base: Path) -> Dict[str, Any]:
     """Each backup folder restored into a throw-away folder and verified (``automation.check_backup``).  Reads only."""
     out = []
     for r in roots(base):
-        res = automation.check_backup(r)
+        shown = str(r).replace(str(Path.home()), "~")
+        away = in_cloud_only(r)
+        if away:
+            out.append({"path": shown, "status": "IN_CLOUD", "latest": automation.backup_status(r)["latest"], "checked": 0, "failed": [], "in_cloud_only": away})
+            continue
+        try:
+            res = automation.check_backup(r)
+        except Exception as exc:                    # one unreadable folder never hides the other's result
+            out.append({"path": shown, "status": "UNREADABLE", "latest": None, "checked": 0, "failed": [type(exc).__name__]})
+            continue
         fails = sorted(k for k, v in (res.get("checks") or {}).items() if (v.get("status") if isinstance(v, dict) else v) != "OK")
-        out.append({"path": str(r).replace(str(Path.home()), "~"), "status": res.get("status"), "latest": res.get("latest"), "checked": len(res.get("checks") or {}), "failed": fails})
+        out.append({"path": shown, "status": res.get("status"), "latest": res.get("latest"), "checked": len(res.get("checks") or {}), "failed": fails})
     return {"status": "REAL", "backups": out, "second": automation.second_backup_status(base),
             "note": "백업을 임시 폴더에 풀어 각 기록의 검증을 돌린 결과입니다. 백업과 기록은 바꾸지 않습니다."}
 

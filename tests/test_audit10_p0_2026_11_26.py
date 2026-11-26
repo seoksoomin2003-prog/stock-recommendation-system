@@ -172,3 +172,21 @@ def test_what_stayed_silent_is_now_said_in_the_days_message():
     assert "보관으로 돌린 읽기 가운데 막힌 것" in said and quiet["label"] in said and "업종 분류 보관(KR TOO_FEW)" in said
     assert automation.Daily._notes({"readings": {quiet["key"]: {"failed": 1}}, "sector_archive": {"US": "KEPT", "KR": "KEPT"}}) == []
     assert '"IC1_*.json"' in (ROOT / "terminal" / "automation.py").read_text(encoding="utf-8")
+
+
+def test_a_backup_whose_files_are_in_icloud_only_is_named_and_not_read(tmp_path, monkeypatch):
+    from terminal import restore
+    monkeypatch.delenv("QPP_BACKUP_DIR_2", raising=False)
+    base, first = tmp_path / "base", tmp_path / "first"
+    monkeypatch.setenv("QPP_BACKUP_DIR", str(first))
+    _ledger(base)
+    automation.backup(base, "2026-11-25", first)
+    assert restore.in_cloud_only(first) == 0 and restore.check(base)["backups"][0]["status"] == "OK"
+    monkeypatch.setattr(restore, "in_cloud_only", lambda root: 7)
+    monkeypatch.setattr(automation, "check_backup", lambda root: (_ for _ in ()).throw(AssertionError("must not read")))
+    got = restore.check(base)["backups"][0]
+    assert got["status"] == "IN_CLOUD" and got["in_cloud_only"] == 7 and got["latest"] == "2026-11-25"
+    monkeypatch.setattr(restore, "in_cloud_only", lambda root: 0)
+    monkeypatch.setattr(automation, "check_backup", lambda root: (_ for _ in ()).throw(OSError("x")))
+    assert restore.check(base)["backups"][0]["status"] == "UNREADABLE"
+    assert "IN_CLOUD" in (ROOT / "terminal" / "static" / "lab.js").read_text(encoding="utf-8")

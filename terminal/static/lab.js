@@ -174,7 +174,7 @@ document.addEventListener("click", async (ev) => {
   try {
     if (what === "check") {
       const r = await api("/api/backup/check");
-      out.textContent = r.backups.length ? r.backups.map((x) => `${x.path}: ${x.status === "OK" ? `이상 없음(${x.latest}, 기록 ${x.checked}종 검증)` : x.status === "NO_BACKUP" ? "백업 없음" : `문제 있음: ${x.failed.join(", ")}`}`).join(" · ") + ". " + r.note : "백업 폴더가 없습니다.";
+      out.textContent = r.backups.length ? r.backups.map((x) => `${x.path}: ${x.status === "OK" ? `이상 없음(${x.latest}, 기록 ${x.checked}종 검증)` : x.status === "NO_BACKUP" ? "백업 없음" : x.status === "IN_CLOUD" ? `사본은 iCloud에 있고 이 Mac에는 ${x.in_cloud_only}개 파일이 내려받기 전 상태라 풀어서 검증하지 못했습니다(최신 ${x.latest}). Finder에서 그 폴더를 '지금 다운로드'한 뒤 다시 누르면 검증합니다` : x.status === "UNREADABLE" ? `읽지 못했습니다(${x.failed.join(", ")})` : `문제 있음: ${x.failed.join(", ")}`}`).join(" · ") + ". " + r.note : "백업 폴더가 없습니다.";
     } else if (what === "repair") {
       const r = await api("/api/backup/repair-ledger", { ...json, body: "{}" });
       out.textContent = r.text;
