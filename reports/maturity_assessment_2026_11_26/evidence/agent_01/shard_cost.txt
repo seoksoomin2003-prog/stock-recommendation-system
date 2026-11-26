@@ -1,0 +1,5 @@
+live shards 33 US 16 KR 17
+US 2026-11-25_US_000038.jsonl.gz gz bytes 975160 json bytes 10068098 records 1008 parse 0.10s
+KR 2026-11-25_KR_000039.jsonl.gz gz bytes 560037 json bytes 6283553 records 600 parse 0.06s
+verify OK 36 voided 3 0.03s
+peak rss MB 96.305152

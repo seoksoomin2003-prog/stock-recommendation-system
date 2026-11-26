@@ -1,0 +1,110 @@
+== factor id spread (non-test files mentioning)
+balance_dilution: terminal/assistant.py terminal/qsf/kr_challenger.py terminal/qsf/config.py terminal/qsf/factors.py terminal/plain.py terminal/committee/figures.py terminal/qsf/views.py terminal/qsf/us_challenger.py terminal/qsf/inventory.py 
+breakout_volume: terminal/assistant.py terminal/analyst_extra.py terminal/plain.py terminal/committee/figures.py terminal/qsf/us_challenger.py terminal/qsf/config.py terminal/qsf/factors.py terminal/qsf/inventory.py 
+insider_activity: terminal/assistant.py terminal/committee/figures.py terminal/plain.py terminal/qsf/config.py terminal/qsf/factors.py terminal/qsf/us_challenger.py terminal/qsf/inventory.py 
+capital_allocation: terminal/assistant.py terminal/committee/figures.py terminal/plain.py terminal/qsf/us_challenger.py terminal/qsf/inventory.py terminal/qsf/config.py terminal/qsf/factors.py 
+== market branching: files and occurrences of == "US" / == "KR"
+     154
+terminal/qsf/service.py:26
+terminal/services.py:20
+terminal/qsf/views.py:19
+terminal/assistant.py:15
+app.py:8
+terminal/today.py:4
+terminal/services_model.py:3
+terminal/server.py:3
+terminal/qsf/sector_picks.py:3
+terminal/qsf/order_plan.py:3
+terminal/portfolio.py:3
+terminal/freshness.py:3
+terminal/filing_watch.py:3
+terminal/committee/service.py:3
+      36
+== JS market branching
+terminal/static/alerts.js:2
+terminal/static/account.js:2
+terminal/static/calendar.js:3
+terminal/static/committee.js:3
+terminal/static/app.js:20
+terminal/static/lab.js:1
+terminal/static/portfolio.js:5
+terminal/static/paper.js:2
+terminal/static/forecast.js:1
+terminal/static/qsf.js:11
+== provider calls: yfinance / requests import sites
+terminal/sources.py
+terminal/kr_etf_holdings.py
+terminal/notify.py
+terminal/news.py
+terminal/coin_source.py
+terminal/qsf/validate_pit.py
+terminal/qsf/research_insider.py
+terminal/qsf/research_kr_fund.py
+terminal/qsf/research_kr_holder.py
+terminal/qsf/research_kr_live.py
+terminal/qsf/service.py
+terminal/qsf/validate.py
+terminal/qsf/research_sentiment.py
+terminal/lab/panel.py
+terminal/lab/membership.py
+terminal/qsf/research_kr.py
+markets/kr/security_master.py
+terminal/qsf/research_kr_events.py
+markets/kr/dart.py
+markets/kr/market_data.py
+terminal/qsf/research_short.py
+terminal/qsf/kr_forward.py
+core/news_engine.py
+core/cross_asset_engine.py
+core/universe_provider.py
+core/providers.py
+core/llm_fundamental_engine.py
+data/loader.py
+utils/resilience.py
+alpha_engine/data/sec/sec_api_provider.py
+app.py
+pipeline/prospective_tracking.py
+== src.<provider> call sites in terminal
+  18 src.yahoo_history(
+   4 src.yahoo_info(
+   4 sources.facts_key(
+   3 src.values(
+   3 src.sec_submissions(
+   2 src.sec_text(
+   2 src.sec_cik(
+   2 src.items(
+   2 src.fred_series(
+   2 src.ecos_series(
+   2 sources.facts_with_predecessors(
+   2 sources.ecos_status(
+   2 sources._num(
+   1 src.yahoo_intraday(
+   1 src.yahoo_earnings_dates(
+   1 src.stat(
+   1 src.relative_to(
+   1 sources.sec_user_agent(
+   1 sources.merge_companyfacts(
+== os.getenv sites
+      62
+utils/config.py:12
+utils/runtime_config.py:7
+terminal/automation.py:6
+markets/storage.py:5
+terminal/sources.py:3
+terminal/qsf/kr_forward.py:3
+terminal/qsf/fund_period.py:3
+terminal/notify.py:3
+terminal/coin_bridge.py:2
+markets/kr/market_data.py:2
+app.py:2
+utils/nyse_calendar.py:1
+== module-level UPPER constants outside config.py (terminal/)
+    1021
+     134
+== TTL definitions
+terminal/services.py:17:TTL = {"quote": 900, "chart": 900, "intraday": 20, "info": 20 * 3600, "facts": 20 * 3600, "filings": 3600, "macro": 6 * 3600}
+terminal/analyst_extra.py:22:FACTOR_TTL = 20 * 3600
+terminal/today.py:13:NEWS_TTL = 900
+terminal/qsf/service.py:35:TTL = {"bars": 1800, "regime": 3600, "facts": 20 * 3600, "kr_facts": 7 * 86400, "subm": 20 * 3600, "kr_list_screen": 3600, "info": 7 * 86400, "earn": 3 * 86400, "form4": 365
+terminal/qsf/service.py:39:QUARTER_TTL = {"new": 30 * 86400, "old": 3650 * 86400, "none": 20 * 3600, "none_old": 90 * 86400}
+terminal/qsf/service.py:43:EARN_NONE_TTL = 6 * 3600           # "the provider lists no date" is kept this long: each morning's scan still asks, a lookup or a retry an hour later does not

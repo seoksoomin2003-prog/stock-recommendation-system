@@ -1,0 +1,135 @@
+{
+"status": "OK",
+"latest": "2026-11-25",
+"seconds": 0.4,
+"checks": {
+"krx_forward": {
+"status": "OK",
+"sessions": 14
+},
+"krx_forward_fund": {
+"status": "OK",
+"sessions": 14
+},
+"krx_forward_events": {
+"status": "OK",
+"sessions": 14
+},
+"us_challenger": {
+"status": "OK",
+"sessions": 13
+},
+"kr_swing_challenger": {
+"status": "OK",
+"sessions": 13
+},
+"kr_swing_prior": {
+"status": "OK",
+"sessions": 11
+},
+"kr_challenger": {
+"status": "OK",
+"sessions": 6
+},
+"kr_cap_universe": {
+"status": "OK",
+"sessions": 12
+},
+"kr_traded_universe": {
+"status": "OK",
+"sessions": 11
+},
+"kr_method": {
+"status": "OK",
+"sessions": 11
+},
+"regime_weights_kr": {
+"status": "OK",
+"sessions": 10
+},
+"regime_weights_us": {
+"status": "OK",
+"sessions": 10
+},
+"paper_book_kr": {
+"status": "OK",
+"sessions": 10
+},
+"paper_book_us": {
+"status": "OK",
+"sessions": 10
+},
+"forecast_kr": {
+"status": "OK",
+"sessions": 9
+},
+"forecast_us": {
+"status": "OK",
+"sessions": 9
+},
+"score_split_kr": {
+"status": "OK",
+"sessions": 8
+},
+"score_split_us": {
+"status": "OK",
+"sessions": 8
+},
+"turnover_book_kr": {
+"status": "OK",
+"sessions": 8
+},
+"turnover_book_us": {
+"status": "OK",
+"sessions": 8
+},
+"rank_book_kr": {
+"status": "OK",
+"sessions": 8
+},
+"rank_book_us": {
+"status": "OK",
+"sessions": 8
+},
+"fund_period_kr": {
+"status": "OK",
+"sessions": 3
+},
+"fund_period_us": {
+"status": "OK",
+"sessions": 3
+},
+"entry_book_kr": {
+"status": "OK",
+"sessions": 1
+},
+"entry_book_us": {
+"status": "OK",
+"sessions": 1
+},
+"qsf_ledger": {
+"status": "OK",
+"shards": 36
+},
+"tracking/ledger/observations.jsonl": {
+"status": "OK",
+"rows": 220
+},
+"tracking/ledger/events.jsonl": {
+"status": "OK",
+"rows": 3
+},
+"tracking/kr/ledger/observations.jsonl": {
+"status": "OK",
+"rows": 143
+},
+"tracking/updates.jsonl": {
+"status": "OK",
+"rows": 19
+},
+"tracking/kr/updates.jsonl": {
+"status": "OK",
+"rows": 16
+}
+}
+}

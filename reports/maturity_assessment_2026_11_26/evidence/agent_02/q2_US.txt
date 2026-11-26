@@ -1,0 +1,29 @@
+
+== US LONG_TERM n=504 buy-band=81
+direction all: {'STABLE': 148, 'MIXED': 48, 'FIRMING': 93, 'DETERIORATING': 60, 'IMPROVING': 101, 'SOFTENING': 50, None: 3, 'UNKNOWN': 1}
+direction buy band: {'FIRMING': 17, 'STABLE': 22, 'IMPROVING': 26, 'SOFTENING': 4, 'DETERIORATING': 4, 'MIXED': 6, None: 2}
+pattern all: {'GOOD_BUT_DEAR': 122, None: 324, 'CHEAP_AND_IMPROVING': 43, 'CHEAP_AND_WORSENING': 15}
+pattern buy band: {'CHEAP_AND_IMPROVING': 16, None: 42, 'GOOD_BUT_DEAR': 19, 'CHEAP_AND_WORSENING': 4}
+buy band x entry_status x direction: {('ENTRY_NOW', 'FIRMING'): 15, ('ENTRY_NOW', 'STABLE'): 21, ('ENTRY_NOW', 'IMPROVING'): 20, ('OVERVALUED_AT_CURRENT_PRICE', 'IMPROVING'): 6, ('ENTRY_NOW', 'SOFTENING'): 4, ('OVERVALUED_AT_CURRENT_PRICE', 'STABLE'): 1, ('ENTRY_NOW', 'DETERIORATING'): 4, ('OVERVALUED_AT_CURRENT_PRICE', 'MIXED'): 2, ('ENTRY_NOW', 'MIXED'): 4, ('OVERVALUED_AT_CURRENT_PRICE', 'FIRMING'): 2, ('NO_VALID_ENTRY_SETUP', None): 2}
+flags in buy band: {'SALES_UP': 32, 'ROE_UP': 20, 'EPS_UP': 31, 'SALES_DOWN': 5, 'ROE_LOWER': 8, 'EPS_DOWN': 4, 'FCF_RARE': 2, 'SALES_DIP': 3}
+  quality>=0.8 & valuation<=0.25 (good business, dear): n=64 median score=63.754 share score>=70=0.16 entry: {'OVERVALUED_AT_CURRENT_PRICE': 59, 'NO_VALID_ENTRY_SETUP': 5}
+  quality>=0.8 & valuation 0.25-0.4 (good, fairly dear, not blocked): n=42 median score=65.161 share score>=70=0.21 entry: {'ENTRY_NOW': 39, 'NO_VALID_ENTRY_SETUP': 3}
+  valuation>=0.8 & growth<=0.2 (cheap, shrinking): n=12 median score=65.198 share score>=70=0.25 entry: {'ENTRY_NOW': 12}
+  valuation>=0.8 & long_trend<=0.2 (cheap, falling price): n=16 median score=64.104 share score>=70=0.31 entry: {'ENTRY_NOW': 15, 'NO_VALID_ENTRY_SETUP': 1}
+  valuation>=0.8 & quality<=0.3 (cheap, poor business): n=0 median score=None share score>=70=nan entry: {}
+  growth>=0.8 & valuation<=0.25 (growth, dear): n=37 median score=63.031 share score>=70=0.19 entry: {'OVERVALUED_AT_CURRENT_PRICE': 28, 'NO_VALID_ENTRY_SETUP': 9}
+  growth>=0.8 & valuation>=0.6 (growth, cheap): n=18 median score=70.895 share score>=70=0.56 entry: {'ENTRY_NOW': 18}
+  buy band: rev_growth<0: 8 of 81
+  buy band: eps_cagr3<0: 6  eps_cagr3 missing: 11
+  PE<=0 count all: 27  PE None: 4
+  buy band valuation normalized quartiles: [0.1  0.36 0.63 0.82 1.  ]
+
+== US SWING n=504 buy-band=49
+direction all: {'STABLE': 148, 'MIXED': 48, 'FIRMING': 93, 'DETERIORATING': 60, 'IMPROVING': 101, 'SOFTENING': 50, None: 3, 'UNKNOWN': 1}
+direction buy band: {'STABLE': 19, 'MIXED': 5, 'FIRMING': 12, 'IMPROVING': 9, 'SOFTENING': 4}
+pattern all: {None: 504}
+pattern buy band: {None: 49}
+buy band x entry_status x direction: {('WAIT_FOR_PULLBACK', 'STABLE'): 19, ('WAIT_FOR_PULLBACK', 'MIXED'): 5, ('WAIT_FOR_PULLBACK', 'FIRMING'): 11, ('WAIT_FOR_BREAKOUT_CONFIRMATION', 'FIRMING'): 1, ('WAIT_FOR_PULLBACK', 'IMPROVING'): 9, ('WAIT_FOR_PULLBACK', 'SOFTENING'): 4}
+flags in buy band: {'ROE_LOWER': 5, 'SALES_UP': 15, 'EPS_UP': 12, 'ROE_UP': 10, 'SALES_DOWN': 1, 'FCF_NEGATIVE': 1, 'EPS_DOWN': 3, 'FCF_RARE': 1, 'SALES_DIP': 1}
+  fund_period keys: ['annual', 'live', 'trailing']  fuller_inputs keys: None
+market_state stored in snapshot? False  regime rows: [('vix_regime', 0.2917390906292459, 'REAL'), ('vix_term', 0.0, 'REAL'), ('credit_spread', 0.043312101910828016, 'REAL'), ('index_trend_breadth', 0.5158730158730159, 'REAL')]

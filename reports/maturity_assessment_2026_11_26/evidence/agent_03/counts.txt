@@ -1,0 +1,10 @@
+US n 504 financial 53 buy-band 81 financial in buy band 17 (21% vs 11% of universe)
+  non-fin without gross margin 264 / 451 | without op margin 77 | without interest cover 149 | all: no share change 20 / 504
+  newer quarter exists 467 | |trailing-annual|>=10: 41 | band differs: 131
+  annual fiscal-end age days: median 329 p90 329 max 513 | over 300 days: 398
+  financial resilience (financials): ==1.0: 23 of 53
+KR n 300 financial 28 buy-band 29 financial in buy band 4 (14% vs 9% of universe)
+  non-fin without gross margin 272 / 272 | without op margin 2 | without interest cover 272 | all: no share change 300 / 300
+  newer quarter exists 299 | |trailing-annual|>=10: 50 | band differs: 86
+  annual fiscal-end age days: median 329 p90 329 max 329 | over 300 days: 299
+  financial resilience (financials): ==1.0: 7 of 28

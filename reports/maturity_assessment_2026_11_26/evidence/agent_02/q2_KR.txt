@@ -1,0 +1,29 @@
+
+== KR LONG_TERM n=300 buy-band=29
+direction all: {'IMPROVING': 55, 'MIXED': 42, 'SOFTENING': 33, 'STABLE': 46, 'DETERIORATING': 40, 'FIRMING': 67, 'UNKNOWN': 17}
+direction buy band: {'IMPROVING': 8, 'STABLE': 7, 'DETERIORATING': 2, 'MIXED': 2, 'FIRMING': 5, 'UNKNOWN': 2, 'SOFTENING': 3}
+pattern all: {None: 209, 'GOOD_BUT_DEAR': 24, 'CHEAP_AND_WORSENING': 13, 'CHEAP_AND_IMPROVING': 54}
+pattern buy band: {None: 18, 'GOOD_BUT_DEAR': 1, 'CHEAP_AND_WORSENING': 2, 'CHEAP_AND_IMPROVING': 8}
+buy band x entry_status x direction: {('ENTRY_NOW', 'IMPROVING'): 8, ('ENTRY_NOW', 'STABLE'): 7, ('ENTRY_NOW', 'DETERIORATING'): 2, ('ENTRY_NOW', 'MIXED'): 2, ('ENTRY_NOW', 'FIRMING'): 4, ('ENTRY_NOW', 'UNKNOWN'): 2, ('ENTRY_NOW', 'SOFTENING'): 3, ('NO_VALID_ENTRY_SETUP', 'FIRMING'): 1}
+flags in buy band: {'ROE_UP': 6, 'SALES_UP': 14, 'EPS_UP': 8, 'ROE_DOWN': 1, 'SALES_DOWN': 1, 'EPS_DOWN': 6, 'ROE_LOWER': 3, 'SALES_DIP': 1, 'CASH_BEHIND': 1}
+  quality>=0.8 & valuation<=0.25 (good business, dear): n=7 median score=64.147 share score>=70=0.00 entry: {'OVERVALUED_AT_CURRENT_PRICE': 7}
+  quality>=0.8 & valuation 0.25-0.4 (good, fairly dear, not blocked): n=3 median score=67.871 share score>=70=0.00 entry: {'ENTRY_NOW': 3}
+  valuation>=0.8 & growth<=0.2 (cheap, shrinking): n=17 median score=52.808 share score>=70=0.06 entry: {'ENTRY_NOW': 8, 'NO_VALID_ENTRY_SETUP': 9}
+  valuation>=0.8 & long_trend<=0.2 (cheap, falling price): n=43 median score=61.496 share score>=70=0.19 entry: {'ENTRY_NOW': 29, 'NO_VALID_ENTRY_SETUP': 14}
+  valuation>=0.8 & quality<=0.3 (cheap, poor business): n=4 median score=42.500 share score>=70=0.00 entry: {'NO_VALID_ENTRY_SETUP': 4}
+  growth>=0.8 & valuation<=0.25 (growth, dear): n=12 median score=56.524 share score>=70=0.00 entry: {'OVERVALUED_AT_CURRENT_PRICE': 7, 'NO_VALID_ENTRY_SETUP': 5}
+  growth>=0.8 & valuation>=0.6 (growth, cheap): n=20 median score=62.903 share score>=70=0.40 entry: {'NO_VALID_ENTRY_SETUP': 5, 'ENTRY_NOW': 15}
+  buy band: rev_growth<0: 2 of 29
+  buy band: eps_cagr3<0: 3  eps_cagr3 missing: 13
+  PE<=0 count all: 49  PE None: 1
+  buy band valuation normalized quartiles: [0.31 0.67 0.93 0.98 1.  ]
+
+== KR SWING n=300 buy-band=0
+direction all: {'IMPROVING': 55, 'MIXED': 42, 'SOFTENING': 33, 'STABLE': 46, 'DETERIORATING': 40, 'FIRMING': 67, 'UNKNOWN': 17}
+direction buy band: {}
+pattern all: {None: 300}
+pattern buy band: {}
+buy band x entry_status x direction: {}
+flags in buy band: {}
+  fund_period keys: ['annual', 'live', 'trailing']  fuller_inputs keys: ['added', 'added_ko', 'live_score', 'score', 'version']
+market_state stored in snapshot? False  regime rows: [('vkospi_regime', None, 'MISSING'), ('index_trend', 0.0, 'REAL'), ('breadth', 0.0, 'REAL'), ('usdkrw_regime', 0.9622088046614957, 'REAL'), ('credit_liquidity', 0.3386178861788618, 'REAL')]

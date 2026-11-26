@@ -1,0 +1,56 @@
+KR 012450 score 62.3 HOLD_WATCH ENTRY_NOW price 633000.0 stop 555278.39 target 962551.09
+   holding keys: ['cost_basis', 'entry_date', 'exit_triggers', 'expected_exit', 'expected_sessions', 'first_review', 'gap_note', 'invalidation', 'range_sessions', 'review_every_sessions', 'reward_risk', 'status', 'stop', 'stop_method', 'strategy', 'target', 'target_method', 'time_stop_note', 'time_stop_review', 'why']
+   expected_sessions 15 range [5, 20] why ['목표까지 8.5 ATR ÷ 하루 약 1/3 ATR 순진행 = 약 25거래일', '초기 정책 범위 5~20일로 제한', 'ATR 6.1%로 변동성이 커 5일 단축']
+   invalidation ['종가가 555,278.39 아래로 마감', '종가가 50일선 832,679.22 아래로 마감하고 50일선이 하락 전환']
+    trend_structure TECHNICAL 0 0.0 {"ma20": 661988.5212118595, "ma200": 1109383.8560467593, "ma200_slope": -0.03440009487732287, "ma50": 832679.215592227, "ma50_slope": -0.17364730456545874} 
+    risk_reward RISK 6 1.0 {"cost_pct": 0.53, "reward_risk": 4.023313356057416, "stop": 555278.3927491312, "target": 962551.0944849064} 
+    momentum TECHNICAL 0 0.7015216978753211 {"macd_hist_pct": 0.011029485534145633, "rsi": 40.07608489376606} 
+    relative_strength TECHNICAL 0 0.22333333333333333 {"percentile": 0.22333333333333333, "rel_126": -0.27591994678167064} 
+KR 064350 score 65.7 HOLD_WATCH ENTRY_NOW price 59000.0 stop 50855.67 target 141237.58
+   holding keys: ['cost_basis', 'entry_date', 'exit_triggers', 'expected_exit', 'expected_sessions', 'first_review', 'gap_note', 'invalidation', 'range_sessions', 'review_every_sessions', 'reward_risk', 'status', 'stop', 'stop_method', 'strategy', 'target', 'target_method', 'time_stop_note', 'time_stop_review', 'why']
+   expected_sessions 15 range [5, 20] why ['목표까지 20.2 ATR ÷ 하루 약 1/3 ATR 순진행 = 약 61거래일', '초기 정책 범위 5~20일로 제한', 'ATR 6.9%로 변동성이 커 5일 단축']
+   invalidation ['종가가 50,855.67 아래로 마감', '종가가 50일선 91,158.44 아래로 마감하고 50일선이 하락 전환']
+    trend_structure TECHNICAL 0 0.0 {"ma20": 70434.13978573531, "ma200": 163878.4216264366, "ma200_slope": -0.15951438387319994, "ma50": 91158.43942817897, "ma50_slope": -0.21651428336132916} 
+    risk_reward RISK 6 1.0 {"cost_pct": 0.53, "reward_risk": 9.687197466339356, "stop": 50855.67427174916, "target": 141237.5782074783} 
+    momentum TECHNICAL 0 0.23511739414322574 {"macd_hist_pct": -0.0005953042342709707, "rsi": 24.04513270358008} 
+    relative_strength TECHNICAL 0 0.016666666666666666 {"percentile": 0.016666666666666666, "rel_126": -0.5446557180335023} 
+KR 051600 score 63.4 HOLD_WATCH ENTRY_NOW price 33450.0 stop 30499.81 target 43196.74
+   holding keys: ['cost_basis', 'entry_date', 'exit_triggers', 'expected_exit', 'expected_sessions', 'first_review', 'gap_note', 'invalidation', 'range_sessions', 'review_every_sessions', 'reward_risk', 'status', 'stop', 'stop_method', 'strategy', 'target', 'target_method', 'time_stop_note', 'time_stop_review', 'why']
+   expected_sessions 20 range [5, 20] why ['목표까지 6.6 ATR ÷ 하루 약 1/3 ATR 순진행 = 약 20거래일']
+   invalidation ['종가가 30,499.81 아래로 마감', '종가가 50일선 41,511.54 아래로 마감하고 50일선이 하락 전환']
+    trend_structure TECHNICAL 0 0.0 {"ma20": 37589.62972736042, "ma200": 49948.83569864903, "ma200_slope": -0.06085099360701085, "ma50": 41511.54127609663, "ma50_slope": -0.0760050761272355} 
+    risk_reward RISK 6 1.0 {"cost_pct": 0.53, "reward_risk": 3.0597989447980525, "stop": 30499.807686130986, "target": 43196.73678485626} 
+    momentum TECHNICAL 0 0.04024131400972432 {"macd_hist_pct": -0.008390347439611028, "rsi": 13.155494195837647} 
+    relative_strength TECHNICAL 0 0.38333333333333336 {"percentile": 0.38333333333333336, "rel_126": -0.07953343174933081} 
+KR ENTRY_NOW swing 20 trend raw keys ['ma20', 'ma200', 'ma200_slope', 'ma50', 'ma50_slope']
+   (ticker, target distance in ATR, expected sessions): [('402340', 5.0, 10), ('009150', 6.8, 15), ('012450', 8.5, 15), ('000810', 3.7, 6), ('009540', 3.9, 12), ('196170', 5.2, 11), ('064350', 20.2, 15), ('007660', 3.3, 5), ('062040', 4.6, 9), ('031210', 4.9, 15), ('011780', 4.4, 8), ('014680', 5.3, 11), ('257720', 3.9, 7), ('035900', 3.2, 5), ('081660', 4.3, 8), ('051600', 6.6, 20), ('214150', 3.2, 5), ('071970', 3.9, 7), ('034230', 5.7, 12), ('003540', 9.2, 20)]
+   long ENTRY_NOW: 5-ATR stop distance as share of price: min 4.4% median 29.2% p90 53.6% max 91.0%; over 50%: 14; over 100% (no stop): 0
+   ATR%% of all swing cards: median 6.73% p90 10.93%
+US HAS score 60.0 HOLD_WATCH ENTRY_NOW price 110.58000183105469 stop 104.3 target 124.62
+   holding keys: ['cost_basis', 'entry_date', 'exit_triggers', 'expected_exit', 'expected_sessions', 'first_review', 'gap_note', 'invalidation', 'range_sessions', 'review_every_sessions', 'reward_risk', 'status', 'stop', 'stop_method', 'strategy', 'target', 'target_method', 'time_stop_note', 'time_stop_review', 'why']
+   expected_sessions 13 range [5, 18] why ['목표까지 4.5 ATR ÷ 하루 약 1/3 ATR 순진행 = 약 13거래일']
+   invalidation ['종가가 104.30 아래로 마감', '종가가 50일선 105.55 아래로 마감하고 50일선이 하락 전환']
+    trend_structure TECHNICAL 10 1.0 {"ma20": 118.26450004577637, "ma200": 94.84179992675782, "ma200_slope": 0.06396276129428236, "ma50": 105.5502001953125, "ma50_slope": 0.10707393013037425} 
+    risk_reward RISK 6 0.5102272712845928 {"cost_pct": 0.40206000000000003, "reward_risk": 2.0204545425691856, "stop": 104.29571642194476, "target": 124.62000274658203} 
+    momentum TECHNICAL 5 0.009415299454201432 {"macd_hist_pct": -0.018666093553850342, "rsi": 30.47076497271007} 
+    relative_strength TECHNICAL 10 0.8884462151394422 {"percentile": 0.8884462151394422, "rel_126": 0.37029337335037393} 
+US SWK score 64.6 HOLD_WATCH ENTRY_NOW price 109.22000122070312 stop 101.09 target 122.68
+   holding keys: ['cost_basis', 'entry_date', 'exit_triggers', 'expected_exit', 'expected_sessions', 'first_review', 'gap_note', 'invalidation', 'range_sessions', 'review_every_sessions', 'reward_risk', 'status', 'stop', 'stop_method', 'strategy', 'target', 'target_method', 'time_stop_note', 'time_stop_review', 'why']
+   expected_sessions 10 range [5, 15] why ['목표까지 3.3 ATR ÷ 하루 약 1/3 ATR 순진행 = 약 10거래일']
+   invalidation ['종가가 101.09 아래로 마감', '종가가 50일선 99.56 아래로 마감하고 50일선이 하락 전환']
+    trend_structure TECHNICAL 10 1.0 {"ma20": 110.96549987792969, "ma200": 88.09320007324219, "ma200_slope": 0.08664873026259734, "ma50": 99.55559997558593, "ma50_slope": 0.0675013159012936} 
+    risk_reward RISK 6 0.2598380942827665 {"cost_pct": 0.40206000000000003, "reward_risk": 1.519676188565533, "stop": 101.0909445626395, "target": 122.68000030517578} 
+    momentum TECHNICAL 5 0.1611529093059657 {"macd_hist_pct": -0.010454911392800621, "rsi": 38.057645465298286} 
+    relative_strength TECHNICAL 10 0.952191235059761 {"percentile": 0.952191235059761, "rel_126": 0.4714956760928435} 
+US TRV score 77.9 BUY_CANDIDATE WAIT_FOR_PULLBACK price 406.8599853515625 stop 389.73 target 418.0
+   holding keys: ['cost_basis', 'entry_date', 'exit_triggers', 'expected_exit', 'expected_sessions', 'first_review', 'gap_note', 'invalidation', 'range_sessions', 'review_every_sessions', 'reward_risk', 'status', 'stop', 'stop_method', 'strategy', 'target', 'target_method', 'time_stop_note', 'time_stop_review', 'why']
+   expected_sessions 10 range [5, 15] why ['목표까지 1.3 ATR ÷ 하루 약 1/3 ATR 순진행 = 약 4거래일', '초기 정책 범위 5~20일로 제한', '추세와 모멘텀이 모두 강해 5일 연장']
+   invalidation ['종가가 389.73 아래로 마감', '종가가 50일선 384.93 아래로 마감하고 50일선이 하락 전환']
+    trend_structure TECHNICAL 10 1.0 {"ma20": 398.8199966430664, "ma200": 340.18490005493163, "ma200_slope": 0.09756927107319169, "ma50": 384.93220153808596, "ma50_slope": 0.031380383405325896} 
+    risk_reward RISK 6 0.0 {"cost_pct": 0.40206000000000003, "reward_risk": 0.5065787512322071, "stop": 389.7342747279576, "target": 418.0} 
+    momentum TECHNICAL 5 0.6946741133004048 {"macd_hist_pct": -0.0015752774450920903, "rsi": 54.202802471385354} 
+    relative_strength TECHNICAL 10 0.950199203187251 {"percentile": 0.950199203187251, "rel_126": 0.4592140990864151} 
+US ENTRY_NOW swing 6 trend raw keys ['ma20', 'ma200', 'ma200_slope', 'ma50', 'ma50_slope']
+   (ticker, target distance in ATR, expected sessions): [('HAS', 4.5, 13), ('MCD', 4.2, 13), ('SWK', 3.3, 10), ('TSCO', 3.9, 12), ('VLO', 4.1, 12), ('ZBRA', 5.3, 16)]
+   long ENTRY_NOW: 5-ATR stop distance as share of price: min 7.6% median 14.6% p90 23.8% max 85.3%; over 50%: 3; over 100% (no stop): 0
+   ATR%% of all swing cards: median 3.02% p90 6.43%

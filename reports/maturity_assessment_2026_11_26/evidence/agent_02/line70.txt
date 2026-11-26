@@ -1,0 +1,28 @@
+2026-11-16 US QSF-1.4.1 SWING n=504 >=70  5.0% >=80  0.0% med 55.6 p90 68.3 | LONG_ n=504 >=70 15.1% >=80  0.6% med 62.0 p90 71.8
+2026-11-16 KR QSF-1.4.1 SWING n=300 >=70  0.0% >=80  0.0% med 46.5 p90 57.4 | LONG_ n=300 >=70 12.7% >=80  1.3% med 54.6 p90 71.5
+2026-11-17 KR QSF-1.4.1 SWING n=300 >=70  0.0% >=80  0.0% med 46.7 p90 57.7 | LONG_ n=300 >=70 12.0% >=80  1.7% med 54.6 p90 71.2
+2026-11-17 US QSF-1.4.1 SWING n=503 >=70  4.4% >=80  0.0% med 54.9 p90 67.4 | LONG_ n=503 >=70 15.7% >=80  0.8% med 62.0 p90 71.9
+2026-11-18 US QSF-1.4.1 SWING n=504 >=70  5.6% >=80  0.0% med 54.5 p90 67.8 | LONG_ n=504 >=70 15.7% >=80  0.6% med 62.1 p90 71.9
+2026-11-18 KR QSF-1.4.1 SWING n=300 >=70  0.0% >=80  0.0% med 46.7 p90 57.3 | LONG_ n=300 >=70 12.3% >=80  1.7% med 54.5 p90 70.8
+2026-11-19 US QSF-1.4.1 SWING n=503 >=70  4.4% >=80  0.0% med 53.1 p90 66.9 | LONG_ n=503 >=70 15.7% >=80  0.6% med 62.0 p90 72.0
+2026-11-19 KR QSF-1.4.1 SWING n=300 >=70  0.0% >=80  0.0% med 47.5 p90 57.6 | LONG_ n=300 >=70 12.0% >=80  1.0% med 54.4 p90 70.6
+2026-11-20 US QSF-1.4.1 SWING n=504 >=70  2.6% >=80  0.0% med 50.7 p90 65.7 | LONG_ n=504 >=70 15.9% >=80  0.6% med 62.1 p90 72.0
+2026-11-20 KR QSF-1.4.1 SWING n=300 >=70  0.0% >=80  0.0% med 46.6 p90 57.3 | LONG_ n=300 >=70 12.0% >=80  1.0% med 54.5 p90 70.8
+2026-11-23 US QSF-1.5.2 SWING n=504 >=70  4.6% >=80  0.0% med 52.6 p90 67.4 | LONG_ n=504 >=70 15.7% >=80  0.6% med 62.0 p90 72.0
+2026-11-23 KR QSF-1.5.2 SWING n=300 >=70  0.0% >=80  0.0% med 46.1 p90 57.0 | LONG_ n=300 >=70 10.7% >=80  1.0% med 54.2 p90 70.6
+2026-11-24 US QSF-1.5.2 SWING n=504 >=70  6.9% >=80  0.0% med 53.6 p90 69.0 | LONG_ n=504 >=70 16.3% >=80  0.6% med 61.9 p90 71.8
+2026-11-24 KR QSF-1.5.2 SWING n=300 >=70  0.0% >=80  0.0% med 45.9 p90 57.3 | LONG_ n=300 >=70 11.0% >=80  1.3% med 54.0 p90 70.4
+2026-11-25 US QSF-1.6.0 SWING n=504 >=70 10.1% >=80  0.0% med 54.7 p90 70.0 | LONG_ n=504 >=70 16.3% >=80  0.8% med 61.8 p90 72.0
+   financial share all 0.11, in long buy band 0.21 (n=17 of 81)
+   missing factors in buy band: {'leverage': 6, 'insider_ownership': 3, 'valuation': 2, 'business_quality': 2, 'growth_quality': 2, 'free_cash_flow': 3, 'balance_dilution': 2, 'financial_resilience': 2, 'capital_allocation': 2, 'long_trend': 1, 'relative_strength': 1, 'momentum_persistence': 1}
+   partial-input factors (inputs have<total) all cards: {}
+2026-11-25 KR QSF-1.6.0 SWING n=300 >=70  0.0% >=80  0.0% med 46.4 p90 57.6 | LONG_ n=300 >=70 11.0% >=80  1.3% med 54.2 p90 70.6
+   financial share all 0.09, in long buy band 0.14 (n=4 of 29)
+   missing factors in buy band: {'growth_quality': 6, 'capital_allocation': 2, 'insider_ownership': 2}
+   partial-input factors (inputs have<total) all cards: {}
+US REAL 2014-01-02 2026-08-13 이 결과는 지금 공식을 이미 여러 번 본 과거 구간에 다시 적용한 것입니다. 새로운 독립 증거가 아니며, 이 결과를 보고 고른 변경은 앞으로 쌓이는 기록으로만 확인할 수 있습니다.
+   SWING {'primary_horizon': 20, 'horizons': '...', 'accounts': '...', 'reading': 'NEITHER'}
+   LONG_TERM {'primary_horizon': 252, 'horizons': '...', 'accounts': '...', 'reading': 'NEITHER'}
+KR REAL 2019-04-01 2026-11-11 이 결과는 지금 공식을 이미 여러 번 본 과거 구간에 다시 적용한 것입니다. 새로운 독립 증거가 아니며, 이 결과를 보고 고른 변경은 앞으로 쌓이는 기록으로만 확인할 수 있습니다.
+   SWING {'primary_horizon': 20, 'horizons': '...', 'accounts': '...', 'reading': 'NEITHER'}
+   LONG_TERM {'primary_horizon': 252, 'horizons': '...', 'accounts': '...', 'reading': 'NEITHER'}

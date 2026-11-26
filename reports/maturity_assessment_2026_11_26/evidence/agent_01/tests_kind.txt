@@ -1,0 +1,29 @@
+test files 179 test functions 2148 functions that read source text (py/js/html) 187 8.7%
+files where >=50% of tests read source: 15
+files with any source-reading test: 68
+files that start the HTTP server or open URLs: 9
+   14/ 14 test_ui_batch_5.py
+   13/ 15 test_ui_batch_1.py
+   12/ 12 test_ui_batch_4.py
+   11/ 11 test_ui_batch_3.py
+    9/  9 test_ui_batch_2.py
+    6/ 32 test_audit_fixes_2026_11_22.py
+    6/  6 test_ui_ticker_context.py
+    5/ 10 test_ws_stage8.py
+    4/ 18 test_committee.py
+    4/ 13 test_ui_batch_6.py
+    4/  5 test_audit_p2_2026_11_25.py
+    4/  4 test_ui_groups.py
+    4/  4 test_audit_p1_2026_11_25.py
+    3/ 24 test_review_2026_11_17.py
+    3/ 24 test_assistant.py
+    3/ 12 test_after_verdict_rules.py
+    3/ 10 test_ws_stage7.py
+    3/ 10 test_kr_universe_switch.py
+    3/ 10 test_inputs_1_4_1.py
+    3/  9 test_buy_verdict.py
+    3/  7 test_rules_r2.py
+    3/  4 test_displays_2026_11_25.py
+    2/ 70 test_qsf.py
+    2/ 40 test_qsf_fund_inputs.py
+    2/ 37 test_p6_19_hardening.py

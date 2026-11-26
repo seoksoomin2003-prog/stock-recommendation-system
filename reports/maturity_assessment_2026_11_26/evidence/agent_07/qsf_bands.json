@@ -1,0 +1,1 @@
+{"bands": [{"start": 80.0, "key": "STRONG_BUY_CANDIDATE", "label": "최상위 구간"}, {"start": 70.0, "key": "BUY_CANDIDATE", "label": "상위 구간"}, {"start": 55.0, "key": "HOLD_WATCH", "label": "보유·관찰"}, {"start": 40.0, "key": "WEAK_REDUCE", "label": "하위 구간"}, {"start": 0.0, "key": "SELL_AVOID", "label": "최하위 구간"}]}

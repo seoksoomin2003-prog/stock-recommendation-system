@@ -1,0 +1,48 @@
+== 1. null: chance that noise reaches the table bar and the program's bar; my own 1.25%/0.3%/0.41% quantile
+swing verdict 240 x 20d    sims 40000: P(t>=2.24) = 5.60%  my quantile at 1.250% = 3.32  documented bar = 3.3  P(t>=documented) = 1.29%
+long verdict 756 x 63d     sims 16000: P(t>=2.24) = 5.63%  my quantile at 1.250% = 3.34  documented bar = 3.35  P(t>=documented) = 1.20%
+early 60 x 5d              sims 40000: P(t>=2.75) = 2.71%  my quantile at 0.298% = 4.24  documented bar = 4.29  P(t>=documented) = 0.27%
+early 120 x 5d             sims 40000: P(t>=2.75) = 1.68%  my quantile at 0.298% = 3.73  documented bar = 3.76  P(t>=documented) = 0.28%
+cont 480 x 20d             sims 40000: P(t>=2.64) = 2.24%  my quantile at 0.415% = 3.60  documented bar = None
+cont 720 x 20d             sims 16000: P(t>=2.64) = 1.93%  my quantile at 0.415% = 3.51  documented bar = None
+cont 960 x 20d             sims 16000: P(t>=2.64) = 1.76%  my quantile at 0.415% = 3.34  documented bar = None
+== 2. power of the 240-session swing verdict, t condition alone and with 'IC > 0 in both halves' and 'mean IC >= 0.02'
+   sd = standard deviation of one day's 20-session IC (BT-1's recorded figures imply roughly 0.10 for Korea, 0.15-0.20 for the US)
+   sd 0.08 true IC 0.02: t>=3.3   7.9%   t and halves and mean   7.9%
+   sd 0.08 true IC 0.03: t>=3.3  15.1%   t and halves and mean  15.1%
+   sd 0.08 true IC 0.05: t>=3.3  39.8%   t and halves and mean  39.8%
+   sd 0.08 true IC 0.08: t>=3.3  80.9%   t and halves and mean  80.9%
+   sd 0.08 true IC 0.10: t>=3.3  94.8%   t and halves and mean  94.8%
+   sd 0.10 true IC 0.02: t>=3.3   6.0%   t and halves and mean   6.0%
+   sd 0.10 true IC 0.03: t>=3.3  10.1%   t and halves and mean  10.1%
+   sd 0.10 true IC 0.05: t>=3.3  26.1%   t and halves and mean  26.1%
+   sd 0.10 true IC 0.08: t>=3.3  61.3%   t and halves and mean  61.3%
+   sd 0.10 true IC 0.10: t>=3.3  81.0%   t and halves and mean  81.0%
+   sd 0.15 true IC 0.02: t>=3.3   3.5%   t and halves and mean   3.5%
+   sd 0.15 true IC 0.03: t>=3.3   5.6%   t and halves and mean   5.6%
+   sd 0.15 true IC 0.05: t>=3.3  11.9%   t and halves and mean  11.9%
+   sd 0.15 true IC 0.08: t>=3.3  29.8%   t and halves and mean  29.8%
+   sd 0.15 true IC 0.10: t>=3.3  44.6%   t and halves and mean  44.6%
+   sd 0.20 true IC 0.02: t>=3.3   3.3%   t and halves and mean   3.3%
+   sd 0.20 true IC 0.03: t>=3.3   4.1%   t and halves and mean   4.1%
+   sd 0.20 true IC 0.05: t>=3.3   7.7%   t and halves and mean   7.7%
+   sd 0.20 true IC 0.08: t>=3.3  16.6%   t and halves and mean  16.6%
+   sd 0.20 true IC 0.10: t>=3.3  26.1%   t and halves and mean  26.1%
+== 3. power by record length at true IC 0.05 (same design, bar re-read from my own quantile for that length)
+   n 240 sd 0.1: bar 3.30 pass 26.1%
+   n 240 sd 0.18: bar 3.30 pass 8.8%
+   n 480 sd 0.1: bar 3.60 pass 36.8%
+   n 480 sd 0.18: bar 3.60 pass 8.9%
+   n 720 sd 0.1: bar 3.51 pass 57.6%
+   n 720 sd 0.18: bar 3.51 pass 14.0%
+   n 960 sd 0.1: bar 3.34 pass 77.0%
+   n 960 sd 0.18: bar 3.34 pass 23.2%
+== 4. persistence between neighbouring 20-session blocks: false passes of the 3.3 bar
+   slow share 0.0: mean lag-1 of 12 blocks -0.08  P(t>=3.3) = 1.32%
+   slow share 0.5: mean lag-1 of 12 blocks +0.32  P(t>=3.3) = 14.02%
+   slow share 1.0: mean lag-1 of 12 blocks +0.43  P(t>=3.3) = 16.86%
+   slow share 1.5: mean lag-1 of 12 blocks +0.46  P(t>=3.3) = 16.23%
+== 5. money condition (sign in both halves) under no score effect: two independent halves with a common drift d (in sd of a half mean)
+   drift 0.0: both halves > 0 = 24.9%
+   drift 0.3: both halves > 0 = 38.1%
+   drift 0.6: both halves > 0 = 52.6%

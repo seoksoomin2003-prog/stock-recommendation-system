@@ -1,0 +1,177 @@
+
+[US] recorded state ADVERSE 26.2 (factor 0.5, cap 0.5): made-up equity 100,000; candidates 304; orders 7; new exposure 49.9%; cash left 49.4%; skipped {'EXPOSURE_FULL': 296, 'TOO_SMALL': 1}
+   by style: {'LONG': 7} binding: {'RISK': 6, 'EXPOSURE': 1}
+   INCY    LONG  score  84.7 w  6.85% stopdist 14.58% risk@close 0.999% risk@limit 1.099% bind RISK     part 0.003% rt_cost 0.44% limit 124.1337 -> order price 124.13
+   ACGL    LONG  score  83.0 w  9.71% stopdist 10.20% risk@close 0.990% risk@limit 1.089% bind RISK     part 0.005% rt_cost 0.43% limit 111.4154 -> order price 111.41
+   EG      LONG  score  81.8 w  9.54% stopdist 10.31% risk@close 0.983% risk@limit 1.082% bind RISK     part 0.005% rt_cost 0.43% limit 438.1096 -> order price 438.1
+   PYPL    LONG  score  80.1 w  6.65% stopdist 14.97% risk@close 0.995% risk@limit 1.095% bind RISK     part 0.001% rt_cost 0.42% limit 58.6754 -> order price 58.67
+   NEM     LONG  score  79.5 w  3.75% stopdist 26.06% risk@close 0.978% risk@limit 1.076% bind RISK     part 0.000% rt_cost 0.42% limit 104.0832 -> order price 104.08
+   CB      LONG  score  78.9 w 11.03% stopdist  8.93% risk@close 0.985% risk@limit 1.084% bind RISK     part 0.002% rt_cost 0.42% limit 383.9068 -> order price 383.9
+   PGR     LONG  score  78.6 w  2.39% stopdist 10.94% risk@close 0.261% risk@limit 0.287% bind EXPOSURE part 0.000% rt_cost 0.41% limit 241.3111 -> order price 241.31
+   sum of stop risk: at close 6.19% of equity; if every order fills at its cap 6.81%;  names 7; largest weight 11.0%
+
+[US] same candidates, as if the day were FAVOURABLE: made-up equity 100,000; candidates 304; orders 8; new exposure 98.5%; cash left 0.0%; skipped {'SLEEVE_FULL': 230, 'NO_CASH': 65, 'ALREADY_PLANNED': 1}
+   by style: {'LONG': 5, 'SWING': 3} binding: {'RISK': 4, 'SLEEVE': 1, 'WEIGHT': 2, 'CASH': 1}
+   INCY    LONG  score  84.7 w 13.70% stopdist 14.58% risk@close 1.998% risk@limit 2.198% bind RISK     part 0.007% rt_cost 0.45% limit 124.1337 -> order price 124.13
+   ACGL    LONG  score  83.0 w 19.52% stopdist 10.20% risk@close 1.992% risk@limit 2.191% bind RISK     part 0.010% rt_cost 0.44% limit 111.4154 -> order price 111.41
+   EG      LONG  score  81.8 w 19.08% stopdist 10.31% risk@close 1.967% risk@limit 2.163% bind RISK     part 0.009% rt_cost 0.44% limit 438.1096 -> order price 438.1
+   PYPL    LONG  score  80.1 w 13.35% stopdist 14.97% risk@close 1.999% risk@limit 2.199% bind RISK     part 0.002% rt_cost 0.43% limit 58.6754 -> order price 58.67
+   NEM     LONG  score  79.5 w  4.26% stopdist 26.06% risk@close 1.110% risk@limit 1.221% bind SLEEVE   part 0.000% rt_cost 0.43% limit 104.0832 -> order price 104.08
+   SWK     SWING score  64.6 w  9.94% stopdist  7.44% risk@close 0.740% risk@limit 0.925% bind WEIGHT   part 0.004% rt_cost 0.45% limit 111.2523 -> order price 111.25
+   HAS     SWING score  60.0 w  9.95% stopdist  5.68% risk@close 0.566% risk@limit 0.707% bind WEIGHT   part 0.004% rt_cost 0.44% limit 112.1511 -> order price 112.15
+   TSCO    SWING score  59.4 w  8.68% stopdist  7.07% risk@close 0.613% risk@limit 0.767% bind CASH     part 0.002% rt_cost 0.44% limit 41.0830 -> order price 41.08
+   sum of stop risk: at close 10.98% of equity; if every order fills at its cap 12.37%;  names 8; largest weight 19.5%
+
+[US] stance DEFENSIVE (size_factor_total 0.25, cap 0.5, left out 288): made-up equity 100,000; candidates 16; orders 13; new exposure 49.1%; cash left 50.2%; skipped {'EXPOSURE_FULL': 3}
+   by style: {'LONG': 13} binding: {'RISK': 13}
+   INCY    LONG  score  84.7 w  3.43% stopdist 14.58% risk@close 0.499% risk@limit 0.549% bind RISK     part 0.002% rt_cost 0.43% limit 124.1337 -> order price 124.13
+   ACGL    LONG  score  83.0 w  4.85% stopdist 10.20% risk@close 0.495% risk@limit 0.545% bind RISK     part 0.002% rt_cost 0.42% limit 111.4154 -> order price 111.41
+   EG      LONG  score  81.8 w  4.77% stopdist 10.31% risk@close 0.492% risk@limit 0.541% bind RISK     part 0.002% rt_cost 0.42% limit 438.1096 -> order price 438.1
+   PYPL    LONG  score  80.1 w  3.30% stopdist 14.97% risk@close 0.493% risk@limit 0.543% bind RISK     part 0.001% rt_cost 0.42% limit 58.6754 -> order price 58.67
+   CB      LONG  score  78.9 w  5.33% stopdist  8.93% risk@close 0.476% risk@limit 0.523% bind RISK     part 0.001% rt_cost 0.41% limit 383.9068 -> order price 383.9
+   PGR     LONG  score  78.6 w  4.54% stopdist 10.94% risk@close 0.496% risk@limit 0.546% bind RISK     part 0.001% rt_cost 0.41% limit 241.3111 -> order price 241.31
+   REGN    LONG  score  77.8 w  2.95% stopdist 15.44% risk@close 0.455% risk@limit 0.500% bind RISK     part 0.000% rt_cost 0.41% limit 997.0257 -> order price 997.02
+   TRV     LONG  score  77.8 w  4.48% stopdist 10.52% risk@close 0.471% risk@limit 0.518% bind RISK     part 0.001% rt_cost 0.41% limit 411.1414 -> order price 411.14
+   GRMN    LONG  score  77.8 w  3.08% stopdist 15.76% risk@close 0.485% risk@limit 0.533% bind RISK     part 0.001% rt_cost 0.43% limit 284.1575 -> order price 284.15
+   RMD     LONG  score  77.0 w  3.44% stopdist 14.03% risk@close 0.483% risk@limit 0.531% bind RISK     part 0.001% rt_cost 0.42% limit 249.1466 -> order price 249.14
+   PHM     LONG  score  76.4 w  3.10% stopdist 15.55% risk@close 0.482% risk@limit 0.530% bind RISK     part 0.001% rt_cost 0.42% limit 136.9365 -> order price 136.93
+   SYF     LONG  score  76.3 w  3.16% stopdist 15.57% risk@close 0.492% risk@limit 0.541% bind RISK     part 0.001% rt_cost 0.42% limit 69.8000 -> order price 69.8
+   CF      LONG  score  76.1 w  2.70% stopdist 17.76% risk@close 0.480% risk@limit 0.528% bind RISK     part 0.001% rt_cost 0.43% limit 119.5871 -> order price 119.58
+   sum of stop risk: at close 6.30% of equity; if every order fills at its cap 6.93%;  names 13; largest weight 5.3%
+
+[US] stance AGGRESSIVE (size_factor_total 0.5, cap 0.5, left out 0): made-up equity 100,000; candidates 304; orders 7; new exposure 49.9%; cash left 49.4%; skipped {'EXPOSURE_FULL': 296, 'TOO_SMALL': 1}
+   by style: {'LONG': 7} binding: {'RISK': 6, 'EXPOSURE': 1}
+   INCY    LONG  score  84.7 w  6.85% stopdist 14.58% risk@close 0.999% risk@limit 1.099% bind RISK     part 0.003% rt_cost 0.44% limit 124.1337 -> order price 124.13
+   ACGL    LONG  score  83.0 w  9.71% stopdist 10.20% risk@close 0.990% risk@limit 1.089% bind RISK     part 0.005% rt_cost 0.43% limit 111.4154 -> order price 111.41
+   EG      LONG  score  81.8 w  9.54% stopdist 10.31% risk@close 0.983% risk@limit 1.082% bind RISK     part 0.005% rt_cost 0.43% limit 438.1096 -> order price 438.1
+   PYPL    LONG  score  80.1 w  6.65% stopdist 14.97% risk@close 0.995% risk@limit 1.095% bind RISK     part 0.001% rt_cost 0.42% limit 58.6754 -> order price 58.67
+   NEM     LONG  score  79.5 w  3.75% stopdist 26.06% risk@close 0.978% risk@limit 1.076% bind RISK     part 0.000% rt_cost 0.42% limit 104.0832 -> order price 104.08
+   CB      LONG  score  78.9 w 11.03% stopdist  8.93% risk@close 0.985% risk@limit 1.084% bind RISK     part 0.002% rt_cost 0.42% limit 383.9068 -> order price 383.9
+   PGR     LONG  score  78.6 w  2.39% stopdist 10.94% risk@close 0.261% risk@limit 0.287% bind EXPOSURE part 0.000% rt_cost 0.41% limit 241.3111 -> order price 241.31
+   sum of stop risk: at close 6.19% of equity; if every order fills at its cap 6.81%;  names 7; largest weight 11.0%
+
+[KR] recorded state ADVERSE 26.0 (factor 1.0, cap None): made-up equity 100,000,000; candidates 141; orders 30; new exposure 96.8%; cash left 0.2%; skipped {'SLEEVE_FULL': 66, 'ALREADY_PLANNED': 6, 'NO_CASH': 39}
+   by style: {'LONG': 22, 'SWING': 8} binding: {'RISK': 29, 'CASH': 1}
+   005830  LONG  score  83.5 w  3.65% stopdist 26.53% risk@close 0.969% risk@limit 1.066% bind RISK     part 0.011% rt_cost 0.64% limit 170506.5021 -> order price 170500.0
+   035900  LONG  score  81.1 w  2.70% stopdist 36.73% risk@close 0.992% risk@limit 1.091% bind RISK     part 0.007% rt_cost 0.65% limit 48259.9099 -> order price 48250.0
+   192080  LONG  score  80.9 w  4.20% stopdist 23.69% risk@close 0.996% risk@limit 1.096% bind RISK     part 0.143% rt_cost 0.89% limit 58964.5656 -> order price 58900.0
+   041510  LONG  score  80.2 w  2.79% stopdist 35.30% risk@close 0.986% risk@limit 1.085% bind RISK     part 0.013% rt_cost 0.69% limit 99699.7569 -> order price 99600.0
+   030190  LONG  score  79.2 w  4.35% stopdist 22.97% risk@close 0.998% risk@limit 1.098% bind RISK     part 0.312% rt_cost 1.04% limit 17850.7407 -> order price 17850.0
+   462870  LONG  score  78.7 w  3.04% stopdist 32.88% risk@close 0.998% risk@limit 1.098% bind RISK     part 0.146% rt_cost 1.03% limit 27991.0317 -> order price 27950.0
+   259960  LONG  score  78.0 w  3.49% stopdist 27.91% risk@close 0.975% risk@limit 1.073% bind RISK     part 0.015% rt_cost 0.67% limit 211236.1283 -> order price 211000.0
+   003690  LONG  score  77.1 w  5.18% stopdist 19.28% risk@close 0.998% risk@limit 1.098% bind RISK     part 0.168% rt_cost 0.85% limit 11782.8343 -> order price 11780.0
+   145020  LONG  score  76.2 w  3.81% stopdist 25.48% risk@close 0.970% risk@limit 1.067% bind RISK     part 0.032% rt_cost 0.71% limit 216889.6216 -> order price 216500.0
+   082920  LONG  score  75.9 w  2.27% stopdist 43.92% risk@close 0.998% risk@limit 1.098% bind RISK     part 0.046% rt_cost 0.91% limit 20815.7237 -> order price 20800.0
+   000810  LONG  score  75.9 w  3.08% stopdist 30.02% risk@close 0.926% risk@limit 1.018% bind RISK     part 0.004% rt_cost 0.61% limit 529430.8716 -> order price 529000.0
+   053800  LONG  score  75.8 w  2.21% stopdist 43.95% risk@close 0.971% risk@limit 1.069% bind RISK     part 0.003% rt_cost 0.62% limit 164839.0401 -> order price 164800.0
+   214450  LONG  score  75.7 w  2.78% stopdist 33.66% risk@close 0.936% risk@limit 1.029% bind RISK     part 0.012% rt_cost 0.68% limit 287357.2234 -> order price 287000.0
+   271560  LONG  score  75.1 w  5.64% stopdist 17.52% risk@close 0.987% risk@limit 1.086% bind RISK     part 0.045% rt_cost 0.68% limit 122000.0938 -> order price 122000.0
+   062040  LONG  score  75.1 w  1.81% stopdist 54.64% risk@close 0.989% risk@limit 1.088% bind RISK     part 0.005% rt_cost 0.69% limit 100507.6029 -> order price 100500.0
+   001450  LONG  score  74.3 w  2.90% stopdist 34.23% risk@close 0.994% risk@limit 1.093% bind RISK     part 0.017% rt_cost 0.71% limit 34905.3390 -> order price 34900.0
+   031980  LONG  score  74.3 w  1.30% stopdist 71.31% risk@close 0.928% risk@limit 1.021% bind RISK     part 0.004% rt_cost 0.71% limit 126735.5734 -> order price 126700.0
+   214150  LONG  score  74.0 w  2.56% stopdist 38.95% risk@close 0.998% risk@limit 1.098% bind RISK     part 0.033% rt_cost 0.81% limit 22752.9302 -> order price 22750.0
+   483650  LONG  score  73.5 w  2.47% stopdist 39.48% risk@close 0.976% risk@limit 1.074% bind RISK     part 0.013% rt_cost 0.71% limit 142824.2425 -> order price 142800.0
+   001800  LONG  score  72.4 w  5.38% stopdist 18.56% risk@close 0.999% risk@limit 1.099% bind RISK     part 0.269% rt_cost 0.91% limit 23324.9768 -> order price 23300.0
+   000660  LONG  score  72.3 w  2.06% stopdist 47.26% risk@close 0.974% risk@limit 1.071% bind RISK     part 0.000% rt_cost 0.54% limit 1078680.4400 -> order price 1078000.0
+   058470  LONG  score  72.2 w  2.15% stopdist 45.78% risk@close 0.984% risk@limit 1.083% bind RISK     part 0.007% rt_cost 0.68% limit 47844.5454 -> order price 47800.0
+   064350  SWING score  65.7 w  3.60% stopdist 13.80% risk@close 0.497% risk@limit 0.621% bind RISK     part 0.012% rt_cost 0.68% limit 61036.0814 -> order price 61000.0
+   009150  SWING score  64.3 w  1.51% stopdist 22.88% risk@close 0.345% risk@limit 0.432% bind RISK     part 0.000% rt_cost 0.56% limit 798177.2273 -> order price 798000.0
+   051600  SWING score  63.4 w  5.65% stopdist  8.82% risk@close 0.499% risk@limit 0.623% bind RISK     part 0.108% rt_cost 0.82% limit 34187.5481 -> order price 34150.0
+   012450  SWING score  62.3 w  3.80% stopdist 12.28% risk@close 0.466% risk@limit 0.583% bind RISK     part 0.003% rt_cost 0.60% limit 652430.4018 -> order price 652000.0
+   402340  SWING score  62.1 w  1.91% stopdist 21.44% risk@close 0.408% risk@limit 0.511% bind RISK     part 0.000% rt_cost 0.57% limit 669038.1250 -> order price 669000.0
+   196170  SWING score  62.1 w  2.88% stopdist 16.80% risk@close 0.484% risk@limit 0.606% bind RISK     part 0.003% rt_cost 0.62% limit 176724.3556 -> order price 176700.0
+   009540  SWING score  61.5 w  5.08% stopdist  9.70% risk@close 0.493% risk@limit 0.616% bind RISK     part 0.011% rt_cost 0.63% limit 226356.8661 -> order price 226000.0
+   014680  SWING score  61.1 w  2.52% stopdist 12.83% risk@close 0.324% risk@limit 0.405% bind CASH     part 0.031% rt_cost 0.76% limit 185979.5833 -> order price 185900.0
+   sum of stop risk: at close 25.06% of equity; if every order fills at its cap 28.09%;  names 30; largest weight 5.7%
+
+[KR] same candidates, as if the day were FAVOURABLE: made-up equity 100,000,000; candidates 141; orders 30; new exposure 96.8%; cash left 0.2%; skipped {'SLEEVE_FULL': 66, 'ALREADY_PLANNED': 6, 'NO_CASH': 39}
+   by style: {'LONG': 22, 'SWING': 8} binding: {'RISK': 29, 'CASH': 1}
+   005830  LONG  score  83.5 w  3.65% stopdist 26.53% risk@close 0.969% risk@limit 1.066% bind RISK     part 0.011% rt_cost 0.64% limit 170506.5021 -> order price 170500.0
+   035900  LONG  score  81.1 w  2.70% stopdist 36.73% risk@close 0.992% risk@limit 1.091% bind RISK     part 0.007% rt_cost 0.65% limit 48259.9099 -> order price 48250.0
+   192080  LONG  score  80.9 w  4.20% stopdist 23.69% risk@close 0.996% risk@limit 1.096% bind RISK     part 0.143% rt_cost 0.89% limit 58964.5656 -> order price 58900.0
+   041510  LONG  score  80.2 w  2.79% stopdist 35.30% risk@close 0.986% risk@limit 1.085% bind RISK     part 0.013% rt_cost 0.69% limit 99699.7569 -> order price 99600.0
+   030190  LONG  score  79.2 w  4.35% stopdist 22.97% risk@close 0.998% risk@limit 1.098% bind RISK     part 0.312% rt_cost 1.04% limit 17850.7407 -> order price 17850.0
+   462870  LONG  score  78.7 w  3.04% stopdist 32.88% risk@close 0.998% risk@limit 1.098% bind RISK     part 0.146% rt_cost 1.03% limit 27991.0317 -> order price 27950.0
+   259960  LONG  score  78.0 w  3.49% stopdist 27.91% risk@close 0.975% risk@limit 1.073% bind RISK     part 0.015% rt_cost 0.67% limit 211236.1283 -> order price 211000.0
+   003690  LONG  score  77.1 w  5.18% stopdist 19.28% risk@close 0.998% risk@limit 1.098% bind RISK     part 0.168% rt_cost 0.85% limit 11782.8343 -> order price 11780.0
+   145020  LONG  score  76.2 w  3.81% stopdist 25.48% risk@close 0.970% risk@limit 1.067% bind RISK     part 0.032% rt_cost 0.71% limit 216889.6216 -> order price 216500.0
+   082920  LONG  score  75.9 w  2.27% stopdist 43.92% risk@close 0.998% risk@limit 1.098% bind RISK     part 0.046% rt_cost 0.91% limit 20815.7237 -> order price 20800.0
+   000810  LONG  score  75.9 w  3.08% stopdist 30.02% risk@close 0.926% risk@limit 1.018% bind RISK     part 0.004% rt_cost 0.61% limit 529430.8716 -> order price 529000.0
+   053800  LONG  score  75.8 w  2.21% stopdist 43.95% risk@close 0.971% risk@limit 1.069% bind RISK     part 0.003% rt_cost 0.62% limit 164839.0401 -> order price 164800.0
+   214450  LONG  score  75.7 w  2.78% stopdist 33.66% risk@close 0.936% risk@limit 1.029% bind RISK     part 0.012% rt_cost 0.68% limit 287357.2234 -> order price 287000.0
+   271560  LONG  score  75.1 w  5.64% stopdist 17.52% risk@close 0.987% risk@limit 1.086% bind RISK     part 0.045% rt_cost 0.68% limit 122000.0938 -> order price 122000.0
+   062040  LONG  score  75.1 w  1.81% stopdist 54.64% risk@close 0.989% risk@limit 1.088% bind RISK     part 0.005% rt_cost 0.69% limit 100507.6029 -> order price 100500.0
+   001450  LONG  score  74.3 w  2.90% stopdist 34.23% risk@close 0.994% risk@limit 1.093% bind RISK     part 0.017% rt_cost 0.71% limit 34905.3390 -> order price 34900.0
+   031980  LONG  score  74.3 w  1.30% stopdist 71.31% risk@close 0.928% risk@limit 1.021% bind RISK     part 0.004% rt_cost 0.71% limit 126735.5734 -> order price 126700.0
+   214150  LONG  score  74.0 w  2.56% stopdist 38.95% risk@close 0.998% risk@limit 1.098% bind RISK     part 0.033% rt_cost 0.81% limit 22752.9302 -> order price 22750.0
+   483650  LONG  score  73.5 w  2.47% stopdist 39.48% risk@close 0.976% risk@limit 1.074% bind RISK     part 0.013% rt_cost 0.71% limit 142824.2425 -> order price 142800.0
+   001800  LONG  score  72.4 w  5.38% stopdist 18.56% risk@close 0.999% risk@limit 1.099% bind RISK     part 0.269% rt_cost 0.91% limit 23324.9768 -> order price 23300.0
+   000660  LONG  score  72.3 w  2.06% stopdist 47.26% risk@close 0.974% risk@limit 1.071% bind RISK     part 0.000% rt_cost 0.54% limit 1078680.4400 -> order price 1078000.0
+   058470  LONG  score  72.2 w  2.15% stopdist 45.78% risk@close 0.984% risk@limit 1.083% bind RISK     part 0.007% rt_cost 0.68% limit 47844.5454 -> order price 47800.0
+   064350  SWING score  65.7 w  3.60% stopdist 13.80% risk@close 0.497% risk@limit 0.621% bind RISK     part 0.012% rt_cost 0.68% limit 61036.0814 -> order price 61000.0
+   009150  SWING score  64.3 w  1.51% stopdist 22.88% risk@close 0.345% risk@limit 0.432% bind RISK     part 0.000% rt_cost 0.56% limit 798177.2273 -> order price 798000.0
+   051600  SWING score  63.4 w  5.65% stopdist  8.82% risk@close 0.499% risk@limit 0.623% bind RISK     part 0.108% rt_cost 0.82% limit 34187.5481 -> order price 34150.0
+   012450  SWING score  62.3 w  3.80% stopdist 12.28% risk@close 0.466% risk@limit 0.583% bind RISK     part 0.003% rt_cost 0.60% limit 652430.4018 -> order price 652000.0
+   402340  SWING score  62.1 w  1.91% stopdist 21.44% risk@close 0.408% risk@limit 0.511% bind RISK     part 0.000% rt_cost 0.57% limit 669038.1250 -> order price 669000.0
+   196170  SWING score  62.1 w  2.88% stopdist 16.80% risk@close 0.484% risk@limit 0.606% bind RISK     part 0.003% rt_cost 0.62% limit 176724.3556 -> order price 176700.0
+   009540  SWING score  61.5 w  5.08% stopdist  9.70% risk@close 0.493% risk@limit 0.616% bind RISK     part 0.011% rt_cost 0.63% limit 226356.8661 -> order price 226000.0
+   014680  SWING score  61.1 w  2.52% stopdist 12.83% risk@close 0.324% risk@limit 0.405% bind CASH     part 0.031% rt_cost 0.76% limit 185979.5833 -> order price 185900.0
+   sum of stop risk: at close 25.06% of equity; if every order fills at its cap 28.09%;  names 30; largest weight 5.7%
+
+[KR] stance DEFENSIVE (size_factor_total 0.5, cap 0.5, left out 133): made-up equity 100,000,000; candidates 8; orders 8; new exposure 14.6%; cash left 85.0%; skipped {}
+   by style: {'LONG': 8} binding: {'RISK': 8}
+   035900  LONG  score  81.1 w  1.35% stopdist 36.73% risk@close 0.496% risk@limit 0.545% bind RISK     part 0.004% rt_cost 0.62% limit 48259.9099 -> order price 48250.0
+   192080  LONG  score  80.9 w  2.07% stopdist 23.69% risk@close 0.491% risk@limit 0.540% bind RISK     part 0.071% rt_cost 0.78% limit 58964.5656 -> order price 58900.0
+   041510  LONG  score  80.2 w  1.35% stopdist 35.30% risk@close 0.476% risk@limit 0.524% bind RISK     part 0.006% rt_cost 0.64% limit 99699.7569 -> order price 99600.0
+   030190  LONG  score  79.2 w  2.16% stopdist 22.97% risk@close 0.497% risk@limit 0.547% bind RISK     part 0.156% rt_cost 0.89% limit 17850.7407 -> order price 17850.0
+   259960  LONG  score  78.0 w  1.64% stopdist 27.91% risk@close 0.459% risk@limit 0.505% bind RISK     part 0.007% rt_cost 0.62% limit 211236.1283 -> order price 211000.0
+   145020  LONG  score  76.2 w  1.90% stopdist 25.48% risk@close 0.485% risk@limit 0.534% bind RISK     part 0.016% rt_cost 0.66% limit 216889.6216 -> order price 216500.0
+   214450  LONG  score  75.7 w  1.39% stopdist 33.66% risk@close 0.468% risk@limit 0.515% bind RISK     part 0.006% rt_cost 0.63% limit 287357.2234 -> order price 287000.0
+   271560  LONG  score  75.1 w  2.76% stopdist 17.52% risk@close 0.483% risk@limit 0.531% bind RISK     part 0.022% rt_cost 0.63% limit 122000.0938 -> order price 122000.0
+   sum of stop risk: at close 3.85% of equity; if every order fills at its cap 4.24%;  names 8; largest weight 2.8%
+
+[KR] stance AGGRESSIVE (size_factor_total 1.5, cap None, left out 0): made-up equity 100,000,000; candidates 141; orders 20; new exposure 96.9%; cash left 0.2%; skipped {'SLEEVE_FULL': 92, 'ALREADY_PLANNED': 4, 'NO_CASH': 25}
+   by style: {'LONG': 14, 'SWING': 6} binding: {'RISK': 18, 'SLEEVE': 1, 'CASH': 1}
+   005830  LONG  score  83.5 w  5.65% stopdist 26.53% risk@close 1.498% risk@limit 1.648% bind RISK     part 0.018% rt_cost 0.67% limit 170506.5021 -> order price 170500.0
+   035900  LONG  score  81.1 w  4.05% stopdist 36.73% risk@close 1.488% risk@limit 1.636% bind RISK     part 0.011% rt_cost 0.68% limit 48259.9099 -> order price 48250.0
+   192080  LONG  score  80.9 w  6.28% stopdist 23.69% risk@close 1.487% risk@limit 1.636% bind RISK     part 0.214% rt_cost 0.97% limit 58964.5656 -> order price 58900.0
+   041510  LONG  score  80.2 w  4.24% stopdist 35.30% risk@close 1.496% risk@limit 1.645% bind RISK     part 0.020% rt_cost 0.73% limit 99699.7569 -> order price 99600.0
+   030190  LONG  score  79.2 w  6.53% stopdist 22.97% risk@close 1.499% risk@limit 1.649% bind RISK     part 0.469% rt_cost 1.16% limit 17850.7407 -> order price 17850.0
+   462870  LONG  score  78.7 w  4.55% stopdist 32.88% risk@close 1.497% risk@limit 1.647% bind RISK     part 0.219% rt_cost 1.15% limit 27991.0317 -> order price 27950.0
+   259960  LONG  score  78.0 w  5.34% stopdist 27.91% risk@close 1.491% risk@limit 1.641% bind RISK     part 0.023% rt_cost 0.70% limit 211236.1283 -> order price 211000.0
+   003690  LONG  score  77.1 w  7.78% stopdist 19.28% risk@close 1.500% risk@limit 1.650% bind RISK     part 0.252% rt_cost 0.92% limit 11782.8343 -> order price 11780.0
+   145020  LONG  score  76.2 w  5.71% stopdist 25.48% risk@close 1.455% risk@limit 1.601% bind RISK     part 0.048% rt_cost 0.75% limit 216889.6216 -> order price 216500.0
+   082920  LONG  score  75.9 w  3.41% stopdist 43.92% risk@close 1.497% risk@limit 1.647% bind RISK     part 0.069% rt_cost 0.99% limit 20815.7237 -> order price 20800.0
+   000810  LONG  score  75.9 w  4.63% stopdist 30.02% risk@close 1.389% risk@limit 1.528% bind RISK     part 0.006% rt_cost 0.62% limit 529430.8716 -> order price 529000.0
+   053800  LONG  score  75.8 w  3.32% stopdist 43.95% risk@close 1.457% risk@limit 1.603% bind RISK     part 0.004% rt_cost 0.64% limit 164839.0401 -> order price 164800.0
+   214450  LONG  score  75.7 w  4.45% stopdist 33.66% risk@close 1.497% risk@limit 1.647% bind RISK     part 0.019% rt_cost 0.71% limit 287357.2234 -> order price 287000.0
+   271560  LONG  score  75.1 w  3.96% stopdist 17.52% risk@close 0.693% risk@limit 0.762% bind SLEEVE   part 0.032% rt_cost 0.65% limit 122000.0938 -> order price 122000.0
+   064350  SWING score  65.7 w  5.43% stopdist 13.80% risk@close 0.749% risk@limit 0.937% bind RISK     part 0.019% rt_cost 0.72% limit 61036.0814 -> order price 61000.0
+   009150  SWING score  64.3 w  3.02% stopdist 22.88% risk@close 0.691% risk@limit 0.864% bind RISK     part 0.000% rt_cost 0.57% limit 798177.2273 -> order price 798000.0
+   051600  SWING score  63.4 w  8.50% stopdist  8.82% risk@close 0.749% risk@limit 0.937% bind RISK     part 0.162% rt_cost 0.88% limit 34187.5481 -> order price 34150.0
+   012450  SWING score  62.3 w  5.70% stopdist 12.28% risk@close 0.699% risk@limit 0.874% bind RISK     part 0.005% rt_cost 0.61% limit 652430.4018 -> order price 652000.0
+   402340  SWING score  62.1 w  3.17% stopdist 21.44% risk@close 0.681% risk@limit 0.851% bind RISK     part 0.001% rt_cost 0.58% limit 669038.1250 -> order price 669000.0
+   196170  SWING score  62.1 w  1.19% stopdist 16.80% risk@close 0.199% risk@limit 0.249% bind CASH     part 0.001% rt_cost 0.59% limit 176724.3556 -> order price 176700.0
+   sum of stop risk: at close 23.71% of equity; if every order fills at its cap 26.65%;  names 20; largest weight 8.5%
+
+[US] small made-up account, no state: made-up equity 3,000; candidates 304; orders 9; new exposure 93.2%; cash left 5.3%; skipped {'SLEEVE_FULL': 232, 'TOO_SMALL': 45, 'NO_CASH': 17, 'ALREADY_PLANNED': 1}
+   by style: {'LONG': 6, 'SWING': 3} binding: {'RISK': 5, 'SLEEVE': 1, 'WEIGHT': 3}
+   INCY    LONG  score  84.7 w 12.23% stopdist 14.58% risk@close 1.784% risk@limit 1.962% bind RISK     part 0.000% rt_cost 0.41% limit 124.1337 -> order price 124.13
+   ACGL    LONG  score  83.0 w 18.38% stopdist 10.20% risk@close 1.876% risk@limit 2.063% bind RISK     part 0.000% rt_cost 0.41% limit 111.4154 -> order price 111.41
+   EG      LONG  score  81.8 w 14.45% stopdist 10.31% risk@close 1.490% risk@limit 1.639% bind RISK     part 0.000% rt_cost 0.41% limit 438.1096 -> order price 438.1
+   PYPL    LONG  score  80.1 w 11.56% stopdist 14.97% risk@close 1.731% risk@limit 1.904% bind RISK     part 0.000% rt_cost 0.41% limit 58.6754 -> order price 58.67
+   NEM     LONG  score  79.5 w  6.76% stopdist 26.06% risk@close 1.762% risk@limit 1.938% bind RISK     part 0.000% rt_cost 0.41% limit 104.0832 -> order price 104.08
+   DECK    LONG  score  76.8 w  5.70% stopdist 21.00% risk@close 1.198% risk@limit 1.317% bind SLEEVE   part 0.000% rt_cost 0.41% limit 87.3564 -> order price 87.35
+   SWK     SWING score  64.6 w  7.28% stopdist  7.44% risk@close 0.542% risk@limit 0.677% bind WEIGHT   part 0.000% rt_cost 0.41% limit 111.2523 -> order price 111.25
+   HAS     SWING score  60.0 w  7.37% stopdist  5.68% risk@close 0.419% risk@limit 0.524% bind WEIGHT   part 0.000% rt_cost 0.41% limit 112.1511 -> order price 112.15
+   TSCO    SWING score  59.4 w  9.42% stopdist  7.07% risk@close 0.666% risk@limit 0.832% bind WEIGHT   part 0.000% rt_cost 0.41% limit 41.0830 -> order price 41.08
+   sum of stop risk: at close 11.47% of equity; if every order fills at its cap 12.86%;  names 9; largest weight 18.4%
+
+KR tick rounding: all on grid and <= cap;  US: 123.45 0.9876
+round trip cost {'US': 0.4021, 'KR': 0.53} fees only {'US': 0.2021, 'KR': 0.23}
+   no-resistance RR  market US ATR 1%: 1.082  (entry rule needs 1.5)
+   no-resistance RR  market KR ATR 1%: 0.976  (entry rule needs 1.5)
+   no-resistance RR  market US ATR 2%: 1.272  (entry rule needs 1.5)
+   no-resistance RR  market KR ATR 2%: 1.208  (entry rule needs 1.5)
+   no-resistance RR  market US ATR 5%: 1.403  (entry rule needs 1.5)
+   no-resistance RR  market KR ATR 5%: 1.374  (entry rule needs 1.5)

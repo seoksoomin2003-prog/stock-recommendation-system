@@ -1,0 +1,261 @@
+== QSF_1_1_HISTORICAL_PRICE_ONLY.json 18614
+    .status = REAL
+== QSF_1_2_VALIDATION.json 69828
+    .primary.SWING.verdict = NO_EVIDENCE
+    .primary.LONG_TERM.verdict = NO_EVIDENCE
+    .status = REAL
+== QSF_BACKTEST_CURRENT_KR.json 16272
+    .status = REAL
+    .strategies.SWING.reading = NEITHER
+    .strategies.LONG_TERM.reading = NEITHER
+== QSF_BACKTEST_CURRENT_US.json 17429
+    .status = REAL
+    .strategies.SWING.reading = NEITHER
+    .strategies.LONG_TERM.reading = NEITHER
+== QSF_CORRECTED_OOS.json 32592
+    .status = REAL
+    .primary.verdict = NO_EVIDENCE
+== QSF_CORRECTED_OOS_RUN1.json 32532
+    .status = REAL
+    .primary.verdict = NO_EVIDENCE
+== QSF_CORRECTED_OPEN.json 69192
+    .primary.SWING.verdict = NO_EVIDENCE
+    .primary.LONG_TERM.verdict = NO_EVIDENCE
+    .status = REAL
+== QSF_CORRECTED_OPEN_RUN1.json 69082
+    .primary.SWING.verdict = NO_EVIDENCE
+    .primary.LONG_TERM.verdict = NO_EVIDENCE
+    .status = REAL
+== QSF_CORRECTED_RESEARCH.json 7572
+    .status = DEVELOPED
+== QSF_CORRECTED_RESEARCH_RUN1.json 7565
+    .status = DEVELOPED
+== QSF_CORRECTED_SUE_TEST.json 2771
+    .status = TESTED
+    .verdict = NO_EVIDENCE
+== QSF_CORRECTED_SWING.json 12146
+    .status = DEVELOPED
+== QSF_CORRECTED_SWING_RUN1.json 12136
+    .status = DEVELOPED
+== QSF_ENSEMBLE.json 19954
+    .status = TESTED
+    .strategies.SWING_20.verdict = NO_EVIDENCE
+    .strategies.LONG_252.verdict = NO_EVIDENCE
+== QSF_FORECAST_TEST.json 5136
+    .status = REAL
+    .markets.KR.verdict = RANGE_CALIBRATED
+    .markets.US.verdict = RANGE_CALIBRATED
+== QSF_FORECAST_TOUCH_TEST.json 43030
+    .status = REAL
+    .markets.KR.verdict = TOUCH_CALIBRATED
+    .markets.US.verdict = TOUCH_CALIBRATED
+== QSF_INSIDER_CIK_ALIASES.json 738
+== QSF_INSIDER_DEV.json 5300
+    .status = DEVELOPED
+== QSF_KR.json 15900
+    .status = TESTED
+    .strategies.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .strategies.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+== QSF_KR_DIAGNOSTICS.json 21419
+    .status = CHECKED
+    .strategies.SWING_20.early.corrected_rules.verdict = WEAK_POSITIVE_EVIDENCE
+    .strategies.SWING_20.test.corrected_rules.verdict = WEAK_POSITIVE_EVIDENCE
+    .strategies.LONG_252.early.corrected_rules.verdict = WEAK_POSITIVE_EVIDENCE
+    .strategies.LONG_252.test.corrected_rules.verdict = WEAK_POSITIVE_EVIDENCE
+== QSF_KR_EVENTS.json 59123
+    .status = TESTED
+    .scores.EVENTS.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.EVENTS.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FINANCING.SWING_20.verdict = NO_EVIDENCE
+    .scores.FINANCING.LONG_252.verdict = NO_EVIDENCE
+    .scores.BUYBACK.SWING_20.verdict = NO_EVIDENCE
+    .scores.BUYBACK.LONG_252.verdict = NO_EVIDENCE
+    .scores.FUND_ONLY.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUND_ONLY.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUND_WITH_EVENTS.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUND_WITH_EVENTS.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .reading = A_AND_B2
+== QSF_KR_FUND.json 48265
+    .status = TESTED
+    .scores.FUNDAMENTALS.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUNDAMENTALS.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.WITH_PRICE.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.WITH_PRICE.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+== QSF_KR_HOLDER.json 62535
+    .status = TESTED
+    .scores.HOLDER.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.HOLDER.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.STAKE.SWING_20.verdict = NO_EVIDENCE
+    .scores.STAKE.LONG_252.verdict = NO_EVIDENCE
+    .scores.CHANGE.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.CHANGE.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUND_ONLY.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUND_ONLY.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUND_WITH_HOLDER.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUND_WITH_HOLDER.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .reading = A_AND_B2
+== QSF_KR_LIVE_REPLAY.json 24201
+    .status = REAL
+    .fidelity.status = REAL
+    .primary.SWING.condition_a.verdict = NO_EVIDENCE
+    .primary.SWING.reading = NO_EVIDENCE
+    .primary.LONG_TERM.condition_a.verdict = WEAK_POSITIVE_EVIDENCE
+    .primary.LONG_TERM.reading = RANK_ONLY
+    .top3.SWING|5.reading = NOT_DISTINCT_FROM_RANDOM
+    .top3.SWING|10.reading = NOT_DISTINCT_FROM_RANDOM
+    .top3.SWING|20.reading = DISTINCT_FROM_RANDOM
+    .top3.LONG_TERM|63.reading = NOT_DISTINCT_FROM_RANDOM
+    .top3.LONG_TERM|126.reading = NOT_DISTINCT_FROM_RANDOM
+    .top3.LONG_TERM|252.reading = NOT_DISTINCT_FROM_RANDOM
+== QSF_KR_LIVE_REPLAY_FIDELITY.json 1222
+    .status = REAL
+== QSF_KR_LONG_EARLY.json 13375
+    .status = REAL
+    .primary.condition_a.verdict = NO_EVIDENCE
+    .primary.reading = NOT_CONFIRMED
+    .others.LONG_TERM|63.condition_a.verdict = WEAK_POSITIVE_EVIDENCE
+    .others.LONG_TERM|126.condition_a.verdict = NO_EVIDENCE
+    .others.SWING|20.condition_a.verdict = NO_EVIDENCE
+== QSF_KR_METHOD_SELECTION.json 19667
+    .status = REAL
+    .verdict = NO_PRIMARY
+== QSF_KR_RISK_GRADE.json 3754
+    .status = REAL
+    .verdict = RISK_GRADE_SUPPORTED
+== QSF_KR_SUE.json 106398
+    .status = TESTED
+    .scores.SUE.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.SUE.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.SUE_RESIDUAL.SWING_20.verdict = NO_EVIDENCE
+    .scores.SUE_RESIDUAL.LONG_252.verdict = NO_EVIDENCE
+    .scores.SUE_OP.SWING_20.verdict = NO_EVIDENCE
+    .scores.SUE_OP.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.SUE_SALES.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.SUE_SALES.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.SUE_FRESH.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.SUE_FRESH.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.SUE_OLDER.SWING_20.verdict = NO_EVIDENCE
+    .scores.SUE_OLDER.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.EARNINGS_CHANGE.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.EARNINGS_CHANGE.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUND_ONLY.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUND_ONLY.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUND_WITH_SUE.SWING_20.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.FUND_WITH_SUE.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .reading = A_NOT_INDEPENDENT
+== QSF_KR_TECH_EARLY.json 5045
+    .status = REAL
+    .technical.reading = NEGATIVE_AGAIN
+    .risk_minus_composite.reading = DROPPING_HELPED_AGAIN
+== QSF_KR_UNIVERSE_TEST.json 19227
+    .status = REAL
+    .universe.reading = FITS_THE_HYPOTHESIS
+    .primary.SWING.condition_a.verdict = NO_EVIDENCE
+    .primary.SWING.reading = NO_EVIDENCE
+    .primary.LONG_TERM.condition_a.verdict = NO_EVIDENCE
+    .primary.LONG_TERM.reading = NO_EVIDENCE
+    .top3.SWING|5.reading = NOT_DISTINCT_FROM_RANDOM
+    .top3.SWING|10.reading = NOT_DISTINCT_FROM_RANDOM
+    .top3.SWING|20.reading = NOT_DISTINCT_FROM_RANDOM
+    .top3.LONG_TERM|63.reading = NOT_DISTINCT_FROM_RANDOM
+    .top3.LONG_TERM|126.reading = WORSE_THAN_RANDOM
+    .top3.LONG_TERM|252.reading = NOT_DISTINCT_FROM_RANDOM
+== QSF_MARKET_STATE.json 10035
+    .status = REAL
+    .markets.US.signals.R_US.return_verdict = RETURN_OPPOSITE
+    .markets.US.signals.R_US.risk_verdict = RISK_HIGHER_WHEN_ADVERSE
+    .markets.US.signals.V_US.return_verdict = RETURN_NOT_DISTINCT
+    .markets.US.signals.V_US.risk_verdict = RISK_HIGHER_WHEN_ADVERSE
+    .markets.KR.signals.R_KR.return_verdict = RETURN_NOT_DISTINCT
+    .markets.KR.signals.R_KR.risk_verdict = RISK_NOT_DISTINCT
+== QSF_NEWS_DEV.json 3026
+    .status = DEVELOPED
+== QSF_NEWS_TEST.json 7022
+    .status = TESTED
+    .strategies.SWING_10.status = TESTED
+    .strategies.SWING_10.verdict = NO_EVIDENCE
+    .strategies.SWING_20.status = TESTED
+    .strategies.SWING_20.verdict = NO_EVIDENCE
+== QSF_OOS_TEST.json 139129
+    .status = REAL
+    .primary.verdict = NO_EVIDENCE
+== QSF_OOS_UNIVERSE.json 2205
+== QSF_OPEN_UNIVERSE.json 13049
+== QSF_OPEN_VALIDATION.json 179992
+    .primary.SWING.verdict = NO_EVIDENCE
+    .primary.LONG_TERM.verdict = NO_EVIDENCE
+    .status = REAL
+    .without_open_names.primary.SWING.verdict = NO_EVIDENCE
+    .without_open_names.primary.LONG_TERM.verdict = NO_EVIDENCE
+    .early_panel.with_open_names.primary.SWING.verdict = NO_EVIDENCE
+    .early_panel.with_open_names.primary.LONG_TERM.verdict = NO_EVIDENCE
+    .early_panel.without_open_names.primary.SWING.verdict = NO_EVIDENCE
+    .early_panel.without_open_names.primary.LONG_TERM.verdict = NO_EVIDENCE
+== QSF_PICKS_SIMULATION.json 17212
+    .status = REAL
+    .picks.tables.SWING|1.reading = NOT_DISTINCT_FROM_RANDOM
+    .picks.tables.SWING|5.reading = NOT_DISTINCT_FROM_RANDOM
+    .picks.tables.SWING|10.reading = NOT_DISTINCT_FROM_RANDOM
+    .picks.tables.SWING|20.reading = NOT_DISTINCT_FROM_RANDOM
+    .picks.tables.LONG_TERM|5.reading = NOT_DISTINCT_FROM_RANDOM
+    .picks.tables.LONG_TERM|21.reading = NOT_DISTINCT_FROM_RANDOM
+    .picks.tables.LONG_TERM|63.reading = NOT_DISTINCT_FROM_RANDOM
+    .picks.primary.SWING.reading = NOT_DISTINCT_FROM_RANDOM
+    .picks.primary.LONG_TERM.reading = NOT_DISTINCT_FROM_RANDOM
+== QSF_PIT_VALIDATION.json 107016
+    .primary.SWING.verdict = NO_EVIDENCE
+    .primary.LONG_TERM.verdict = NO_EVIDENCE
+    .status = REAL
+    .existing_names_only.primary.SWING.verdict = NO_EVIDENCE
+    .existing_names_only.primary.LONG_TERM.verdict = NO_EVIDENCE
+== QSF_REGIME_WEIGHTS.json 8519
+    .status = REAL
+    .markets.KR.status = REAL
+    .markets.KR.verdict = NOT_SUPPORTED
+    .markets.US.status = REAL
+    .markets.US.verdict = NOT_SUPPORTED
+== QSF_RESEARCH_SCORE_DEV.json 7466
+    .status = DEVELOPED
+== QSF_SENTIMENT.json 11919
+    .status = TESTED
+    .strategies.SWING_20.verdict = NO_EVIDENCE
+    .strategies.LONG_252.verdict = NO_EVIDENCE
+== QSF_SHORT_DEV.json 2994
+    .status = DEVELOPED
+== QSF_SURVIVORSHIP_SURVEY.json 2745
+== QSF_SWING_DEV.json 13240
+    .status = DEVELOPED
+== QSF_SWING_TEST.json 6493
+    .status = TESTED
+    .strategies.SWING_10.status = TESTED
+    .strategies.SWING_10.verdict = NO_EVIDENCE
+    .strategies.SWING_20.status = TESTED
+    .strategies.SWING_20.verdict = NO_EVIDENCE
+== QSF_US_13F.json 25479
+    .status = TESTED
+    .scores.BREADTH.SWING_20.verdict = NO_EVIDENCE
+    .scores.BREADTH.QUARTER_63.verdict = NO_EVIDENCE
+    .scores.BREADTH.LONG_252.verdict = NO_EVIDENCE
+    .scores.BREADTH_RESIDUAL.SWING_20.verdict = NO_EVIDENCE
+    .scores.BREADTH_RESIDUAL.QUARTER_63.verdict = NO_EVIDENCE
+    .scores.BREADTH_RESIDUAL.LONG_252.verdict = NO_EVIDENCE
+    .scores.BREADTH_REL.SWING_20.verdict = NO_EVIDENCE
+    .scores.BREADTH_REL.QUARTER_63.verdict = NO_EVIDENCE
+    .scores.BREADTH_REL.LONG_252.verdict = NO_EVIDENCE
+    .scores.BREADTH_LEVEL.SWING_20.verdict = NO_EVIDENCE
+    .scores.BREADTH_LEVEL.QUARTER_63.verdict = NO_EVIDENCE
+    .scores.BREADTH_LEVEL.LONG_252.verdict = WEAK_POSITIVE_EVIDENCE
+    .scores.BREADTH_FRESH.SWING_20.verdict = NO_EVIDENCE
+    .scores.BREADTH_FRESH.QUARTER_63.verdict = NO_EVIDENCE
+    .scores.BREADTH_FRESH.LONG_252.verdict = NO_EVIDENCE
+    .scores.BREADTH_OLDER.SWING_20.verdict = NO_EVIDENCE
+    .scores.BREADTH_OLDER.QUARTER_63.verdict = NO_EVIDENCE
+    .scores.BREADTH_OLDER.LONG_252.verdict = NO_EVIDENCE
+== QSF_US_13F_PREPARE.json 19257
+    .status = PREPARED_OK
+== frozen_core_after.json 1308
+    .sources.core/decision_engine.py = 074f5180426eacdb95d890de0cadcd89c1752775092ac2b3bd846cb3f1d2cf0a
+    .sources.contracts/decision.py = 3339af551c0dd7f2a532e602aab0970973ea41f94cf0c5dd6e0d88e91996e468
+== frozen_core_before.json 1215
+    .sources.core/decision_engine.py = 074f5180426eacdb95d890de0cadcd89c1752775092ac2b3bd846cb3f1d2cf0a
+    .sources.contracts/decision.py = 3339af551c0dd7f2a532e602aab0970973ea41f94cf0c5dd6e0d88e91996e468

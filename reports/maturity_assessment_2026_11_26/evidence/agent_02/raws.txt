@@ -1,0 +1,22 @@
+US business_quality gross_margin None in 313 of 500
+US business_quality roe_years_positive None in 0 of 500
+US financial_resilience interest_cover None in 198 of 500
+US balance_dilution share_change None in 17 of 501
+US capital_allocation returns_capital None in 19 of 497
+US valuation fcf_yield None in 74 of 501
+US valuation pe None in 1 of 501
+US growth_quality eps_cagr3 None in 90 of 500
+US insider_ownership insider_pct None in 1 of 501
+US insider_activity: n 504 sell-only zero 275 no trades 0.5 167
+US risk_reward zero share among score>=65: 66 of 114
+KR business_quality gross_margin None in 300 of 300
+KR business_quality roe_years_positive None in 0 of 300
+KR financial_resilience interest_cover None in 300 of 300
+KR balance_dilution share_change None in 300 of 300
+KR capital_allocation returns_capital None in 0 of 231
+KR valuation fcf_yield None in 39 of 299
+KR valuation pe None in 0 of 299
+KR growth_quality eps_cagr3 None in 120 of 265
+KR insider_ownership insider_pct None in 0 of 271
+KR insider_activity: n 0 sell-only zero 0 no trades 0.5 0
+KR risk_reward zero share among score>=65: 0 of 1

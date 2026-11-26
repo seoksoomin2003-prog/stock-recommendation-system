@@ -1,0 +1,270 @@
+====================================================================================================
+{'ticker': 'ACGL', 'name': None, 'sector': None, 'industry': None, 'score': 82.961, 'conservative_score': 82.961, 'band': 'STRONG_BUY_CANDIDATE', 'band_held_back': False, 'action': 'BUY', 'entry_status': 'ENTRY_NOW', 'confidence': 'HIGH', 'coverage': 1.0, 'price': 110.29, 'deal_pin': None}
+domains {'EVENTS': (6.427, 64.267, 1.0), 'FUNDAMENTAL': (37.048, 86.157, 1.0), 'REGIME': (0.0, 22.61, 1.0), 'RISK': (14.515, 90.716, 1.0), 'TECHNICAL': (7.55, 75.5, 1.0)}
+  TECH long_trend             w 5 n=0.821 REAL     raw={'ma200': 98.049, 'ma200_slope': 0.023} | None
+  TECH relative_strength      w 3 n=0.795 REAL     raw={'percentile': 0.795, 'rel_126': 0.274} | None
+  TECH momentum_persistence   w 2 n=0.531 REAL     raw={'pos_month_share': 0.583, 'ret_12_1': 0.091} | None
+  FUND valuation              w15 n=0.799 REAL     raw={'pb': 1.483, 'pe': 9.508} | None
+  FUND business_quality       w15 n=0.845 REAL     raw={'gross_margin': None, 'op_margin': None, 'roe': 0.182, 'roe_years_positive': 1.0} | None
+  FUND growth_quality         w 8 n=0.924 REAL     raw={'eps_cagr3': 0.451, 'rev_cagr3': 0.275, 'rev_growth': 0.143} | None
+  FUND free_cash_flow         w 7 n=None NOT_APPLICABLE raw={} | 금융업은 FCF 기준을 적용하지 않습니다
+  FUND balance_dilution       w 5 n=1.0 REAL     raw={'equity_assets': 0.305, 'share_change': -0.015} | None
+  REGI vix_regime             w 0 n=0.292 REAL     raw={'percentile_5y': 0.924, 'vix': 28.29} | None
+  REGI vix_term               w 0 n=0.0 REAL     raw={'vix_vix3m': 1.076} | None
+  REGI credit_spread          w 0 n=0.043 REAL     raw={'percentile': 0.957, 'spread': 3.72, 'window_obs': 785} | None
+  REGI index_trend_breadth    w 0 n=0.516 REAL     raw={'breadth': 0.579, 'close': 716.7, 'ma200': 733.161, 'ma50': 757.889} | None
+  RISK financial_resilience   w 7 n=1.0 REAL     raw={'equity_assets': 0.305} | None
+  RISK downside_drawdown      w 5 n=0.93 REAL     raw={'downside_vol': 0.148, 'max_drawdown_252': -0.141} | None
+  RISK liquidity              w 4 n=0.716 REAL     raw={'adv_value': 200200454.378} | None
+  RISK leverage               w 4 n=None NOT_APPLICABLE raw={} | 금융업은 부채비율을 일반 기업 기준으로 평가하지 않습니다
+  EVEN governance             w 3 n=0.8 REAL     raw={'window_days': 365} | None
+  EVEN material_events        w 3 n=0.6 REAL     raw={'negative': 0, 'positive': 0} | None
+  EVEN insider_ownership      w 2 n=0.146 REAL     raw={'insider_pct': 0.029} | None
+  EVEN capital_allocation     w 2 n=0.968 REAL     raw={'returns_capital': True, 'share_change': -0.015} | None
+  fund_checks {"basis_note": null, "checked": 3, "direction": "FIRMING", "direction_ko": "한 가지가 좋아짐", "flags": [{"code": "SALES_UP", "side": "up", "text": "매출이 늘고 있습니다: 최근 1년 +14.3%, 3년 연평균 +27.5%."}], "pattern": "CHEAP_AND_IMPROVING", "pattern_ko": "값이 싸게 읽히고 재무가 좋아지는 방향입니다.", "version": "FC-K-1"}
+  fund_period {"annual": {"filed": "2026-02-26", "fiscal_end": "2025-12-31", "newer_quarter": false, "score": 82.961}, "live": "ANNUAL", "trailing": {"filed": "2026-11-04", "fiscal_end": "2026-09-30", "newer_quarter": true, "score": 80.008}}
+  keys: ['action', 'actionability', 'band', 'band_held_back', 'benchmark', 'cik', 'confidence', 'conservative_score', 'coverage', 'data_date', 'deal_held', 'deal_pin', 'domains', 'entry_session', 'entry_status', 'factors', 'fund_checks', 'fund_period', 'gates', 'held', 'holding', 'input_coverage', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'rules_version', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  holding: {"entry_date": "2026-11-27", "first_review": "2027-03-01", "invalidation": ["수익성 지속 악화 (ROE·영업이익률 하락)", "정당한 이유 없는 FCF 적자 지속", "재무 건전성 악화", "중대한 지배구조 문제", "심각한 주식 희석"], "milestones": ["다음 실적의 매출 성장률이 최근 14.3%를 유지하는지", "FCF 마진 30.7% 유지 여부"], "next_review": "2027-05-27", "range_months": [24, 36], "reduce_conditions": ["밸류에이션 점수 25/100 미만 지속", "종목·섹터 한도 초과"], "review_note": "12개월이 지났다는 이유만으로 매도하지 않습니다. 강제 종료일은 없습니다.", "scenarios": {"cases": [{"assumption": "성장 10%p 둔화, 배수 25% 축소", "case": "약세", "eps_growth": 0.04271788990825684, "multiple": 7.130819024710819, "price": 86.25101777446378}, {"assumption": "최근 매출 성장 유지, 현재 배수", "case": "기준", "eps_growth": 0.14271788990825685, "multiple": 9.507758699614426, "price": 126.03035712417112}, {"assumption": "성장 5%p 개선, 배수 15% 확대", "case": "강세", "eps_growth": 0.19271788990825683, "multiple": 10.93392250455659, "price": 151.2765857454396}], "method": "1년 뒤 EPS × 배수. 가정에 크게 의존하는 참고 범위입니다.", "status": "REAL"}, "status": "HYPOTHESIS", "strategy": "LONG_TERM", "why": ["사업 품질 84/100, 성장 품질 92/100으로 복리 기간을 길게 봅니다"]}
+====================================================================================================
+{'ticker': 'BE', 'name': None, 'sector': None, 'industry': None, 'score': 30.954, 'conservative_score': 30.954, 'band': 'SELL_AVOID', 'band_held_back': False, 'action': 'AVOID', 'entry_status': 'NO_VALID_ENTRY_SETUP', 'confidence': 'HIGH', 'coverage': 1.0, 'price': 152.89, 'deal_pin': None}
+domains {'EVENTS': (5.75, 57.497, 1.0), 'FUNDAMENTAL': (9.376, 18.752, 1.0), 'REGIME': (0.0, 22.61, 1.0), 'RISK': (8.667, 43.333, 1.0), 'TECHNICAL': (4.066, 40.657, 1.0)}
+  TECH long_trend             w 5 n=0.5 REAL     raw={'ma200': 224.043, 'ma200_slope': 0.191} | None
+  TECH relative_strength      w 3 n=0.022 REAL     raw={'percentile': 0.022, 'rel_126': -0.448} | None
+  TECH momentum_persistence   w 2 n=0.75 REAL     raw={'pos_month_share': 0.5, 'ret_12_1': 1.287} | None
+  FUND valuation              w15 n=0.006 REAL     raw={'fcf_yield': 0.001, 'pb': 58.809, 'pe': -413.216} | None
+  FUND business_quality       w15 n=0.114 REAL     raw={'gross_margin': 0.29, 'op_margin': 0.036, 'roe': -0.113, 'roe_years_positive': 0.0} | None
+  FUND growth_quality         w 8 n=0.667 REAL     raw={'eps_cagr3': None, 'rev_cagr3': 0.191, 'rev_growth': 0.373} | None
+  FUND free_cash_flow         w 7 n=0.321 REAL     raw={'fcf_margin': 0.028, 'fcf_years_positive': 0.4} | None
+  FUND balance_dilution       w 5 n=0.0 REAL     raw={'debt_equity': 3.411, 'share_change': 0.057} | None
+  REGI vix_regime             w 0 n=0.292 REAL     raw={'percentile_5y': 0.924, 'vix': 28.29} | None
+  REGI vix_term               w 0 n=0.0 REAL     raw={'vix_vix3m': 1.076} | None
+  REGI credit_spread          w 0 n=0.043 REAL     raw={'percentile': 0.957, 'spread': 3.72, 'window_obs': 785} | None
+  REGI index_trend_breadth    w 0 n=0.516 REAL     raw={'breadth': 0.579, 'close': 716.7, 'ma200': 733.161, 'ma50': 757.889} | None
+  RISK financial_resilience   w 7 n=0.667 REAL     raw={'cash_debt': 0.936, 'current_ratio': 5.98, 'interest_cover': 1.351} | None
+  RISK downside_drawdown      w 5 n=0.0 REAL     raw={'downside_vol': 0.719, 'max_drawdown_252': -0.588} | None
+  RISK liquidity              w 4 n=1.0 REAL     raw={'adv_value': 3251413218.037} | None
+  RISK leverage               w 4 n=0.0 REAL     raw={'debt_equity': 3.411} | None
+  EVEN governance             w 3 n=0.8 REAL     raw={'window_days': 365} | None
+  EVEN material_events        w 3 n=0.6 REAL     raw={'negative': 0, 'positive': 0} | None
+  EVEN insider_ownership      w 2 n=0.275 REAL     raw={'insider_pct': 0.055} | None
+  EVEN capital_allocation     w 2 n=0.5 REAL     raw={'returns_capital': True, 'share_change': 0.057} | None
+  fund_checks {"basis_note": "이 방향은 연간 재무제표로 읽은 것입니다. 최근 4분기 재무로 계산한 점수는 19.4점 높아, 최근 분기는 다른 쪽으로 움직였을 수 있습니다.", "checked": 2, "direction": "MIXED", "direction_ko": "엇갈림", "flags": [{"code": "ROE_DOWN", "side": "down", "text": "자기자본이익률(ROE)이 -4.8%에서 -11.3%로 내려갔습니다. 보유 종목이라면 이 프로그램이 '보유 논리가 깨짐'으로 읽는 조건입니다."}, {"code": "SALES_UP", "side": "up", "text": "매출이 늘고 있습니다: 최근 1년 +37.3%, 3년 연평균 +19.1%."}, {"code": "LOSS", "side": "risk", "text": "지금 적자입니다."}], "pattern": null, "pattern_ko": null, "version": "FC-K-1"}
+  fund_period {"annual": {"filed": "2026-02-09", "fiscal_end": "2025-12-31", "newer_quarter": false, "score": 30.954}, "live": "ANNUAL", "trailing": {"filed": "2026-10-22", "fiscal_end": "2026-09-30", "newer_quarter": true, "score": 50.376}}
+  keys: ['action', 'actionability', 'band', 'band_held_back', 'benchmark', 'cik', 'confidence', 'conservative_score', 'coverage', 'data_date', 'deal_held', 'deal_pin', 'domains', 'entry_session', 'entry_status', 'factors', 'fund_checks', 'fund_period', 'gates', 'held', 'holding', 'input_coverage', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'rules_version', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  holding: {"entry_date": "2026-11-27", "first_review": "2027-03-01", "invalidation": ["수익성 지속 악화 (ROE·영업이익률 하락)", "정당한 이유 없는 FCF 적자 지속", "재무 건전성 악화", "중대한 지배구조 문제", "심각한 주식 희석"], "milestones": ["다음 실적의 매출 성장률이 최근 37.3%를 유지하는지", "영업이익률 3.6% 유지 여부", "FCF 마진 2.8% 유지 여부"], "next_review": "2027-05-27", "range_months": [12, 24], "reduce_conditions": ["밸류에이션 점수 25/100 미만 지속", "종목·섹터 한도 초과"], "review_note": "12개월이 지났다는 이유만으로 매도하지 않습니다. 강제 종료일은 없습니다.", "scenarios": {"reason": "EPS, PER 또는 성장률이 없거나 적자라 시나리오를 만들지 않습니다.", "status": "UNAVAILABLE"}, "status": "HYPOTHESIS", "strategy": "LONG_TERM", "why": ["사업 품질 11/100으로 낮아 상단을 24개월로 줄입니다", "밸류에이션 1/100: 진입 전 관찰 기간이 더 필요할 수 있습니다"]}
+====================================================================================================
+{'ticker': 'CAT', 'name': None, 'sector': None, 'industry': None, 'score': 57.413, 'conservative_score': 57.413, 'band': 'HOLD_WATCH', 'band_held_back': False, 'action': 'WATCH', 'entry_status': 'ENTRY_NOW', 'confidence': 'HIGH', 'coverage': 1.0, 'price': 543.69, 'deal_pin': None}
+domains {'EVENTS': (7.225, 72.247, 1.0), 'FUNDAMENTAL': (30.848, 61.697, 1.0), 'REGIME': (0.0, 22.61, 1.0), 'RISK': (9.42, 47.102, 1.0), 'TECHNICAL': (4.178, 41.783, 1.0)}
+  TECH long_trend             w 5 n=0.478 REAL     raw={'ma200': 801.168, 'ma200_slope': 0.046} | None
+  TECH relative_strength      w 3 n=0.052 REAL     raw={'percentile': 0.052, 'rel_126': -0.356} | None
+  TECH momentum_persistence   w 2 n=0.815 REAL     raw={'pos_month_share': 0.667, 'ret_12_1': 0.286} | None
+  FUND valuation              w15 n=0.294 REAL     raw={'fcf_yield': 0.036, 'pb': 11.67, 'pe': 28.904} | None
+  FUND business_quality       w15 n=0.887 REAL     raw={'gross_margin': None, 'op_margin': 0.165, 'roe': 0.417, 'roe_years_positive': 1.0} | None
+  FUND growth_quality         w 8 n=0.505 REAL     raw={'eps_cagr3': 0.142, 'rev_cagr3': 0.044, 'rev_growth': 0.043} | None
+  FUND free_cash_flow         w 7 n=0.88 REAL     raw={'fcf_margin': 0.132, 'fcf_years_positive': 1.0} | None
+  FUND balance_dilution       w 5 n=0.589 REAL     raw={'debt_equity': 1.699, 'share_change': -0.035} | None
+  REGI vix_regime             w 0 n=0.292 REAL     raw={'percentile_5y': 0.924, 'vix': 28.29} | None
+  REGI vix_term               w 0 n=0.0 REAL     raw={'vix_vix3m': 1.076} | None
+  REGI credit_spread          w 0 n=0.043 REAL     raw={'percentile': 0.957, 'spread': 3.72, 'window_obs': 785} | None
+  REGI index_trend_breadth    w 0 n=0.516 REAL     raw={'breadth': 0.579, 'close': 716.7, 'ma200': 733.161, 'ma50': 757.889} | None
+  RISK financial_resilience   w 7 n=0.415 REAL     raw={'cash_debt': 0.276, 'current_ratio': 1.436, 'interest_cover': None} | None
+  RISK downside_drawdown      w 5 n=0.224 REAL     raw={'downside_vol': 0.302, 'max_drawdown_252': -0.521} | None
+  RISK liquidity              w 4 n=1.0 REAL     raw={'adv_value': 2465496366.054} | None
+  RISK leverage               w 4 n=0.348 REAL     raw={'debt_equity': 1.699} | None
+  EVEN governance             w 3 n=0.8 REAL     raw={'window_days': 365} | None
+  EVEN material_events        w 3 n=0.6 REAL     raw={'negative': 0, 'positive': 0} | None
+  EVEN insider_ownership      w 2 n=0.512 REAL     raw={'insider_pct': 0.002} | None
+  EVEN capital_allocation     w 2 n=1.0 REAL     raw={'returns_capital': True, 'share_change': -0.035} | None
+  fund_checks {"basis_note": null, "checked": 4, "direction": "SOFTENING", "direction_ko": "한 가지가 나빠짐", "flags": [{"code": "ROE_LOWER", "side": "down", "text": "자기자본이익률(ROE)이 55.4%에서 41.7%로 내려갔습니다."}], "pattern": "GOOD_BUT_DEAR", "pattern_ko": "사업은 좋게 읽히지만 값이 비싸게 읽힙니다. 좋은 회사와 좋은 투자는 다를 수 있습니다.", "version": "FC-K-1"}
+  fund_period {"annual": {"filed": "2026-02-13", "fiscal_end": "2025-12-31", "newer_quarter": false, "score": 57.413}, "live": "ANNUAL", "trailing": {"filed": "2026-11-04", "fiscal_end": "2026-09-30", "newer_quarter": true, "score": 59.111}}
+  keys: ['action', 'actionability', 'band', 'band_held_back', 'benchmark', 'cik', 'confidence', 'conservative_score', 'coverage', 'data_date', 'deal_held', 'deal_pin', 'domains', 'entry_session', 'entry_status', 'factors', 'fund_checks', 'fund_period', 'gates', 'held', 'holding', 'input_coverage', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'rules_version', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  holding: {"entry_date": "2026-11-27", "first_review": "2027-03-01", "invalidation": ["수익성 지속 악화 (ROE·영업이익률 하락)", "정당한 이유 없는 FCF 적자 지속", "재무 건전성 악화", "중대한 지배구조 문제", "심각한 주식 희석"], "milestones": ["다음 실적의 매출 성장률이 최근 4.3%를 유지하는지", "영업이익률 16.5% 유지 여부", "FCF 마진 13.2% 유지 여부"], "next_review": "2027-05-27", "range_months": [12, 36], "reduce_conditions": ["밸류에이션 점수 25/100 미만 지속", "종목·섹터 한도 초과"], "review_note": "12개월이 지났다는 이유만으로 매도하지 않습니다. 강제 종료일은 없습니다.", "scenarios": {"cases": [{"assumption": "성장 10%p 둔화, 배수 25% 축소", "case": "약세", "eps_growth": -0.05710472310944473, "multiple": 21.67822976241652, "price": 384.48205154596235}, {"assumption": "최근 매출 성장 유지, 현재 배수", "case": "기준", "eps_growth": 0.04289527689055528, "multiple": 28.904306349888692, "price": 567.011735638757}, {"assumption": "성장 5%p 개선, 배수 15% 확대", "case": "강세", "eps_growth": 0.09289527689055528, "multiple": 33.239952302372, "price": 683.3256711249516}], "method": "1년 뒤 EPS × 배수. 가정에 크게 의존하는 참고 범위입니다.", "status": "REAL"}, "status": "HYPOTHESIS", "strategy": "LONG_TERM", "why": ["초기 정책 범위 12~36개월을 그대로 씁니다"]}
+====================================================================================================
+{'ticker': 'COST', 'name': None, 'sector': None, 'industry': None, 'score': 63.309, 'conservative_score': 63.309, 'band': 'HOLD_WATCH', 'band_held_back': False, 'action': 'WATCH', 'entry_status': 'OVERVALUED_AT_CURRENT_PRICE', 'confidence': 'HIGH', 'coverage': 1.0, 'price': 1086.81, 'deal_pin': None}
+domains {'EVENTS': (5.936, 59.364, 1.0), 'FUNDAMENTAL': (26.303, 52.605, 1.0), 'REGIME': (0.0, 22.61, 1.0), 'RISK': (17.637, 88.184, 1.0), 'TECHNICAL': (7.102, 71.022, 1.0)}
+  TECH long_trend             w 5 n=0.789 REAL     raw={'ma200': 980.528, 'ma200_slope': 0.022} | None
+  TECH relative_strength      w 3 n=0.671 REAL     raw={'percentile': 0.671, 'rel_126': 0.18} | None
+  TECH momentum_persistence   w 2 n=0.572 REAL     raw={'pos_month_share': 0.583, 'ret_12_1': 0.125} | None
+  FUND valuation              w15 n=0.093 REAL     raw={'fcf_yield': 0.019, 'pb': 13.451, 'pe': 52.351} | None
+  FUND business_quality       w15 n=0.718 REAL     raw={'gross_margin': None, 'op_margin': 0.039, 'roe': 0.258, 'roe_years_positive': 1.0} | None
+  FUND growth_quality         w 8 n=0.641 REAL     raw={'eps_cagr3': 0.136, 'rev_cagr3': 0.078, 'rev_growth': 0.101} | None
+  FUND free_cash_flow         w 7 n=0.627 REAL     raw={'fcf_margin': 0.031, 'fcf_years_positive': 1.0} | None
+  FUND balance_dilution       w 5 n=0.924 REAL     raw={'debt_equity': 0.172, 'share_change': -0.001} | None
+  REGI vix_regime             w 0 n=0.292 REAL     raw={'percentile_5y': 0.924, 'vix': 28.29} | None
+  REGI vix_term               w 0 n=0.0 REAL     raw={'vix_vix3m': 1.076} | None
+  REGI credit_spread          w 0 n=0.043 REAL     raw={'percentile': 0.957, 'spread': 3.72, 'window_obs': 785} | None
+  REGI index_trend_breadth    w 0 n=0.516 REAL     raw={'breadth': 0.579, 'close': 716.7, 'ma200': 733.161, 'ma50': 757.889} | None
+  RISK financial_resilience   w 7 n=0.739 REAL     raw={'cash_debt': 3.279, 'current_ratio': 1.06, 'interest_cover': 80.586} | None
+  RISK downside_drawdown      w 5 n=0.893 REAL     raw={'downside_vol': 0.136, 'max_drawdown_252': -0.183} | None
+  RISK liquidity              w 4 n=1.0 REAL     raw={'adv_value': 2858367335.35} | None
+  RISK leverage               w 4 n=1.0 REAL     raw={'debt_equity': 0.172} | None
+  EVEN governance             w 3 n=0.8 REAL     raw={'window_days': 365} | None
+  EVEN material_events        w 3 n=0.6 REAL     raw={'negative': 0, 'positive': 0} | None
+  EVEN insider_ownership      w 2 n=0.005 REAL     raw={'insider_pct': 0.001} | None
+  EVEN capital_allocation     w 2 n=0.863 REAL     raw={'returns_capital': True, 'share_change': -0.001} | None
+  fund_checks {"basis_note": null, "checked": 4, "direction": "FIRMING", "direction_ko": "한 가지가 좋아짐", "flags": [{"code": "SALES_UP", "side": "up", "text": "매출이 늘고 있습니다: 최근 1년 +10.1%, 3년 연평균 +7.8%."}], "pattern": "GOOD_BUT_DEAR", "pattern_ko": "사업은 좋게 읽히지만 값이 비싸게 읽힙니다. 좋은 회사와 좋은 투자는 다를 수 있습니다.", "version": "FC-K-1"}
+  fund_period {"annual": {"filed": "2026-10-07", "fiscal_end": "2026-08-30", "newer_quarter": false, "score": 63.309}, "live": "ANNUAL", "trailing": {"filed": "2026-10-07", "fiscal_end": "2026-08-30", "newer_quarter": false, "score": 63.309}}
+  keys: ['action', 'actionability', 'band', 'band_held_back', 'benchmark', 'cik', 'confidence', 'conservative_score', 'coverage', 'data_date', 'deal_held', 'deal_pin', 'domains', 'entry_session', 'entry_status', 'factors', 'fund_checks', 'fund_period', 'gates', 'held', 'holding', 'input_coverage', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'rules_version', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  holding: {"entry_date": "2026-11-27", "first_review": "2027-03-01", "invalidation": ["수익성 지속 악화 (ROE·영업이익률 하락)", "정당한 이유 없는 FCF 적자 지속", "재무 건전성 악화", "중대한 지배구조 문제", "심각한 주식 희석"], "milestones": ["다음 실적의 매출 성장률이 최근 10.1%를 유지하는지", "영업이익률 3.9% 유지 여부", "FCF 마진 3.1% 유지 여부"], "next_review": "2027-05-27", "range_months": [24, 36], "reduce_conditions": ["밸류에이션 점수 25/100 미만 지속", "종목·섹터 한도 초과"], "review_note": "12개월이 지났다는 이유만으로 매도하지 않습니다. 강제 종료일은 없습니다.", "scenarios": {"cases": [{"assumption": "성장 10%p 둔화, 배수 25% 축소", "case": "약세", "eps_growth": 0.0014369538757788847, "multiple": 39.26336916884935, "price": 816.2788158897614}, {"assumption": "최근 매출 성장 유지, 현재 배수", "case": "기준", "eps_growth": 0.10143695387577889, "multiple": 52.35115889179913, "price": 1197.0527603790567}, {"assumption": "성장 5%p 개선, 배수 15% 확대", "case": "강세", "eps_growth": 0.15143695387577888, "multiple": 60.203832725568994, "price": 1439.102252805056}], "method": "1년 뒤 EPS × 배수. 가정에 크게 의존하는 참고 범위입니다.", "status": "REAL"}, "status": "HYPOTHESIS", "strategy": "LONG_TERM", "why": ["사업 품질 72/100, 성장 품질 64/100으로 복리 기간을 길게 봅니다", "밸류에이션 9/100: 진입 전 관찰 기간이 더 필요할 수 있습니다"]}
+====================================================================================================
+{'ticker': 'CRWD', 'name': None, 'sector': None, 'industry': None, 'score': 54.313, 'conservative_score': 54.313, 'band': 'WEAK_REDUCE', 'band_held_back': False, 'action': 'AVOID', 'entry_status': 'NO_VALID_ENTRY_SETUP', 'confidence': 'HIGH', 'coverage': 1.0, 'price': 209.3, 'deal_pin': None}
+domains {'EVENTS': (5.085, 50.847, 1.0), 'FUNDAMENTAL': (20.862, 41.723, 1.0), 'REGIME': (0.0, 22.61, 1.0), 'RISK': (13.956, 69.778, 1.0), 'TECHNICAL': (8.98, 89.801, 1.0)}
+  TECH long_trend             w 5 n=1.0 REAL     raw={'ma200': 177.816, 'ma200_slope': 0.269} | None
+  TECH relative_strength      w 3 n=0.827 REAL     raw={'percentile': 0.827, 'rel_126': 0.307} | None
+  TECH momentum_persistence   w 2 n=0.75 REAL     raw={'pos_month_share': 0.5, 'ret_12_1': 1.115} | None
+  FUND valuation              w15 n=0.029 REAL     raw={'fcf_yield': 0.006, 'pb': 48.394, 'pe': -1318.812} | None
+  FUND business_quality       w15 n=0.3 REAL     raw={'gross_margin': 0.747, 'op_margin': -0.061, 'roe': -0.037, 'roe_years_positive': 0.2} | None
+  FUND growth_quality         w 8 n=0.667 REAL     raw={'eps_cagr3': None, 'rev_cagr3': 0.29, 'rev_growth': 0.217} | None
+  FUND free_cash_flow         w 7 n=1.0 REAL     raw={'fcf_margin': 0.272, 'fcf_years_positive': 1.0} | None
+  FUND balance_dilution       w 5 n=0.718 REAL     raw={'debt_equity': 0.168, 'share_change': 0.024} | None
+  REGI vix_regime             w 0 n=0.292 REAL     raw={'percentile_5y': 0.924, 'vix': 28.29} | None
+  REGI vix_term               w 0 n=0.0 REAL     raw={'vix_vix3m': 1.076} | None
+  REGI credit_spread          w 0 n=0.043 REAL     raw={'percentile': 0.957, 'spread': 3.72, 'window_obs': 785} | None
+  REGI index_trend_breadth    w 0 n=0.516 REAL     raw={'breadth': 0.579, 'close': 716.7, 'ma200': 733.161, 'ma50': 757.889} | None
+  RISK financial_resilience   w 7 n=0.604 REAL     raw={'cash_debt': 7.016, 'current_ratio': 1.773, 'interest_cover': -10.467} | None
+  RISK downside_drawdown      w 5 n=0.346 REAL     raw={'downside_vol': 0.368, 'max_drawdown_252': -0.332} | None
+  RISK liquidity              w 4 n=1.0 REAL     raw={'adv_value': 2657789867.527} | None
+  RISK leverage               w 4 n=1.0 REAL     raw={'debt_equity': 0.168} | None
+  EVEN governance             w 3 n=0.8 REAL     raw={'window_days': 365} | None
+  EVEN material_events        w 3 n=0.6 REAL     raw={'negative': 0, 'positive': 0} | None
+  EVEN insider_ownership      w 2 n=0.068 REAL     raw={'insider_pct': 0.014} | None
+  EVEN capital_allocation     w 2 n=0.374 REAL     raw={'returns_capital': None, 'share_change': 0.024} | None
+  fund_checks {"basis_note": null, "checked": 2, "direction": "FIRMING", "direction_ko": "한 가지가 좋아짐", "flags": [{"code": "SALES_UP", "side": "up", "text": "매출이 늘고 있습니다: 최근 1년 +21.7%, 3년 연평균 +29.0%."}, {"code": "LOSS", "side": "risk", "text": "지금 적자입니다."}], "pattern": null, "pattern_ko": null, "version": "FC-K-1"}
+  fund_period {"annual": {"filed": "2026-03-05", "fiscal_end": "2026-01-31", "newer_quarter": false, "score": 54.313}, "live": "ANNUAL", "trailing": {"filed": "2026-11-23", "fiscal_end": "2026-10-31", "newer_quarter": true, "score": 56.112}}
+  keys: ['action', 'actionability', 'band', 'band_held_back', 'benchmark', 'cik', 'confidence', 'conservative_score', 'coverage', 'data_date', 'deal_held', 'deal_pin', 'domains', 'entry_session', 'entry_status', 'factors', 'fund_checks', 'fund_period', 'gates', 'held', 'holding', 'input_coverage', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'rules_version', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  holding: {"entry_date": "2026-11-27", "first_review": "2027-03-01", "invalidation": ["수익성 지속 악화 (ROE·영업이익률 하락)", "정당한 이유 없는 FCF 적자 지속", "재무 건전성 악화", "중대한 지배구조 문제", "심각한 주식 희석"], "milestones": ["다음 실적의 매출 성장률이 최근 21.7%를 유지하는지", "영업이익률 -6.1% 유지 여부", "FCF 마진 27.2% 유지 여부"], "next_review": "2027-05-27", "range_months": [12, 24], "reduce_conditions": ["밸류에이션 점수 25/100 미만 지속", "종목·섹터 한도 초과"], "review_note": "12개월이 지났다는 이유만으로 매도하지 않습니다. 강제 종료일은 없습니다.", "scenarios": {"reason": "EPS, PER 또는 성장률이 없거나 적자라 시나리오를 만들지 않습니다.", "status": "UNAVAILABLE"}, "status": "HYPOTHESIS", "strategy": "LONG_TERM", "why": ["사업 품질 30/100으로 낮아 상단을 24개월로 줄입니다", "밸류에이션 3/100: 진입 전 관찰 기간이 더 필요할 수 있습니다"]}
+====================================================================================================
+{'ticker': 'JPM', 'name': None, 'sector': None, 'industry': None, 'score': 64.336, 'conservative_score': 64.336, 'band': 'HOLD_WATCH', 'band_held_back': False, 'action': 'WATCH', 'entry_status': 'ENTRY_NOW', 'confidence': 'HIGH', 'coverage': 1.0, 'price': 316.74, 'deal_pin': None}
+domains {'EVENTS': (6.242, 62.421, 1.0), 'FUNDAMENTAL': (27.693, 64.403, 1.0), 'REGIME': (0.0, 22.61, 1.0), 'RISK': (11.082, 69.26, 1.0), 'TECHNICAL': (5.809, 58.086, 1.0)}
+  TECH long_trend             w 5 n=0.586 REAL     raw={'ma200': 325.133, 'ma200_slope': 0.026} | None
+  TECH relative_strength      w 3 n=0.558 REAL     raw={'percentile': 0.558, 'rel_126': 0.129} | None
+  TECH momentum_persistence   w 2 n=0.602 REAL     raw={'pos_month_share': 0.583, 'ret_12_1': 0.149} | None
+  FUND valuation              w15 n=0.456 REAL     raw={'pb': 2.321, 'pe': 15.821} | None
+  FUND business_quality       w15 n=0.79 REAL     raw={'gross_margin': None, 'op_margin': None, 'roe': 0.157, 'roe_years_positive': 1.0} | None
+  FUND growth_quality         w 8 n=0.695 REAL     raw={'eps_cagr3': 0.183, 'rev_cagr3': 0.123, 'rev_growth': 0.028} | None
+  FUND free_cash_flow         w 7 n=None NOT_APPLICABLE raw={} | 금융업은 FCF 기준을 적용하지 않습니다
+  FUND balance_dilution       w 5 n=0.69 REAL     raw={'equity_assets': 0.082, 'share_change': -0.034} | None
+  REGI vix_regime             w 0 n=0.292 REAL     raw={'percentile_5y': 0.924, 'vix': 28.29} | None
+  REGI vix_term               w 0 n=0.0 REAL     raw={'vix_vix3m': 1.076} | None
+  REGI credit_spread          w 0 n=0.043 REAL     raw={'percentile': 0.957, 'spread': 3.72, 'window_obs': 785} | None
+  REGI index_trend_breadth    w 0 n=0.516 REAL     raw={'breadth': 0.579, 'close': 716.7, 'ma200': 733.161, 'ma50': 757.889} | None
+  RISK financial_resilience   w 7 n=0.381 REAL     raw={'equity_assets': 0.082} | None
+  RISK downside_drawdown      w 5 n=0.883 REAL     raw={'downside_vol': 0.167, 'max_drawdown_252': -0.155} | None
+  RISK liquidity              w 4 n=1.0 REAL     raw={'adv_value': 2454202887.645} | None
+  RISK leverage               w 4 n=None NOT_APPLICABLE raw={} | 금융업은 부채비율을 일반 기업 기준으로 평가하지 않습니다
+  EVEN governance             w 3 n=0.8 REAL     raw={'window_days': 365} | None
+  EVEN material_events        w 3 n=0.6 REAL     raw={'negative': 0, 'positive': 0} | None
+  EVEN insider_ownership      w 2 n=0.021 REAL     raw={'insider_pct': 0.004} | None
+  EVEN capital_allocation     w 2 n=1.0 REAL     raw={'returns_capital': True, 'share_change': -0.034} | None
+  fund_checks {"basis_note": null, "checked": 3, "direction": "STABLE", "direction_ko": "큰 변화 없음", "flags": [], "pattern": null, "pattern_ko": null, "version": "FC-K-1"}
+  fund_period {"annual": {"filed": "2026-02-13", "fiscal_end": "2025-12-31", "newer_quarter": false, "score": 64.336}, "live": "ANNUAL", "trailing": {"filed": "2026-11-03", "fiscal_end": "2026-09-30", "newer_quarter": true, "score": 65.544}}
+  keys: ['action', 'actionability', 'band', 'band_held_back', 'benchmark', 'cik', 'confidence', 'conservative_score', 'coverage', 'data_date', 'deal_held', 'deal_pin', 'domains', 'entry_session', 'entry_status', 'factors', 'fund_checks', 'fund_period', 'gates', 'held', 'holding', 'input_coverage', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'rules_version', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  holding: {"entry_date": "2026-11-27", "first_review": "2027-03-01", "invalidation": ["수익성 지속 악화 (ROE·영업이익률 하락)", "정당한 이유 없는 FCF 적자 지속", "재무 건전성 악화", "중대한 지배구조 문제", "심각한 주식 희석"], "milestones": ["다음 실적의 매출 성장률이 최근 2.8%를 유지하는지"], "next_review": "2027-05-27", "range_months": [24, 36], "reduce_conditions": ["밸류에이션 점수 25/100 미만 지속", "종목·섹터 한도 초과"], "review_note": "12개월이 지났다는 이유만으로 매도하지 않습니다. 강제 종료일은 없습니다.", "scenarios": {"cases": [{"assumption": "성장 10%p 둔화, 배수 25% 축소", "case": "약세", "eps_growth": -0.07245376106693105, "multiple": 11.865883750039025, "price": 220.34323999619366}, {"assumption": "최근 매출 성장 유지, 현재 배수", "case": "기준", "eps_growth": 0.027546238933068956, "multiple": 15.821178333385365, "price": 325.46498568502903}, {"assumption": "성장 5%p 개선, 배수 15% 확대", "case": "강세", "eps_growth": 0.07754623893306896, "multiple": 18.19435508339317, "price": 392.49728297625995}], "method": "1년 뒤 EPS × 배수. 가정에 크게 의존하는 참고 범위입니다.", "status": "REAL"}, "status": "HYPOTHESIS", "strategy": "LONG_TERM", "why": ["사업 품질 79/100, 성장 품질 70/100으로 복리 기간을 길게 봅니다"]}
+====================================================================================================
+{'ticker': 'KO', 'name': None, 'sector': None, 'industry': None, 'score': 66.66, 'conservative_score': 66.66, 'band': 'HOLD_WATCH', 'band_held_back': False, 'action': 'WATCH', 'entry_status': 'OVERVALUED_AT_CURRENT_PRICE', 'confidence': 'HIGH', 'coverage': 1.0, 'price': 97.59, 'deal_pin': None}
+domains {'EVENTS': (6.929, 69.287, 1.0), 'FUNDAMENTAL': (29.406, 58.813, 1.0), 'REGIME': (0.0, 22.61, 1.0), 'RISK': (14.592, 72.962, 1.0), 'TECHNICAL': (9.067, 90.667, 1.0)}
+  TECH long_trend             w 5 n=1.0 REAL     raw={'ma200': 84.17, 'ma200_slope': 0.08} | None
+  TECH relative_strength      w 3 n=0.809 REAL     raw={'percentile': 0.809, 'rel_126': 0.287} | None
+  TECH momentum_persistence   w 2 n=0.82 REAL     raw={'pos_month_share': 0.667, 'ret_12_1': 0.289} | None
+  FUND valuation              w15 n=0.148 REAL     raw={'fcf_yield': 0.013, 'pb': 13.051, 'pe': 32.102} | None
+  FUND business_quality       w15 n=1.0 REAL     raw={'gross_margin': 0.616, 'op_margin': 0.287, 'roe': 0.407, 'roe_years_positive': 1.0} | None
+  FUND growth_quality         w 8 n=0.424 REAL     raw={'eps_cagr3': 0.116, 'rev_cagr3': 0.037, 'rev_growth': 0.019} | None
+  FUND free_cash_flow         w 7 n=0.826 REAL     raw={'fcf_margin': 0.11, 'fcf_years_positive': 1.0} | None
+  FUND balance_dilution       w 5 n=0.603 REAL     raw={'debt_equity': 1.412, 'share_change': -0.002} | None
+  REGI vix_regime             w 0 n=0.292 REAL     raw={'percentile_5y': 0.924, 'vix': 28.29} | None
+  REGI vix_term               w 0 n=0.0 REAL     raw={'vix_vix3m': 1.076} | None
+  REGI credit_spread          w 0 n=0.043 REAL     raw={'percentile': 0.957, 'spread': 3.72, 'window_obs': 785} | None
+  REGI index_trend_breadth    w 0 n=0.516 REAL     raw={'breadth': 0.579, 'close': 716.7, 'ma200': 733.161, 'ma50': 757.889} | None
+  RISK financial_resilience   w 7 n=0.529 REAL     raw={'cash_debt': 0.226, 'current_ratio': 1.459, 'interest_cover': 8.32} | None
+  RISK downside_drawdown      w 5 n=1.0 REAL     raw={'downside_vol': 0.112, 'max_drawdown_252': -0.085} | None
+  RISK liquidity              w 4 n=1.0 REAL     raw={'adv_value': 1981717779.867} | None
+  RISK leverage               w 4 n=0.473 REAL     raw={'debt_equity': 1.412} | None
+  EVEN governance             w 3 n=0.8 REAL     raw={'window_days': 365} | None
+  EVEN material_events        w 3 n=0.6 REAL     raw={'negative': 0, 'positive': 0} | None
+  EVEN insider_ownership      w 2 n=0.496 REAL     raw={'insider_pct': 0.099} | None
+  EVEN capital_allocation     w 2 n=0.869 REAL     raw={'returns_capital': True, 'share_change': -0.002} | None
+  fund_checks {"basis_note": null, "checked": 4, "direction": "FIRMING", "direction_ko": "한 가지가 좋아짐", "flags": [{"code": "EPS_UP", "side": "up", "text": "주당이익이 1년 사이 +24% 늘었습니다."}], "pattern": "GOOD_BUT_DEAR", "pattern_ko": "사업은 좋게 읽히지만 값이 비싸게 읽힙니다. 좋은 회사와 좋은 투자는 다를 수 있습니다.", "version": "FC-K-1"}
+  fund_period {"annual": {"filed": "2026-02-20", "fiscal_end": "2025-12-31", "newer_quarter": false, "score": 66.66}, "live": "ANNUAL", "trailing": {"filed": "2026-10-28", "fiscal_end": "2026-10-02", "newer_quarter": true, "score": 72.609}}
+  keys: ['action', 'actionability', 'band', 'band_held_back', 'benchmark', 'cik', 'confidence', 'conservative_score', 'coverage', 'data_date', 'deal_held', 'deal_pin', 'domains', 'entry_session', 'entry_status', 'factors', 'fund_checks', 'fund_period', 'gates', 'held', 'holding', 'input_coverage', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'rules_version', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  holding: {"entry_date": "2026-11-27", "first_review": "2027-03-01", "invalidation": ["수익성 지속 악화 (ROE·영업이익률 하락)", "정당한 이유 없는 FCF 적자 지속", "재무 건전성 악화", "중대한 지배구조 문제", "심각한 주식 희석"], "milestones": ["다음 실적의 매출 성장률이 최근 1.9%를 유지하는지", "영업이익률 28.7% 유지 여부", "FCF 마진 11.0% 유지 여부"], "next_review": "2027-05-27", "range_months": [12, 36], "reduce_conditions": ["밸류에이션 점수 25/100 미만 지속", "종목·섹터 한도 초과"], "review_note": "12개월이 지났다는 이유만으로 매도하지 않습니다. 강제 종료일은 없습니다.", "scenarios": {"cases": [{"assumption": "성장 10%p 둔화, 배수 25% 축소", "case": "약세", "eps_growth": -0.08130086483500146, "multiple": 24.076479359676963, "price": 67.24188392728162}, {"assumption": "최근 매출 성장 유지, 현재 배수", "case": "기준", "eps_growth": 0.018699135164998548, "multiple": 32.101972479569284, "price": 99.41484487016456}, {"assumption": "성장 5%p 개선, 배수 15% 확대", "case": "강세", "eps_growth": 0.06869913516499855, "multiple": 36.917268351504674, "price": 119.93849639011795}], "method": "1년 뒤 EPS × 배수. 가정에 크게 의존하는 참고 범위입니다.", "status": "REAL"}, "status": "HYPOTHESIS", "strategy": "LONG_TERM", "why": ["초기 정책 범위 12~36개월을 그대로 씁니다", "밸류에이션 15/100: 진입 전 관찰 기간이 더 필요할 수 있습니다"]}
+====================================================================================================
+{'ticker': 'LLY', 'name': None, 'sector': None, 'industry': None, 'score': 65.951, 'conservative_score': 65.951, 'band': 'HOLD_WATCH', 'band_held_back': False, 'action': 'WATCH', 'entry_status': 'OVERVALUED_AT_CURRENT_PRICE', 'confidence': 'MEDIUM', 'coverage': 1.0, 'price': 1392.22, 'deal_pin': None}
+domains {'EVENTS': (6.029, 60.289, 1.0), 'FUNDAMENTAL': (32.666, 65.332, 1.0), 'REGIME': (0.0, 22.61, 1.0), 'RISK': (11.952, 59.76, 1.0), 'TECHNICAL': (8.709, 87.093, 1.0)}
+  TECH long_trend             w 5 n=1.0 REAL     raw={'ma200': 1123.084, 'ma200_slope': 0.061} | None
+  TECH relative_strength      w 3 n=0.817 REAL     raw={'percentile': 0.817, 'rel_126': 0.298} | None
+  TECH momentum_persistence   w 2 n=0.63 REAL     raw={'pos_month_share': 0.5, 'ret_12_1': 0.204} | None
+  FUND valuation              w15 n=0.034 REAL     raw={'fcf_yield': 0.007, 'pb': 46.735, 'pe': 60.663} | None
+  FUND business_quality       w15 n=1.0 REAL     raw={'gross_margin': None, 'op_margin': None, 'roe': 0.778, 'roe_years_positive': 1.0} | None
+  FUND growth_quality         w 8 n=1.0 REAL     raw={'eps_cagr3': 0.493, 'rev_cagr3': 0.317, 'rev_growth': 0.447} | None
+  FUND free_cash_flow         w 7 n=0.894 REAL     raw={'fcf_margin': 0.138, 'fcf_years_positive': 1.0} | None
+  FUND balance_dilution       w 5 n=0.578 REAL     raw={'debt_equity': 1.602, 'share_change': -0.005} | None
+  REGI vix_regime             w 0 n=0.292 REAL     raw={'percentile_5y': 0.924, 'vix': 28.29} | None
+  REGI vix_term               w 0 n=0.0 REAL     raw={'vix_vix3m': 1.076} | None
+  REGI credit_spread          w 0 n=0.043 REAL     raw={'percentile': 0.957, 'spread': 3.72, 'window_obs': 785} | None
+  REGI index_trend_breadth    w 0 n=0.516 REAL     raw={'breadth': 0.579, 'close': 716.7, 'ma200': 733.161, 'ma50': 757.889} | None
+  RISK financial_resilience   w 7 n=0.405 REAL     raw={'cash_debt': 0.171, 'current_ratio': 1.579, 'interest_cover': None} | None
+  RISK downside_drawdown      w 5 n=0.711 REAL     raw={'downside_vol': 0.213, 'max_drawdown_252': -0.233} | None
+  RISK liquidity              w 4 n=1.0 REAL     raw={'adv_value': 4627309909.944} | None
+  RISK leverage               w 4 n=0.391 REAL     raw={'debt_equity': 1.602} | None
+  EVEN governance             w 3 n=0.8 REAL     raw={'window_days': 365} | None
+  EVEN material_events        w 3 n=0.6 REAL     raw={'negative': 0, 'positive': 0} | None
+  EVEN insider_ownership      w 2 n=0.019 REAL     raw={'insider_pct': 0.002} | None
+  EVEN capital_allocation     w 2 n=0.895 REAL     raw={'returns_capital': True, 'share_change': -0.005} | None
+  fund_checks {"basis_note": null, "checked": 4, "direction": "IMPROVING", "direction_ko": "좋아지는 중", "flags": [{"code": "SALES_UP", "side": "up", "text": "매출이 늘고 있습니다: 최근 1년 +44.7%, 3년 연평균 +31.7%."}, {"code": "EPS_UP", "side": "up", "text": "주당이익이 1년 사이 +96% 늘었습니다."}], "pattern": "GOOD_BUT_DEAR", "pattern_ko": "사업은 좋게 읽히지만 값이 비싸게 읽힙니다. 좋은 회사와 좋은 투자는 다를 수 있습니다.", "version": "FC-K-1"}
+  fund_period {"annual": {"filed": "2026-02-12", "fiscal_end": "2025-12-31", "newer_quarter": false, "score": 65.951}, "live": "ANNUAL", "trailing": {"filed": "2026-10-29", "fiscal_end": "2026-09-30", "newer_quarter": true, "score": 67.839}}
+  keys: ['action', 'actionability', 'band', 'band_held_back', 'benchmark', 'cik', 'confidence', 'conservative_score', 'coverage', 'data_date', 'deal_held', 'deal_pin', 'domains', 'entry_session', 'entry_status', 'factors', 'fund_checks', 'fund_period', 'gates', 'held', 'holding', 'input_coverage', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'rules_version', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  holding: {"entry_date": "2026-11-27", "first_review": "2027-03-01", "invalidation": ["수익성 지속 악화 (ROE·영업이익률 하락)", "정당한 이유 없는 FCF 적자 지속", "재무 건전성 악화", "중대한 지배구조 문제", "심각한 주식 희석"], "milestones": ["다음 실적의 매출 성장률이 최근 44.7%를 유지하는지", "FCF 마진 13.8% 유지 여부"], "next_review": "2027-05-27", "range_months": [24, 36], "reduce_conditions": ["밸류에이션 점수 25/100 미만 지속", "종목·섹터 한도 초과"], "review_note": "12개월이 지났다는 이유만으로 매도하지 않습니다. 강제 종료일은 없습니다.", "scenarios": {"cases": [{"assumption": "성장 10%p 둔화, 배수 25% 축소", "case": "약세", "eps_growth": 0.19999999999999998, "multiple": 45.49738466350082, "price": 1252.9979736328125}, {"assumption": "최근 매출 성장 유지, 현재 배수", "case": "기준", "eps_growth": 0.3, "multiple": 60.66317955133442, "price": 1809.8859619140626}, {"assumption": "성장 5%p 개선, 배수 15% 확대", "case": "강세", "eps_growth": 0.35, "multiple": 69.76265648403458, "price": 2161.4215045166015}], "method": "1년 뒤 EPS × 배수. 가정에 크게 의존하는 참고 범위입니다.", "status": "REAL"}, "status": "HYPOTHESIS", "strategy": "LONG_TERM", "why": ["사업 품질 100/100, 성장 품질 100/100으로 복리 기간을 길게 봅니다", "밸류에이션 3/100: 진입 전 관찰 기간이 더 필요할 수 있습니다"]}
+====================================================================================================
+{'ticker': 'MU', 'name': None, 'sector': None, 'industry': None, 'score': 77.684, 'conservative_score': 77.684, 'band': 'BUY_CANDIDATE', 'band_held_back': False, 'action': 'BUY', 'entry_status': 'ENTRY_NOW', 'confidence': 'HIGH', 'coverage': 1.0, 'price': 601.25, 'deal_pin': None}
+domains {'EVENTS': (5.713, 57.13, 1.0), 'FUNDAMENTAL': (44.839, 89.678, 1.0), 'REGIME': (0.0, 22.61, 1.0), 'RISK': (15.0, 75.0, 1.0), 'TECHNICAL': (4.364, 43.639, 1.0)}
+  TECH long_trend             w 5 n=0.5 REAL     raw={'ma200': 776.479, 'ma200_slope': 0.327} | None
+  TECH relative_strength      w 3 n=0.066 REAL     raw={'percentile': 0.066, 'rel_126': -0.318} | None
+  TECH momentum_persistence   w 2 n=0.833 REAL     raw={'pos_month_share': 0.667, 'ret_12_1': 3.152} | None
+  FUND valuation              w15 n=0.825 REAL     raw={'fcf_yield': 0.087, 'pb': 4.916, 'pe': 8.089} | None
+  FUND business_quality       w15 n=0.95 REAL     raw={'gross_margin': 0.807, 'op_margin': 0.746, 'roe': 0.614, 'roe_years_positive': 0.8} | None
+  FUND growth_quality         w 8 n=1.0 REAL     raw={'eps_cagr3': None, 'rev_cagr3': 1.046, 'rev_growth': 2.563} | None
+  FUND free_cash_flow         w 7 n=0.9 REAL     raw={'fcf_margin': 0.443, 'fcf_years_positive': 0.8} | None
+  FUND balance_dilution       w 5 n=0.783 REAL     raw={'debt_equity': 0.037, 'share_change': 0.016} | None
+  REGI vix_regime             w 0 n=0.292 REAL     raw={'percentile_5y': 0.924, 'vix': 28.29} | None
+  REGI vix_term               w 0 n=0.0 REAL     raw={'vix_vix3m': 1.076} | None
+  REGI credit_spread          w 0 n=0.043 REAL     raw={'percentile': 0.957, 'spread': 3.72, 'window_obs': 785} | None
+  REGI index_trend_breadth    w 0 n=0.516 REAL     raw={'breadth': 0.579, 'close': 716.7, 'ma200': 733.161, 'ma50': 757.889} | None
+  RISK financial_resilience   w 7 n=1.0 REAL     raw={'cash_debt': 7.408, 'current_ratio': 3.314, 'interest_cover': 937.17} | None
+  RISK downside_drawdown      w 5 n=0.0 REAL     raw={'downside_vol': 0.547, 'max_drawdown_252': -0.51} | None
+  RISK liquidity              w 4 n=1.0 REAL     raw={'adv_value': 26689931549.839} | None
+  RISK leverage               w 4 n=1.0 REAL     raw={'debt_equity': 0.037} | None
+  EVEN governance             w 3 n=0.8 REAL     raw={'window_days': 365} | None
+  EVEN material_events        w 3 n=0.6 REAL     raw={'negative': 0, 'positive': 0} | None
+  EVEN insider_ownership      w 2 n=0.014 REAL     raw={'insider_pct': 0.003} | None
+  EVEN capital_allocation     w 2 n=0.743 REAL     raw={'returns_capital': True, 'share_change': 0.016} | None
+  fund_checks {"basis_note": null, "checked": 4, "direction": "IMPROVING", "direction_ko": "좋아지는 중", "flags": [{"code": "ROE_UP", "side": "up", "text": "자기자본이익률(ROE)이 15.8%에서 61.4%로 올랐습니다."}, {"code": "SALES_UP", "side": "up", "text": "매출이 늘고 있습니다: 최근 1년 +256.3%, 3년 연평균 +104.6%."}, {"code": "EPS_UP", "side": "up", "text": "주당이익이 1년 사이 +879% 늘었습니다."}], "pattern": "CHEAP_AND_IMPROVING", "pattern_ko": "값이 싸게 읽히고 재무가 좋아지는 방향입니다.", "version": "FC-K-1"}
+  fund_period {"annual": {"filed": "2026-10-09", "fiscal_end": "2026-09-03", "newer_quarter": false, "score": 77.684}, "live": "ANNUAL", "trailing": {"filed": "2026-10-09", "fiscal_end": "2026-09-03", "newer_quarter": false, "score": 77.684}}
+  keys: ['action', 'actionability', 'band', 'band_held_back', 'benchmark', 'cik', 'confidence', 'conservative_score', 'coverage', 'data_date', 'deal_held', 'deal_pin', 'domains', 'entry_session', 'entry_status', 'factors', 'fund_checks', 'fund_period', 'gates', 'held', 'holding', 'input_coverage', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'rules_version', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  holding: {"entry_date": "2026-11-27", "first_review": "2027-03-01", "invalidation": ["수익성 지속 악화 (ROE·영업이익률 하락)", "정당한 이유 없는 FCF 적자 지속", "재무 건전성 악화", "중대한 지배구조 문제", "심각한 주식 희석"], "milestones": ["다음 실적의 매출 성장률이 최근 256.3%를 유지하는지", "영업이익률 74.6% 유지 여부", "FCF 마진 44.3% 유지 여부"], "next_review": "2027-05-27", "range_months": [24, 36], "reduce_conditions": ["밸류에이션 점수 25/100 미만 지속", "종목·섹터 한도 초과"], "review_note": "12개월이 지났다는 이유만으로 매도하지 않습니다. 강제 종료일은 없습니다.", "scenarios": {"cases": [{"assumption": "성장 10%p 둔화, 배수 25% 축소", "case": "약세", "eps_growth": 0.19999999999999998, "multiple": 6.066695815955873, "price": 541.125}, {"assumption": "최근 매출 성장 유지, 현재 배수", "case": "기준", "eps_growth": 0.3, "multiple": 8.08892775460783, "price": 781.6250000000001}, {"assumption": "성장 5%p 개선, 배수 15% 확대", "case": "강세", "eps_growth": 0.35, "multiple": 9.302266917799004, "price": 933.440625}], "method": "1년 뒤 EPS × 배수. 가정에 크게 의존하는 참고 범위입니다.", "status": "REAL"}, "status": "HYPOTHESIS", "strategy": "LONG_TERM", "why": ["사업 품질 95/100, 성장 품질 100/100으로 복리 기간을 길게 봅니다"]}
+====================================================================================================
+{'ticker': 'NVDA', 'name': None, 'sector': None, 'industry': None, 'score': 71.894, 'conservative_score': 71.894, 'band': 'BUY_CANDIDATE', 'band_held_back': False, 'action': 'BUY', 'entry_status': 'OVERVALUED_AT_CURRENT_PRICE', 'confidence': 'HIGH', 'coverage': 1.0, 'price': 149.3, 'deal_pin': None}
+domains {'EVENTS': (6.485, 64.849, 1.0), 'FUNDAMENTAL': (38.504, 77.008, 1.0), 'REGIME': (0.0, 22.61, 1.0), 'RISK': (16.144, 80.722, 1.0), 'TECHNICAL': (3.572, 35.716, 1.0)}
+  TECH long_trend             w 5 n=0.432 REAL     raw={'ma200': 202.874, 'ma200_slope': 0.036} | None
+  TECH relative_strength      w 3 n=0.084 REAL     raw={'percentile': 0.084, 'rel_126': -0.268} | None
+  TECH momentum_persistence   w 2 n=0.579 REAL     raw={'pos_month_share': 0.417, 'ret_12_1': 0.197} | None
+  FUND valuation              w15 n=0.234 REAL     raw={'fcf_yield': 0.027, 'pb': 22.92, 'pe': 30.469} | None
+  FUND business_quality       w15 n=1.0 REAL     raw={'gross_margin': 0.711, 'op_margin': 0.604, 'roe': 0.763, 'roe_years_positive': 1.0} | None
+  FUND growth_quality         w 8 n=1.0 REAL     raw={'eps_cagr3': 2.066, 'rev_cagr3': 1.0, 'rev_growth': 0.655} | None
+  FUND free_cash_flow         w 7 n=1.0 REAL     raw={'fcf_margin': 0.448, 'fcf_years_positive': 1.0} | None
+  FUND balance_dilution       w 5 n=1.0 REAL     raw={'debt_equity': 0.054, 'share_change': -0.012} | None
+  REGI vix_regime             w 0 n=0.292 REAL     raw={'percentile_5y': 0.924, 'vix': 28.29} | None
+  REGI vix_term               w 0 n=0.0 REAL     raw={'vix_vix3m': 1.076} | None
+  REGI credit_spread          w 0 n=0.043 REAL     raw={'percentile': 0.957, 'spread': 3.72, 'window_obs': 785} | None
+  REGI index_trend_breadth    w 0 n=0.516 REAL     raw={'breadth': 0.579, 'close': 716.7, 'ma200': 733.161, 'ma50': 757.889} | None
+  RISK financial_resilience   w 7 n=1.0 REAL     raw={'cash_debt': 1.252, 'current_ratio': 3.905, 'interest_cover': 503.425} | None
+  RISK downside_drawdown      w 5 n=0.229 REAL     raw={'downside_vol': 0.32, 'max_drawdown_252': -0.475} | None
+  RISK liquidity              w 4 n=1.0 REAL     raw={'adv_value': 57441786371.595} | None
+  RISK leverage               w 4 n=1.0 REAL     raw={'debt_equity': 0.054} | None
+  EVEN governance             w 3 n=0.8 REAL     raw={'window_days': 365} | None
+  EVEN material_events        w 3 n=0.6 REAL     raw={'negative': 0, 'positive': 0} | None
+  EVEN insider_ownership      w 2 n=0.202 REAL     raw={'insider_pct': 0.04} | None
+  EVEN capital_allocation     w 2 n=0.941 REAL     raw={'returns_capital': True, 'share_change': -0.012} | None
+  fund_checks {"basis_note": null, "checked": 4, "direction": "MIXED", "direction_ko": "엇갈림", "flags": [{"code": "ROE_LOWER", "side": "down", "text": "자기자본이익률(ROE)이 91.9%에서 76.3%로 내려갔습니다."}, {"code": "SALES_UP", "side": "up", "text": "매출이 늘고 있습니다: 최근 1년 +65.5%, 3년 연평균 +100.0%."}, {"code": "EPS_UP", "side": "up", "text": "주당이익이 1년 사이 +67% 늘었습니다."}], "pattern": "GOOD_BUT_DEAR", "pattern_ko": "사업은 좋게 읽히지만 값이 비싸게 읽힙니다. 좋은 회사와 좋은 투자는 다를 수 있습니다.", "version": "FC-K-1"}
+  fund_period {"annual": {"filed": "2026-02-25", "fiscal_end": "2026-01-25", "newer_quarter": false, "score": 71.894}, "live": "ANNUAL", "trailing": {"filed": "2026-08-26", "fiscal_end": "2026-07-26", "newer_quarter": true, "score": 74.257}}
+  keys: ['action', 'actionability', 'band', 'band_held_back', 'benchmark', 'cik', 'confidence', 'conservative_score', 'coverage', 'data_date', 'deal_held', 'deal_pin', 'domains', 'entry_session', 'entry_status', 'factors', 'fund_checks', 'fund_period', 'gates', 'held', 'holding', 'input_coverage', 'market', 'model_version', 'price', 'profile', 'provenance', 'recorded_at', 'rules_version', 'score', 'spec_version', 'stop', 'strategy', 'target', 'ticker']
+  holding: {"entry_date": "2026-11-27", "first_review": "2027-03-01", "invalidation": ["수익성 지속 악화 (ROE·영업이익률 하락)", "정당한 이유 없는 FCF 적자 지속", "재무 건전성 악화", "중대한 지배구조 문제", "심각한 주식 희석"], "milestones": ["다음 실적의 매출 성장률이 최근 65.5%를 유지하는지", "영업이익률 60.4% 유지 여부", "FCF 마진 44.8% 유지 여부"], "next_review": "2027-05-27", "range_months": [24, 36], "reduce_conditions": ["밸류에이션 점수 25/100 미만 지속", "종목·섹터 한도 초과"], "review_note": "12개월이 지났다는 이유만으로 매도하지 않습니다. 강제 종료일은 없습니다.", "scenarios": {"cases": [{"assumption": "성장 10%p 둔화, 배수 25% 축소", "case": "약세", "eps_growth": 0.19999999999999998, "multiple": 22.852041283432317, "price": 134.37000274658203}, {"assumption": "최근 매출 성장 유지, 현재 배수", "case": "기준", "eps_growth": 0.3, "multiple": 30.469388377909755, "price": 194.09000396728518}, {"assumption": "성장 5%p 개선, 배수 15% 확대", "case": "강세", "eps_growth": 0.35, "multiple": 35.039796634596215, "price": 231.788254737854}], "method": "1년 뒤 EPS × 배수. 가정에 크게 의존하는 참고 범위입니다.", "status": "REAL"}, "status": "HYPOTHESIS", "strategy": "LONG_TERM", "why": ["사업 품질 100/100, 성장 품질 100/100으로 복리 기간을 길게 봅니다", "밸류에이션 23/100: 진입 전 관찰 기간이 더 필요할 수 있습니다"]}

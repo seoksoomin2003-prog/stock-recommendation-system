@@ -1,0 +1,68 @@
+  Xi = np.where(np.isfinite(X), X, np.nanmean(X, axis=0, keepdims=True)); Xi = np.where(np.isfinite(Xi), Xi, 0.5)
+SESSION 2026-11-25 QSF-1.6.0 cards 600
+
+===== KR SWING profile KR_SWING_V3 n=300 scored weight total=40
+score pct 0/5/25/50/75/90/95/99/100: [23.3 32.  40.  46.4 52.5 57.6 60.2 63.4 65.7] mean 45.9 sd 8.8
+share >=70: 0.000 (n=0)  >=80: 0.000 (n=0)  <40: 0.253
+band: {'HOLD_WATCH': 52, 'WEAK_REDUCE': 172, 'SELL_AVOID': 76}
+action: {'WATCH': 52, 'AVOID': 248} actionability: {'ACTIONABLE': 290, 'BLOCKED': 10}
+confidence: {'HIGH': 235, 'MEDIUM': 65}
+entry_status all: {'WAIT_FOR_PULLBACK': 29, 'ENTRY_NOW': 20, 'NO_VALID_ENTRY_SETUP': 250, 'WAIT_FOR_BREAKOUT_CONFIRMATION': 1}
+entry_status score>=70: {}
+held_back: 0 deal_held: 0
+factor | w | avail | mean | sd | at0 | at1 | mode share | w*sd | rho(score)
+earnings_revenue_quality     3 0.99 0.53 0.30 0.11 0.08 0.000:0.11 0.89 +0.51
+profitability                2 1.00 0.41 0.31 0.11 0.06 0.000:0.11 0.62 +0.63
+balance_sheet                3 1.00 0.61 0.35 0.04 0.21 1.000:0.21 1.05 +0.37
+cash_flow_quality            2 0.90 0.50 0.36 0.23 0.09 0.000:0.23 0.72 +0.64
+risk_reward                  6 1.00 0.14 0.23 0.52 0.03 0.000:0.52 1.40 +0.28
+atr_risk                     5 1.00 0.16 0.22 0.46 0.00 0.000:0.46 1.09 +0.37
+liquidity                    5 1.00 0.67 0.28 0.01 0.22 1.000:0.22 1.41 +0.22
+drawdown_gap                 4 1.00 0.26 0.20 0.15 0.00 0.000:0.15 0.80 +0.26
+earnings_calendar            4 1.00 1.00 0.00 0.00 1.00 1.000:1.00 0.00 +nan
+material_disclosures         3 1.00 0.57 0.18 0.04 0.02 0.600:0.62 0.55 +0.40
+insider_activity             3 avail 0.00
+share of sum(w*sd) by factor (top5): [('liquidity', np.float64(0.165)), ('risk_reward', np.float64(0.164)), ('atr_risk', np.float64(0.128)), ('balance_sheet', np.float64(0.123)), ('earnings_revenue_quality', np.float64(0.105)), ('drawdown_gap', np.float64(0.094))]
+  domain FUNDAMENTAL nominal weight share 0.25  variance share 0.51
+  domain RISK        nominal weight share 0.50  variance share 0.42
+  domain EVENTS      nominal weight share 0.25  variance share 0.06
+pairs |rho|>=0.5: [('atr_risk', 'drawdown_gap', np.float64(0.83)), ('earnings_revenue_quality', 'cash_flow_quality', np.float64(0.59)), ('earnings_revenue_quality', 'profitability', np.float64(0.52))]
+most negative pairs: [('liquidity', 'drawdown_gap', np.float64(-0.44)), ('atr_risk', 'liquidity', np.float64(-0.4)), ('risk_reward', 'drawdown_gap', np.float64(-0.11)), ('risk_reward', 'atr_risk', np.float64(-0.09)), ('balance_sheet', 'atr_risk', np.float64(-0.08))]
+factors with variation: 9  effective N (participation ratio, unweighted rank corr): 6.0  top eigen shares: [0.26 0.23 0.12 0.11 0.1 ]
+effective N of the weighted composite (participation ratio of contribution covariance): 5.2  top eigen shares: [0.31 0.22 0.15 0.13 0.1 ]
+
+===== KR LONG_TERM profile KR_LONG_TERM_V2 n=300 scored weight total=90
+score pct 0/5/25/50/75/90/95/99/100: [12.7 26.5 42.9 54.2 64.4 70.6 74.3 80.2 83.5] mean 52.9 sd 14.7
+share >=70: 0.110 (n=33)  >=80: 0.013 (n=4)  <40: 0.190
+band: {'HOLD_WATCH': 115, 'BUY_CANDIDATE': 25, 'SELL_AVOID': 57, 'WEAK_REDUCE': 99, 'STRONG_BUY_CANDIDATE': 4}
+action: {'WATCH': 115, 'BUY': 28, 'AVOID': 155, 'REDUCE': 1, 'BLOCKED': 1} actionability: {'ACTIONABLE': 290, 'BLOCKED': 10}
+confidence: {'MEDIUM': 251, 'LOW': 49}
+entry_status all: {'ENTRY_NOW': 121, 'NO_VALID_ENTRY_SETUP': 164, 'OVERVALUED_AT_CURRENT_PRICE': 15}
+entry_status score>=70: {'ENTRY_NOW': 28, 'NO_VALID_ENTRY_SETUP': 5}
+held_back: 4 deal_held: 0
+factor | w | avail | mean | sd | at0 | at1 | mode share | w*sd | rho(score)
+long_trend                   5 1.00 0.35 0.29 0.19 0.05 0.500:0.21 1.43 +0.27
+relative_strength            3 1.00 0.50 0.29 0.00 0.00 0.340:0.00 0.87 +0.30
+momentum_persistence         2 1.00 0.42 0.26 0.00 0.00 0.167:0.13 0.51 +0.20
+valuation                   15 1.00 0.58 0.34 0.07 0.16 1.000:0.16 5.15 +0.57
+business_quality            15 1.00 0.49 0.25 0.05 0.01 0.000:0.05 3.78 +0.81
+growth_quality               8 0.88 0.45 0.34 0.13 0.11 0.000:0.13 2.68 +0.43
+free_cash_flow               7 0.87 0.51 0.32 0.14 0.08 0.000:0.14 2.23 +0.79
+balance_dilution             5 1.00 0.62 0.36 0.11 0.22 1.000:0.22 1.78 +0.48
+financial_resilience         7 1.00 0.48 0.33 0.02 0.12 1.000:0.12 2.30 +0.52
+downside_drawdown            5 1.00 0.15 0.21 0.48 0.00 0.000:0.49 1.06 +0.40
+liquidity                    4 1.00 0.67 0.28 0.01 0.22 1.000:0.22 1.12 -0.02
+leverage                     4 0.91 0.67 0.31 0.07 0.12 1.000:0.12 1.25 +0.53
+governance                   3 1.00 0.76 0.15 0.00 0.00 0.800:0.93 0.44 +0.10
+material_events              3 1.00 0.56 0.20 0.07 0.02 0.600:0.62 0.60 +0.32
+insider_ownership            2 0.90 0.97 0.16 0.00 0.94 1.000:0.94 0.31 -0.13
+capital_allocation           2 0.77 0.97 0.12 0.00 0.96 1.000:0.96 0.24 +0.12
+share of sum(w*sd) by factor (top5): [('valuation', np.float64(0.2)), ('business_quality', np.float64(0.147)), ('growth_quality', np.float64(0.104)), ('financial_resilience', np.float64(0.089)), ('free_cash_flow', np.float64(0.086)), ('balance_dilution', np.float64(0.069))]
+  domain TECHNICAL   nominal weight share 0.11  variance share 0.06
+  domain FUNDAMENTAL nominal weight share 0.56  variance share 0.76
+  domain RISK        nominal weight share 0.22  variance share 0.17
+  domain EVENTS      nominal weight share 0.11  variance share 0.02
+pairs |rho|>=0.5: [('balance_dilution', 'leverage', np.float64(1.0)), ('financial_resilience', 'leverage', np.float64(0.8)), ('balance_dilution', 'financial_resilience', np.float64(0.8)), ('long_trend', 'momentum_persistence', np.float64(0.77)), ('relative_strength', 'downside_drawdown', np.float64(0.69)), ('business_quality', 'free_cash_flow', np.float64(0.63)), ('business_quality', 'growth_quality', np.float64(0.58)), ('valuation', 'downside_drawdown', np.float64(0.52))]
+most negative pairs: [('downside_drawdown', 'liquidity', np.float64(-0.35)), ('valuation', 'liquidity', np.float64(-0.31)), ('relative_strength', 'liquidity', np.float64(-0.2)), ('valuation', 'insider_ownership', np.float64(-0.17)), ('liquidity', 'insider_ownership', np.float64(-0.12))]
+factors with variation: 16  effective N (participation ratio, unweighted rank corr): 8.6  top eigen shares: [0.22 0.15 0.13 0.1  0.07]
+effective N of the weighted composite (participation ratio of contribution covariance): 3.4  top eigen shares: [0.47 0.24 0.12 0.05 0.04]

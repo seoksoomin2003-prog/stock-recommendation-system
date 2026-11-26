@@ -1,0 +1,73 @@
+data/.DS_Store                                file in_backup=False
+data/__init__.py                              file in_backup=False
+data/__pycache__                              files=     2 in_backup=     0 MB=      0.1
+data/automation                               files=    24 in_backup=     0 MB=      0.5
+data/historical_data.db                       file in_backup=False
+data/historical_security.db                   file in_backup=False
+data/kr                                       files=    43 in_backup=     0 MB=     64.3
+data/lab                                      files=     4 in_backup=     1 MB=     10.4
+data/loader.py                                file in_backup=False
+data/news                                     files=    30 in_backup=    28 MB=     12.1
+data/qsf                                      files= 16786 in_backup=    71 MB=   1414.1
+data/research_cache.db                        file in_backup=False
+data/sec_cache                                files=     1 in_backup=     0 MB=      0.9
+data/signals                                  files=   142 in_backup=     0 MB=      0.0
+data/sp500_universe_cache.json                file in_backup=False
+data/terminal                                 files=   184 in_backup=     2 MB=     73.6
+data/tickers.db                               file in_backup=False
+data/tickers.db.pre_security_master.bak       file in_backup=False
+research_data/.DS_Store                       file in_backup=False
+research_data/committee_kr                    files=     2 in_backup=     1 MB=      0.1
+research_data/committee_us                    files=     2 in_backup=     1 MB=      0.1
+research_data/dart                            files= 16424 in_backup=     0 MB=    132.4
+research_data/entry_book_kr                   files=     4 in_backup=     2 MB=      0.0
+research_data/entry_book_us                   files=     4 in_backup=     2 MB=      0.0
+research_data/expectations_kr                 files=     2 in_backup=     1 MB=      0.0
+research_data/expectations_us                 files=     0 in_backup=     0 MB=      0.0
+research_data/forecast_kr                     files=    11 in_backup=    10 MB=      0.2
+research_data/forecast_us                     files=    11 in_backup=    10 MB=      0.3
+research_data/fund_period_kr                  files=     5 in_backup=     4 MB=      0.0
+research_data/fund_period_us                  files=     5 in_backup=     4 MB=      0.0
+research_data/kr_cap_universe                 files=    14 in_backup=    13 MB=      0.1
+research_data/kr_capex                        files=   296 in_backup=     0 MB=      0.2
+research_data/kr_challenger                   files=     8 in_backup=     7 MB=      0.1
+research_data/kr_fcf_probe                    files=   296 in_backup=     0 MB=      0.1
+research_data/kr_insider_probe                files=   780 in_backup=     0 MB=     23.6
+research_data/kr_method                       files=    13 in_backup=    12 MB=      0.1
+research_data/kr_share_probe                  files=  3829 in_backup=     0 MB=      3.5
+research_data/kr_swing_challenger             files=    15 in_backup=    14 MB=      0.1
+research_data/kr_swing_prior                  files=    13 in_backup=    12 MB=      0.0
+research_data/kr_traded_universe              files=    13 in_backup=    12 MB=      0.1
+research_data/krx                             files=  8819 in_backup=     0 MB=    701.4
+research_data/krx_forward                     files=    17 in_backup=    15 MB=      0.5
+research_data/krx_forward_events              files=    16 in_backup=    15 MB=      0.3
+research_data/krx_forward_fund                files=    16 in_backup=    15 MB=      0.6
+research_data/krx_live                        files=     9 in_backup=     0 MB=    259.6
+research_data/paper_book_kr                   files=    13 in_backup=    11 MB=      0.1
+research_data/paper_book_us                   files=    13 in_backup=    11 MB=      0.0
+research_data/rank_book_kr                    files=    11 in_backup=     9 MB=      0.0
+research_data/rank_book_us                    files=    11 in_backup=     9 MB=      0.0
+research_data/regime_weights_kr               files=    12 in_backup=    11 MB=      0.1
+research_data/regime_weights_us               files=    12 in_backup=    11 MB=      0.1
+research_data/score_split_kr                  files=    10 in_backup=     9 MB=      0.1
+research_data/score_split_us                  files=    10 in_backup=     9 MB=      0.1
+research_data/sec13f                          files=   125 in_backup=     0 MB=   3613.3
+research_data/sentiment                       files=     1 in_backup=     0 MB=      0.5
+research_data/short                           files=  2291 in_backup=     0 MB=     20.8
+research_data/turnover_book_kr                files=    11 in_backup=     9 MB=      0.0
+research_data/turnover_book_us                files=    11 in_backup=     9 MB=      0.0
+research_data/us_challenger                   files=    14 in_backup=    14 MB=      0.5
+tracking/STORAGE_SCHEMA.json                  file in_backup=False
+tracking/dashboard.html                       file in_backup=False
+tracking/excluded_runs.json                   file in_backup=True
+tracking/kr                                   files=    40 in_backup=     3 MB=      1.4
+tracking/ledger                               files=     4 in_backup=     2 MB=      1.6
+tracking/outcomes                             files=    19 in_backup=     0 MB=      9.2
+tracking/outcomes.json                        file in_backup=False
+tracking/prices                               files=    17 in_backup=     0 MB=      0.8
+tracking/recommendation_ledger.jsonl          file in_backup=True
+tracking/reports                              files=     2 in_backup=     0 MB=      0.2
+tracking/updates.jsonl                        file in_backup=True
+tracking/updates.jsonl.lock                   file in_backup=False
+reports/qsf not QSF_*: ['frozen_core_before.json', 'frozen_core_after.json', 'survivorship_scripts']
+ignored top-level: ['.DS_Store', '.env', '.pytest_cache/', '.venv/', '__pycache__/', 'cache.nosync/', 'cache/', 'data/.DS_Store', 'data/historical_data.db', 'data/historical_security.db', 'data/research_cache.db', 'data/sp500_universe_cache.json', 'data/tickers.db', 'data/tickers.db.pre_security_master.bak', 'reports/P6-20_pytest_junit.xml', 'reports/P6-21_25_pytest_junit.xml', 'reports/QSF_pytest_junit.xml', 'reports/TERMINAL-1_pytest_junit.xml', 'reports/TERMINAL-2_pytest_junit.xml', 'reports/TERMINAL-3_pytest_junit.xml', 'reports/TERMINAL-4_pytest_junit.xml', 'research_data/', 'runs/', 'scratch/', 'tracking/', '']

@@ -1,0 +1,34 @@
+input_coverage dist Counter({1.0: 709, 0.9: 243, 0.8: 40, 0.7: 8, 0.6: 4, 0.2: 1, 0.5: 1, 0.3: 1, 0.1: 1})
+confidence Counter({('SWING', 'HIGH'): 498, ('LONG_TERM', 'HIGH'): 370, ('LONG_TERM', 'MEDIUM'): 107, ('LONG_TERM', 'LOW'): 21, ('LONG_TERM', 'INSUFFICIENT'): 6, ('SWING', 'MEDIUM'): 4, ('SWING', 'INSUFFICIENT'): 2})
+held back Counter({('SWING', False): 504, ('LONG_TERM', False): 504})
+SC0 ABBV {"debt_equity": 99.0, "share_change": 0.0}
+SC0 ABT {"debt_equity": 0.24801457893727222, "share_change": 0.0}
+SC0 AWK {"debt_equity": 1.1792931623142937, "share_change": 0.0}
+STALE CLX SWING 59.177527608655986 HOLD_WATCH MEDIUM ACTIONABLE {"factor": "earnings_revenue_quality", "as_of": "2025-08-08", "normalized": 0.7354010996757369, "contribution": 2.2062032990272105, "reason": null}
+STALE CLX LONG_TERM 57.113882533312236 HOLD_WATCH INSUFFICIENT INSUFFICIENT_DATA {"factor": "valuation", "as_of": "2025-08-08", "normalized": 0.525011966542526, "contribution": 7.87517949813789, "reason": null}
+DE0 CMG SWING balance_sheet {"as_of": "2026-02-04", "contribution": 2.0433266814909326, "domain": "FUNDAMENTAL", "factor": "balance_sheet", "normalized": 0.6811088938303109, "raw": {"current_ratio": 1.2346613451927464, "debt_equity": 0.0}, "reason": null, "source": "SEC EDGAR 10-K", "status": "REAL", "weight": 3}
+DE0 CMG LONG_TERM leverage {"as_of": "2026-02-04", "contribution": 4.0, "domain": "RISK", "factor": "leverage", "normalized": 1.0, "raw": {"debt_equity": 0.0}, "reason": null, "source": "SEC EDGAR 10-K", "status": "REAL", "weight": 4}
+SC0 DD {"debt_equity": 0.2294705079387887, "share_change": 0.0}
+SC0 DGX {"debt_equity": 0.7909344490934449, "share_change": 0.0}
+SC0 DTE {"debt_equity": 2.1285865236121273, "share_change": 0.0}
+TECHMISS FDXF 32.450591090639996 SELL_AVOID MEDIUM 0.875 0.8625 [('trend_structure', '이동평균 이력 부족')]
+SC0 FDXF {"debt_equity": 99.0, "share_change": 0.0}
+STALE FERG SWING 58.356762167103525 HOLD_WATCH MEDIUM ACTIONABLE {"factor": "earnings_revenue_quality", "as_of": "2025-09-26", "normalized": 0.5522514506687336, "contribution": 1.656754352006201, "reason": null}
+STALE FERG LONG_TERM 56.864573377640085 HOLD_WATCH INSUFFICIENT INSUFFICIENT_DATA {"factor": "valuation", "as_of": "2025-09-26", "normalized": 0.29145156629701047, "contribution": 4.371773494455157, "reason": null}
+SC0 GILD {"debt_equity": 1.0983570453244065, "share_change": 0.0}
+TECHMISS HONA 49.81935218802877 WEAK_REDUCE INSUFFICIENT 0.625 0.625 [('trend_structure', '이동평균 이력 부족'), ('relative_strength', 'SPY 대비 3개월 자료 없음, 6개월 자료 없음: 계산 값 없음'), ('earnings_revenue_quality', '재무 수치를 찾지 못했습니다.'), ('profitability', '재무 수치를 찾지 못했습니다.'), ('balance_sheet', '재무 수치를 찾지 못했습니다.'), ('cash_flow_quality', '재무 수치를 찾지 못했습니다.')]
+SC0 IFF {"debt_equity": 0.42348452734209413, "share_change": 0.0}
+SC0 JNJ {"debt_equity": 0.612344255861866, "share_change": 0.0}
+DE0 LULU SWING balance_sheet {"as_of": "2026-03-17", "contribution": 3.0, "domain": "FUNDAMENTAL", "factor": "balance_sheet", "normalized": 1.0, "raw": {"current_ratio": 2.258327205453848, "debt_equity": 0.0}, "reason": null, "source": "SEC EDGAR 10-K", "status": "REAL", "weight": 3}
+DE0 LULU LONG_TERM leverage {"as_of": "2026-03-17", "contribution": 4.0, "domain": "RISK", "factor": "leverage", "normalized": 1.0, "raw": {"debt_equity": 0.0}, "reason": null, "source": "SEC EDGAR 10-K", "status": "REAL", "weight": 4}
+DE0 P SWING balance_sheet {"as_of": "2026-03-25", "contribution": 2.5049136382913, "domain": "FUNDAMENTAL", "factor": "balance_sheet", "normalized": 0.8349712127637666, "raw": {"current_ratio": 1.60393091063304, "debt_equity": 0.0}, "reason": null, "source": "SEC EDGAR 10-K", "status": "REAL", "weight": 3}
+DE0 P LONG_TERM leverage {"as_of": "2026-03-25", "contribution": 4.0, "domain": "RISK", "factor": "leverage", "normalized": 1.0, "raw": {"debt_equity": 0.0}, "reason": null, "source": "SEC EDGAR 10-K", "status": "REAL", "weight": 4}
+DE0 SNDK SWING balance_sheet {"as_of": "2026-08-17", "contribution": 3.0, "domain": "FUNDAMENTAL", "factor": "balance_sheet", "normalized": 1.0, "raw": {"current_ratio": 2.2899122021143166, "debt_equity": 0.0}, "reason": null, "source": "SEC EDGAR 10-K", "status": "REAL", "weight": 3}
+DE0 SNDK LONG_TERM leverage {"as_of": "2026-08-17", "contribution": 4.0, "domain": "RISK", "factor": "leverage", "normalized": 1.0, "raw": {"debt_equity": 0.0}, "reason": null, "source": "SEC EDGAR 10-K", "status": "REAL", "weight": 4}
+REL0 SPY SWING {"as_of": "2026-11-25", "contribution": 3.00796812749004, "domain": "TECHNICAL", "factor": "relative_strength", "normalized": 0.300796812749004, "raw": {"percentile": 0.300796812749004, "rel_126": 0.0}, "reason": null, "source": "일봉 가격 (Yahoo Finance, 지연)", "status": "REAL", "weight": 10}
+REL0 SPY LONG_TERM {"as_of": "2026-11-25", "contribution": 0.902390438247012, "domain": "TECHNICAL", "factor": "relative_strength", "normalized": 0.300796812749004, "raw": {"percentile": 0.300796812749004, "rel_126": 0.0}, "reason": null, "source": "일봉 가격 (Yahoo Finance, 지연)", "status": "REAL", "weight": 3}
+TECHMISS VYLR 54.36766191001939 WEAK_REDUCE INSUFFICIENT 0.625 0.59375 [('trend_structure', '이동평균 이력 부족'), ('relative_strength', 'SPY 대비 3개월 자료 없음, 6개월 자료 없음: 계산 값 없음'), ('earnings_revenue_quality', '재무 수치를 찾지 못했습니다.'), ('profitability', '재무 수치를 찾지 못했습니다.'), ('balance_sheet', '재무 수치를 찾지 못했습니다.'), ('cash_flow_quality', '재무 수치를 찾지 못했습니다.')]
+OLDBAR HUBB SWING 2026-11-17 46.535277607373935 WEAK_REDUCE AVOID BLOCKED HIGH 2026-11-19T03:23:07.350265+00:00 2026-11-19 [{'code': 'STALE_PRICE', 'text': '마지막 시세 2026-11-17가 최근 완료 거래일 2026-11-18이 아닙니다.'}] 2026-11-17 [('trend_structure', 'REAL', '2026-11-17'), ('relative_strength', 'REAL', '2026-11-17'), ('momentum', 'REAL', '2026-11-17')]
+OLDBAR HUBB LONG_TERM 2026-11-17 63.477745300273355 HOLD_WATCH WATCH BLOCKED HIGH 2026-11-19T03:23:07.351672+00:00 2026-11-19 [{'code': 'STALE_PRICE', 'text': '마지막 시세 2026-11-17가 최근 완료 거래일 2026-11-18이 아닙니다.'}] 2026-11-17 [('long_trend', 'REAL', '2026-11-17'), ('relative_strength', 'REAL', '2026-11-17'), ('momentum_persistence', 'REAL', '2026-11-17')]
+KR1110 2026-11-10_KR_000016.jsonl.gz 4 ['240550', '480370'] 2026-11-10T22:32:44.045219+00:00
+KR1110 2026-11-10_KR_000017.jsonl.gz 592 ['000100', '000150', '000250', '000270', '000500', '000650'] 2026-11-10T22:58:32.709906+00:00

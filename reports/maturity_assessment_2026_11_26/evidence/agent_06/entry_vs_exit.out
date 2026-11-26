@@ -1,0 +1,7 @@
+   KR 402340 -> THESIS_INVALIDATED ['TREND_BREAKDOWN', 'MOMENTUM_DETERIORATION'] 종가가 하락 중인 50일선 894,965원 아래입니다.
+   KR 009150 -> THESIS_INVALIDATED ['TREND_BREAKDOWN'] 종가가 하락 중인 50일선 1,191,121원 아래입니다.
+   KR 012450 -> THESIS_INVALIDATED ['TREND_BREAKDOWN'] 종가가 하락 중인 50일선 832,679원 아래입니다.
+KR swing ENTRY_NOW: 20 | close under a falling 50-day line (the plan's own invalidation): 18 | exit reading on the entry day itself: {'THESIS_INVALIDATED': 18, 'HOLD': 2}
+   US VLO -> THESIS_INVALIDATED ['TREND_BREAKDOWN', 'MOMENTUM_DETERIORATION'] 종가가 하락 중인 50일선 392.48 아래입니다.
+   US ZBRA -> THESIS_INVALIDATED ['TREND_BREAKDOWN'] 종가가 하락 중인 50일선 356.29 아래입니다.
+US swing ENTRY_NOW: 6 | close under a falling 50-day line (the plan's own invalidation): 2 | exit reading on the entry day itself: {'REDUCE': 2, 'HOLD': 2, 'THESIS_INVALIDATED': 2}

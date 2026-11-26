@@ -1,0 +1,64 @@
+files 249 lines 53202 chars 2969402 avg chars/line 55.8 lines>120 5237
+  terminal/qsf                   22656 lines   1317153 chars
+  terminal                       10579 lines    637759 chars
+  core                            4302 lines    173282 chars
+  pipeline                        2776 lines    157130 chars
+  markets                         2576 lines    142774 chars
+  root                            2045 lines    111268 chars
+  scripts                         1917 lines     96076 chars
+  terminal/committee              1888 lines    136805 chars
+  utils                           1277 lines     51211 chars
+  terminal/lab                     894 lines     42319 chars
+  data                             893 lines     47892 chars
+  alpha_engine                     867 lines     36253 chars
+  contracts                        269 lines      8779 chars
+  execution                        263 lines     10701 chars
+functions 2887 >60: 67 >100: 17 >150: 9
+   (484, 'main.py', 'run_live_cycle', 95)
+   (222, 'pipeline/canonical.py', 'evaluate', 69)
+   (206, 'terminal/assistant.py', 'stock_answer', 1496)
+   (199, 'pipeline/prospective_outcomes.py', 'observation_outcome', 116)
+   (195, 'terminal/qsf/fundamentals.py', 'metrics', 276)
+   (179, 'terminal/assistant.py', 'briefing', 445)
+   (179, 'terminal/assistant.py', 'analyst_note', 1122)
+   (162, 'terminal/assistant.py', 'plain_answer', 1704)
+   (157, 'terminal/server.py', 'make_handler', 252)
+   (139, 'terminal/qsf/paper_book.py', 'step', 95)
+   (120, 'terminal/plain.py', 'card_plain', 124)
+   (120, 'core/decision_engine.py', 'evaluate_existing_position', 126)
+   (118, 'core/backtest_engine.py', 'run_walk_forward', 109)
+   (107, 'pipeline/prospective_tracking.py', 'render_markdown', 324)
+   (106, 'core/news_engine.py', 'analyze_sentiment_batch_v2', 162)
+   (105, 'terminal/qsf/engine.py', 'score', 189)
+   (101, 'terminal/server.py', 'routes', 145)
+   (99, 'core/decision_engine.py', '_optimize_portfolio', 278)
+   (96, 'terminal/automation.py', '_run', 845)
+   (94, 'data/loader.py', 'get_financial_data', 778)
+   (93, 'pipeline/prospective_ledger.py', 'build_records', 214)
+   (92, 'terminal/committee/council.py', 'decide', 138)
+   (92, 'core/decision_engine.py', 'evaluate_portfolio', 33)
+   (91, 'terminal/qsf/order_plan.py', 'build', 226)
+   (90, 'terminal/committee/investors.py', 'lynch', 391)
+broad excepts 250 silent (pass/continue/return const): 54 error object used: 145
+  app.py                                        broad  27 silent   0
+  terminal/assistant.py                         broad  26 silent   9
+  terminal/qsf/service.py                       broad  23 silent   9
+  terminal/automation.py                        broad  18 silent   3
+  terminal/services.py                          broad  12 silent   3
+  terminal/committee/service.py                 broad  12 silent   3
+  data/loader.py                                broad  11 silent   3
+  alpha_engine/data/sec/sec_api_provider.py     broad   9 silent   3
+  terminal/qsf/views.py                         broad   8 silent   5
+  utils/memory_guard.py                         broad   8 silent   3
+  terminal/filing_watch.py                      broad   6 silent   1
+  core/universe_provider.py                     broad   6 silent   1
+  core/providers.py                             broad   6 silent   0
+  terminal/today.py                             broad   5 silent   3
+  core/news_engine.py                           broad   4 silent   0
+  core/rag_engine.py                            broad   4 silent   0
+  terminal/services_model.py                    broad   3 silent   0
+  terminal/notify.py                            broad   3 silent   0
+  markets/kr/pipeline.py                        broad   3 silent   0
+  terminal/server.py                            broad   2 silent   1
+  terminal/record_status.py                     broad   2 silent   1
+  terminal/sources.py                           broad   2 silent   0

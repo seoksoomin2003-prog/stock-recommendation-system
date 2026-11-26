@@ -1,0 +1,17 @@
+US MSFT status REAL rank_basis UNIVERSE 3.1s
+  SWING: live score 57.6865 data_date 2026-11-25 | ledger score 57.6865 data_date 2026-11-25 | band HOLD_WATCH vs HOLD_WATCH | factor diffs 1/20
+      atr_risk: ledger 0.6398663618885426 live 0.6398663288166231
+  LONG_TERM: live score 74.3930 data_date 2026-11-25 | ledger score 74.3930 data_date 2026-11-25 | band BUY_CANDIDATE vs BUY_CANDIDATE | factor diffs 1/20
+      downside_drawdown: ledger 0.6376396612001998 live 0.6376395984344406
+US JPM status REAL rank_basis UNIVERSE 2.9s
+  SWING: live score 46.9640 data_date 2026-11-25 | ledger score 46.9640 data_date 2026-11-25 | band WEAK_REDUCE vs WEAK_REDUCE | factor diffs 1/20
+      atr_risk: ledger 0.8646525621918869 live 0.8646526114518058
+  LONG_TERM: live score 64.3364 data_date 2026-11-25 | ledger score 64.3364 data_date 2026-11-25 | band HOLD_WATCH vs HOLD_WATCH | factor diffs 0/20
+KR 005930 status REAL rank_basis UNIVERSE 3.0s
+  SWING: live score 57.6505 data_date 2026-11-25 | ledger score 57.6520 data_date 2026-11-25 | band HOLD_WATCH vs HOLD_WATCH | factor diffs 4/21
+      momentum: ledger 0.18754127860056263 live 0.18764724934280078
+      breakout_volume: ledger 0.2326649154327299 live 0.23267257417916903
+      usdkrw_regime: ledger 0.9622088046614957 live 0.9266278730658781
+      risk_reward: ledger 0.23245710797962815 live 0.23235895907791593
+  LONG_TERM: live score 64.3474 data_date 2026-11-25 | ledger score 64.3474 data_date 2026-11-25 | band HOLD_WATCH vs HOLD_WATCH | factor diffs 1/21
+      usdkrw_regime: ledger 0.9622088046614957 live 0.9266278730658781

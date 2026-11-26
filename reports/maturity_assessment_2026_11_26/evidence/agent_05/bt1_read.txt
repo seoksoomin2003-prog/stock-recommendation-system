@@ -1,0 +1,38 @@
+===== US 152 2014-01-02 2026-08-13 SPY(다음 날 시가 진입, 배당 포함) 0.40206000000000003 {'SWING': 463.19736842105266, 'LONG_TERM': 458.0263157894737}
+ -- SWING NEITHER primary 20
+   h 5 ic 0.0221 t 1.14 lag 1 NO_EVIDENCE checks {'ic': True, 't': False, 'ic_both_halves': True, 'spread_both_halves': False, 'buy_band': False} | top-idx -0.0043 band-idx -0.0048 mono False
+   h 10 ic 0.0072 t 0.43 lag 1 NO_EVIDENCE checks {'ic': False, 't': False, 'ic_both_halves': False, 'spread_both_halves': False, 'buy_band': True} | top-idx -0.005 band-idx -0.0045 mono False
+   h 20 ic 0.0043 t 0.27 lag 1 NO_EVIDENCE checks {'ic': False, 't': False, 'ic_both_halves': False, 'spread_both_halves': False, 'buy_band': False} | top-idx -0.0065 band-idx -0.0062 mono False
+   accounts keys: ['hold_sessions', 'first', 'last', 'accounts']
+     hold_sessions 21
+     first 2014-01-02
+     last 2026-08-13
+     accounts {}
+ -- LONG_TERM NEITHER primary 252
+   h 63 ic 0.0158 t 1.38 lag 3 NO_EVIDENCE checks {'ic': False, 't': False, 'ic_both_halves': True, 'spread_both_halves': False, 'buy_band': True} | top-idx -0.0045 band-idx -0.0054 mono False
+   h 126 ic 0.0308 t 2.14 lag 6 NO_EVIDENCE checks {'ic': True, 't': False, 'ic_both_halves': True, 'spread_both_halves': False, 'buy_band': True} | top-idx -0.0069 band-idx -0.0077 mono False
+   h 252 ic 0.0334 t 1.98 lag 12 NO_EVIDENCE checks {'ic': True, 't': False, 'ic_both_halves': True, 'spread_both_halves': False, 'buy_band': True} | top-idx -0.0118 band-idx -0.0131 mono False
+   accounts keys: ['hold_sessions', 'first', 'last', 'accounts']
+     hold_sessions 21
+     first 2014-01-02
+     last 2026-08-13
+     accounts {}
+===== KR 90 2019-04-01 2026-11-11 시가총액 가중 시장(전 종목) 0.53 {'SWING': 280.56666666666666, 'LONG_TERM': 246.26666666666668}
+ -- SWING NEITHER primary 20
+   h 5 ic 0.0498 t 4.02 lag 1 NO_EVIDENCE checks {'ic': True, 't': True, 'ic_both_halves': True, 'spread_both_halves': False, 'buy_band': True} | top-idx -0.0065 band-idx 0.0 mono False
+   h 10 ic 0.0507 t 4.33 lag 1 NO_EVIDENCE checks {'ic': True, 't': True, 'ic_both_halves': True, 'spread_both_halves': False, 'buy_band': True} | top-idx -0.0097 band-idx -0.0055 mono False
+   h 20 ic 0.0544 t 5.13 lag 1 NO_EVIDENCE checks {'ic': True, 't': True, 'ic_both_halves': True, 'spread_both_halves': False, 'buy_band': True} | top-idx -0.0107 band-idx -0.0041 mono False
+   accounts keys: ['hold_sessions', 'first', 'last', 'accounts']
+     hold_sessions 21
+     first 2019-04-01
+     last 2026-10-13
+     accounts {}
+ -- LONG_TERM NEITHER primary 252
+   h 63 ic 0.0572 t 2.92 lag 3 WEAK_POSITIVE_EVIDENCE checks {'ic': True, 't': True, 'ic_both_halves': True, 'spread_both_halves': True, 'buy_band': True} | top-idx -0.0083 band-idx -0.0049 mono False
+   h 126 ic 0.0635 t 2.31 lag 6 NO_EVIDENCE checks {'ic': True, 't': True, 'ic_both_halves': True, 'spread_both_halves': False, 'buy_band': True} | top-idx -0.0239 band-idx -0.0222 mono False
+   h 252 ic 0.0445 t 1.99 lag 12 NO_EVIDENCE checks {'ic': True, 't': False, 'ic_both_halves': True, 'spread_both_halves': False, 'buy_band': True} | top-idx -0.0721 band-idx -0.0619 mono False
+   accounts keys: ['hold_sessions', 'first', 'last', 'accounts']
+     hold_sessions 21
+     first 2019-04-01
+     last 2026-10-13
+     accounts {}
