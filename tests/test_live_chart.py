@@ -121,3 +121,10 @@ def test_the_stock_screens_chart_follows_the_open_session_only_when_asked(tmp_pa
     js = (ROOT / "terminal" / "static" / "app.js").read_text(encoding="utf-8")
     assert js.count("setInterval(async () => {\n    stockTick++;") == 1 and 'state.tab !== "stock" || document.hidden' in js and "&live=1" in js
     assert '$("#cha-plan").closest("label")]' in (ROOT / "terminal" / "static" / "chart.js").read_text(encoding="utf-8")       # the plan lines belong to the daily chart
+
+
+def test_the_minute_line_takes_its_colour_from_the_previous_close():
+    js = (ROOT / "terminal" / "static" / "chart.js").read_text(encoding="utf-8")
+    body = js[js.index("function chaDrawMinute"):js.index("function chaClock")]
+    assert "[[up, 0, py(prev)], [dn, py(prev), P.h - py(prev)]]" in body and "ctx.clip()" in body          # above the previous close one colour, under it the other
+    assert "if (prev === null) { ctx.strokeStyle = ink; path(); }" in body                                    # no previous close: one ink line, never a guessed side

@@ -345,7 +345,11 @@ function chaDrawMinute() {
   chaClock(ctx, d, x, P.h - 14, muted);
   if (prev !== null) { ctx.save(); ctx.strokeStyle = muted; ctx.setLineDash([4, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, py(prev)); ctx.lineTo(pw, py(prev)); ctx.stroke(); ctx.restore(); }
   if (cha.type === "line" || bw < 2.2) {
-    ctx.strokeStyle = ink; ctx.lineWidth = 1.4; ctx.beginPath(); bars.forEach((b, i) => (i ? ctx.lineTo(xi(i), py(b.close)) : ctx.moveTo(xi(i), py(b.close)))); ctx.stroke();
+    // 선 색은 전일 종가 기준입니다(사용자 요청 2026-11-26): 그 위는 오름 색, 아래는 내림 색(거래량 막대와 같은 색).  전일 종가를 모르면 글자색 한 가지.
+    const path = () => { ctx.beginPath(); bars.forEach((b, i) => (i ? ctx.lineTo(xi(i), py(b.close)) : ctx.moveTo(xi(i), py(b.close)))); ctx.stroke(); };
+    ctx.lineWidth = 1.4;
+    if (prev === null) { ctx.strokeStyle = ink; path(); }
+    else [[up, 0, py(prev)], [dn, py(prev), P.h - py(prev)]].forEach(([col, top, h]) => { ctx.save(); ctx.beginPath(); ctx.rect(0, top, pw, Math.max(0, h)); ctx.clip(); ctx.strokeStyle = col; path(); ctx.restore(); });
   } else bars.forEach((b, i) => {
     const o = isNum(b.open) ? b.open : b.close, col = b.close >= o ? up : dn, hv = isNum(b.high) ? b.high : Math.max(o, b.close), lv = isNum(b.low) ? b.low : Math.min(o, b.close);
     ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1;
@@ -354,7 +358,7 @@ function chaDrawMinute() {
     else { ctx.beginPath(); ctx.moveTo(xi(i) - bw * 0.4, py(o)); ctx.lineTo(xi(i), py(o)); ctx.moveTo(xi(i), py(b.close)); ctx.lineTo(xi(i) + bw * 0.4, py(b.close)); ctx.stroke(); }
   });
   const L = bars[n - 1];
-  vizEndTags(ctx, [{ y: py(L.close), color: ink, label: tickLabel(L.close, Math.max(nt.digits, dg)), dot: [xi(n - 1), py(L.close)] }], pw + 4, 12, ph - 6, { box: true, T });
+  vizEndTags(ctx, [{ y: py(L.close), color: prev === null ? ink : L.close >= prev ? up : dn, label: tickLabel(L.close, Math.max(nt.digits, dg)), dot: [xi(n - 1), py(L.close)] }], pw + 4, 12, ph - 6, { box: true, T });
   let vmax = 0; bars.forEach((b) => { if (isNum(b.volume)) vmax = Math.max(vmax, b.volume); });
   const vt = niceTicks(0, vmax || 1, 2), vtop = Math.max(vmax || 1, vt.ticks[vt.ticks.length - 1] || 0), vy = (v) => V.h - 2 - (v / vtop) * (V.h - 8);
   chaGrid(V.ctx, pw, 0, vtop, vy, grid, muted, (v) => big(v, ""), 2, vt.ticks.filter((v) => v > 0));
