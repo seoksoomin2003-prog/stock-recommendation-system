@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from zoneinfo import ZoneInfo
 
+from terminal import kr_summary
 from terminal import TERMINAL_VERSION, alert_rules, chart_analysis, portfolio as pf, sources
 from terminal.cache import FileCache
 from terminal.services_model import ModelViews
@@ -600,6 +601,9 @@ class Terminal(ModelViews):
             c = self.qsf.kr_company(ticker)
             ident = c.get("ident") or {}
             data = {**(info["data"] or {}), "longName": ident.get("company_name") or (info["data"] or {}).get("longName"), "exchange": ident.get("market") or (info["data"] or {}).get("exchange")}
+            ko = kr_summary.for_ticker(ticker, data.get("longBusinessSummary"))
+            if ko:
+                data["summaryKo"] = ko
             return {"ticker": ticker, "market": "KR", "profile": {"status": info["status"], "data": self._dividend_check(data), "source": "Yahoo Finance quote summary, KRX 상장 목록", "fetched_at": info["fetched_at"]},
                     "fundamentals": self._kr_fundamentals(c)}
         out = {"ticker": ticker, "market": "US", "profile": {"status": info["status"], "data": self._dividend_check(info["data"] or {}),

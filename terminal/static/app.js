@@ -1028,7 +1028,7 @@ function renderProfile(c) {
     <div class="meta">${esc([sectorKo(p.sector), p.industry].filter(Boolean).join(" · "))}${safeUrl(p.website) ? ` · <a href="${esc(safeUrl(p.website))}" target="_blank" rel="noopener noreferrer">웹사이트</a>` : ""}</div>`;
   $("#s-facts").innerHTML = `<h2>핵심 수치</h2><div class="kv">${kv.map(([k, v]) => `<div><span>${k}</span><b class="num">${v}</b></div>`).join("")}</div>
     ${meta(c.profile.source, c.profile.fetched_at, badge(c.profile.status))}`;
-  $("#s-desc").innerHTML = `${p.longBusinessSummary ? `<details class="co-sum" id="sum"><summary>회사 설명 <span class="meta m0">Yahoo 영문 원문</span> <span class="co-lead" lang="en">${esc(p.longBusinessSummary)}</span></summary><div class="summary open" lang="en">${esc(p.longBusinessSummary)}</div></details>` : '<h2>회사 설명</h2><div class="empty">회사 설명이 없습니다.</div>'}`;
+  $("#s-desc").innerHTML = coSummary(p);
   renderHeadPrice();
   $("#addc").onclick = () => compareWith([c.ticker]);
   $("#adda").onclick = () => chartWith(c.ticker);
@@ -1463,3 +1463,13 @@ function fromHash() {
 }
 window.addEventListener("hashchange", fromHash);
 window.addEventListener("DOMContentLoaded", fromHash);   // after every script (portfolio.js) has registered
+
+// Company description: the Korean translation kept with the program when there is one (Korean stocks), Yahoo's English text otherwise.
+function coSummary(p) {
+  const en = p.longBusinessSummary, ko = p.summaryKo;
+  if (ko && ko.ko) {
+    const note = `${esc(ko.source)}${ko.made_on ? ` · ${esc(ko.made_on)}` : ""}${ko.english_changed ? " · 그 뒤 야후 원문이 바뀜" : ""}`;
+    return `<details class="co-sum" id="sum"><summary>회사 설명 <span class="meta m0">${note}</span> <span class="co-lead">${esc(ko.ko)}</span></summary><div class="summary open">${esc(ko.ko)}</div>${en ? `<details class="co-en"><summary class="meta">영문 원문 보기</summary><div class="summary" lang="en">${esc(en)}</div></details>` : ""}</details>`;
+  }
+  return en ? `<details class="co-sum" id="sum"><summary>회사 설명 <span class="meta m0">Yahoo 영문 원문</span> <span class="co-lead" lang="en">${esc(en)}</span></summary><div class="summary open" lang="en">${esc(en)}</div></details>` : '<h2>회사 설명</h2><div class="empty">회사 설명이 없습니다.</div>';
+}
