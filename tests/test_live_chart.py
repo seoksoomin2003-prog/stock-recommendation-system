@@ -104,3 +104,20 @@ def test_the_screen_polls_one_timer_and_never_feeds_a_score():
     assert 'state.tab !== "chart" || document.hidden' in js and "&live=1" in js
     for path in list((ROOT / "terminal" / "qsf").rglob("*.py")) + list((ROOT / "terminal" / "committee").rglob("*.py")):
         assert "live_chart" not in path.read_text(encoding="utf-8"), path.name
+
+
+def test_the_stock_screens_chart_follows_the_open_session_only_when_asked(tmp_path):
+    """User request 2026-11-26: the price chart of the stock screen moves during a session too, from the same one-minute copy."""
+    now = datetime(2026, 11, 24, 10, 1, tzinfo=NY).astimezone(timezone.utc)
+    src = _Src(_rows((2026, 11, 24), (9, 30), 31, NY))
+    t = Terminal(tmp_path, src=src, now=lambda: now)
+    routes = server.routes(t)
+    plain = routes[("GET", "/api/chart")]({"t": "AAPL", "range": "3mo"}, None)
+    assert plain["live_now"] is None and plain["bars"][-1]["date"] == "2026-11-20" and "1분봉" not in plain["source"]
+    live = routes[("GET", "/api/chart")]({"t": "AAPL", "range": "3mo", "live": "1"}, None)
+    assert live["live_now"]["live"] and live["bars"][-1]["date"] == "2026-11-24" and live["last"]["close"] == 130.2 and "1분봉으로 이어 그림" in live["source"]
+    closed = Terminal(tmp_path / "c", src=src, now=lambda: datetime(2026, 11, 24, 20, 0, tzinfo=NY).astimezone(timezone.utc))
+    assert server.routes(closed)[("GET", "/api/chart")]({"t": "AAPL", "range": "3mo", "live": "1"}, None)["live_now"] is None      # after the close: the daily bars as they are
+    js = (ROOT / "terminal" / "static" / "app.js").read_text(encoding="utf-8")
+    assert js.count("setInterval(async () => {\n    stockTick++;") == 1 and 'state.tab !== "stock" || document.hidden' in js and "&live=1" in js
+    assert '$("#cha-plan").closest("label")]' in (ROOT / "terminal" / "static" / "chart.js").read_text(encoding="utf-8")       # the plan lines belong to the daily chart

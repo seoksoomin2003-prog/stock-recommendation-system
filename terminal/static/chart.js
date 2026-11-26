@@ -71,7 +71,7 @@ async function renderChart() {
   $("#cha-plan").onchange = (e) => { cha.plan = e.target.checked; chaSave(); chaDraw(); };
   const minute = cha.range === "1d";
   // 1분봉에는 일봉 기준 지표가 없으므로 그 칸과 선택지를 숨깁니다(display: 클래스 규칙이 hidden 속성보다 앞섭니다).
-  [$("#cha-ma"), $("#cha-rsi-h"), $("#cha-rsi"), $("#cha-macd-h"), $("#cha-macd"), $("#cha-bb").closest("label"), $("#cha-sig").closest("label")]
+  [$("#cha-ma"), $("#cha-rsi-h"), $("#cha-rsi"), $("#cha-macd-h"), $("#cha-macd"), $("#cha-bb").closest("label"), $("#cha-sig").closest("label"), $("#cha-plan").closest("label")]
     .forEach((el) => (el.style.display = minute ? "none" : ""));
   const want = chaWant();
   cha.data = null; clearInterval(cha.timer);

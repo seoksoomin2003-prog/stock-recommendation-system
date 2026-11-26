@@ -260,7 +260,9 @@ class Terminal(ModelViews):
         return {"market": market, "groups": groups, "cache": q["cache"], "source": "Yahoo Finance (일봉 종가, 지연)",
                 "basis": "최근 일봉 종가 대비 전일 종가. 실시간이 아니며, 장중에는 '장중·미확정'으로 표시되는 지연 가격입니다."}
 
-    def chart(self, ticker: str, rng: str = "1y") -> Dict[str, Any]:
+    def chart(self, ticker: str, rng: str = "1y", live: str = "") -> Dict[str, Any]:
+        """``live`` "1" (the stock screen, user request 2026-11-26): during an open session the last daily bar is brought up to
+        the last one-minute bar, as the chart-analysis tab does (terminal/live_chart.py).  The age of that bar is in ``live_now``."""
         ticker = clean_ticker(ticker)
         period = {"3mo": "2y", "1y": "2y", "5y": "10y"}.get(rng)
         if not period:
@@ -271,6 +273,16 @@ class Terminal(ModelViews):
         rows = (res["data"] or {}).get(sym) or []
         if not rows:
             return {"ticker": ticker, "status": "UNAVAILABLE", "bars": [], "cache": res}
+        now_live = None
+        if live == "1":
+            from terminal import live_chart
+            if live_chart.open_now(market, self.now()):
+                try:
+                    v = self.intraday(ticker)
+                    rows = live_chart.merge_daily(rows, v)
+                    now_live = {k: v.get(k) for k in ("live", "note", "age_min", "session", "refresh_s")} | {"time": (v.get("last") or {}).get("time")}
+                except Exception as exc:                 # the daily chart stands without it; the kind of failure is named
+                    now_live = {"live": False, "note": f"1분봉을 받지 못해 일봉만 그렸습니다({type(exc).__name__}).", "refresh_s": live_chart.REFRESH_S}
         closes = [r["close"] for r in rows]
         sma = {n: _sma(closes, n) for n in (20, 50, 200)}
         keep = {"3mo": 63, "1y": 252, "5y": 1260}[rng]
@@ -286,8 +298,8 @@ class Terminal(ModelViews):
                          "change_pct": _pct(last["close"], rows[-2]["close"] if len(rows) > 1 else None),
                          "high_52w": hi52, "low_52w": lo52,
                          "vs_sma200_pct": _pct(last["close"], sma[200][-1])},
-                "cache": {k: res[k] for k in ("status", "fetched_at", "error")},
-                "source": "Yahoo Finance (분할 조정 일봉)"}
+                "cache": {k: res[k] for k in ("status", "fetched_at", "error")}, "live_now": now_live,
+                "source": "Yahoo Finance (분할 조정 일봉)" + (" · 오늘 일봉은 Yahoo 1분봉으로 이어 그림" if now_live and now_live.get("live") else "")}
 
     def price_on(self, ticker: str, day: str = "", market: str = "") -> Dict[str, Any]:
         """The close a trade form fills in (user request 2026-11-24): the last daily close on or before the form's date, from the

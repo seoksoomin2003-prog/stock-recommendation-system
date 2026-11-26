@@ -974,17 +974,39 @@ function sScoreAge() {
   if (!tag.hidden) tag.title = `스캔 기록 ${box.dataset.session} · 차트의 마지막 일봉 ${last}`;
 }
 let lastChart = null;
+// 받은 차트를 그리고 아래 줄과 머리 가격을 맞춥니다.  장중이면 마지막 가격이 몇 분 전 것인지 서버가 잰 문장을 그대로 적습니다.
+function takeChart(c) {
+  lastChart = c; drawPrice();
+  const L = c.last || {}, live = c.live_now;
+  $("#c-meta").innerHTML = c.bars.length ? meta(c.source, c.cache.fetched_at, `${badge(c.status)} ${liveBadge(L.intraday)} 마지막 일봉 ${esc(L.date)}${live && live.note ? ` · ${esc(live.note)}` : ""}`) :
+    `<div class="empty">${badge("UNAVAILABLE")} 가격 데이터를 받지 못했습니다. 종목 코드를 확인하세요.</div>`;
+  state.lastQuote = L; renderHeadPrice(); sScoreAge();
+}
+// 종목 정보 화면의 가격 차트도 장중에 움직이게 (사용자 요청 2026-11-26): 차트분석 탭과 같은 간격(30초)과 같은 자료입니다.
+// 한 타이머만 돕니다.  종목 탭이 아니거나 창이 가려져 있으면 받지 않고, 장이 닫혀 있으면 5분에 한 번만 열렸는지 봅니다.
+const STOCK_REFRESH_MS = 30000, STOCK_CLOSED_EVERY = 10;
+let stockTimer = null, stockTick = 0, stockBusy = false;
+function stockPoll() {
+  clearInterval(stockTimer); stockTick = 0;
+  stockTimer = setInterval(async () => {
+    stockTick++;
+    if (state.tab !== "stock" || document.hidden || !$("#s-chart") || stockBusy || !lastChart || !state.ticker) return;
+    if (!(lastChart.live_now && lastChart.live_now.live) && stockTick % STOCK_CLOSED_EVERY) return;
+    const t = state.ticker, r = state.range;
+    stockBusy = true;
+    try {
+      const c = await api(`/api/chart?t=${encodeURIComponent(t)}&range=${r}&live=1`);
+      if (state.ticker === t && state.range === r && $("#s-chart") && c.bars.length) takeChart(c);
+    } catch (e) { /* 그려진 차트는 그대로 두고 다음 차례에 다시 받습니다 */ } finally { stockBusy = false; }
+  }, STOCK_REFRESH_MS);
+}
 async function loadChart(t) {
   $("#c-meta").innerHTML = '<div class="meta">불러오는 중…</div>';
   try {
-    const c = await api(`/api/chart?t=${encodeURIComponent(t)}&range=${state.range}`);
+    const c = await api(`/api/chart?t=${encodeURIComponent(t)}&range=${state.range}&live=1`);
     if (c.status !== "UNAVAILABLE") rememberTicker(t);          // 가격이 온 종목만 '최근 본 종목'에 남깁니다
     if (state.ticker !== t) return;
-    lastChart = c; drawPrice(); redrawOn("stock", "price", drawPrice);
-    const L = c.last || {};
-    $("#c-meta").innerHTML = c.bars.length ? meta(c.source, c.cache.fetched_at, `${badge(c.status)} ${liveBadge(L.intraday)} 마지막 일봉 ${esc(L.date)}`) :
-      `<div class="empty">${badge("UNAVAILABLE")} 가격 데이터를 받지 못했습니다. 종목 코드를 확인하세요.</div>`;
-    state.lastQuote = L; renderHeadPrice(); sScoreAge();
+    takeChart(c); redrawOn("stock", "price", drawPrice); stockPoll();
   } catch (e) { $("#c-meta").innerHTML = `<span class="err">${esc(errKo(e))}</span> <button type="button" class="ghost" id="c-retry">다시 시도</button>`; $("#c-retry").onclick = () => loadChart(t); }
 }
 // 가격 줄: 지난 값을 지금 값처럼 보이지 않게 마지막 일봉 날짜를 함께 적고, 정상 자료가 아니면 상태 표시를 붙입니다(차트 아래 줄과 같은 값).

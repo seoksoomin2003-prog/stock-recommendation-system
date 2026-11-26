@@ -157,7 +157,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[pho
         ("POST", "/api/phone/unpair"): lambda q, b: _phone(phone).unpair(str(b.get("id") or "")),
         ("GET", "/api/health"): lambda q, b: {**t.health(), "server_errors": errors.view()},
         ("GET", "/api/overview"): lambda q, b: t.overview(_market(q.get("market", "US"))),
-        ("GET", "/api/chart"): lambda q, b: t.chart(q.get("t", ""), q.get("range", "1y")),
+        ("GET", "/api/chart"): lambda q, b: t.chart(q.get("t", ""), q.get("range", "1y"), q.get("live", "")),
         ("GET", "/api/price"): lambda q, b: t.price_on(q.get("t", ""), q.get("date", ""), "COIN" if q.get("market") == "COIN" else ""),
         ("GET", "/api/compare"): lambda q, b: t.compare(q.get("t", ""), q.get("range", "1y")),
         ("GET", "/api/chart/analysis"): lambda q, b: t.chart_analysis(q.get("t", ""), q.get("range", "1y"), q.get("ma", ""), q.get("live", "")),
