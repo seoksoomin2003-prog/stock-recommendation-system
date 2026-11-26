@@ -110,7 +110,7 @@ def test_the_users_switch_turns_a_markets_news_record_off(tmp_path, monkeypatch)
     d, calls = job(tmp_path, {})
     res = d.run()
     assert "NEWS_KR" not in calls and "NEWS" in calls
-    assert res["steps"]["NEWS_KR"]["status"] == automation.SKIPPED and news.OFF_ENV in res["steps"]["NEWS_KR"]["detail"] and res["steps"]["NEWS"]["status"] == automation.OK
+    assert res["steps"]["NEWS_KR"]["status"] == automation.SKIPPED and "꺼 둠" in res["steps"]["NEWS_KR"]["detail"] and res["steps"]["NEWS"]["status"] == automation.OK
     runbook = (ROOT / "reports" / "RUNBOOK.md").read_text(encoding="utf-8")
     assert runbook.count("QPP_NEWS_OFF") >= 2 and "막히면 끄는 것이 답이다" in runbook
 

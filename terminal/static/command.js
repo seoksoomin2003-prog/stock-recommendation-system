@@ -153,6 +153,13 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "?") { e.preventDefault(); cmdOpen(); return; }
   // 숫자 키는 왼쪽 메뉴에 보이는 묶음의 순서를 따릅니다 (작업 화면 개편 2026-11-24): 코인 시장에서는 1 오늘, 2 내 계좌, 3 코인.
   if (/^[1-9]$/.test(e.key)) { const g = navGroups()[+e.key - 1]; if (g) { showGroup(g); window.scrollTo(0, 0); } return; }
-  if (e.key === "m" || e.key === "M") setMarket({ US: "KR", KR: "COIN", COIN: "US" }[state.market] || "US");
+  if (e.key === "m" || e.key === "M") {
+    // 시장을 바꾸면 화면이 다시 그려져 적던 내용이 사라집니다: 적다 만 칸이 있으면 먼저 묻습니다 (터미널 점검 9번, 2026-11-26).
+    const next = { US: "KR", KR: "COIN", COIN: "US" }[state.market] || "US";
+    const dirty = [...document.querySelectorAll("input:not([type=checkbox]):not([type=radio]):not([type=hidden]), textarea")]
+      .some((el) => el.offsetParent !== null && el.id !== "cmd-q" && el.value !== "" && el.value !== el.defaultValue);
+    if (!dirty) setMarket(next);
+    else uiConfirm("적다 만 내용이 있습니다. 시장을 바꾸면 지워집니다.", { okLabel: "시장 바꾸기", danger: true }).then((ok) => { if (ok) setMarket(next); });
+  }
 });
 $("#cmdbtn").onclick = cmdOpen;

@@ -1244,7 +1244,7 @@ def build_parser() -> argparse.ArgumentParser:
     lb = sub.add_parser("lab", help="Challenger models beside the frozen P6-11B (TERMINAL-3)")
     lb.add_argument("action", choices=["update", "status", "compare"])
     nw = sub.add_parser("news", help="Record free news headlines of the scanned stocks (feeds no score)")
-    nw.add_argument("action", choices=["record"])
+    nw.add_argument("action", choices=["record", "off", "on"])
     qs = sub.add_parser("qsf", help="QSF 1.1: 0-100 stock score with holding-period plan (separate from P6-11B)")
     qs.add_argument("action", choices=QSF_ACTIONS)
     qs.add_argument("tickers", nargs="*")
@@ -1316,6 +1316,9 @@ def main(argv=None) -> int:
         return cmd_qsf(args)
     if args.command == "news":
         from terminal import news
+        if args.action in ("off", "on"):
+            print(json.dumps(news.set_off(PROJECT_ROOT, args.market, args.action == "off"), ensure_ascii=False))
+            return 0
         res = news.record(PROJECT_ROOT, args.market)
         print(json.dumps(res, ensure_ascii=False))
         if str(res.get("stopped") or "").startswith("REFUSED"):

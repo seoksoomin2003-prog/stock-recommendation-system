@@ -346,8 +346,8 @@ class Daily:
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else "다운로드 끊김" if rc == 4 else NO_STATEMENTS if rc == 7 else f"코드 {rc}"}
             if name in ("NEWS", "NEWS_KR"):
                 from terminal import news
-                if news.switched_off("US" if name == "NEWS" else "KR"):      # the user's switch for a feed that refuses for good
-                    return {"status": SKIPPED, "at": at, "detail": f".env의 {news.OFF_ENV}로 꺼 둠"}
+                if news.switched_off("US" if name == "NEWS" else "KR", self.base):      # the user's switch for a feed that refuses for good
+                    return {"status": SKIPPED, "at": at, "detail": "뉴스 기록을 꺼 둠(점수와 무관)"}
                 rc = self.runner(name, ["news", "record"] if name == "NEWS" else ["--market", "KR", "news", "record"])
                 if rc == 6:             # refused for too many requests: a second request a minute later is the last thing the feed wants
                     return {"status": FAILED, "at": at, "detail": "뉴스 제공처가 요청을 거절함(요청 과다) · 오늘은 더 묻지 않고 내일 다시 시도", "no_quick_retry": True}

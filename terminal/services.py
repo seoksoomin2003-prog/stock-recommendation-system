@@ -401,7 +401,23 @@ class Terminal(ModelViews):
         return {**out, "ticker": ticker, "name": self.COMPARE_INDEX.get(ticker), "market": market, "range": rng, "status": status,
                 "intraday": self._intraday(bars[-1]["date"], market) if bars else None, "short_history": bool(bars) and len(bars) < keep,
                 "settings": chart_analysis.settings(), "cache": {k: res.get(k) for k in ("status", "fetched_at", "error")}, "source": source,
-                "live_now": now_live}
+                "live_now": now_live, "plan_lines": self._plan_lines(ticker, market)}
+
+    def _plan_lines(self, ticker: str, market: str) -> Optional[Dict[str, Any]]:
+        """The swing plan's levels of the newest recorded card, for the chart (UI audit item 4): stop, target and the zone the
+        entry rule waits for or reads as met.  Read from the record, display only; None for an index or a stock not in the scan."""
+        try:
+            from terminal import assistant
+            from terminal.qsf import ledger as ledger_mod
+            session = self.qsf.screen_rows(market).get("session")
+            snap = next((s for s in ledger_mod.session_snaps(self.qsf.ledger, market, session) if s.get("ticker") == ticker and s.get("strategy") == "SWING"), None) if session else None
+            if not snap or not snap.get("stop"):
+                return None
+            zone = assistant.pullback_zone(snap) if snap.get("entry_status") == "WAIT_FOR_PULLBACK" else None
+            return {"session": session, "stop": snap.get("stop"), "target": snap.get("target"), "zone": zone, "entry_status": snap.get("entry_status"),
+                    "note": "스윙 카드의 계획 값입니다(손절 기준, 목표 기준, 눌림을 기다리는 구간). 시험하지 않은 규칙 값이고 주문이 아닙니다."}
+        except Exception:
+            return None
 
     def _kr_chart_rows(self, ticker: str, rows: List[Dict[str, Any]], period: str) -> Any:
         """A Korean stock's bars rebuilt from the KRX daily copy the score uses (QSF-1.1.8: Yahoo's Korean history has missing days and

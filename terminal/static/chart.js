@@ -7,7 +7,7 @@ const CHA_TYPES = { candle: "캔들", ohlc: "OHLC", line: "선" };
 const CHA_HOME = { US: ["^GSPC", "^IXIC"], KR: ["^KS11", "^KQ11"] };
 // Each signal is marked on the pane of the indicator it comes from, so the price chart carries only the crossings and band breaks.
 const CHA_ON_PRICE = new Set(["GOLDEN_CROSS", "DEAD_CROSS", "BB_UPPER", "BB_LOWER"]);
-const cha = { ticker: {}, range: "1y", type: "candle", ma: {}, bb: true, sig: true, data: null, x: null, timer: null, tick: 0, busy: false };
+const cha = { ticker: {}, range: "1y", type: "candle", ma: {}, bb: true, sig: true, plan: true, data: null, x: null, timer: null, tick: 0, busy: false };
 // 장중에 차트가 움직이게 (2026-11-25): 30초마다 다시 받습니다.  장이 닫혀 있으면 5분마다 열렸는지만 봅니다.  가격이 몇 분 전 것인지는
 // 서버가 마지막 1분봉 시각으로 재서 보내고, 화면은 그 문장을 그대로 보여 줍니다(늦은 가격을 지금 가격처럼 보이지 않게).
 const CHA_REFRESH_MS = 30000, CHA_CLOSED_EVERY = 10;
@@ -18,11 +18,11 @@ try {
     if (CHA_TYPES[v.type]) cha.type = v.type;
     if (v.ma && typeof v.ma === "object") for (const m of ["US", "KR"]) if (Array.isArray(v.ma[m])) cha.ma[m] = v.ma[m].filter((n) => Number.isInteger(n));
     if (v.ticker && typeof v.ticker === "object") for (const m of ["US", "KR"]) if (typeof v.ticker[m] === "string") cha.ticker[m] = v.ticker[m];
-    cha.bb = v.bb !== false; cha.sig = v.sig !== false;
+    cha.bb = v.bb !== false; cha.sig = v.sig !== false; cha.plan = v.plan !== false;
   }
 } catch (e) { /* storage unavailable: defaults */ }
 function chaSave() {
-  try { localStorage.setItem(CHA_KEY, JSON.stringify({ range: cha.range, type: cha.type, ma: cha.ma, bb: cha.bb, sig: cha.sig, ticker: cha.ticker })); } catch (e) { /* not remembered */ }
+  try { localStorage.setItem(CHA_KEY, JSON.stringify({ range: cha.range, type: cha.type, ma: cha.ma, bb: cha.bb, sig: cha.sig, plan: cha.plan, ticker: cha.ticker })); } catch (e) { /* not remembered */ }
 }
 const chaName = (t) => (typeof CMP_INDEX !== "undefined" && CMP_INDEX[t]) || t;
 // Per-market MA colours (visualization spec 2.3: Korean screens move 50 to aqua and 120 to grey) come from the tokens.
@@ -53,7 +53,8 @@ async function renderChart() {
     main: `<div class="panel"><div class="cha-ctl"><span class="seg" id="cha-rng">${Object.entries(CHA_RANGES).map(([r, n]) => `<button type="button" data-r="${r}" class="${r === cha.range ? "on" : ""}">${n}</button>`).join("")}</span>
       <span class="seg" id="cha-type">${Object.entries(CHA_TYPES).map(([k, n]) => `<button type="button" data-k="${k}" class="${k === cha.type ? "on" : ""}">${n}</button>`).join("")}</span>
       <label class="cha-opt"><input type="checkbox" id="cha-bb"${cha.bb ? " checked" : ""}> 볼린저밴드</label>
-      <label class="cha-opt"><input type="checkbox" id="cha-sig"${cha.sig ? " checked" : ""}> 신호 표시</label></div>
+      <label class="cha-opt"><input type="checkbox" id="cha-sig"${cha.sig ? " checked" : ""}> 신호 표시</label>
+      <label class="cha-opt" title="스윙 카드의 손절 기준, 목표 기준, 눌림을 기다리는 구간을 가로선으로 그립니다. 시험하지 않은 계획 값입니다."><input type="checkbox" id="cha-plan"${cha.plan ? " checked" : ""}> 스윙 계획 선</label></div>
     <div class="cha-ctl" id="cha-ma"></div>
     <div class="cha-stack" id="cha-stack" role="group" aria-label="${esc(chaName(t))} 차트 네 칸. 초점을 두고 ←/→로 날짜를 옮깁니다."><canvas id="cha-price" aria-label="가격 차트"></canvas><div class="cha-pane">거래량</div><canvas id="cha-vol" aria-label="거래량"></canvas>
       <div class="cha-pane" id="cha-rsi-h">RSI</div><canvas id="cha-rsi" aria-label="RSI"></canvas><div class="cha-pane" id="cha-macd-h">MACD</div><canvas id="cha-macd" aria-label="MACD"></canvas>
@@ -67,6 +68,7 @@ async function renderChart() {
   $("#cha-type").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; cha.type = b.dataset.k; chaSave(); $("#cha-type").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); chaDraw(); };
   $("#cha-bb").onchange = (e) => { cha.bb = e.target.checked; chaSave(); chaDraw(); };
   $("#cha-sig").onchange = (e) => { cha.sig = e.target.checked; chaSave(); chaDraw(); };
+  $("#cha-plan").onchange = (e) => { cha.plan = e.target.checked; chaSave(); chaDraw(); };
   const minute = cha.range === "1d";
   // 1분봉에는 일봉 기준 지표가 없으므로 그 칸과 선택지를 숨깁니다(display: 클래스 규칙이 hidden 속성보다 앞섭니다).
   [$("#cha-ma"), $("#cha-rsi-h"), $("#cha-rsi"), $("#cha-macd-h"), $("#cha-macd"), $("#cha-bb").closest("label"), $("#cha-sig").closest("label")]
@@ -206,6 +208,7 @@ function chaDraw() {
   mas.forEach((k) => line(ctx, bars.map((b) => b.ma[k]), x, py, chaMaColor(k, T), 1.4));
   vizEndTags(ctx, mas.map((k) => { let i = n - 1; while (i >= 0 && !isNum(bars[i].ma[k])) i--; return i < 0 ? null : { y: py(bars[i].ma[k]), color: chaMaColor(k, T), label: k, dot: [x(i), py(bars[i].ma[k])] }; }).filter(Boolean),
     pw + 4, 12, ph - 6, { box: true, T });
+  const planOut = cha.plan ? chaPlanLines(ctx, d.plan_lines, py, pw, lo, hi, T) : [];
   if (cha.sig) d.signals.forEach((g) => {
     if (!CHA_ON_PRICE.has(g.kind) || (!cha.bb && g.kind.startsWith("BB_")) || g.i < 0 || g.i >= n) return;      // band breaks go with the band
     const b = bars[g.i], upSide = g.side === "up", yy = upSide ? py(isNum(b.low) ? b.low : b.close) + 9 : py(isNum(b.high) ? b.high : b.close) - 9;
@@ -243,6 +246,7 @@ function chaDraw() {
   $("#cha-legend").innerHTML = [...mas.map((k) => `<span><i style="background:${chaMaColor(k, T)}"></i>${k}일선</span>`),
     cha.bb ? `<span><i style="background:${muted}"></i>볼린저밴드(${s.bollinger.n}일, ±${s.bollinger.k}표준편차)</span>` : "",
     `<span><i style="background:${ink}"></i>거래량 ${s.volume.n}일 평균</span>`, `<span><i style="background:${ink}"></i>RSI·MACD선</span>`, `<span><i style="background:${chaMaColor(20, T)}"></i>MACD 시그널</span>`,
+    cha.plan && d.plan_lines ? `<span title="${esc(d.plan_lines.note)}"><i style="background:${T.down}"></i>손절 기준 · <i style="background:${T.up}"></i>목표 기준${d.plan_lines.zone ? ` · <i style="background:${T.warn}"></i>눌림 대기 구간` : ""} (${esc(d.plan_lines.session)} 스윙 카드, 시험 안 된 계획 값${planOut.length ? `; 범위 밖: ${planOut.join(", ")}` : ""})</span>` : "",
     cha.sig ? `<span><b>▲</b> 오름 쪽 · <b>▼</b> 내림 쪽 신호 · <b>●</b> 거래량 급증 (모두 검증 안 됨)</span>` : ""].join("");
   // names with a data summary (visualization spec 1.11), like the stock screen's price chart
   const b0 = bars[0], b1 = bars[n - 1], dg = isKR() ? 0 : 2, lastRsi = [...bars].reverse().find((b) => isNum(b.rsi));
@@ -251,6 +255,21 @@ function chaDraw() {
   chaHover(py, nt.digits);
 }
 // Grid lines and value ticks; the tick labels are right-aligned at the canvas's right edge, so the digits line up (stage 6).
+// 스윙 카드의 계획 값(손절 기준, 목표 기준, 눌림 대기 구간)을 가격 칸에 가로선으로 그립니다 (화면 점검 4번, 2026-11-26).
+// 차트의 세로 범위는 바꾸지 않습니다: 범위 밖의 값은 그리지 않고 이름을 돌려주어 범례에 적습니다.
+function chaPlanLines(ctx, pl, py, pw, lo, hi, T) {
+  if (!pl) return [];
+  const out = [], dg = isKR() ? 0 : 2, inside = (v) => isNum(v) && v >= lo && v <= hi;
+  if (pl.zone && inside(pl.zone[0]) && inside(pl.zone[1])) { ctx.save(); ctx.fillStyle = T.warn; ctx.globalAlpha = 0.10; ctx.fillRect(0, py(pl.zone[1]), pw, py(pl.zone[0]) - py(pl.zone[1])); ctx.restore(); }
+  else if (pl.zone) out.push("눌림 대기 구간");
+  [["손절 기준", pl.stop, T.down], ["목표 기준", pl.target, T.up]].forEach(([name, v, col]) => {
+    if (!isNum(v)) return;
+    if (!inside(v)) { out.push(`${name} ${tickLabel(v, dg)}`); return; }
+    ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(0, py(v)); ctx.lineTo(pw, py(v)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = vizFont(10); ctx.fillStyle = col; ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText(`${name} ${tickLabel(v, dg)}`, 4, py(v) - 2); ctx.restore();
+  });
+  return out;
+}
 function chaGrid(ctx, pw, lo, hi, y, grid, muted, label, rows = 4, at = null) {
   const right = ctx.canvas.clientWidth - 4;
   ctx.font = vizFont(11); ctx.textBaseline = "middle"; ctx.textAlign = "right"; ctx.lineWidth = 1;

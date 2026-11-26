@@ -87,9 +87,34 @@ def pause_of(market: str) -> float:
     return PAUSE_BY_MARKET.get(market, PAUSE_S)
 
 
-def switched_off(market: str) -> bool:
-    """Whether the user turned this market's news record off in .env (``QPP_NEWS_OFF=KR``): for a feed that refuses for good."""
-    return market.upper() in {x.strip().upper() for x in (os.getenv(OFF_ENV) or "").split("#")[0].replace(";", ",").split(",")}
+OFF_FILE = "data/terminal/news_off.json"      # the same switch kept by a command or a button, for a user who does not edit .env (2026-11-26)
+
+
+def _off_file(base: Optional[Path]) -> set:
+    if base is None:
+        return set()
+    try:
+        doc = json.loads((Path(base) / OFF_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return set()
+    return {str(m).upper() for m in (doc.get("markets") if isinstance(doc, dict) else None) or []}
+
+
+def set_off(base: Path, market: str, off: bool) -> Dict[str, Any]:
+    """Turn a market's news record off or on again.  Headlines feed no score, so nothing else changes."""
+    now = _off_file(base)
+    now = (now | {market.upper()}) if off else (now - {market.upper()})
+    target = Path(base) / OFF_FILE
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps({"markets": sorted(now)}, ensure_ascii=False), encoding="utf-8")
+    return {"status": "OK", "off": sorted(now), "note": "뉴스는 점수에 들어가지 않습니다. 꺼도 점수와 기록은 그대로입니다."}
+
+
+def switched_off(market: str, base: Optional[Path] = None) -> bool:
+    """Whether the user turned this market's news record off: in .env (``QPP_NEWS_OFF=KR``) or by the stored switch
+    (``set_off``).  For a feed that refuses for good."""
+    env = {x.strip().upper() for x in (os.getenv(OFF_ENV) or "").split("#")[0].replace(";", ",").split(",")}
+    return market.upper() in env | _off_file(base)
 
 
 def fetch(ticker: str, market: str, name: Optional[str] = None, http=requests) -> Dict[str, Any]:

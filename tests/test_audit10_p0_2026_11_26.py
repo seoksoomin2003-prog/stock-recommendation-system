@@ -244,3 +244,42 @@ def test_the_real_plan_sizes_its_risk_at_the_limit_price_and_the_paper_book_does
         assert old["shares"] * (old["limit"] - old["stop"]) / account["equity"] * 100 > budget          # what the close-based size allowed at the limit
     code = (ROOT / "terminal" / "qsf" / "paper_book.py").read_text(encoding="utf-8")
     assert "risk_at_limit" not in code and "risk_at_limit=True" in (ROOT / "terminal" / "services.py").read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------- closing the open lists (2026-11-26, deadline 2026-11-29)
+def test_the_news_record_can_be_switched_off_without_editing_env(tmp_path, monkeypatch):
+    from terminal import news
+    monkeypatch.delenv(news.OFF_ENV, raising=False)
+    assert not news.switched_off("KR", tmp_path) and not news.switched_off("KR")
+    assert news.set_off(tmp_path, "kr", True)["off"] == ["KR"] and news.switched_off("KR", tmp_path) and not news.switched_off("US", tmp_path)
+    assert news.set_off(tmp_path, "KR", False)["off"] == [] and not news.switched_off("KR", tmp_path)
+    (tmp_path / news.OFF_FILE).write_text("not json", encoding="utf-8")
+    assert not news.switched_off("KR", tmp_path)                                   # a damaged switch file is "on", never a crash
+    monkeypatch.setenv(news.OFF_ENV, "KR")
+    assert news.switched_off("KR", tmp_path)                                       # .env still works
+    assert 'news.switched_off("US" if name == "NEWS" else "KR", self.base)' in (ROOT / "terminal" / "automation.py").read_text(encoding="utf-8")
+
+
+def test_the_chart_gets_the_swing_plans_levels_from_the_record_and_the_m_key_asks_first():
+    from terminal.services import Terminal
+    snap = {"ticker": "AAA", "strategy": "SWING", "stop": 96.0, "target": 110.0, "entry_status": "ENTRY_NOW", "price": 100.0, "factors": []}
+
+    class Led:
+        def _live_rows(self): return [{"market": "US", "session": "2026-11-25"}]
+        def _load(self, r): return [snap, {**snap, "strategy": "LONG_TERM", "stop": None}]
+
+    class Q:
+        ledger = Led()
+        def screen_rows(self, market): return {"session": "2026-11-25"}
+
+    class T(Terminal):
+        qsf = Q()
+
+    t = T.__new__(T)
+    got = t._plan_lines("AAA", "US")
+    assert got["stop"] == 96.0 and got["target"] == 110.0 and got["zone"] is None and got["session"] == "2026-11-25" and "시험하지 않은" in got["note"]
+    assert t._plan_lines("ZZZ", "US") is None                                      # not in the scan: no line, never a made-up one
+    chart = (ROOT / "terminal" / "static" / "chart.js").read_text(encoding="utf-8")
+    assert "chaPlanLines(ctx, d.plan_lines, py, pw, lo, hi, T)" in chart and 'id="cha-plan"' in chart and "범위 밖" in chart
+    keys = (ROOT / "terminal" / "static" / "command.js").read_text(encoding="utf-8")
+    assert "적다 만 내용이 있습니다" in keys and "if (!dirty) setMarket(next);" in keys
