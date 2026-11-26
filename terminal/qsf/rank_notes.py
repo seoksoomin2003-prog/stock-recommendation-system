@@ -9,6 +9,7 @@ Nothing here scores, records or reads the network: the ranking's notes come from
 from the card itself.  Added 2026-11-23 (UI audit, items 1-3).
 """
 from typing import Any, Dict, Iterable, List, Optional, Tuple
+from terminal.qsf import ledger as ledger_mod
 
 STRONG, WEAK, SHOWN = 0.6, 0.4, 3
 
@@ -62,11 +63,7 @@ def short(b: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _session_snaps(ledger: Any, market: str, session: str) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
-    for r in ledger._live_rows():
-        if r["market"] == market and r["session"] == session:
-            out += ledger._load(r)
-    return out
+    return ledger_mod.session_snaps(ledger, market, session)
 
 
 def previous_session(ledger: Any, market: str, session: str) -> Optional[str]:

@@ -19,6 +19,7 @@ from terminal.qsf import config, kr_forward as kf, validate
 from terminal.qsf.ledger import Ledger
 from terminal.qsf.score_split import TOP_FIFTH, _band, _ic, _mean
 from utils import durable
+from terminal.qsf import ledger as ledger_mod
 
 PROTOCOL = "reports/QSF_FUND_PERIOD_PROTOCOL.md"
 FOLDERS = {"KR": Path("research_data") / "fund_period_kr", "US": Path("research_data") / "fund_period_us"}
@@ -134,11 +135,7 @@ def score_session(snaps: List[Dict[str, Any]], session: str, market: str) -> Dic
 
 
 def _session_snaps(led: Ledger, market: str, session: str) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
-    for r in led._live_rows():
-        if r["market"] == market and r["session"] == session:
-            out += led._load(r)
-    return out
+    return ledger_mod.session_snaps(led, market, session)
 
 
 def record(base: Path, market: str, now: Callable[[], datetime] = _utcnow, first: str = FIRST) -> Dict[str, Any]:

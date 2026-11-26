@@ -1,6 +1,8 @@
 """P0 of the institutional assessment (2026-11-26, user decisions): cards the buy check waits on leave the REAL order plan only,
 the card and the buy check say why, template sentences that did not fit the company, and a second backup folder."""
 import json
+
+import pytest
 from pathlib import Path
 
 from terminal import automation, plain, record_status
@@ -190,3 +192,35 @@ def test_a_backup_whose_files_are_in_icloud_only_is_named_and_not_read(tmp_path,
     monkeypatch.setattr(automation, "check_backup", lambda root: (_ for _ in ()).throw(OSError("x")))
     assert restore.check(base)["backups"][0]["status"] == "UNREADABLE"
     assert "IN_CLOUD" in (ROOT / "terminal" / "static" / "lab.js").read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------- P2 (2026-11-26)
+def test_the_plans_totals_are_display_only_and_the_paper_book_record_is_as_it_was():
+    from terminal.qsf import order_plan as op
+    orders = [{"ticker": "A", "sector": "Tech", "shares": 10, "limit": 105.0, "stop": 95.0, "weight_pct": 10.0, "risk_pct": 0.5},
+              {"ticker": "B", "sector": "Tech", "shares": 5, "limit": 52.0, "stop": 46.0, "weight_pct": 2.5, "risk_pct": 0.2},
+              {"ticker": "C", "sector": None, "shares": 1, "limit": 11.0, "stop": 9.0, "weight_pct": 0.1, "risk_pct": 0.01}]
+    t = op.totals(orders, 10_000.0)
+    assert t["orders"] == 3 and t["weight_pct"] == pytest.approx(12.6) and t["risk_pct"] == pytest.approx(0.71)
+    assert orders[0]["risk_at_limit_pct"] == pytest.approx(1.0) and t["risk_at_limit_pct"] == pytest.approx(1.0 + 0.3 + 0.02)
+    assert t["largest_sector"] == {"sector": "Tech", "weight_pct": 12.5} and "합계에 거는 한도는 없습니다" in t["note"]
+    code = (ROOT / "terminal" / "qsf" / "order_plan.py").read_text(encoding="utf-8")
+    build = code[code.index("def build("):]
+    assert "risk_at_limit_pct" not in build and "totals" not in build                       # the plan builder, read by the paper book, is unchanged
+    assert "totals" not in (ROOT / "terminal" / "qsf" / "paper_book.py").read_text(encoding="utf-8")
+
+
+def test_a_ranking_row_says_when_a_newer_quarter_moves_the_score_by_ten_points():
+    from terminal.qsf import service
+    card = lambda a, t, newer=True: {"fund_period": {"live": "ANNUAL", "annual": {"score": a}, "trailing": {"score": t, "newer_quarter": newer}}}      # noqa: E731
+    assert service.fund_gap(card(64.3, 84.6)) == pytest.approx(20.3) and service.fund_gap(card(80.0, 62.3)) == pytest.approx(-17.7)
+    assert service.fund_gap(card(64.3, 70.0)) is None and service.fund_gap(card(64.3, 84.6, newer=False)) is None and service.fund_gap({}) is None
+    assert "qsfGapTag(r)" in (ROOT / "terminal" / "static" / "qsf.js").read_text(encoding="utf-8")
+
+
+def test_the_persistence_figure_gives_both_shapes_and_the_inventory_gives_a_range():
+    import numpy as np
+    from terminal.qsf import inventory, live_forward as lf
+    assert lf.PERSIST_POINTS[:4] == ((0.0, 1.25), (0.09, 2.5), (0.18, 3.9), (0.26, 5.4)) and lf.PERSIST_POINTS[-1] == (0.47, 14.6)
+    assert all(np.interp(r, *zip(*lf.PERSIST_SLOW)) > np.interp(r, *zip(*lf.PERSIST_POINTS)) for r in (0.0, 0.1, 0.2, 0.3, 0.4))
+    assert "2.6~10.1%" in inventory.markdown() and "상위 4.6%" not in inventory.markdown()

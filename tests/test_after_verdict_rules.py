@@ -253,7 +253,7 @@ def test_the_verdict_report_says_how_far_the_pay_off_carries_from_one_block_to_t
     assert "바꾸지 않습니다" in p["note"] and "12개" in p["says"]
     days = lambda ics: [{"ic": v} for v in ics for _ in range(20)]                   # noqa: E731
     up = lf.persistence(days([0.10, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01]), 20)       # a slow drift: neighbours alike
-    assert up["lag1"] > 0.26 and up["beyond_table"] is True and up["false_pass_pct_about"] == 5.4 and "이상" in up["says"]
+    assert up["lag1"] > 0.26 and up["false_pass_pct_about"] > 5.4 and up["false_pass_pct_if_slow"] > up["false_pass_pct_about"] and "느린 쏠림" in up["says"]      # table extended and a slow-drift figure added 2026-11-26
     flip = lf.persistence(days([0.05, -0.05] * 5), 20)                               # neighbours opposite
     assert flip["lag1"] < 0 and flip["false_pass_pct_about"] == 1.25 and "1.25%쯤" in flip["says"]
     assert lf.persistence(days([0.05] * 5), 20)["status"] == "UNAVAILABLE" and lf.persistence(days([0.05] * 12), 20)["status"] == "UNAVAILABLE"      # too few blocks, or no variation: no figure

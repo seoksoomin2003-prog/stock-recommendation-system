@@ -1062,7 +1062,7 @@ class QSF(ScreenViews):
                     rows.append({k2: c.get(k2) for k2 in ("ticker", "name", "strategy", "score", "band", "band_label", "action", "action_label", "color", "actionability", "coverage", "confidence", "entry_status", "price", "data_date")}
                                 | {"domains": {d: v["score_100"] for d, v in c["domains"].items()}, "gates": [g["code"] for g in c["gates"]],
                                    "missing_factors": len([x for x in c.get("missing") or [] if x not in config.NEVER_AVAILABLE.get((market, s), ())]),
-                                   "band_held_back": bool(c.get("band_held_back"))})
+                                   "band_held_back": bool(c.get("band_held_back")), "fund_gap": fund_gap(c)})
             except Exception as exc:                     # one bad ticker never stops a scan; the type is recorded
                 errors[t] = type(exc).__name__
                 _log_scan_error(self.base, market, t, exc)
@@ -1234,6 +1234,17 @@ class QSF(ScreenViews):
 
 
 FUNDAMENTALS_NOT_READY = "FUNDAMENTALS_NOT_READY"          # prices arrived, statements did not, for too many stocks
+
+
+def fund_gap(card: Dict[str, Any]) -> Optional[float]:
+    """Trailing-four-quarter score minus the annual one when a newer quarter is out and they differ by ten points or more
+    (the card's own note uses the same line, terminal/fund_checks._basis_note).  For the ranking row: the row is ranked on
+    annual statements a median 329 days old, and the difference was shown on the card only (assessment 2026-11-26)."""
+    fp = card.get("fund_period") or {}
+    a, t = (fp.get("annual") or {}).get("score"), (fp.get("trailing") or {}).get("score")
+    if a is None or t is None or not (fp.get("trailing") or {}).get("newer_quarter") or abs(t - a) < 10.0:
+        return None
+    return round(float(t) - float(a), 1)
 
 
 def fund_share(cards: List[Dict[str, Any]]) -> Dict[str, Any]:

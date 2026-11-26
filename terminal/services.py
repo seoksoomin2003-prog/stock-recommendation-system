@@ -1125,6 +1125,7 @@ class Terminal(ModelViews):
         plan = op.build(cands, account, market, st, sized, blocked=blocked, outside=outside)
         for o in plan["orders"]:            # the price an order can carry: the cap rounded down to the price step (display only)
             o["limit_order"] = op.order_price(market, o["limit"])
+        plan["totals"] = op.totals(plan["orders"], equity)          # display only: the sum of the new orders, and the risk at the limit price
         # what the market state alone asked for stays readable apart from the stance
         plan.update(size_factor=float(mstate.get("size_factor") or 1.0), new_exposure_cap=mstate.get("new_exposure_cap"), stance=stance_shown,
                     market_state={k: mstate.get(k) for k in op.STATE_SHOWN})

@@ -18,6 +18,7 @@ from terminal.qsf import config, kr_forward as kf, research_ensemble as en, rese
 from terminal.qsf.ledger import Ledger
 from terminal.qsf.research_score import test_verdict
 from utils import durable, nyse_calendar
+from terminal.qsf import ledger as ledger_mod
 
 PROTOCOL = "reports/QSF_US_CHALLENGER_PROTOCOL.md"
 FOLDER = Path("research_data") / "us_challenger"
@@ -83,11 +84,7 @@ def score_session(snaps: List[Dict[str, Any]], session: str) -> Dict[str, Any]:
 
 
 def _session_snaps(led: Ledger, session: str) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
-    for r in led._live_rows():
-        if r["market"] == "US" and r["session"] == session:
-            out += led._load(r)
-    return out
+    return ledger_mod.session_snaps(led, "US", session)
 
 
 def write_record(base: Path, led: Ledger, day: str, at: datetime, late: bool) -> bool:

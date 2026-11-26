@@ -17,6 +17,7 @@ import numpy as np
 from terminal.qsf import config, kr_forward as kf, validate, walkforward
 from terminal.qsf.ledger import Ledger
 from utils import durable
+from terminal.qsf import ledger as ledger_mod
 
 PROTOCOL = "reports/QSF_REGIME_WEIGHTS_PROTOCOL.md"
 REPORT = Path("reports") / "qsf" / "QSF_REGIME_WEIGHTS.json"
@@ -307,11 +308,7 @@ def score_session(snaps: List[Dict[str, Any]], session: str, market: str, st: st
 
 
 def _session_snaps(led: Ledger, market: str, session: str) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
-    for r in led._live_rows():
-        if r["market"] == market and r["session"] == session:
-            out += led._load(r)
-    return out
+    return ledger_mod.session_snaps(led, market, session)
 
 
 def record(base: Path, market: str, index_bars: Callable[[], Sequence[Dict[str, Any]]], now: Callable[[], datetime] = _utcnow, first: str = FIRST) -> Dict[str, Any]:

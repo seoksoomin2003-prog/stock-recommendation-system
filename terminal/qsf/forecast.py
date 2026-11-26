@@ -16,6 +16,7 @@ import numpy as np
 
 from terminal.qsf import kr_forward as kf
 from terminal.qsf.ledger import Ledger
+from terminal.qsf import ledger as ledger_mod
 
 VERSION = "FC-1"
 PROTOCOL = "reports/QSF_FORECAST_PROTOCOL.md"
@@ -339,11 +340,7 @@ def matrix(tickers: Sequence[str], loader: Callable[[str], List[Dict[str, Any]]]
 
 
 def _session_snaps(led: Ledger, market: str, session: str) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
-    for r in led._live_rows():
-        if r["market"] == market and r["session"] == session:
-            out += led._load(r)
-    return out
+    return ledger_mod.session_snaps(led, market, session)
 
 
 def build_doc(session: str, market: str, snaps: List[Dict[str, Any]], loader: Callable[[str], List[Dict[str, Any]]]) -> Dict[str, Any]:

@@ -386,6 +386,16 @@ def _stopped_exit(path: List[Dict[str, Any]], idx: int, h: int, calendar: List[s
     return last, horizon_end
 
 
+def session_snaps(led: Any, market: str, session: str) -> List[Dict[str, Any]]:
+    """Every snapshot in effect of one market and session; the rest of the ledger is not opened.  ``led``: a Ledger or anything
+    with its ``_live_rows`` and ``_load``.  The one home of a loop that eleven modules each carried a copy of (2026-11-26)."""
+    out: List[Dict[str, Any]] = []
+    for r in led._live_rows():
+        if r["market"] == market and r["session"] == session:
+            out += led._load(r)
+    return out
+
+
 def outcome(path: List[Dict[str, Any]], bench: List[Dict[str, Any]], signal_session: str, h: int, cost: float, entry_session: Optional[str] = None,
             dates: Optional[List[str]] = None, bench_by_date: Optional[Dict[str, Dict[str, Any]]] = None,
             calendar: Optional[List[str]] = None) -> Optional[Dict[str, float]]:

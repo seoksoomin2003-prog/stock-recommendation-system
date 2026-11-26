@@ -15,6 +15,7 @@ from typing import Any, Dict, Iterable, List, Optional
 
 from terminal import portfolio as pf
 from terminal.qsf import config, engine
+from terminal.qsf import ledger as ledger_mod
 
 ENTRY_READY = "ENTRY_NOW"
 LIMIT_ATR = 0.5                 # a buy is not chased beyond the reference close plus this many ATR
@@ -114,11 +115,7 @@ def _adv(snap: Dict[str, Any]) -> Optional[float]:
 
 def session_snaps(led: Any, market: str, session: str) -> List[Dict[str, Any]]:
     """Every ledger snapshot of one market and session; the rest of the ledger is not opened."""
-    out: List[Dict[str, Any]] = []
-    for r in led._live_rows():
-        if r["market"] == market and r["session"] == session:
-            out += led._load(r)
-    return out
+    return ledger_mod.session_snaps(led, market, session)
 
 
 def market_state(snaps: Iterable[Dict[str, Any]], market: str, session: str) -> Optional[Dict[str, Any]]:
@@ -211,6 +208,26 @@ def annotate(orders: List[Dict[str, Any]], deals: Optional[Dict[str, Any]] = Non
             "note": (f"계획 {len(orders)}종목 가운데 {under}종목은 점수 구간이 상위 구간({buy:g}점 이상)이 아닙니다. 주문 계획은 구간이 아니라 '진입 규칙 충족' 상태로 후보를 고르기 때문입니다. "
                      "각 줄의 점수 아래에 구간을 적었습니다. 실전 판정은 70점 이상 묶음(한국 스윙은 그날 상위 5분의 1)을 정해진 기간 보유한 수익으로 읽습니다. "
                      "이 줄들은 그 묶음이 아니어서, 판정이 통과해도 이 계획의 종목이 검증된 것은 아닙니다.") if under else None}
+
+
+TOTALS_NOTE = ("새 주문을 모두 합친 값입니다. 한도는 주문 하나씩에만 걸려 있고, 합계에 거는 한도는 없습니다(미국의 나쁜 날 50%만 예외). "
+               "손절 합계는 모든 종목이 같은 날 손절에 닿는 경우의 손실이고, 지정가 기준은 모두 지정가 상한에 체결됐을 때입니다. 손절가가 지켜진다는 뜻은 아닙니다.")
+
+
+def totals(orders: List[Dict[str, Any]], equity: float) -> Dict[str, Any]:
+    """Display only (assessment 2026-11-26): what the plan's new orders add up to, and each order's loss at its stop when it is
+    filled at its limit (the dearest fill the plan allows; ``risk_pct`` assumes the close).  Each order is sized against its own
+    limits; nothing limits their sum, and the plan showed none of it.  Called by the real plan's page only: ``build`` and the
+    paper book's record are as they were, and no size is changed."""
+    by_sector: Dict[str, float] = {}
+    for o in orders:
+        o["risk_at_limit_pct"] = o["shares"] * (o["limit"] - o["stop"]) / equity * 100
+    for o in orders:
+        by_sector[o.get("sector") or "분류 없음"] = by_sector.get(o.get("sector") or "분류 없음", 0.0) + o["weight_pct"]
+    top = max(by_sector.items(), key=lambda kv: kv[1]) if by_sector else None
+    return {"orders": len(orders), "weight_pct": sum(o["weight_pct"] for o in orders), "risk_pct": sum(o["risk_pct"] for o in orders),
+            "risk_at_limit_pct": sum(o["risk_at_limit_pct"] for o in orders), "largest_sector": None if top is None else {"sector": top[0], "weight_pct": top[1]},
+            "note": TOTALS_NOTE}
 
 
 def count_by(cands: List[Dict[str, Any]], buy: float = 70.0) -> Dict[str, Dict[str, int]]:

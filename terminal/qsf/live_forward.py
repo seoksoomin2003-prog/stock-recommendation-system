@@ -269,7 +269,12 @@ def variant_of(strategy: str, sector_of: Optional[Callable[[str], Optional[str]]
 # A reading's t bar is set for a pay-off that does not persist from month to month.  When it does, the chance of a false pass is
 # larger: two agents of the score audit of 2026-11-25 simulated it separately (AGENT_06 section 5, AGENT_08 second pass).  These are
 # their points for the 240-session swing verdict: (correlation of neighbouring 20-session blocks, false passes in percent).
-PERSIST_POINTS = ((0.0, 1.25), (0.09, 2.5), (0.18, 3.9), (0.26, 5.4))
+PERSIST_POINTS = ((0.0, 1.25), (0.09, 2.5), (0.18, 3.9), (0.26, 5.4), (0.31, 5.9), (0.35, 7.7), (0.41, 10.0), (0.47, 14.6))
+# The same lag-1 value means a different chance by the SHAPE of the persistence (assessment 2026-11-26, simulated on random numbers,
+# 48,000 series a point, the lag-1 measured as ``persistence`` measures it on 12 blocks).  The points above fit a short memory (each
+# day's pay-off leaning on the day before; the last four were added that day).  These are for a slow drift (a part of the pay-off
+# that keeps its sign for about three months), which the t's 20-session lag cannot see: far more false passes at the same lag-1.
+PERSIST_SLOW = ((-0.08, 1.25), (-0.03, 3.7), (0.09, 8.2), (0.19, 11.2), (0.32, 14.1), (0.43, 15.9))
 PERSIST_MIN_BLOCKS = 8
 
 
@@ -286,11 +291,13 @@ def persistence(days: List[Dict[str, Any]], h: int) -> Dict[str, Any]:
     e = ic - ic.mean()
     r = float((e[:-1] * e[1:]).sum() / (e * e).sum())
     xs, ys = [p[0] for p in PERSIST_POINTS], [p[1] for p in PERSIST_POINTS]
+    slow = float(np.interp(r, [p[0] for p in PERSIST_SLOW], [p[1] for p in PERSIST_SLOW]))
     return {"status": "REAL", "blocks": n, "block_sessions": h, "lag1": r, "rough_by": float(1 / math.sqrt(n)),
-            "false_pass_pct_about": float(np.interp(max(r, 0.0), xs, ys)), "beyond_table": bool(r > xs[-1]),
+            "false_pass_pct_about": float(np.interp(max(r, 0.0), xs, ys)), "beyond_table": bool(r > xs[-1]), "false_pass_pct_if_slow": slow,
             "says": (f"{h}거래일 묶음 {n}개의 이웃한 묶음 사이 순위 상관의 이어짐은 {r:+.2f}입니다(묶음이 {n}개뿐이라 ±{1 / math.sqrt(n):.2f}쯤 흔들리는 값). "
                      + ("이어짐이 없거나 반대여서 우연 통과는 기준대로 1.25%쯤으로 봅니다." if r <= 0 else
-                        f"이 값이 참이라면 우연 통과는 1.25%가 아니라 약 {float(np.interp(r, xs, ys)):.1f}%{' 이상' if r > xs[-1] else ''}입니다(240거래일 스윙 판정 기준의 모의실험 값).")),
+                        f"이 값이 참이라면 우연 통과는 1.25%가 아니라 약 {float(np.interp(r, xs, ys)):.1f}%{' 이상' if r > xs[-1] else ''}입니다(240거래일 스윙 판정 기준의 모의실험 값).")
+                     + f" 다만 같은 값이라도 이어짐의 모양에 따라 다릅니다: 성과의 일부가 석 달쯤 같은 쪽으로 머무는 느린 쏠림이라면 약 {slow:.1f}%입니다. 묶음 {n}개로는 어느 쪽인지 가릴 수 없습니다."),
             "note": note}
 
 

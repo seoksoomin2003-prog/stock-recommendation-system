@@ -17,6 +17,7 @@ from terminal.qsf import config, engine, kr_forward as kf, validate
 from terminal.qsf.kr_swing_challenger import _fifths, _ic, _t
 from terminal.qsf.ledger import Ledger
 from utils import durable
+from terminal.qsf import ledger as ledger_mod
 
 PROTOCOL = "reports/QSF_KR_SWING_PRIOR_PROTOCOL.md"
 FOLDER = Path("research_data") / "kr_swing_prior"
@@ -57,11 +58,7 @@ def score_session(snaps: List[Dict[str, Any]], session: str) -> Dict[str, Any]:
 
 
 def _session_snaps(led: Ledger, session: str) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
-    for r in led._live_rows():
-        if r["market"] == "KR" and r["session"] == session:
-            out += led._load(r)
-    return out
+    return ledger_mod.session_snaps(led, "KR", session)
 
 
 def record(base: Path, now: Callable[[], datetime] = _utcnow, first: str = FIRST) -> Dict[str, Any]:

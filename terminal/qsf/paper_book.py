@@ -15,6 +15,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence
 
 from terminal.qsf import config, kr_forward as kf, order_plan
 from terminal.qsf.ledger import Ledger
+from terminal.qsf import ledger as ledger_mod
 
 RULES = "reports/PAPER_BOOK_RULES.md"
 VERSION = "PB-2"            # PB-2 (2026-11-16): the plan reads the market state; on an adverse US day a new order is at most half its usual size
@@ -235,11 +236,7 @@ def step(prev: Optional[Dict[str, Any]], day: str, market: str, bars: Bars, snap
 
 # ---------------------------------------------------------------------- the daily record
 def _session_snaps(led: Ledger, market: str, session: str) -> List[Dict[str, Any]]:
-    out: List[Dict[str, Any]] = []
-    for r in led._live_rows():
-        if r["market"] == market and r["session"] == session:
-            out += led._load(r)
-    return out
+    return ledger_mod.session_snaps(led, market, session)
 
 
 def _last_doc(base: Path, market: str, store: Optional[Path] = None) -> Optional[Dict[str, Any]]:
