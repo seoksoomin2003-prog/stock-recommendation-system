@@ -1426,6 +1426,11 @@ def buy_verdict(snap: Dict[str, Any], strategy: str, market: str, *, gates: List
         # "cheap and worsening" or whose ROE fall would read "thesis invalidated" on a holder is not a "막는 것 없음" (user decision
         # 2026-11-25; the entry status and the order plan are unchanged, and the rule is untested on returns)
         wait.append((f"이 프로그램의 재무 점검이 '나빠지는 중'으로 읽었습니다: {worse}", "다음 실적에서 이 수치가 돌아서면 다시 봅니다."))
+    from terminal.qsf import plan_checks
+    broken = plan_checks.trend_broken(snap) if entry == "ENTRY_NOW" else None
+    if broken:
+        # the entry rule does not read the trend the exit rule reads: said here and kept out of the real plan (user decision 2026-11-26)
+        wait.append((broken, "종가가 50일선 위로 올라서거나 50일선이 오름세로 돌면 다시 봅니다."))
     if snap.get("confidence") == "LOW" and why != "CONFIDENCE":
         # whatever the stance: a score built on missing or old figures is not a "막는 것 없음" (user decision 2026-11-25)
         wait.append(("이 점수를 믿는 정도가 '낮음'입니다. 계산에 쓸 자료가 일부 없거나 오래됐습니다.", "자료가 채워져 신뢰도가 오르면 다시 봅니다."))

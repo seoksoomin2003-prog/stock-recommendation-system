@@ -237,7 +237,8 @@ def _thesis(name: str, sc: Dict[str, Any], decision: str, buyers: List[Dict[str,
     if decision == NO_DATA:
         return "판단할 수 있는 관점이 모자라 위원회는 의견을 내지 않습니다."
     head = (f"사업의 질 {_word(sc['quality'], ('낮음', '보통', '높음'))}, 가격 매력 {_word(sc['valuation'], ('낮음', '보통', '높음'))}, 성장 기회 {_word(sc['growth'], ('작음', '보통', '큼'))}, "
-            f"시장 국면 적합 {_word(sc['regime'], ('낮음', '보통', '높음'))}, 하방 위험 {_word(sc['downside'], ('낮음', '보통', '높음'))}.")
+            f"가격 추세와 시장 환경 {_word(sc['regime'], ('낮음', '보통', '높음'))}, 낙폭·변동성으로 본 하방 위험 {_word(sc['downside'], ('낮음', '보통', '높음'))}"
+            + ("(아래 치명 위험은 이 수치와 따로 읽습니다)." if any(r.get('level') == CRITICAL for r in risks) else "."))
     risk = f" 위험: {', '.join(r['name'] for r in risks[:3])}." if risks else ""
     other = f" {minority[0]['name']}은 '{minority[0]['recommendation_ko']}'로 달리 봅니다." if minority else ""
     end = {STRONG_BUY: "위원회는 적극 매수 조건으로 봅니다.", BUY: "위원회는 매수 조건으로 봅니다.", CONDITIONAL_BUY: "위원회는 조건 없는 매수가 아니라 조건부 매수로 봅니다.",

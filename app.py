@@ -1191,6 +1191,8 @@ def cmd_automation(args) -> int:
                "macos": notify.send_macos("퀀트 터미널", "테스트 알림입니다.")}
     elif args.action == "telegram-chat":
         res = notify.find_chats()
+    elif args.action in ("second-backup-on", "second-backup-off"):      # a second backup folder (default: the iCloud Drive folder)
+        res = automation.set_second_backup(PROJECT_ROOT, args.action.endswith("-on"))
     else:
         res = automation.status(PROJECT_ROOT)
     print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
@@ -1250,7 +1252,7 @@ def build_parser() -> argparse.ArgumentParser:
     qs.add_argument("--record", action="store_true", help="scan of named tickers only: write it to the ledger too (a whole scan always records)")
     qs.add_argument("--apply", action="store_true", help="cache-prune only: remove the files instead of listing them")
     au = sub.add_parser("automation", help="Daily job: record, tracking, backup, Telegram/macOS alerts (TERMINAL-4)")
-    au.add_argument("action", choices=["status", "run", "install", "uninstall", "test-notify", "telegram-chat"], nargs="?", default="status")
+    au.add_argument("action", choices=["status", "run", "install", "uninstall", "test-notify", "telegram-chat", "second-backup-on", "second-backup-off"], nargs="?", default="status")
     au.add_argument("--resend", action="store_true", help="Send the summary again even if unchanged")
     tm = sub.add_parser("terminal", help="Personal terminal: local web app on 127.0.0.1 (TERMINAL-1, read-only)")
     tm.add_argument("--port", type=int, default=8765)

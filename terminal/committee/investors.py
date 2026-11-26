@@ -288,7 +288,7 @@ def graham_value(f: Dict[str, Any], p: Dict[str, Any]) -> Dict[str, Any]:
     if kind == "REAL_ESTATE":                      # depreciation distorts a REIT's earnings: book value is the firmer ground
         return {"mos": None if pb is None or pb <= 0 else 1.0 - pb / p["pb"], "method": f"부동산: PER 대신 PBR {p['pb']}배 기준(감가상각이 이익을 왜곡)", "loss": False}
     if kind == "ASSET_LIGHT" or pb is None or pb <= 0:      # few tangible assets (or no equity): the earnings multiple alone
-        return {"mos": None if pe is None else 1.0 - pe / p["pe"], "method": f"자산이 가벼운 업종: PBR 없이 PER {p['pe']:.0f}배 기준", "loss": False}
+        return {"mos": None if pe is None else 1.0 - pe / p["pe"], "method": f"기술·커뮤니케이션 업종이거나 순자산 자료가 없음: PBR 없이 PER {p['pe']:.0f}배 기준(설비가 큰 회사에는 맞지 않을 수 있음)", "loss": False}
     if pe is None:
         return {"mos": None, "method": "PER 자료 없음", "loss": False}
     return {"mos": 1.0 - (pe * pb / p["pe_pb"]) ** 0.5, "method": f"PER×PBR {p['pe_pb']} 기준(그레이엄 수)", "loss": False}

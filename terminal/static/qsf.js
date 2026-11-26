@@ -656,6 +656,7 @@ function qsfCard(c) {
       <div>${qsfLabel(c)}<div class="meta mt-1">구간: ${esc(c.band_label)}${c.diagnostic_only ? " · 진단용 점수" : ""}</div>${qsfRankNote(c)}</div></header>
     <div class="qsf-meta"><span title="자료가 얼마나 있는지를 말합니다. 맞을 확률이 아닙니다.">신뢰도(자료의 양) <b>${QSF_CONF[c.confidence]}</b></span><span>데이터 반영률 <b>${(c.coverage * 100).toFixed(0)}%</b></span>${isNum(c.input_coverage) && c.input_coverage < c.coverage - 0.005 ? `<span title="요인은 계산됐지만 그 안의 수치 일부가 비어 있습니다. 신뢰도는 이 값도 함께 봅니다.">요인 안 수치 반영률 <b>${(c.input_coverage * 100).toFixed(0)}%</b></span>` : ""}<span title="${esc((c.provenance && c.provenance.price) || "")}">시세 <b>${esc(c.data_date)}</b> ${qsfPrice(c.price, m)}</span><span class="tech-id" title="점수 공식의 버전입니다. 기록을 비교할 때 씁니다.">${esc(c.model_version)}</span></div>
     <div class="qsf-meta qsf-sum"><span>진입 <b>${qsfEntry(e.status, c.strategy)}</b></span>${qsfCardGo(c, e, h)}${c.strategy === "SWING" ? `<span>손절 기준 <b class="num">${qsfPrice(h.stop, m)}</b></span><span>목표 기준 <b class="num">${qsfPrice(h.target, m)}</b></span>` : ""}${c.exit ? `<span>보유 종목 <b>${QSF_EXIT[c.exit.action]}</b></span>` : ""}</div>
+    ${qsfPlanChecks(c)}
     ${c.gates.length ? `<div class="notice"><b>위험 게이트 ${c.gates.length}건</b>: ${c.gates.map((g) => esc(g.text)).join(" ")} 점수는 진단용으로 남기지만 실행 대상이 아닙니다.</div>` : ""}
     ${c.earnings_unknown ? `<div class="notice">${esc(c.earnings_unknown)}</div>` : ""}
     ${qsfFold("basis", `근거 <span class="meta m0">점수를 올리고 깎은 요인 · 영역별 점수 · 진입</span>`, `<p>${esc(c.why_summary)}</p>
@@ -1216,9 +1217,15 @@ async function qsfLookahead() {
 
 // ------------------------------------------------------------------ order plan (real account) and the paper book
 // 카드에서 한 번에 (6차 묶음 P1-13): 진입 규칙을 채운 종목은 주문 계획의 그 줄로, 어느 종목이든 크기 계산기로 갑니다.  계산과 한도는 그대로입니다.
+// 진입 규칙은 충족하지만 내 계좌의 주문 계획에서는 빼는 카드(2026-11-26 결정): 이유를 진입 줄 바로 아래에 적습니다.
+function qsfPlanChecks(c) {
+  const w = c.plan_checks || [];
+  return w.length ? `<div class="notice"><b>진입 규칙은 충족하지만 내 계좌의 주문 계획에서는 뺍니다.</b> ${w.map((x) => esc(x.text)).join(" ")} '사도 돼?'도 기다림으로 답합니다. 진입 규칙과 기록은 그대로이고, 이 조건이 수익에 도움이 되는지는 시험하지 않았습니다.</div>` : "";
+}
+const qsfPlanLeft = (pc) => (pc && pc.note ? `<div class="notice">${esc(pc.note)} 빠진 이유: ${Object.entries(pc.left_out_by || {}).map(([k, n]) => `${esc(k)} ${n}건`).join(", ")}. ${pc.rows.slice(0, 12).map((r) => esc(r.name || r.ticker)).join(", ")}${pc.rows.length > 12 ? ` 외 ${pc.rows.length - 12}종목` : ""}.</div>` : "");
 function qsfCardGo(c, e, h) {
   const t = esc(c.ticker), stop = c.strategy === "SWING" && isNum(h.stop) ? ` data-stop="${h.stop.toFixed(c.market === "KR" ? 0 : 2)}"` : "";
-  return `<span class="qsf-go">${e.status === "ENTRY_NOW" ? `<button type="button" class="linkish qsf-toplan" data-t="${t}">주문 계획의 이 줄 보기</button>` : ""}
+  return `<span class="qsf-go">${e.status === "ENTRY_NOW" && !(c.plan_checks || []).length ? `<button type="button" class="linkish qsf-toplan" data-t="${t}">주문 계획의 이 줄 보기</button>` : ""}
     <button type="button" class="linkish qsf-tosize" data-t="${t}" data-style="${c.strategy === "SWING" ? "SWING" : "LONG"}"${stop}>크기 계산기에 넣기</button></span>`;
 }
 document.addEventListener("click", (ev) => {
@@ -1254,7 +1261,7 @@ function qsfPlanHtml(d) {
   const how = `<div class="meta">프로그램이 진입 상태를 '진입 규칙 충족'(장기는 '진입을 막는 조건 없음')으로 읽은 종목을 점수 높은 순으로 놓고, 설정해 두신 한도(거래당 위험, 종목 비중, 장기·스윙 비중, 섹터 비중)와 현금 안에서 수량을 정합니다. 이미 보유한 종목과 같은 날 이미 계획된 종목에는 주문을 또 만들지 않습니다.</div>`;
   if (!d) return "";
   if (d.status === "NO_SCAN") return `<div class="panel">${title}${how}<div class="empty">기록된 스캔이 없습니다.</div></div>`;
-  if (d.status === "NO_ACCOUNT") return `<div class="panel">${title}${how}${qsfPlanState(d.market_state)}<div class="empty">${esc(d.reason)} 오늘 진입 후보는 ${d.candidates}종목입니다. <button type="button" class="ghost" onclick="acctRecord('${d.market === "KR" ? "KR" : "US"}')">통합 계좌에서 기록하기</button></div>${d.timing_note ? `<div class="meta">${esc(d.timing_note)}</div>` : ""}</div>`;
+  if (d.status === "NO_ACCOUNT") return `<div class="panel">${title}${how}${qsfPlanState(d.market_state)}${qsfPlanLeft(d.plan_checks)}<div class="empty">${esc(d.reason)} 오늘 진입 후보는 ${d.candidates}종목입니다. <button type="button" class="ghost" onclick="acctRecord('${d.market === "KR" ? "KR" : "US"}')">통합 계좌에서 기록하기</button></div>${d.timing_note ? `<div class="meta">${esc(d.timing_note)}</div>` : ""}</div>`;
   const a = d.assumptions;
   const body = d.orders.length
     ? `<div class="tbl-wrap"><table>${QSF_ORDER_HEAD}<tbody>${qsfOrderRows(d.orders)}</tbody></table></div>`
@@ -1263,6 +1270,7 @@ function qsfPlanHtml(d) {
     <div class="meta">기준 거래일 ${esc(d.session)} · 계좌 평가액 ${money(d.equity, 0)} · 현금 ${money(d.cash, 0)} · 진입 후보 ${d.candidates}종목 중 ${d.orders.length}종목 계획 · 계획 후 남는 현금 ${money(d.cash_after, 0)}</div>
     ${qsfPlanState(d.market_state)}${d.size_factor < 1 ? `<div class="notice">시장 상태가 나쁘거나 읽을 수 없는 날이라 새 주문의 거래당 위험 한도와 종목 비중 한도를 ${(d.size_factor * 100).toFixed(0)}%로 계산했습니다.${d.new_exposure_cap ? ` 새 주문의 합계도 계좌의 ${(d.new_exposure_cap * 100).toFixed(0)}%까지만 잡았습니다(이 계획의 합계 ${isNum(d.new_exposure_pct) ? d.new_exposure_pct.toFixed(1) : "?"}%).` : ""}</div>` : ""}
     ${d.stance && d.stance.note ? `<div class="notice">${esc(d.stance.note)}${Object.keys(d.stance.left_out_by || {}).length ? ` 빠진 이유: ${Object.entries(d.stance.left_out_by).map(([k, n]) => `${esc(k)} ${n}건`).join(", ")}.` : ""}</div>` : ""}
+    ${qsfPlanLeft(d.plan_checks)}
     ${body}${d.bands && d.bands.note ? `<div class="notice">${esc(d.bands.note)}</div>` : ""}${qsfSkipLine(d.skipped_counts, Object.fromEntries((d.skipped || []).map((s) => [s.code, s.reason])))}
     <div class="meta">비용: ${esc(a.cost_basis)}. ${esc(a.slippage_note)} 주문은 종목의 20일 평균 거래대금의 ${a.max_participation_pct}%를 넘지 않게 줄이고, 계좌의 ${a.min_weight_pct}% 미만인 주문은 만들지 않습니다. 지정가 상한은 기준 종가 + ${a.limit_atr} ATR을 호가 단위로 내린 가격입니다.</div>
     ${d.timing_note ? `<div class="notice">${esc(d.timing_note)}</div>` : ""}<div class="meta">${esc(d.note)}</div></div>`;

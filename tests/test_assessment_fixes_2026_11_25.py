@@ -132,7 +132,7 @@ def test_low_confidence_is_said_and_reads_wait_under_every_stance():
     assert verdict(snap(80.0, confidence="MEDIUM"))["key"] == "OK"
     said = _text(plain.card_plain(_card(confidence="LOW"), {}))
     assert "믿는 정도는 '낮음'" in said and "걱정할 점이 없다는 뜻으로 읽으면 안 됩니다" in said
-    assert "걱정할 점이 없다는 뜻" not in _text(plain.card_plain(_card(), {}))
+    assert "걱정할 점이 없다는 뜻으로 읽으면 안 됩니다" not in _text(plain.card_plain(_card(), {}))      # the low-confidence addition only; every card now says "not a sign of no worry" (2026-11-26)
     rows = [{"ticker": "X", "strategy": "LONG_TERM", "entry_status": "ENTRY_NOW", "actionability": "ACTIONABLE", "score": 72.0, "confidence": "LOW"}]
     assert A.candidates(rows, {})["styles"]["LONG_TERM"]["rows"][0]["confidence"] == "LOW"
     assert 'r.confidence === "LOW"' in src("terminal", "static", "assistant.js")

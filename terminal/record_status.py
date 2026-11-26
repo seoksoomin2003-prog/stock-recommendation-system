@@ -149,7 +149,25 @@ def _kr_calendar(qsf_service: Any) -> Optional[List[str]]:
     return days or None
 
 
-def backup_alerts(saved: Dict[str, Any]) -> List[Dict[str, str]]:
+def backup_alerts(saved: Dict[str, Any], second: Optional[Dict[str, Any]] = None) -> List[Dict[str, str]]:
+    return _first_backup_alerts(saved) + second_backup_alerts(second)
+
+
+def second_backup_alerts(second: Optional[Dict[str, Any]]) -> List[Dict[str, str]]:
+    """The first backup sits on the disk that holds the records (assessment 2026-11-26).  Without a second place, or with one
+    that fell behind, the page says so."""
+    if second is None:
+        return []
+    if not second.get("on"):
+        return [{"level": "warn", "text": "백업이 기록과 같은 디스크에만 있습니다. 디스크가 고장 나면 기록과 백업을 함께 잃습니다. 두 번째 백업 위치를 켜 두세요(RUNBOOK '두 번째 백업')."}] if second.get("first_on_records_disk") else []
+    if not second.get("latest"):
+        return [{"level": "warn", "text": f"두 번째 백업({second.get('path')})이 아직 없습니다. 다음 매일 작업이 만듭니다. 그 뒤에도 없으면 그 폴더에 쓸 수 없는 것입니다."}]
+    if second["age_days"] > automation.BACKUP_STALE_DAYS:
+        return [{"level": "warn", "text": f"두 번째 백업({second.get('path')})이 {second['age_days']}일 전 것입니다. 매일 작업의 '백업' 단계 설명에 실패 이유가 적힙니다."}]
+    return []
+
+
+def _first_backup_alerts(saved: Dict[str, Any]) -> List[Dict[str, str]]:
     if not saved.get("latest"):
         return [{"level": "warn", "text": "백업이 아직 없습니다."}]
     if saved["age_days"] > automation.BACKUP_STALE_DAYS:
@@ -190,6 +208,7 @@ def build(terminal: Any) -> Dict[str, Any]:
     challenger = us_challenger.status(terminal.base, us_calendar)
     room = storage.disk(terminal.base)
     saved = automation.backup_status()
+    second = automation.second_backup_status(terminal.base)
     from terminal.qsf import price_audit
     audits = price_audit.summary_view(terminal.base)
     challenger["due_sessions"] = sum(1 for d in us_calendar if d >= us_challenger.FIRST)
@@ -197,5 +216,5 @@ def build(terminal: Any) -> Dict[str, Any]:
     steps = [{"name": STEP_LABELS.get(k, k), "status": (auto.get("steps") or {}).get(k, {}).get("status")} for k in STEP_LABELS]
     return {"status": "REAL", "model_version": config.MODEL_VERSION, "integrity": verify.get("status"), "qsf": qsf, "baseline": baseline, "kr_forward": forward, "us_challenger": challenger,
             "automation": {"installed": auto.get("installed"), "schedule_kst": auto.get("schedule_kst"), "schedule_text": auto.get("schedule_text"), "last_run_at": last.get("at"), "latest_session": auto.get("latest_session"), "steps": steps},
-            "disk": room, "backup": saved, "alerts": ([{"level": room["level"], "text": storage.low_disk_text(terminal.base)}] if room["level"] != "ok" else []) + backup_alerts(saved) + audit_alerts(audits) + alerts(qsf, baseline, auto, verify.get("status"), forward, challenger), "price_audit": audits, "minimum_independent": config.MIN_INDEPENDENT,
+            "disk": room, "backup": saved, "backup_second": second, "alerts": ([{"level": room["level"], "text": storage.low_disk_text(terminal.base)}] if room["level"] != "ok" else []) + backup_alerts(saved, second) + audit_alerts(audits) + alerts(qsf, baseline, auto, verify.get("status"), forward, challenger), "price_audit": audits, "minimum_independent": config.MIN_INDEPENDENT,
             "note": "진행 상황만 보여 줍니다. 수익률을 계산하지 않으며, 기준을 채우기 전에는 점수의 성과를 판단할 수 없습니다."}

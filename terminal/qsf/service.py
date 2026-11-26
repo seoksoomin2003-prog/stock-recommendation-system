@@ -863,6 +863,11 @@ class QSF(ScreenViews):
             out["fund_checks"] = fund_checks.read(fund, out)
         except Exception:
             pass
+        try:                                    # why the real order plan leaves this card out although the entry rule is met (display only)
+            from terminal.qsf import plan_checks
+            out["plan_checks"] = plan_checks.reasons(out)
+        except Exception:
+            pass
         if market == "US" and fund.get("status") in USABLE and not fund.get("is_financial") and fund.get("fcf") is None and fund.get("ocf_to_ni") is not None:
             out["capex_unread"] = True          # display only: operating cash flow is there, capital spending is not (filed under the company's own tag)
         if fund.get("fuller"):                  # the score with the lines the live Korean reader has no place for (side record FI-1; never the live score)

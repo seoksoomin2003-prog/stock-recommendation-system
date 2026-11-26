@@ -65,6 +65,48 @@ def backup_root() -> Path:
     return Path(os.getenv("QPP_BACKUP_DIR") or Path.home() / "QuantEngineBackups")
 
 
+SECOND_FILE = "data/terminal/backup_second.json"      # the user's choice of a second place for the backup (2026-11-26: an iCloud Drive folder)
+ICLOUD_BACKUP = Path.home() / "Library" / "Mobile Documents" / "com~apple~CloudDocs" / "QuantEngineBackups"
+
+
+def second_backup_root(base: Path) -> Optional[Path]:
+    """A second backup folder, on another disk or service than the first.  None unless the user turned it on.  The first backup
+    sits on the disk that holds the records (assessment 2026-11-26): this copy is what survives that disk.  ``.env`` is in neither."""
+    forced = os.getenv("QPP_BACKUP_DIR_2")
+    if forced:
+        return Path(forced)
+    try:
+        doc = json.loads((Path(base) / SECOND_FILE).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return Path(doc["path"]).expanduser() if isinstance(doc, dict) and doc.get("on") and doc.get("path") else None
+
+
+def set_second_backup(base: Path, on: bool, path: Optional[Path] = None) -> Dict[str, Any]:
+    from utils import durable
+    target = Path(base) / SECOND_FILE
+    target.parent.mkdir(parents=True, exist_ok=True)
+    doc = {"on": bool(on), "path": str(path or ICLOUD_BACKUP).replace(str(Path.home()), "~"), "set_at": datetime.now(timezone.utc).isoformat()}
+    durable.write_text(target, json.dumps(doc, ensure_ascii=False, indent=1))
+    return second_backup_status(base)
+
+
+def _same_disk(a: Path, b: Path) -> Optional[bool]:
+    try:
+        return os.stat(a).st_dev == os.stat(b).st_dev
+    except OSError:
+        return None
+
+
+def second_backup_status(base: Path, today: Optional[date] = None) -> Dict[str, Any]:
+    """{"on", "path", "latest", "age_days", "copies", "first_on_records_disk"}.  ``path`` is written with ~ for the home folder."""
+    root = second_backup_root(base)
+    first_same = _same_disk(backup_root(), Path(base)) if backup_root().exists() else None
+    if root is None:
+        return {"on": False, "path": None, "latest": None, "age_days": None, "copies": 0, "first_on_records_disk": first_same}
+    return {"on": True, "path": str(root).replace(str(Path.home()), "~"), **backup_status(root, today), "first_on_records_disk": first_same}
+
+
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -350,9 +392,20 @@ class Daily:
                 return {"status": FAILED if track != 0 else WAITING if behind else OK, "at": at, "detail": " · ".join(x for x in notes if x) or None,
                         "scan_run": run.get("run_id")}
             res = backup(self.base, session, self.backup_dir)
-            return {"status": OK, "at": at, "detail": f"{res['files']}개 파일"}
+            return {"status": OK, "at": at, "detail": f"{res['files']}개 파일" + self._second_backup(session)}
         except Exception as exc:                                    # one failed step never stops the others
             return {"status": FAILED, "at": at, "detail": type(exc).__name__}
+
+    def _second_backup(self, session: str) -> str:
+        """The same backup into the user's second folder, when one is set.  Its failure is said in the step's detail and on the
+        record-status page; it never fails the first backup."""
+        root = None if self.backup_dir is not None else second_backup_root(self.base)
+        if root is None:
+            return ""
+        try:
+            return f" · 두 번째 백업 {backup(self.base, session, root)['files']}개 파일"
+        except Exception as exc:
+            return f" · 두 번째 백업 실패({type(exc).__name__})"
 
     def _kr_newest_session(self) -> Optional[str]:
         """The newest completed KRX session the provider shows, found the way the model scan finds it (index and anchor stock).
@@ -1033,7 +1086,7 @@ def status(base: Path) -> Dict[str, Any]:
             "latest_session": latest, "steps": sessions.get(latest) if latest else None,
             "last_run": st.get("last_run"), "last_attempt": st.get("last_attempt"), "running": running(base), "earnings_gap": st.get("earnings_gap"),
             "notes": Daily._notes(st),
-            "step_names": {**STEP_NAMES, "WRAP_UP": "점검과 알림"}, "backup_dir": str(backup_root())}
+            "step_names": {**STEP_NAMES, "WRAP_UP": "점검과 알림"}, "backup_dir": str(backup_root()), "backup_second": second_backup_status(base)}
 
 
 def running(base: Path) -> Optional[Dict[str, Any]]:

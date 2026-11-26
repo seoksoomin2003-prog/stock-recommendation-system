@@ -39,8 +39,8 @@ FACTOR = {
     "long_trend": ("긴 기간으로 보아 주가가 오르는 흐름입니다.", "긴 기간으로 보아 주가가 내려가는 흐름입니다."),
     "momentum_persistence": ("오르는 흐름이 여러 달 이어지고 있습니다.", "오르는 흐름이 이어지지 못하고 있습니다."),
     "valuation": ("회사가 버는 돈에 비해 주가가 비싸지 않은 편입니다.", "회사가 버는 돈에 비해 주가가 비싼 편입니다."),
-    "business_quality": ("꾸준히 돈을 잘 버는 사업입니다.", "돈을 버는 힘이 약하거나 해마다 들쭉날쭉합니다."),
-    "growth_quality": ("매출과 이익이 몇 해에 걸쳐 꾸준히 늘었습니다.", "매출과 이익이 몇 해 동안 잘 늘지 않았습니다."),
+    "business_quality": ("최근 연간 재무에서 이익률과 자기자본이익률이 높게 읽힙니다.", "돈을 버는 힘이 약하거나 해마다 들쭉날쭉합니다."),
+    "growth_quality": ("최근 3년 매출과 이익의 성장률이 높게 읽힙니다(기준 연도가 낮았으면 크게 나옵니다).", "매출과 이익이 몇 해 동안 잘 늘지 않았습니다."),
     "free_cash_flow": ("사업에 쓸 돈을 다 쓰고도 현금이 남습니다.", "사업에 쓸 돈을 쓰고 나면 남는 현금이 적거나 없습니다."),
     "balance_dilution": ("빚이 많지 않고, 주식 수를 늘리지 않아 기존 주주의 몫이 줄지 않았습니다.", "빚이 많거나, 주식 수가 늘어 기존 주주의 몫이 줄었습니다."),
     "financial_resilience": ("어려운 시기가 와도 버틸 여력이 있습니다.", "어려운 시기에 버틸 여력이 넉넉하지 않습니다."),
@@ -191,7 +191,7 @@ def card_plain(card: Dict[str, Any], facts: Optional[Dict[str, Any]] = None) -> 
         # A factor computed from part of its figures is not spoken for above, which left the worst fact unsaid: a company whose
         # sales and profit were falling read "no worry" (assessment 2026-11-25, HMM).  These lines name each figure they read.
         bad = bad + [m for m in moving if m not in bad][:max(0, 4 - len(bad))] if bad else moving
-    none_bad = "뚜렷하게 걱정되는 점이 없습니다." + (" 다만 자료가 모자라거나 오래돼, 걱정할 점이 없다는 뜻으로 읽으면 안 됩니다." if card.get("confidence") == "LOW" else "")
+    none_bad = "점수 항목 가운데 낮게 읽힌 것은 없습니다. 걱정할 점이 없다는 뜻은 아닙니다." + (" 다만 자료가 모자라거나 오래돼, 걱정할 점이 없다는 뜻으로 읽으면 안 됩니다." if card.get("confidence") == "LOW" else "")
     parts.append({"h": "걱정되는 점", "lines": bad or [none_bad]})
     if unsaid:
         parts.append({"h": "말하지 않은 것", "lines": [
