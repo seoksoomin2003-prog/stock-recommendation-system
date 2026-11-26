@@ -211,7 +211,8 @@ def annotate(orders: List[Dict[str, Any]], deals: Optional[Dict[str, Any]] = Non
 
 
 TOTALS_NOTE = ("새 주문을 모두 합친 값입니다. 한도는 주문 하나씩에만 걸려 있고, 합계에 거는 한도는 없습니다(미국의 나쁜 날 50%만 예외). "
-               "손절 합계는 모든 종목이 같은 날 손절에 닿는 경우의 손실이고, 지정가 기준은 모두 지정가 상한에 체결됐을 때입니다. 손절가가 지켜진다는 뜻은 아닙니다.")
+               "손절 합계는 모든 종목이 같은 날 손절에 닿는 경우의 손실이고, 지정가 기준은 모두 지정가 상한에 체결됐을 때입니다. 손절가가 지켜진다는 뜻은 아닙니다. "
+               "거래당 위험 한도는 지정가 상한에 체결됐을 때의 손실로 계산합니다(2026-11-26부터).")
 
 
 def totals(orders: List[Dict[str, Any]], equity: float) -> Dict[str, Any]:
@@ -241,13 +242,16 @@ def count_by(cands: List[Dict[str, Any]], buy: float = 70.0) -> Dict[str, Dict[s
 
 
 def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, settings: Optional[Dict[str, float]] = None, state: Optional[Dict[str, Any]] = None,
-          blocked: Optional[Any] = None, outside: Optional[set] = None) -> Dict[str, Any]:
+          blocked: Optional[Any] = None, outside: Optional[set] = None, risk_at_limit: bool = False) -> Dict[str, Any]:
     """``account``: ``equity``, ``cash``, ``positions`` {ticker: {style, value, sector}}.  Candidates are taken in score order; each
     order reserves cash at its limit price with the buy commission, so a fill at or under the limit never overdraws the account.
     ``state``: the session's market state.  On an adverse day in a market with a size factor (``config.ADVERSE_SIZE_FACTOR``) the risk
     per trade and the weight limit of every new order are multiplied by it; nothing else reads the state.
     ``blocked``: tickers that get no new order (the turnover rules' wait after a stop); None when the rules are not in force.
-    ``outside``: (ticker, style) pairs outside the rank rules' entry share (``outside_top``); None when those rules are not in force."""
+    ``outside``: (ticker, style) pairs outside the rank rules' entry share (``outside_top``); None when those rules are not in force.
+    ``risk_at_limit`` (user decision 2026-11-26, the real plan only): the risk limit counts the loss from the LIMIT price to the
+    stop, the dearest fill the plan allows, so a fill above the close cannot exceed the risk per trade.  False for the paper book
+    and the comparison books, which keep the rule they were registered with (the loss from the close)."""
     st = settings or pf.DEFAULT_SETTINGS
     factor = float((state or {}).get("size_factor") or 1.0)
     cap = (state or {}).get("new_exposure_cap")           # adverse or unknown day in a market with a brake: what all new orders may add up to
@@ -294,6 +298,8 @@ def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, set
             lim = {**lim, "risk_per_trade_pct": lim["risk_per_trade_pct"] * factor, "max_position_pct": lim["max_position_pct"] * factor}
         size = pf.position_size(equity, cash, close, c["stop"], lim) if equity > 0 else None
         caps = dict(size["limits"]) if size else {"RISK": 0, "WEIGHT": 0, "CASH": 0}
+        if risk_at_limit and size:
+            caps["RISK"] = pf.position_size(equity, cash, limit, c["stop"], lim)["limits"]["RISK"]
         caps["CASH"] = math.floor(max(cash, 0.0) / unit + pf.EPS)
         caps["SLEEVE"] = math.floor(max(sleeve_cap[style] - sleeve[style], 0.0) / close + pf.EPS)
         if c.get("sector"):
@@ -325,7 +331,7 @@ def build(cands: List[Dict[str, Any]], account: Dict[str, Any], market: str, set
         by_code[s["code"]] = by_code.get(s["code"], 0) + 1
     shown = None if state is None else {k: state.get(k) for k in STATE_SHOWN}
     return {"market": market, "orders": orders, "skipped": skipped, "skipped_counts": by_code, "candidates": len(cands), "cash_after": cash, "market_state": shown, "size_factor": factor,
-            "new_exposure_cap": cap, "new_exposure_pct": new_total / equity * 100 if equity > 0 else None, "rules_note": PLAN_AMENDMENT,
+            "new_exposure_cap": cap, "new_exposure_pct": new_total / equity * 100 if equity > 0 else None, "rules_note": PLAN_AMENDMENT, "risk_at_limit": bool(risk_at_limit),
             "sleeve": {s: {"value": sleeve[s], "cap": sleeve_cap[s]} for s in sleeve},
             "assumptions": {"limit_atr": LIMIT_ATR, "min_weight_pct": MIN_WEIGHT_PCT, "max_participation_pct": MAX_PARTICIPATION * 100, "commission_bps": config.COSTS[market]["commission_bps"],
                             "sell_bps": config.COSTS[market]["sell_tax_bps"] + config.COSTS[market].get("sell_fee_bps", 0.0), "spread_bps": config.COSTS[market]["spread_slippage_bps"],

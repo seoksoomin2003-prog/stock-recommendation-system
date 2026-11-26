@@ -1122,7 +1122,7 @@ class Terminal(ModelViews):
         blocked = turnover_book.loss_sales(state.get("closed") or [], market, session, holding.stepper(market), rules["reentry_wait"]) if rules else None
         rank = rank_book.active_rules(self.base, market)             # the same for the rank rules: an entry only inside the day's top share
         outside = op.outside_top(cands, op.ahead_share(snaps, session), rank["entry_top"]) if rank else None
-        plan = op.build(cands, account, market, st, sized, blocked=blocked, outside=outside)
+        plan = op.build(cands, account, market, st, sized, blocked=blocked, outside=outside, risk_at_limit=True)      # the risk limit at the limit price (user decision 2026-11-26)
         for o in plan["orders"]:            # the price an order can carry: the cap rounded down to the price step (display only)
             o["limit_order"] = op.order_price(market, o["limit"])
         plan["totals"] = op.totals(plan["orders"], equity)          # display only: the sum of the new orders, and the risk at the limit price

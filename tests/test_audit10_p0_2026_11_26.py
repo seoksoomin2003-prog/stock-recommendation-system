@@ -206,7 +206,7 @@ def test_the_plans_totals_are_display_only_and_the_paper_book_record_is_as_it_wa
     assert t["largest_sector"] == {"sector": "Tech", "weight_pct": 12.5} and "합계에 거는 한도는 없습니다" in t["note"]
     code = (ROOT / "terminal" / "qsf" / "order_plan.py").read_text(encoding="utf-8")
     build = code[code.index("def build("):]
-    assert "risk_at_limit_pct" not in build and "totals" not in build                       # the plan builder, read by the paper book, is unchanged
+    assert "risk_at_limit_pct" not in build and "totals(" not in build                      # the plan builder, read by the paper book, records what it did
     assert "totals" not in (ROOT / "terminal" / "qsf" / "paper_book.py").read_text(encoding="utf-8")
 
 
@@ -224,3 +224,23 @@ def test_the_persistence_figure_gives_both_shapes_and_the_inventory_gives_a_rang
     assert lf.PERSIST_POINTS[:4] == ((0.0, 1.25), (0.09, 2.5), (0.18, 3.9), (0.26, 5.4)) and lf.PERSIST_POINTS[-1] == (0.47, 14.6)
     assert all(np.interp(r, *zip(*lf.PERSIST_SLOW)) > np.interp(r, *zip(*lf.PERSIST_POINTS)) for r in (0.0, 0.1, 0.2, 0.3, 0.4))
     assert "2.6~10.1%" in inventory.markdown() and "상위 4.6%" not in inventory.markdown()
+
+
+def test_the_real_plan_sizes_its_risk_at_the_limit_price_and_the_paper_book_does_not():
+    from terminal import portfolio as pf
+    from terminal.qsf import order_plan as op
+    cand = [{"ticker": "AAA", "name": "A", "sector": "Tech", "style": "SWING", "score": 60.0, "session": "2026-11-25", "close": 100.0, "stop": 96.0, "target": 110.0, "atr": 4.0,
+             "adv_value": 1e12, "band": "HOLD_WATCH"}]
+    account = {"equity": 1_000_000.0, "cash": 1_000_000.0, "positions": {}}
+    st = {**pf.DEFAULT_SETTINGS, "max_position_pct": 100.0, "max_sector_pct": 100.0}
+    lim = pf.limits_for("SWING", st, "US")
+    old = op.build(cand, account, "US", st)["orders"][0]
+    new_plan = op.build(cand, account, "US", st, risk_at_limit=True)
+    new = new_plan["orders"][0]
+    budget = lim["risk_per_trade_pct"]
+    assert new_plan["risk_at_limit"] is True and new["limit"] == pytest.approx(102.0)
+    if old["binding"] == "RISK":                                    # close to stop 4, limit to stop 6: a third fewer shares
+        assert new["shares"] == pytest.approx(old["shares"] * 4 / 6, abs=1) and new["shares"] * (new["limit"] - new["stop"]) / account["equity"] * 100 <= budget + 1e-9
+        assert old["shares"] * (old["limit"] - old["stop"]) / account["equity"] * 100 > budget          # what the close-based size allowed at the limit
+    code = (ROOT / "terminal" / "qsf" / "paper_book.py").read_text(encoding="utf-8")
+    assert "risk_at_limit" not in code and "risk_at_limit=True" in (ROOT / "terminal" / "services.py").read_text(encoding="utf-8")
