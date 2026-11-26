@@ -75,9 +75,22 @@ def _clone(src, dst):
     try:
         if ctypes.CDLL(None).clonefile(os.fsencode(src), os.fsencode(dst), 0) == 0:
             return dst
-    except (AttributeError, OSError):
+    except (AttributeError, OSError, TypeError):      # TypeError: Windows has no C library to ask by that name
         pass
     return shutil.copy2(src, dst)
+
+
+def _link(entry, target):
+    """A symlink to the real source.  Windows lets only some accounts make symlinks: there a folder becomes a junction (which
+    needs no right) and a file a copy."""
+    try:
+        target.symlink_to(entry, target_is_directory=entry.is_dir())
+    except OSError:
+        if entry.is_dir():
+            import _winapi
+            _winapi.CreateJunction(str(entry), str(target))
+        else:
+            shutil.copy2(entry, target)
 
 
 _SANDBOX = {}
@@ -100,7 +113,7 @@ def pytest_configure(config):
             shutil.copytree(entry, target, symlinks=True, copy_function=_clone,
                             ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         else:
-            target.symlink_to(entry)
+            _link(entry, target)
     _SANDBOX.update(dir=sandbox, previous=os.getcwd())
     os.chdir(sandbox)
 
