@@ -92,7 +92,8 @@ def test_only_protected_folders_are_noted_and_links_are_followed(tmp_path):
     sandbox.mkdir()
     (sandbox / "tests").symlink_to(root / "tests")              # as the suite's sandbox links the source folders
     assert guard._protected_rel(root / "data" / "a.json", root) == "data/a.json"
-    assert guard._protected_rel(str(sandbox / "tests" / ".." / "data" / "a.json"), root) == "data/a.json"
+    if os.name != "nt":                                         # Windows reads "tests\\.." by its letters, before the link: there the path is the sandbox's own
+        assert guard._protected_rel(str(sandbox / "tests" / ".." / "data" / "a.json"), root) == "data/a.json"
     assert guard._protected_rel(os.fsencode(root / "data" / "a.json"), root) == "data/a.json"
     assert guard._protected_rel(root / "terminal" / "x.py", root) is None and guard._protected_rel(tmp_path / "elsewhere", root) is None
     assert guard._protected_rel(7, root) is None                 # a file descriptor
