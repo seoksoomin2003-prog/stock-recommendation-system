@@ -117,5 +117,6 @@ jobs:
           kill %1 || true
       - name: Guard tests inside the unpacked copy
         run: |
+          python3.14 -c "import socket, time; t = time.time(); socket.getfqdn('0.0.0.0'); print('name lookup of 0.0.0.0 took', round(time.time() - t, 1), 's')"
           cd "$RUNNER_TEMP/share_in/quant-stock-engine"
           .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_share_copy.py tests/test_phone_view.py tests/test_freeze_and_entry_book.py tests/test_rules_r2.py

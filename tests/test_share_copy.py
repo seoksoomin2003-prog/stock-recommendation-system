@@ -73,3 +73,12 @@ def test_the_copy_lands_in_a_folder_of_its_own_under_home_never_on_a_desktop_a_c
     assert share.default_folder() == tmp_path / share.FOLDER and "Desktop" not in share.default_folder().parts
     res = share.make(_base(tmp_path))
     assert list((tmp_path / share.FOLDER).glob("QuantEngine-*.zip")) and not list((tmp_path / "Desktop").iterdir()) and res["status"] == "REAL"
+
+
+def test_starting_a_listener_never_asks_the_system_for_the_computers_name(monkeypatch):
+    import socket
+    monkeypatch.setattr(socket, "getfqdn", lambda *a: (_ for _ in ()).throw(AssertionError("name lookup")))
+    for host in ("127.0.0.1", "0.0.0.0"):
+        httpd = server._Server((host, 0), server.BaseHTTPRequestHandler)
+        assert httpd.server_port == httpd.server_address[1] and httpd.server_name == host
+        httpd.server_close()

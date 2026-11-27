@@ -10,6 +10,7 @@ import logging
 import mimetypes
 import os
 import re
+import socketserver
 import sys
 import threading
 import traceback
@@ -430,6 +431,13 @@ def _finite(o):
 
 class _Server(ThreadingHTTPServer):
     daemon_threads = True
+
+    def server_bind(self):
+        """The standard class asks the system for this computer's full name here (for the phone listener, a reverse lookup of
+        0.0.0.0).  Nothing reads that name, and on a computer whose name service is slow the lookup held the phone button for
+        longer than the request waits (seen on a clean Mac, 2026-11-27).  Bind, and keep the address as the name."""
+        socketserver.TCPServer.server_bind(self)
+        self.server_name, self.server_port = self.server_address[:2]
 
     def handle_error(self, request, client_address):
         exc = sys.exc_info()[1]
