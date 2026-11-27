@@ -16,5 +16,6 @@ fi
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -r requirements.lock || { echo "패키지를 받지 못했습니다. 인터넷 연결을 확인하고 다시 누르세요."; exit 1; }
 [ -f .env ] || { cp .env.example .env; echo ".env 파일을 만들었습니다. 텍스트 편집기로 열어 자기 키를 넣으세요. 안내: reports/RUNBOOK.md"; }
+if [ -n "$QE_SKIP_SCHEDULE" ]; then echo "자동 실행 등록은 건너뜁니다(시험용)."; exit 0; fi
 .venv/bin/python app.py terminal-agent install && .venv/bin/python app.py automation install
 echo "끝났습니다. 브라우저에서 http://127.0.0.1:8765 를 여세요."

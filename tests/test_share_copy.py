@@ -65,3 +65,11 @@ def test_a_computer_with_no_way_to_send_counts_a_notice_as_told_and_the_first_pa
     cmd = (ROOT / "ops" / "처음 설치.command").read_text(encoding="utf-8")
     assert "sys.version_info[:2] == (3, 14)" in cmd and "python3.14" in cmd
     assert "screen_only" in (ROOT / "terminal" / "static" / "lab.js").read_text(encoding="utf-8")
+
+
+def test_the_copy_lands_in_a_folder_of_its_own_under_home_never_on_a_desktop_a_cloud_may_upload(tmp_path, monkeypatch):
+    monkeypatch.setattr(share.Path, "home", classmethod(lambda cls: tmp_path))
+    (tmp_path / "Desktop").mkdir()
+    assert share.default_folder() == tmp_path / share.FOLDER and "Desktop" not in share.default_folder().parts
+    res = share.make(_base(tmp_path))
+    assert list((tmp_path / share.FOLDER).glob("QuantEngine-*.zip")) and not list((tmp_path / "Desktop").iterdir()) and res["status"] == "REAL"

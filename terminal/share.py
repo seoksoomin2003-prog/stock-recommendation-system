@@ -31,6 +31,7 @@ PERSONAL = frozenset({"data/terminal/journal.jsonl", "data/terminal/paper_journa
 SKIP_DIRS = frozenset({".git", ".venv", "__pycache__", ".pytest_cache", "data", "research_data", "tracking", "cache", "cache.nosync",
                        "runs", "scratch", "node_modules", ".idea"})
 CHOICES = ("data/qsf/stance.json", "data/qsf/*_switch.json")      # the owner's screen choices (stance, apply buttons): the receiver starts from the program's defaults
+FOLDER = "QuantEngine-배포본"
 README = "먼저 읽기.txt"
 README_TEXT = """퀀트 터미널 배포본
 
@@ -130,8 +131,9 @@ def key_file(text: str) -> Tuple[str, List[str], List[str]]:
 
 
 def default_folder() -> Path:
-    desk = Path.home() / "Desktop"
-    return desk if desk.is_dir() else Path.home()
+    """A folder of its own in the home folder, never the Desktop: a Mac with "Desktop & Documents" in iCloud Drive (or a Windows
+    PC with OneDrive) uploads whatever lands there, and this file holds the keys (found 2026-11-27: the copy had been uploaded)."""
+    return Path.home() / FOLDER
 
 
 def _put(z: zipfile.ZipFile, arc: str, src: Optional[Path] = None, text: Optional[str] = None) -> None:
@@ -146,6 +148,7 @@ def make(base: Path, folder: Optional[Path] = None, now: Optional[datetime] = No
     """Writes ``QuantEngine-배포본-<date>.zip`` and says what went in.  The program's own files are read and nothing is changed."""
     base, when = Path(base), now or datetime.now()
     folder = Path(folder or default_folder())
+    folder.mkdir(parents=True, exist_ok=True)
     target = folder / f"QuantEngine-배포본-{when:%Y-%m-%d}.zip"
     part = target.with_name(target.name + ".part")
     src, rec = source_files(base), record_files(base)
@@ -174,7 +177,7 @@ def make(base: Path, folder: Optional[Path] = None, now: Optional[datetime] = No
     return {"status": "REAL", "version": VERSION, "path": shown, "size_mb": round(target.stat().st_size / 1e6, 1), "files": n, "records": len(rec),
             "keys_kept": kept, "keys_held_back": held, "key_file": env.is_file(), "personal_left_out": sorted(PERSONAL) + list(CHOICES),
             "text": _text(shown, n, len(rec), kept, held, env.is_file()),
-            "note": "이 zip에는 자료를 받는 키가 들어 있습니다. 믿는 사람에게만 주고, 공개된 곳에 올리지 마세요. 값은 이 화면에 보이지 않습니다."}
+            "note": "이 zip에는 자료를 받는 키가 들어 있습니다. 믿는 사람에게만 주고, 공개된 곳에 올리지 마세요. iCloud·OneDrive처럼 저절로 올라가는 폴더(바탕화면, 문서)에도 두지 마세요. 값은 이 화면에 보이지 않습니다."}
 
 
 def _text(shown: str, n: int, rec: int, kept: Iterable[str], held: Iterable[str], has_env: bool) -> str:

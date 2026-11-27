@@ -271,7 +271,7 @@ def make_handler(t: Terminal, errors: Optional[ErrorTally] = None, phone: Option
         timeout = REQUEST_TIMEOUT_S
 
         def log_message(self, fmt, *args):          # quiet; never logs request bodies or headers
-            log.debug("%s %s", self.command, self.path.split("?")[0])
+            log.debug("%s %s", getattr(self, "command", "?"), (getattr(self, "path", "") or "").split("?")[0])      # a request line that could not be read has neither
 
         def _send(self, code: int, body: bytes, ctype: str, cookie: Optional[str] = None):
             self.send_response(code)
