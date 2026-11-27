@@ -39,15 +39,36 @@ def report_path(base: Path, market: str, strategy: str) -> Path:
     return Path(base) / REPORT_DIR / f"QSF_LIVE_FORWARD_{market}_{strategy}.json"
 
 
+# What a reading reads of a snapshot, and of each of its factors.  A whole snapshot is about 37 KB in memory (its holding plan and
+# the factors' sources and sentences are most of it); a sample of 260 US sessions held whole took 5-6 GB and the 819 of the long
+# verdict would take 15-19 GB, more than the computer has (drill of 2026-11-28).  Keeping these fields changes no figure: nothing
+# below reads another.  A new reading that needs another field adds it here (tests/test_live_forward.py holds the two lists).
+ROW_FIELDS = ("ticker", "strategy", "score", "actionability", "data_date", "entry_session", "benchmark", "model_version", "price")
+FACTOR_FIELDS = ("factor", "weight", "normalized", "scored", "status")
+
+
+def light(s: Dict[str, Any]) -> Dict[str, Any]:
+    """A snapshot cut to what the readings read (``ROW_FIELDS``, the statement basis, ``FACTOR_FIELDS`` of each factor).  A field
+    the snapshot does not carry stays absent, so ``.get`` answers as it did on the whole snapshot."""
+    out = {k: s[k] for k in ROW_FIELDS if k in s}
+    if "fund_period" in s:
+        fp = s["fund_period"]
+        out["fund_period"] = {"live": fp.get("live")} if isinstance(fp, dict) else fp
+    if "factors" in s:
+        out["factors"] = [{k: f[k] for k in FACTOR_FIELDS if k in f} if isinstance(f, dict) else f for f in s["factors"] or []]
+    return out
+
+
 def session_rows(led: Ledger, market: str, strategy: str, first: str = FIRST) -> Dict[str, List[Dict[str, Any]]]:
-    """Session -> the rows that count: a score, not INSUFFICIENT_DATA, and a price of that very session.  A day under MIN_ROWS is left out."""
+    """Session -> the rows that count: a score, not INSUFFICIENT_DATA, and a price of that very session.  A day under MIN_ROWS is left out.
+    Each row is the snapshot cut to what the readings read (``light``)."""
     out: Dict[str, List[Dict[str, Any]]] = {}
     for r in led._live_rows():
         if r["market"] != market or r["session"] < first:
             continue
         for s in led._load(r):
             if s.get("strategy") == strategy and s.get("score") is not None and s.get("actionability") != "INSUFFICIENT_DATA" and s.get("data_date") == r["session"]:
-                out.setdefault(r["session"], []).append(s)
+                out.setdefault(r["session"], []).append(light(s))
     return {d: v for d, v in sorted(out.items()) if len(v) >= MIN_ROWS}
 
 
@@ -461,7 +482,7 @@ def early_once(base: Path, market: str, n: int, loader: Callable[[str], List[Dic
     failed = [k for k, ok in r["condition_a"].items() if not ok]
     t_txt = "계산할 수 없음" if s["t"] is None else f"{s['t']:+.2f}"
     reasons = [f"처음 {len(used)}거래일({used[0]} ~ {used[-1]})의 스윙 점수와 그 뒤 {h}거래일 수익의 순위 상관: 평균 {s['ic']:+.3f}, t {t_txt} (기준 {s['t_bar']:g}. 주된 판정보다 엄격한 값입니다).",
-               "순위 조건 다섯 가지 가운데 못 채운 것: " + (", ".join(failed) if failed else "없음") + f". 수익 조건(70점 이상 구간이 지수를 전·후반 모두 이김): {'채움' if r['condition_b'] else '못 채움'}.",
+               "순위 조건 다섯 가지 가운데 못 채운 것: " + (", ".join(failed) if failed else "없음") + f". 수익 조건({'그날 상위 20%가' if top else '70점 이상 구간이'} 지수를 전·후반 모두 이김): {'채움' if r['condition_b'] else '못 채움'}.",
                "이 읽기는 짧은 기록을 봅니다. 작은 효과는 잡지 못하고, '구분되지 않음'은 효과가 없다는 뜻이 아닙니다.",
                "무엇이 나와도 점수, 규칙, 주된 판정(240거래일·20거래일 수익)은 바뀌지 않습니다."]
     res = {"status": "REAL", "protocol": PROTOCOL, "kind": "EARLY", "market": market, "strategy": "SWING", "horizon": h, "sessions_used": len(used), "first": used[0], "last": used[-1],

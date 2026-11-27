@@ -149,3 +149,50 @@ def test_two_markets_are_combined_only_as_a_reference(tmp_path):
     got = lf._pooled(tmp_path, "SWING")
     assert got["combined"] == pytest.approx(3.8 / 2 ** 0.5) and got["engine_level_reference"] is True
     assert lf._pooled(tmp_path, "LONG_TERM") is None
+
+
+class _Whole(dict):
+    """A snapshot as the ledger holds it, counting every field a reading asks of it."""
+    asked = set()
+
+    def get(self, k, default=None):
+        _Whole.asked.add(k)
+        return super().get(k, default)
+
+    def __getitem__(self, k):
+        _Whole.asked.add(k)
+        return super().__getitem__(k)
+
+
+def test_a_reading_holds_only_the_fields_it_reads_and_its_figures_are_the_same(led):
+    """Drill of 2026-11-28: every whole snapshot of a sample kept in memory (37 KB each) would not fit for the long verdicts."""
+    from terminal.qsf import kr_avoid_marks as am
+    heavy = {"holding": {"plan": "x" * 2000}, "provenance": {"a": 1}, "fund_checks": {"flags": []}, "fuller_inputs": {"x": 1}, "domains": {"d": 1}, "stop": 1.0,
+             "target": 2.0, "recorded_at": "t", "benchmark": "^KQ11", "price": 10.0, "fund_period": {"live": "TRAILING", "annual_as_of": "2026-09-30"}}
+    facs = lambda k: [{"factor": f, "weight": w, "normalized": (k * (i + 1)) % 7 / 7, "scored": i != 2, "status": "REAL", "raw": 1.234, "source": "s" * 50, "as_of": "d",
+                       "reason": "r" * 80, "domain": "x", "contribution": 0.1} for i, (f, w) in enumerate((("mom", 0.4), ("val", 0.3), ("vol", 0.2), ("gap", 0.1)))]
+    whole = [_Whole(snap(k, CAL[0], CAL[1], factors=[_Whole(f) for f in facs(k)], **heavy)) for k in range(N)]
+    cut = [lf.light(s) for s in whole]
+    assert set(cut[0]) == set(lf.ROW_FIELDS) | {"fund_period", "factors"} and set(cut[0]["factors"][0]) == set(lf.FACTOR_FIELDS)
+    assert "sector" not in lf.light({"ticker": "A", "score": 1}) and lf.light({"ticker": "A"}) == {"ticker": "A"}          # an absent field stays absent
+    assert len(json.dumps(cut[0])) < len(json.dumps(whole[0])) / 5
+    bench = flat_bench()
+    px = lambda: lf.Prices(loader(), bench, {"^KQ11": bench})
+    _Whole.asked = set()
+    for variant in (None, lf.without_factor("mom"), lf.within_sector(lambda t, d: "S" + t[-1])):
+        a, b = lf.day_stats(CAL[0], whole, px(), 20, 0.002, variant), lf.day_stats(CAL[0], cut, px(), 20, 0.002, variant)
+        assert a == b and a is not None
+    rows_w, rows_c = {CAL[0]: whole}, {CAL[0]: cut}
+    assert lf.formula_mix(rows_w, [CAL[0]]) == lf.formula_mix(rows_c, [CAL[0]]) and lf.late_days(rows_w, [CAL[0]], CAL) == lf.late_days(rows_c, [CAL[0]], CAL)
+    marks = {"known": {f"T{k:02d}" for k in range(N)}, "any": {"T01", "T02", "T30"}, **{m: {"T01"} for m in am.MARKS}}
+    assert am.day_row(CAL[0], whole, marks, px(), 0.002) == am.day_row(CAL[0], cut, marks, px(), 0.002)
+    # every field those readings asked of a whole snapshot or factor is one the cut keeps
+    assert _Whole.asked <= set(lf.ROW_FIELDS) | set(lf.FACTOR_FIELDS) | {"fund_period", "factors", "live"}, _Whole.asked
+    assert all(set(s) <= set(lf.ROW_FIELDS) | {"fund_period", "factors"} for s in lf.session_rows(FakeLedger("x"), "US", "SWING")[CAL[0]])
+    code = (__import__("pathlib").Path(lf.__file__).parent / "us_challenger.py").read_text(encoding="utf-8")
+    assert "keep=lambda s:" in code and 'led.snapshots(market="US", strategy=strategy)' not in code
+
+
+def test_the_early_reading_names_the_band_it_read(led):
+    code = __import__("inspect").getsource(lf.early_once)
+    assert "그날 상위 20%가" in code and "if top else" in code          # Korea's swing money condition reads the top fifth, never the band of 70

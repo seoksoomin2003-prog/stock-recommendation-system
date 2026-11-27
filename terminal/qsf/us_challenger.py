@@ -238,9 +238,9 @@ def evaluate_once(base: Path, strategy: str, loader: Callable[[str], List[Dict]]
     records = {d: kf._read_day(folder, d)["strategies"][strategy] for d in chosen}
     closes: Dict[str, Dict[str, float]] = {}
     led = Ledger(Path(base))
-    for s in led.snapshots(market="US", strategy=strategy):
-        if s.get("price"):
-            closes.setdefault(s["ticker"], {})[s["data_date"]] = float(s["price"])
+    # three fields of each snapshot, taken as its shard is read: every US session held whole would not fit in memory (drill 2026-11-28)
+    for ticker, day, price in led.snapshots(market="US", strategy=strategy, keep=lambda s: (s["ticker"], s["data_date"], float(s["price"])) if s.get("price") else None):
+        closes.setdefault(ticker, {})[day] = price
     px = build_panel(sorted({r["ticker"] for v in records.values() for r in v}), loader, closes)
     place = {d: i for i, d in enumerate(px.dates)}
     chosen = [d for d in chosen if d in place]
