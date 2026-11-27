@@ -104,6 +104,8 @@ def key_file(text: str) -> Tuple[str, List[str], List[str]]:
         if name and name.upper().startswith(HELD_BACK_KEYS):
             held.append(name)
             continue
+        if any(k in raw.upper() for k in HELD_BACK_KEYS):       # a comment that names the key may be a switched-off line with its value
+            continue
         if name:
             kept.append(name)
         lines.append(raw)
@@ -138,7 +140,7 @@ def make(base: Path, folder: Optional[Path] = None, now: Optional[datetime] = No
         with zipfile.ZipFile(part, "w", zipfile.ZIP_DEFLATED) as z:
             for rel in sorted(set(src) | set(rec)):
                 p = base / rel
-                if rel in PERSONAL or rel == ".env" or rel == README or not p.is_file():
+                if rel in PERSONAL or rel == ".env" or rel == README or "/evidence/" in rel or not p.is_file():      # audit evidence holds saved screen replies of the owner's own terminal
                     continue
                 _put(z, rel, src=p)
                 n += 1

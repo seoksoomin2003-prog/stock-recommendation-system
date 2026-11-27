@@ -13,7 +13,8 @@ def _base(tmp_path):
                       "data/terminal/watchlist.json": "[]", "data/terminal/phone_view.json": "{}", "data/terminal/cache/x.json": "{}",
                       "data/qsf/ledger/index.jsonl": "{}\n", "data/qsf/ledger/2026-11-26.jsonl.gz": "z", "research_data/krx_forward/2026-11-26.json.gz": "z",
                       "data/qsf/stance.json": "{}", ".venv/lib/x.py": "", "runs/a.txt": "",
-                      ".env": "# keys\nDART_API_KEY=dart-value\nexport TELEGRAM_BOT_TOKEN=tg-secret\nTELEGRAM_CHAT_ID = 12345\nSEC_USER_AGENT=\"someone\"\n"}.items():
+                      "reports/audit_x/evidence/agent_07/watchlist.json": "[]", "reports/RUNBOOK.md": "x",
+                      ".env": "# keys\n# TELEGRAM_BOT_TOKEN=old-secret\nDART_API_KEY=dart-value\nexport TELEGRAM_BOT_TOKEN=tg-secret\nTELEGRAM_CHAT_ID = 12345\nSEC_USER_AGENT=\"someone\"\n"}.items():
         p = base / rel
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(text, encoding="utf-8")
@@ -33,6 +34,7 @@ def test_the_copy_keeps_the_data_keys_and_the_records_and_leaves_out_telegram_an
     assert {"app.py", "ops/run.command", ".env", share.README, "data/qsf/ledger/index.jsonl", "data/qsf/ledger/2026-11-26.jsonl.gz",
             "research_data/krx_forward/2026-11-26.json.gz", "data/qsf/stance.json"} <= names
     assert not names & {"data/terminal/journal.jsonl", "data/terminal/watchlist.json", "data/terminal/phone_view.json", "data/terminal/cache/x.json", ".venv/lib/x.py", "runs/a.txt"}
+    assert "reports/RUNBOOK.md" in names and not any("/evidence/" in n for n in names) and "old-secret" not in env
     assert mode & 0o111                                                         # a .command file stays one that can be double-clicked
     assert res["keys_held_back"] == ["TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"] and res["keys_kept"] == ["DART_API_KEY", "SEC_USER_AGENT"]
     said = str(res)
