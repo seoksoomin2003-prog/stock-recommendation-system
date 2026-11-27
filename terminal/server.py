@@ -170,6 +170,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[pho
         ("GET", "/api/backup/check"): lambda q, b: _restore().check(t.base),
         ("POST", "/api/backup/second"): lambda q, b: _restore().set_second(t.base, b.get("on") is True),
         ("POST", "/api/backup/repair-ledger"): lambda q, b: _restore().repair_ledger(t.base),
+        ("POST", "/api/share/make"): lambda q, b: __import__("terminal.share", fromlist=["make"]).make(t.base),      # a copy to hand over: keys in, Telegram and personal entries out (SH-1)
         ("POST", "/api/watchlist/add"): lambda q, b: {"tickers": t.watchlist_add(b.get("ticker", ""))},
         ("GET", "/api/calendar"): lambda q, b: t.econ_calendar(_market(q.get("market", "US")), _days(q.get("days") or "60")),
         ("GET", "/api/alerts"): lambda q, b: t.alerts_view(),

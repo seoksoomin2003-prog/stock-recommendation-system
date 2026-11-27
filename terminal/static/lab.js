@@ -162,7 +162,8 @@ function recBackup(d) {
     <div><span>두 번째${b2.path ? ` (${esc(b2.path)})` : ""}</span><b>${b2.on ? esc(b2.latest || "아직 없음") : '<span class="missing">꺼짐</span>'}</b></div></div>
     <div class="actions"><button type="button" class="ghost" data-rec-backup="check">백업 확인(풀어서 검증)</button>
       <button type="button" class="ghost" data-rec-backup="${b2.on ? "off" : "on"}">두 번째 백업 ${b2.on ? "끄기" : "켜기(iCloud Drive)"}</button>
-      ${broken ? '<button type="button" data-rec-backup="repair">깨진 기록 묶음을 백업에서 되돌리기</button>' : ""}</div>
+      ${broken ? '<button type="button" data-rec-backup="repair">깨진 기록 묶음을 백업에서 되돌리기</button>' : ""}
+      <button type="button" class="ghost" data-rec-backup="share" title="다른 사람에게 줄 사본을 바탕화면에 zip으로 만듭니다. 자료를 받는 키는 넣고, 텔레그램 키와 계좌·매매 일지·모의 매매·관심종목·알림 규칙은 넣지 않습니다.">배포본 만들기</button></div>
     <div class="meta" id="rec-backup-out">첫 번째 백업은 기록과 같은 디스크에 있습니다. 두 번째 백업은 그 디스크가 고장 나도 남는 사본입니다. 키 파일(.env)은 어느 백업에도 넣지 않습니다.</div>`;
 }
 document.addEventListener("click", async (ev) => {
@@ -175,6 +176,11 @@ document.addEventListener("click", async (ev) => {
     if (what === "check") {
       const r = await api("/api/backup/check");
       out.textContent = r.backups.length ? r.backups.map((x) => `${x.path}: ${x.status === "OK" ? `이상 없음(${x.latest}, 기록 ${x.checked}종 검증)` : x.status === "NO_BACKUP" ? "백업 없음" : x.status === "IN_CLOUD" ? `사본은 iCloud에 있고 이 Mac에는 ${x.in_cloud_only}개 파일이 내려받기 전 상태라 풀어서 검증하지 못했습니다(최신 ${x.latest}). Finder에서 그 폴더를 '지금 다운로드'한 뒤 다시 누르면 검증합니다` : x.status === "UNREADABLE" ? `읽지 못했습니다(${x.failed.join(", ")})` : `문제 있음: ${x.failed.join(", ")}`}`).join(" · ") + ". " + r.note : "백업 폴더가 없습니다.";
+    } else if (what === "share") {
+      if (!window.confirm("다른 사람에게 줄 사본(zip)을 바탕화면에 만듭니다.\n자료를 받는 키(.env)가 들어갑니다. 텔레그램 키와 계좌·매매 기록은 들어가지 않습니다.\n만들까요?")) { out.textContent = "만들지 않았습니다."; btn.disabled = false; return; }
+      out.textContent = "배포본을 만드는 중입니다…";
+      const r = await api("/api/share/make", { ...json, body: "{}" });
+      out.textContent = `${r.text} (${r.size_mb}MB) ${r.note}`;
     } else if (what === "repair") {
       const r = await api("/api/backup/repair-ledger", { ...json, body: "{}" });
       out.textContent = r.text;
