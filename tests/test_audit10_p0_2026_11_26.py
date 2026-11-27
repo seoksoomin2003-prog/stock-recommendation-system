@@ -283,3 +283,17 @@ def test_the_chart_gets_the_swing_plans_levels_from_the_record_and_the_m_key_ask
     assert "chaPlanLines(ctx, d.plan_lines, py, pw, lo, hi, T)" in chart and 'id="cha-plan"' in chart and "범위 밖" in chart
     keys = (ROOT / "terminal" / "static" / "command.js").read_text(encoding="utf-8")
     assert "적다 만 내용이 있습니다" in keys and "if (!dirty) setMarket(next);" in keys
+
+
+def test_an_empty_copy_a_cloud_folder_left_beside_a_dated_backup_is_removed_and_a_full_one_never(tmp_path):
+    """2026-11-27: iCloud Drive left an empty "2026-11-25 2" after a holiday backed the same session up twice."""
+    base, root = tmp_path / "base", tmp_path / "bk"
+    base.mkdir()
+    for name in ("2026-11-25 2", "2026-11-25 3", "notes 2", "2026-11-24"):
+        (root / name).mkdir(parents=True)
+    (root / "2026-11-25 3" / "kept.txt").write_text("x", encoding="utf-8")
+    automation.backup(base, "2026-11-25", root)
+    left = sorted(p.name for p in root.iterdir())
+    assert "2026-11-25 2" not in left                                         # empty and named like a copy of a date: gone
+    assert "2026-11-25 3" in left and (root / "2026-11-25 3" / "kept.txt").exists()      # holds a file: never touched
+    assert "notes 2" in left and "2026-11-24" in left and "2026-11-25" in left          # not a date's copy; an empty dated folder is a backup

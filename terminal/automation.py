@@ -180,7 +180,24 @@ def backup(base: Path, day: str, root: Optional[Path] = None) -> Dict[str, Any]:
     folders = sorted(p for p in root.iterdir() if p.is_dir() and _is_date_name(p.name))
     for old in folders[:-KEEP_BACKUPS]:
         shutil.rmtree(old, ignore_errors=True)
+    _drop_empty_copies(root)
     return {"files": n, "path": str(final)}
+
+
+def _drop_empty_copies(root: Path) -> int:
+    """A cloud folder (iCloud Drive) answers a dated folder replaced under the same name with an empty copy named "2026-11-25 2"
+    (first seen 2026-11-27, after a holiday backed the same session up twice).  Such a copy is removed when it is empty and only
+    then: ``rmdir`` refuses a folder that holds anything, so nothing with content is ever deleted here."""
+    n = 0
+    for p in root.iterdir():
+        head, _, tail = p.name.rpartition(" ")
+        if p.is_dir() and not p.is_symlink() and tail.isdigit() and _is_date_name(head):
+            try:
+                p.rmdir()
+                n += 1
+            except OSError:
+                pass
+    return n
 
 
 def _previous_weekday(day: date) -> date:
