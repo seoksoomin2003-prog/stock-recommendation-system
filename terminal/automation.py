@@ -249,6 +249,12 @@ def check_backup(root: Optional[Path] = None) -> Dict[str, Any]:
     return {"status": status, "latest": latest, "checks": checks}
 
 
+def _told(res: Dict[str, Any]) -> bool:
+    """Sent, or this computer has no way to send (no Telegram keys and no desktop notice, e.g. a Windows copy without Telegram):
+    the screen is then the only place, and the notice counts as told instead of being tried again at every run."""
+    return (res or {}).get("status") in ("SENT", "NOT_AVAILABLE")
+
+
 def _is_date_name(name: str) -> bool:
     """Only folders named like a date are ever pruned; anything else in the backup folder is left alone."""
     try:
@@ -512,7 +518,7 @@ class Daily:
             tg = self.telegram(earnings_gap.text(got))
             if tg["status"] == "NOT_CONFIGURED":
                 tg = self.macos("미국 실적 발표일 빈칸 재집계", earnings_gap.short(got))
-            got["delivered"] = tg["status"] == "SENT"
+            got["delivered"] = _told(tg)
             got.pop("error", None)
         except Exception as exc:                                    # never stops the run
             got["error"] = type(exc).__name__
@@ -569,7 +575,7 @@ class Daily:
                     tg = self.telegram(book.text(rep))
                     if tg["status"] == "NOT_CONFIGURED":
                         tg = self.macos(title, book.short(rep))
-                    sent = tg["status"] == "SENT"
+                    sent = _told(tg)
                     m = {"decision": m.get("decision") if told else rep.get("decision"), "at": self.now().isoformat(), "warned": unread and sent,
                          "delivered": told or (not unread and sent)}
             except Exception as exc:                                # never stops the run; said in the day's message (``_notes``)
@@ -599,7 +605,7 @@ class Daily:
                         tg = self.telegram(readings.damaged_text(e))
                         if tg["status"] == "NOT_CONFIGURED":
                             tg = self.macos("판정", f"{e['label']}: 결과 파일 손상")
-                        m["damaged"] = tg["status"] == "SENT"
+                        m["damaged"] = _told(tg)
                     got[e["key"]] = m
                     continue
                 m.pop("damaged", None)
@@ -617,14 +623,14 @@ class Daily:
                         tg = self.telegram(readings.stuck_text(e, m["failed"]))
                         if tg["status"] == "NOT_CONFIGURED":
                             tg = self.macos("판정", f"{e['label']}: {m['failed']}번 읽지 못함")
-                        m["warned"] = tg["status"] == "SENT"
+                        m["warned"] = _told(tg)
                 elif not e.get("notify"):                           # an archived reading (user decision 2026-11-25): filed, on the schedule, no notice
                     m.update(verdict=readings.verdict(e, rep), at=self.now().isoformat(), delivered=True, quiet=True)
                 else:
                     tg = self.telegram(readings.text(e, rep))
                     if tg["status"] == "NOT_CONFIGURED":
                         tg = self.macos("판정", f"{e['label']}: {readings.verdict(e, rep)}")
-                    m.update(verdict=readings.verdict(e, rep), at=self.now().isoformat(), delivered=tg["status"] == "SENT")
+                    m.update(verdict=readings.verdict(e, rep), at=self.now().isoformat(), delivered=_told(tg))
                 m.pop("error", None)
             except Exception as exc:                                # never stops the run
                 m["error"] = type(exc).__name__
@@ -858,7 +864,7 @@ class Daily:
                 return
             tg = self.telegram(self.compose_kr_early(plan, self.now()))
             mac = self.macos(f"한국 점수 기록 완료 {plan['session']}", "주문 계획 준비됨 · 동시호가 08:30~08:59 · 자세한 내용은 텔레그램과 화면")
-            ok = tg.get("status") == "SENT" if tg.get("status") != "NOT_CONFIGURED" else mac.get("status") == "SENT"
+            ok = tg.get("status") == "SENT" if tg.get("status") != "NOT_CONFIGURED" else _told(mac)
             if ok:
                 st["kr_early"] = {"session": plan["session"], "at": self.now().isoformat()}
                 self._save(st)
@@ -1013,7 +1019,7 @@ class Daily:
                    (f". 텔레그램 전달 실패({out['telegram'].get('error')})" if out["telegram"]["status"] == "FAILED" else "")
             out["macos"] = self.macos(f"퀀트 터미널 {session}", body)
             ok = out["telegram"]["status"] == "SENT" if out["telegram"]["status"] != "NOT_CONFIGURED" \
-                else out["macos"]["status"] == "SENT"
+                else _told(out["macos"])
             if ok:
                 st["notified"] = {"session": session, "signature": sig, "at": self.now().isoformat()}
                 st["alerts"] = sorted(_key(a) for a in alerts["items"])    # "new" clears only once actually delivered
@@ -1127,7 +1133,8 @@ def status(base: Path) -> Dict[str, Any]:
     latest = sorted(sessions)[-1] if sessions else None
     return {"installed": is_installed(), "schedule_kst": [f"{h:02d}:{m:02d}" for h, m in SCHEDULE],
             "schedule_text": f"{SCHEDULE[0][0]:02d}:{SCHEDULE[0][1]:02d}부터 {SCHEDULE[-1][0]:02d}:{SCHEDULE[-1][1]:02d}까지 매시간",
-            "telegram": notify.telegram_status(), "capital_configured": bool(os.getenv("QPP_CAPITAL", "").strip()),
+            "telegram": notify.telegram_status(), "screen_only": notify.telegram_status() == "NOT_CONFIGURED" and sys.platform != "darwin",
+            "capital_configured": bool(os.getenv("QPP_CAPITAL", "").strip()),
             "latest_session": latest, "steps": sessions.get(latest) if latest else None,
             "last_run": st.get("last_run"), "last_attempt": st.get("last_attempt"), "running": running(base), "earnings_gap": st.get("earnings_gap"),
             "notes": Daily._notes(st),

@@ -49,7 +49,7 @@ async function renderComparison() {
 async function automationLine() {
   const a = await api("/api/automation/status").catch(() => null);
   if (!a) return "";
-  const tg = { CONFIGURED: "텔레그램 연결됨", NOT_CONFIGURED: "텔레그램 미설정", INVALID: "텔레그램 설정 오류" }[a.telegram];
+  const tg = { CONFIGURED: "텔레그램 연결됨", NOT_CONFIGURED: "텔레그램 미설정", INVALID: "텔레그램 설정 오류" }[a.telegram] + (a.screen_only ? " · 이 컴퓨터는 알림을 보낼 방법이 없어 결과는 화면에서만 봅니다" : "");
   const run = a.installed ? `자동 실행 켜짐 (한국 시간 ${a.schedule_kst[0]})` : "자동 실행 꺼짐";
   const last = a.last_run ? `마지막 실행 ${a.last_run.at.slice(0, 16).replace("T", " ")} UTC, 기준 거래일 ${a.last_run.session}` : "실행 기록 없음";
   const gaps = a.last_run && a.last_run.missing_sessions.length ? `, 빠진 거래일 ${a.last_run.missing_sessions.length}일` : "";
