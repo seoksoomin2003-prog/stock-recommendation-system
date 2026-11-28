@@ -85,6 +85,8 @@ def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[
         out.append({"level": "bad", "text": "QSF 기록 파일 검증에 실패했습니다. 기록을 믿기 전에 원인을 확인해야 합니다."})
     if not auto.get("installed"):
         out.append({"level": "bad", "text": "매일 자동 실행이 설치되어 있지 않습니다."})
+    if auto.get("sec_configured") is False:
+        out.append({"level": "bad", "text": "SEC 연락처(이메일)가 없어 미국 종목의 점수가 기록되지 않습니다. 프로그램 폴더 ops(Windows는 ops\\windows)의 '연락처 입력' 파일을 눌러 입력하세요."})
     if not baseline.get("capital_configured"):
         out.append({"level": "bad", "text": "자본금이 비어 있어 기준 모델의 매일 스캔을 건너뜁니다. 모델 탭에서 입력하세요."})
     if baseline.get("status") != "REAL":
@@ -131,7 +133,7 @@ def alerts(qsf: Dict[str, Dict[str, Any]], baseline: Dict[str, Any], auto: Dict[
             out.append({"level": "warn", "text": f"{names[m]} QSF 기록이 아직 없습니다."})
             continue
         if (r["behind_sessions"] or 0) >= BEHIND_ALERT:
-            out.append({"level": "warn", "text": f"{names[m]} QSF 기록이 마지막 완료 거래일보다 {r['behind_sessions']}거래일 뒤처져 있습니다. 다음 자동 실행 때 맥이 켜져 있어야 합니다."})
+            out.append({"level": "bad", "kind": "SCAN_BEHIND", "market": m, "text": f"{names[m]} 점수 기록이 마지막 완료 거래일보다 {r['behind_sessions']}거래일 뒤처져 있습니다(마지막 기록 {r['last']}). 다음 자동 실행 때 컴퓨터가 켜져 있어야 합니다."})
         gaps = [d for d in r["missing"] if d <= r["last"]]
         if gaps:
             out.append({"level": "warn", "text": f"{names[m]} QSF 기록이 빠진 거래일 {len(gaps)}개: {', '.join(gaps[-5:])}"})

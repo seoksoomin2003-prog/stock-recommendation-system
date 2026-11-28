@@ -1196,7 +1196,7 @@ def cmd_automation(args) -> int:
     else:
         res = automation.status(PROJECT_ROOT)
     print(json.dumps(res, ensure_ascii=False, indent=1, default=str))
-    return 0
+    return 0 if args.action != "install" or res.get("installed") else 1      # an install file must be able to see a refused registration
 
 
 def cmd_terminal_agent(args) -> int:

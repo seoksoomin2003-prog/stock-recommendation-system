@@ -1268,7 +1268,7 @@ function wireCapital(el, cap, b, mk) {
     if (Number.isNaN(typed)) parts.push("0보다 큰 숫자로 입력하세요.");
     else if (typed !== saved) parts.push("저장 전 미리보기입니다.");
     else if (saved === null) parts.push(cap.invalid ? "저장된 값을 읽을 수 없습니다. 다시 입력하세요." : mk === "KR" ? "저장된 자본금이 없어 한국 모델 스캔을 건너뜁니다." : "자본금이 없어 P6-11B 스캔을 건너뜁니다.");
-    if (!Number.isNaN(typed) && base && isNum(b.capital) && base !== b.capital) parts.push(`금액과 주수만 환산했습니다. 추천 종목은 스캔 당시 자본 ${money(b.capital)} 기준이라 다음 스캔에서 달라질 수 있습니다.`);
+    if (!Number.isNaN(typed) && base && isNum(b.capital) && base !== b.capital) parts.push(`금액과 주수만 환산했습니다. 모델 상위 종목은 스캔 당시 자본 ${money(b.capital)} 기준이라 다음 스캔에서 달라질 수 있습니다.`);
     note.innerHTML = parts.join(" ");
   };
   input.oninput = () => refresh();
@@ -1333,7 +1333,7 @@ async function renderModel() {
       <tbody>${(b.top5 || []).map((r) => `<tr class="click" data-ticker="${esc(r.ticker)}"><td>${esc(r.recommendation_rank)}</td><td class="l"><b>${esc(r.ticker)}</b> <span class="meta m0">${esc(r.name || "")}</span></td>
         <td class="l">${esc(sectorKo(r.sector))}</td><td class="num">${fmt(r.close, mk === "KR" ? 0 : 2)}</td><td class="num">${fmt(r.alpha, 3)}</td><td class="num">${isNum(r.target_weight) ? (r.target_weight * 100).toFixed(1) + "%" : DASH}</td>
         <td class="num" data-cap-amount data-w="${isNum(r.target_weight) ? r.target_weight : ""}">${DASH}</td><td class="num" data-cap-shares data-w="${isNum(r.target_weight) ? r.target_weight : ""}" data-close="${isNum(r.close) ? r.close : ""}">${DASH}</td>
-        <td class="num">${fmt(r.hard_stop)}</td><td>${isNum(r.horizon_days) ? r.horizon_days + "거래일" : DASH}</td></tr>`).join("") || '<tr><td colspan="10" class="empty">추천 종목 없음</td></tr>'}</tbody></table></div>
+        <td class="num">${fmt(r.hard_stop)}</td><td>${isNum(r.horizon_days) ? r.horizon_days + "거래일" : DASH}</td></tr>`).join("") || '<tr><td colspan="10" class="empty">모델 상위 종목 없음</td></tr>'}</tbody></table></div>
       <div class="meta"><span class="tech-id">실행 ID ${esc(b.run_id)}</span> · 읽기 전용 표시입니다. 이 화면은 모델을 실행하거나 변경하지 않습니다.</div>` : '<h2>모델 상위 종목</h2><div class="empty">기록된 전체 스캔이 없습니다.</div>'}</div>`,
       lower: `<div class="panel"><h2>전향적 추적 ${badge(t.status)}</h2>${t.status === "REAL" ? `<div class="kv"><div><span>기록된 실행</span><b>${esc(t.runs)}</b></div><div><span>관찰 건수</span><b>${esc(t.observations)}</b></div>${t.excluded_runs ? `<div title="같은 거래일을 두 번 스캔한 기록입니다. 지우지 않고 집계에서만 뺍니다."><span>집계 제외 (중복 스캔)</span><b>실행 ${esc(t.excluded_runs)}개 · ${esc(t.excluded_observations)}건</b></div>` : ""}
         <div><span>최근 갱신</span><b>${esc(t.latest_update || "—")}</b></div></div>

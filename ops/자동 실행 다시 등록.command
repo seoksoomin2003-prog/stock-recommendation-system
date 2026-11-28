@@ -5,7 +5,7 @@
 # 등록하면 매일 작업이 그 자리에서 한 번 실행됩니다. 낮에, 매일 작업이 돌고 있지 않을 때만 누르세요.
 cd "$(dirname "$0")/.." || exit 1
 if [ ! -x .venv/bin/python ]; then
-  echo "파이썬 환경(.venv)이 없습니다. reports/RUNBOOK.md 8절대로 먼저 만드세요."
+  echo "파이썬 환경(.venv)이 없습니다. 같은 폴더의 '처음 설치' 파일을 누르면 다시 만들어집니다(프로그램을 만든 맥은 reports/RUNBOOK.md 8절)."
   exit 1
 fi
 hour=$(TZ=Asia/Seoul date +%H)

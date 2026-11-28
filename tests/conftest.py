@@ -377,3 +377,11 @@ def mechanism_on(monkeypatch):
     monkeypatch.setattr(readings, "BOOKS_NOTIFY", True)
     for e in readings.REGISTRY:
         monkeypatch.setitem(e, "notify", True)
+
+
+@pytest.fixture(autouse=True)
+def _sec_contact_counts_as_set(monkeypatch):
+    """The daily job skips the US scores without the SEC contact (2026-11-29).  A test computer has none, and the tests of the
+    daily job are not about that: it counts as set unless a test says otherwise."""
+    from terminal import automation
+    monkeypatch.setattr(automation, "sec_ready", lambda: True)

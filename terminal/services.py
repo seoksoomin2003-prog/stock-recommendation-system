@@ -1145,8 +1145,12 @@ class Terminal(ModelViews):
         _, integ, state, val, _, _ = self._valued(market)
         equity = val["summary"]["equity"]
         if not equity or equity <= 0:
+            # an account that IS recorded but has a holding with no price today is not "no account" (hand-over audit 2026-11-29)
+            unpriced = list(val["summary"].get("missing_prices") or [])
+            reason = (f"보유 종목 {', '.join(map(str, unpriced[:5]))}{' 등' if len(unpriced) > 5 else ''}의 시세를 받지 못해 계좌 평가액을 계산하지 못했습니다. 시세가 다시 들어오면 계획을 보여 줍니다."
+                      if unpriced else "계좌 평가액이 없습니다. '내 계좌'에 입금·거래를 기록하면 그 계좌 기준으로 계획을 보여 줍니다.")
             return {"status": "NO_ACCOUNT", "market": market, "session": session, "candidates": len(cands), "candidates_by": op.count_by(cands), "note": note, "market_state": mstate, "stance": stance_shown, "plan_checks": checks,
-                    "timing_note": op.TIMING_NOTE[market], "reason": "계좌 평가액이 없습니다. '내 계좌'에 입금·거래를 기록하면 그 계좌 기준으로 계획을 보여 줍니다."}
+                    "timing_note": op.TIMING_NOTE[market], "price_missing": unpriced, "reason": reason}
         account = {"equity": equity, "cash": state["cash"],
                    "positions": {h["ticker"]: {"style": h.get("style"), "value": h.get("value") or 0.0, "sector": h.get("sector")} for h in val["holdings"]}}
         from terminal.qsf import holding, rank_book, turnover_book

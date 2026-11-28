@@ -44,6 +44,7 @@ SLEPT_NOTE_S = 120                                  # a step during which the Ma
 HOLDINGS_EVERY_DAYS, HOLDINGS_FRESH_DAYS = 7, 90     # KODEX holdings: retry cadence while missing, and refresh age
 KEEP_BACKUPS = 60
 KEEP_SESSIONS = 40
+NO_SEC = "SEC 연락처(이메일) 미설정: 미국 종목은 기록하지 않음. 프로그램 폴더 ops(Windows는 ops\\windows)의 '연락처 입력' 파일을 누르면 다음 시각부터 기록합니다"
 NO_STATEMENTS = "재무 자료 미준비(재무가 있는 종목이 80% 미만이라 그날을 기록하지 않음, 다음 시각에 다시 시도)"
 FORWARD_STORES = ("krx_forward", "krx_forward_fund", "krx_forward_events", "us_challenger", "kr_swing_challenger", "kr_swing_prior", "kr_challenger", "kr_cap_universe", "kr_traded_universe", "kr_method", "regime_weights_kr", "regime_weights_us", "paper_book_kr", "paper_book_us", "forecast_kr", "forecast_us", "score_split_kr", "score_split_us", "turnover_book_kr", "turnover_book_us", "rank_book_kr", "rank_book_us", "fund_period_kr", "fund_period_us", "entry_book_kr", "entry_book_us")
 KR_STEPS = ("QSF_KR", "NEWS_KR", "KR_FORWARD", "SCAN_KR")     # Korea trades on some days the US does not, and these must not wait for a US session
@@ -59,6 +60,31 @@ BACKUP_GLOBS = ("data/terminal/journal.jsonl", "data/terminal/paper_journal.json
                 "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl", "data/qsf/ledger/index.jsonl", "data/news/*/runs.jsonl", "research_data/krx_forward/index.jsonl", "research_data/krx_forward_fund/index.jsonl", "research_data/krx_forward_events/index.jsonl", "research_data/us_challenger/index.jsonl", "research_data/kr_swing_challenger/index.jsonl", "research_data/kr_swing_prior/index.jsonl", "research_data/kr_challenger/index.jsonl", "research_data/kr_cap_universe/index.jsonl", "research_data/kr_traded_universe/index.jsonl", "research_data/kr_method/index.jsonl", "research_data/regime_weights_kr/index.jsonl", "research_data/regime_weights_us/index.jsonl", "research_data/paper_book_kr/index.jsonl", "research_data/paper_book_us/index.jsonl", "research_data/forecast_kr/index.jsonl", "research_data/forecast_us/index.jsonl", "research_data/score_split_kr/index.jsonl", "research_data/score_split_us/index.jsonl", "research_data/fund_period_kr/index.jsonl", "research_data/fund_period_us/index.jsonl", "research_data/turnover_book_kr/index.jsonl", "research_data/turnover_book_us/index.jsonl", "reports/qsf/QSF_TURNOVER_*.json", "research_data/rank_book_kr/index.jsonl", "research_data/rank_book_us/index.jsonl", "research_data/entry_book_kr/index.jsonl", "research_data/entry_book_us/index.jsonl", "reports/qsf/QSF_RANK_RULES_*.json", "data/qsf/top3/index.jsonl", "data/qsf/top3/*.json.gz",
                 "data/qsf/price_archive/*.json.gz", "research_data/expectations_kr/*.jsonl", "research_data/expectations_us/*.jsonl", "research_data/committee_kr/*.jsonl", "research_data/committee_us/*.jsonl",
                 "data/qsf/stance.json", "data/qsf/*_switch.json", "data/qsf/verdict_seals.json", "data/qsf/sector_archive/*.json")          # the user's own choices on the screen (stance, the three reading buttons)
+
+
+def sec_ready() -> bool:
+    """Whether the SEC contact is set.  Read from the key file as well as the environment: the daily job is a new process each
+    hour, the server is not, and a contact typed after the server started must count at once."""
+    from utils import runtime_config
+    if runtime_config.sec_user_agent_status()["status"] == "CONFIGURED":
+        return True
+    try:
+        return sec_in_key_file(runtime_config.ENV_FILE.read_text(encoding="utf-8-sig", errors="replace"))
+    except OSError:
+        return False
+
+
+def sec_in_key_file(text: str) -> bool:
+    """Whether any SEC_USER_AGENT line of a key file holds a usable contact (an ``export`` prefix and quotes are allowed)."""
+    from utils import runtime_config
+    for raw in text.splitlines():
+        line = raw.strip()
+        if line.startswith("export "):
+            line = line[len("export "):].strip()
+        if line.startswith("SEC_USER_AGENT") and "=" in line and line.split("=", 1)[0].strip() == "SEC_USER_AGENT":
+            if runtime_config.sec_user_agent_status(line.split("=", 1)[1].strip().strip("\"'"))["status"] == "CONFIGURED":
+                return True
+    return False
 
 
 def backup_root() -> Path:
@@ -368,6 +394,8 @@ class Daily:
                 rc = self.runner(name, ["track"])
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else f"코드 {rc}"}
             if name == "QSF":
+                if not sec_ready():                 # every US statement comes from the SEC: without the contact the scan would run 20 minutes each hour and record nothing
+                    return {"status": SKIPPED, "at": at, "detail": NO_SEC}
                 rc = self.runner(name, ["qsf", "scan"])
                 return {"status": OK if rc == 0 else FAILED, "at": at, "detail": None if rc == 0 else "데이터 미준비" if rc == 3 else "다운로드 끊김" if rc == 4 else NO_STATEMENTS if rc == 7 else f"코드 {rc}"}
             if name == "QSF_KR":
@@ -387,6 +415,8 @@ class Daily:
                 rc = self.runner(name, ["qsf", "kr-forward-record"])
                 return {"status": OK if rc == 0 else WAITING if rc == 3 else FAILED, "at": at, "detail": None if rc in (0, 3) else "KRX 키 없음" if rc == 4 else f"코드 {rc}"}
             if name == "US_CHALLENGER":                             # waiting is not a failure: the ledger may not have the session yet
+                if not sec_ready():                                 # no US scores were recorded for it to read: not a wait that keeps every hourly run busy
+                    return {"status": SKIPPED, "at": at, "detail": NO_SEC}
                 rc = self.runner(name, ["qsf", "us-challenger-record"])
                 return {"status": OK if rc == 0 else WAITING if rc == 3 else FAILED, "at": at, "detail": None if rc in (0, 3) else f"코드 {rc}"}
             if name == "SCAN_KR":                                   # the experimental Korean model, then its paper outcomes
@@ -879,7 +909,8 @@ class Daily:
             by = plan.get("candidates_by") or {}
             part = lambda s, label: f"{label} {(by.get(s) or {}).get('all', 0)}(상위 구간 {(by.get(s) or {}).get('buy', 0)})"      # noqa: E731
             lines += [f"진입 규칙을 채운 후보 {plan.get('candidates', 0)}종목: {part('SWING', '스윙')}, {part('LONG', '장기')}.",
-                      "계좌 평가액이 없어 수량은 계산하지 않았습니다(화면 '내 계좌'에 기록하면 계산합니다)."]
+                      "보유 종목의 시세를 받지 못해 수량은 계산하지 않았습니다(시세가 다시 들어오면 계산합니다)." if plan.get("price_missing")
+                      else "계좌 평가액이 없어 수량은 계산하지 않았습니다(화면 '내 계좌'에 기록하면 계산합니다)."]
         else:
             orders = plan.get("orders") or []
             lines.append(f"내 계좌 기준 주문 계획 {len(orders)}종목 (진입 후보 {plan.get('candidates', 0)}종목)" if orders else
@@ -948,6 +979,8 @@ class Daily:
             pending.append("SCAN")                  # a skipped scan runs as soon as capital is configured
         if (steps.get("SCAN_KR") or {}).get("status") == SKIPPED and os.getenv("QPP_CAPITAL_KRW", "").strip():
             pending.append("SCAN_KR")               # the same for the Korean model scan
+        if sec_ready():
+            pending += [n for n in ("QSF", "US_CHALLENGER") if (steps.get(n) or {}).get("detail") == NO_SEC]      # and for the US scores once the SEC contact is entered
         kr_day = _previous_weekday(self.now().astimezone(KST).date()).isoformat()
         if st.get("kr_day") != kr_day:              # once for each weekday, whether or not the US traded on it
             pending += [n for n in KR_STEPS if n not in pending]
@@ -1134,7 +1167,7 @@ def status(base: Path) -> Dict[str, Any]:
     return {"installed": is_installed(), "schedule_kst": [f"{h:02d}:{m:02d}" for h, m in SCHEDULE],
             "schedule_text": f"{SCHEDULE[0][0]:02d}:{SCHEDULE[0][1]:02d}부터 {SCHEDULE[-1][0]:02d}:{SCHEDULE[-1][1]:02d}까지 매시간",
             "telegram": notify.telegram_status(), "screen_only": notify.telegram_status() == "NOT_CONFIGURED" and sys.platform != "darwin",
-            "capital_configured": bool(os.getenv("QPP_CAPITAL", "").strip()),
+            "capital_configured": bool(os.getenv("QPP_CAPITAL", "").strip()), "sec_configured": sec_ready(),
             "latest_session": latest, "steps": sessions.get(latest) if latest else None,
             "last_run": st.get("last_run"), "last_attempt": st.get("last_attempt"), "running": running(base), "earnings_gap": st.get("earnings_gap"),
             "notes": Daily._notes(st),

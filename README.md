@@ -31,26 +31,20 @@ macOS가 그 파일을 다시 받는 동안 Python이 멈췄기 때문입니다.
 원래 데스크탑 폴더는 **바꾸거나 지우지 않았습니다**. 새 위치를 확인한 뒤에 직접 보관하거나 지우면 됩니다(7절).
 `app.py doctor`는 프로젝트가 iCloud 동기화 폴더에서 실행되면 경고합니다.
 
-## 2. 설치 (macOS Apple Silicon)
+## 2. 설치
 
-Python 3.10 이상(python.org **Python 3.14.2**에서 확인)과 인터넷 연결이 필요합니다.
+**배포본(zip)을 받은 컴퓨터(Mac·Windows).** 미리 설치할 것은 없습니다. 압축을 풀고 Mac은 `Mac 설치.command`,
+Windows는 `Windows 설치.bat`을 두 번 누릅니다. 설치 도구(uv)와 Python 3.14, 패키지를 스스로 받아 홈 폴더의
+`QuantEngine`에 설치하고 브라우저를 엽니다. 자세한 것은 zip 안의 `먼저 읽기.txt`와 `reports/RUNBOOK.md` A부.
+
+**소스에서 직접(개발용, Python 3.14).** 버전은 `requirements.lock`에 고정돼 있습니다.
 
 ```bash
-cd ~/Developer/quant-stock-engine
+python3.14 -m venv .venv
 ```
 
 ```bash
-python3 -m venv .venv
-```
-
-```bash
-.venv/bin/python -m pip install -r requirements.txt
-```
-
-시험을 돌리려면 추가로:
-
-```bash
-.venv/bin/python -m pip install -r requirements-dev.txt
+.venv/bin/python -m pip install -r requirements.lock
 ```
 
 ## 3. 설정 (`.env`)

@@ -41,7 +41,7 @@ class TestSecUserAgent(unittest.TestCase):
         f = runtime_config.sec_user_agent_status
         self.assertEqual(f("")["status"], "MISSING")
         self.assertEqual(f("   ")["status"], "MISSING")
-        self.assertEqual(f("AntigravityIDE/1.0 (soominseok@example.com)")["status"], "INVALID")  # former default
+        self.assertEqual(f("AntigravityIDE/1.0 (someone@example.com)")["status"], "INVALID")  # former default
         self.assertEqual(f("App/1.0 contact@example.org")["status"], "INVALID")
         self.assertEqual(f("App/1.0 <your e-mail>")["status"], "INVALID")
         self.assertEqual(f("App/1.0 no-email-here")["status"], "INVALID")

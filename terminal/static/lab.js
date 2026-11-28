@@ -163,7 +163,7 @@ function recBackup(d) {
     <div class="actions"><button type="button" class="ghost" data-rec-backup="check">백업 확인(풀어서 검증)</button>
       <button type="button" class="ghost" data-rec-backup="${b2.on ? "off" : "on"}">두 번째 백업 ${b2.on ? "끄기" : "켜기(iCloud Drive)"}</button>
       ${broken ? '<button type="button" data-rec-backup="repair">깨진 기록 묶음을 백업에서 되돌리기</button>' : ""}
-      <button type="button" class="ghost" data-rec-backup="share" title="다른 사람에게 줄 사본을 홈 폴더의 'QuantEngine-배포본' 폴더에 zip으로 만듭니다. 자료를 받는 키는 넣고, 텔레그램 키와 계좌·매매 일지·모의 매매·관심종목·알림 규칙은 넣지 않습니다.">배포본 만들기</button></div>
+      <button type="button" class="ghost" data-rec-backup="share" title="다른 사람에게 줄 사본을 홈 폴더의 'QuantEngine-배포본' 폴더에 zip으로 만듭니다. 자료를 받는 키는 넣고, 텔레그램 키, 자본금, SEC 연락처, 계좌·매매 일지·모의 매매·관심종목·알림 규칙, 기준 모델 스캔 기록, 점검 보고서는 넣지 않습니다.">배포본 만들기</button></div>
     <div class="meta" id="rec-backup-out">첫 번째 백업은 기록과 같은 디스크에 있습니다. 두 번째 백업은 그 디스크가 고장 나도 남는 사본입니다. 키 파일(.env)은 어느 백업에도 넣지 않습니다.</div>`;
 }
 document.addEventListener("click", async (ev) => {
@@ -177,7 +177,7 @@ document.addEventListener("click", async (ev) => {
       const r = await api("/api/backup/check");
       out.textContent = r.backups.length ? r.backups.map((x) => `${x.path}: ${x.status === "OK" ? `이상 없음(${x.latest}, 기록 ${x.checked}종 검증)` : x.status === "NO_BACKUP" ? "백업 없음" : x.status === "IN_CLOUD" ? `사본은 iCloud에 있고 이 Mac에는 ${x.in_cloud_only}개 파일이 내려받기 전 상태라 풀어서 검증하지 못했습니다(최신 ${x.latest}). Finder에서 그 폴더를 '지금 다운로드'한 뒤 다시 누르면 검증합니다` : x.status === "UNREADABLE" ? `읽지 못했습니다(${x.failed.join(", ")})` : `문제 있음: ${x.failed.join(", ")}`}`).join(" · ") + ". " + r.note : "백업 폴더가 없습니다.";
     } else if (what === "share") {
-      if (!window.confirm("다른 사람에게 줄 사본(zip)을 홈 폴더의 'QuantEngine-배포본' 폴더에 만듭니다(바탕화면은 iCloud·OneDrive로 올라갈 수 있어 쓰지 않습니다).\n자료를 받는 키(.env)가 들어갑니다. 텔레그램 키와 계좌·매매 기록은 들어가지 않습니다.\n만들까요?")) { out.textContent = "만들지 않았습니다."; btn.disabled = false; return; }
+      if (!window.confirm("다른 사람에게 줄 사본(zip)을 홈 폴더의 'QuantEngine-배포본' 폴더에 만듭니다(바탕화면은 iCloud·OneDrive로 올라갈 수 있어 쓰지 않습니다).\n자료를 받는 키(.env)가 들어갑니다. 텔레그램 키, 자본금, 연락처(이메일), 계좌·매매 기록, 점검 보고서는 들어가지 않습니다.\n만들까요?")) { out.textContent = "만들지 않았습니다."; btn.disabled = false; return; }
       out.textContent = "배포본을 만드는 중입니다…";
       const r = await api("/api/share/make", { ...json, body: "{}" });
       out.textContent = `${r.text} (${r.size_mb}MB) ${r.note}`;
@@ -229,7 +229,7 @@ async function renderRecord() {
     <div class="meta">재무 점수 기록: ${f.fund.sessions}거래일 · 마지막 ${esc(f.fund.last || "—")} · 독립 표본 ${f.fund.independent.toFixed(1)} / ${f.fund.target}</div>
     ${f.events ? `<div class="meta">공시 사건 기록: ${f.events.sessions}거래일 · 마지막 ${esc(f.events.last || "—")} · 독립 표본 ${f.events.independent.toFixed(1)} / ${f.events.target}</div>` : ""}
     <h3>미국 도전자 점수 기록 <span class="meta m0">라이브와 분리</span></h3><div class="kv"><div><span>기록 거래일</span><b class="num">${u.sessions}</b></div><div><span>마지막 기록</span><b>${esc(u.last || "—")}</b></div><div><span>늦은 기록</span><b class="num">${u.late}</b></div><div><span>스윙 독립 표본 (20거래일)</span><b class="num">${u.independent.toFixed(1)} / ${u.target}</b></div><div><span>장기 독립 표본 (63거래일)</span><b class="num">${u.long_independent.toFixed(1)} / ${u.target}</b></div></div>
-    <div class="meta">점수와 날짜만 쌓습니다. 수익률은 표본이 찬 뒤 한 번만 평가합니다. 이 점수는 추천과 라이브 점수에 쓰이지 않습니다.${u.sessions ? "" : ` 첫 기록 대상은 ${esc(u.first_due)}입니다.`}</div>
+    <div class="meta">점수와 날짜만 쌓습니다. 수익률은 표본이 찬 뒤 한 번만 평가합니다. 이 점수는 후보 표시와 라이브 점수에 쓰이지 않습니다.${u.sessions ? "" : ` 첫 기록 대상은 ${esc(u.first_due)}입니다.`}</div>
     ${recAudit(d.price_audit)}
     <h3 id="rec-auto">자동 실행</h3><div class="kv">${d.disk ? `<div><span>디스크 여유</span><b class="num">${d.disk.free_gb}GB</b></div>` : ""}${d.backup ? `<div><span>마지막 백업</span><b>${esc(d.backup.latest || "—")}</b></div>` : ""}<div><span>설치</span><b>${a.installed ? "설치됨" : '<span class="missing">미설치</span>'}</b></div><div><span>실행 시각</span><b>${esc(a.schedule_text || (a.schedule_kst || []).join(", "))}</b></div><div><span>마지막 실행</span><b>${a.last_run_at ? when(a.last_run_at) : DASH}</b></div><div><span>기준 거래일</span><b>${esc(a.latest_session || "—")}</b></div></div>
     <div class="meta">${a.steps.map((s) => `${esc(s.name)}: ${esc(stat[s.status] || "기록 없음")}`).join(" · ")}</div>

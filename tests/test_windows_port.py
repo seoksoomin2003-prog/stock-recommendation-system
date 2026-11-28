@@ -71,6 +71,24 @@ def test_no_module_imports_the_mac_only_lock_module_directly():
                 assert "\nimport fcntl\n" not in p.read_text(encoding="utf-8"), p
     app = (ROOT / "app.py").read_text(encoding="utf-8")
     assert '"-X", "utf8"' in app and "stay_awake" in app
-    for name in ("1 처음 설치.bat", "2 자동 실행 등록.bat", "서버 다시 시작.bat", "지금 수집.bat", "자동 실행 해제.bat"):
+    for name in ("1 처음 설치.bat", "2 자동 실행 등록.bat", "서버 다시 시작.bat", "지금 수집.bat", "자동 실행 해제.bat", "연락처 입력.bat"):
         body = (ROOT / "ops" / "windows" / name).read_bytes()
         assert body.startswith(b"@echo off\r\nchcp 65001") and b"\r\n" in body and b"\n" not in body.replace(b"\r\n", b"")
+
+
+def test_the_sign_in_start_is_for_this_account_so_a_plain_account_can_register_it(tmp_path, monkeypatch):
+    """Hand-over audit 2026-11-29: a sign-in trigger without an account means "any user", which only an administrator may
+    register; the file a receiver double-clicks is not one.  (A hosted runner is an administrator and never showed it.)"""
+    monkeypatch.setenv("USERNAME", "홍길동")
+    monkeypatch.setenv("USERDOMAIN", "PC-1")
+    doc = win_tasks.task_xml(tmp_path, tmp_path / "l.log", ["automation", "run"], automation.SCHEDULE)
+    dom = xml.dom.minidom.parseString(doc.replace('encoding="UTF-16"', ""))
+    ids = [n.firstChild.data for n in dom.getElementsByTagName("UserId")]
+    assert ids == ["PC-1\\홍길동", "PC-1\\홍길동"]                                  # the trigger and the principal
+    assert dom.getElementsByTagName("LogonTrigger")[0].getElementsByTagName("UserId")
+    monkeypatch.delenv("USERNAME")
+    assert "UserId" not in win_tasks.task_xml(tmp_path, tmp_path / "l.log", ["automation", "run"])      # nothing made up when Windows does not say
+    src = (ROOT / "terminal" / "win_tasks.py").read_text(encoding="utf-8")
+    assert src.count('_schtasks("/Run", "/TN", DAILY)') == 1                      # the first collection starts at install, as on the Mac
+    import app
+    assert "res.get(\"installed\") else 1" in (ROOT / "app.py").read_text(encoding="utf-8")

@@ -1265,7 +1265,7 @@ function qsfPlanHtml(d) {
   const how = `<div class="meta">프로그램이 진입 상태를 '진입 규칙 충족'(장기는 '진입을 막는 조건 없음')으로 읽은 종목을 점수 높은 순으로 놓고, 설정해 두신 한도(거래당 위험, 종목 비중, 장기·스윙 비중, 섹터 비중)와 현금 안에서 수량을 정합니다. 이미 보유한 종목과 같은 날 이미 계획된 종목에는 주문을 또 만들지 않습니다.</div>`;
   if (!d) return "";
   if (d.status === "NO_SCAN") return `<div class="panel">${title}${how}<div class="empty">기록된 스캔이 없습니다.</div></div>`;
-  if (d.status === "NO_ACCOUNT") return `<div class="panel">${title}${how}${qsfPlanState(d.market_state)}${qsfPlanLeft(d.plan_checks)}<div class="empty">${esc(d.reason)} 오늘 진입 후보는 ${d.candidates}종목입니다. <button type="button" class="ghost" onclick="acctRecord('${d.market === "KR" ? "KR" : "US"}')">통합 계좌에서 기록하기</button></div>${d.timing_note ? `<div class="meta">${esc(d.timing_note)}</div>` : ""}</div>`;
+  if (d.status === "NO_ACCOUNT") return `<div class="panel">${title}${how}${qsfPlanState(d.market_state)}${qsfPlanLeft(d.plan_checks)}<div class="empty">${esc(d.reason)} 오늘 진입 후보는 ${d.candidates}종목입니다. ${(d.price_missing || []).length ? "" : `<button type="button" class="ghost" onclick="acctRecord('${d.market === "KR" ? "KR" : "US"}')">통합 계좌에서 기록하기</button>`}</div>${d.timing_note ? `<div class="meta">${esc(d.timing_note)}</div>` : ""}</div>`;
   const a = d.assumptions;
   const body = d.orders.length
     ? `<div class="tbl-wrap"><table>${QSF_ORDER_HEAD}<tbody>${qsfOrderRows(d.orders)}</tbody></table></div>`

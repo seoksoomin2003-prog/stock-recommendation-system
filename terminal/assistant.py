@@ -85,6 +85,9 @@ def plan_items(plan: Dict[str, Any], market: str) -> List[Dict[str, Any]]:
     if status == "NO_SCAN":
         return [item("DUE", "NO_SCAN", f"{MARKET_KO[market]} 점수 기록이 없어 진입 후보를 만들지 못했습니다. 자료 수집 상태를 확인하세요.", tab="qsf")]
     n = plan.get("candidates") or 0
+    if status == "NO_ACCOUNT" and plan.get("price_missing"):
+        return [item("DUE", "NO_ACCOUNT", f"{MARKET_KO[market]} {plan.get('reason')} 진입 규칙을 채운 것으로 읽힌 후보는 스윙·장기 합쳐 {n}건입니다. " + candidate_split(plan.get("candidates_by")),
+                     tab="account", short=f"보유 종목 시세 누락으로 주문 계획 보류(진입 규칙 충족 후보 {n}건)")]
     if status == "NO_ACCOUNT":
         return [item("INFO", "NO_ACCOUNT", f"{MARKET_KO[market]} 계좌가 기록돼 있지 않아 주문 수량·손절·한도를 계산하지 못했습니다. 진입 규칙을 채운 것으로 읽힌 후보는 스윙·장기 합쳐 {n}건입니다. "
                      + candidate_split(plan.get("candidates_by")) +
@@ -510,7 +513,9 @@ def briefing(terminal: Any, market: str = "US", now: Optional[Callable[[], datet
             found = record_status.build(terminal).get("alerts") or []
         except AttributeError:          # a terminal that cannot report its records (the tests' stand-ins): nothing to add, the lab tab is unchanged
             return []
-        return [item("DUE" if a.get("level") == "bad" else "INFO", "RECORD_ALERT", a["text"], tab="lab") for a in found]
+        # a score record that is days behind is not an operations detail: every figure on this page is that old (2026-11-29)
+        return [item("DUE", "SCAN_BEHIND", a["text"] + " 이 화면의 후보·주문 계획·'사도 돼?' 답은 그 기록의 종가 기준입니다.", tab="lab") if a.get("kind") == "SCAN_BEHIND" and a.get("market") == market
+                else item("DUE" if a.get("level") == "bad" else "INFO", "RECORD_ALERT", a["text"], tab="lab") for a in found]
 
     part("job", records)
     def top_still() -> List[Dict[str, Any]]:
@@ -1380,8 +1385,29 @@ def pullback_zone(snap: Dict[str, Any]) -> Optional[List[float]]:
     return [z["low"], z["high"]] if z else None
 
 
+STALE_SESSIONS = 2    # as record_status.BEHIND_ALERT: one finished session behind is the normal state of a morning
+
+
+def _behind(terminal: Any, market: str, session: Optional[str]) -> Optional[int]:
+    """Finished sessions after the record's own.  Counted on the market's calendar, never in calendar days: a holiday week is
+    not a stale record.  None when the calendar cannot be read (unknown is never read as stale)."""
+    try:
+        day = str(session)[:10]
+        if market == "US":
+            from utils import nyse_calendar
+            last = nyse_calendar.latest_completed_session(terminal.qsf.now())
+            return max(0, len(nyse_calendar.sessions_between(date.fromisoformat(day), last)) - 1)
+        if market == "KR":
+            from terminal import record_status
+            days = record_status._kr_calendar(terminal.qsf)
+            return sum(1 for d in days if d > day) if days else None
+    except Exception:
+        return None
+    return None
+
+
 def buy_verdict(snap: Dict[str, Any], strategy: str, market: str, *, gates: List[str], marks: List[str], earnings: Dict[str, Any],
-                soon: bool, level: str, wide: Iterable[str], state: Dict[str, Any], held: bool) -> Dict[str, Any]:
+                soon: bool, level: str, wide: Iterable[str], state: Dict[str, Any], held: bool, behind: Optional[int] = None) -> Dict[str, Any]:
     """The conclusion of '사도 돼?' for one strategy: key OK / WAIT / NO, the deciding reason, what would change it, the other
     reasons of the same weight, notes and the stance line it was judged against."""
     from terminal.qsf import config, stance as qs
@@ -1410,6 +1436,8 @@ def buy_verdict(snap: Dict[str, Any], strategy: str, market: str, *, gates: List
         wait.append((f"자료가 빠진 요인을 중간값으로 보면 {seen_txt}으로 상위 구간 기준에 못 미쳐, 진입 판단을 미룬 종목입니다.", "빠진 자료가 채워지면 다시 봅니다."))
     elif entry == "NO_VALID_ENTRY_SETUP" and not gates:
         no.append((f"진입 판단이 '{entry_ko(entry, strategy)}'입니다. {entry_meaning(entry, strategy)}".strip(), "진입 근거가 생기면 다시 봅니다."))
+    if behind is not None and behind >= STALE_SESSIONS:
+        wait.append((f"점수 기록이 {behind}거래일 뒤처져 있습니다(마지막 기록 {snap.get('data_date')}). 그 뒤의 시세와 공시는 반영되지 않았습니다.", "새 기록이 쌓이면 다시 봅니다. 연구실 탭의 '자동 실행' 줄을 확인하세요."))
     why = qs.judge(snap, level, set(wide))
     if why == "LINE":
         low = seen is not None and float(seen) < score
@@ -1671,7 +1699,7 @@ def stock_answer(terminal: Any, intent: str, stock: Dict[str, str], strategy: st
     level = qs.level(Path(terminal.base), market)
     session = snap.get("data_date")
     wide = qs.volatile(_snaps(terminal, market, session)) if qs.PRESETS[level]["drop_volatile"] and session else set()
-    judged = dict(gates=gates, marks=marks, earnings=raw, soon=soon, level=level, wide=wide, state=state, held=held)
+    judged = dict(gates=gates, marks=marks, earnings=raw, soon=soon, level=level, wide=wide, state=state, held=held, behind=_behind(terminal, market, session))
     v = buy_verdict(snap, strategy, market, **judged)
     other_snap = _snap(terminal, stock, "LONG_TERM" if strategy == "SWING" else "SWING")
     other_line = ""

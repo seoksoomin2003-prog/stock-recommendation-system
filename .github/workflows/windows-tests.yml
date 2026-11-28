@@ -113,7 +113,10 @@ jobs:
           cd "$RUNNER_TEMP/qe_home/QuantEngine"
           test -x .venv/bin/python && test -x .tools/uv
           .venv/bin/python -c "import sys; print('copy runs on', sys.version.split()[0], sys.base_prefix)"
-          env -i HOME="$HOME" PATH=/usr/bin:/bin:/usr/sbin:/sbin QE_INSTALL_DIR="$RUNNER_TEMP/qe_home/QuantEngine" QE_SKIP_SCHEDULE=1 /bin/zsh "$RUNNER_TEMP/share_in/Mac 설치.command" < /dev/null | grep -q "덮어쓰지 않고"
+          env -i HOME="$HOME" PATH=/usr/bin:/bin:/usr/sbin:/sbin QE_INSTALL_DIR="$RUNNER_TEMP/qe_home/QuantEngine" QE_SKIP_SCHEDULE=1 /bin/zsh "$RUNNER_TEMP/share_in/Mac 설치.command" < /dev/null      # a second press: nobody to ask, nothing copied over
+          test -f "$RUNNER_TEMP/qe_home/QuantEngine/app.py" && test ! -e "$RUNNER_TEMP/qe_home/QuantEngine.part"
+          test ! -e tracking && test ! -e docs && test -f reports/RUNBOOK.md && test "$(ls reports/*.md | grep -vcE 'PROTOCOL|RULES|RUNBOOK|FACTOR_INVENTORY|FORMULA_FREEZE|QSF_1_6_0')" = "0"
+          if grep -qE '^(QPP_CAPITAL|SEC_USER_AGENT|TELEGRAM)[A-Z_]*=.+' .env; then echo "an owner line reached the copy"; exit 1; fi
       - name: The unpacked copy starts and answers
         run: |
           cd "$RUNNER_TEMP/qe_home/QuantEngine"

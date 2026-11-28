@@ -59,7 +59,7 @@ def sec_user_agent_status(value: Optional[str] = None) -> Dict[str, str]:
     value = (os.getenv("SEC_USER_AGENT", "") if value is None else value).strip()
     if not value:
         return {"status": "MISSING", "reason": "SEC_USER_AGENT is not set."}
-    if "<" in value or ">" in value or "your" in value.lower():
+    if "<" in value or ">" in value or re.search(r"\byour[\s_.\-]*(real|e-?mail|contact|name|address)", value.lower()):
         return {"status": "INVALID", "reason": "SEC_USER_AGENT still contains template text."}
     match = _EMAIL_RE.search(value)
     if not match:

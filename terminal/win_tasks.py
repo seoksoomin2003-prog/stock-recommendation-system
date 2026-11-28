@@ -13,6 +13,7 @@ Nothing from ``.env`` is copied into a task.
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import tempfile
@@ -28,6 +29,12 @@ def pythonw() -> str:
     """The windowless interpreter beside the running one (``.venv\\Scripts\\pythonw.exe``); the running one when there is none."""
     p = Path(sys.executable).with_name("pythonw.exe")
     return str(p if p.exists() else sys.executable)
+
+
+def account() -> str:
+    """``DOMAIN\\name`` of the signed-in account ('' when Windows does not say)."""
+    name, domain = os.environ.get("USERNAME", "").strip(), os.environ.get("USERDOMAIN", "").strip()
+    return f"{domain}\\{name}" if name and domain else name
 
 
 def _schtasks(*args: str):
@@ -55,7 +62,11 @@ def task_xml(base: Path, log: Path, app_args: Sequence[str], times: Sequence[Tup
     """The task definition.  ``times``: (hour, minute) daily starts; a sign-in start is always there.  ``keep_alive``: started
     again a minute after it stops, never ended for running long (the server)."""
     base = Path(base)
-    triggers = ["<LogonTrigger><Enabled>true</Enabled></LogonTrigger>"]
+    who = account()
+    uid = f"<UserId>{escape(who)}</UserId>" if who else ""
+    # the sign-in of THIS account: a trigger for "any user" can only be registered by an administrator, and the file a
+    # receiver double-clicks is not one (found by the hand-over audit, 2026-11-29; a hosted runner is an administrator)
+    triggers = [f"<LogonTrigger><Enabled>true</Enabled>{uid}</LogonTrigger>"]
     triggers += [f"<CalendarTrigger><StartBoundary>2026-01-01T{h:02d}:{m:02d}:00</StartBoundary><Enabled>true</Enabled>"
                  f"<ScheduleByDay><DaysInterval>1</DaysInterval></ScheduleByDay></CalendarTrigger>" for h, m in times]
     args = " ".join(f'"{a}"' for a in ["-X", "utf8", str(base / "ops" / "win_launch.py"), str(log), *app_args])
@@ -65,7 +76,7 @@ def task_xml(base: Path, log: Path, app_args: Sequence[str], times: Sequence[Tup
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo><Description>Quant terminal ({escape(" ".join(app_args))})</Description></RegistrationInfo>
   <Triggers>{"".join(triggers)}</Triggers>
-  <Principals><Principal id="Author"><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
+  <Principals><Principal id="Author">{uid}<LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
   <Settings>
     <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
     <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
@@ -109,7 +120,10 @@ def install_daily(base: Path, times: Sequence[Tuple[int, int]]) -> Dict[str, Any
     base = Path(base)
     log = base / "data" / "automation" / "launchd.log"                  # the same file name as on the Mac: the screens read it
     log.parent.mkdir(parents=True, exist_ok=True)
-    return {**_create(DAILY, task_xml(base, log, ["automation", "run"], times)), "path": DAILY}
+    res = _create(DAILY, task_xml(base, log, ["automation", "run"], times))
+    if res["installed"]:
+        _schtasks("/Run", "/TN", DAILY)                                    # the Mac's agent runs once at load; so does this (the first collection starts at install)
+    return {**res, "path": DAILY}
 
 
 def uninstall_daily() -> Dict[str, Any]:
@@ -120,6 +134,7 @@ def install_server(base: Path, port: int) -> Dict[str, Any]:
     base = Path(base)
     log = base / "data" / "terminal" / "logs" / "launchd.log"
     log.parent.mkdir(parents=True, exist_ok=True)
+    _schtasks("/End", "/TN", SERVER)                                       # a server already running would keep the port and the old code
     res = _create(SERVER, task_xml(base, log, ["terminal", "--port", str(int(port))], keep_alive=True))
     if res["installed"]:
         _schtasks("/Run", "/TN", SERVER)                                   # the Mac's agent starts at load; so does this
