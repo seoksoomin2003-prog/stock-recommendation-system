@@ -46,7 +46,7 @@ jobs:
           .venv\Scripts\python.exe app.py terminal-agent uninstall *>> smoke.log
           if (Test-Path data\terminal\logs\launchd.log) { Get-Content data\terminal\logs\launchd.log -Tail 40 | Tee-Object -Append smoke.log }
           Get-Content smoke.log
-      - name: Copy to hand over, installed from its zip with the real .bat file
+      - name: Copy to hand over, installed from its zip with the one file a receiver presses (fetches its own Python)
         if: always()
         shell: pwsh
         run: |
@@ -57,11 +57,16 @@ jobs:
           $zip = Get-ChildItem $out -Filter *.zip | Select-Object -First 1
           if (-not $zip) { "NO ZIP" | Tee-Object -Append bundle.log; Get-Content bundle.log; exit 1 }
           Expand-Archive -LiteralPath $zip.FullName -DestinationPath $dst
-          Set-Location (Join-Path $dst "quant-stock-engine")
-          Get-ChildItem ops\windows | ForEach-Object { $_.Name } *>> $env:GITHUB_WORKSPACE\bundle.log
-          cmd /c '"ops\windows\1 처음 설치.bat" < NUL' *>> $env:GITHUB_WORKSPACE\bundle.log
+          Set-Location $dst
+          Get-ChildItem | ForEach-Object { $_.Name } *>> $env:GITHUB_WORKSPACE\bundle.log
+          $env:QE_INSTALL_DIR = Join-Path $env:RUNNER_TEMP "qe_home\QuantEngine"; $env:QE_SKIP_SCHEDULE = "1"
+          cmd /c '"Windows 설치.bat" < NUL' *>> $env:GITHUB_WORKSPACE\bundle.log
           "bat exit $LASTEXITCODE" | Tee-Object -Append $env:GITHUB_WORKSPACE\bundle.log
+          if (-not (Test-Path $env:QE_INSTALL_DIR\app.py)) { "NOT COPIED TO THE INSTALL FOLDER" | Tee-Object -Append $env:GITHUB_WORKSPACE\bundle.log; Get-Content $env:GITHUB_WORKSPACE\bundle.log; exit 1 }
+          Set-Location $env:QE_INSTALL_DIR
+          if (-not (Test-Path .tools\uv.exe)) { "NO INSTALL TOOL FETCHED" | Tee-Object -Append $env:GITHUB_WORKSPACE\bundle.log; Get-Content $env:GITHUB_WORKSPACE\bundle.log; exit 1 }
           if (-not (Test-Path .venv\Scripts\python.exe)) { "NO VENV FROM THE BAT FILE" | Tee-Object -Append $env:GITHUB_WORKSPACE\bundle.log; Get-Content $env:GITHUB_WORKSPACE\bundle.log; exit 1 }
+          .venv\Scripts\python.exe -c "import sys; print('copy runs on', sys.version.split()[0], sys.base_prefix)" *>> $env:GITHUB_WORKSPACE\bundle.log
           $p = Start-Process -PassThru -WindowStyle Hidden .venv\Scripts\python.exe -ArgumentList "-X","utf8","app.py","terminal","--port","8770"
           Start-Sleep -Seconds 25
           $ok = $true
@@ -83,7 +88,8 @@ jobs:
 
   mac-bundle:
     # A Mac that has never seen the program: the copy is made, unpacked the way Finder does it and installed with the real
-    # .command file (the schedule is left out: a hosted computer must not start the daily collection).
+    # one file a receiver presses, which copies it into an install folder and fetches its own Python (the schedule is left
+    # out: a hosted computer must not start the daily collection).
     runs-on: macos-latest
     timeout-minutes: 40
     steps:
@@ -98,16 +104,19 @@ jobs:
           .venv/bin/python -m pip install -r requirements.lock
           mkdir -p "$RUNNER_TEMP/share_out" "$RUNNER_TEMP/share_in"
           .venv/bin/python -c "import sys; from pathlib import Path; from terminal import share; r = share.make(Path('.'), Path(sys.argv[1])); print(r['status'], r['files'], r['records'], r['key_file'])" "$RUNNER_TEMP/share_out"
-      - name: Unpack and install with the .command file
+      - name: Unpack and install with the one file a receiver presses
         run: |
           ditto -x -k "$RUNNER_TEMP"/share_out/*.zip "$RUNNER_TEMP/share_in"
-          cd "$RUNNER_TEMP/share_in/quant-stock-engine"
-          ls -l ops
-          QE_SKIP_SCHEDULE=1 zsh "ops/처음 설치.command"
-          test -x .venv/bin/python
+          cd "$RUNNER_TEMP/share_in"
+          ls -l
+          env -i HOME="$HOME" PATH=/usr/bin:/bin:/usr/sbin:/sbin QE_INSTALL_DIR="$RUNNER_TEMP/qe_home/QuantEngine" QE_SKIP_SCHEDULE=1 /bin/zsh "./Mac 설치.command" < /dev/null
+          cd "$RUNNER_TEMP/qe_home/QuantEngine"
+          test -x .venv/bin/python && test -x .tools/uv
+          .venv/bin/python -c "import sys; print('copy runs on', sys.version.split()[0], sys.base_prefix)"
+          env -i HOME="$HOME" PATH=/usr/bin:/bin:/usr/sbin:/sbin QE_INSTALL_DIR="$RUNNER_TEMP/qe_home/QuantEngine" QE_SKIP_SCHEDULE=1 /bin/zsh "$RUNNER_TEMP/share_in/Mac 설치.command" < /dev/null | grep -q "덮어쓰지 않고"
       - name: The unpacked copy starts and answers
         run: |
-          cd "$RUNNER_TEMP/share_in/quant-stock-engine"
+          cd "$RUNNER_TEMP/qe_home/QuantEngine"
           .venv/bin/python app.py terminal --port 8770 > server.log 2>&1 &
           for i in $(seq 1 30); do curl -sf -m 3 http://127.0.0.1:8770/api/health && break; sleep 2; done
           curl -sf -m 20 http://127.0.0.1:8770/api/health
@@ -118,5 +127,5 @@ jobs:
       - name: Guard tests inside the unpacked copy
         run: |
           python3.14 -c "import socket, time; t = time.time(); socket.getfqdn('0.0.0.0'); print('name lookup of 0.0.0.0 took', round(time.time() - t, 1), 's')"
-          cd "$RUNNER_TEMP/share_in/quant-stock-engine"
+          cd "$RUNNER_TEMP/qe_home/QuantEngine"
           .venv/bin/python -m pytest -q -p no:cacheprovider tests/test_share_copy.py tests/test_phone_view.py tests/test_freeze_and_entry_book.py tests/test_rules_r2.py

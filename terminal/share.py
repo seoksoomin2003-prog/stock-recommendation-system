@@ -29,35 +29,87 @@ HELD_BACK_KEYS = ("TELEGRAM",)                       # a key whose name starts w
 PERSONAL = frozenset({"data/terminal/journal.jsonl", "data/terminal/paper_journal.jsonl", "data/terminal/settings.json",
                       "data/terminal/watchlist.json", "data/terminal/alerts.json", "data/terminal/alerts_log.jsonl"})
 SKIP_DIRS = frozenset({".git", ".venv", "__pycache__", ".pytest_cache", "data", "research_data", "tracking", "cache", "cache.nosync",
-                       "runs", "scratch", "node_modules", ".idea"})
+                       "runs", "scratch", "node_modules", ".idea", ".tools"})
 CHOICES = ("data/qsf/stance.json", "data/qsf/*_switch.json")      # the owner's screen choices (stance, apply buttons): the receiver starts from the program's defaults
 FOLDER = "QuantEngine-배포본"
 README = "먼저 읽기.txt"
 README_TEXT = """퀀트 터미널 배포본
 
-1. 이 폴더를 원하는 곳에 둡니다(예: 홈 폴더 아래 Developer). 바탕화면, 문서, 다운로드 폴더와 iCloud·OneDrive 폴더는 피합니다.
-2. Python 3.14를 설치합니다(python.org). 다른 버전으로는 설치되지 않습니다.
-3. 낮에(한국 시간 09~22시) 설치합니다. 설치하면 첫 수집이 곧 시작되는데, 밤과 새벽에는 그날 자료가 덜 나와 있습니다.
-   Mac: ops 폴더의 '처음 설치.command'를 두 번 누릅니다.
-   Windows: ops\\windows 폴더의 '1 처음 설치.bat', 그다음 '2 자동 실행 등록.bat'을 두 번 누릅니다.
-4. 브라우저에서 http://127.0.0.1:8765 를 엽니다.
+파이썬이나 다른 프로그램을 미리 설치할 필요가 없습니다. 인터넷에 연결된 컴퓨터에서 아래 두 가지만 합니다.
+
+1. 받은 zip의 압축을 풉니다(Mac: 두 번 누르기 / Windows: 오른쪽 클릭 > 압축 풀기. 풀지 않고 zip 안에서 누르면 안 됩니다).
+2. 풀린 폴더에서 Mac은 'Mac 설치.command', Windows는 'Windows 설치.bat'을 두 번 누릅니다.
+
+설치 창이 이메일 주소를 한 번 묻습니다(미국 재무 자료를 주는 SEC가 받는 사람의 연락처를 요구합니다. 건너뛸 수 있습니다).
+몇 분 뒤 브라우저에 화면이 스스로 열립니다. 주소는 http://127.0.0.1:8765 입니다.
+프로그램은 홈 폴더의 QuantEngine 폴더에 설치됩니다. 설치가 끝나면 받은 zip과 풀린 폴더는 지워도 됩니다(키가 들어 있으니
+지우는 편이 좋습니다). 될 수 있으면 낮에(한국 시간 09~22시) 설치합니다: 설치하면 첫 수집이 곧 시작되는데, 밤과 새벽에는
+그날 자료가 덜 나와 있습니다.
 
 경고 창이 뜰 때
 - Mac "확인되지 않은 개발자" 또는 "열 수 없습니다": 창을 닫고 시스템 설정 > 개인정보 보호 및 보안 > 아래쪽의
   "그래도 열기"를 누른 뒤 파일을 다시 두 번 누릅니다. (예전 macOS는 파일을 오른쪽 클릭 > 열기)
+- Mac "터미널이 다운로드 폴더의 파일에 접근하려고 합니다": "허용"을 누릅니다.
 - Windows "Windows의 PC 보호": "추가 정보" > "실행"을 누릅니다.
 
 알아 둘 것
-- 자료를 받는 키(.env)는 들어 있습니다. 텔레그램 알림 키는 들어 있지 않습니다. 알림을 받으려면 자기 텔레그램 봇의
-  TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID 두 줄을 .env에 넣습니다.
+- 설치할 때 설치 도구(uv)와 Python 3.14, 패키지를 인터넷에서 받아 QuantEngine 폴더 안에만 둡니다. 컴퓨터의 다른 곳은
+  바꾸지 않습니다(자동 실행 등록은 예외). 이미 있는 파이썬과 섞이지 않고, 다른 버전으로는 설치되지 않습니다.
+- 자료를 받는 키(.env)는 들어 있습니다. 텔레그램 알림 키와 SEC 연락처(준 사람의 이메일)는 들어 있지 않습니다. 알림을 받으려면 자기 텔레그램 봇의
+  TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID 두 줄을 QuantEngine 폴더의 .env에 넣습니다.
 - 텔레그램을 넣지 않으면 Mac은 컴퓨터 알림으로만 알려 줍니다. Windows는 알림이 전혀 없으므로 화면의 '오늘' 탭과
   연구실 탭의 '자동 실행'을 직접 열어 봐야 합니다.
-- 컴퓨터가 켜져 있고 로그인돼 있고 잠들지 않아야 매일 수집이 돕니다.
+- 컴퓨터가 켜져 있고 로그인돼 있고 전원에 연결돼 있고 잠들지 않아야 매일 수집이 돕니다.
 - 계좌, 매매 일지, 모의 매매, 관심종목, 알림 규칙은 비어 있고 성향은 '기본'입니다. 화면에서 새로 입력합니다.
 - 시세와 재무 자료는 처음 실행할 때 새로 받으므로 첫 수집은 오래 걸립니다(두 시간 안팎).
 - 준 사람과 같은 키를 씁니다. 키마다 하루 호출 한도가 있어 함께 쓰면 한도를 나눠 씁니다.
-- 자세한 사용법: reports/RUNBOOK.md
+- 화면이 안 열릴 때: QuantEngine 폴더의 ops('서버 다시 시작') 파일을 두 번 누릅니다. Windows는 ops\\windows 폴더입니다.
+- 자세한 사용법: QuantEngine 폴더의 reports/RUNBOOK.md
 - 투자 권유가 아닌 연구용 프로그램입니다. 주문 기능은 없습니다.
+"""
+INSTALL_FOLDER = "QuantEngine"                       # under the receiver's home folder: outside the Desktop, Documents and Downloads a cloud may upload or macOS may fence off
+MAC_START = "Mac 설치.command"
+WIN_START = "Windows 설치.bat"
+MAC_START_TEXT = """#!/bin/zsh
+# 받은 폴더에서 한 번 누릅니다. 프로그램을 홈 폴더의 QuantEngine 으로 복사한 뒤 그 안의 설치 파일을 실행합니다.
+SRC="$(cd "$(dirname "$0")" && pwd)/quant-stock-engine"
+DST="${QE_INSTALL_DIR:-$HOME/QuantEngine}"
+if [ ! -f "$SRC/app.py" ]; then echo "옆에 quant-stock-engine 폴더가 없습니다. zip을 통째로 푼 뒤 풀린 폴더에서 다시 누르세요."; exit 1; fi
+if [ -f "$DST/app.py" ]; then
+  echo "설치 폴더가 이미 있습니다: $DST"
+  echo "그 폴더의 기록을 지키기 위해 새로 받은 파일로 덮어쓰지 않고, 있는 폴더에서 설치를 이어 갑니다."
+else
+  echo "프로그램을 $DST 로 복사합니다."
+  rm -rf "$DST.part"
+  ditto "$SRC" "$DST.part" && mkdir -p "$(dirname "$DST")" && mv "$DST.part" "$DST" || { echo "복사하지 못했습니다. $DST 자리에 다른 것이 있는지 확인하세요."; exit 1; }
+fi
+exec /bin/zsh "$DST/ops/처음 설치.command"
+"""
+WIN_START_TEXT = """@echo off
+chcp 65001 >nul
+rem 받은 폴더에서 한 번 누릅니다. 프로그램을 사용자 폴더의 QuantEngine 으로 복사한 뒤 그 안의 설치 파일을 실행합니다.
+set "SRC=%~dp0quant-stock-engine"
+if defined QE_INSTALL_DIR (set "DST=%QE_INSTALL_DIR%") else (set "DST=%USERPROFILE%\\QuantEngine")
+if not exist "%SRC%\\app.py" goto nofolder
+if exist "%DST%\\app.py" goto have
+echo 프로그램을 %DST% 로 복사합니다.
+robocopy "%SRC%" "%DST%" /E /NFL /NDL /NJH /NJS /NP >nul
+if errorlevel 8 goto nocopy
+goto run
+:have
+echo 설치 폴더가 이미 있습니다: %DST%
+echo 그 폴더의 기록을 지키기 위해 새로 받은 파일로 덮어쓰지 않고, 있는 폴더에서 설치를 이어 갑니다.
+:run
+call "%DST%\\ops\\windows\\1 처음 설치.bat"
+exit /b %errorlevel%
+:nofolder
+echo 옆에 quant-stock-engine 폴더가 없습니다. zip 파일을 오른쪽 클릭해 압축을 모두 푼 뒤, 풀린 폴더에서 다시 누르세요.
+pause
+exit /b 1
+:nocopy
+echo 복사하지 못했습니다. %DST% 자리에 다른 것이 있는지 확인하세요.
+pause
+exit /b 1
 """
 
 
@@ -136,12 +188,20 @@ def default_folder() -> Path:
     return Path.home() / FOLDER
 
 
-def _put(z: zipfile.ZipFile, arc: str, src: Optional[Path] = None, text: Optional[str] = None) -> None:
-    info = zipfile.ZipInfo(f"{TOP}/{arc}", date_time=datetime.now().timetuple()[:6])
+def _put(z: zipfile.ZipFile, arc: str, src: Optional[Path] = None, text: Optional[str] = None, beside: bool = False) -> None:
+    """``beside``: next to the program's folder, where the receiver looks first (the two start files and the first page)."""
+    info = zipfile.ZipInfo(arc if beside else f"{TOP}/{arc}", date_time=datetime.now().timetuple()[:6])
     info.compress_type = zipfile.ZIP_DEFLATED
     mode = 0o755 if arc.endswith((".command", ".sh")) else 0o600 if arc == ".env" else 0o644
     info.external_attr = (0o100000 | mode) << 16
     z.writestr(info, src.read_bytes() if src is not None else (text or "").encode("utf-8"))
+
+
+def _start_files(z: zipfile.ZipFile) -> None:
+    """One file to press per system, beside the folder: it copies the program into the home folder and runs the real installer."""
+    _put(z, README, text=README_TEXT, beside=True)
+    _put(z, MAC_START, text=MAC_START_TEXT, beside=True)
+    _put(z, WIN_START, text=WIN_START_TEXT.replace("\n", "\r\n"), beside=True)
 
 
 def make(base: Path, folder: Optional[Path] = None, now: Optional[datetime] = None) -> Dict[str, Any]:
@@ -168,6 +228,7 @@ def make(base: Path, folder: Optional[Path] = None, now: Optional[datetime] = No
                 text, kept, held = key_file(env.read_text(encoding="utf-8"))
                 _put(z, ".env", text=text)
             _put(z, README, text=README_TEXT)
+            _start_files(z)
         os.chmod(part, 0o600)
         os.replace(part, target)
     except Exception:

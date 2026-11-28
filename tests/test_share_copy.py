@@ -63,7 +63,8 @@ def test_a_computer_with_no_way_to_send_counts_a_notice_as_told_and_the_first_pa
     for word in ("그래도 열기", "추가 정보", "낮에", "Windows는 알림이 전혀 없으므로", "다른 버전으로는 설치되지 않습니다", "하루 호출 한도"):
         assert word in share.README_TEXT
     cmd = (ROOT / "ops" / "처음 설치.command").read_text(encoding="utf-8")
-    assert "sys.version_info[:2] == (3, 14)" in cmd and "python3.14" in cmd
+    assert "sys.version_info[:2] == (3, 14)" in cmd and "--managed-python --python 3.14" in cmd and "ops/set_contact.py" in cmd
+    assert "com.quantengine.terminal.plist" in cmd                               # a second copy on a computer that already runs one is refused
     assert "screen_only" in (ROOT / "terminal" / "static" / "lab.js").read_text(encoding="utf-8")
 
 
@@ -82,3 +83,45 @@ def test_starting_a_listener_never_asks_the_system_for_the_computers_name(monkey
         httpd = server._Server((host, 0), server.BaseHTTPRequestHandler)
         assert httpd.server_port == httpd.server_address[1] and httpd.server_name == host
         httpd.server_close()
+
+
+def test_the_copy_has_one_file_to_press_per_system_beside_the_folder_and_asks_for_no_python(tmp_path):
+    """2026-11-28 (user request): unpack, press one file.  The start file copies the program into the home folder and the real
+    installer fetches its own Python, so the first page no longer asks the receiver to install anything."""
+    res = share.make(_base(tmp_path), tmp_path / "out")
+    assert res["status"] == "REAL"
+    with zipfile.ZipFile(next((tmp_path / "out").glob("*.zip"))) as z:
+        names = set(z.namelist())
+        assert {share.README, share.MAC_START, share.WIN_START, f"{share.TOP}/{share.README}"} <= names
+        assert (z.getinfo(share.MAC_START).external_attr >> 16) & 0o111
+        bat = z.read(share.WIN_START)
+        assert bat.startswith(b"@echo off\r\nchcp 65001") and b"\n" not in bat.replace(b"\r\n", b"")
+        assert z.read(share.MAC_START).decode("utf-8").startswith("#!/bin/zsh")
+    assert "$HOME/QuantEngine" in share.MAC_START_TEXT and "%USERPROFILE%\\QuantEngine" in share.WIN_START_TEXT
+    assert "덮어쓰지 않고" in share.MAC_START_TEXT and "덮어쓰지 않고" in share.WIN_START_TEXT          # a folder with records is never copied over
+    assert "미리 설치할 필요가 없습니다" in share.README_TEXT and "python.org" not in share.README_TEXT
+    assert ".tools" in share.SKIP_DIRS                                            # the fetched Python never rides in a copy made from a copy
+    bat1 = (ROOT / "ops" / "windows" / "1 처음 설치.bat").read_text(encoding="utf-8")
+    assert "uv.exe venv --managed-python --python 3.14" in bat1 and "ops\\set_contact.py" in bat1 and "terminal-agent install" in bat1
+    assert 'start "" http://127.0.0.1:8765' in bat1 and "(" not in "".join(x for x in bat1.splitlines() if x.startswith("echo"))
+
+
+def test_the_installer_asks_each_computer_for_its_own_contact_and_keeps_it_in_the_key_file_only(tmp_path, monkeypatch, capsys):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("set_contact", ROOT / "ops" / "set_contact.py")
+    sc = importlib.util.module_from_spec(spec); spec.loader.exec_module(sc)
+    monkeypatch.delenv("SEC_USER_AGENT", raising=False)
+    monkeypatch.delenv("QE_SKIP_SCHEDULE", raising=False)
+    env = tmp_path / ".env"
+    env.write_text("OPENDART_API_KEY=k\nSEC_USER_AGENT=\nECOS_API_KEY=e\n", encoding="utf-8")
+    assert sc.main(env, ask=lambda _: "", tty=True) == "SKIPPED" and sc.stored(env.read_text(encoding="utf-8")) == ""
+    assert sc.main(env, ask=lambda _: "x", tty=False) == "NOT_ASKED"                 # no one at the keyboard: nothing is asked or written
+    answers = iter(["not an address", "someone@a-real-domain.kr"])
+    assert sc.main(env, ask=lambda _: next(answers), tty=True) == "SAVED"
+    text = env.read_text(encoding="utf-8")
+    assert text == "OPENDART_API_KEY=k\nSEC_USER_AGENT=QuantEngine someone@a-real-domain.kr\nECOS_API_KEY=e\n"
+    assert "someone@" not in capsys.readouterr().out                             # the address is never printed back
+    assert sc.main(env, ask=lambda _: 1 / 0, tty=True) == "ALREADY"                  # set once, never asked again
+    assert sc.with_value("A=1\n", "v") == "A=1\nSEC_USER_AGENT=v\n"
+    _, kept, _ = share.key_file("SEC_USER_AGENT=\nTELEGRAM_BOT_TOKEN=t\n")
+    assert kept == ["SEC_USER_AGENT"]
