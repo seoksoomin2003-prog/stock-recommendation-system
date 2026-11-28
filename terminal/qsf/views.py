@@ -92,6 +92,13 @@ class ScreenViews:
             r["stance"] = {"ok": why is None, "why": stance.REASONS.get(why)}
 
     def latest(self, market: str = "US") -> Dict[str, Any]:
+        """The newest scan with today's labels and marks.  Inside one screen request it is built once (``utils.reqmemo``); every
+        caller gets its own row dictionaries, so one caller's additions never reach another."""
+        from utils import reqmemo
+        got = reqmemo.get(("qsf.latest", id(self), market), lambda: self._latest_built(market))
+        return {**got, "rows": [dict(r) for r in got.get("rows") or []]}
+
+    def _latest_built(self, market: str = "US") -> Dict[str, Any]:
         try:
             out = json.loads((self.dir / f"latest_{market}.json").read_text(encoding="utf-8"))
             risky = self._high_risk(market)
@@ -448,7 +455,28 @@ class ScreenViews:
         from terminal.qsf import price_archive, top_picks
         files = [self.ledger.index, self.base / top_picks.FOLDER / "index.jsonl", self.dir / "bars_KR.json.gz", self.terminal.lab.panel_file,
                  price_archive.path_of(self.base, "US"), price_archive.path_of(self.base, "KR")]
-        return tuple(m(f) for f in files) + tuple(m(self.cache._path(k)) for k in cache_keys) + (self.now().date().isoformat(),)
+        return tuple(m(f) for f in files) + tuple(self._cache_mark(k) for k in cache_keys) + (self.now().date().isoformat(),)
+
+    def _cache_mark(self, key: str) -> Any:
+        """What a cached price series holds: its length and last bar, not the time its file was written.  The index cache is
+        written again every half hour with the same bars; stamped by file time, the two heaviest reports (top three,
+        validation) were thrown away and computed again each time, in the middle of the first screen (2026-11-29)."""
+        p = self.cache._path(key)
+        try:
+            st = p.stat().st_mtime_ns
+        except OSError:
+            return None
+        marks = self.__dict__.setdefault("_cache_marks", {})
+        hit = marks.get(key)
+        if hit is not None and hit[0] == st:
+            return hit[1]
+        try:
+            data = json.loads(p.read_text(encoding="utf-8")).get("data") or {}
+            mark: Any = tuple((k, len(v), json.dumps(v[-1], sort_keys=True, default=str) if v else None) for k, v in sorted(data.items()) if isinstance(v, list))
+        except (OSError, ValueError, AttributeError):
+            mark = ("UNREADABLE", st)
+        marks[key] = (st, mark)
+        return mark
 
     def _memo(self, name: str, stamp: tuple, compute: Callable[[], Dict[str, Any]]) -> Dict[str, Any]:
         """One computation per report at a time: a second request for a report that is being computed waits for it and takes its

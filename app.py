@@ -1356,6 +1356,8 @@ def main(argv=None) -> int:
 
 if __name__ == "__main__":
     if os.name == "nt":                                # Windows port (2026-11-27); the Mac never enters this block
+        os.environ.setdefault("PYTHONUTF8", "1")       # children (the daily job's steps) start in UTF-8 mode themselves: without it each
+                                                       # re-ran itself below, and a step's time limit stopped the wrapper only (2026-11-29)
         if not sys.flags.utf8_mode:                    # files and the console as UTF-8, as on the Mac (Korean text everywhere)
             import subprocess
             sys.exit(subprocess.call([sys.executable, "-X", "utf8", *sys.argv]))

@@ -34,14 +34,16 @@ def roots(base: Path) -> List[Path]:
 def repair_ledger(base: Path, now: Optional[datetime] = None, backups: Optional[List[Path]] = None) -> Dict[str, Any]:
     """{"status": "NOTHING_TO_DO" | "REPAIRED" | "PARTLY" | "NO_GOOD_COPY" | "INDEX_BROKEN", "repaired": [...], "left": [...]}."""
     led = Ledger(Path(base))
+    stamp = (now or datetime.now(timezone.utc)).strftime("%Y%m%dT%H%M%SZ")
+    mended = mend_cut_lines(Path(base), stamp)
+    said = (f"줄이 잘린 기록 파일 {len(mended)}개를 고쳤습니다(잘린 조각은 지우지 않고 각 폴더의 '{ASIDE}' 폴더로 옮겼습니다): " + ", ".join(m["file"] for m in mended[:5]) + ". ") if mended else ""
     idx = led.read_index()
     if idx["status"] != "OK":
         return {"status": "INDEX_BROKEN", "repaired": [], "left": [], "text": "기록의 목록 파일(index.jsonl) 자체가 깨져 있습니다. 이 버튼으로는 되돌리지 못합니다. reports/RUNBOOK.md 5절을 보세요."}
     want = {r["file"]: r["sha256"] for r in idx["rows"] if r.get("type") != "VOID"}
     bad = led.verify().get("bad_files") or []
     if not bad:
-        return {"status": "NOTHING_TO_DO", "repaired": [], "left": [], "text": "깨진 기록 묶음이 없습니다."}
-    stamp = (now or datetime.now(timezone.utc)).strftime("%Y%m%dT%H%M%SZ")
+        return {"status": "REPAIRED" if mended else "NOTHING_TO_DO", "repaired": [], "left": [], "mended": mended, "text": said + "깨진 기록 묶음이 없습니다.", "integrity": led.verify()["status"]}
     repaired, left = [], []
     for name in bad:
         good = next((p for p in (Path(r) / "qsf_ledger" / name for r in (backups if backups is not None else roots(base))) if p.exists() and not (getattr(p.lstat(), "st_flags", 0) & DATALESS) and _sha(p) == want[name]), None)      # a copy held in iCloud only is not read here: download it first
@@ -64,10 +66,45 @@ def repair_ledger(base: Path, now: Optional[datetime] = None, backups: Optional[
     status = "REPAIRED" if repaired and not left else "PARTLY" if repaired else "NO_GOOD_COPY"
     text = (f"기록 묶음 {len(repaired)}개를 백업에서 되돌렸습니다. 깨졌던 파일은 지우지 않고 '{ASIDE}' 폴더로 옮겼습니다." if repaired else "") + \
            (f" {len(left)}개는 백업에 맞는 사본이 없어 그대로 두었습니다: {', '.join(left[:5])}." if left else "")
-    return {"status": status, "repaired": repaired, "left": left, "text": text.strip(), "integrity": led.verify()["status"]}
+    return {"status": status, "repaired": repaired, "left": left, "mended": mended, "text": (said + text).strip(), "integrity": led.verify()["status"]}
+
+
+LINE_STORES = ("data/qsf/ledger/index.jsonl", "data/qsf/top3/index.jsonl", "research_data/*/*.jsonl", "data/lab/ledger.jsonl",
+               "data/terminal/journal.jsonl", "data/terminal/paper_journal.jsonl", "tracking/*.jsonl", "tracking/ledger/*.jsonl", "tracking/kr/*.jsonl", "tracking/kr/ledger/*.jsonl")
+
+
+def mend_cut_lines(base: Path, stamp: str) -> List[Dict[str, str]]:
+    """Every line record that ends in a cut line, mended (``durable.mend_tail``) under its writer's lock.  A full disk or a
+    power cut in the middle of a line leaves such a file, and every writer then refuses it for good; until 2026-11-29 the only
+    way back was a hand edit.  The fragment is kept beside the file, never deleted; a whole last line only gets its line break."""
+    from utils import durable, fcntl_port as fcntl
+    out: List[Dict[str, str]] = []
+    for pattern in LINE_STORES:
+        for p in sorted(Path(base).glob(pattern)):
+            try:
+                with open(p, "rb") as fh:
+                    fh.seek(0, 2)
+                    if fh.tell() == 0:
+                        continue
+                    fh.seek(-1, 2)
+                    if fh.read(1) == b"\n":
+                        continue
+            except OSError:
+                continue
+            lock = p.parent / ("ledger.lock" if p.name == "index.jsonl" and p.parent.name == "ledger" else "write.lock")
+            if lock.exists():
+                with open(lock, "w") as held:
+                    fcntl.flock(held, fcntl.LOCK_EX)
+                    got = durable.mend_tail(p, stamp, ASIDE)
+            else:
+                got = durable.mend_tail(p, stamp, ASIDE)
+            if got in ("CLOSED", "CUT"):
+                out.append({"file": p.relative_to(base).as_posix(), "what": got})
+    return out
 
 
 def in_cloud_only(root: Path) -> int:
+
     """How many files of a backup folder iCloud keeps as download-on-read entries.  macOS does this by itself when the disk is
     short ("Mac 저장 공간 최적화").  Reading one downloads it, which can take minutes and fails inside the background server
     (first seen 2026-11-26: 166 of 421 files a few hours after the first copy).  The copy is whole in iCloud; it is the local

@@ -9,6 +9,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional
@@ -46,6 +47,22 @@ def _alive(pid: Any) -> bool:
     return fcntl.pid_alive(pid)
 
 
+MARKER_MAX_AGE_S = 3 * 3600      # a scan takes about a quarter of an hour; past this the marker's number may belong to another program
+
+
+def _live(base: Path, m: Optional[Dict[str, Any]], clock: Callable[[], float] = time.time) -> bool:
+    """Whether the marker names a scan that is still running: its process answers AND the marker file is not old.  The number
+    alone was believed for ever (found 2026-11-29: a marker from 2026-11-13 still on disk), so any program that later got the
+    same number kept the daily Korean model scan waiting and the button dead.  The age is the file's own, by the computer's
+    clock: the marker's ``started_at`` is whatever clock the caller passed in."""
+    if not m or not _alive(m.get("pid")):
+        return False
+    try:
+        return clock() - (Path(base) / MARKER).stat().st_mtime < MARKER_MAX_AGE_S
+    except OSError:
+        return False
+
+
 def run_since(base: Path, started_at: str) -> Optional[Dict[str, Any]]:
     """The newest scan run that began at or after ``started_at`` and wrote its result; None when there is none."""
     root = Path(base) / RUNS
@@ -62,8 +79,7 @@ def run_since(base: Path, started_at: str) -> Optional[Dict[str, Any]]:
 
 def started_here(base: Path) -> bool:
     """A scan started from the screen is still running."""
-    m = _marker(base)
-    return bool(m and _alive(m.get("pid")))
+    return _live(base, _marker(base))
 
 
 def _daily_job(base: Path) -> Optional[Dict[str, Any]]:
@@ -109,7 +125,7 @@ def status(base: Path) -> Dict[str, Any]:
     m = _marker(base)
     if not m:
         return {"status": "IDLE"}
-    if _alive(m.get("pid")):
+    if _live(base, m):
         return {"status": "RUNNING", "started_at": m.get("started_at")}
     run = run_since(Path(base), str(m.get("started_at") or ""))
     if run:
@@ -124,7 +140,7 @@ def start(base: Path, popen: Callable = subprocess.Popen, now: Callable[[], date
     if job:
         return {"status": "ALREADY_RUNNING", "started_at": job.get("started_at"), "by": "DAILY_JOB"}
     m = _marker(base)
-    if m and _alive(m.get("pid")):
+    if _live(base, m):
         return {"status": "ALREADY_RUNNING", "started_at": m.get("started_at")}
     folder = (base / MARKER).parent
     folder.mkdir(parents=True, exist_ok=True)

@@ -386,14 +386,28 @@ def _stopped_exit(path: List[Dict[str, Any]], idx: int, h: int, calendar: List[s
     return last, horizon_end
 
 
+SNAPS_KEPT = 2
+
+
 def session_snaps(led: Any, market: str, session: str) -> List[Dict[str, Any]]:
     """Every snapshot in effect of one market and session; the rest of the ledger is not opened.  ``led``: a Ledger or anything
     with its ``_live_rows`` and ``_load``.  The one home of a loop that eleven modules each carried a copy of (2026-11-26)."""
-    out: List[Dict[str, Any]] = []
-    for r in led._live_rows():
-        if r["market"] == market and r["session"] == session:
-            out += led._load(r)
-    return out
+    # A session's shards never change while the index stays as it is, so the parsed session is kept (the two last asked for:
+    # today's and the one before it).  The Today page read the same 11 MB three times a request and the chart once per poll.
+    stamp = led._index_stamp() if hasattr(led, "_index_stamp") else None
+    kept = getattr(led, "__dict__", {}).setdefault("_snaps_kept", {}) if stamp is not None else None
+    key = (stamp, market, session)
+    out = kept.get(key) if kept is not None else None
+    if out is None:
+        out = []
+        for r in led._live_rows():
+            if r["market"] == market and r["session"] == session:
+                out += led._load(r)
+        if kept is not None:
+            while len(kept) >= SNAPS_KEPT:
+                kept.pop(next(iter(kept)), None)
+            kept[key] = out
+    return [dict(s) for s in out] if kept is not None else out      # each caller its own dictionaries: the kept ones are never handed out
 
 
 def outcome(path: List[Dict[str, Any]], bench: List[Dict[str, Any]], signal_session: str, h: int, cost: float, entry_session: Optional[str] = None,

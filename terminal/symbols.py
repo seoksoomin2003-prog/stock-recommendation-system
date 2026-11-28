@@ -12,6 +12,26 @@ LIMIT = 8
 ORDER = {"EXACT": 0, "PREFIX": 1, "NAME_START": 2, "NAME": 3, "NEAR": 4}
 
 
+_KEPT: Dict[int, tuple] = {}
+
+
+def universe_of(terminal: Any, rows_of: Any) -> List[Dict[str, str]]:
+    """The universe of both markets, built again only when a scan file changed (it was rebuilt, with two full readings of the
+    scans, on every letter typed into the search box)."""
+    def m(market):
+        try:
+            return (terminal.qsf.dir / f"latest_{market}.json").stat().st_mtime_ns
+        except (OSError, AttributeError):
+            return None
+    key = (m("US"), m("KR"))
+    hit = _KEPT.get(id(terminal))
+    if hit is not None and hit[0] == key and None not in key:
+        return hit[1]
+    built = universe({mk: rows_of(terminal, mk) for mk in ("US", "KR")})
+    _KEPT[id(terminal)] = (key, built)
+    return built
+
+
 def universe(rows_by_market: Dict[str, Iterable[Dict[str, Any]]]) -> List[Dict[str, str]]:
     """One entry per scanned stock (the rows carry each stock once per strategy)."""
     seen, out = set(), []

@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 GB = 1024 ** 3
 WARN_FREE = 5 * GB
 BAD_FREE = 2 * GB
+STOP_FREE = GB // 2                 # under this the daily job writes nothing: a record line cut short by a full disk blocks its store until repaired
 CACHE = Path("data") / "qsf" / "cache"
 SCANBARS = re.compile(r"^scanbars_(\d{4}-\d{2}-\d{2})_[0-9a-f]+_[0-9a-f]+\.json$")
 KEEP_SESSIONS = 5
@@ -33,6 +34,15 @@ def disk(base: Path, usage=shutil.disk_usage) -> Dict[str, Any]:
     u = usage(Path(base))
     level = "bad" if u.free < BAD_FREE else "warn" if u.free < WARN_FREE else "ok"
     return {"free_gb": round(u.free / GB, 1), "total_gb": round(u.total / GB, 1), "level": level}
+
+
+def too_full(base: Path, usage=shutil.disk_usage) -> Optional[float]:
+    """Free GB when the disk is too full to record safely, else None (also None when the disk cannot be asked)."""
+    try:
+        free = usage(Path(base)).free
+    except OSError:
+        return None
+    return round(free / GB, 2) if free < STOP_FREE else None
 
 
 def low_disk_text(base: Path, usage=shutil.disk_usage) -> Optional[str]:

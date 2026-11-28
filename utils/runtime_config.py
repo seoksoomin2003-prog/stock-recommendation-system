@@ -36,7 +36,9 @@ def load_local_env(path: Optional[Path] = None) -> Dict[str, str]:
     loaded: Dict[str, str] = {}
     if not path.is_file():
         return loaded
-    for raw in path.read_text(encoding="utf-8").splitlines():
+    # utf-8-sig: Windows Notepad may put a byte-order mark before the first key.  errors="replace": a file saved in another
+    # encoding (Korean comments in cp949) must not stop the program at start; keys and values are ASCII and read the same.
+    for raw in path.read_text(encoding="utf-8-sig", errors="replace").splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
@@ -118,7 +120,7 @@ def set_capital(market: str, value, path: Optional[Path] = None) -> Optional[flo
     key = CAPITAL_KEYS[market]
     amount = None if value is None or not str(value).strip() else parse_capital(value)
     path = Path(path) if path else ENV_FILE
-    text = path.read_text(encoding="utf-8") if path.is_file() else ""
+    text = path.read_text(encoding="utf-8-sig", errors="replace") if path.is_file() else ""
     written = f"{key}={amount:.2f}".rstrip("0").rstrip(".") if amount is not None else None
     lines, placed = [], False
     for raw in text.splitlines():

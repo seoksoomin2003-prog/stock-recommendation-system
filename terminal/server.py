@@ -32,6 +32,7 @@ from terminal.committee import service as committee_service  # noqa: E402
 from terminal.qsf import rank_notes as qsf_rank_notes  # noqa: E402
 from terminal.qsf import changes as qsf_changes, forecast as qsf_forecast, kr_cap_view as qsf_cap_view, kr_method as qsf_kr_method, lookahead as qsf_lookahead, paper_book as qsf_paper_book, regime_weights as qsf_regime_weights, screen as qsf_screen, track_record as qsf_track_record, turnover_book as qsf_turnover_book  # noqa: E402
 from terminal.qsf import entry_book as qsf_entry_book, fund_period as qsf_fund_period, inventory as qsf_inventory, rank_book as qsf_rank_book, readings as qsf_readings, stance as qsf_stance  # noqa: E402
+from utils import reqmemo
 
 HOST = "127.0.0.1"
 log = logging.getLogger("terminal")
@@ -206,7 +207,7 @@ def routes(t: Terminal, errors: Optional[ErrorTally] = None, phone: Optional[pho
         ("GET", "/api/committee/compare"): lambda q, b: committee_service.compare(t, _two(q), [_code(x, _two(q)) for x in (q.get("t") or "").split(",") if x.strip()][:12]),
         ("GET", "/api/committee/dashboard"): lambda q, b: committee_service.dashboard(t, _two(q)),
         ("GET", "/api/committee/performance"): lambda q, b: committee_service.performance(t, _two(q)),
-        ("GET", "/api/symbols"): lambda q, b: symbols.suggest(symbols.universe({m: assistant._rows(t, m) for m in ("US", "KR")}), q.get("q", ""), "KR" if q.get("market") == "KR" else "US"),
+        ("GET", "/api/symbols"): lambda q, b: symbols.suggest(symbols.universe_of(t, assistant._rows), q.get("q", ""), "KR" if q.get("market") == "KR" else "US"),
         ("GET", "/api/model/plan"): lambda q, b: t.model_plan(),
         ("GET", "/api/lab/status"): lambda q, b: t.lab.status(),
         ("GET", "/api/automation/status"): lambda q, b: {**automation.status(t.base), "server_agent": server_agent.status(t.base)},
@@ -386,7 +387,8 @@ def make_handler(t: Terminal, errors: Optional[ErrorTally] = None, phone: Option
                         with writes:
                             out = fn(q, body)
                     else:
-                        out = fn(q, body)
+                        with reqmemo.scope():            # what one page asks for many times is built once for that page
+                            out = fn(q, body)
                     return self._json(200, _finite(out))
                 except GONE:                             # the browser left before the answer was written: nothing failed here
                     log.debug("client left during %s %s", method, u.path)

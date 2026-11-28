@@ -281,7 +281,7 @@ def make(base: Path, folder: Optional[Path] = None, now: Optional[datetime] = No
                 _put(z, rel, src=p)
                 n += 1
             if env.is_file():
-                text, kept, held = key_file(env.read_text(encoding="utf-8"))
+                text, kept, held = key_file(env.read_text(encoding="utf-8-sig", errors="replace"))
                 _put(z, ".env", text=text)
             _put(z, README, text=README_TEXT)
             _start_files(z)

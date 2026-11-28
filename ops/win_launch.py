@@ -21,6 +21,7 @@ def main() -> None:
             os.replace(log, log.with_name(log.name + ".1"))
     except OSError:
         pass
+    os.environ.setdefault("PYTHONUTF8", "1")           # every program this one starts reads and writes UTF-8 without re-running itself
     out = open(log, "a", encoding="utf-8", buffering=1)
     sys.stdout = sys.stderr = out
     os.chdir(base)

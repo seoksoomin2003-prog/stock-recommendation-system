@@ -54,6 +54,44 @@ def _lines(path: Path) -> List[str]:
     return [x for x in text.splitlines() if x.strip()]
 
 
+def mend_tail(path: PathLike, stamp: str, aside: str = "damaged") -> Optional[str]:
+    """What a person's repair button does to a line record that ends without a line break (a write cut short: the disk ran
+    out, the power went).  Never called by a writer: a writer refuses such a file (``TornFile``).
+
+    "CLOSED": the last line is a whole record that only lacked its line break; the break is added.
+    "CUT": the last line is a fragment; it is moved to ``<folder>/<aside>/<name>.tail.<stamp>`` and the file ends at the line before.
+    "UNREADABLE": an earlier line cannot be read either; nothing is changed.   None: the file ends whole, nothing to do."""
+    path = Path(path)
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return None
+    if not data or data.endswith(b"\n"):
+        return None
+    cut = data.rfind(b"\n") + 1
+    head, tail = data[:cut], data[cut:]
+    try:
+        for line in head.decode("utf-8").splitlines():
+            if line.strip():
+                json.loads(line)
+    except (UnicodeDecodeError, ValueError):
+        return "UNREADABLE"
+    try:
+        whole = isinstance(json.loads(tail.decode("utf-8")), dict)
+    except (UnicodeDecodeError, ValueError):
+        whole = False
+    tmp = path.with_name(path.name + ".mend")
+    if whole:
+        tmp.write_bytes(data + b"\n")
+    else:
+        folder = path.parent / aside
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / f"{path.name}.tail.{stamp}").write_bytes(tail)
+        tmp.write_bytes(head)
+    replace(tmp, path)
+    return "CLOSED" if whole else "CUT"
+
+
 def _link(prev: str, row: Dict[str, Any]) -> str:
     body = json.dumps({k: v for k, v in row.items() if k != "chain"}, ensure_ascii=False, sort_keys=True)
     return hashlib.sha256((prev + hashlib.sha256(body.encode("utf-8")).hexdigest()).encode()).hexdigest()

@@ -841,6 +841,9 @@ class Daily:
         with self._exclusive() as got:
             if not got:
                 return {"status": "ALREADY_RUNNING"}
+            short = storage.too_full(self.base)
+            if short is not None:               # nothing is written, not even the marker: a line cut by a full disk blocks its record
+                return self._disk_stop(short)
             try:
                 self._mark(None, 0, 0)          # inside: on a full disk this is the first write to fail, and the user must hear of it
                 out = self._run(resend)
@@ -934,6 +937,26 @@ class Daily:
             self.sleep(NETWORK_POLL_S)
             waited += NETWORK_POLL_S
         return True
+
+    def _disk_stop(self, free_gb: float) -> Dict[str, Any]:
+        """The run that did not start because the disk is nearly full.  Told once a day (kept in memory of the day by a small
+        file in the system's temp folder, since this disk is the one that must not be written); the next firing tries again."""
+        text = (f"퀀트 터미널: 디스크 여유가 {free_gb}GB뿐이라 오늘 자료 수집과 기록을 시작하지 않았습니다. 기록 도중 디스크가 차면 기록 파일의 마지막 줄이 잘려 "
+                "그 기록이 막히기 때문입니다. 다른 파일을 지워 공간을 1GB 이상 만들면 다음 시각에 스스로 이어 갑니다.")
+        try:
+            import tempfile
+            flag = Path(tempfile.gettempdir()) / f"quantengine_disk_stop_{hashlib.sha256(str(self.base).encode()).hexdigest()[:10]}"
+            today = self.now().astimezone(KST).date().isoformat()
+            if not (flag.exists() and flag.read_text(encoding="utf-8").strip() == today):
+                self.telegram(text)
+                self.macos("퀀트 터미널: 디스크 여유 부족", f"여유 {free_gb}GB. 오늘 기록을 시작하지 않았습니다.")
+                try:
+                    flag.write_text(today, encoding="utf-8")
+                except OSError:
+                    pass
+        except Exception:
+            pass
+        return {"status": "DISK_FULL", "free_gb": free_gb, "text": text}
 
     def _crash_notice(self, exc: BaseException) -> None:
         """One line when a run dies outside its steps; without it the job could stop every hour unseen.  Sent once per kind of

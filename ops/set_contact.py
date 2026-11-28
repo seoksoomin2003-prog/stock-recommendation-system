@@ -56,7 +56,7 @@ def value_for(answer: str) -> str:
 
 
 def main(env: Path = ROOT / ".env", ask=input, tty: bool | None = None) -> str:
-    text = env.read_text(encoding="utf-8") if env.is_file() else ""
+    text = env.read_text(encoding="utf-8-sig", errors="replace") if env.is_file() else ""
     if runtime_config.sec_user_agent_status(stored(text) or os.getenv(KEY, ""))["status"] == "CONFIGURED":
         return "ALREADY"
     if os.getenv("QE_SKIP_SCHEDULE") or not (sys.stdin.isatty() if tty is None else tty):
